@@ -32,15 +32,18 @@ export interface Lead {
   nome: string;
   telefone: string;
   canal: "Meta Ads" | "Google Ads" | "Indicação" | "Orgânico";
-  corretor: "Larissa" | "Hans";
+  corretor: "Hans" | "Rafael" | "Gabriel";
+  origem: "Carteira" | "Marketing";
   etapa: LeadEtapa;
   dataEntrada: string;
   historico: { data: string; mensagem: string; remetente: "Sofia" | "Lead" }[];
 }
 
 export const leads: Lead[] = [
+  // Hans Rodovalho
   {
-    id: "1", nome: "Carlos Eduardo Silva", telefone: "(66) 99901-2345", canal: "Meta Ads", corretor: "Hans", etapa: "Visita agendada", dataEntrada: "2025-03-24",
+    id: "1", nome: "Carlos Eduardo Silva", telefone: "(66) 99901-2345", canal: "Meta Ads",
+    corretor: "Hans", origem: "Marketing", etapa: "Visita agendada", dataEntrada: "2025-03-24",
     historico: [
       { data: "2025-03-24 10:32", mensagem: "Olá Carlos! Sou a Sofia, assistente virtual da HR Imóveis. Vi que você se interessou pelo Residencial Lago Azul. Posso te ajudar?", remetente: "Sofia" },
       { data: "2025-03-24 10:35", mensagem: "Oi! Sim, quero saber o valor e se tem lotes maiores.", remetente: "Lead" },
@@ -49,53 +52,96 @@ export const leads: Lead[] = [
     ],
   },
   {
-    id: "2", nome: "Ana Paula Ferreira", telefone: "(66) 99812-6789", canal: "Google Ads", corretor: "Larissa", etapa: "Proposta", dataEntrada: "2025-03-20",
-    historico: [
-      { data: "2025-03-20 14:10", mensagem: "Boa tarde, Ana Paula! Aqui é a Sofia da HR Imóveis. Você pesquisou sobre casas de alto padrão em Sinop?", remetente: "Sofia" },
-      { data: "2025-03-20 14:15", mensagem: "Sim! Estou buscando algo acima de 300m², condomínio fechado.", remetente: "Lead" },
-      { data: "2025-03-20 14:17", mensagem: "Perfeito! Temos opções incríveis no Aquarela e no Damha. A Larissa pode te apresentar. Quando fica bom?", remetente: "Sofia" },
-    ],
-  },
-  {
-    id: "3", nome: "Roberto Nascimento", telefone: "(66) 99734-1122", canal: "Meta Ads", corretor: "Hans", etapa: "Qualificado", dataEntrada: "2025-03-25",
+    id: "3", nome: "Roberto Nascimento", telefone: "(66) 99734-1122", canal: "Meta Ads",
+    corretor: "Hans", origem: "Marketing", etapa: "Qualificado", dataEntrada: "2025-03-25",
     historico: [
       { data: "2025-03-25 09:00", mensagem: "Bom dia Roberto! Sou a Sofia, assistente da HR Imóveis. Vi seu interesse em imóveis premium. Qual sua faixa de investimento?", remetente: "Sofia" },
       { data: "2025-03-25 09:05", mensagem: "Bom dia! Estou pensando entre 1 e 2 milhões.", remetente: "Lead" },
     ],
   },
   {
-    id: "4", nome: "Mariana Costa", telefone: "(66) 99645-3344", canal: "Indicação", corretor: "Larissa", etapa: "Visita realizada", dataEntrada: "2025-03-18",
+    id: "5", nome: "Fernando Almeida", telefone: "(66) 99556-7788", canal: "Google Ads",
+    corretor: "Hans", origem: "Marketing", etapa: "Lead recebido", dataEntrada: "2025-03-27",
+    historico: [
+      { data: "2025-03-27 11:20", mensagem: "Olá Fernando! Sou a Sofia da HR Imóveis. Obrigada pelo interesse! Está buscando imóvel para moradia ou investimento?", remetente: "Sofia" },
+    ],
+  },
+  {
+    id: "7", nome: "Thiago Barbosa", telefone: "(66) 99378-1234", canal: "Orgânico",
+    corretor: "Hans", origem: "Carteira", etapa: "Visita agendada", dataEntrada: "2025-03-26",
+    historico: [
+      { data: "2025-03-26 13:00", mensagem: "Oi Thiago! Sou a Sofia. Vi que você acompanha a HR Imóveis. Está pensando em investir em imóveis?", remetente: "Sofia" },
+      { data: "2025-03-26 13:10", mensagem: "Sim, quero conhecer terrenos no Eco Park.", remetente: "Lead" },
+    ],
+  },
+  // Rafael Filimberti
+  {
+    id: "2", nome: "Ana Paula Ferreira", telefone: "(66) 99812-6789", canal: "Google Ads",
+    corretor: "Rafael", origem: "Marketing", etapa: "Proposta", dataEntrada: "2025-03-20",
+    historico: [
+      { data: "2025-03-20 14:10", mensagem: "Boa tarde, Ana Paula! Aqui é a Sofia da HR Imóveis. Você pesquisou sobre casas de alto padrão em Sinop?", remetente: "Sofia" },
+      { data: "2025-03-20 14:15", mensagem: "Sim! Estou buscando algo acima de 300m², condomínio fechado.", remetente: "Lead" },
+      { data: "2025-03-20 14:17", mensagem: "Perfeito! Temos opções incríveis no Aquarela e no Damha. O Rafael pode te apresentar. Quando fica bom?", remetente: "Sofia" },
+    ],
+  },
+  {
+    id: "6", nome: "Juliana Mendes", telefone: "(66) 99467-9900", canal: "Meta Ads",
+    corretor: "Rafael", origem: "Marketing", etapa: "Fechamento", dataEntrada: "2025-03-10",
+    historico: [
+      { data: "2025-03-10 08:30", mensagem: "Bom dia Juliana! Vi que se interessou pelo Residencial Damha III. Gostaria de saber mais?", remetente: "Sofia" },
+      { data: "2025-03-10 08:45", mensagem: "Sim! Quero agendar visita o mais rápido possível.", remetente: "Lead" },
+      { data: "2025-03-15 17:00", mensagem: "Juliana, o Rafael confirmou que a proposta foi aceita! Parabéns pelo novo lar! 🎉", remetente: "Sofia" },
+    ],
+  },
+  {
+    id: "9", nome: "Igor Santos", telefone: "(66) 99123-4455", canal: "Indicação",
+    corretor: "Rafael", origem: "Carteira", etapa: "Visita realizada", dataEntrada: "2025-03-22",
+    historico: [
+      { data: "2025-03-22 10:00", mensagem: "Olá Igor! A Sofia aqui da HR Imóveis. O Paulo indicou você — está buscando casa ou terreno?", remetente: "Sofia" },
+      { data: "2025-03-22 10:08", mensagem: "Casa! Procuro algo a partir de 250m² em condomínio.", remetente: "Lead" },
+      { data: "2025-03-22 10:10", mensagem: "Ótimo! O Rafael tem a opção perfeita no Aquarela. Que tal visitarmos sexta?", remetente: "Sofia" },
+      { data: "2025-03-22 10:15", mensagem: "Combinado!", remetente: "Lead" },
+    ],
+  },
+  {
+    id: "10", nome: "Beatriz Lima", telefone: "(66) 99234-5566", canal: "Indicação",
+    corretor: "Rafael", origem: "Carteira", etapa: "Qualificado", dataEntrada: "2025-03-28",
+    historico: [
+      { data: "2025-03-28 14:00", mensagem: "Boa tarde Beatriz! Sou a Sofia da HR Imóveis. A Camila falou que você busca investimento imobiliário?", remetente: "Sofia" },
+      { data: "2025-03-28 14:12", mensagem: "Isso! Quero um terreno de até 500m² para construir.", remetente: "Lead" },
+    ],
+  },
+  // Gabriel Souza
+  {
+    id: "4", nome: "Mariana Costa", telefone: "(66) 99645-3344", canal: "Indicação",
+    corretor: "Gabriel", origem: "Carteira", etapa: "Visita realizada", dataEntrada: "2025-03-18",
     historico: [
       { data: "2025-03-18 16:00", mensagem: "Olá Mariana! A Fernanda indicou você para conhecer nossos empreendimentos. Posso ajudar?", remetente: "Sofia" },
       { data: "2025-03-18 16:10", mensagem: "Sim! Ela falou muito bem. Quero ver casas prontas no Aquarela.", remetente: "Lead" },
     ],
   },
   {
-    id: "5", nome: "Fernando Almeida", telefone: "(66) 99556-7788", canal: "Google Ads", corretor: "Hans", etapa: "Lead recebido", dataEntrada: "2025-03-27",
-    historico: [
-      { data: "2025-03-27 11:20", mensagem: "Olá Fernando! Sou a Sofia da HR Imóveis. Obrigada pelo interesse! Está buscando imóvel para moradia ou investimento?", remetente: "Sofia" },
-    ],
-  },
-  {
-    id: "6", nome: "Juliana Mendes", telefone: "(66) 99467-9900", canal: "Meta Ads", corretor: "Larissa", etapa: "Fechamento", dataEntrada: "2025-03-10",
-    historico: [
-      { data: "2025-03-10 08:30", mensagem: "Bom dia Juliana! Vi que se interessou pelo Residencial Damha III. Gostaria de saber mais?", remetente: "Sofia" },
-      { data: "2025-03-10 08:45", mensagem: "Sim! Quero agendar visita o mais rápido possível.", remetente: "Lead" },
-      { data: "2025-03-15 17:00", mensagem: "Juliana, a Larissa confirmou que a proposta foi aceita! Parabéns pelo novo lar! 🎉", remetente: "Sofia" },
-    ],
-  },
-  {
-    id: "7", nome: "Thiago Barbosa", telefone: "(66) 99378-1234", canal: "Orgânico", corretor: "Hans", etapa: "Visita agendada", dataEntrada: "2025-03-26",
-    historico: [
-      { data: "2025-03-26 13:00", mensagem: "Oi Thiago! Sou a Sofia. Vi que você acompanha a HR Imóveis. Está pensando em investir em imóveis?", remetente: "Sofia" },
-      { data: "2025-03-26 13:10", mensagem: "Sim, quero conhecer terrenos no Eco Park.", remetente: "Lead" },
-    ],
-  },
-  {
-    id: "8", nome: "Patrícia Oliveira", telefone: "(66) 99289-5566", canal: "Meta Ads", corretor: "Larissa", etapa: "Qualificado", dataEntrada: "2025-03-26",
+    id: "8", nome: "Patrícia Oliveira", telefone: "(66) 99289-5566", canal: "Meta Ads",
+    corretor: "Gabriel", origem: "Marketing", etapa: "Qualificado", dataEntrada: "2025-03-26",
     historico: [
       { data: "2025-03-26 15:30", mensagem: "Boa tarde Patrícia! Aqui é a Sofia. Você se interessou pelas casas do Aquarela. Posso passar mais detalhes?", remetente: "Sofia" },
       { data: "2025-03-26 15:40", mensagem: "Por favor! Qual o valor do m² e condições de pagamento?", remetente: "Lead" },
+    ],
+  },
+  {
+    id: "11", nome: "Diego Carvalho", telefone: "(66) 99345-6677", canal: "Google Ads",
+    corretor: "Gabriel", origem: "Marketing", etapa: "Proposta", dataEntrada: "2025-03-21",
+    historico: [
+      { data: "2025-03-21 09:30", mensagem: "Olá Diego! Sou a Sofia da HR Imóveis. Você pesquisou sobre terrenos premium em Sinop. Posso ajudar?", remetente: "Sofia" },
+      { data: "2025-03-21 09:40", mensagem: "Sim! Quero um lote grande, acima de 600m².", remetente: "Lead" },
+      { data: "2025-03-21 09:42", mensagem: "Temos o Terreno Premium Nações com 800m² por R$1.200.000. O Gabriel pode agendar uma visita. Quando fica bom?", remetente: "Sofia" },
+    ],
+  },
+  {
+    id: "12", nome: "Sabrina Nunes", telefone: "(66) 99456-7788", canal: "Orgânico",
+    corretor: "Gabriel", origem: "Carteira", etapa: "Lead recebido", dataEntrada: "2025-03-29",
+    historico: [
+      { data: "2025-03-29 11:00", mensagem: "Oi Sabrina! Sou a Sofia. Vi que você curtiu várias publicações do Gabriel. Está pensando em investir?", remetente: "Sofia" },
     ],
   },
 ];
@@ -109,22 +155,107 @@ export const funnelData = [
   { etapa: "Fechamento", quantidade: 2, fill: "hsl(160, 60%, 35%)" },
 ];
 
+export interface FunnelEtapaData {
+  etapa: LeadEtapa;
+  quantidade: number;
+  fill: string;
+}
+
+export interface FunnelCorretor {
+  corretor: string;
+  corretorId: string;
+  stats: {
+    totalLeads: number;
+    taxaConversao: string;
+    pipelineEmNegociacao: number;
+  };
+  carteira: FunnelEtapaData[];
+  marketing: FunnelEtapaData[];
+}
+
+export const funnelPorCorretor: FunnelCorretor[] = [
+  {
+    corretor: "Hans Rodovalho",
+    corretorId: "hans",
+    stats: { totalLeads: 30, taxaConversao: "6.7", pipelineEmNegociacao: 2250000 },
+    carteira: [
+      { etapa: "Lead recebido", quantidade: 12, fill: "hsl(224, 73%, 38%)" },
+      { etapa: "Qualificado", quantidade: 8,  fill: "hsl(224, 73%, 46%)" },
+      { etapa: "Visita agendada", quantidade: 5, fill: "hsl(224, 73%, 53%)" },
+      { etapa: "Visita realizada", quantidade: 4, fill: "hsl(224, 73%, 60%)" },
+      { etapa: "Proposta", quantidade: 2,  fill: "hsl(224, 73%, 67%)" },
+      { etapa: "Fechamento", quantidade: 1,  fill: "hsl(224, 73%, 30%)" },
+    ],
+    marketing: [
+      { etapa: "Lead recebido", quantidade: 18, fill: "hsl(43, 76%, 48%)" },
+      { etapa: "Qualificado", quantidade: 12, fill: "hsl(43, 76%, 54%)" },
+      { etapa: "Visita agendada", quantidade: 8,  fill: "hsl(43, 76%, 60%)" },
+      { etapa: "Visita realizada", quantidade: 6,  fill: "hsl(43, 76%, 65%)" },
+      { etapa: "Proposta", quantidade: 3,  fill: "hsl(43, 76%, 43%)" },
+      { etapa: "Fechamento", quantidade: 1,  fill: "hsl(43, 76%, 35%)" },
+    ],
+  },
+  {
+    corretor: "Rafael Filimberti",
+    corretorId: "rafael",
+    stats: { totalLeads: 23, taxaConversao: "4.3", pipelineEmNegociacao: 1500000 },
+    carteira: [
+      { etapa: "Lead recebido", quantidade: 8,  fill: "hsl(224, 73%, 38%)" },
+      { etapa: "Qualificado", quantidade: 5,  fill: "hsl(224, 73%, 46%)" },
+      { etapa: "Visita agendada", quantidade: 3,  fill: "hsl(224, 73%, 53%)" },
+      { etapa: "Visita realizada", quantidade: 2,  fill: "hsl(224, 73%, 60%)" },
+      { etapa: "Proposta", quantidade: 1,  fill: "hsl(224, 73%, 67%)" },
+      { etapa: "Fechamento", quantidade: 0,  fill: "hsl(224, 73%, 30%)" },
+    ],
+    marketing: [
+      { etapa: "Lead recebido", quantidade: 15, fill: "hsl(43, 76%, 48%)" },
+      { etapa: "Qualificado", quantidade: 9,  fill: "hsl(43, 76%, 54%)" },
+      { etapa: "Visita agendada", quantidade: 6,  fill: "hsl(43, 76%, 60%)" },
+      { etapa: "Visita realizada", quantidade: 4,  fill: "hsl(43, 76%, 65%)" },
+      { etapa: "Proposta", quantidade: 2,  fill: "hsl(43, 76%, 43%)" },
+      { etapa: "Fechamento", quantidade: 1,  fill: "hsl(43, 76%, 35%)" },
+    ],
+  },
+  {
+    corretor: "Gabriel Souza",
+    corretorId: "gabriel",
+    stats: { totalLeads: 18, taxaConversao: "5.6", pipelineEmNegociacao: 1200000 },
+    carteira: [
+      { etapa: "Lead recebido", quantidade: 6,  fill: "hsl(224, 73%, 38%)" },
+      { etapa: "Qualificado", quantidade: 4,  fill: "hsl(224, 73%, 46%)" },
+      { etapa: "Visita agendada", quantidade: 2,  fill: "hsl(224, 73%, 53%)" },
+      { etapa: "Visita realizada", quantidade: 2,  fill: "hsl(224, 73%, 60%)" },
+      { etapa: "Proposta", quantidade: 1,  fill: "hsl(224, 73%, 67%)" },
+      { etapa: "Fechamento", quantidade: 0,  fill: "hsl(224, 73%, 30%)" },
+    ],
+    marketing: [
+      { etapa: "Lead recebido", quantidade: 12, fill: "hsl(43, 76%, 48%)" },
+      { etapa: "Qualificado", quantidade: 7,  fill: "hsl(43, 76%, 54%)" },
+      { etapa: "Visita agendada", quantidade: 5,  fill: "hsl(43, 76%, 60%)" },
+      { etapa: "Visita realizada", quantidade: 3,  fill: "hsl(43, 76%, 65%)" },
+      { etapa: "Proposta", quantidade: 1,  fill: "hsl(43, 76%, 43%)" },
+      { etapa: "Fechamento", quantidade: 1,  fill: "hsl(43, 76%, 35%)" },
+    ],
+  },
+];
+
 export const imoveis = [
-  { id: "1", nome: "Casa Aquarela Premium", tipo: "Casa", valor: 2800000, status: "Disponível" as const, corretor: "Larissa" as const },
-  { id: "2", nome: "Lote Lago Azul 360m²", tipo: "Terreno", valor: 580000, status: "Em negociação" as const, corretor: "Hans" as const },
-  { id: "3", nome: "Sobrado Damha III", tipo: "Casa", valor: 3500000, status: "Vendido" as const, corretor: "Larissa" as const },
-  { id: "4", nome: "Terreno Eco Park 500m²", tipo: "Terreno", valor: 750000, status: "Disponível" as const, corretor: "Hans" as const },
-  { id: "5", nome: "Casa Florais Cuiabá", tipo: "Casa", valor: 4200000, status: "Em negociação" as const, corretor: "Larissa" as const },
-  { id: "6", nome: "Lote Residencial Royal", tipo: "Terreno", valor: 920000, status: "Disponível" as const, corretor: "Hans" as const },
-  { id: "7", nome: "Mansão Jardins Imperial", tipo: "Casa", valor: 8500000, status: "Disponível" as const, corretor: "Larissa" as const },
-  { id: "8", nome: "Cobertura Duplex Central", tipo: "Apartamento", valor: 1500000, status: "Em negociação" as const, corretor: "Hans" as const },
-  { id: "9", nome: "Casa Condomínio Alphaville", tipo: "Casa", valor: 6800000, status: "Disponível" as const, corretor: "Larissa" as const },
-  { id: "10", nome: "Terreno Premium Nações", tipo: "Terreno", valor: 1200000, status: "Disponível" as const, corretor: "Hans" as const },
+  { id: "1",  nome: "Casa Aquarela Premium",       tipo: "Casa",        valor: 2800000, status: "Disponível"    as const, corretor: "Rafael" as const },
+  { id: "2",  nome: "Lote Lago Azul 360m²",        tipo: "Terreno",     valor: 580000,  status: "Em negociação" as const, corretor: "Hans"   as const },
+  { id: "3",  nome: "Sobrado Damha III",            tipo: "Casa",        valor: 3500000, status: "Vendido"       as const, corretor: "Rafael" as const },
+  { id: "4",  nome: "Terreno Eco Park 500m²",      tipo: "Terreno",     valor: 750000,  status: "Disponível"    as const, corretor: "Hans"   as const },
+  { id: "5",  nome: "Casa Florais Cuiabá",          tipo: "Casa",        valor: 4200000, status: "Em negociação" as const, corretor: "Gabriel" as const },
+  { id: "6",  nome: "Lote Residencial Royal",       tipo: "Terreno",     valor: 920000,  status: "Disponível"    as const, corretor: "Hans"   as const },
+  { id: "7",  nome: "Mansão Jardins Imperial",      tipo: "Casa",        valor: 8500000, status: "Disponível"    as const, corretor: "Rafael" as const },
+  { id: "8",  nome: "Cobertura Duplex Central",     tipo: "Apartamento", valor: 1500000, status: "Em negociação" as const, corretor: "Hans"   as const },
+  { id: "9",  nome: "Casa Condomínio Alphaville",   tipo: "Casa",        valor: 6800000, status: "Disponível"    as const, corretor: "Gabriel" as const },
+  { id: "10", nome: "Terreno Premium Nações",       tipo: "Terreno",     valor: 1200000, status: "Disponível"    as const, corretor: "Hans"   as const },
 ];
 
 export const corretoresRanking = [
-  { nome: "Larissa", atendimentos: 18, visitas: 7, propostas: 3, fechamentos: 1 },
-  { nome: "Hans", atendimentos: 17, visitas: 6, propostas: 2, fechamentos: 1 },
+  { nome: "Hans Rodovalho",    atendimentos: 30, visitas: 11, propostas: 5, fechamentos: 2 },
+  { nome: "Rafael Filimberti", atendimentos: 23, visitas: 9,  propostas: 3, fechamentos: 1 },
+  { nome: "Gabriel Souza",     atendimentos: 18, visitas: 7,  propostas: 2, fechamentos: 1 },
 ];
 
 export const metaAds = {
@@ -166,20 +297,6 @@ export const metaVsGoogle = [
 
 export const socialProfiles = [
   {
-    nome: "Larissa",
-    handle: "@larissa.hrimoveis",
-    seguidores: 12400,
-    alcance: 34500,
-    engajamento: 2890,
-    posts: 8,
-    variacaoSemanal: [
-      { semana: "Sem 1", alcance: 28000, engajamento: 2100 },
-      { semana: "Sem 2", alcance: 31000, engajamento: 2400 },
-      { semana: "Sem 3", alcance: 33000, engajamento: 2700 },
-      { semana: "Sem 4", alcance: 34500, engajamento: 2890 },
-    ],
-  },
-  {
     nome: "Hans",
     handle: "@hans.corretor",
     seguidores: 8900,
@@ -191,6 +308,20 @@ export const socialProfiles = [
       { semana: "Sem 2", alcance: 19500, engajamento: 1350 },
       { semana: "Sem 3", alcance: 21000, engajamento: 1500 },
       { semana: "Sem 4", alcance: 22100, engajamento: 1650 },
+    ],
+  },
+  {
+    nome: "Rafael",
+    handle: "@rafael.hrimoveis",
+    seguidores: 6400,
+    alcance: 16800,
+    engajamento: 1240,
+    posts: 5,
+    variacaoSemanal: [
+      { semana: "Sem 1", alcance: 12000, engajamento: 880 },
+      { semana: "Sem 2", alcance: 14000, engajamento: 1020 },
+      { semana: "Sem 3", alcance: 15500, engajamento: 1140 },
+      { semana: "Sem 4", alcance: 16800, engajamento: 1240 },
     ],
   },
   {
@@ -210,8 +341,8 @@ export const socialProfiles = [
 ];
 
 export const engajamentoPorPerfil = [
-  { perfil: "Larissa", curtidas: 2200, comentarios: 690 },
-  { perfil: "Hans", curtidas: 1280, comentarios: 370 },
+  { perfil: "Hans",      curtidas: 1280, comentarios: 370 },
+  { perfil: "Rafael",    curtidas: 980,  comentarios: 260 },
   { perfil: "HR Imóveis", curtidas: 3300, comentarios: 900 },
 ];
 
@@ -220,7 +351,7 @@ export type PostStatus = "💡 Ideia" | "✍️ Roteiro" | "🎬 Gravado" | "✅
 export interface ContentPost {
   id: string;
   titulo: string;
-  perfil: "Larissa" | "Hans" | "HR Imóveis";
+  perfil: "Hans" | "Rafael" | "Gabriel" | "HR Imóveis";
   formato: "Reels" | "Carrossel" | "Feed" | "Stories";
   tema: string;
   prioridade: "Alta" | "Média" | "Baixa";
@@ -229,14 +360,14 @@ export interface ContentPost {
 }
 
 export const contentPosts: ContentPost[] = [
-  { id: "1", titulo: "Tour Mansão Jardins Imperial", perfil: "Larissa", formato: "Reels", tema: "Tour de imóvel", prioridade: "Alta", status: "✅ Publicado", data: "2025-03-24" },
-  { id: "2", titulo: "5 motivos para morar em condomínio", perfil: "HR Imóveis", formato: "Carrossel", tema: "Educacional", prioridade: "Média", status: "✅ Publicado", data: "2025-03-25" },
-  { id: "3", titulo: "Dia a dia do corretor", perfil: "Hans", formato: "Stories", tema: "Bastidores", prioridade: "Baixa", status: "🎬 Gravado", data: "2025-03-26" },
-  { id: "4", titulo: "Casa Aquarela - Detalhes", perfil: "Larissa", formato: "Reels", tema: "Tour de imóvel", prioridade: "Alta", status: "✍️ Roteiro", data: "2025-03-28" },
-  { id: "5", titulo: "Mercado imobiliário Sinop 2025", perfil: "HR Imóveis", formato: "Feed", tema: "Mercado", prioridade: "Média", status: "💡 Ideia", data: "2025-03-29" },
-  { id: "6", titulo: "Depoimento cliente Damha", perfil: "Larissa", formato: "Reels", tema: "Social proof", prioridade: "Alta", status: "✍️ Roteiro", data: "2025-03-30" },
-  { id: "7", titulo: "Lote vs Casa pronta", perfil: "Hans", formato: "Carrossel", tema: "Educacional", prioridade: "Média", status: "💡 Ideia", data: "2025-03-31" },
-  { id: "8", titulo: "Inauguração área gourmet Eco Park", perfil: "HR Imóveis", formato: "Stories", tema: "Evento", prioridade: "Alta", status: "🎬 Gravado", data: "2025-03-27" },
+  { id: "1", titulo: "Tour Mansão Jardins Imperial",       perfil: "Rafael",    formato: "Reels",    tema: "Tour de imóvel", prioridade: "Alta",  status: "✅ Publicado", data: "2025-03-24" },
+  { id: "2", titulo: "5 motivos para morar em condomínio", perfil: "HR Imóveis", formato: "Carrossel", tema: "Educacional",    prioridade: "Média", status: "✅ Publicado", data: "2025-03-25" },
+  { id: "3", titulo: "Dia a dia do corretor",              perfil: "Hans",      formato: "Stories",  tema: "Bastidores",     prioridade: "Baixa", status: "🎬 Gravado",   data: "2025-03-26" },
+  { id: "4", titulo: "Casa Aquarela - Detalhes",           perfil: "Gabriel",   formato: "Reels",    tema: "Tour de imóvel", prioridade: "Alta",  status: "✍️ Roteiro",   data: "2025-03-28" },
+  { id: "5", titulo: "Mercado imobiliário Sinop 2025",     perfil: "HR Imóveis", formato: "Feed",     tema: "Mercado",        prioridade: "Média", status: "💡 Ideia",     data: "2025-03-29" },
+  { id: "6", titulo: "Depoimento cliente Damha",           perfil: "Rafael",    formato: "Reels",    tema: "Social proof",   prioridade: "Alta",  status: "✍️ Roteiro",   data: "2025-03-30" },
+  { id: "7", titulo: "Lote vs Casa pronta",                perfil: "Hans",      formato: "Carrossel", tema: "Educacional",    prioridade: "Média", status: "💡 Ideia",     data: "2025-03-31" },
+  { id: "8", titulo: "Inauguração área gourmet Eco Park",  perfil: "HR Imóveis", formato: "Stories",  tema: "Evento",         prioridade: "Alta",  status: "🎬 Gravado",   data: "2025-03-27" },
 ];
 
 export interface KanbanTask {
@@ -248,14 +379,14 @@ export interface KanbanTask {
 }
 
 export const kanbanTasks: KanbanTask[] = [
-  { id: "1", titulo: "Atualizar fotos Lago Azul", responsavel: "Hans", prioridade: "Alta", status: "A fazer" },
-  { id: "2", titulo: "Gravar tour Mansão Imperial", responsavel: "Larissa", prioridade: "Alta", status: "Em andamento" },
-  { id: "3", titulo: "Configurar campanha remarketing", responsavel: "Equipe", prioridade: "Média", status: "A fazer" },
-  { id: "4", titulo: "Revisar script Sofia", responsavel: "Equipe", prioridade: "Alta", status: "Em andamento" },
-  { id: "5", titulo: "Publicar carrossel educacional", responsavel: "Hans", prioridade: "Média", status: "Feito" },
-  { id: "6", titulo: "Contrato Juliana Mendes", responsavel: "Larissa", prioridade: "Alta", status: "Feito" },
-  { id: "7", titulo: "Ajustar CPC Google Ads", responsavel: "Equipe", prioridade: "Baixa", status: "A fazer" },
-  { id: "8", titulo: "Follow-up leads semana", responsavel: "Hans", prioridade: "Alta", status: "Em andamento" },
+  { id: "1", titulo: "Atualizar fotos Lago Azul",        responsavel: "Hans",    prioridade: "Alta",  status: "A fazer" },
+  { id: "2", titulo: "Gravar tour Mansão Imperial",      responsavel: "Rafael",  prioridade: "Alta",  status: "Em andamento" },
+  { id: "3", titulo: "Configurar campanha remarketing",  responsavel: "Equipe",  prioridade: "Média", status: "A fazer" },
+  { id: "4", titulo: "Revisar script Sofia",             responsavel: "Equipe",  prioridade: "Alta",  status: "Em andamento" },
+  { id: "5", titulo: "Publicar carrossel educacional",   responsavel: "Hans",    prioridade: "Média", status: "Feito" },
+  { id: "6", titulo: "Contrato Juliana Mendes",          responsavel: "Rafael",  prioridade: "Alta",  status: "Feito" },
+  { id: "7", titulo: "Ajustar CPC Google Ads",           responsavel: "Equipe",  prioridade: "Baixa", status: "A fazer" },
+  { id: "8", titulo: "Follow-up leads semana",           responsavel: "Gabriel", prioridade: "Alta",  status: "Em andamento" },
 ];
 
 export const agentStatus = [
@@ -264,20 +395,20 @@ export const agentStatus = [
 ];
 
 export const activityLog = [
-  { tipo: "Lead", descricao: "Novo lead: Fernando Almeida via Google Ads", data: "2025-03-27 11:20", status: "success" as const },
-  { tipo: "Sofia", descricao: "Conversa iniciada com Fernando Almeida", data: "2025-03-27 11:21", status: "success" as const },
-  { tipo: "Visita", descricao: "Visita agendada: Carlos Eduardo - Lago Azul", data: "2025-03-27 10:45", status: "success" as const },
-  { tipo: "Campanha", descricao: "Budget Meta Ads: 90% utilizado", data: "2025-03-27 09:00", status: "warning" as const },
-  { tipo: "Sistema", descricao: "Backup automático realizado", data: "2025-03-27 06:00", status: "success" as const },
-  { tipo: "Proposta", descricao: "Proposta enviada: Ana Paula - Damha III", data: "2025-03-26 17:30", status: "success" as const },
-  { tipo: "Erro", descricao: "Timeout API Salesforce (recuperado)", data: "2025-03-26 14:15", status: "error" as const },
+  { tipo: "Lead",     descricao: "Novo lead: Fernando Almeida via Google Ads",  data: "2025-03-27 11:20", status: "success" as const },
+  { tipo: "Sofia",    descricao: "Conversa iniciada com Fernando Almeida",       data: "2025-03-27 11:21", status: "success" as const },
+  { tipo: "Visita",   descricao: "Visita agendada: Carlos Eduardo - Lago Azul",  data: "2025-03-27 10:45", status: "success" as const },
+  { tipo: "Campanha", descricao: "Budget Meta Ads: 90% utilizado",               data: "2025-03-27 09:00", status: "warning" as const },
+  { tipo: "Sistema",  descricao: "Backup automático realizado",                  data: "2025-03-27 06:00", status: "success" as const },
+  { tipo: "Proposta", descricao: "Proposta enviada: Ana Paula - Damha III",      data: "2025-03-26 17:30", status: "success" as const },
+  { tipo: "Erro",     descricao: "Timeout API Salesforce (recuperado)",          data: "2025-03-26 14:15", status: "error"   as const },
 ];
 
 export const systemHealth = [
-  { nome: "VPS (Servidor)", status: "online" as const, ultimaChecagem: "2025-03-27 15:45", detalhe: "CPU: 23% | RAM: 41% | Disco: 35%" },
-  { nome: "Mac (Produção)", status: "online" as const, ultimaChecagem: "2025-03-27 15:44", detalhe: "Processamento de vídeos OK" },
-  { nome: "API Anthropic", status: "online" as const, ultimaChecagem: "2025-03-27 15:45", detalhe: "Latência: 340ms | Tokens/dia: 45.2k" },
-  { nome: "Salesforce", status: "degraded" as const, ultimaChecagem: "2025-03-27 15:43", detalhe: "Latência elevada: 1.2s (normal: 400ms)" },
-  { nome: "Meta Ads API", status: "online" as const, ultimaChecagem: "2025-03-27 15:45", detalhe: "Rate limit: 12% utilizado" },
-  { nome: "Google Ads API", status: "online" as const, ultimaChecagem: "2025-03-27 15:44", detalhe: "Quota: 8% utilizada" },
+  { nome: "VPS (Servidor)",      status: "online"    as const, ultimaChecagem: "2025-03-27 15:45", detalhe: "CPU: 23% | RAM: 41% | Disco: 35%" },
+  { nome: "Mac (Produção)",      status: "online"    as const, ultimaChecagem: "2025-03-27 15:44", detalhe: "Processamento de vídeos OK" },
+  { nome: "API Anthropic",       status: "online"    as const, ultimaChecagem: "2025-03-27 15:45", detalhe: "Latência: 340ms | Tokens/dia: 45.2k" },
+  { nome: "Salesforce",          status: "degraded"  as const, ultimaChecagem: "2025-03-27 15:43", detalhe: "Latência elevada: 1.2s (normal: 400ms)" },
+  { nome: "Meta Ads API",        status: "online"    as const, ultimaChecagem: "2025-03-27 15:45", detalhe: "Rate limit: 12% utilizado" },
+  { nome: "Google Ads API",      status: "online"    as const, ultimaChecagem: "2025-03-27 15:44", detalhe: "Quota: 8% utilizada" },
 ];
