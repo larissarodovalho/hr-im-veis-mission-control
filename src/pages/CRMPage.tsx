@@ -7,7 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { leads, imoveis, corretoresRanking, funnelPorCorretor, contas, oportunidades, leadsPorOrigem, leadsTotaisPorOrigem, produtosPorLead, motivosDesqualificacao, oportunidadesFases, motivosDaPerda, vgv, ticketMedio, visitas, visitasPorTipoImovel, tarefas, type TipoTarefa, type StatusTarefa, type StatusVisita } from "@/data/mockData";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { leads, imoveis, corretoresRanking, funnelPorCorretor, contas, oportunidades, leadsPorOrigem, leadsTotaisPorOrigem, produtosPorLead, motivosDesqualificacao, oportunidadesFases, motivosDaPerda, vgv, ticketMedio, visitas as visitasIniciais, visitasPorTipoImovel, tarefas, type TipoTarefa, type StatusTarefa, type StatusVisita, type Visita } from "@/data/mockData";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line, CartesianGrid } from "recharts";
 import { ChevronDown, ChevronUp, Phone, MessageSquare, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList, BarChart2, HandCoins, CalendarCheck, CheckCircle2, Clock, AlertCircle, Circle } from "lucide-react";
 
@@ -55,6 +59,13 @@ export default function CRM() {
   const [filtroStatus, setFiltroStatus]             = useState<"Todos" | StatusTarefa>("Todos");
   const [filtroStatusVisita, setFiltroStatusVisita] = useState<"Todos" | StatusVisita>("Todos");
   const [filtroCorretorVisita, setFiltroCorretorVisita] = useState<"Todos" | "Hans" | "Rafael" | "Gabriel">("Todos");
+  const [listaVisitas, setListaVisitas] = useState<Visita[]>(visitasIniciais);
+  const [dialogAberto, setDialogAberto] = useState(false);
+  const [novaVisita, setNovaVisita] = useState({
+    conta: "", corretor: "Hans" as "Hans" | "Rafael" | "Gabriel",
+    imovel: "", tipoImovel: "Casa" as "Casa" | "Terreno" | "Apartamento",
+    dataVisita: "", status: "Agendada" as StatusVisita,
+  });
   const [corretorSelecionado, setCorretorSelecionado] = useState<typeof CORRETORES[number]>("Hans");
   const [periodoLeads, setPeriodoLeads]   = useState<Periodo>("Tudo");
   const [periodoContas, setPeriodoContas] = useState<Periodo>("Tudo");
@@ -808,32 +819,114 @@ export default function CRM() {
         {/* ── ABA: Visitas ── */}
         <TabsContent value="visitas" className="space-y-4">
 
-          {/* KPIs por status */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {([
-              { label: "Total",      value: visitas.length,                                              color: "text-foreground",  bg: "bg-muted/40" },
-              { label: "Agendadas",  value: visitas.filter((v) => v.status === "Agendada").length,       color: "text-primary",     bg: "bg-primary/5" },
-              { label: "Realizadas", value: visitas.filter((v) => v.status === "Realizada").length,      color: "text-green-500",   bg: "bg-green-500/5" },
-              { label: "Canceladas", value: visitas.filter((v) => v.status === "Cancelada").length,      color: "text-red-500",     bg: "bg-red-500/5" },
-            ] as const).map((k) => (
-              <div key={k.label} className={`stat-card ${k.bg} cursor-pointer border-2 ${filtroStatusVisita === (k.label === "Total" ? "Todos" : k.label.slice(0,-1) as StatusVisita) ? "border-primary/40" : "border-transparent"}`}
-                onClick={() => setFiltroStatusVisita(k.label === "Total" ? "Todos" : k.label.slice(0,-1) as StatusVisita)}>
-                <span className="text-xs text-muted-foreground">{k.label}</span>
-                <p className={`text-3xl font-bold font-display mt-1 ${k.color}`}>{k.value}</p>
-              </div>
-            ))}
+          {/* Header com botão Agendar */}
+          <div className="flex items-center justify-between">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 flex-1 mr-4">
+              {([
+                { label: "Total",      value: listaVisitas.length,                                                  color: "text-foreground",  bg: "bg-muted/40",      statusKey: "Todos"      },
+                { label: "Agendadas",  value: listaVisitas.filter((v) => v.status === "Agendada").length,           color: "text-primary",     bg: "bg-primary/5",     statusKey: "Agendada"   },
+                { label: "Realizadas", value: listaVisitas.filter((v) => v.status === "Realizada").length,          color: "text-green-500",   bg: "bg-green-500/5",   statusKey: "Realizada"  },
+                { label: "Canceladas", value: listaVisitas.filter((v) => v.status === "Cancelada").length,          color: "text-red-500",     bg: "bg-red-500/5",     statusKey: "Cancelada"  },
+              ] as const).map((k) => (
+                <div key={k.label} className={`stat-card ${k.bg} cursor-pointer border-2 transition-all ${filtroStatusVisita === k.statusKey ? "border-primary/40" : "border-transparent"}`}
+                  onClick={() => setFiltroStatusVisita(k.statusKey as "Todos" | StatusVisita)}>
+                  <span className="text-xs text-muted-foreground">{k.label}</span>
+                  <p className={`text-3xl font-bold font-display mt-1 ${k.color}`}>{k.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Botão Agendar Visita */}
+            <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="whitespace-nowrap">+ Agendar Visita</Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Agendar Nova Visita</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-2">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Nome do Cliente</Label>
+                    <Input className="h-8 text-sm" placeholder="Ex: João Silva" value={novaVisita.conta}
+                      onChange={(e) => setNovaVisita((p) => ({ ...p, conta: e.target.value }))} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Corretor Responsável</Label>
+                    <Select value={novaVisita.corretor} onValueChange={(v) => setNovaVisita((p) => ({ ...p, corretor: v as typeof p.corretor }))}>
+                      <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {["Hans", "Rafael", "Gabriel"].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Imóvel de Interesse</Label>
+                    <Select value={novaVisita.imovel} onValueChange={(v) => setNovaVisita((p) => ({ ...p, imovel: v }))}>
+                      <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Selecione um imóvel" /></SelectTrigger>
+                      <SelectContent>
+                        {imoveis.map((i) => <SelectItem key={i.id} value={i.nome}>{i.nome}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Tipo de Imóvel</Label>
+                    <Select value={novaVisita.tipoImovel} onValueChange={(v) => setNovaVisita((p) => ({ ...p, tipoImovel: v as typeof p.tipoImovel }))}>
+                      <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {["Casa", "Terreno", "Apartamento"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Data da Visita</Label>
+                    <Input type="date" className="h-8 text-sm" value={novaVisita.dataVisita}
+                      onChange={(e) => setNovaVisita((p) => ({ ...p, dataVisita: e.target.value }))} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Status</Label>
+                    <Select value={novaVisita.status} onValueChange={(v) => setNovaVisita((p) => ({ ...p, status: v as StatusVisita }))}>
+                      <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {["Agendada", "Realizada", "Cancelada", "Reagendada"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" size="sm" onClick={() => setDialogAberto(false)}>Cancelar</Button>
+                  <Button size="sm" onClick={() => {
+                    if (!novaVisita.conta || !novaVisita.imovel || !novaVisita.dataVisita) return;
+                    const nova: Visita = {
+                      id: `V${String(listaVisitas.length + 1).padStart(3, "0")}`,
+                      nome: `V${String(listaVisitas.length + 1).padStart(6, "0")}`,
+                      conta: novaVisita.conta,
+                      corretor: novaVisita.corretor,
+                      imovel: novaVisita.imovel,
+                      tipoImovel: novaVisita.tipoImovel,
+                      valorImovel: imoveis.find((i) => i.nome === novaVisita.imovel)?.valor ?? 0,
+                      dataCriacao: new Date().toISOString().slice(0, 10),
+                      dataVisita: novaVisita.dataVisita,
+                      status: novaVisita.status,
+                    };
+                    setListaVisitas((prev) => [nova, ...prev]);
+                    setNovaVisita({ conta: "", corretor: "Hans", imovel: "", tipoImovel: "Casa", dataVisita: "", status: "Agendada" });
+                    setDialogAberto(false);
+                  }}>Agendar</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
 
-          {/* Reagendadas separado */}
+          {/* Reagendadas + Filtro corretor */}
           <div className="flex items-center gap-3">
             <div
-              className={`stat-card bg-amber-500/5 cursor-pointer border-2 ${filtroStatusVisita === "Reagendada" ? "border-primary/40" : "border-transparent"} inline-flex gap-4 items-center px-4 py-2`}
+              className={`stat-card bg-amber-500/5 cursor-pointer border-2 transition-all ${filtroStatusVisita === "Reagendada" ? "border-primary/40" : "border-transparent"} inline-flex gap-4 items-center px-4 py-2`}
               onClick={() => setFiltroStatusVisita(filtroStatusVisita === "Reagendada" ? "Todos" : "Reagendada")}
             >
               <span className="text-xs text-muted-foreground">Reagendadas</span>
-              <span className="text-2xl font-bold text-amber-500">{visitas.filter((v) => v.status === "Reagendada").length}</span>
+              <span className="text-2xl font-bold text-amber-500">{listaVisitas.filter((v) => v.status === "Reagendada").length}</span>
             </div>
-            {/* Filtro por corretor */}
             <Select value={filtroCorretorVisita} onValueChange={(v) => setFiltroCorretorVisita(v as typeof filtroCorretorVisita)}>
               <SelectTrigger className="w-40 h-8 text-xs"><SelectValue placeholder="Corretor" /></SelectTrigger>
               <SelectContent>
@@ -850,7 +943,7 @@ export default function CRM() {
                 <CardTitle className="text-sm">Visitas por Corretor</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-center h-[160px]">
-                <p className="text-8xl font-bold font-display text-primary leading-none">{visitas.length}</p>
+                <p className="text-8xl font-bold font-display text-primary leading-none">{listaVisitas.length}</p>
               </CardContent>
             </Card>
 
@@ -862,7 +955,7 @@ export default function CRM() {
               <CardContent>
                 <ResponsiveContainer width="100%" height={160}>
                   <BarChart
-                    data={CORRETORES.map((c) => ({ nome: c, quantidade: visitas.filter((v) => v.corretor === c).length, fill: FILLS[c] }))}
+                    data={CORRETORES.map((c) => ({ nome: c, quantidade: listaVisitas.filter((v) => v.corretor === c).length, fill: FILLS[c] }))}
                     layout="vertical" margin={{ left: 80 }}
                   >
                     <XAxis type="number" fontSize={11} allowDecimals={false} />
@@ -887,7 +980,7 @@ export default function CRM() {
               <CardContent>
                 {(() => {
                   const contagem: Record<string, number> = {};
-                  visitas.forEach((v) => { contagem[v.conta] = (contagem[v.conta] || 0) + 1; });
+                  listaVisitas.forEach((v) => { contagem[v.conta] = (contagem[v.conta] || 0) + 1; });
                   const top = Object.entries(contagem).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([conta, quantidade]) => ({ conta: conta.split(" ").slice(0, 2).join(" "), quantidade }));
                   return (
                     <ResponsiveContainer width="100%" height={180}>
@@ -911,7 +1004,7 @@ export default function CRM() {
               <CardContent>
                 {(() => {
                   const contagem: Record<string, number> = {};
-                  visitas.forEach((v) => { contagem[v.dataCriacao] = (contagem[v.dataCriacao] || 0) + 1; });
+                  listaVisitas.forEach((v) => { contagem[v.dataCriacao] = (contagem[v.dataCriacao] || 0) + 1; });
                   const data = Object.entries(contagem).sort().map(([data, quantidade]) => ({ data: data.slice(5), quantidade }));
                   return (
                     <ResponsiveContainer width="100%" height={160}>
@@ -938,7 +1031,7 @@ export default function CRM() {
               <CardContent>
                 {(() => {
                   const contagem: Record<string, number> = {};
-                  visitas.forEach((v) => { contagem[v.imovel] = (contagem[v.imovel] || 0) + 1; });
+                  listaVisitas.forEach((v) => { contagem[v.imovel] = (contagem[v.imovel] || 0) + 1; });
                   const top = Object.entries(contagem).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([imovel, quantidade]) => ({ imovel: imovel.split(" ").slice(0, 2).join(" "), quantidade }));
                   return (
                     <ResponsiveContainer width="100%" height={180}>
