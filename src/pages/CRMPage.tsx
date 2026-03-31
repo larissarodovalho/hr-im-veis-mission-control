@@ -55,6 +55,7 @@ const PeriodoSelect = ({ value, onChange }: { value: Periodo; onChange: (v: Peri
 );
 
 export default function CRM() {
+  const [listaLeads, setListaLeads] = useState<Lead[]>([...leadsIniciais]);
   const [expandedLead, setExpandedLead] = useState<string | null>(null);
   const [visaoCC, setVisaoCC]           = useState<"geral" | "corretor">("geral");
   const [filtroCorretor, setFiltroCorretor]         = useState<"Todos" | "Hans" | "Rafael" | "Gabriel">("Todos");
