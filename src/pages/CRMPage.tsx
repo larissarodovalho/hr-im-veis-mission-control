@@ -64,7 +64,7 @@ export default function CRM() {
   });
   const [listaLeads, setListaLeads] = useState<Lead[]>([...leadsIniciais]);
   const [expandedLead, setExpandedLead] = useState<string | null>(null);
-  const [visaoCC, setVisaoCC]           = useState<"geral" | "corretor">("geral");
+  const [contatoAberto, setContatoAberto] = useState<string | null>(null);
   const [filtroCorretor, setFiltroCorretor]         = useState<"Todos" | "Hans" | "Rafael" | "Gabriel">("Todos");
   const [filtroTipo, setFiltroTipo]                 = useState<"Todos" | TipoTarefa>("Todos");
   const [filtroStatus, setFiltroStatus]             = useState<"Todos" | StatusTarefa>("Todos");
