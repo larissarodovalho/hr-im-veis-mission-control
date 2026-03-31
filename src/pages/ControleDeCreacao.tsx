@@ -81,7 +81,7 @@ export default function ControleDeCreacao() {
       <h2 className="section-title">Controle de Criação</h2>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Leads */}
         <Card>
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
