@@ -163,6 +163,7 @@ export default function CRM() {
                       <th className="text-left p-3 font-medium hidden md:table-cell">Origem</th>
                       <th className="text-left p-3 font-medium hidden md:table-cell">Corretor</th>
                       <th className="text-left p-3 font-medium hidden lg:table-cell">Entrada</th>
+                      <th className="text-left p-3 font-medium">Ação</th>
                       <th className="p-3 w-10"></th>
                     </tr>
                   </thead>
