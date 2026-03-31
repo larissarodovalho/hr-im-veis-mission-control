@@ -459,6 +459,39 @@ export const oportunidades: Oportunidade[] = [
   { id: "o8",  nome: "Florais Cuiabá - Patrícia",    corretor: "Gabriel", valor: 4200000,  estagio: "Proposta",    dataCreacao: "2026-03-18" },
 ];
 
+// --- Visão Geral - Acessos no Site ---
+
+export const acessosSite = [
+  { dia: "03 de mar.", acessos: 980 },
+  { dia: "06 de mar.", acessos: 1650 },
+  { dia: "09 de mar.", acessos: 1120 },
+  { dia: "12 de mar.", acessos: 1380 },
+  { dia: "15 de mar.", acessos: 1250 },
+  { dia: "18 de mar.", acessos: 1420 },
+  { dia: "21 de mar.", acessos: 1780 },
+  { dia: "24 de mar.", acessos: 1550 },
+  { dia: "27 de mar.", acessos: 1320 },
+  { dia: "31 de mar.", acessos: 1480 },
+];
+
+export const imoveisMaisVisualizados = [
+  { codigo: "HR0002", tipo: "Casa", bairro: "Condomínio Residencial Mondrian", valor: 10900000 },
+  { codigo: "HR0001", tipo: "Sobrado", bairro: "Jardim Maringá I", valor: 5500000 },
+  { codigo: "HR0026", tipo: "Sobrado", bairro: "Residencial Portal da Mata", valor: 8500000 },
+  { codigo: "HR0032", tipo: "Casa", bairro: "Condomínio Carpe Diem", valor: 6200000 },
+];
+
+export const agendaVisaoGeral = [
+  { id: "ag1", titulo: "Visita - Carlos Eduardo", data: "2026-04-02 15:00", corretor: "Hans", imovel: "Lago Azul" },
+  { id: "ag2", titulo: "Reunião - Ana Paula", data: "2026-04-03 10:00", corretor: "Rafael", imovel: "Aquarela Premium" },
+  { id: "ag3", titulo: "Visita - Thiago Barbosa", data: "2026-04-04 14:00", corretor: "Hans", imovel: "Eco Park" },
+];
+
+export const performanceVendas = {
+  vendasMes: 1,
+  valorNegociosRealizados: 1322000,
+};
+
 // --- Análise de Leads ---
 
 export const leadsPorOrigem = [
