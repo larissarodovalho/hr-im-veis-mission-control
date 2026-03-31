@@ -49,6 +49,8 @@ const PeriodoSelect = ({ value, onChange }: { value: Periodo; onChange: (v: Peri
 
 export default function CRM() {
   const [expandedLead, setExpandedLead] = useState<string | null>(null);
+  const [visaoCC, setVisaoCC] = useState<"geral" | "corretor">("geral");
+  const [corretorSelecionado, setCorretorSelecionado] = useState<typeof CORRETORES[number]>("Hans");
   const [periodoLeads, setPeriodoLeads]   = useState<Periodo>("Tudo");
   const [periodoContas, setPeriodoContas] = useState<Periodo>("Tudo");
   const [periodoOps, setPeriodoOps]       = useState<Periodo>("Tudo");
@@ -375,29 +377,75 @@ export default function CRM() {
         </TabsContent>
 
         {/* ── ABA: Controle de Criação ── */}
-        <TabsContent value="criacao" className="space-y-6">
+        <TabsContent value="criacao" className="space-y-4">
+
+          {/* Toggle Geral / Por Corretor */}
+          <div className="flex items-center gap-3">
+            <Tabs value={visaoCC} onValueChange={(v) => setVisaoCC(v as "geral" | "corretor")}>
+              <TabsList className="h-8 bg-muted/50 rounded-md p-0.5">
+                <TabsTrigger value="geral" className="h-7 text-xs px-3 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                  Geral
+                </TabsTrigger>
+                <TabsTrigger value="corretor" className="h-7 text-xs px-3 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                  Por Corretor
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            {visaoCC === "corretor" && (
+              <Select value={corretorSelecionado} onValueChange={(v) => setCorretorSelecionado(v as typeof CORRETORES[number])}>
+                <SelectTrigger className="w-44 h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CORRETORES.map((c) => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          {/* Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Leads */}
             <Card>
               <CardHeader className="pb-2 flex flex-row items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-primary" />
-                  <CardTitle className="text-sm">Quantidade de Leads</CardTitle>
+                  <CardTitle className="text-sm">Leads</CardTitle>
                 </div>
                 <PeriodoSelect value={periodoLeads} onChange={setPeriodoLeads} />
               </CardHeader>
               <CardContent>
-                <p className="text-5xl font-bold font-display text-primary mb-4">{leadsF.length}</p>
-                <ResponsiveContainer width="100%" height={160}>
-                  <BarChart data={leadsPorCorretor} layout="vertical" margin={{ left: 80 }}>
-                    <XAxis type="number" fontSize={11} allowDecimals={false} />
-                    <YAxis type="category" dataKey="nome" fontSize={11} width={75} />
-                    <Tooltip formatter={(v) => [v, "Leads"]} />
-                    <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
-                      {leadsPorCorretor.map((e, i) => <Cell key={i} fill={e.fill} />)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                {visaoCC === "geral" ? (
+                  <>
+                    <p className="text-5xl font-bold font-display text-primary mb-4">{leadsF.length}</p>
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart data={leadsPorCorretor} layout="vertical" margin={{ left: 80 }}>
+                        <XAxis type="number" fontSize={11} allowDecimals={false} />
+                        <YAxis type="category" dataKey="nome" fontSize={11} width={75} />
+                        <Tooltip formatter={(v) => [v, "Leads"]} />
+                        <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
+                          {leadsPorCorretor.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-5xl font-bold font-display text-primary mb-1">
+                      {leadsF.filter((l) => l.corretor === corretorSelecionado).length}
+                    </p>
+                    <p className="text-xs text-muted-foreground mb-3">{corretorSelecionado}</p>
+                    <div className="space-y-1.5">
+                      {(["Lead recebido","Qualificado","Visita agendada","Visita realizada","Proposta","Fechamento"] as const).map((etapa) => {
+                        const count = leadsF.filter((l) => l.corretor === corretorSelecionado && l.etapa === etapa).length;
+                        return (
+                          <div key={etapa} className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">{etapa}</span>
+                            <span className="font-semibold">{count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -406,22 +454,44 @@ export default function CRM() {
               <CardHeader className="pb-2 flex flex-row items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-green-500" />
-                  <CardTitle className="text-sm">Quantidade de Contas</CardTitle>
+                  <CardTitle className="text-sm">Contas</CardTitle>
                 </div>
                 <PeriodoSelect value={periodoContas} onChange={setPeriodoContas} />
               </CardHeader>
               <CardContent>
-                <p className="text-5xl font-bold font-display text-green-500 mb-4">{contasF.length}</p>
-                <ResponsiveContainer width="100%" height={160}>
-                  <BarChart data={contasPorCorretor} layout="vertical" margin={{ left: 80 }}>
-                    <XAxis type="number" fontSize={11} allowDecimals={false} />
-                    <YAxis type="category" dataKey="nome" fontSize={11} width={75} />
-                    <Tooltip formatter={(v) => [v, "Contas"]} />
-                    <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
-                      {contasPorCorretor.map((e, i) => <Cell key={i} fill={e.fill} />)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                {visaoCC === "geral" ? (
+                  <>
+                    <p className="text-5xl font-bold font-display text-green-500 mb-4">{contasF.length}</p>
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart data={contasPorCorretor} layout="vertical" margin={{ left: 80 }}>
+                        <XAxis type="number" fontSize={11} allowDecimals={false} />
+                        <YAxis type="category" dataKey="nome" fontSize={11} width={75} />
+                        <Tooltip formatter={(v) => [v, "Contas"]} />
+                        <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
+                          {contasPorCorretor.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-5xl font-bold font-display text-green-500 mb-1">
+                      {contasF.filter((c) => c.corretor === corretorSelecionado).length}
+                    </p>
+                    <p className="text-xs text-muted-foreground mb-3">{corretorSelecionado}</p>
+                    <div className="space-y-1.5">
+                      {(["Pessoa Física","Pessoa Jurídica"] as const).map((tipo) => {
+                        const count = contasF.filter((c) => c.corretor === corretorSelecionado && c.tipo === tipo).length;
+                        return (
+                          <div key={tipo} className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">{tipo}</span>
+                            <span className="font-semibold">{count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -430,22 +500,44 @@ export default function CRM() {
               <CardHeader className="pb-2 flex flex-row items-center justify-between">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-amber-500" />
-                  <CardTitle className="text-sm">Quantidade de Oportunidades</CardTitle>
+                  <CardTitle className="text-sm">Oportunidades</CardTitle>
                 </div>
                 <PeriodoSelect value={periodoOps} onChange={setPeriodoOps} />
               </CardHeader>
               <CardContent>
-                <p className="text-5xl font-bold font-display text-amber-500 mb-4">{opsF.length}</p>
-                <ResponsiveContainer width="100%" height={160}>
-                  <BarChart data={opsPorCorretor} layout="vertical" margin={{ left: 80 }}>
-                    <XAxis type="number" fontSize={11} allowDecimals={false} />
-                    <YAxis type="category" dataKey="nome" fontSize={11} width={75} />
-                    <Tooltip formatter={(v) => [v, "Oportunidades"]} />
-                    <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
-                      {opsPorCorretor.map((e, i) => <Cell key={i} fill={e.fill} />)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                {visaoCC === "geral" ? (
+                  <>
+                    <p className="text-5xl font-bold font-display text-amber-500 mb-4">{opsF.length}</p>
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart data={opsPorCorretor} layout="vertical" margin={{ left: 80 }}>
+                        <XAxis type="number" fontSize={11} allowDecimals={false} />
+                        <YAxis type="category" dataKey="nome" fontSize={11} width={75} />
+                        <Tooltip formatter={(v) => [v, "Oportunidades"]} />
+                        <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
+                          {opsPorCorretor.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-5xl font-bold font-display text-amber-500 mb-1">
+                      {opsF.filter((o) => o.corretor === corretorSelecionado).length}
+                    </p>
+                    <p className="text-xs text-muted-foreground mb-3">{corretorSelecionado}</p>
+                    <div className="space-y-1.5">
+                      {(["Prospecção","Qualificação","Proposta","Negociação","Fechamento"] as const).map((estagio) => {
+                        const count = opsF.filter((o) => o.corretor === corretorSelecionado && o.estagio === estagio).length;
+                        return (
+                          <div key={estagio} className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">{estagio}</span>
+                            <span className="font-semibold">{count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
