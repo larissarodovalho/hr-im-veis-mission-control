@@ -87,6 +87,29 @@ export default function CRM() {
   const [metricaAberta, setMetricaAberta] = useState<"reunioes" | "propostas" | "aceitas" | "nao_aceitas" | "vendas_fechadas" | null>(null);
   const [propostaDocs, setPropostaDocs] = useState<Record<string, { nome: string; url: string; tipo: string }>>({});
   const [docPreview, setDocPreview] = useState<{ nome: string; url: string; tipo: string } | null>(null);
+  const [desqualificarLead, setDesqualificarLead] = useState<string | null>(null);
+  const [motivoDesqualificacao, setMotivoDesqualificacao] = useState("");
+  const [motivoDesqualificacaoOutro, setMotivoDesqualificacaoOutro] = useState("");
+
+  const MOTIVOS_DESQUALIFICACAO = [
+    "Sem interesse",
+    "Sem capacidade financeira",
+    "Não respondeu",
+    "Comprou com concorrente",
+    "Dados inválidos",
+    "Duplicado",
+    "Outro",
+  ];
+
+  const desqualificar = (leadId: string) => {
+    const motivo = motivoDesqualificacao === "Outro" ? motivoDesqualificacaoOutro : motivoDesqualificacao;
+    if (!motivo) { toast.error("Selecione um motivo"); return; }
+    setListaLeads(prev => prev.map(l => l.id === leadId ? { ...l, etapa: "Desqualificado" as LeadEtapa } : l));
+    toast.success("Lead desqualificado: " + motivo);
+    setDesqualificarLead(null);
+    setMotivoDesqualificacao("");
+    setMotivoDesqualificacaoOutro("");
+  };
 
   const avancarEtapa = (leadId: string) => {
     setListaLeads(prev => prev.map(l => {
