@@ -157,6 +157,9 @@ export default function CRM() {
           <TabsTrigger value="tarefas" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <CheckCircle2 className="h-3.5 w-3.5" /> Tarefas
           </TabsTrigger>
+          <TabsTrigger value="relatorios" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <FileDown className="h-3.5 w-3.5" /> Relatórios
+          </TabsTrigger>
         </TabsList>
 
         {/* ── ABA: Leads (para qualificar) ── */}
