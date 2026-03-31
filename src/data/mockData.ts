@@ -241,16 +241,16 @@ export const funnelPorCorretor: FunnelCorretor[] = [
 ];
 
 export const imoveis = [
-  { id: "1",  nome: "Casa Aquarela Premium",       tipo: "Casa",        valor: 2800000, status: "Disponível"    as const, corretor: "Rafael" as const },
-  { id: "2",  nome: "Lote Lago Azul 360m²",        tipo: "Terreno",     valor: 580000,  status: "Em negociação" as const, corretor: "Hans"   as const },
-  { id: "3",  nome: "Sobrado Damha III",            tipo: "Casa",        valor: 3500000, status: "Vendido"       as const, corretor: "Rafael" as const },
-  { id: "4",  nome: "Terreno Eco Park 500m²",      tipo: "Terreno",     valor: 750000,  status: "Disponível"    as const, corretor: "Hans"   as const },
-  { id: "5",  nome: "Casa Florais Cuiabá",          tipo: "Casa",        valor: 4200000, status: "Em negociação" as const, corretor: "Gabriel" as const },
-  { id: "6",  nome: "Lote Residencial Royal",       tipo: "Terreno",     valor: 920000,  status: "Disponível"    as const, corretor: "Hans"   as const },
-  { id: "7",  nome: "Mansão Jardins Imperial",      tipo: "Casa",        valor: 8500000, status: "Disponível"    as const, corretor: "Rafael" as const },
-  { id: "8",  nome: "Cobertura Duplex Central",     tipo: "Apartamento", valor: 1500000, status: "Em negociação" as const, corretor: "Hans"   as const },
-  { id: "9",  nome: "Casa Condomínio Alphaville",   tipo: "Casa",        valor: 6800000, status: "Disponível"    as const, corretor: "Gabriel" as const },
-  { id: "10", nome: "Terreno Premium Nações",       tipo: "Terreno",     valor: 1200000, status: "Disponível"    as const, corretor: "Hans"   as const },
+  { id: "1",  nome: "Casa Aquarela Premium",       tipo: "Casa",        valor: 2800000, status: "Disponível"    as const, corretor: "Rafael"  as const, dataCreacao: "2026-03-05" },
+  { id: "2",  nome: "Lote Lago Azul 360m²",        tipo: "Terreno",     valor: 580000,  status: "Em negociação" as const, corretor: "Hans"    as const, dataCreacao: "2026-03-12" },
+  { id: "3",  nome: "Sobrado Damha III",            tipo: "Casa",        valor: 3500000, status: "Vendido"       as const, corretor: "Rafael"  as const, dataCreacao: "2026-02-18" },
+  { id: "4",  nome: "Terreno Eco Park 500m²",      tipo: "Terreno",     valor: 750000,  status: "Disponível"    as const, corretor: "Hans"    as const, dataCreacao: "2026-01-22" },
+  { id: "5",  nome: "Casa Florais Cuiabá",          tipo: "Casa",        valor: 4200000, status: "Em negociação" as const, corretor: "Gabriel" as const, dataCreacao: "2026-03-20" },
+  { id: "6",  nome: "Lote Residencial Royal",       tipo: "Terreno",     valor: 920000,  status: "Disponível"    as const, corretor: "Hans"    as const, dataCreacao: "2026-02-10" },
+  { id: "7",  nome: "Mansão Jardins Imperial",      tipo: "Casa",        valor: 8500000, status: "Disponível"    as const, corretor: "Rafael"  as const, dataCreacao: "2026-03-28" },
+  { id: "8",  nome: "Cobertura Duplex Central",     tipo: "Apartamento", valor: 1500000, status: "Em negociação" as const, corretor: "Hans"    as const, dataCreacao: "2026-02-25" },
+  { id: "9",  nome: "Casa Condomínio Alphaville",   tipo: "Casa",        valor: 6800000, status: "Disponível"    as const, corretor: "Gabriel" as const, dataCreacao: "2026-01-15" },
+  { id: "10", nome: "Terreno Premium Nações",       tipo: "Terreno",     valor: 1200000, status: "Disponível"    as const, corretor: "Hans"    as const, dataCreacao: "2026-03-01" },
 ];
 
 export const corretoresRanking = [
