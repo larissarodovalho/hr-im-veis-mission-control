@@ -103,6 +103,7 @@ export default function CRM() {
   const leadsF  = useMemo(() => filtrarPorData(listaLeads.map(l => ({ ...l, dataCreacao: l.dataEntrada })), periodoLeads),  [periodoLeads, listaLeads]);
   const contasF = useMemo(() => filtrarPorData(contas,        periodoContas), [periodoContas]);
   const opsF    = useMemo(() => filtrarPorData(oportunidades, periodoOps),    [periodoOps]);
+  const imoveisF = useMemo(() => filtrarPorData(imoveis, periodoImoveis), [periodoImoveis]);
 
   const leadsPorCorretor  = useMemo(() => porCorretor(leadsF),  [leadsF]);
   const contasPorCorretor = useMemo(() => porCorretor(contasF), [contasF]);
