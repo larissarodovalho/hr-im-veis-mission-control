@@ -550,3 +550,36 @@ export const visitasPorTipoImovel = [
   { tipo: "Terreno",   quantidade: 7,  fill: "hsl(43, 76%, 48%)"  },
   { tipo: "Apartamento", quantidade: 2, fill: "hsl(160, 60%, 42%)" },
 ];
+
+// --- Tarefas ---
+
+export type TipoTarefa = "Ligação" | "Mensagem";
+export type StatusTarefa = "Pendente" | "Em andamento" | "Concluída" | "Atrasada";
+export type PrioridadeTarefa = "Alta" | "Média" | "Baixa";
+
+export interface Tarefa {
+  id: string;
+  tipo: TipoTarefa;
+  titulo: string;
+  descricao: string;
+  corretor: "Hans" | "Rafael" | "Gabriel";
+  lead: string;
+  prioridade: PrioridadeTarefa;
+  status: StatusTarefa;
+  dataVencimento: string;
+}
+
+export const tarefas: Tarefa[] = [
+  { id: "T001", tipo: "Ligação",  titulo: "Retornar ligação",        descricao: "Carlos pediu retorno sobre lotes do Lago Azul",          corretor: "Hans",    lead: "Carlos Eduardo Silva",    prioridade: "Alta",  status: "Pendente",    dataVencimento: "2026-03-31" },
+  { id: "T002", tipo: "Mensagem", titulo: "Enviar proposta WhatsApp", descricao: "Enviar detalhes da proposta do Terreno Premium Nações",   corretor: "Hans",    lead: "Roberto Nascimento",      prioridade: "Alta",  status: "Em andamento",dataVencimento: "2026-03-31" },
+  { id: "T003", tipo: "Ligação",  titulo: "Follow-up visita",        descricao: "Confirmar interesse após visita no Eco Park",             corretor: "Hans",    lead: "Thiago Barbosa",          prioridade: "Média", status: "Pendente",    dataVencimento: "2026-04-01" },
+  { id: "T004", tipo: "Mensagem", titulo: "Enviar material",         descricao: "Enviar fotos e planta do Cobertura Duplex",               corretor: "Hans",    lead: "Fernando Almeida",        prioridade: "Baixa", status: "Pendente",    dataVencimento: "2026-04-02" },
+  { id: "T005", tipo: "Ligação",  titulo: "Negociação final",        descricao: "Ligar para fechar condições do Aquarela Premium",         corretor: "Rafael",  lead: "Ana Paula Ferreira",      prioridade: "Alta",  status: "Atrasada",    dataVencimento: "2026-03-29" },
+  { id: "T006", tipo: "Mensagem", titulo: "Contrato para assinar",   descricao: "Enviar contrato Damha III para revisão",                  corretor: "Rafael",  lead: "Juliana Mendes",          prioridade: "Alta",  status: "Concluída",   dataVencimento: "2026-03-28" },
+  { id: "T007", tipo: "Ligação",  titulo: "Qualificar lead",         descricao: "Entender necessidade e orçamento de Igor Santos",         corretor: "Rafael",  lead: "Igor Santos",             prioridade: "Média", status: "Pendente",    dataVencimento: "2026-04-01" },
+  { id: "T008", tipo: "Mensagem", titulo: "Enviar vídeo do imóvel",  descricao: "Gravar e enviar tour rápido do Sobrado Damha III",        corretor: "Rafael",  lead: "Beatriz Lima",            prioridade: "Média", status: "Em andamento",dataVencimento: "2026-04-02" },
+  { id: "T009", tipo: "Ligação",  titulo: "Agendar visita",          descricao: "Marcar visita ao Alphaville para Mariana Costa",          corretor: "Gabriel", lead: "Mariana Costa",           prioridade: "Alta",  status: "Concluída",   dataVencimento: "2026-03-30" },
+  { id: "T010", tipo: "Mensagem", titulo: "Follow-up proposta",      descricao: "Verificar se Diego revisou a proposta do Terreno Nações", corretor: "Gabriel", lead: "Diego Carvalho",          prioridade: "Alta",  status: "Atrasada",    dataVencimento: "2026-03-29" },
+  { id: "T011", tipo: "Ligação",  titulo: "Primeiro contato",        descricao: "Ligar para Sabrina e apresentar portfólio",               corretor: "Gabriel", lead: "Sabrina Nunes",           prioridade: "Média", status: "Pendente",    dataVencimento: "2026-04-01" },
+  { id: "T012", tipo: "Mensagem", titulo: "Enviar comparativo",      descricao: "Comparativo de 3 imóveis para Patrícia Oliveira",         corretor: "Gabriel", lead: "Patrícia Oliveira",       prioridade: "Baixa", status: "Pendente",    dataVencimento: "2026-04-03" },
+];
