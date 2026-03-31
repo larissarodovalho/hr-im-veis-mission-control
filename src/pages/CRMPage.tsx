@@ -79,6 +79,7 @@ export default function CRM() {
     dataVisita: "", status: "Agendada" as StatusVisita,
   });
   const [corretorSelecionado, setCorretorSelecionado] = useState<typeof CORRETORES[number]>("Hans");
+  const [filtroEtapaLead, setFiltroEtapaLead] = useState<"Todos" | LeadEtapa>("Todos");
   const [periodoLeads, setPeriodoLeads]   = useState<Periodo>("Tudo");
   const [periodoContas, setPeriodoContas] = useState<Periodo>("Tudo");
   const [periodoOps, setPeriodoOps]       = useState<Periodo>("Tudo");
@@ -193,10 +194,19 @@ export default function CRM() {
         {/* ── ABA: Leads (para qualificar) ── */}
         <TabsContent value="leads" className="space-y-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Leads — Para Qualificar</CardTitle>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs">{listaLeads.filter(l => l.etapa === "Lead recebido").length} leads</Badge>
+            <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
+              <CardTitle className="text-base">Leads</CardTitle>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Select value={filtroEtapaLead} onValueChange={(v) => setFiltroEtapaLead(v as "Todos" | LeadEtapa)}>
+                  <SelectTrigger className="w-44 h-7 text-xs"><SelectValue placeholder="Status qualificação" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Todos" className="text-xs">Todos os status</SelectItem>
+                    {ETAPAS_ORDEM.map(e => <SelectItem key={e} value={e} className="text-xs">{e}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Badge variant="outline" className="text-xs">
+                  {listaLeads.filter(l => filtroEtapaLead === "Todos" || l.etapa === filtroEtapaLead).length} leads
+                </Badge>
                 <Dialog open={dialogNovoLead} onOpenChange={setDialogNovoLead}>
                   <DialogTrigger asChild>
                     <Button size="sm" className="h-7 text-xs">+ Novo Lead</Button>
@@ -288,12 +298,13 @@ export default function CRM() {
                       <th className="text-left p-3 font-medium hidden md:table-cell">Origem</th>
                       <th className="text-left p-3 font-medium hidden md:table-cell">Corretor</th>
                       <th className="text-left p-3 font-medium hidden lg:table-cell">Entrada</th>
+                      <th className="text-left p-3 font-medium">Etapa</th>
                       <th className="text-left p-3 font-medium">Ação</th>
                       <th className="p-3 w-10"></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {listaLeads.filter(l => l.etapa === "Lead recebido").map((lead) => (
+                    {listaLeads.filter(l => filtroEtapaLead === "Todos" || l.etapa === filtroEtapaLead).map((lead) => (
                       <>
                         <tr
                           key={lead.id}
@@ -312,6 +323,16 @@ export default function CRM() {
                           </td>
                           <td className="p-3 hidden md:table-cell">{lead.corretor}</td>
                           <td className="p-3 hidden lg:table-cell text-muted-foreground">{lead.dataEntrada}</td>
+                          <td className="p-3">
+                            <Badge variant="outline" className={`text-xs ${
+                              lead.etapa === "Lead recebido" ? "border-gray-400 text-gray-600" :
+                              lead.etapa === "Qualificado" ? "border-blue-500 text-blue-600" :
+                              lead.etapa === "Visita agendada" ? "border-cyan-500 text-cyan-600" :
+                              lead.etapa === "Visita realizada" ? "border-teal-500 text-teal-600" :
+                              lead.etapa === "Proposta" ? "border-amber-500 text-amber-600" :
+                              "border-green-500 text-green-600"
+                            }`}>{lead.etapa}</Badge>
+                          </td>
                           <td className="p-3">
                             <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-green-500 text-green-600 hover:bg-green-50" onClick={(e) => { e.stopPropagation(); avancarEtapa(lead.id); }}>
                               Qualificar <ArrowRight className="h-3 w-3" />
