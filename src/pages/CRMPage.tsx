@@ -594,6 +594,54 @@ export default function CRM() {
         </div>
       </div>
 
+      {/* Métricas: Reuniões e Propostas */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="stat-card">
+          <div className="flex items-center gap-2 mb-1">
+            <CalendarCheck className="h-4 w-4 text-primary" />
+            <span className="text-sm text-muted-foreground">Reuniões Realizadas</span>
+          </div>
+          <p className="text-xl font-bold font-display">
+            {listaLeads.filter(l => ["Visita realizada", "Proposta", "Fechamento"].includes(l.etapa)).length}
+          </p>
+          <p className="text-xs text-muted-foreground">Total de reuniões/visitas concluídas</p>
+        </div>
+        <div className="stat-card">
+          <div className="flex items-center gap-2 mb-1">
+            <ClipboardList className="h-4 w-4 text-amber-500" />
+            <span className="text-sm text-muted-foreground">Propostas Enviadas</span>
+          </div>
+          <p className="text-xl font-bold font-display">
+            {listaLeads.filter(l => ["Proposta", "Fechamento"].includes(l.etapa)).length}
+          </p>
+          <p className="text-xs text-muted-foreground">Total de propostas geradas</p>
+        </div>
+        <div className="stat-card">
+          <div className="flex items-center gap-2 mb-1">
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <span className="text-sm text-muted-foreground">Propostas Aceitas</span>
+          </div>
+          <p className="text-xl font-bold font-display text-green-600 dark:text-green-400">
+            {listaLeads.filter(l => l.etapa === "Fechamento").length}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Taxa: {listaLeads.filter(l => ["Proposta", "Fechamento"].includes(l.etapa)).length > 0
+              ? ((listaLeads.filter(l => l.etapa === "Fechamento").length / listaLeads.filter(l => ["Proposta", "Fechamento"].includes(l.etapa)).length) * 100).toFixed(0)
+              : 0}%
+          </p>
+        </div>
+        <div className="stat-card">
+          <div className="flex items-center gap-2 mb-1">
+            <AlertCircle className="h-4 w-4 text-red-500" />
+            <span className="text-sm text-muted-foreground">Propostas Não Aceitas</span>
+          </div>
+          <p className="text-xl font-bold font-display text-red-600 dark:text-red-400">
+            {listaLeads.filter(l => l.etapa === "Proposta").length}
+          </p>
+          <p className="text-xs text-muted-foreground">Aguardando decisão ou recusadas</p>
+        </div>
+      </div>
+
       {/* Leads Table */}
       <Card>
         <CardHeader>
