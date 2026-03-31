@@ -32,7 +32,7 @@ export interface Lead {
   nome: string;
   telefone: string;
   email?: string;
-  canal: "Meta Ads" | "Google Ads" | "Indicação" | "Orgânico";
+  canal: "Meta Ads" | "Google Ads" | "Indicação" | "Orgânico" | "Site";
   corretor: "Hans" | "Rafael" | "Gabriel";
   origem: "Carteira" | "Marketing";
   etapa: LeadEtapa;
