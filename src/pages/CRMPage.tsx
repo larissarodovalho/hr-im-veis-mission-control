@@ -497,95 +497,195 @@ export default function CRM() {
         {/* ── ABA: Funil de Vendas ── */}
         <TabsContent value="funil" className="space-y-6">
 
-      {/* Funil por Corretor */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Funil por Corretor</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="hans">
-            <TabsList className="mb-4">
-              <TabsTrigger value="hans">Hans Rodovalho</TabsTrigger>
-              <TabsTrigger value="rafael">Rafael Filimberti</TabsTrigger>
-              <TabsTrigger value="gabriel">Gabriel Souza</TabsTrigger>
-            </TabsList>
+      {/* Toggle Geral / Por Corretor */}
+      <Tabs defaultValue="geral_funil">
+        <TabsList className="h-8 bg-muted/50 rounded-md p-0.5 mb-4">
+          <TabsTrigger value="geral_funil" className="h-7 text-xs px-3 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            Geral
+          </TabsTrigger>
+          <TabsTrigger value="corretor_funil" className="h-7 text-xs px-3 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            Por Corretor
+          </TabsTrigger>
+        </TabsList>
 
-            {funnelPorCorretor.map((fc) => (
-              <TabsContent key={fc.corretorId} value={fc.corretorId} className="space-y-4">
-                {/* Stats do corretor */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="stat-card">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Users className="h-4 w-4 text-primary" />
-                      <span className="text-xs text-muted-foreground">Total de Leads</span>
-                    </div>
-                    <p className="text-xl font-bold font-display">{fc.stats.totalLeads}</p>
+        {/* Funil Geral */}
+        <TabsContent value="geral_funil" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Funil de Vendas — Geral</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {/* Stats gerais */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6">
+                <div className="stat-card">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Users className="h-4 w-4 text-primary" />
+                    <span className="text-xs text-muted-foreground">Total de Leads</span>
                   </div>
-                  <div className="stat-card">
-                    <div className="flex items-center gap-2 mb-1">
-                      <TrendingUp className="h-4 w-4 text-green-500" />
-                      <span className="text-xs text-muted-foreground">Taxa de Conversão</span>
-                    </div>
-                    <p className="text-xl font-bold font-display">{fc.stats.taxaConversao}%</p>
+                  <p className="text-xl font-bold font-display">{listaLeads.length}</p>
+                </div>
+                <div className="stat-card">
+                  <div className="flex items-center gap-2 mb-1">
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <span className="text-xs text-muted-foreground">Taxa de Conversão</span>
                   </div>
-                  <div className="stat-card">
-                    <div className="flex items-center gap-2 mb-1">
-                      <DollarSign className="h-4 w-4 text-gold" />
-                      <span className="text-xs text-muted-foreground">Pipeline em Negociação</span>
-                    </div>
-                    <p className="text-xl font-bold font-display">
-                      R$ {fc.stats.pipelineEmNegociacao.toLocaleString()}
-                    </p>
+                  <p className="text-xl font-bold font-display">
+                    {listaLeads.length > 0 ? ((listaLeads.filter(l => l.etapa === "Fechamento").length / listaLeads.length) * 100).toFixed(1) : 0}%
+                  </p>
+                </div>
+                <div className="stat-card">
+                  <div className="flex items-center gap-2 mb-1">
+                    <DollarSign className="h-4 w-4 text-gold" />
+                    <span className="text-xs text-muted-foreground">Pipeline em Negociação</span>
                   </div>
+                  <p className="text-xl font-bold font-display">R$ {totalEmNegociacao.toLocaleString()}</p>
+                </div>
+                <div className="stat-card">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Trophy className="h-4 w-4 text-amber-500" />
+                    <span className="text-xs text-muted-foreground">Fechamentos</span>
+                  </div>
+                  <p className="text-xl font-bold font-display">{listaLeads.filter(l => l.etapa === "Fechamento").length}</p>
+                </div>
+              </div>
+
+              {/* Funil geral */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {/* Carteira Geral */}
+                <div>
+                  <p className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-2 flex items-center gap-1">
+                    <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-600 dark:bg-blue-400" />
+                    Carteira — Todos os Corretores
+                  </p>
+                  <ResponsiveContainer width="100%" height={240}>
+                    <BarChart data={funnelDinamico} layout="vertical" margin={{ left: 120 }}>
+                      <XAxis type="number" fontSize={11} allowDecimals={false} />
+                      <YAxis type="category" dataKey="etapa" fontSize={10} width={115} />
+                      <Tooltip formatter={(v) => [v, "Leads"]} />
+                      <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
+                        {funnelDinamico.map((entry, i) => (
+                          <Cell key={i} fill={entry.fill} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
 
-                {/* Dois funis lado a lado */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Carteira */}
-                  <div>
-                    <p className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-2 flex items-center gap-1">
-                      <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-600 dark:bg-blue-400" />
-                      Carteira
-                    </p>
-                    <ResponsiveContainer width="100%" height={220}>
-                      <BarChart data={fc.carteira} layout="vertical" margin={{ left: 120 }}>
-                        <XAxis type="number" fontSize={11} allowDecimals={false} />
-                        <YAxis type="category" dataKey="etapa" fontSize={10} width={115} />
-                        <Tooltip formatter={(v) => [v, "Leads"]} />
-                        <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
-                          {fc.carteira.map((entry, i) => (
-                            <Cell key={i} fill={entry.fill} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  {/* Marketing */}
-                  <div>
-                    <p className="text-sm font-semibold text-amber-500 mb-2 flex items-center gap-1">
-                      <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500" />
-                      Marketing
-                    </p>
-                    <ResponsiveContainer width="100%" height={220}>
-                      <BarChart data={fc.marketing} layout="vertical" margin={{ left: 120 }}>
-                        <XAxis type="number" fontSize={11} allowDecimals={false} />
-                        <YAxis type="category" dataKey="etapa" fontSize={10} width={115} />
-                        <Tooltip formatter={(v) => [v, "Leads"]} />
-                        <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
-                          {fc.marketing.map((entry, i) => (
-                            <Cell key={i} fill={entry.fill} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+                {/* Distribuição por Corretor */}
+                <div>
+                  <p className="text-sm font-semibold text-amber-500 mb-2 flex items-center gap-1">
+                    <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500" />
+                    Distribuição por Corretor
+                  </p>
+                  <ResponsiveContainer width="100%" height={240}>
+                    <BarChart data={CORRETORES.map(c => ({
+                      nome: c,
+                      leads: listaLeads.filter(l => l.corretor === c).length,
+                      fechamentos: listaLeads.filter(l => l.corretor === c && l.etapa === "Fechamento").length,
+                      fill: FILLS[c],
+                    }))} layout="vertical" margin={{ left: 80 }}>
+                      <XAxis type="number" fontSize={11} allowDecimals={false} />
+                      <YAxis type="category" dataKey="nome" fontSize={11} width={75} />
+                      <Tooltip />
+                      <Bar dataKey="leads" name="Leads" radius={[0, 5, 5, 0]}>
+                        {CORRETORES.map((c, i) => <Cell key={i} fill={FILLS[c]} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
-              </TabsContent>
-            ))}
-          </Tabs>
-        </CardContent>
-      </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Funil por Corretor */}
+        <TabsContent value="corretor_funil" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Funil por Corretor</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="hans">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="hans">Hans Rodovalho</TabsTrigger>
+                  <TabsTrigger value="rafael">Rafael Filimberti</TabsTrigger>
+                  <TabsTrigger value="gabriel">Gabriel Souza</TabsTrigger>
+                </TabsList>
+
+                {funnelPorCorretor.map((fc) => (
+                  <TabsContent key={fc.corretorId} value={fc.corretorId} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="stat-card">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Users className="h-4 w-4 text-primary" />
+                          <span className="text-xs text-muted-foreground">Total de Leads</span>
+                        </div>
+                        <p className="text-xl font-bold font-display">{fc.stats.totalLeads}</p>
+                      </div>
+                      <div className="stat-card">
+                        <div className="flex items-center gap-2 mb-1">
+                          <TrendingUp className="h-4 w-4 text-green-500" />
+                          <span className="text-xs text-muted-foreground">Taxa de Conversão</span>
+                        </div>
+                        <p className="text-xl font-bold font-display">{fc.stats.taxaConversao}%</p>
+                      </div>
+                      <div className="stat-card">
+                        <div className="flex items-center gap-2 mb-1">
+                          <DollarSign className="h-4 w-4 text-gold" />
+                          <span className="text-xs text-muted-foreground">Pipeline em Negociação</span>
+                        </div>
+                        <p className="text-xl font-bold font-display">
+                          R$ {fc.stats.pipelineEmNegociacao.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-2 flex items-center gap-1">
+                          <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-600 dark:bg-blue-400" />
+                          Carteira
+                        </p>
+                        <ResponsiveContainer width="100%" height={220}>
+                          <BarChart data={fc.carteira} layout="vertical" margin={{ left: 120 }}>
+                            <XAxis type="number" fontSize={11} allowDecimals={false} />
+                            <YAxis type="category" dataKey="etapa" fontSize={10} width={115} />
+                            <Tooltip formatter={(v) => [v, "Leads"]} />
+                            <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
+                              {fc.carteira.map((entry, i) => (
+                                <Cell key={i} fill={entry.fill} />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-semibold text-amber-500 mb-2 flex items-center gap-1">
+                          <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500" />
+                          Marketing
+                        </p>
+                        <ResponsiveContainer width="100%" height={220}>
+                          <BarChart data={fc.marketing} layout="vertical" margin={{ left: 120 }}>
+                            <XAxis type="number" fontSize={11} allowDecimals={false} />
+                            <YAxis type="category" dataKey="etapa" fontSize={10} width={115} />
+                            <Tooltip formatter={(v) => [v, "Leads"]} />
+                            <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
+                              {fc.marketing.map((entry, i) => (
+                                <Cell key={i} fill={entry.fill} />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Pipeline + Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
