@@ -1,4 +1,5 @@
 import {
+import {
   LayoutDashboard,
   Users,
   Megaphone,
@@ -6,11 +7,11 @@ import {
   FileText,
   Settings,
   Activity,
-  Building2,
   Plug,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import hrLogo from "@/assets/hr-imoveis-logo.png";
 import {
   Sidebar,
   SidebarContent,
