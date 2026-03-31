@@ -130,6 +130,9 @@ export default function CRM() {
           <TabsTrigger value="contatos" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <Phone className="h-3.5 w-3.5" /> Contatos
           </TabsTrigger>
+          <TabsTrigger value="kanban" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <Building2 className="h-3.5 w-3.5" /> Kanban
+          </TabsTrigger>
           <TabsTrigger value="funil" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <TrendingUp className="h-3.5 w-3.5" /> Funil de Vendas
           </TabsTrigger>
@@ -384,6 +387,76 @@ export default function CRM() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ── ABA: Kanban ── */}
+        <TabsContent value="kanban" className="space-y-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm text-muted-foreground">Acompanhe o progresso dos leads pelo funil de vendas</p>
+            <Badge variant="outline" className="text-xs">{listaLeads.length} leads total</Badge>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-4">
+            {ETAPAS_ORDEM.map((etapa, colIdx) => {
+              const leadsNaEtapa = listaLeads.filter(l => l.etapa === etapa);
+              const colColors = [
+                "bg-primary text-primary-foreground",
+                "bg-blue-500 text-white",
+                "bg-amber-500 text-white",
+                "bg-orange-500 text-white",
+                "bg-emerald-500 text-white",
+                "bg-green-600 text-white",
+              ];
+              return (
+                <div key={etapa} className="flex-shrink-0 w-[220px] flex flex-col">
+                  <div className={`rounded-t-lg px-3 py-2 text-center ${colColors[colIdx]}`}>
+                    <p className="text-xs font-bold truncate">{etapa} ({leadsNaEtapa.length})</p>
+                  </div>
+                  <div className="flex-1 border-x border-b rounded-b-lg bg-muted/10 p-2 space-y-2 min-h-[200px]">
+                    {leadsNaEtapa.map(lead => (
+                      <div key={lead.id} className="bg-card border rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow group">
+                        <div className="flex items-start justify-between gap-1">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[11px] font-mono text-muted-foreground">OP-{lead.id.padStart(5, "0")}</p>
+                            <p className="text-xs font-semibold truncate">{lead.nome}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">{lead.canal}</p>
+                          </div>
+                          <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <span className="text-[10px] font-bold text-primary">{lead.corretor.charAt(0)}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 mt-2">
+                          <Badge variant="outline" className={`text-[9px] px-1 py-0 ${lead.origem === "Carteira" ? "border-blue-400 text-blue-500" : "border-amber-400 text-amber-500"}`}>
+                            {lead.origem}
+                          </Badge>
+                          <span className="text-[9px] text-muted-foreground ml-auto">{lead.dataEntrada}</span>
+                        </div>
+                        <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {colIdx > 0 && (
+                            <Button size="sm" variant="ghost" className="h-5 text-[9px] px-1.5 text-muted-foreground"
+                              onClick={() => {
+                                setListaLeads(prev => prev.map(l => l.id === lead.id ? { ...l, etapa: ETAPAS_ORDEM[colIdx - 1] } : l));
+                                toast.info(`${lead.nome} voltou para "${ETAPAS_ORDEM[colIdx - 1]}"`);
+                              }}>
+                              ← Voltar
+                            </Button>
+                          )}
+                          {colIdx < ETAPAS_ORDEM.length - 1 && (
+                            <Button size="sm" variant="default" className="h-5 text-[9px] px-1.5 ml-auto"
+                              onClick={() => avancarEtapa(lead.id)}>
+                              Avançar →
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {leadsNaEtapa.length === 0 && (
+                      <p className="text-[10px] text-muted-foreground text-center py-8">Nenhum lead</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </TabsContent>
 
         {/* ── ABA: Funil de Vendas ── */}
