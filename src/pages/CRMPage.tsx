@@ -1237,9 +1237,9 @@ export default function CRM() {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={180}>
-                  <BarChart data={corretoresRanking.map((c) => ({ nome: c.nome.split(" ")[0], quantidade: c.atendimentos, fill: FILLS[c.nome.split(" ")[0] as keyof typeof FILLS] ?? "hsl(224,73%,45%)" }))} layout="vertical" margin={{ left: 60 }}>
+                  <BarChart data={corretoresRanking.map((c) => ({ nome: c.nome.split(" ")[0], quantidade: c.atendimentos, fill: FILLS[c.nome.split(" ")[0] as keyof typeof FILLS] ?? "hsl(224,73%,45%)" }))} layout="vertical" margin={{ left: 0, right: 10 }}>
                     <XAxis type="number" fontSize={11} allowDecimals={false} />
-                    <YAxis type="category" dataKey="nome" fontSize={11} width={55} />
+                    <YAxis type="category" dataKey="nome" fontSize={11} width={50} tickMargin={2} />
                     <Tooltip formatter={(v) => [v, "Leads"]} />
                     <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
                       {corretoresRanking.map((_, i) => <Cell key={i} fill={Object.values(FILLS)[i]} />)}
