@@ -42,17 +42,20 @@ function porCorretor<T extends { corretor: string }>(items: T[]) {
 }
 
 export default function ControleDeCreacao() {
-  const [periodoLeads, setPeriodoLeads]   = useState<Periodo>("Tudo");
-  const [periodoContas, setPeriodoContas] = useState<Periodo>("Tudo");
-  const [periodoOps, setPeriodoOps]       = useState<Periodo>("Tudo");
+  const [periodoLeads, setPeriodoLeads]     = useState<Periodo>("Tudo");
+  const [periodoContas, setPeriodoContas]   = useState<Periodo>("Tudo");
+  const [periodoOps, setPeriodoOps]         = useState<Periodo>("Tudo");
+  const [periodoImoveis, setPeriodoImoveis] = useState<Periodo>("Tudo");
 
-  const leadsF  = useMemo(() => filtrarPorData(leads.map(l => ({ ...l, dataCreacao: l.dataEntrada })), periodoLeads),  [periodoLeads]);
-  const contasF = useMemo(() => filtrarPorData(contas,       periodoContas), [periodoContas]);
-  const opsF    = useMemo(() => filtrarPorData(oportunidades, periodoOps),   [periodoOps]);
+  const leadsF    = useMemo(() => filtrarPorData(leads.map(l => ({ ...l, dataCreacao: l.dataEntrada })), periodoLeads),  [periodoLeads]);
+  const contasF   = useMemo(() => filtrarPorData(contas,        periodoContas), [periodoContas]);
+  const opsF      = useMemo(() => filtrarPorData(oportunidades, periodoOps),    [periodoOps]);
+  const imoveisF  = useMemo(() => filtrarPorData(imoveis,       periodoImoveis), [periodoImoveis]);
 
-  const leadsPorCorretor  = useMemo(() => porCorretor(leadsF),  [leadsF]);
-  const contasPorCorretor = useMemo(() => porCorretor(contasF), [contasF]);
-  const opsPorCorretor    = useMemo(() => porCorretor(opsF),    [opsF]);
+  const leadsPorCorretor    = useMemo(() => porCorretor(leadsF),   [leadsF]);
+  const contasPorCorretor   = useMemo(() => porCorretor(contasF),  [contasF]);
+  const opsPorCorretor      = useMemo(() => porCorretor(opsF),     [opsF]);
+  const imoveisPorCorretor  = useMemo(() => porCorretor(imoveisF), [imoveisF]);
 
   const PeriodoSelect = ({
     value,
