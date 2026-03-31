@@ -5,7 +5,7 @@ import { leads, contas, oportunidades, imoveis } from "@/data/mockData";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
-import { Users, Building2, TrendingUp } from "lucide-react";
+import { Users, Building2, TrendingUp, Home } from "lucide-react";
 
 const CORRETORES = ["Hans", "Rafael", "Gabriel"] as const;
 const FILLS = {
