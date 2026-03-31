@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { leads, imoveis, corretoresRanking, funnelPorCorretor, contas, oportunidades, leadsPorOrigem, leadsTotaisPorOrigem, produtosPorLead, motivosDesqualificacao, oportunidadesFases, motivosDaPerda, vgv, ticketMedio, visitas, visitasPorTipoImovel, tarefas, type TipoTarefa, type StatusTarefa } from "@/data/mockData";
+import { leads, imoveis, corretoresRanking, funnelPorCorretor, contas, oportunidades, leadsPorOrigem, leadsTotaisPorOrigem, produtosPorLead, motivosDesqualificacao, oportunidadesFases, motivosDaPerda, vgv, ticketMedio, visitas, visitasPorTipoImovel, tarefas, type TipoTarefa, type StatusTarefa, type StatusVisita } from "@/data/mockData";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line, CartesianGrid } from "recharts";
 import { ChevronDown, ChevronUp, Phone, MessageSquare, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList, BarChart2, HandCoins, CalendarCheck, CheckCircle2, Clock, AlertCircle, Circle } from "lucide-react";
 
@@ -50,9 +50,11 @@ const PeriodoSelect = ({ value, onChange }: { value: Periodo; onChange: (v: Peri
 export default function CRM() {
   const [expandedLead, setExpandedLead] = useState<string | null>(null);
   const [visaoCC, setVisaoCC]           = useState<"geral" | "corretor">("geral");
-  const [filtroCorretor, setFiltroCorretor] = useState<"Todos" | "Hans" | "Rafael" | "Gabriel">("Todos");
-  const [filtroTipo, setFiltroTipo]         = useState<"Todos" | TipoTarefa>("Todos");
-  const [filtroStatus, setFiltroStatus]     = useState<"Todos" | StatusTarefa>("Todos");
+  const [filtroCorretor, setFiltroCorretor]         = useState<"Todos" | "Hans" | "Rafael" | "Gabriel">("Todos");
+  const [filtroTipo, setFiltroTipo]                 = useState<"Todos" | TipoTarefa>("Todos");
+  const [filtroStatus, setFiltroStatus]             = useState<"Todos" | StatusTarefa>("Todos");
+  const [filtroStatusVisita, setFiltroStatusVisita] = useState<"Todos" | StatusVisita>("Todos");
+  const [filtroCorretorVisita, setFiltroCorretorVisita] = useState<"Todos" | "Hans" | "Rafael" | "Gabriel">("Todos");
   const [corretorSelecionado, setCorretorSelecionado] = useState<typeof CORRETORES[number]>("Hans");
   const [periodoLeads, setPeriodoLeads]   = useState<Periodo>("Tudo");
   const [periodoContas, setPeriodoContas] = useState<Periodo>("Tudo");
@@ -806,12 +808,46 @@ export default function CRM() {
         {/* ── ABA: Visitas ── */}
         <TabsContent value="visitas" className="space-y-4">
 
-          {/* Linha 1: Total + Por Usuário */}
+          {/* KPIs por status */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {([
+              { label: "Total",      value: visitas.length,                                              color: "text-foreground",  bg: "bg-muted/40" },
+              { label: "Agendadas",  value: visitas.filter((v) => v.status === "Agendada").length,       color: "text-primary",     bg: "bg-primary/5" },
+              { label: "Realizadas", value: visitas.filter((v) => v.status === "Realizada").length,      color: "text-green-500",   bg: "bg-green-500/5" },
+              { label: "Canceladas", value: visitas.filter((v) => v.status === "Cancelada").length,      color: "text-red-500",     bg: "bg-red-500/5" },
+            ] as const).map((k) => (
+              <div key={k.label} className={`stat-card ${k.bg} cursor-pointer border-2 ${filtroStatusVisita === (k.label === "Total" ? "Todos" : k.label.slice(0,-1) as StatusVisita) ? "border-primary/40" : "border-transparent"}`}
+                onClick={() => setFiltroStatusVisita(k.label === "Total" ? "Todos" : k.label.slice(0,-1) as StatusVisita)}>
+                <span className="text-xs text-muted-foreground">{k.label}</span>
+                <p className={`text-3xl font-bold font-display mt-1 ${k.color}`}>{k.value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Reagendadas separado */}
+          <div className="flex items-center gap-3">
+            <div
+              className={`stat-card bg-amber-500/5 cursor-pointer border-2 ${filtroStatusVisita === "Reagendada" ? "border-primary/40" : "border-transparent"} inline-flex gap-4 items-center px-4 py-2`}
+              onClick={() => setFiltroStatusVisita(filtroStatusVisita === "Reagendada" ? "Todos" : "Reagendada")}
+            >
+              <span className="text-xs text-muted-foreground">Reagendadas</span>
+              <span className="text-2xl font-bold text-amber-500">{visitas.filter((v) => v.status === "Reagendada").length}</span>
+            </div>
+            {/* Filtro por corretor */}
+            <Select value={filtroCorretorVisita} onValueChange={(v) => setFiltroCorretorVisita(v as typeof filtroCorretorVisita)}>
+              <SelectTrigger className="w-40 h-8 text-xs"><SelectValue placeholder="Corretor" /></SelectTrigger>
+              <SelectContent>
+                {["Todos", "Hans", "Rafael", "Gabriel"].map((c) => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Linha 1: Por Corretor + Por Status (gráfico) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Total */}
             <Card>
               <CardHeader className="pb-1">
-                <CardTitle className="text-sm">Quantidade Total de Visitas</CardTitle>
+                <CardTitle className="text-sm">Visitas por Corretor</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-center h-[160px]">
                 <p className="text-8xl font-bold font-display text-primary leading-none">{visitas.length}</p>
@@ -944,10 +980,12 @@ export default function CRM() {
             </Card>
           </div>
 
-          {/* Tabela: Todas as visitas */}
+          {/* Tabela: Visitas filtradas */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Todas as Visitas e Imóveis de Interesse</CardTitle>
+              <CardTitle className="text-sm">
+                Visitas {filtroStatusVisita !== "Todos" ? `— ${filtroStatusVisita}s` : ""} {filtroCorretorVisita !== "Todos" ? `· ${filtroCorretorVisita}` : ""}
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -958,21 +996,31 @@ export default function CRM() {
                       <th className="text-left p-3 font-medium">Conta</th>
                       <th className="text-left p-3 font-medium">Corretor</th>
                       <th className="text-left p-3 font-medium">Imóvel</th>
-                      <th className="text-left p-3 font-medium">Valor</th>
-                      <th className="text-left p-3 font-medium">Data</th>
+                      <th className="text-left p-3 font-medium">Status</th>
+                      <th className="text-left p-3 font-medium">Data Visita</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {visitas.map((v) => (
-                      <tr key={v.id} className="border-b hover:bg-muted/30">
-                        <td className="p-3 font-mono text-muted-foreground">{v.nome}</td>
-                        <td className="p-3 font-medium">{v.conta}</td>
-                        <td className="p-3">{v.corretor}</td>
-                        <td className="p-3">{v.imovel}</td>
-                        <td className="p-3">R$ {v.valorImovel.toLocaleString("pt-BR")}</td>
-                        <td className="p-3 text-muted-foreground">{v.dataCriacao}</td>
-                      </tr>
-                    ))}
+                    {visitas
+                      .filter((v) => filtroStatusVisita  === "Todos" || v.status    === filtroStatusVisita)
+                      .filter((v) => filtroCorretorVisita === "Todos" || v.corretor === filtroCorretorVisita)
+                      .map((v) => (
+                        <tr key={v.id} className="border-b hover:bg-muted/30">
+                          <td className="p-3 font-mono text-muted-foreground">{v.nome}</td>
+                          <td className="p-3 font-medium">{v.conta}</td>
+                          <td className="p-3">{v.corretor}</td>
+                          <td className="p-3">{v.imovel}</td>
+                          <td className="p-3">
+                            <Badge variant="outline" className={`text-[10px] px-1.5 ${
+                              v.status === "Realizada"  ? "border-green-500 text-green-600" :
+                              v.status === "Cancelada"  ? "border-red-500 text-red-600" :
+                              v.status === "Reagendada" ? "border-amber-500 text-amber-600" :
+                              "border-primary text-primary"
+                            }`}>{v.status}</Badge>
+                          </td>
+                          <td className="p-3 text-muted-foreground">{v.dataVisita}</td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>

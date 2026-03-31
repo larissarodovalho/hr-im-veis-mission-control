@@ -516,6 +516,8 @@ export const ticketMedio = vendasFechadas.length > 0 ? Math.round(vgv / vendasFe
 
 // --- Visitas ---
 
+export type StatusVisita = "Agendada" | "Realizada" | "Cancelada" | "Reagendada";
+
 export interface Visita {
   id: string;
   nome: string;
@@ -525,24 +527,26 @@ export interface Visita {
   tipoImovel: "Casa" | "Terreno" | "Apartamento";
   valorImovel: number;
   dataCriacao: string;
+  status: StatusVisita;
+  dataVisita: string;
 }
 
 export const visitas: Visita[] = [
-  { id: "V001", nome: "V000061", conta: "Murilo Barzagui",                   corretor: "Hans",    imovel: "Mansão Jardins Imperial",     tipoImovel: "Casa",      valorImovel: 8500000, dataCriacao: "2026-03-17" },
-  { id: "V002", nome: "V000060", conta: "Dra Fernanda Indicação",            corretor: "Hans",    imovel: "Casa Aquarela Premium",       tipoImovel: "Casa",      valorImovel: 2800000, dataCriacao: "2026-02-24" },
-  { id: "V003", nome: "V000059", conta: "Igor Santos",                       corretor: "Rafael",  imovel: "Cobertura Duplex Central",    tipoImovel: "Apartamento", valorImovel: 1500000, dataCriacao: "2026-02-24" },
-  { id: "V004", nome: "V000058", conta: "Charles De Freitas Sartori",        corretor: "Gabriel", imovel: "Lote Residencial Royal",      tipoImovel: "Terreno",   valorImovel: 920000,  dataCriacao: "2026-02-24" },
-  { id: "V005", nome: "V000051", conta: "Antonio Sergio Rossani",            corretor: "Hans",    imovel: "Terreno Eco Park 500m²",      tipoImovel: "Terreno",   valorImovel: 750000,  dataCriacao: "2026-02-24" },
-  { id: "V006", nome: "V000051", conta: "Antonio Sergio Rossani",            corretor: "Hans",    imovel: "Terreno Premium Nações",      tipoImovel: "Terreno",   valorImovel: 1200000, dataCriacao: "2026-02-24" },
-  { id: "V007", nome: "V000051", conta: "Antonio Sergio Rossani",            corretor: "Hans",    imovel: "Lote Lago Azul 360m²",        tipoImovel: "Terreno",   valorImovel: 580000,  dataCriacao: "2026-02-24" },
-  { id: "V008", nome: "V000049", conta: "Larissa Benetti Camianski",         corretor: "Rafael",  imovel: "Sobrado Damha III",           tipoImovel: "Casa",      valorImovel: 3500000, dataCriacao: "2026-02-24" },
-  { id: "V009", nome: "V000049", conta: "Larissa Benetti Camianski",         corretor: "Rafael",  imovel: "Casa Florais Cuiabá",         tipoImovel: "Casa",      valorImovel: 4200000, dataCriacao: "2026-02-24" },
-  { id: "V010", nome: "V000048", conta: "Angelica Leitão",                   corretor: "Hans",    imovel: "Casa Aquarela Premium",       tipoImovel: "Casa",      valorImovel: 2800000, dataCriacao: "2026-02-24" },
-  { id: "V011", nome: "V000047", conta: "Claudinei Opolski",                 corretor: "Gabriel", imovel: "Casa Condomínio Alphaville",  tipoImovel: "Casa",      valorImovel: 6800000, dataCriacao: "2026-02-24" },
-  { id: "V012", nome: "V000046", conta: "Alonso Teixeira Junior",            corretor: "Rafael",  imovel: "Mansão Jardins Imperial",     tipoImovel: "Casa",      valorImovel: 8500000, dataCriacao: "2026-02-24" },
-  { id: "V013", nome: "V000045", conta: "Andre Simoncito",                   corretor: "Hans",    imovel: "Terreno Premium Nações",      tipoImovel: "Terreno",   valorImovel: 1200000, dataCriacao: "2026-02-17" },
-  { id: "V014", nome: "V000044", conta: "Francisconi Alves",                 corretor: "Gabriel", imovel: "Lote Residencial Royal",      tipoImovel: "Terreno",   valorImovel: 920000,  dataCriacao: "2026-02-17" },
-  { id: "V015", nome: "V000043", conta: "Igor Neves Oliveira",               corretor: "Rafael",  imovel: "Cobertura Duplex Central",    tipoImovel: "Apartamento", valorImovel: 1500000, dataCriacao: "2026-02-17" },
+  { id: "V001", nome: "V000061", conta: "Murilo Barzagui",             corretor: "Hans",    imovel: "Mansão Jardins Imperial",    tipoImovel: "Casa",        valorImovel: 8500000, dataCriacao: "2026-03-17", status: "Realizada",   dataVisita: "2026-03-20" },
+  { id: "V002", nome: "V000060", conta: "Dra Fernanda Indicação",      corretor: "Hans",    imovel: "Casa Aquarela Premium",      tipoImovel: "Casa",        valorImovel: 2800000, dataCriacao: "2026-02-24", status: "Realizada",   dataVisita: "2026-02-26" },
+  { id: "V003", nome: "V000059", conta: "Igor Santos",                 corretor: "Rafael",  imovel: "Cobertura Duplex Central",   tipoImovel: "Apartamento", valorImovel: 1500000, dataCriacao: "2026-02-24", status: "Realizada",   dataVisita: "2026-02-27" },
+  { id: "V004", nome: "V000058", conta: "Charles De Freitas Sartori",  corretor: "Gabriel", imovel: "Lote Residencial Royal",     tipoImovel: "Terreno",     valorImovel: 920000,  dataCriacao: "2026-02-24", status: "Cancelada",   dataVisita: "2026-02-28" },
+  { id: "V005", nome: "V000051", conta: "Antonio Sergio Rossani",      corretor: "Hans",    imovel: "Terreno Eco Park 500m²",     tipoImovel: "Terreno",     valorImovel: 750000,  dataCriacao: "2026-02-24", status: "Realizada",   dataVisita: "2026-03-01" },
+  { id: "V006", nome: "V000051", conta: "Antonio Sergio Rossani",      corretor: "Hans",    imovel: "Terreno Premium Nações",     tipoImovel: "Terreno",     valorImovel: 1200000, dataCriacao: "2026-02-24", status: "Realizada",   dataVisita: "2026-03-01" },
+  { id: "V007", nome: "V000051", conta: "Antonio Sergio Rossani",      corretor: "Hans",    imovel: "Lote Lago Azul 360m²",       tipoImovel: "Terreno",     valorImovel: 580000,  dataCriacao: "2026-02-24", status: "Reagendada",  dataVisita: "2026-04-05" },
+  { id: "V008", nome: "V000049", conta: "Larissa Benetti Camianski",   corretor: "Rafael",  imovel: "Sobrado Damha III",          tipoImovel: "Casa",        valorImovel: 3500000, dataCriacao: "2026-02-24", status: "Realizada",   dataVisita: "2026-03-03" },
+  { id: "V009", nome: "V000049", conta: "Larissa Benetti Camianski",   corretor: "Rafael",  imovel: "Casa Florais Cuiabá",        tipoImovel: "Casa",        valorImovel: 4200000, dataCriacao: "2026-02-24", status: "Agendada",    dataVisita: "2026-04-02" },
+  { id: "V010", nome: "V000048", conta: "Angelica Leitão",             corretor: "Hans",    imovel: "Casa Aquarela Premium",      tipoImovel: "Casa",        valorImovel: 2800000, dataCriacao: "2026-02-24", status: "Cancelada",   dataVisita: "2026-03-05" },
+  { id: "V011", nome: "V000047", conta: "Claudinei Opolski",           corretor: "Gabriel", imovel: "Casa Condomínio Alphaville", tipoImovel: "Casa",        valorImovel: 6800000, dataCriacao: "2026-02-24", status: "Agendada",    dataVisita: "2026-04-03" },
+  { id: "V012", nome: "V000046", conta: "Alonso Teixeira Junior",      corretor: "Rafael",  imovel: "Mansão Jardins Imperial",    tipoImovel: "Casa",        valorImovel: 8500000, dataCriacao: "2026-02-24", status: "Agendada",    dataVisita: "2026-04-04" },
+  { id: "V013", nome: "V000045", conta: "Andre Simoncito",             corretor: "Hans",    imovel: "Terreno Premium Nações",     tipoImovel: "Terreno",     valorImovel: 1200000, dataCriacao: "2026-02-17", status: "Realizada",   dataVisita: "2026-02-20" },
+  { id: "V014", nome: "V000044", conta: "Francisconi Alves",           corretor: "Gabriel", imovel: "Lote Residencial Royal",     tipoImovel: "Terreno",     valorImovel: 920000,  dataCriacao: "2026-02-17", status: "Reagendada",  dataVisita: "2026-04-06" },
+  { id: "V015", nome: "V000043", conta: "Igor Neves Oliveira",         corretor: "Rafael",  imovel: "Cobertura Duplex Central",   tipoImovel: "Apartamento", valorImovel: 1500000, dataCriacao: "2026-02-17", status: "Realizada",   dataVisita: "2026-02-21" },
 ];
 
 export const visitasPorTipoImovel = [
