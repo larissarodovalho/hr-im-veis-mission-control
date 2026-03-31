@@ -116,7 +116,7 @@ function ChatterPanel({ lead }: { lead: Lead }) {
           <div key={i} className={`flex ${msg.remetente === "Sofia" ? "justify-end" : "justify-start"}`}>
             <div className={`max-w-[85%] rounded-lg px-3 py-2 text-xs ${
               msg.remetente === "Sofia"
-                ? "bg-green-600/90 text-white rounded-br-none"
+                ? "bg-primary text-primary-foreground rounded-br-none"
                 : "bg-muted text-foreground rounded-bl-none"
             }`}>
               <p>{msg.mensagem}</p>
