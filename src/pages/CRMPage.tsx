@@ -77,12 +77,12 @@ export default function CRM() {
       <h2 className="section-title">CRM — Comercial</h2>
 
       <Tabs defaultValue="funil">
-        <TabsList className="mb-2">
-          <TabsTrigger value="funil" className="flex items-center gap-1.5">
-            <TrendingUp className="h-4 w-4" /> Funil de Vendas
+        <TabsList className="h-8 bg-muted/50 rounded-md p-0.5 gap-0.5 mb-2">
+          <TabsTrigger value="funil" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <TrendingUp className="h-3.5 w-3.5" /> Funil de Vendas
           </TabsTrigger>
-          <TabsTrigger value="criacao" className="flex items-center gap-1.5">
-            <ClipboardList className="h-4 w-4" /> Controle de Criação
+          <TabsTrigger value="criacao" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <ClipboardList className="h-3.5 w-3.5" /> Controle de Criação
           </TabsTrigger>
         </TabsList>
 
