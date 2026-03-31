@@ -201,7 +201,7 @@ export default function ImoveisTab() {
   const filtered = imoveisList
     .filter(im => filtroStatus === "Todos" || im.status === filtroStatus)
     .filter(im => filtroCorretor === "Todos" || im.corretor === filtroCorretor)
-    .filter(im => !busca || im.nome.toLowerCase().includes(busca.toLowerCase()) || im.codigo.toLowerCase().includes(busca.toLowerCase()));
+    .filter(im => !busca || im.nome.toLowerCase().includes(busca.toLowerCase()) || im.codigo.toLowerCase().includes(busca.toLowerCase()) || im.endereco.bairro.toLowerCase().includes(busca.toLowerCase()));
 
   const totalDisp = imoveisList.filter(i => i.status === "Disponível").length;
   const totalNeg = imoveisList.filter(i => i.status === "Em negociação").length;
