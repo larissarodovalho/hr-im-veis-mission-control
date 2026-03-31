@@ -337,9 +337,14 @@ export default function CRM() {
                           <td className="p-3 hidden md:table-cell">{lead.corretor}</td>
                           <td className="p-3 hidden lg:table-cell text-muted-foreground">{lead.dataEntrada}</td>
                           <td className="p-3">
-                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-green-500 text-green-600 hover:bg-green-50" onClick={(e) => { e.stopPropagation(); avancarEtapa(lead.id); }}>
-                              Qualificar <ArrowRight className="h-3 w-3" />
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-green-500 text-green-600 hover:bg-green-50" onClick={(e) => { e.stopPropagation(); avancarEtapa(lead.id); }}>
+                                Qualificar <ArrowRight className="h-3 w-3" />
+                              </Button>
+                              <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-destructive text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); setDesqualificarLead(lead.id); }}>
+                                <XCircle className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </td>
                           <td className="p-3">
                             {expandedLead === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
