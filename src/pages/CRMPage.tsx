@@ -7,9 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { leads, imoveis, corretoresRanking, funnelPorCorretor, contas, oportunidades, leadsPorOrigem, leadsTotaisPorOrigem, produtosPorLead, motivosDesqualificacao } from "@/data/mockData";
+import { leads, imoveis, corretoresRanking, funnelPorCorretor, contas, oportunidades, leadsPorOrigem, leadsTotaisPorOrigem, produtosPorLead, motivosDesqualificacao, oportunidadesFases, motivosDaPerda, vgv, ticketMedio } from "@/data/mockData";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
-import { ChevronDown, ChevronUp, Phone, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList, BarChart2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Phone, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList, BarChart2, HandCoins } from "lucide-react";
 
 type Periodo = "Tudo" | "Este mês" | "Mês anterior" | "Este ano";
 
@@ -88,6 +88,9 @@ export default function CRM() {
           </TabsTrigger>
           <TabsTrigger value="analise" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <BarChart2 className="h-3.5 w-3.5" /> Análise de Leads
+          </TabsTrigger>
+          <TabsTrigger value="oportunidades" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <HandCoins className="h-3.5 w-3.5" /> Oportunidades
           </TabsTrigger>
         </TabsList>
 
@@ -672,6 +675,123 @@ export default function CRM() {
             </Card>
 
           </div>
+        </TabsContent>
+
+        {/* ── ABA: Oportunidades ── */}
+        <TabsContent value="oportunidades" className="space-y-4">
+
+          {/* Linha 1: KPIs rápidos */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="pb-1">
+                <CardTitle className="text-xs text-muted-foreground">Todas as Oportunidades</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-6xl font-bold font-display text-primary leading-none">{oportunidades.length}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-1">
+                <CardTitle className="text-xs text-muted-foreground">Oportunidades Ganhas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-6xl font-bold font-display text-green-500 leading-none">
+                  {oportunidades.filter((o) => o.estagio === "Fechamento").length}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-1">
+                <CardTitle className="text-xs text-muted-foreground">Oportunidades Perdidas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-6xl font-bold font-display text-red-500 leading-none">0</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-1">
+                <CardTitle className="text-xs text-muted-foreground">Em Negociação</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-6xl font-bold font-display text-amber-500 leading-none">
+                  {oportunidades.filter((o) => o.estagio === "Negociação").length}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Linha 2: Fases + Motivo da Perda */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Fases da Oportunidade</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={oportunidadesFases} margin={{ bottom: 20 }}>
+                    <XAxis dataKey="fase" fontSize={10} interval={0} angle={-15} textAnchor="end" />
+                    <YAxis fontSize={11} allowDecimals={false} />
+                    <Tooltip formatter={(v) => [v, "Oportunidades"]} />
+                    <Bar dataKey="quantidade" radius={[5, 5, 0, 0]}>
+                      {oportunidadesFases.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Motivo da Perda</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={motivosDaPerda} margin={{ bottom: 20 }}>
+                    <XAxis dataKey="motivo" fontSize={10} interval={0} angle={-15} textAnchor="end" />
+                    <YAxis fontSize={11} allowDecimals={false} />
+                    <Tooltip formatter={(v) => [v, "Oportunidades"]} />
+                    <Bar dataKey="quantidade" radius={[5, 5, 0, 0]}>
+                      {motivosDaPerda.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Linha 3: VGV + Ticket Médio */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="border-2 border-primary/20">
+              <CardHeader className="pb-1">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-sm">VGV — Valor Geral de Vendas</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-5xl font-bold font-display text-primary leading-none mt-2">
+                  R$ {vgv.toLocaleString("pt-BR")}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {oportunidades.filter((o) => o.estagio === "Fechamento").length} negócios fechados
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-2 border-amber-500/20">
+              <CardHeader className="pb-1">
+                <div className="flex items-center gap-2">
+                  <Trophy className="h-4 w-4 text-amber-500" />
+                  <CardTitle className="text-sm">Ticket Médio</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-5xl font-bold font-display text-amber-500 leading-none mt-2">
+                  R$ {ticketMedio.toLocaleString("pt-BR")}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">por negócio fechado</p>
+              </CardContent>
+            </Card>
+          </div>
+
         </TabsContent>
 
       </Tabs>

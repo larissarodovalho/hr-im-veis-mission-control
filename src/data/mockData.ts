@@ -493,3 +493,23 @@ export const motivosDesqualificacao = [
   { motivo: "Viab. Técnica/Comercial", quantidade: 1, fill: "hsl(224, 73%, 65%)" },
   { motivo: "Outros",                  quantidade: 2, fill: "hsl(0, 0%, 65%)"    },
 ];
+
+// --- Oportunidades (Painel Vendas) ---
+
+export const oportunidadesFases = [
+  { fase: "Novo/Diagn.", quantidade: 30, fill: "hsl(224, 73%, 45%)" },
+  { fase: "Proposta E.", quantidade: 1,  fill: "hsl(224, 73%, 55%)" },
+  { fase: "Negociação",  quantidade: 3,  fill: "hsl(43, 76%, 48%)"  },
+  { fase: "Negociação+", quantidade: 4,  fill: "hsl(160, 60%, 42%)" },
+];
+
+export const motivosDaPerda = [
+  { motivo: "Sem interesse", quantidade: 40, fill: "hsl(224, 73%, 45%)" },
+  { motivo: "Preço alto",    quantidade: 8,  fill: "hsl(224, 73%, 58%)" },
+  { motivo: "Comprou outro", quantidade: 5,  fill: "hsl(43, 76%, 50%)"  },
+  { motivo: "Sem retorno",   quantidade: 3,  fill: "hsl(0, 0%, 65%)"    },
+];
+
+export const vendasFechadas = oportunidades.filter((o) => o.estagio === "Fechamento");
+export const vgv = vendasFechadas.reduce((acc, o) => acc + o.valor, 0);
+export const ticketMedio = vendasFechadas.length > 0 ? Math.round(vgv / vendasFechadas.length) : 0;
