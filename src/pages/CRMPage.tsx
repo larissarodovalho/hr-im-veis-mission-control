@@ -11,9 +11,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { leads, imoveis, corretoresRanking, funnelPorCorretor, contas, oportunidades, leadsPorOrigem, leadsTotaisPorOrigem, produtosPorLead, motivosDesqualificacao, oportunidadesFases, motivosDaPerda, vgv, ticketMedio, visitas as visitasIniciais, visitasPorTipoImovel, tarefas, type TipoTarefa, type StatusTarefa, type StatusVisita, type Visita } from "@/data/mockData";
+import { leads as leadsIniciais, imoveis, corretoresRanking, funnelPorCorretor, contas, oportunidades, leadsPorOrigem, leadsTotaisPorOrigem, produtosPorLead, motivosDesqualificacao, oportunidadesFases, motivosDaPerda, vgv, ticketMedio, visitas as visitasIniciais, visitasPorTipoImovel, tarefas, type TipoTarefa, type StatusTarefa, type StatusVisita, type Visita, type Lead, type LeadEtapa } from "@/data/mockData";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line, CartesianGrid } from "recharts";
-import { ChevronDown, ChevronUp, Phone, MessageSquare, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList, BarChart2, HandCoins, CalendarCheck, CheckCircle2, Clock, AlertCircle, Circle } from "lucide-react";
+import { ChevronDown, ChevronUp, Phone, MessageSquare, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList, BarChart2, HandCoins, CalendarCheck, CheckCircle2, Clock, AlertCircle, Circle, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
+
+const ETAPAS_ORDEM: LeadEtapa[] = ["Lead recebido", "Qualificado", "Visita agendada", "Visita realizada", "Proposta", "Fechamento"];
 
 type Periodo = "Tudo" | "Este mês" | "Mês anterior" | "Este ano";
 
@@ -52,6 +55,7 @@ const PeriodoSelect = ({ value, onChange }: { value: Periodo; onChange: (v: Peri
 );
 
 export default function CRM() {
+  const [listaLeads, setListaLeads] = useState<Lead[]>([...leadsIniciais]);
   const [expandedLead, setExpandedLead] = useState<string | null>(null);
   const [visaoCC, setVisaoCC]           = useState<"geral" | "corretor">("geral");
   const [filtroCorretor, setFiltroCorretor]         = useState<"Todos" | "Hans" | "Rafael" | "Gabriel">("Todos");
@@ -71,7 +75,20 @@ export default function CRM() {
   const [periodoContas, setPeriodoContas] = useState<Periodo>("Tudo");
   const [periodoOps, setPeriodoOps]       = useState<Periodo>("Tudo");
 
-  const leadsF  = useMemo(() => filtrarPorData(leads.map(l => ({ ...l, dataCreacao: l.dataEntrada })), periodoLeads),  [periodoLeads]);
+  const avancarEtapa = (leadId: string) => {
+    setListaLeads(prev => prev.map(l => {
+      if (l.id !== leadId) return l;
+      const idx = ETAPAS_ORDEM.indexOf(l.etapa);
+      if (idx < ETAPAS_ORDEM.length - 1) {
+        const novaEtapa = ETAPAS_ORDEM[idx + 1];
+        toast.success(`${l.nome} avançou para "${novaEtapa}"`);
+        return { ...l, etapa: novaEtapa };
+      }
+      return l;
+    }));
+  };
+
+  const leadsF  = useMemo(() => filtrarPorData(listaLeads.map(l => ({ ...l, dataCreacao: l.dataEntrada })), periodoLeads),  [periodoLeads, listaLeads]);
   const contasF = useMemo(() => filtrarPorData(contas,        periodoContas), [periodoContas]);
   const opsF    = useMemo(() => filtrarPorData(oportunidades, periodoOps),    [periodoOps]);
 
@@ -79,12 +96,18 @@ export default function CRM() {
   const contasPorCorretor = useMemo(() => porCorretor(contasF), [contasF]);
   const opsPorCorretor    = useMemo(() => porCorretor(opsF),    [opsF]);
 
+  const funnelDinamico = useMemo(() => ETAPAS_ORDEM.map((etapa, i) => ({
+    etapa,
+    quantidade: listaLeads.filter(l => l.etapa === etapa).length,
+    fill: `hsl(224, 73%, ${40 + i * 8}%)`,
+  })), [listaLeads]);
+
   const totalEmNegociacao = imoveis
     .filter((i) => i.status === "Em negociação")
     .reduce((acc, i) => acc + i.valor, 0);
 
-  const visitasAgendadas = leads.filter((l) => l.etapa === "Visita agendada").length;
-  const visitasRealizadas = leads.filter((l) => l.etapa === "Visita realizada").length;
+  const visitasAgendadas = listaLeads.filter((l) => l.etapa === "Visita agendada").length;
+  const visitasRealizadas = listaLeads.filter((l) => l.etapa === "Visita realizada").length;
   const taxaComparecimento =
     visitasAgendadas > 0
       ? (((visitasRealizadas) / (visitasAgendadas + visitasRealizadas)) * 100).toFixed(0)
@@ -127,7 +150,7 @@ export default function CRM() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Leads — Para Qualificar</CardTitle>
-              <Badge variant="outline" className="text-xs">{leads.filter(l => l.etapa === "Lead recebido").length} leads</Badge>
+              <Badge variant="outline" className="text-xs">{listaLeads.filter(l => l.etapa === "Lead recebido").length} leads</Badge>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -140,11 +163,12 @@ export default function CRM() {
                       <th className="text-left p-3 font-medium hidden md:table-cell">Origem</th>
                       <th className="text-left p-3 font-medium hidden md:table-cell">Corretor</th>
                       <th className="text-left p-3 font-medium hidden lg:table-cell">Entrada</th>
+                      <th className="text-left p-3 font-medium">Ação</th>
                       <th className="p-3 w-10"></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {leads.filter(l => l.etapa === "Lead recebido").map((lead) => (
+                    {listaLeads.filter(l => l.etapa === "Lead recebido").map((lead) => (
                       <>
                         <tr
                           key={lead.id}
@@ -164,12 +188,17 @@ export default function CRM() {
                           <td className="p-3 hidden md:table-cell">{lead.corretor}</td>
                           <td className="p-3 hidden lg:table-cell text-muted-foreground">{lead.dataEntrada}</td>
                           <td className="p-3">
+                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-green-500 text-green-600 hover:bg-green-50" onClick={(e) => { e.stopPropagation(); avancarEtapa(lead.id); }}>
+                              Qualificar <ArrowRight className="h-3 w-3" />
+                            </Button>
+                          </td>
+                          <td className="p-3">
                             {expandedLead === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                           </td>
                         </tr>
                         {expandedLead === lead.id && (
                           <tr key={`${lead.id}-hist`}>
-                            <td colSpan={7} className="p-4 bg-muted/20">
+                            <td colSpan={8} className="p-4 bg-muted/20">
                               <p className="text-xs font-semibold text-muted-foreground mb-2">Histórico — Sofia IA</p>
                               <div className="space-y-2 max-h-48 overflow-y-auto">
                                 {lead.historico.map((msg, i) => (
@@ -198,7 +227,7 @@ export default function CRM() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Contatos — Leads Qualificados</CardTitle>
-              <Badge variant="outline" className="text-xs">{leads.filter(l => l.etapa !== "Lead recebido").length} contatos</Badge>
+              <Badge variant="outline" className="text-xs">{listaLeads.filter(l => l.etapa !== "Lead recebido").length} contatos</Badge>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -212,11 +241,12 @@ export default function CRM() {
                       <th className="text-left p-3 font-medium hidden md:table-cell">Corretor</th>
                       <th className="text-left p-3 font-medium">Etapa</th>
                       <th className="text-left p-3 font-medium hidden lg:table-cell">Entrada</th>
+                      <th className="text-left p-3 font-medium">Ação</th>
                       <th className="p-3 w-10"></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {leads.filter(l => l.etapa !== "Lead recebido").map((lead) => (
+                    {listaLeads.filter(l => l.etapa !== "Lead recebido").map((lead) => (
                       <>
                         <tr
                           key={lead.id}
@@ -239,12 +269,21 @@ export default function CRM() {
                           </td>
                           <td className="p-3 hidden lg:table-cell text-muted-foreground">{lead.dataEntrada}</td>
                           <td className="p-3">
+                            {lead.etapa !== "Fechamento" ? (
+                              <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-primary text-primary hover:bg-primary/5" onClick={(e) => { e.stopPropagation(); avancarEtapa(lead.id); }}>
+                                {ETAPAS_ORDEM[ETAPAS_ORDEM.indexOf(lead.etapa) + 1]} <ArrowRight className="h-3 w-3" />
+                              </Button>
+                            ) : (
+                              <Badge className="text-xs bg-green-500">✓ Fechado</Badge>
+                            )}
+                          </td>
+                          <td className="p-3">
                             {expandedLead === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                           </td>
                         </tr>
                         {expandedLead === lead.id && (
                           <tr key={`${lead.id}-hist`}>
-                            <td colSpan={8} className="p-4 bg-muted/20">
+                            <td colSpan={9} className="p-4 bg-muted/20">
                               <p className="text-xs font-semibold text-muted-foreground mb-2">Histórico — Sofia IA</p>
                               <div className="space-y-2 max-h-48 overflow-y-auto">
                                 {lead.historico.map((msg, i) => (
@@ -417,7 +456,7 @@ export default function CRM() {
                 </tr>
               </thead>
               <tbody>
-                {leads.map((lead) => (
+                {listaLeads.map((lead) => (
                   <>
                     <tr
                       key={lead.id}
@@ -817,7 +856,7 @@ export default function CRM() {
               <CardContent className="flex items-center justify-center h-[160px]">
                 <div className="text-center">
                   <p className="text-7xl font-bold font-display text-primary leading-none">
-                    {leads.filter((l) => {
+                    {listaLeads.filter((l) => {
                       const d = new Date(l.dataEntrada);
                       const semanaAtras = new Date();
                       semanaAtras.setDate(semanaAtras.getDate() - 7);
