@@ -241,6 +241,7 @@ export default function CRM() {
                       <th className="text-left p-3 font-medium hidden md:table-cell">Corretor</th>
                       <th className="text-left p-3 font-medium">Etapa</th>
                       <th className="text-left p-3 font-medium hidden lg:table-cell">Entrada</th>
+                      <th className="text-left p-3 font-medium">Ação</th>
                       <th className="p-3 w-10"></th>
                     </tr>
                   </thead>
@@ -267,6 +268,15 @@ export default function CRM() {
                             <Badge variant="outline" className="text-xs">{lead.etapa}</Badge>
                           </td>
                           <td className="p-3 hidden lg:table-cell text-muted-foreground">{lead.dataEntrada}</td>
+                          <td className="p-3">
+                            {lead.etapa !== "Fechamento" ? (
+                              <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-primary text-primary hover:bg-primary/5" onClick={(e) => { e.stopPropagation(); avancarEtapa(lead.id); }}>
+                                {ETAPAS_ORDEM[ETAPAS_ORDEM.indexOf(lead.etapa) + 1]} <ArrowRight className="h-3 w-3" />
+                              </Button>
+                            ) : (
+                              <Badge className="text-xs bg-green-500">✓ Fechado</Badge>
+                            )}
+                          </td>
                           <td className="p-3">
                             {expandedLead === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                           </td>
