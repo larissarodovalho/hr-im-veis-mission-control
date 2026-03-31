@@ -194,10 +194,19 @@ export default function CRM() {
         {/* ── ABA: Leads (para qualificar) ── */}
         <TabsContent value="leads" className="space-y-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Leads — Para Qualificar</CardTitle>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs">{listaLeads.filter(l => l.etapa === "Lead recebido").length} leads</Badge>
+            <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
+              <CardTitle className="text-base">Leads</CardTitle>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Select value={filtroEtapaLead} onValueChange={(v) => setFiltroEtapaLead(v as "Todos" | LeadEtapa)}>
+                  <SelectTrigger className="w-44 h-7 text-xs"><SelectValue placeholder="Status qualificação" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Todos" className="text-xs">Todos os status</SelectItem>
+                    {ETAPAS_ORDEM.map(e => <SelectItem key={e} value={e} className="text-xs">{e}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Badge variant="outline" className="text-xs">
+                  {listaLeads.filter(l => filtroEtapaLead === "Todos" || l.etapa === filtroEtapaLead).length} leads
+                </Badge>
                 <Dialog open={dialogNovoLead} onOpenChange={setDialogNovoLead}>
                   <DialogTrigger asChild>
                     <Button size="sm" className="h-7 text-xs">+ Novo Lead</Button>
