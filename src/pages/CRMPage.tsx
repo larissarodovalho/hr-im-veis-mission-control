@@ -184,6 +184,11 @@ export default function CRM() {
                           onChange={(e) => setNovoLead(p => ({ ...p, telefone: e.target.value }))} />
                       </div>
                       <div className="space-y-1.5">
+                        <Label className="text-xs">E-mail</Label>
+                        <Input className="h-8 text-sm" placeholder="email@exemplo.com" maxLength={100} value={novoLead.email || ""}
+                          onChange={(e) => setNovoLead(p => ({ ...p, email: e.target.value }))} />
+                      </div>
+                      <div className="space-y-1.5">
                         <Label className="text-xs">Canal de Origem</Label>
                         <Select value={novoLead.canal} onValueChange={(v) => setNovoLead(p => ({ ...p, canal: v as Lead["canal"] }))}>
                           <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
