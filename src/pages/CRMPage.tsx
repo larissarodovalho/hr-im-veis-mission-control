@@ -126,6 +126,28 @@ export default function CRM() {
 
   return (
     <div className="space-y-6">
+      {/* Dialog preview de documento de proposta */}
+      <Dialog open={!!docPreview} onOpenChange={(open) => { if (!open) setDocPreview(null); }}>
+        <DialogContent className="sm:max-w-3xl max-h-[85vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-4 w-4" /> {docPreview?.nome}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="w-full h-[60vh] rounded-md overflow-hidden border bg-muted/20">
+            {docPreview && (docPreview.tipo.startsWith("image/") ? (
+              <img src={docPreview.url} alt={docPreview.nome} className="w-full h-full object-contain" />
+            ) : (
+              <iframe src={docPreview.url} className="w-full h-full" title={docPreview.nome} />
+            ))}
+          </div>
+          <DialogFooter>
+            <Button size="sm" variant="outline" asChild>
+              <a href={docPreview?.url} download={docPreview?.nome}><Download className="h-3.5 w-3.5 mr-1.5" /> Baixar</a>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <h2 className="section-title">CRM — Comercial</h2>
 
       <Tabs defaultValue="leads">
