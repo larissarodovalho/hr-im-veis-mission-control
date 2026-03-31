@@ -7,6 +7,7 @@ import {
   Settings,
   Activity,
   Building2,
+  Plug,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -27,6 +28,7 @@ const items = [
   { title: "Tráfego Pago", url: "/trafego", icon: Megaphone },
   { title: "Redes Sociais", url: "/redes-sociais", icon: Share2 },
   { title: "Conteúdo", url: "/conteudo", icon: FileText },
+  { title: "Integrações", url: "/integracoes", icon: Plug },
   { title: "Operacional", url: "/operacional", icon: Settings },
   { title: "Saúde do Sistema", url: "/saude", icon: Activity },
 ];
