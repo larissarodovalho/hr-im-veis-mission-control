@@ -201,7 +201,7 @@ export default function ImoveisTab() {
   const filtered = imoveisList
     .filter(im => filtroStatus === "Todos" || im.status === filtroStatus)
     .filter(im => filtroCorretor === "Todos" || im.corretor === filtroCorretor)
-    .filter(im => !busca || im.nome.toLowerCase().includes(busca.toLowerCase()) || im.codigo.toLowerCase().includes(busca.toLowerCase()));
+    .filter(im => !busca || im.nome.toLowerCase().includes(busca.toLowerCase()) || im.codigo.toLowerCase().includes(busca.toLowerCase()) || im.endereco.bairro.toLowerCase().includes(busca.toLowerCase()));
 
   const totalDisp = imoveisList.filter(i => i.status === "Disponível").length;
   const totalNeg = imoveisList.filter(i => i.status === "Em negociação").length;
@@ -236,7 +236,7 @@ export default function ImoveisTab() {
         <div className="flex items-center gap-2 flex-1 min-w-[200px]">
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input className="h-8 text-xs pl-8" placeholder="Buscar pela referência..." value={busca} onChange={e => setBusca(e.target.value)} maxLength={50} />
+            <Input className="h-8 text-xs pl-8" placeholder="Buscar por referência ou bairro..." value={busca} onChange={e => setBusca(e.target.value)} maxLength={50} />
           </div>
           <Select value={filtroStatus} onValueChange={v => setFiltroStatus(v as typeof filtroStatus)}>
             <SelectTrigger className="w-36 h-8 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
