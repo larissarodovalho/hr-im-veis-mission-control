@@ -58,7 +58,7 @@ const PeriodoSelect = ({ value, onChange }: { value: Periodo; onChange: (v: Peri
 export default function CRM() {
   const [dialogNovoLead, setDialogNovoLead] = useState(false);
   const [novoLead, setNovoLead] = useState({
-    nome: "", telefone: "", canal: "Meta Ads" as Lead["canal"],
+    nome: "", telefone: "", email: "", canal: "Meta Ads" as Lead["canal"],
     corretor: "Hans" as Lead["corretor"], origem: "Marketing" as Lead["origem"],
   });
   const [listaLeads, setListaLeads] = useState<Lead[]>([...leadsIniciais]);
@@ -184,6 +184,11 @@ export default function CRM() {
                           onChange={(e) => setNovoLead(p => ({ ...p, telefone: e.target.value }))} />
                       </div>
                       <div className="space-y-1.5">
+                        <Label className="text-xs">E-mail</Label>
+                        <Input className="h-8 text-sm" placeholder="email@exemplo.com" maxLength={100} value={novoLead.email || ""}
+                          onChange={(e) => setNovoLead(p => ({ ...p, email: e.target.value }))} />
+                      </div>
+                      <div className="space-y-1.5">
                         <Label className="text-xs">Canal de Origem</Label>
                         <Select value={novoLead.canal} onValueChange={(v) => setNovoLead(p => ({ ...p, canal: v as Lead["canal"] }))}>
                           <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
@@ -221,6 +226,7 @@ export default function CRM() {
                           id: `lead-${Date.now()}`,
                           nome,
                           telefone,
+                          email: novoLead.email.trim() || undefined,
                           canal: novoLead.canal,
                           corretor: novoLead.corretor,
                           origem: novoLead.origem,
@@ -229,7 +235,7 @@ export default function CRM() {
                           historico: [{ data: new Date().toISOString().slice(0, 16).replace("T", " "), mensagem: `Novo lead cadastrado manualmente. Canal: ${novoLead.canal}.`, remetente: "Sofia" }],
                         };
                         setListaLeads(prev => [novo, ...prev]);
-                        setNovoLead({ nome: "", telefone: "", canal: "Meta Ads", corretor: "Hans", origem: "Marketing" });
+                        setNovoLead({ nome: "", telefone: "", email: "", canal: "Meta Ads", corretor: "Hans", origem: "Marketing" });
                         setDialogNovoLead(false);
                         toast.success(`Lead "${nome}" cadastrado com sucesso!`);
                       }}>Cadastrar</Button>
