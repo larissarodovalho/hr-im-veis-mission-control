@@ -6,11 +6,11 @@ import {
   FileText,
   Settings,
   Activity,
-  Building2,
   Plug,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import hrLogo from "@/assets/hr-imoveis-logo.png";
 import {
   Sidebar,
   SidebarContent,
@@ -42,8 +42,8 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r-0">
       <SidebarContent className="pt-6">
         <div className={`px-4 mb-8 flex items-center gap-3 ${collapsed ? "justify-center" : ""}`}>
-          <div className="w-10 h-10 rounded-lg gold-gradient flex items-center justify-center flex-shrink-0">
-            <Building2 className="h-5 w-5 text-accent-foreground" />
+          <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 overflow-hidden">
+            <img src={hrLogo} alt="HR Imóveis" className="w-8 h-8 object-contain" />
           </div>
           {!collapsed && (
             <div>
