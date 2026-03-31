@@ -55,6 +55,11 @@ const PeriodoSelect = ({ value, onChange }: { value: Periodo; onChange: (v: Peri
 );
 
 export default function CRM() {
+  const [dialogNovoLead, setDialogNovoLead] = useState(false);
+  const [novoLead, setNovoLead] = useState({
+    nome: "", telefone: "", canal: "Meta Ads" as Lead["canal"],
+    corretor: "Hans" as Lead["corretor"], origem: "Marketing" as Lead["origem"],
+  });
   const [listaLeads, setListaLeads] = useState<Lead[]>([...leadsIniciais]);
   const [expandedLead, setExpandedLead] = useState<string | null>(null);
   const [visaoCC, setVisaoCC]           = useState<"geral" | "corretor">("geral");
@@ -150,7 +155,81 @@ export default function CRM() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Leads — Para Qualificar</CardTitle>
-              <Badge variant="outline" className="text-xs">{listaLeads.filter(l => l.etapa === "Lead recebido").length} leads</Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs">{listaLeads.filter(l => l.etapa === "Lead recebido").length} leads</Badge>
+                <Dialog open={dialogNovoLead} onOpenChange={setDialogNovoLead}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="h-7 text-xs">+ Novo Lead</Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Cadastrar Novo Lead</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Nome completo</Label>
+                        <Input className="h-8 text-sm" placeholder="Ex: João da Silva" maxLength={100} value={novoLead.nome}
+                          onChange={(e) => setNovoLead(p => ({ ...p, nome: e.target.value }))} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Telefone</Label>
+                        <Input className="h-8 text-sm" placeholder="(66) 99999-0000" maxLength={20} value={novoLead.telefone}
+                          onChange={(e) => setNovoLead(p => ({ ...p, telefone: e.target.value }))} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Canal de Origem</Label>
+                        <Select value={novoLead.canal} onValueChange={(v) => setNovoLead(p => ({ ...p, canal: v as Lead["canal"] }))}>
+                          <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {(["Meta Ads", "Google Ads", "Indicação", "Orgânico"] as const).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Corretor Responsável</Label>
+                        <Select value={novoLead.corretor} onValueChange={(v) => setNovoLead(p => ({ ...p, corretor: v as Lead["corretor"] }))}>
+                          <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {CORRETORES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Tipo de Origem</Label>
+                        <Select value={novoLead.origem} onValueChange={(v) => setNovoLead(p => ({ ...p, origem: v as Lead["origem"] }))}>
+                          <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {(["Carteira", "Marketing"] as const).map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" size="sm" onClick={() => setDialogNovoLead(false)}>Cancelar</Button>
+                      <Button size="sm" onClick={() => {
+                        const nome = novoLead.nome.trim();
+                        const telefone = novoLead.telefone.trim();
+                        if (!nome || !telefone) { toast.error("Preencha nome e telefone."); return; }
+                        const novo: Lead = {
+                          id: `lead-${Date.now()}`,
+                          nome,
+                          telefone,
+                          canal: novoLead.canal,
+                          corretor: novoLead.corretor,
+                          origem: novoLead.origem,
+                          etapa: "Lead recebido",
+                          dataEntrada: new Date().toISOString().slice(0, 10),
+                          historico: [{ data: new Date().toISOString().slice(0, 16).replace("T", " "), mensagem: `Novo lead cadastrado manualmente. Canal: ${novoLead.canal}.`, remetente: "Sofia" }],
+                        };
+                        setListaLeads(prev => [novo, ...prev]);
+                        setNovoLead({ nome: "", telefone: "", canal: "Meta Ads", corretor: "Hans", origem: "Marketing" });
+                        setDialogNovoLead(false);
+                        toast.success(`Lead "${nome}" cadastrado com sucesso!`);
+                      }}>Cadastrar</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
