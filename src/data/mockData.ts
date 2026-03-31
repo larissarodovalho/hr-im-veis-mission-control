@@ -25,7 +25,7 @@ export const overviewCards = {
   postsPublicados: 12,
 };
 
-export type LeadEtapa = "Lead recebido" | "Qualificado" | "Visita agendada" | "Visita realizada" | "Proposta" | "Fechamento";
+export type LeadEtapa = "Lead recebido" | "Qualificado" | "Visita agendada" | "Visita realizada" | "Proposta" | "Fechamento" | "Desqualificado";
 
 export interface Lead {
   id: string;
