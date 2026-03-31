@@ -175,6 +175,35 @@ export default function CRM() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog desqualificar lead */}
+      <Dialog open={!!desqualificarLead} onOpenChange={(open) => { if (!open) { setDesqualificarLead(null); setMotivoDesqualificacao(""); setMotivoDesqualificacaoOutro(""); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <XCircle className="h-4 w-4 text-destructive" /> Desqualificar Lead
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Label>Motivo da desqualificação</Label>
+            <Select value={motivoDesqualificacao} onValueChange={setMotivoDesqualificacao}>
+              <SelectTrigger><SelectValue placeholder="Selecione o motivo" /></SelectTrigger>
+              <SelectContent>
+                {MOTIVOS_DESQUALIFICACAO.map(m => (
+                  <SelectItem key={m} value={m}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {motivoDesqualificacao === "Outro" && (
+              <Textarea placeholder="Descreva o motivo..." value={motivoDesqualificacaoOutro} onChange={e => setMotivoDesqualificacaoOutro(e.target.value)} className="min-h-[80px]" />
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setDesqualificarLead(null); setMotivoDesqualificacao(""); setMotivoDesqualificacaoOutro(""); }}>Cancelar</Button>
+            <Button variant="destructive" onClick={() => desqualificarLead && desqualificar(desqualificarLead)}>Desqualificar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <h2 className="section-title">CRM — Comercial</h2>
 
       <Tabs defaultValue="leads">
