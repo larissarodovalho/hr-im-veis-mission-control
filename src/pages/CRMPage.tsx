@@ -167,7 +167,7 @@ export default function CRM() {
                     </tr>
                   </thead>
                   <tbody>
-                    {leads.filter(l => l.etapa === "Lead recebido").map((lead) => (
+                    {listaLeads.filter(l => l.etapa === "Lead recebido").map((lead) => (
                       <>
                         <tr
                           key={lead.id}
@@ -221,7 +221,7 @@ export default function CRM() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Contatos — Leads Qualificados</CardTitle>
-              <Badge variant="outline" className="text-xs">{leads.filter(l => l.etapa !== "Lead recebido").length} contatos</Badge>
+              <Badge variant="outline" className="text-xs">{listaLeads.filter(l => l.etapa !== "Lead recebido").length} contatos</Badge>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -239,7 +239,7 @@ export default function CRM() {
                     </tr>
                   </thead>
                   <tbody>
-                    {leads.filter(l => l.etapa !== "Lead recebido").map((lead) => (
+                    {listaLeads.filter(l => l.etapa !== "Lead recebido").map((lead) => (
                       <>
                         <tr
                           key={lead.id}
@@ -440,7 +440,7 @@ export default function CRM() {
                 </tr>
               </thead>
               <tbody>
-                {leads.map((lead) => (
+                {listaLeads.map((lead) => (
                   <>
                     <tr
                       key={lead.id}
@@ -840,7 +840,7 @@ export default function CRM() {
               <CardContent className="flex items-center justify-center h-[160px]">
                 <div className="text-center">
                   <p className="text-7xl font-bold font-display text-primary leading-none">
-                    {leads.filter((l) => {
+                    {listaLeads.filter((l) => {
                       const d = new Date(l.dataEntrada);
                       const semanaAtras = new Date();
                       semanaAtras.setDate(semanaAtras.getDate() - 7);
