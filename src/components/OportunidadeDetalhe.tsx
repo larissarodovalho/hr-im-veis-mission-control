@@ -22,6 +22,7 @@ const FASE_LABELS: Record<LeadEtapa, string> = {
   "Visita realizada": "Visita Realizada",
   "Proposta": "Proposta",
   "Fechamento": "Convertido",
+  "Desqualificado": "Desqualificado",
 };
 
 interface Atividade {

@@ -13,7 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { leads as leadsIniciais, imoveis, corretoresRanking, funnelPorCorretor, contas, oportunidades, leadsPorOrigem, leadsTotaisPorOrigem, produtosPorLead, motivosDesqualificacao, oportunidadesFases, motivosDaPerda, vgv, ticketMedio, visitas as visitasIniciais, visitasPorTipoImovel, tarefas, type TipoTarefa, type StatusTarefa, type StatusVisita, type Visita, type Lead, type LeadEtapa } from "@/data/mockData";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line, CartesianGrid } from "recharts";
-import { ChevronDown, ChevronUp, Phone, MessageSquare, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList, BarChart2, HandCoins, CalendarCheck, CheckCircle2, Clock, AlertCircle, Circle, ArrowRight, Home, FileDown, Download, Paperclip, Eye, FileText } from "lucide-react";
+import { ChevronDown, ChevronUp, Phone, MessageSquare, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList, BarChart2, HandCoins, CalendarCheck, CheckCircle2, Clock, AlertCircle, Circle, ArrowRight, Home, FileDown, Download, Paperclip, Eye, FileText, XCircle } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import ImoveisTab from "@/components/ImoveisTab";
 import OportunidadeDetalhe from "@/components/OportunidadeDetalhe";
@@ -86,6 +87,29 @@ export default function CRM() {
   const [metricaAberta, setMetricaAberta] = useState<"reunioes" | "propostas" | "aceitas" | "nao_aceitas" | "vendas_fechadas" | null>(null);
   const [propostaDocs, setPropostaDocs] = useState<Record<string, { nome: string; url: string; tipo: string }>>({});
   const [docPreview, setDocPreview] = useState<{ nome: string; url: string; tipo: string } | null>(null);
+  const [desqualificarLead, setDesqualificarLead] = useState<string | null>(null);
+  const [motivoDesqualificacao, setMotivoDesqualificacao] = useState("");
+  const [motivoDesqualificacaoOutro, setMotivoDesqualificacaoOutro] = useState("");
+
+  const MOTIVOS_DESQUALIFICACAO = [
+    "Sem interesse",
+    "Sem capacidade financeira",
+    "Não respondeu",
+    "Comprou com concorrente",
+    "Dados inválidos",
+    "Duplicado",
+    "Outro",
+  ];
+
+  const desqualificar = (leadId: string) => {
+    const motivo = motivoDesqualificacao === "Outro" ? motivoDesqualificacaoOutro : motivoDesqualificacao;
+    if (!motivo) { toast.error("Selecione um motivo"); return; }
+    setListaLeads(prev => prev.map(l => l.id === leadId ? { ...l, etapa: "Desqualificado" as LeadEtapa } : l));
+    toast.success("Lead desqualificado: " + motivo);
+    setDesqualificarLead(null);
+    setMotivoDesqualificacao("");
+    setMotivoDesqualificacaoOutro("");
+  };
 
   const avancarEtapa = (leadId: string) => {
     setListaLeads(prev => prev.map(l => {
@@ -148,6 +172,35 @@ export default function CRM() {
             <Button size="sm" variant="outline" asChild>
               <a href={docPreview?.url} download={docPreview?.nome}><Download className="h-3.5 w-3.5 mr-1.5" /> Baixar</a>
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog desqualificar lead */}
+      <Dialog open={!!desqualificarLead} onOpenChange={(open) => { if (!open) { setDesqualificarLead(null); setMotivoDesqualificacao(""); setMotivoDesqualificacaoOutro(""); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <XCircle className="h-4 w-4 text-destructive" /> Desqualificar Lead
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Label>Motivo da desqualificação</Label>
+            <Select value={motivoDesqualificacao} onValueChange={setMotivoDesqualificacao}>
+              <SelectTrigger><SelectValue placeholder="Selecione o motivo" /></SelectTrigger>
+              <SelectContent>
+                {MOTIVOS_DESQUALIFICACAO.map(m => (
+                  <SelectItem key={m} value={m}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {motivoDesqualificacao === "Outro" && (
+              <Textarea placeholder="Descreva o motivo..." value={motivoDesqualificacaoOutro} onChange={e => setMotivoDesqualificacaoOutro(e.target.value)} className="min-h-[80px]" />
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setDesqualificarLead(null); setMotivoDesqualificacao(""); setMotivoDesqualificacaoOutro(""); }}>Cancelar</Button>
+            <Button variant="destructive" onClick={() => desqualificarLead && desqualificar(desqualificarLead)}>Desqualificar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -313,9 +366,14 @@ export default function CRM() {
                           <td className="p-3 hidden md:table-cell">{lead.corretor}</td>
                           <td className="p-3 hidden lg:table-cell text-muted-foreground">{lead.dataEntrada}</td>
                           <td className="p-3">
-                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-green-500 text-green-600 hover:bg-green-50" onClick={(e) => { e.stopPropagation(); avancarEtapa(lead.id); }}>
-                              Qualificar <ArrowRight className="h-3 w-3" />
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-green-500 text-green-600 hover:bg-green-50" onClick={(e) => { e.stopPropagation(); avancarEtapa(lead.id); }}>
+                                Qualificar <ArrowRight className="h-3 w-3" />
+                              </Button>
+                              <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-destructive text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); setDesqualificarLead(lead.id); }}>
+                                <XCircle className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </td>
                           <td className="p-3">
                             {expandedLead === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
