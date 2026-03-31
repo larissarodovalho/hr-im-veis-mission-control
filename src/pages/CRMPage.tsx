@@ -82,6 +82,7 @@ export default function CRM() {
   const [periodoLeads, setPeriodoLeads]   = useState<Periodo>("Tudo");
   const [periodoContas, setPeriodoContas] = useState<Periodo>("Tudo");
   const [periodoOps, setPeriodoOps]       = useState<Periodo>("Tudo");
+  const [metricaAberta, setMetricaAberta] = useState<"reunioes" | "propostas" | "aceitas" | "nao_aceitas" | null>(null);
 
   const avancarEtapa = (leadId: string) => {
     setListaLeads(prev => prev.map(l => {
