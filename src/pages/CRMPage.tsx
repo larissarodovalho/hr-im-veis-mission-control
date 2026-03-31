@@ -643,12 +643,13 @@ export default function CRM() {
 
         return (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               {[
                 { key: "reunioes" as const, icon: <CalendarCheck className="h-4 w-4 text-primary" />, label: "Reuniões Realizadas", count: reunioes.length, sub: "Total de reuniões/visitas concluídas", color: "" },
                 { key: "propostas" as const, icon: <ClipboardList className="h-4 w-4 text-amber-500" />, label: "Propostas Enviadas", count: propostas.length, sub: "Total de propostas geradas", color: "" },
                 { key: "aceitas" as const, icon: <CheckCircle2 className="h-4 w-4 text-green-500" />, label: "Propostas Aceitas", count: aceitas.length, sub: `Taxa: ${taxaAceite}%`, color: "text-green-600 dark:text-green-400" },
                 { key: "nao_aceitas" as const, icon: <AlertCircle className="h-4 w-4 text-red-500" />, label: "Propostas Não Aceitas", count: naoAceitas.length, sub: "Aguardando decisão ou recusadas", color: "text-red-600 dark:text-red-400" },
+                { key: "vendas_fechadas" as const, icon: <DollarSign className="h-4 w-4 text-emerald-600" />, label: "Vendas Fechadas", count: vendasFechadas.length, sub: `Conversão: ${reunioes.length > 0 ? ((vendasFechadas.length / reunioes.length) * 100).toFixed(0) : 0}%`, color: "text-emerald-600 dark:text-emerald-400" },
               ].map(m => (
                 <div key={m.key}
                   className={`stat-card cursor-pointer transition-all hover:ring-2 hover:ring-primary/30 ${metricaAberta === m.key ? "ring-2 ring-primary" : ""}`}
