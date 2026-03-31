@@ -82,6 +82,7 @@ export default function CRM() {
   const [periodoLeads, setPeriodoLeads]   = useState<Periodo>("Tudo");
   const [periodoContas, setPeriodoContas] = useState<Periodo>("Tudo");
   const [periodoOps, setPeriodoOps]       = useState<Periodo>("Tudo");
+  const [periodoImoveis, setPeriodoImoveis] = useState<Periodo>("Tudo");
   const [metricaAberta, setMetricaAberta] = useState<"reunioes" | "propostas" | "aceitas" | "nao_aceitas" | "vendas_fechadas" | null>(null);
   const [propostaDocs, setPropostaDocs] = useState<Record<string, { nome: string; url: string; tipo: string }>>({});
   const [docPreview, setDocPreview] = useState<{ nome: string; url: string; tipo: string } | null>(null);
