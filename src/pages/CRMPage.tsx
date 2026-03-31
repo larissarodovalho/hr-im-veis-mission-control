@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { leads as leadsIniciais, imoveis, corretoresRanking, funnelPorCorretor, contas, oportunidades, leadsPorOrigem, leadsTotaisPorOrigem, produtosPorLead, motivosDesqualificacao, oportunidadesFases, motivosDaPerda, vgv, ticketMedio, visitas as visitasIniciais, visitasPorTipoImovel, tarefas, type TipoTarefa, type StatusTarefa, type StatusVisita, type Visita, type Lead, type LeadEtapa } from "@/data/mockData";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line, CartesianGrid } from "recharts";
-import { ChevronDown, ChevronUp, Phone, MessageSquare, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList, BarChart2, HandCoins, CalendarCheck, CheckCircle2, Clock, AlertCircle, Circle, ArrowRight, Home, FileDown, Download } from "lucide-react";
+import { ChevronDown, ChevronUp, Phone, MessageSquare, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList, BarChart2, HandCoins, CalendarCheck, CheckCircle2, Clock, AlertCircle, Circle, ArrowRight, Home, FileDown, Download, Paperclip, Eye, FileText } from "lucide-react";
 import { toast } from "sonner";
 import ImoveisTab from "@/components/ImoveisTab";
 import OportunidadeDetalhe from "@/components/OportunidadeDetalhe";
@@ -83,6 +83,8 @@ export default function CRM() {
   const [periodoContas, setPeriodoContas] = useState<Periodo>("Tudo");
   const [periodoOps, setPeriodoOps]       = useState<Periodo>("Tudo");
   const [metricaAberta, setMetricaAberta] = useState<"reunioes" | "propostas" | "aceitas" | "nao_aceitas" | null>(null);
+  const [propostaDocs, setPropostaDocs] = useState<Record<string, { nome: string; url: string; tipo: string }>>({});
+  const [docPreview, setDocPreview] = useState<{ nome: string; url: string; tipo: string } | null>(null);
 
   const avancarEtapa = (leadId: string) => {
     setListaLeads(prev => prev.map(l => {
@@ -124,6 +126,28 @@ export default function CRM() {
 
   return (
     <div className="space-y-6">
+      {/* Dialog preview de documento de proposta */}
+      <Dialog open={!!docPreview} onOpenChange={(open) => { if (!open) setDocPreview(null); }}>
+        <DialogContent className="sm:max-w-3xl max-h-[85vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-4 w-4" /> {docPreview?.nome}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="w-full h-[60vh] rounded-md overflow-hidden border bg-muted/20">
+            {docPreview && (docPreview.tipo.startsWith("image/") ? (
+              <img src={docPreview.url} alt={docPreview.nome} className="w-full h-full object-contain" />
+            ) : (
+              <iframe src={docPreview.url} className="w-full h-full" title={docPreview.nome} />
+            ))}
+          </div>
+          <DialogFooter>
+            <Button size="sm" variant="outline" asChild>
+              <a href={docPreview?.url} download={docPreview?.nome}><Download className="h-3.5 w-3.5 mr-1.5" /> Baixar</a>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <h2 className="section-title">CRM — Comercial</h2>
 
       <Tabs defaultValue="leads">
@@ -653,12 +677,14 @@ export default function CRM() {
                           <th className="text-left p-3 font-medium">Corretor</th>
                           <th className="text-left p-3 font-medium">Etapa</th>
                           <th className="text-left p-3 font-medium hidden md:table-cell">Imóvel Vinculado</th>
+                          {metricaAberta !== "reunioes" && <th className="text-left p-3 font-medium">Proposta</th>}
                           <th className="text-left p-3 font-medium hidden lg:table-cell">Data</th>
                         </tr>
                       </thead>
                       <tbody>
                         {metricaLeads.map(lead => {
                           const imovelVinculado = imoveis.find(i => i.corretor === lead.corretor && i.status === (lead.etapa === "Fechamento" ? "Vendido" : "Em negociação"));
+                          const doc = propostaDocs[lead.id];
                           return (
                             <tr key={lead.id} className="border-b hover:bg-muted/30">
                               <td className="p-3 font-medium">{lead.nome}</td>
@@ -674,6 +700,30 @@ export default function CRM() {
                                   </span>
                                 ) : "—"}
                               </td>
+                              {metricaAberta !== "reunioes" && (
+                                <td className="p-3">
+                                  {doc ? (
+                                    <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setDocPreview(doc)}>
+                                      <Eye className="h-3 w-3" /> {doc.nome.length > 15 ? doc.nome.slice(0, 15) + "…" : doc.nome}
+                                    </Button>
+                                  ) : (
+                                    <label className="cursor-pointer">
+                                      <Button size="sm" variant="outline" className="h-7 text-xs gap-1 pointer-events-none">
+                                        <Paperclip className="h-3 w-3" /> Anexar
+                                      </Button>
+                                      <input type="file" className="hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (!file) return;
+                                          const url = URL.createObjectURL(file);
+                                          setPropostaDocs(prev => ({ ...prev, [lead.id]: { nome: file.name, url, tipo: file.type } }));
+                                          toast.success(`Documento "${file.name}" anexado à proposta de ${lead.nome}`);
+                                        }}
+                                      />
+                                    </label>
+                                  )}
+                                </td>
+                              )}
                               <td className="p-3 hidden lg:table-cell text-muted-foreground">{lead.dataEntrada}</td>
                             </tr>
                           );
