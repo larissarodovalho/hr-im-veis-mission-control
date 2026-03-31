@@ -324,6 +324,16 @@ export default function CRM() {
                           <td className="p-3 hidden md:table-cell">{lead.corretor}</td>
                           <td className="p-3 hidden lg:table-cell text-muted-foreground">{lead.dataEntrada}</td>
                           <td className="p-3">
+                            <Badge variant="outline" className={`text-xs ${
+                              lead.etapa === "Lead recebido" ? "border-gray-400 text-gray-600" :
+                              lead.etapa === "Qualificado" ? "border-blue-500 text-blue-600" :
+                              lead.etapa === "Visita agendada" ? "border-cyan-500 text-cyan-600" :
+                              lead.etapa === "Visita realizada" ? "border-teal-500 text-teal-600" :
+                              lead.etapa === "Proposta" ? "border-amber-500 text-amber-600" :
+                              "border-green-500 text-green-600"
+                            }`}>{lead.etapa}</Badge>
+                          </td>
+                          <td className="p-3">
                             <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-green-500 text-green-600 hover:bg-green-50" onClick={(e) => { e.stopPropagation(); avancarEtapa(lead.id); }}>
                               Qualificar <ArrowRight className="h-3 w-3" />
                             </Button>
