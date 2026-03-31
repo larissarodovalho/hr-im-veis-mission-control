@@ -226,6 +226,7 @@ export default function CRM() {
                           id: `lead-${Date.now()}`,
                           nome,
                           telefone,
+                          email: novoLead.email.trim() || undefined,
                           canal: novoLead.canal,
                           corretor: novoLead.corretor,
                           origem: novoLead.origem,
@@ -234,7 +235,7 @@ export default function CRM() {
                           historico: [{ data: new Date().toISOString().slice(0, 16).replace("T", " "), mensagem: `Novo lead cadastrado manualmente. Canal: ${novoLead.canal}.`, remetente: "Sofia" }],
                         };
                         setListaLeads(prev => [novo, ...prev]);
-                        setNovoLead({ nome: "", telefone: "", canal: "Meta Ads", corretor: "Hans", origem: "Marketing" });
+                        setNovoLead({ nome: "", telefone: "", email: "", canal: "Meta Ads", corretor: "Hans", origem: "Marketing" });
                         setDialogNovoLead(false);
                         toast.success(`Lead "${nome}" cadastrado com sucesso!`);
                       }}>Cadastrar</Button>
