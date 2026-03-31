@@ -1322,9 +1322,9 @@ export default function CRM() {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={180}>
-                  <BarChart data={motivosDesqualificacao} layout="vertical" margin={{ left: 120 }}>
+                  <BarChart data={motivosDesqualificacao} layout="vertical" margin={{ left: 0, right: 10 }}>
                     <XAxis type="number" fontSize={11} allowDecimals={false} />
-                    <YAxis type="category" dataKey="motivo" fontSize={9} width={115} />
+                    <YAxis type="category" dataKey="motivo" fontSize={9} width={90} tickMargin={2} />
                     <Tooltip formatter={(v) => [v, "Leads"]} />
                     <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
                       {motivosDesqualificacao.map((e, i) => <Cell key={i} fill={e.fill} />)}
