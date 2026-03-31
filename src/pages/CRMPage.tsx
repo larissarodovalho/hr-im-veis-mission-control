@@ -463,6 +463,11 @@ export default function CRM() {
           </div>
         </TabsContent>
 
+        {/* ── ABA: Imóveis ── */}
+        <TabsContent value="imoveis" className="space-y-4">
+          <ImoveisTab />
+        </TabsContent>
+
         {/* ── ABA: Funil de Vendas ── */}
         <TabsContent value="funil" className="space-y-6">
 
