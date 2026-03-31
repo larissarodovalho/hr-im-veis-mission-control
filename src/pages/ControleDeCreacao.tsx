@@ -46,7 +46,7 @@ export default function ControleDeCreacao() {
   const [periodoContas, setPeriodoContas] = useState<Periodo>("Tudo");
   const [periodoOps, setPeriodoOps]       = useState<Periodo>("Tudo");
 
-  const leadsF  = useMemo(() => filtrarPorData(leads,        periodoLeads),  [periodoLeads]);
+  const leadsF  = useMemo(() => filtrarPorData(leads.map(l => ({ ...l, dataCreacao: l.dataEntrada })), periodoLeads),  [periodoLeads]);
   const contasF = useMemo(() => filtrarPorData(contas,       periodoContas), [periodoContas]);
   const opsF    = useMemo(() => filtrarPorData(oportunidades, periodoOps),   [periodoOps]);
 
