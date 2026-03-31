@@ -16,6 +16,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieCha
 import { ChevronDown, ChevronUp, Phone, MessageSquare, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList, BarChart2, HandCoins, CalendarCheck, CheckCircle2, Clock, AlertCircle, Circle, ArrowRight, Home } from "lucide-react";
 import { toast } from "sonner";
 import ImoveisTab from "@/components/ImoveisTab";
+import OportunidadeDetalhe from "@/components/OportunidadeDetalhe";
 
 const ETAPAS_ORDEM: LeadEtapa[] = ["Lead recebido", "Qualificado", "Visita agendada", "Visita realizada", "Proposta", "Fechamento"];
 
