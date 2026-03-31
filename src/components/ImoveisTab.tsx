@@ -203,8 +203,34 @@ export default function ImoveisTab() {
     .filter(im => filtroCorretor === "Todos" || im.corretor === filtroCorretor)
     .filter(im => !busca || im.nome.toLowerCase().includes(busca.toLowerCase()) || im.codigo.toLowerCase().includes(busca.toLowerCase()));
 
+  const totalDisp = imoveisList.filter(i => i.status === "Disponível").length;
+  const totalNeg = imoveisList.filter(i => i.status === "Em negociação").length;
+  const totalVend = imoveisList.filter(i => i.status === "Vendido").length;
+  const totalInd = imoveisList.filter(i => i.status === "Indisponível").length;
+
+  const statusCards: { label: string; value: "Todos" | Imovel["status"]; count: number; color: string }[] = [
+    { label: "Total", value: "Todos", count: imoveisList.length, color: "border-primary/50 hover:border-primary" },
+    { label: "Disponíveis", value: "Disponível", count: totalDisp, color: "border-green-500/50 hover:border-green-500" },
+    { label: "Em Negociação", value: "Em negociação", count: totalNeg, color: "border-amber-500/50 hover:border-amber-500" },
+    { label: "Vendidos", value: "Vendido", count: totalVend, color: "border-primary/50 hover:border-primary" },
+    { label: "Indisponíveis", value: "Indisponível", count: totalInd, color: "border-red-500/50 hover:border-red-500" },
+  ];
+
   return (
     <div className="space-y-4">
+      {/* Status Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        {statusCards.map(sc => (
+          <button
+            key={sc.label}
+            onClick={() => setFiltroStatus(sc.value)}
+            className={`rounded-lg border-2 p-3 text-left transition-all cursor-pointer ${sc.color} ${filtroStatus === sc.value ? "ring-2 ring-primary bg-muted/60" : "bg-card hover:bg-muted/30"}`}
+          >
+            <p className="text-xs text-muted-foreground">{sc.label}</p>
+            <p className="text-2xl font-bold">{sc.count}</p>
+          </button>
+        ))}
+      </div>
       {/* Header */}
       <div className="flex flex-wrap items-center gap-3 justify-between">
         <div className="flex items-center gap-2 flex-1 min-w-[200px]">
