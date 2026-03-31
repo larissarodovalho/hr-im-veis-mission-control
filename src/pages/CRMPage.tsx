@@ -596,52 +596,105 @@ export default function CRM() {
       </div>
 
       {/* Métricas: Reuniões e Propostas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="stat-card">
-          <div className="flex items-center gap-2 mb-1">
-            <CalendarCheck className="h-4 w-4 text-primary" />
-            <span className="text-sm text-muted-foreground">Reuniões Realizadas</span>
-          </div>
-          <p className="text-xl font-bold font-display">
-            {listaLeads.filter(l => ["Visita realizada", "Proposta", "Fechamento"].includes(l.etapa)).length}
-          </p>
-          <p className="text-xs text-muted-foreground">Total de reuniões/visitas concluídas</p>
-        </div>
-        <div className="stat-card">
-          <div className="flex items-center gap-2 mb-1">
-            <ClipboardList className="h-4 w-4 text-amber-500" />
-            <span className="text-sm text-muted-foreground">Propostas Enviadas</span>
-          </div>
-          <p className="text-xl font-bold font-display">
-            {listaLeads.filter(l => ["Proposta", "Fechamento"].includes(l.etapa)).length}
-          </p>
-          <p className="text-xs text-muted-foreground">Total de propostas geradas</p>
-        </div>
-        <div className="stat-card">
-          <div className="flex items-center gap-2 mb-1">
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-            <span className="text-sm text-muted-foreground">Propostas Aceitas</span>
-          </div>
-          <p className="text-xl font-bold font-display text-green-600 dark:text-green-400">
-            {listaLeads.filter(l => l.etapa === "Fechamento").length}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Taxa: {listaLeads.filter(l => ["Proposta", "Fechamento"].includes(l.etapa)).length > 0
-              ? ((listaLeads.filter(l => l.etapa === "Fechamento").length / listaLeads.filter(l => ["Proposta", "Fechamento"].includes(l.etapa)).length) * 100).toFixed(0)
-              : 0}%
-          </p>
-        </div>
-        <div className="stat-card">
-          <div className="flex items-center gap-2 mb-1">
-            <AlertCircle className="h-4 w-4 text-red-500" />
-            <span className="text-sm text-muted-foreground">Propostas Não Aceitas</span>
-          </div>
-          <p className="text-xl font-bold font-display text-red-600 dark:text-red-400">
-            {listaLeads.filter(l => l.etapa === "Proposta").length}
-          </p>
-          <p className="text-xs text-muted-foreground">Aguardando decisão ou recusadas</p>
-        </div>
-      </div>
+      {(() => {
+        const reunioes = listaLeads.filter(l => ["Visita realizada", "Proposta", "Fechamento"].includes(l.etapa));
+        const propostas = listaLeads.filter(l => ["Proposta", "Fechamento"].includes(l.etapa));
+        const aceitas = listaLeads.filter(l => l.etapa === "Fechamento");
+        const naoAceitas = listaLeads.filter(l => l.etapa === "Proposta");
+        const taxaAceite = propostas.length > 0 ? ((aceitas.length / propostas.length) * 100).toFixed(0) : "0";
+
+        const metricaLeads = metricaAberta === "reunioes" ? reunioes
+          : metricaAberta === "propostas" ? propostas
+          : metricaAberta === "aceitas" ? aceitas
+          : metricaAberta === "nao_aceitas" ? naoAceitas
+          : [];
+
+        const metricaTitulo = metricaAberta === "reunioes" ? "Reuniões Realizadas"
+          : metricaAberta === "propostas" ? "Propostas Enviadas"
+          : metricaAberta === "aceitas" ? "Propostas Aceitas"
+          : "Propostas Não Aceitas";
+
+        return (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { key: "reunioes" as const, icon: <CalendarCheck className="h-4 w-4 text-primary" />, label: "Reuniões Realizadas", count: reunioes.length, sub: "Total de reuniões/visitas concluídas", color: "" },
+                { key: "propostas" as const, icon: <ClipboardList className="h-4 w-4 text-amber-500" />, label: "Propostas Enviadas", count: propostas.length, sub: "Total de propostas geradas", color: "" },
+                { key: "aceitas" as const, icon: <CheckCircle2 className="h-4 w-4 text-green-500" />, label: "Propostas Aceitas", count: aceitas.length, sub: `Taxa: ${taxaAceite}%`, color: "text-green-600 dark:text-green-400" },
+                { key: "nao_aceitas" as const, icon: <AlertCircle className="h-4 w-4 text-red-500" />, label: "Propostas Não Aceitas", count: naoAceitas.length, sub: "Aguardando decisão ou recusadas", color: "text-red-600 dark:text-red-400" },
+              ].map(m => (
+                <div key={m.key}
+                  className={`stat-card cursor-pointer transition-all hover:ring-2 hover:ring-primary/30 ${metricaAberta === m.key ? "ring-2 ring-primary" : ""}`}
+                  onClick={() => setMetricaAberta(metricaAberta === m.key ? null : m.key)}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    {m.icon}
+                    <span className="text-sm text-muted-foreground">{m.label}</span>
+                  </div>
+                  <p className={`text-xl font-bold font-display ${m.color}`}>{m.count}</p>
+                  <p className="text-xs text-muted-foreground">{m.sub}</p>
+                </div>
+              ))}
+            </div>
+
+            {metricaAberta && metricaLeads.length > 0 && (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-base">{metricaTitulo} — Detalhes</CardTitle>
+                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setMetricaAberta(null)}>Fechar</Button>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b bg-muted/50">
+                          <th className="text-left p-3 font-medium">Cliente</th>
+                          <th className="text-left p-3 font-medium hidden sm:table-cell">Telefone</th>
+                          <th className="text-left p-3 font-medium">Corretor</th>
+                          <th className="text-left p-3 font-medium">Etapa</th>
+                          <th className="text-left p-3 font-medium hidden md:table-cell">Imóvel Vinculado</th>
+                          <th className="text-left p-3 font-medium hidden lg:table-cell">Data</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {metricaLeads.map(lead => {
+                          const imovelVinculado = imoveis.find(i => i.corretor === lead.corretor && i.status === (lead.etapa === "Fechamento" ? "Vendido" : "Em negociação"));
+                          return (
+                            <tr key={lead.id} className="border-b hover:bg-muted/30">
+                              <td className="p-3 font-medium">{lead.nome}</td>
+                              <td className="p-3 hidden sm:table-cell">{lead.telefone}</td>
+                              <td className="p-3">{lead.corretor}</td>
+                              <td className="p-3">
+                                <Badge variant={lead.etapa === "Fechamento" ? "default" : "outline"} className="text-xs">{lead.etapa}</Badge>
+                              </td>
+                              <td className="p-3 hidden md:table-cell text-muted-foreground">
+                                {imovelVinculado ? (
+                                  <span className="flex items-center gap-1">
+                                    <Home className="h-3 w-3" /> {imovelVinculado.nome} — R$ {imovelVinculado.valor.toLocaleString("pt-BR")}
+                                  </span>
+                                ) : "—"}
+                              </td>
+                              <td className="p-3 hidden lg:table-cell text-muted-foreground">{lead.dataEntrada}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {metricaAberta && metricaLeads.length === 0 && (
+              <Card>
+                <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                  Nenhum registro encontrado para "{metricaTitulo}".
+                </CardContent>
+              </Card>
+            )}
+          </>
+        );
+      })()}
 
       {/* Leads Table */}
       <Card>
