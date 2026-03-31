@@ -7,9 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { leads, imoveis, corretoresRanking, funnelPorCorretor, contas, oportunidades, leadsPorOrigem, leadsTotaisPorOrigem, produtosPorLead, motivosDesqualificacao, oportunidadesFases, motivosDaPerda, vgv, ticketMedio } from "@/data/mockData";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
-import { ChevronDown, ChevronUp, Phone, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList, BarChart2, HandCoins } from "lucide-react";
+import { leads, imoveis, corretoresRanking, funnelPorCorretor, contas, oportunidades, leadsPorOrigem, leadsTotaisPorOrigem, produtosPorLead, motivosDesqualificacao, oportunidadesFases, motivosDaPerda, vgv, ticketMedio, visitas, visitasPorTipoImovel } from "@/data/mockData";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line, CartesianGrid } from "recharts";
+import { ChevronDown, ChevronUp, Phone, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList, BarChart2, HandCoins, CalendarCheck } from "lucide-react";
 
 type Periodo = "Tudo" | "Este mês" | "Mês anterior" | "Este ano";
 
@@ -91,6 +91,9 @@ export default function CRM() {
           </TabsTrigger>
           <TabsTrigger value="oportunidades" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <HandCoins className="h-3.5 w-3.5" /> Oportunidades
+          </TabsTrigger>
+          <TabsTrigger value="visitas" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <CalendarCheck className="h-3.5 w-3.5" /> Visitas
           </TabsTrigger>
         </TabsList>
 
@@ -791,6 +794,184 @@ export default function CRM() {
               </CardContent>
             </Card>
           </div>
+
+        </TabsContent>
+
+        {/* ── ABA: Visitas ── */}
+        <TabsContent value="visitas" className="space-y-4">
+
+          {/* Linha 1: Total + Por Usuário */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Total */}
+            <Card>
+              <CardHeader className="pb-1">
+                <CardTitle className="text-sm">Quantidade Total de Visitas</CardTitle>
+              </CardHeader>
+              <CardContent className="flex items-center justify-center h-[160px]">
+                <p className="text-8xl font-bold font-display text-primary leading-none">{visitas.length}</p>
+              </CardContent>
+            </Card>
+
+            {/* Por usuário */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Visitas por Corretor</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart
+                    data={CORRETORES.map((c) => ({ nome: c, quantidade: visitas.filter((v) => v.corretor === c).length, fill: FILLS[c] }))}
+                    layout="vertical" margin={{ left: 80 }}
+                  >
+                    <XAxis type="number" fontSize={11} allowDecimals={false} />
+                    <YAxis type="category" dataKey="nome" fontSize={11} width={75} />
+                    <Tooltip formatter={(v) => [v, "Visitas"]} />
+                    <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
+                      {CORRETORES.map((_, i) => <Cell key={i} fill={Object.values(FILLS)[i]} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Linha 2: Por conta + Data de criação */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Visitas por conta (top 8) */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Visitas por Conta (Top 8)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const contagem: Record<string, number> = {};
+                  visitas.forEach((v) => { contagem[v.conta] = (contagem[v.conta] || 0) + 1; });
+                  const top = Object.entries(contagem).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([conta, quantidade]) => ({ conta: conta.split(" ").slice(0, 2).join(" "), quantidade }));
+                  return (
+                    <ResponsiveContainer width="100%" height={180}>
+                      <BarChart data={top} margin={{ bottom: 30 }}>
+                        <XAxis dataKey="conta" fontSize={9} interval={0} angle={-30} textAnchor="end" />
+                        <YAxis fontSize={11} allowDecimals={false} />
+                        <Tooltip formatter={(v) => [v, "Visitas"]} />
+                        <Bar dataKey="quantidade" fill="hsl(224, 73%, 45%)" radius={[5, 5, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+
+            {/* Data de criação */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Data de Criação da Visita</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const contagem: Record<string, number> = {};
+                  visitas.forEach((v) => { contagem[v.dataCriacao] = (contagem[v.dataCriacao] || 0) + 1; });
+                  const data = Object.entries(contagem).sort().map(([data, quantidade]) => ({ data: data.slice(5), quantidade }));
+                  return (
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart data={data} margin={{ bottom: 20 }}>
+                        <XAxis dataKey="data" fontSize={10} />
+                        <YAxis fontSize={11} allowDecimals={false} />
+                        <Tooltip formatter={(v) => [v, "Visitas"]} />
+                        <Bar dataKey="quantidade" fill="hsl(224, 73%, 45%)" radius={[5, 5, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Linha 3: Imóveis mais visitados + Tipo */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Imóveis mais visitados */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Imóveis de Interesse mais Visitados</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const contagem: Record<string, number> = {};
+                  visitas.forEach((v) => { contagem[v.imovel] = (contagem[v.imovel] || 0) + 1; });
+                  const top = Object.entries(contagem).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([imovel, quantidade]) => ({ imovel: imovel.split(" ").slice(0, 2).join(" "), quantidade }));
+                  return (
+                    <ResponsiveContainer width="100%" height={180}>
+                      <BarChart data={top} margin={{ bottom: 30 }}>
+                        <XAxis dataKey="imovel" fontSize={9} interval={0} angle={-30} textAnchor="end" />
+                        <YAxis fontSize={11} allowDecimals={false} />
+                        <Tooltip formatter={(v) => [v, "Visitas"]} />
+                        <Bar dataKey="quantidade" fill="hsl(43, 76%, 48%)" radius={[5, 5, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+
+            {/* Tipo de imóvel — rosca */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Visitas por Tipo de Imóvel</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center">
+                <ResponsiveContainer width="100%" height={180}>
+                  <PieChart>
+                    <Pie data={visitasPorTipoImovel} dataKey="quantidade" cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={3} label={({ value }) => value}>
+                      {visitasPorTipoImovel.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                    </Pie>
+                    <Tooltip formatter={(v, n) => [v, n]} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="flex gap-4 mt-1">
+                  {visitasPorTipoImovel.map((e) => (
+                    <span key={e.tipo} className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: e.fill }} />
+                      {e.tipo}
+                    </span>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Tabela: Todas as visitas */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Todas as Visitas e Imóveis de Interesse</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="text-left p-3 font-medium">Visita</th>
+                      <th className="text-left p-3 font-medium">Conta</th>
+                      <th className="text-left p-3 font-medium">Corretor</th>
+                      <th className="text-left p-3 font-medium">Imóvel</th>
+                      <th className="text-left p-3 font-medium">Valor</th>
+                      <th className="text-left p-3 font-medium">Data</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visitas.map((v) => (
+                      <tr key={v.id} className="border-b hover:bg-muted/30">
+                        <td className="p-3 font-mono text-muted-foreground">{v.nome}</td>
+                        <td className="p-3 font-medium">{v.conta}</td>
+                        <td className="p-3">{v.corretor}</td>
+                        <td className="p-3">{v.imovel}</td>
+                        <td className="p-3">R$ {v.valorImovel.toLocaleString("pt-BR")}</td>
+                        <td className="p-3 text-muted-foreground">{v.dataCriacao}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
 
         </TabsContent>
 
