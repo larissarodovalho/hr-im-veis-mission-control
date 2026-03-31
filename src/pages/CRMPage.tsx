@@ -625,18 +625,21 @@ export default function CRM() {
         const propostas = listaLeads.filter(l => ["Proposta", "Fechamento"].includes(l.etapa));
         const aceitas = listaLeads.filter(l => l.etapa === "Fechamento");
         const naoAceitas = listaLeads.filter(l => l.etapa === "Proposta");
+        const vendasFechadas = listaLeads.filter(l => l.etapa === "Fechamento" && imoveis.some(i => i.corretor === l.corretor && i.status === "Vendido"));
         const taxaAceite = propostas.length > 0 ? ((aceitas.length / propostas.length) * 100).toFixed(0) : "0";
 
         const metricaLeads = metricaAberta === "reunioes" ? reunioes
           : metricaAberta === "propostas" ? propostas
           : metricaAberta === "aceitas" ? aceitas
           : metricaAberta === "nao_aceitas" ? naoAceitas
+          : metricaAberta === "vendas_fechadas" ? vendasFechadas
           : [];
 
         const metricaTitulo = metricaAberta === "reunioes" ? "Reuniões Realizadas"
           : metricaAberta === "propostas" ? "Propostas Enviadas"
           : metricaAberta === "aceitas" ? "Propostas Aceitas"
-          : "Propostas Não Aceitas";
+          : metricaAberta === "nao_aceitas" ? "Propostas Não Aceitas"
+          : "Vendas Fechadas";
 
         return (
           <>
