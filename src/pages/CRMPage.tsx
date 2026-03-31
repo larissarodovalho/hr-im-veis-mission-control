@@ -318,34 +318,48 @@ export default function CRM() {
 
         {/* ── ABA: Contatos (já qualificados) ── */}
         <TabsContent value="contatos" className="space-y-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Contatos — Leads Qualificados</CardTitle>
-              <Badge variant="outline" className="text-xs">{listaLeads.filter(l => l.etapa !== "Lead recebido").length} contatos</Badge>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="text-left p-3 font-medium">Nome</th>
-                      <th className="text-left p-3 font-medium hidden sm:table-cell">Telefone</th>
-                      <th className="text-left p-3 font-medium">Canal</th>
-                      <th className="text-left p-3 font-medium hidden md:table-cell">Origem</th>
-                      <th className="text-left p-3 font-medium hidden md:table-cell">Corretor</th>
-                      <th className="text-left p-3 font-medium">Etapa</th>
-                      <th className="text-left p-3 font-medium hidden lg:table-cell">Entrada</th>
-                      <th className="text-left p-3 font-medium">Ação</th>
-                      <th className="p-3 w-10"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {listaLeads.filter(l => l.etapa !== "Lead recebido").map((lead) => (
-                      <>
+          {contatoAberto ? (
+            (() => {
+              const lead = listaLeads.find(l => l.id === contatoAberto);
+              if (!lead) return null;
+              return (
+                <OportunidadeDetalhe
+                  lead={lead}
+                  onVoltar={() => setContatoAberto(null)}
+                  onAvancarEtapa={avancarEtapa}
+                  onSetEtapa={(leadId, etapa) => {
+                    setListaLeads(prev => prev.map(l => l.id === leadId ? { ...l, etapa } : l));
+                    toast.success(`Fase alterada para "${etapa}"`);
+                  }}
+                />
+              );
+            })()
+          ) : (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Contatos — Leads Qualificados</CardTitle>
+                <Badge variant="outline" className="text-xs">{listaLeads.filter(l => l.etapa !== "Lead recebido").length} contatos</Badge>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        <th className="text-left p-3 font-medium">Nome</th>
+                        <th className="text-left p-3 font-medium hidden sm:table-cell">Telefone</th>
+                        <th className="text-left p-3 font-medium">Canal</th>
+                        <th className="text-left p-3 font-medium hidden md:table-cell">Corretor</th>
+                        <th className="text-left p-3 font-medium">Etapa</th>
+                        <th className="text-left p-3 font-medium hidden lg:table-cell">Entrada</th>
+                        <th className="text-left p-3 font-medium">Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {listaLeads.filter(l => l.etapa !== "Lead recebido").map((lead) => (
                         <tr
                           key={lead.id}
                           className="border-b hover:bg-muted/30 cursor-pointer"
-                          onClick={() => setExpandedLead(expandedLead === lead.id ? null : lead.id)}
+                          onClick={() => setContatoAberto(lead.id)}
                         >
                           <td className="p-3 font-medium">{lead.nome}</td>
                           <td className="p-3 hidden sm:table-cell">
@@ -354,51 +368,24 @@ export default function CRM() {
                           <td className="p-3">
                             <Badge variant={lead.canal === "Meta Ads" ? "default" : "secondary"} className="text-xs">{lead.canal}</Badge>
                           </td>
-                          <td className="p-3 hidden md:table-cell">
-                            <Badge variant="outline" className={`text-xs ${lead.origem === "Carteira" ? "border-blue-500 text-blue-600" : "border-amber-500 text-amber-600"}`}>{lead.origem}</Badge>
-                          </td>
                           <td className="p-3 hidden md:table-cell">{lead.corretor}</td>
                           <td className="p-3">
                             <Badge variant="outline" className="text-xs">{lead.etapa}</Badge>
                           </td>
                           <td className="p-3 hidden lg:table-cell text-muted-foreground">{lead.dataEntrada}</td>
                           <td className="p-3">
-                            {lead.etapa !== "Fechamento" ? (
-                              <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-primary text-primary hover:bg-primary/5" onClick={(e) => { e.stopPropagation(); avancarEtapa(lead.id); }}>
-                                {ETAPAS_ORDEM[ETAPAS_ORDEM.indexOf(lead.etapa) + 1]} <ArrowRight className="h-3 w-3" />
-                              </Button>
-                            ) : (
-                              <Badge className="text-xs bg-green-500">✓ Fechado</Badge>
-                            )}
-                          </td>
-                          <td className="p-3">
-                            {expandedLead === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
+                              Abrir <ArrowRight className="h-3 w-3" />
+                            </Button>
                           </td>
                         </tr>
-                        {expandedLead === lead.id && (
-                          <tr key={`${lead.id}-hist`}>
-                            <td colSpan={9} className="p-4 bg-muted/20">
-                              <p className="text-xs font-semibold text-muted-foreground mb-2">Histórico — Sofia IA</p>
-                              <div className="space-y-2 max-h-48 overflow-y-auto">
-                                {lead.historico.map((msg, i) => (
-                                  <div key={i} className={`flex ${msg.remetente === "Sofia" ? "justify-start" : "justify-end"}`}>
-                                    <div className={`max-w-[80%] rounded-lg px-3 py-2 text-xs ${msg.remetente === "Sofia" ? "bg-primary/10 text-foreground" : "bg-accent/20 text-foreground"}`}>
-                                      <p className="font-medium text-[10px] text-muted-foreground mb-0.5">{msg.remetente} · {msg.data}</p>
-                                      <p>{msg.mensagem}</p>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* ── ABA: Kanban ── */}
