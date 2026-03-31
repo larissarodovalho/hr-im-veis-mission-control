@@ -1574,76 +1574,143 @@ export default function CRM() {
 
         {/* ── ABA: Relatórios ── */}
         <TabsContent value="relatorios" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Exportar Relatórios</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Relatório de Leads */}
-              <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/20">
-                <div>
-                  <h4 className="text-sm font-semibold">Relatório de Leads</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">Todos os leads com etapa, canal, corretor e data de entrada.</p>
-                </div>
-                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => {
-                  const header = ["Nome", "Telefone", "E-mail", "Canal", "Corretor", "Origem", "Etapa", "Data Entrada"];
-                  const rows = listaLeads.map(l => [l.nome, l.telefone, l.email || "", l.canal, l.corretor, l.origem, l.etapa, l.dataEntrada]);
-                  const csv = [header, ...rows].map(r => r.map(c => `"${c}"`).join(";")).join("\n");
-                  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a"); a.href = url; a.download = "relatorio_leads.csv"; a.click();
-                  URL.revokeObjectURL(url);
-                  toast.success("Relatório de Leads exportado!");
-                }}>
-                  <Download className="h-3.5 w-3.5" /> Exportar CSV
-                </Button>
-              </div>
-
-              {/* Relatório de Clientes (Contatos qualificados) */}
-              <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/20">
-                <div>
-                  <h4 className="text-sm font-semibold">Relatório de Clientes</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">Contatos qualificados (a partir de "Qualificado") com dados completos.</p>
-                </div>
-                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => {
-                  const clientes = listaLeads.filter(l => l.etapa !== "Lead recebido");
-                  const header = ["Nome", "Telefone", "E-mail", "Canal", "Corretor", "Origem", "Etapa", "Data Entrada"];
-                  const rows = clientes.map(l => [l.nome, l.telefone, l.email || "", l.canal, l.corretor, l.origem, l.etapa, l.dataEntrada]);
-                  const csv = [header, ...rows].map(r => r.map(c => `"${c}"`).join(";")).join("\n");
-                  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a"); a.href = url; a.download = "relatorio_clientes.csv"; a.click();
-                  URL.revokeObjectURL(url);
-                  toast.success("Relatório de Clientes exportado!");
-                }}>
-                  <Download className="h-3.5 w-3.5" /> Exportar CSV
-                </Button>
-              </div>
-
-              {/* Relatório de Imóveis */}
-              <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/20">
-                <div>
-                  <h4 className="text-sm font-semibold">Relatório de Imóveis</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">Todos os imóveis cadastrados com tipo, valor, status e corretor responsável.</p>
-                </div>
-                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => {
-                  const header = ["Nome", "Tipo", "Valor", "Status", "Corretor"];
-                  const rows = imoveis.map(i => [i.nome, i.tipo, `R$ ${i.valor.toLocaleString("pt-BR")}`, i.status, i.corretor]);
-                  const csv = [header, ...rows].map(r => r.map(c => `"${c}"`).join(";")).join("\n");
-                  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a"); a.href = url; a.download = "relatorio_imoveis.csv"; a.click();
-                  URL.revokeObjectURL(url);
-                  toast.success("Relatório de Imóveis exportado!");
-                }}>
-                  <Download className="h-3.5 w-3.5" /> Exportar CSV
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <RelatoriosTab listaLeads={listaLeads} imoveis={imoveis} />
         </TabsContent>
 
       </Tabs>
     </div>
+  );
+}
+
+/* ── Componente Relatórios com filtros ── */
+type FiltroLeadRel = "Todos" | "Qualificados" | "Não qualificados";
+type FiltroClienteRel = "Todos" | "Carteira" | "Marketing" | "Indicação" | "Compradores" | "Vendedores";
+type FiltroImovelRel = "Todos" | "Ativos" | "Desativados" | "Indisponível" | "Vendidos" | "Tirados de venda";
+
+function RelatoriosTab({ listaLeads, imoveis }: { listaLeads: Lead[]; imoveis: typeof import("@/data/mockData").imoveis }) {
+  const [filtroLead, setFiltroLead] = useState<FiltroLeadRel>("Todos");
+  const [filtroCliente, setFiltroCliente] = useState<FiltroClienteRel>("Todos");
+  const [filtroImovel, setFiltroImovel] = useState<FiltroImovelRel>("Todos");
+
+  const exportCSV = (header: string[], rows: string[][], filename: string) => {
+    const csv = [header, ...rows].map(r => r.map(c => `"${c}"`).join(";")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Leads filtrados
+  const leadsFiltrados = useMemo(() => {
+    if (filtroLead === "Qualificados") return listaLeads.filter(l => l.etapa !== "Lead recebido");
+    if (filtroLead === "Não qualificados") return listaLeads.filter(l => l.etapa === "Lead recebido");
+    return listaLeads;
+  }, [listaLeads, filtroLead]);
+
+  // Clientes filtrados
+  const clientesFiltrados = useMemo(() => {
+    const qualificados = listaLeads.filter(l => l.etapa !== "Lead recebido");
+    if (filtroCliente === "Carteira") return qualificados.filter(l => l.origem === "Carteira");
+    if (filtroCliente === "Marketing") return qualificados.filter(l => l.origem === "Marketing");
+    if (filtroCliente === "Indicação") return qualificados.filter(l => l.canal === "Indicação");
+    if (filtroCliente === "Compradores") return qualificados.filter(l => ["Visita agendada", "Visita realizada", "Proposta", "Fechamento"].includes(l.etapa));
+    if (filtroCliente === "Vendedores") return qualificados.filter(l => l.origem === "Carteira" && l.canal === "Indicação");
+    return qualificados;
+  }, [listaLeads, filtroCliente]);
+
+  // Imóveis filtrados
+  const imoveisFiltrados = useMemo(() => {
+    if (filtroImovel === "Ativos") return imoveis.filter(i => i.status === "Disponível");
+    if (filtroImovel === "Vendidos") return imoveis.filter(i => i.status === "Vendido");
+    if (filtroImovel === "Desativados") return imoveis.filter(i => (i as any).status === "Desativado");
+    if (filtroImovel === "Indisponível") return imoveis.filter(i => i.status === "Em negociação");
+    if (filtroImovel === "Tirados de venda") return imoveis.filter(i => (i as any).status === "Tirado de venda");
+    return imoveis;
+  }, [imoveis, filtroImovel]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Exportar Relatórios</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+
+        {/* Relatório de Leads */}
+        <div className="p-4 rounded-lg border bg-muted/20 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="text-sm font-semibold">Relatório de Leads</h4>
+              <p className="text-xs text-muted-foreground mt-0.5">Filtrar por tipo antes de exportar.</p>
+            </div>
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => {
+              const header = ["Nome", "Telefone", "E-mail", "Canal", "Corretor", "Origem", "Etapa", "Data Entrada"];
+              const rows = leadsFiltrados.map(l => [l.nome, l.telefone, l.email || "", l.canal, l.corretor, l.origem, l.etapa, l.dataEntrada]);
+              exportCSV(header, rows, `relatorio_leads_${filtroLead.toLowerCase().replace(/ /g, "_")}.csv`);
+              toast.success(`Relatório de Leads (${filtroLead}) exportado!`);
+            }}>
+              <Download className="h-3.5 w-3.5" /> Exportar CSV
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {(["Todos", "Qualificados", "Não qualificados"] as FiltroLeadRel[]).map(f => (
+              <Button key={f} size="sm" variant={filtroLead === f ? "default" : "outline"} className="h-7 text-xs"
+                onClick={() => setFiltroLead(f)}>{f}</Button>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">{leadsFiltrados.length} registro(s) selecionado(s)</p>
+        </div>
+
+        {/* Relatório de Clientes */}
+        <div className="p-4 rounded-lg border bg-muted/20 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="text-sm font-semibold">Relatório de Clientes</h4>
+              <p className="text-xs text-muted-foreground mt-0.5">Contatos qualificados por categoria.</p>
+            </div>
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => {
+              const header = ["Nome", "Telefone", "E-mail", "Canal", "Corretor", "Origem", "Etapa", "Data Entrada"];
+              const rows = clientesFiltrados.map(l => [l.nome, l.telefone, l.email || "", l.canal, l.corretor, l.origem, l.etapa, l.dataEntrada]);
+              exportCSV(header, rows, `relatorio_clientes_${filtroCliente.toLowerCase().replace(/ /g, "_")}.csv`);
+              toast.success(`Relatório de Clientes (${filtroCliente}) exportado!`);
+            }}>
+              <Download className="h-3.5 w-3.5" /> Exportar CSV
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {(["Todos", "Carteira", "Marketing", "Indicação", "Compradores", "Vendedores"] as FiltroClienteRel[]).map(f => (
+              <Button key={f} size="sm" variant={filtroCliente === f ? "default" : "outline"} className="h-7 text-xs"
+                onClick={() => setFiltroCliente(f)}>{f}</Button>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">{clientesFiltrados.length} registro(s) selecionado(s)</p>
+        </div>
+
+        {/* Relatório de Imóveis */}
+        <div className="p-4 rounded-lg border bg-muted/20 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="text-sm font-semibold">Relatório de Imóveis</h4>
+              <p className="text-xs text-muted-foreground mt-0.5">Imóveis por status de disponibilidade.</p>
+            </div>
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => {
+              const header = ["Nome", "Tipo", "Valor", "Status", "Corretor"];
+              const rows = imoveisFiltrados.map(i => [i.nome, i.tipo, `R$ ${i.valor.toLocaleString("pt-BR")}`, i.status, i.corretor]);
+              exportCSV(header, rows, `relatorio_imoveis_${filtroImovel.toLowerCase().replace(/ /g, "_")}.csv`);
+              toast.success(`Relatório de Imóveis (${filtroImovel}) exportado!`);
+            }}>
+              <Download className="h-3.5 w-3.5" /> Exportar CSV
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {(["Todos", "Ativos", "Desativados", "Indisponível", "Vendidos", "Tirados de venda"] as FiltroImovelRel[]).map(f => (
+              <Button key={f} size="sm" variant={filtroImovel === f ? "default" : "outline"} className="h-7 text-xs"
+                onClick={() => setFiltroImovel(f)}>{f}</Button>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">{imoveisFiltrados.length} registro(s) selecionado(s)</p>
+        </div>
+
+      </CardContent>
+    </Card>
   );
 }
