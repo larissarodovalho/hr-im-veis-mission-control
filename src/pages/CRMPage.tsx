@@ -108,6 +108,7 @@ export default function CRM() {
   const leadsPorCorretor  = useMemo(() => porCorretor(leadsF),  [leadsF]);
   const contasPorCorretor = useMemo(() => porCorretor(contasF), [contasF]);
   const opsPorCorretor    = useMemo(() => porCorretor(opsF),    [opsF]);
+  const imoveisPorCorretor = useMemo(() => porCorretor(imoveisF), [imoveisF]);
 
   const funnelDinamico = useMemo(() => ETAPAS_ORDEM.map((etapa, i) => ({
     etapa,
