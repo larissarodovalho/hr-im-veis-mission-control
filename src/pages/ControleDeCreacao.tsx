@@ -1,11 +1,11 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { leads, contas, oportunidades } from "@/data/mockData";
+import { leads, contas, oportunidades, imoveis } from "@/data/mockData";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
-import { Users, Building2, TrendingUp } from "lucide-react";
+import { Users, Building2, TrendingUp, Home } from "lucide-react";
 
 const CORRETORES = ["Hans", "Rafael", "Gabriel"] as const;
 const FILLS = {
@@ -42,17 +42,20 @@ function porCorretor<T extends { corretor: string }>(items: T[]) {
 }
 
 export default function ControleDeCreacao() {
-  const [periodoLeads, setPeriodoLeads]   = useState<Periodo>("Tudo");
-  const [periodoContas, setPeriodoContas] = useState<Periodo>("Tudo");
-  const [periodoOps, setPeriodoOps]       = useState<Periodo>("Tudo");
+  const [periodoLeads, setPeriodoLeads]     = useState<Periodo>("Tudo");
+  const [periodoContas, setPeriodoContas]   = useState<Periodo>("Tudo");
+  const [periodoOps, setPeriodoOps]         = useState<Periodo>("Tudo");
+  const [periodoImoveis, setPeriodoImoveis] = useState<Periodo>("Tudo");
 
-  const leadsF  = useMemo(() => filtrarPorData(leads.map(l => ({ ...l, dataCreacao: l.dataEntrada })), periodoLeads),  [periodoLeads]);
-  const contasF = useMemo(() => filtrarPorData(contas,       periodoContas), [periodoContas]);
-  const opsF    = useMemo(() => filtrarPorData(oportunidades, periodoOps),   [periodoOps]);
+  const leadsF    = useMemo(() => filtrarPorData(leads.map(l => ({ ...l, dataCreacao: l.dataEntrada })), periodoLeads),  [periodoLeads]);
+  const contasF   = useMemo(() => filtrarPorData(contas,        periodoContas), [periodoContas]);
+  const opsF      = useMemo(() => filtrarPorData(oportunidades, periodoOps),    [periodoOps]);
+  const imoveisF  = useMemo(() => filtrarPorData(imoveis,       periodoImoveis), [periodoImoveis]);
 
-  const leadsPorCorretor  = useMemo(() => porCorretor(leadsF),  [leadsF]);
-  const contasPorCorretor = useMemo(() => porCorretor(contasF), [contasF]);
-  const opsPorCorretor    = useMemo(() => porCorretor(opsF),    [opsF]);
+  const leadsPorCorretor    = useMemo(() => porCorretor(leadsF),   [leadsF]);
+  const contasPorCorretor   = useMemo(() => porCorretor(contasF),  [contasF]);
+  const opsPorCorretor      = useMemo(() => porCorretor(opsF),     [opsF]);
+  const imoveisPorCorretor  = useMemo(() => porCorretor(imoveisF), [imoveisF]);
 
   const PeriodoSelect = ({
     value,
@@ -78,7 +81,7 @@ export default function ControleDeCreacao() {
       <h2 className="section-title">Controle de Criação</h2>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Leads */}
         <Card>
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -145,6 +148,29 @@ export default function ControleDeCreacao() {
                 <Tooltip formatter={(v) => [v, "Oportunidades"]} />
                 <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
                   {opsPorCorretor.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        {/* Imóveis Criados */}
+        <Card>
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Home className="h-4 w-4 text-violet-500" />
+              <CardTitle className="text-sm">Imóveis Criados</CardTitle>
+            </div>
+            <PeriodoSelect value={periodoImoveis} onChange={setPeriodoImoveis} />
+          </CardHeader>
+          <CardContent>
+            <p className="text-5xl font-bold font-display text-violet-500 mb-4">{imoveisF.length}</p>
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart data={imoveisPorCorretor} layout="vertical" margin={{ left: 80 }}>
+                <XAxis type="number" fontSize={11} allowDecimals={false} />
+                <YAxis type="category" dataKey="nome" fontSize={11} width={75} />
+                <Tooltip formatter={(v) => [v, "Imóveis"]} />
+                <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
+                  {imoveisPorCorretor.map((e, i) => <Cell key={i} fill={e.fill} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
