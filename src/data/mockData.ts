@@ -412,3 +412,49 @@ export const systemHealth = [
   { nome: "Meta Ads API",        status: "online"    as const, ultimaChecagem: "2025-03-27 15:45", detalhe: "Rate limit: 12% utilizado" },
   { nome: "Google Ads API",      status: "online"    as const, ultimaChecagem: "2025-03-27 15:44", detalhe: "Quota: 8% utilizada" },
 ];
+
+// --- Controle de Criação ---
+
+export interface Conta {
+  id: string;
+  nome: string;
+  tipo: "Pessoa Física" | "Pessoa Jurídica";
+  corretor: "Hans" | "Rafael" | "Gabriel";
+  dataCreacao: string;
+  cidade: string;
+}
+
+export interface Oportunidade {
+  id: string;
+  nome: string;
+  corretor: "Hans" | "Rafael" | "Gabriel";
+  valor: number;
+  estagio: "Prospecção" | "Qualificação" | "Proposta" | "Negociação" | "Fechamento";
+  dataCreacao: string;
+}
+
+export const contas: Conta[] = [
+  { id: "c1",  nome: "Carlos Eduardo Silva",    tipo: "Pessoa Física",   corretor: "Hans",    dataCreacao: "2026-01-10", cidade: "Sinop" },
+  { id: "c2",  nome: "Roberto Nascimento",       tipo: "Pessoa Física",   corretor: "Hans",    dataCreacao: "2026-01-15", cidade: "Sinop" },
+  { id: "c3",  nome: "Fernando Almeida",         tipo: "Pessoa Física",   corretor: "Hans",    dataCreacao: "2026-02-03", cidade: "Sinop" },
+  { id: "c4",  nome: "Thiago Barbosa",           tipo: "Pessoa Física",   corretor: "Hans",    dataCreacao: "2026-02-18", cidade: "Sorriso" },
+  { id: "c5",  nome: "Construtora Nortec",       tipo: "Pessoa Jurídica", corretor: "Hans",    dataCreacao: "2026-03-01", cidade: "Sinop" },
+  { id: "c6",  nome: "Ana Paula Ferreira",       tipo: "Pessoa Física",   corretor: "Rafael",  dataCreacao: "2026-01-20", cidade: "Sinop" },
+  { id: "c7",  nome: "Juliana Mendes",           tipo: "Pessoa Física",   corretor: "Rafael",  dataCreacao: "2026-02-10", cidade: "Sinop" },
+  { id: "c8",  nome: "Igor Santos",              tipo: "Pessoa Física",   corretor: "Rafael",  dataCreacao: "2026-03-05", cidade: "Sinop" },
+  { id: "c9",  nome: "Mariana Costa",            tipo: "Pessoa Física",   corretor: "Gabriel", dataCreacao: "2026-01-25", cidade: "Sinop" },
+  { id: "c10", nome: "Patrícia Oliveira",        tipo: "Pessoa Física",   corretor: "Gabriel", dataCreacao: "2026-02-14", cidade: "Sorriso" },
+  { id: "c11", nome: "Diego Carvalho",           tipo: "Pessoa Física",   corretor: "Gabriel", dataCreacao: "2026-03-12", cidade: "Sinop" },
+  { id: "c12", nome: "Sabrina Nunes",            tipo: "Pessoa Física",   corretor: "Gabriel", dataCreacao: "2026-03-20", cidade: "Sinop" },
+];
+
+export const oportunidades: Oportunidade[] = [
+  { id: "o1",  nome: "Lote Lago Azul - Carlos",     corretor: "Hans",    valor: 580000,   estagio: "Negociação",  dataCreacao: "2026-02-20" },
+  { id: "o2",  nome: "Cobertura Central - Roberto",  corretor: "Hans",    valor: 1500000,  estagio: "Proposta",    dataCreacao: "2026-03-01" },
+  { id: "o3",  nome: "Terreno Nações - Fernando",    corretor: "Hans",    valor: 920000,   estagio: "Qualificação",dataCreacao: "2026-03-10" },
+  { id: "o4",  nome: "Eco Park - Thiago",            corretor: "Hans",    valor: 750000,   estagio: "Fechamento",  dataCreacao: "2026-03-15" },
+  { id: "o5",  nome: "Aquarela - Ana Paula",         corretor: "Rafael",  valor: 2800000,  estagio: "Proposta",    dataCreacao: "2026-02-25" },
+  { id: "o6",  nome: "Damha III - Juliana",          corretor: "Rafael",  valor: 3500000,  estagio: "Fechamento",  dataCreacao: "2026-03-08" },
+  { id: "o7",  nome: "Alphaville - Mariana",         corretor: "Gabriel", valor: 6800000,  estagio: "Negociação",  dataCreacao: "2026-03-05" },
+  { id: "o8",  nome: "Florais Cuiabá - Patrícia",    corretor: "Gabriel", valor: 4200000,  estagio: "Proposta",    dataCreacao: "2026-03-18" },
+];

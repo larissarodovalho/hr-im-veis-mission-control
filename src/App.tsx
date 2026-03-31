@@ -11,6 +11,7 @@ import RedesSociais from "@/pages/RedesSociais";
 import Conteudo from "@/pages/Conteudo";
 import Operacional from "@/pages/Operacional";
 import SaudeSistema from "@/pages/SaudeSistema";
+import ControleDeCreacao from "@/pages/ControleDeCreacao";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/conteudo" element={<Conteudo />} />
             <Route path="/operacional" element={<Operacional />} />
             <Route path="/saude" element={<SaudeSistema />} />
+            <Route path="/controle-criacao" element={<ControleDeCreacao />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </DashboardLayout>
