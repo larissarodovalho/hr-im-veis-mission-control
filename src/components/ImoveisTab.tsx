@@ -140,6 +140,7 @@ export default function ImoveisTab() {
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<"Todos" | Imovel["status"]>("Todos");
   const [filtroCorretor, setFiltroCorretor] = useState<"Todos" | Imovel["corretor"]>("Todos");
+  const [apenasExclusivos, setApenasExclusivos] = useState(false);
   const [form, setForm] = useState({ ...emptyImovel });
   const [novoDoc, setNovoDoc] = useState({ imovelId: "", nome: "" });
 
