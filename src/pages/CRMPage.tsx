@@ -193,7 +193,7 @@ export default function CRM() {
                         <Select value={novoLead.canal} onValueChange={(v) => setNovoLead(p => ({ ...p, canal: v as Lead["canal"] }))}>
                           <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            {(["Meta Ads", "Google Ads", "Indicação", "Orgânico"] as const).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                            {(["Meta Ads", "Google Ads", "Indicação", "Orgânico", "Site"] as const).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
