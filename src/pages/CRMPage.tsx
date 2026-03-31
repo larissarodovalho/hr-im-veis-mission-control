@@ -94,8 +94,14 @@ export default function CRM() {
     <div className="space-y-6">
       <h2 className="section-title">CRM — Comercial</h2>
 
-      <Tabs defaultValue="funil">
-        <TabsList className="h-8 bg-muted/50 rounded-md p-0.5 gap-0.5 mb-2">
+      <Tabs defaultValue="leads">
+        <TabsList className="h-8 bg-muted/50 rounded-md p-0.5 gap-0.5 mb-2 flex-wrap">
+          <TabsTrigger value="leads" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <Users className="h-3.5 w-3.5" /> Leads
+          </TabsTrigger>
+          <TabsTrigger value="contatos" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <Phone className="h-3.5 w-3.5" /> Contatos
+          </TabsTrigger>
           <TabsTrigger value="funil" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <TrendingUp className="h-3.5 w-3.5" /> Funil de Vendas
           </TabsTrigger>
@@ -115,6 +121,152 @@ export default function CRM() {
             <CheckCircle2 className="h-3.5 w-3.5" /> Tarefas
           </TabsTrigger>
         </TabsList>
+
+        {/* ── ABA: Leads (para qualificar) ── */}
+        <TabsContent value="leads" className="space-y-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-base">Leads — Para Qualificar</CardTitle>
+              <Badge variant="outline" className="text-xs">{leads.filter(l => l.etapa === "Lead recebido").length} leads</Badge>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="text-left p-3 font-medium">Nome</th>
+                      <th className="text-left p-3 font-medium hidden sm:table-cell">Telefone</th>
+                      <th className="text-left p-3 font-medium">Canal</th>
+                      <th className="text-left p-3 font-medium hidden md:table-cell">Origem</th>
+                      <th className="text-left p-3 font-medium hidden md:table-cell">Corretor</th>
+                      <th className="text-left p-3 font-medium hidden lg:table-cell">Entrada</th>
+                      <th className="p-3 w-10"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leads.filter(l => l.etapa === "Lead recebido").map((lead) => (
+                      <>
+                        <tr
+                          key={lead.id}
+                          className="border-b hover:bg-muted/30 cursor-pointer"
+                          onClick={() => setExpandedLead(expandedLead === lead.id ? null : lead.id)}
+                        >
+                          <td className="p-3 font-medium">{lead.nome}</td>
+                          <td className="p-3 hidden sm:table-cell">
+                            <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{lead.telefone}</span>
+                          </td>
+                          <td className="p-3">
+                            <Badge variant={lead.canal === "Meta Ads" ? "default" : "secondary"} className="text-xs">{lead.canal}</Badge>
+                          </td>
+                          <td className="p-3 hidden md:table-cell">
+                            <Badge variant="outline" className={`text-xs ${lead.origem === "Carteira" ? "border-blue-500 text-blue-600" : "border-amber-500 text-amber-600"}`}>{lead.origem}</Badge>
+                          </td>
+                          <td className="p-3 hidden md:table-cell">{lead.corretor}</td>
+                          <td className="p-3 hidden lg:table-cell text-muted-foreground">{lead.dataEntrada}</td>
+                          <td className="p-3">
+                            {expandedLead === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </td>
+                        </tr>
+                        {expandedLead === lead.id && (
+                          <tr key={`${lead.id}-hist`}>
+                            <td colSpan={7} className="p-4 bg-muted/20">
+                              <p className="text-xs font-semibold text-muted-foreground mb-2">Histórico — Sofia IA</p>
+                              <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {lead.historico.map((msg, i) => (
+                                  <div key={i} className={`flex ${msg.remetente === "Sofia" ? "justify-start" : "justify-end"}`}>
+                                    <div className={`max-w-[80%] rounded-lg px-3 py-2 text-xs ${msg.remetente === "Sofia" ? "bg-primary/10 text-foreground" : "bg-accent/20 text-foreground"}`}>
+                                      <p className="font-medium text-[10px] text-muted-foreground mb-0.5">{msg.remetente} · {msg.data}</p>
+                                      <p>{msg.mensagem}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ── ABA: Contatos (já qualificados) ── */}
+        <TabsContent value="contatos" className="space-y-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-base">Contatos — Leads Qualificados</CardTitle>
+              <Badge variant="outline" className="text-xs">{leads.filter(l => l.etapa !== "Lead recebido").length} contatos</Badge>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="text-left p-3 font-medium">Nome</th>
+                      <th className="text-left p-3 font-medium hidden sm:table-cell">Telefone</th>
+                      <th className="text-left p-3 font-medium">Canal</th>
+                      <th className="text-left p-3 font-medium hidden md:table-cell">Origem</th>
+                      <th className="text-left p-3 font-medium hidden md:table-cell">Corretor</th>
+                      <th className="text-left p-3 font-medium">Etapa</th>
+                      <th className="text-left p-3 font-medium hidden lg:table-cell">Entrada</th>
+                      <th className="p-3 w-10"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leads.filter(l => l.etapa !== "Lead recebido").map((lead) => (
+                      <>
+                        <tr
+                          key={lead.id}
+                          className="border-b hover:bg-muted/30 cursor-pointer"
+                          onClick={() => setExpandedLead(expandedLead === lead.id ? null : lead.id)}
+                        >
+                          <td className="p-3 font-medium">{lead.nome}</td>
+                          <td className="p-3 hidden sm:table-cell">
+                            <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{lead.telefone}</span>
+                          </td>
+                          <td className="p-3">
+                            <Badge variant={lead.canal === "Meta Ads" ? "default" : "secondary"} className="text-xs">{lead.canal}</Badge>
+                          </td>
+                          <td className="p-3 hidden md:table-cell">
+                            <Badge variant="outline" className={`text-xs ${lead.origem === "Carteira" ? "border-blue-500 text-blue-600" : "border-amber-500 text-amber-600"}`}>{lead.origem}</Badge>
+                          </td>
+                          <td className="p-3 hidden md:table-cell">{lead.corretor}</td>
+                          <td className="p-3">
+                            <Badge variant="outline" className="text-xs">{lead.etapa}</Badge>
+                          </td>
+                          <td className="p-3 hidden lg:table-cell text-muted-foreground">{lead.dataEntrada}</td>
+                          <td className="p-3">
+                            {expandedLead === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </td>
+                        </tr>
+                        {expandedLead === lead.id && (
+                          <tr key={`${lead.id}-hist`}>
+                            <td colSpan={8} className="p-4 bg-muted/20">
+                              <p className="text-xs font-semibold text-muted-foreground mb-2">Histórico — Sofia IA</p>
+                              <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {lead.historico.map((msg, i) => (
+                                  <div key={i} className={`flex ${msg.remetente === "Sofia" ? "justify-start" : "justify-end"}`}>
+                                    <div className={`max-w-[80%] rounded-lg px-3 py-2 text-xs ${msg.remetente === "Sofia" ? "bg-primary/10 text-foreground" : "bg-accent/20 text-foreground"}`}>
+                                      <p className="font-medium text-[10px] text-muted-foreground mb-0.5">{msg.remetente} · {msg.data}</p>
+                                      <p>{msg.mensagem}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* ── ABA: Funil de Vendas ── */}
         <TabsContent value="funil" className="space-y-6">
