@@ -130,6 +130,9 @@ export default function CRM() {
           <TabsTrigger value="contatos" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <Phone className="h-3.5 w-3.5" /> Contatos
           </TabsTrigger>
+          <TabsTrigger value="kanban" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <Building2 className="h-3.5 w-3.5" /> Kanban
+          </TabsTrigger>
           <TabsTrigger value="funil" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <TrendingUp className="h-3.5 w-3.5" /> Funil de Vendas
           </TabsTrigger>
