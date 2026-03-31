@@ -1228,15 +1228,15 @@ export default function CRM() {
 
         {/* ── ABA: Análise de Leads ── */}
         <TabsContent value="analise" className="space-y-4">
+          {/* Row 1: 3 colunas */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
             {/* Leads por Proprietário */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Leads por Proprietário</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={160}>
+                <ResponsiveContainer width="100%" height={180}>
                   <BarChart data={corretoresRanking.map((c) => ({ nome: c.nome.split(" ")[0], quantidade: c.atendimentos, fill: FILLS[c.nome.split(" ")[0] as keyof typeof FILLS] ?? "hsl(224,73%,45%)" }))} layout="vertical" margin={{ left: 60 }}>
                     <XAxis type="number" fontSize={11} allowDecimals={false} />
                     <YAxis type="category" dataKey="nome" fontSize={11} width={55} />
@@ -1255,10 +1255,10 @@ export default function CRM() {
                 <CardTitle className="text-sm">Origem do Lead</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={160}>
-                  <BarChart data={leadsPorOrigem} layout="vertical" margin={{ left: 140 }}>
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={leadsPorOrigem} layout="vertical" margin={{ left: 120 }}>
                     <XAxis type="number" fontSize={11} allowDecimals={false} />
-                    <YAxis type="category" dataKey="origem" fontSize={9} width={135} />
+                    <YAxis type="category" dataKey="origem" fontSize={9} width={115} />
                     <Tooltip formatter={(v) => [v, "Leads"]} />
                     <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
                       {leadsPorOrigem.map((e, i) => <Cell key={i} fill={e.fill} />)}
@@ -1274,7 +1274,7 @@ export default function CRM() {
                 <CardTitle className="text-sm">Leads Totais por Origem</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center">
-                <ResponsiveContainer width="100%" height={160}>
+                <ResponsiveContainer width="100%" height={180}>
                   <PieChart>
                     <Pie data={leadsTotaisPorOrigem} dataKey="value" cx="50%" cy="50%" innerRadius={40} outerRadius={65} paddingAngle={2} label={({ value }) => value}>
                       {leadsTotaisPorOrigem.map((e, i) => <Cell key={i} fill={e.fill} />)}
@@ -1292,14 +1292,17 @@ export default function CRM() {
                 </div>
               </CardContent>
             </Card>
+          </div>
 
+          {/* Row 2: 3 colunas */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Produtos por Lead */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Produtos por Lead</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={160}>
+                <ResponsiveContainer width="100%" height={180}>
                   <BarChart data={produtosPorLead} layout="vertical" margin={{ left: 120 }}>
                     <XAxis type="number" fontSize={11} allowDecimals={false} />
                     <YAxis type="category" dataKey="produto" fontSize={10} width={115} />
@@ -1312,12 +1315,31 @@ export default function CRM() {
               </CardContent>
             </Card>
 
+            {/* Motivo da Desqualificação */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Motivo da Desqualificação</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={motivosDesqualificacao} layout="vertical" margin={{ left: 120 }}>
+                    <XAxis type="number" fontSize={11} allowDecimals={false} />
+                    <YAxis type="category" dataKey="motivo" fontSize={9} width={115} />
+                    <Tooltip formatter={(v) => [v, "Leads"]} />
+                    <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
+                      {motivosDesqualificacao.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
             {/* Leads criados últimos 7 dias */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Leads criados — últimos 7 dias</CardTitle>
               </CardHeader>
-              <CardContent className="flex items-center justify-center h-[160px]">
+              <CardContent className="flex items-center justify-center h-[180px]">
                 <div className="text-center">
                   <p className="text-7xl font-bold font-display text-primary leading-none">
                     {listaLeads.filter((l) => {
@@ -1331,26 +1353,6 @@ export default function CRM() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Motivo da Desqualificação */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Motivo da Desqualificação</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={160}>
-                  <BarChart data={motivosDesqualificacao} layout="vertical" margin={{ left: 140 }}>
-                    <XAxis type="number" fontSize={11} allowDecimals={false} />
-                    <YAxis type="category" dataKey="motivo" fontSize={9} width={135} />
-                    <Tooltip formatter={(v) => [v, "Leads"]} />
-                    <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
-                      {motivosDesqualificacao.map((e, i) => <Cell key={i} fill={e.fill} />)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
           </div>
         </TabsContent>
 
