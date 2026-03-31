@@ -7,7 +7,6 @@ import {
   Settings,
   Activity,
   Building2,
-  ClipboardList,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -25,7 +24,6 @@ import {
 const items = [
   { title: "Visão Geral", url: "/", icon: LayoutDashboard },
   { title: "CRM — Comercial", url: "/crm", icon: Users },
-  { title: "Controle de Criação", url: "/controle-criacao", icon: ClipboardList },
   { title: "Tráfego Pago", url: "/trafego", icon: Megaphone },
   { title: "Redes Sociais", url: "/redes-sociais", icon: Share2 },
   { title: "Conteúdo", url: "/conteudo", icon: FileText },
