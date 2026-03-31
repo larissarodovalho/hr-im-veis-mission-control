@@ -140,6 +140,7 @@ export default function ImoveisTab() {
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<"Todos" | Imovel["status"]>("Todos");
   const [filtroCorretor, setFiltroCorretor] = useState<"Todos" | Imovel["corretor"]>("Todos");
+  const [apenasExclusivos, setApenasExclusivos] = useState(false);
   const [form, setForm] = useState({ ...emptyImovel });
   const [novoDoc, setNovoDoc] = useState({ imovelId: "", nome: "" });
 
@@ -201,6 +202,7 @@ export default function ImoveisTab() {
   const filtered = imoveisList
     .filter(im => filtroStatus === "Todos" || im.status === filtroStatus)
     .filter(im => filtroCorretor === "Todos" || im.corretor === filtroCorretor)
+    .filter(im => !apenasExclusivos || im.codigo.startsWith("HR"))
     .filter(im => !busca || im.nome.toLowerCase().includes(busca.toLowerCase()) || im.codigo.toLowerCase().includes(busca.toLowerCase()) || im.endereco.bairro.toLowerCase().includes(busca.toLowerCase()));
 
   const totalDisp = imoveisList.filter(i => i.status === "Disponível").length;
@@ -250,6 +252,12 @@ export default function ImoveisTab() {
               {["Todos", ...CORRETORES].map(c => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}
             </SelectContent>
           </Select>
+          <button
+            onClick={() => setApenasExclusivos(!apenasExclusivos)}
+            className={`h-8 px-3 text-xs rounded-md border transition-all font-medium ${apenasExclusivos ? "bg-primary text-primary-foreground border-primary" : "bg-card border-input hover:bg-muted/50"}`}
+          >
+            Exclusivos HR
+          </button>
         </div>
         <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
           <DialogTrigger asChild>
