@@ -75,7 +75,20 @@ export default function CRM() {
   const [periodoContas, setPeriodoContas] = useState<Periodo>("Tudo");
   const [periodoOps, setPeriodoOps]       = useState<Periodo>("Tudo");
 
-  const leadsF  = useMemo(() => filtrarPorData(leads.map(l => ({ ...l, dataCreacao: l.dataEntrada })), periodoLeads),  [periodoLeads]);
+  const avancarEtapa = (leadId: string) => {
+    setListaLeads(prev => prev.map(l => {
+      if (l.id !== leadId) return l;
+      const idx = ETAPAS_ORDEM.indexOf(l.etapa);
+      if (idx < ETAPAS_ORDEM.length - 1) {
+        const novaEtapa = ETAPAS_ORDEM[idx + 1];
+        toast.success(`${l.nome} avançou para "${novaEtapa}"`);
+        return { ...l, etapa: novaEtapa };
+      }
+      return l;
+    }));
+  };
+
+  const leadsF  = useMemo(() => filtrarPorData(listaLeads.map(l => ({ ...l, dataCreacao: l.dataEntrada })), periodoLeads),  [periodoLeads, listaLeads]);
   const contasF = useMemo(() => filtrarPorData(contas,        periodoContas), [periodoContas]);
   const opsF    = useMemo(() => filtrarPorData(oportunidades, periodoOps),    [periodoOps]);
 
@@ -83,12 +96,18 @@ export default function CRM() {
   const contasPorCorretor = useMemo(() => porCorretor(contasF), [contasF]);
   const opsPorCorretor    = useMemo(() => porCorretor(opsF),    [opsF]);
 
+  const funnelDinamico = useMemo(() => ETAPAS_ORDEM.map((etapa, i) => ({
+    etapa,
+    quantidade: listaLeads.filter(l => l.etapa === etapa).length,
+    fill: `hsl(224, 73%, ${40 + i * 8}%)`,
+  })), [listaLeads]);
+
   const totalEmNegociacao = imoveis
     .filter((i) => i.status === "Em negociação")
     .reduce((acc, i) => acc + i.valor, 0);
 
-  const visitasAgendadas = leads.filter((l) => l.etapa === "Visita agendada").length;
-  const visitasRealizadas = leads.filter((l) => l.etapa === "Visita realizada").length;
+  const visitasAgendadas = listaLeads.filter((l) => l.etapa === "Visita agendada").length;
+  const visitasRealizadas = listaLeads.filter((l) => l.etapa === "Visita realizada").length;
   const taxaComparecimento =
     visitasAgendadas > 0
       ? (((visitasRealizadas) / (visitasAgendadas + visitasRealizadas)) * 100).toFixed(0)
