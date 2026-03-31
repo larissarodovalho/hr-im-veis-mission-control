@@ -252,6 +252,12 @@ export default function ImoveisTab() {
               {["Todos", ...CORRETORES].map(c => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}
             </SelectContent>
           </Select>
+          <button
+            onClick={() => setApenasExclusivos(!apenasExclusivos)}
+            className={`h-8 px-3 text-xs rounded-md border transition-all font-medium ${apenasExclusivos ? "bg-primary text-primary-foreground border-primary" : "bg-card border-input hover:bg-muted/50"}`}
+          >
+            Exclusivos HR
+          </button>
         </div>
         <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
           <DialogTrigger asChild>
