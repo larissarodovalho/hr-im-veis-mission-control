@@ -79,6 +79,7 @@ export default function CRM() {
     dataVisita: "", status: "Agendada" as StatusVisita,
   });
   const [corretorSelecionado, setCorretorSelecionado] = useState<typeof CORRETORES[number]>("Hans");
+  const [filtroEtapaLead, setFiltroEtapaLead] = useState<"Todos" | LeadEtapa>("Todos");
   const [periodoLeads, setPeriodoLeads]   = useState<Periodo>("Tudo");
   const [periodoContas, setPeriodoContas] = useState<Periodo>("Tudo");
   const [periodoOps, setPeriodoOps]       = useState<Periodo>("Tudo");
