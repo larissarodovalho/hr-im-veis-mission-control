@@ -283,7 +283,7 @@ export default function CRM() {
                         </tr>
                         {expandedLead === lead.id && (
                           <tr key={`${lead.id}-hist`}>
-                            <td colSpan={8} className="p-4 bg-muted/20">
+                            <td colSpan={9} className="p-4 bg-muted/20">
                               <p className="text-xs font-semibold text-muted-foreground mb-2">Histórico — Sofia IA</p>
                               <div className="space-y-2 max-h-48 overflow-y-auto">
                                 {lead.historico.map((msg, i) => (
