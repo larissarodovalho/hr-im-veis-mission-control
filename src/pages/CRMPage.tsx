@@ -1077,6 +1077,52 @@ export default function CRM() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Imóveis Criados */}
+            <Card>
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Home className="h-4 w-4 text-violet-500" />
+                  <CardTitle className="text-sm">Imóveis Criados</CardTitle>
+                </div>
+                <PeriodoSelect value={periodoImoveis} onChange={setPeriodoImoveis} />
+              </CardHeader>
+              <CardContent>
+                {visaoCC === "geral" ? (
+                  <>
+                    <p className="text-5xl font-bold font-display text-violet-500 mb-4">{imoveisF.length}</p>
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart data={imoveisPorCorretor} layout="vertical" margin={{ left: 80 }}>
+                        <XAxis type="number" fontSize={11} allowDecimals={false} />
+                        <YAxis type="category" dataKey="nome" fontSize={11} width={75} />
+                        <Tooltip formatter={(v) => [v, "Imóveis"]} />
+                        <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
+                          {imoveisPorCorretor.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-5xl font-bold font-display text-violet-500 mb-1">
+                      {imoveisF.filter((i) => i.corretor === corretorSelecionado).length}
+                    </p>
+                    <p className="text-xs text-muted-foreground mb-3">{corretorSelecionado}</p>
+                    <div className="space-y-1.5">
+                      {(["Apartamento","Casa","Terreno","Comercial"] as const).map((tipo) => {
+                        const count = imoveisF.filter((i) => i.corretor === corretorSelecionado && i.tipo === tipo).length;
+                        return (
+                          <div key={tipo} className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">{tipo}</span>
+                            <span className="font-semibold">{count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
