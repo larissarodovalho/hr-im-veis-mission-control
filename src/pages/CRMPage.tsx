@@ -150,7 +150,7 @@ export default function CRM() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Leads — Para Qualificar</CardTitle>
-              <Badge variant="outline" className="text-xs">{leads.filter(l => l.etapa === "Lead recebido").length} leads</Badge>
+              <Badge variant="outline" className="text-xs">{listaLeads.filter(l => l.etapa === "Lead recebido").length} leads</Badge>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
