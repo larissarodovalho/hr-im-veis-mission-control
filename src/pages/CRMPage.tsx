@@ -7,9 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { leads, imoveis, corretoresRanking, funnelPorCorretor, contas, oportunidades } from "@/data/mockData";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
-import { ChevronDown, ChevronUp, Phone, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList } from "lucide-react";
+import { leads, imoveis, corretoresRanking, funnelPorCorretor, contas, oportunidades, leadsPorOrigem, leadsTotaisPorOrigem, produtosPorLead, motivosDesqualificacao } from "@/data/mockData";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
+import { ChevronDown, ChevronUp, Phone, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList, BarChart2 } from "lucide-react";
 
 type Periodo = "Tudo" | "Este mês" | "Mês anterior" | "Este ano";
 
@@ -85,6 +85,9 @@ export default function CRM() {
           </TabsTrigger>
           <TabsTrigger value="criacao" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <ClipboardList className="h-3.5 w-3.5" /> Controle de Criação
+          </TabsTrigger>
+          <TabsTrigger value="analise" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <BarChart2 className="h-3.5 w-3.5" /> Análise de Leads
           </TabsTrigger>
         </TabsList>
 
@@ -540,6 +543,134 @@ export default function CRM() {
                 )}
               </CardContent>
             </Card>
+          </div>
+        </TabsContent>
+
+        {/* ── ABA: Análise de Leads ── */}
+        <TabsContent value="analise" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+            {/* Leads por Proprietário */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Leads por Proprietário</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={corretoresRanking.map((c) => ({ nome: c.nome.split(" ")[0], quantidade: c.atendimentos, fill: FILLS[c.nome.split(" ")[0] as keyof typeof FILLS] ?? "hsl(224,73%,45%)" }))} layout="vertical" margin={{ left: 60 }}>
+                    <XAxis type="number" fontSize={11} allowDecimals={false} />
+                    <YAxis type="category" dataKey="nome" fontSize={11} width={55} />
+                    <Tooltip formatter={(v) => [v, "Leads"]} />
+                    <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
+                      {corretoresRanking.map((_, i) => <Cell key={i} fill={Object.values(FILLS)[i]} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Origem do Lead */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Origem do Lead</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={leadsPorOrigem} layout="vertical" margin={{ left: 140 }}>
+                    <XAxis type="number" fontSize={11} allowDecimals={false} />
+                    <YAxis type="category" dataKey="origem" fontSize={9} width={135} />
+                    <Tooltip formatter={(v) => [v, "Leads"]} />
+                    <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
+                      {leadsPorOrigem.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Leads Totais (rosca) */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Leads Totais por Origem</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center">
+                <ResponsiveContainer width="100%" height={160}>
+                  <PieChart>
+                    <Pie data={leadsTotaisPorOrigem} dataKey="value" cx="50%" cy="50%" innerRadius={40} outerRadius={65} paddingAngle={2} label={({ value }) => value}>
+                      {leadsTotaisPorOrigem.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                    </Pie>
+                    <Tooltip formatter={(v, n) => [v, n]} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 justify-center">
+                  {leadsTotaisPorOrigem.map((e) => (
+                    <span key={e.name} className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <span className="w-2 h-2 rounded-full inline-block" style={{ background: e.fill }} />
+                      {e.name}
+                    </span>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Produtos por Lead */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Produtos por Lead</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={produtosPorLead} layout="vertical" margin={{ left: 120 }}>
+                    <XAxis type="number" fontSize={11} allowDecimals={false} />
+                    <YAxis type="category" dataKey="produto" fontSize={10} width={115} />
+                    <Tooltip formatter={(v) => [v, "Leads"]} />
+                    <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
+                      {produtosPorLead.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Leads criados últimos 7 dias */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Leads criados — últimos 7 dias</CardTitle>
+              </CardHeader>
+              <CardContent className="flex items-center justify-center h-[160px]">
+                <div className="text-center">
+                  <p className="text-7xl font-bold font-display text-primary leading-none">
+                    {leads.filter((l) => {
+                      const d = new Date(l.dataEntrada);
+                      const semanaAtras = new Date();
+                      semanaAtras.setDate(semanaAtras.getDate() - 7);
+                      return d >= semanaAtras;
+                    }).length}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">novos leads</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Motivo da Desqualificação */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Motivo da Desqualificação</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={motivosDesqualificacao} layout="vertical" margin={{ left: 140 }}>
+                    <XAxis type="number" fontSize={11} allowDecimals={false} />
+                    <YAxis type="category" dataKey="motivo" fontSize={9} width={135} />
+                    <Tooltip formatter={(v) => [v, "Leads"]} />
+                    <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
+                      {motivosDesqualificacao.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
           </div>
         </TabsContent>
 

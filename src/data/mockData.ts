@@ -458,3 +458,38 @@ export const oportunidades: Oportunidade[] = [
   { id: "o7",  nome: "Alphaville - Mariana",         corretor: "Gabriel", valor: 6800000,  estagio: "Negociação",  dataCreacao: "2026-03-05" },
   { id: "o8",  nome: "Florais Cuiabá - Patrícia",    corretor: "Gabriel", valor: 4200000,  estagio: "Proposta",    dataCreacao: "2026-03-18" },
 ];
+
+// --- Análise de Leads ---
+
+export const leadsPorOrigem = [
+  { origem: "Carteira",                  quantidade: 16, fill: "hsl(224, 73%, 45%)" },
+  { origem: "Anúncio Pago / Meta",        quantidade: 10, fill: "hsl(43, 76%, 48%)"  },
+  { origem: "Indicação de terceiros",     quantidade: 10, fill: "hsl(160, 60%, 42%)" },
+  { origem: "Instagram",                  quantidade: 4,  fill: "hsl(280, 60%, 55%)" },
+  { origem: "Cliente de corretor parceiro", quantidade: 9, fill: "hsl(200, 70%, 50%)" },
+  { origem: "WhatsApp",                   quantidade: 1,  fill: "hsl(130, 60%, 45%)" },
+  { origem: "Site",                       quantidade: 10, fill: "hsl(20, 70%, 55%)"  },
+];
+
+export const leadsTotaisPorOrigem = [
+  { name: "Anúncio Pago / Meta",        value: 8,  fill: "hsl(43, 76%, 48%)"  },
+  { name: "Indicação de terceiros",     value: 2,  fill: "hsl(160, 60%, 42%)" },
+  { name: "Cliente de corretor parceiro", value: 2, fill: "hsl(200, 70%, 50%)" },
+  { name: "Carteira",                   value: 3,  fill: "hsl(224, 73%, 45%)" },
+  { name: "Outros",                     value: 1,  fill: "hsl(0, 0%, 65%)"    },
+];
+
+export const produtosPorLead = [
+  { produto: "Imóveis Exclusivos", quantidade: 9,  fill: "hsl(224, 73%, 45%)" },
+  { produto: "Imóveis Alto Padrão", quantidade: 4, fill: "hsl(224, 73%, 55%)" },
+  { produto: "Imóveis Padrão",     quantidade: 3,  fill: "hsl(224, 73%, 65%)" },
+  { produto: "Empreendimentos",    quantidade: 1,  fill: "hsl(43, 76%, 52%)"  },
+  { produto: "Terreno",            quantidade: 1,  fill: "hsl(43, 76%, 62%)"  },
+];
+
+export const motivosDesqualificacao = [
+  { motivo: "Perfil Inadequado (Fit)", quantidade: 6, fill: "hsl(224, 73%, 45%)" },
+  { motivo: "Orçamento (Budget)",      quantidade: 3, fill: "hsl(224, 73%, 55%)" },
+  { motivo: "Viab. Técnica/Comercial", quantidade: 1, fill: "hsl(224, 73%, 65%)" },
+  { motivo: "Outros",                  quantidade: 2, fill: "hsl(0, 0%, 65%)"    },
+];
