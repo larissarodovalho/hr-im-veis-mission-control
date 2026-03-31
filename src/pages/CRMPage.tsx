@@ -655,12 +655,14 @@ export default function CRM() {
                           <th className="text-left p-3 font-medium">Corretor</th>
                           <th className="text-left p-3 font-medium">Etapa</th>
                           <th className="text-left p-3 font-medium hidden md:table-cell">Imóvel Vinculado</th>
+                          {metricaAberta !== "reunioes" && <th className="text-left p-3 font-medium">Proposta</th>}
                           <th className="text-left p-3 font-medium hidden lg:table-cell">Data</th>
                         </tr>
                       </thead>
                       <tbody>
                         {metricaLeads.map(lead => {
                           const imovelVinculado = imoveis.find(i => i.corretor === lead.corretor && i.status === (lead.etapa === "Fechamento" ? "Vendido" : "Em negociação"));
+                          const doc = propostaDocs[lead.id];
                           return (
                             <tr key={lead.id} className="border-b hover:bg-muted/30">
                               <td className="p-3 font-medium">{lead.nome}</td>
@@ -676,6 +678,30 @@ export default function CRM() {
                                   </span>
                                 ) : "—"}
                               </td>
+                              {metricaAberta !== "reunioes" && (
+                                <td className="p-3">
+                                  {doc ? (
+                                    <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setDocPreview(doc)}>
+                                      <Eye className="h-3 w-3" /> {doc.nome.length > 15 ? doc.nome.slice(0, 15) + "…" : doc.nome}
+                                    </Button>
+                                  ) : (
+                                    <label className="cursor-pointer">
+                                      <Button size="sm" variant="outline" className="h-7 text-xs gap-1 pointer-events-none">
+                                        <Paperclip className="h-3 w-3" /> Anexar
+                                      </Button>
+                                      <input type="file" className="hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (!file) return;
+                                          const url = URL.createObjectURL(file);
+                                          setPropostaDocs(prev => ({ ...prev, [lead.id]: { nome: file.name, url, tipo: file.type } }));
+                                          toast.success(`Documento "${file.name}" anexado à proposta de ${lead.nome}`);
+                                        }}
+                                      />
+                                    </label>
+                                  )}
+                                </td>
+                              )}
                               <td className="p-3 hidden lg:table-cell text-muted-foreground">{lead.dataEntrada}</td>
                             </tr>
                           );
