@@ -1094,7 +1094,7 @@ export default function CRM() {
                     </tr>
                   </thead>
                   <tbody>
-                    {visitas
+                    {listaVisitas
                       .filter((v) => filtroStatusVisita  === "Todos" || v.status    === filtroStatusVisita)
                       .filter((v) => filtroCorretorVisita === "Todos" || v.corretor === filtroCorretorVisita)
                       .map((v) => (
