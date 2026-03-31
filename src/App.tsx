@@ -12,6 +12,7 @@ import Conteudo from "@/pages/Conteudo";
 import Operacional from "@/pages/Operacional";
 import SaudeSistema from "@/pages/SaudeSistema";
 import ControleDeCreacao from "@/pages/ControleDeCreacao";
+import Integracoes from "@/pages/Integracoes";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
