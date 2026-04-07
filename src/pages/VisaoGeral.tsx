@@ -164,36 +164,7 @@ export default function VisaoGeral() {
       </div>
 
       {/* Bottom row: Imóveis + Agenda + Funil */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Imóveis mais visualizados</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {imoveisMaisVisualizados.map((imovel) => (
-              <div key={imovel.codigo} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                  <Home className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold flex items-center gap-1.5">
-                    <Home className="h-3.5 w-3.5 text-primary" />
-                    {imovel.tipo} – {imovel.codigo}
-                  </p>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                    <MapPin className="h-3 w-3" />
-                    Sinop, MT – {imovel.bairro}
-                  </p>
-                  <p className="text-xs font-medium mt-1 flex items-center gap-1 gold-accent">
-                    <Tag className="h-3 w-3" />
-                    R$ {imovel.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
