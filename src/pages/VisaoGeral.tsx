@@ -202,17 +202,17 @@ export default function VisaoGeral() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Funil de Vendas</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2.5">
+          <CardContent className="space-y-3">
             {funnelData.map((etapa, i) => {
               const maxQtd = funnelData[0].quantidade;
-              const widthPercent = Math.max((etapa.quantidade / maxQtd) * 100, 30);
+              const widthPercent = Math.max((etapa.quantidade / maxQtd) * 100, 45);
               return (
                 <div
                   key={etapa.etapa}
-                  className="flex items-center justify-center rounded-full py-2.5 px-4 text-sm font-medium text-primary-foreground transition-all"
+                  className="flex items-center justify-center rounded-lg py-3.5 px-5 font-semibold text-primary-foreground transition-all shadow-sm"
                   style={{ width: `${widthPercent}%`, margin: "0 auto", background: FUNNEL_COLORS[i % FUNNEL_COLORS.length] }}
                 >
-                  <span className="truncate text-xs">{etapa.etapa} | {etapa.quantidade} cards</span>
+                  <span className="truncate text-sm">{etapa.etapa} — {etapa.quantidade} cards</span>
                 </div>
               );
             })}
