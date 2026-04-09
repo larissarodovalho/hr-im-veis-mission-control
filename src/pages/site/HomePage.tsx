@@ -247,11 +247,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Community image */}
-      <section className="relative h-[70vh] sm:h-[80vh]">
-        <ParallaxImage src={sectionCommunity} alt="Condomínio fechado" className="absolute inset-0 h-full" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-[#0a0a0a]/30" />
-      </section>
 
 
       {/* CTA — Comprar ou Vender */}
