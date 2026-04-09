@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import ImoveisTab from "@/components/ImoveisTab";
 import OportunidadeDetalhe from "@/components/OportunidadeDetalhe";
+import PropostasTab from "@/components/PropostasTab";
 
 const ETAPAS_ORDEM: LeadEtapa[] = ["Lead recebido", "Qualificado", "Visita agendada", "Visita realizada", "Proposta", "Fechamento"];
 
