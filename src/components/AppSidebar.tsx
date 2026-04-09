@@ -47,13 +47,17 @@ const CRM_SUBTABS = [
   { label: "Propostas", value: "propostas", icon: FileTextIcon },
 ];
 
+const MARKETING_SUBTABS = [
+  { label: "Visão Geral", value: "geral", icon: LayoutDashboard },
+  { label: "Tráfego Pago", value: "trafego", icon: Megaphone },
+  { label: "Redes Sociais", value: "redes-sociais", icon: Share2 },
+  { label: "Conteúdo", value: "conteudo", icon: FileText },
+];
+
 const items = [
   { title: "Visão Geral", url: "/", icon: LayoutDashboard },
   { title: "CRM — Comercial", url: "/crm", icon: Users },
   { title: "Marketing", url: "/marketing", icon: TrendingUp },
-  { title: "Tráfego Pago", url: "/trafego", icon: Megaphone },
-  { title: "Redes Sociais", url: "/redes-sociais", icon: Share2 },
-  { title: "Conteúdo", url: "/conteudo", icon: FileText },
   { title: "Integrações", url: "/integracoes", icon: Plug },
   { title: "Operacional", url: "/operacional", icon: Settings },
   { title: "Saúde do Sistema", url: "/saude", icon: Activity },
@@ -66,7 +70,8 @@ export function AppSidebar() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const isCRM = location.pathname === "/crm";
-  const activeTab = searchParams.get("tab") || "leads";
+  const isMarketing = location.pathname === "/marketing";
+  const activeTab = searchParams.get("tab") || (isCRM ? "leads" : "geral");
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
@@ -87,13 +92,13 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
-                const isActive = item.url === "/crm" ? isCRM : location.pathname === item.url;
+                const isActive = item.url === "/crm" ? isCRM : item.url === "/marketing" ? isMarketing : location.pathname === item.url;
                 return (
                   <div key={item.title}>
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild>
                         <NavLink
-                          to={item.url === "/crm" ? "/crm?tab=leads" : item.url}
+                          to={item.url === "/crm" ? "/crm?tab=leads" : item.url === "/marketing" ? "/marketing?tab=geral" : item.url}
                           end={item.url === "/"}
                           className={`transition-all duration-200 ${isActive ? "bg-sidebar-accent text-sidebar-primary" : "hover:bg-sidebar-accent/50"}`}
                         >
@@ -111,6 +116,28 @@ export function AppSidebar() {
                             <button
                               key={sub.value}
                               onClick={() => navigate(`/crm?tab=${sub.value}`)}
+                              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-all duration-150 ${
+                                isSubActive
+                                  ? "bg-sidebar-accent text-sidebar-primary font-medium"
+                                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
+                              }`}
+                            >
+                              <sub.icon className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span>{sub.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {/* Marketing sub-tabs */}
+                    {item.url === "/marketing" && isMarketing && !collapsed && (
+                      <div className="ml-4 mt-1 mb-2 space-y-0.5 border-l-2 border-sidebar-accent pl-3">
+                        {MARKETING_SUBTABS.map((sub) => {
+                          const isSubActive = activeTab === sub.value;
+                          return (
+                            <button
+                              key={sub.value}
+                              onClick={() => navigate(`/marketing?tab=${sub.value}`)}
                               className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-all duration-150 ${
                                 isSubActive
                                   ? "bg-sidebar-accent text-sidebar-primary font-medium"
