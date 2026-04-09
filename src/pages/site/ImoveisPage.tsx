@@ -244,12 +244,12 @@ export default function ImoveisPage() {
 
               {/* Clear */}
               <AnimatePresence>
-                {(tipoSelecionado !== "Todos" || busca || faixaMin || faixaMax) && (
+                {(tipoSelecionado !== "Todos" || busca || faixaSelecionada !== "Todos") && (
                   <motion.button
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
-                    onClick={() => { setTipoSelecionado("Todos"); setBusca(""); setFaixaMin(""); setFaixaMax(""); }}
+                    onClick={() => { setTipoSelecionado("Todos"); setBusca(""); setFaixaSelecionada("Todos"); }}
                     className="w-7 h-7 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.1] transition-all"
                   >
                     <X className="h-3 w-3" />
@@ -430,7 +430,7 @@ export default function ImoveisPage() {
           >
             <p className="text-white/20 text-sm font-light">Nenhum imóvel encontrado com os filtros aplicados.</p>
             <button
-              onClick={() => { setTipoSelecionado("Todos"); setBusca(""); setFaixaMin(""); setFaixaMax(""); }}
+              onClick={() => { setTipoSelecionado("Todos"); setBusca(""); setFaixaSelecionada("Todos"); }}
               className="mt-4 px-5 py-2 rounded-xl text-xs text-white/40 hover:text-white/70 border border-white/10 hover:border-white/20 transition-all"
             >
               Limpar filtros
