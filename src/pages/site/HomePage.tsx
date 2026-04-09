@@ -519,46 +519,69 @@ function NewsletterSection() {
   return (
     <ScrollSection className="py-36 sm:py-48 border-t border-white/[0.04]">
       <div className="max-w-7xl mx-auto px-6 text-center">
-        <FadeIn>
-          <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-6">Newsletter</p>
-        </FadeIn>
-        <FadeIn delay={0.1}>
-          <h2 className="text-2xl sm:text-4xl font-display font-light tracking-wide mb-4">
-            Fique por dentro do mercado{" "}
-            <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100 font-normal">
-              imobiliário
-            </span>
-          </h2>
-        </FadeIn>
-        <FadeIn delay={0.15}>
-          <p className="text-xs text-white/25 font-light max-w-md mx-auto mb-10 leading-relaxed tracking-wide">
-            Receba informações exclusivas sobre novos imóveis, tendências do mercado e novidades da região de Sinop.
-          </p>
-        </FadeIn>
-        <FadeIn delay={0.2}>
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-            <input
-              type="email"
-              required
-              placeholder="Seu melhor e-mail"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 px-5 py-3 rounded-full bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/20 font-light tracking-wide focus:outline-none focus:border-white/20 transition-colors"
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-7 py-3 rounded-full bg-white text-black text-xs font-medium tracking-wide uppercase hover:bg-white/90 transition-all disabled:opacity-50"
-            >
-              {loading ? "Enviando..." : "Inscrever-se"}
-            </button>
-          </form>
-        </FadeIn>
-        <FadeIn delay={0.25}>
-          <p className="text-[9px] text-white/15 mt-4 font-light tracking-wider">
-            Sem spam. Cancele quando quiser.
-          </p>
-        </FadeIn>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }}
+          className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-6"
+        >
+          Newsletter
+        </motion.p>
+        <motion.h2
+          initial={{ opacity: 0, y: 40, scale: 0.97 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.9, delay: 0.1, ease: [0.25, 0.4, 0.25, 1] }}
+          className="text-2xl sm:text-4xl font-display font-light tracking-wide mb-4"
+        >
+          Fique por dentro do mercado{" "}
+          <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100 font-normal">
+            imobiliário
+          </span>
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, delay: 0.2 }}
+          className="text-xs text-white/25 font-light max-w-md mx-auto mb-10 leading-relaxed tracking-wide"
+        >
+          Receba informações exclusivas sobre novos imóveis, tendências do mercado e novidades da região de Sinop.
+        </motion.p>
+        <motion.form
+          onSubmit={handleSubmit}
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.3, ease: [0.25, 0.4, 0.25, 1] }}
+          className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+        >
+          <input
+            type="email"
+            required
+            placeholder="Seu melhor e-mail"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="flex-1 px-5 py-3 rounded-full bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/20 font-light tracking-wide focus:outline-none focus:border-white/20 transition-colors"
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-7 py-3 rounded-full bg-white text-black text-xs font-medium tracking-wide uppercase hover:bg-white/90 transition-all disabled:opacity-50"
+          >
+            {loading ? "Enviando..." : "Inscrever-se"}
+          </button>
+        </motion.form>
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="text-[9px] text-white/15 mt-4 font-light tracking-wider"
+        >
+          Sem spam. Cancele quando quiser.
+        </motion.p>
       </div>
     </ScrollSection>
   );
