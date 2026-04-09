@@ -621,3 +621,13 @@ export const tarefas: Tarefa[] = [
   { id: "T011", tipo: "Ligação",  titulo: "Primeiro contato",        descricao: "Ligar para Sabrina e apresentar portfólio",               corretor: "Gabriel", lead: "Sabrina Nunes",           prioridade: "Média", status: "Pendente",    dataVencimento: "2026-04-01" },
   { id: "T012", tipo: "Mensagem", titulo: "Enviar comparativo",      descricao: "Comparativo de 3 imóveis para Patrícia Oliveira",         corretor: "Gabriel", lead: "Patrícia Oliveira",       prioridade: "Baixa", status: "Pendente",    dataVencimento: "2026-04-03" },
 ];
+
+// --- Propostas (métricas mock) ---
+export const propostasMock = {
+  total: 18,
+  pendentes: 5,
+  aceitas: 9,
+  recusadas: 4,
+  valorTotal: 12500000,
+  valorAceitas: 8200000,
+};
