@@ -290,31 +290,52 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-end justify-between mb-16">
             <div>
-              <FadeIn>
-                <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-4">Portfolio</p>
-              </FadeIn>
-              <FadeIn delay={0.1}>
-                <h2 className="text-3xl sm:text-4xl font-display font-light tracking-wide">
-                  Imóveis em destaque
-                </h2>
-              </FadeIn>
+              <motion.p
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-80px" }}
+                transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }}
+                className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-4"
+              >
+                Portfolio
+              </motion.p>
+              <motion.h2
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-80px" }}
+                transition={{ duration: 0.9, delay: 0.1, ease: [0.25, 0.4, 0.25, 1] }}
+                className="text-3xl sm:text-4xl font-display font-light tracking-wide"
+              >
+                Imóveis em destaque
+              </motion.h2>
             </div>
-            <FadeIn delay={0.2}>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
               <Link
                 to="/site/imoveis"
                 className="hidden sm:inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.3em] text-white/30 hover:text-white/60 transition-colors font-light"
               >
                 Ver todos <ArrowRight className="h-3 w-3" />
               </Link>
-            </FadeIn>
+            </motion.div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-px bg-white/[0.04] rounded-2xl overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-px bg-black rounded-2xl overflow-hidden">
             {destaque.map((imovel, i) => (
-              <FadeIn key={imovel.id} delay={i * 0.1}>
+              <motion.div
+                key={imovel.id}
+                initial={{ opacity: 0, y: 60, scale: 0.95 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.9, delay: i * 0.2, ease: [0.25, 0.4, 0.25, 1] }}
+              >
                 <Link
                   to={`/site/imoveis/${imovel.id}`}
-                  className="group block bg-[black] hover:bg-white/[0.02] transition-colors"
+                  className="group block bg-black hover:bg-white/[0.02] transition-colors"
                 >
                   <div className="aspect-[4/3] overflow-hidden">
                     <motion.img
@@ -344,20 +365,24 @@ export default function HomePage() {
                     </p>
                   </div>
                 </Link>
-              </FadeIn>
+              </motion.div>
             ))}
           </div>
 
-          <FadeIn>
-            <div className="sm:hidden mt-10 text-center">
-              <Link
-                to="/site/imoveis"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-white/10 text-white/40 text-xs font-light tracking-wide uppercase hover:bg-white/5 transition-all"
-              >
-                Ver todos <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          </FadeIn>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+            className="sm:hidden mt-10 text-center"
+          >
+            <Link
+              to="/site/imoveis"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-white/10 text-white/40 text-xs font-light tracking-wide uppercase hover:bg-white/5 transition-all"
+            >
+              Ver todos <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </motion.div>
         </div>
       </ScrollSection>
 
@@ -366,16 +391,34 @@ export default function HomePage() {
       {/* CTA — Comprar ou Vender */}
       <ScrollSection className="py-36 sm:py-48">
         <div className="max-w-7xl mx-auto px-6">
-          <FadeIn>
-            <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-8 text-center">Como podemos ajudar</p>
-          </FadeIn>
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }}
+            className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-8 text-center"
+          >
+            Como podemos ajudar
+          </motion.p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-black rounded-2xl overflow-hidden">
-             <FadeIn>
-              <div className="relative bg-[black] overflow-hidden">
+            <motion.div
+              initial={{ opacity: 0, x: -50, scale: 0.95 }}
+              whileInView={{ opacity: 1, x: 0, scale: 1 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 1, ease: [0.25, 0.4, 0.25, 1] }}
+            >
+              <div className="relative bg-black overflow-hidden h-full">
                 <img src={property1} alt="Comprar imóvel" className="absolute inset-0 w-full h-full object-cover opacity-20" loading="lazy" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[black] via-[black]/80 to-[black]/60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/60" />
                 <div className="relative p-10 sm:p-16 text-center flex flex-col items-center">
-                  <MessageCircle className="h-8 w-8 text-white/15 mb-6" />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
+                  >
+                    <MessageCircle className="h-8 w-8 text-white/15 mb-6" />
+                  </motion.div>
                   <h3 className="text-2xl sm:text-3xl font-display font-light tracking-wide mb-4">
                     Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100">comprar</span> um imóvel?
                   </h3>
@@ -400,13 +443,25 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-            </FadeIn>
-            <FadeIn delay={0.1}>
-              <div className="relative bg-[black] overflow-hidden">
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 50, scale: 0.95 }}
+              whileInView={{ opacity: 1, x: 0, scale: 1 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 1, delay: 0.2, ease: [0.25, 0.4, 0.25, 1] }}
+            >
+              <div className="relative bg-black overflow-hidden h-full">
                 <img src={featureInterior} alt="Vender imóvel" className="absolute inset-0 w-full h-full object-cover opacity-20" loading="lazy" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[black] via-[black]/80 to-[black]/60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/60" />
                 <div className="relative p-10 sm:p-16 text-center flex flex-col items-center">
-                  <Building2 className="h-8 w-8 text-white/15 mb-6" />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.5 }}
+                  >
+                    <Building2 className="h-8 w-8 text-white/15 mb-6" />
+                  </motion.div>
                   <h3 className="text-2xl sm:text-3xl font-display font-light tracking-wide mb-4">
                     Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100">vender</span> seu imóvel?
                   </h3>
@@ -421,7 +476,7 @@ export default function HomePage() {
                   </Link>
                 </div>
               </div>
-            </FadeIn>
+            </motion.div>
           </div>
         </div>
       </ScrollSection>
@@ -464,46 +519,69 @@ function NewsletterSection() {
   return (
     <ScrollSection className="py-36 sm:py-48 border-t border-white/[0.04]">
       <div className="max-w-7xl mx-auto px-6 text-center">
-        <FadeIn>
-          <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-6">Newsletter</p>
-        </FadeIn>
-        <FadeIn delay={0.1}>
-          <h2 className="text-2xl sm:text-4xl font-display font-light tracking-wide mb-4">
-            Fique por dentro do mercado{" "}
-            <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100 font-normal">
-              imobiliário
-            </span>
-          </h2>
-        </FadeIn>
-        <FadeIn delay={0.15}>
-          <p className="text-xs text-white/25 font-light max-w-md mx-auto mb-10 leading-relaxed tracking-wide">
-            Receba informações exclusivas sobre novos imóveis, tendências do mercado e novidades da região de Sinop.
-          </p>
-        </FadeIn>
-        <FadeIn delay={0.2}>
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-            <input
-              type="email"
-              required
-              placeholder="Seu melhor e-mail"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 px-5 py-3 rounded-full bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/20 font-light tracking-wide focus:outline-none focus:border-white/20 transition-colors"
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-7 py-3 rounded-full bg-white text-black text-xs font-medium tracking-wide uppercase hover:bg-white/90 transition-all disabled:opacity-50"
-            >
-              {loading ? "Enviando..." : "Inscrever-se"}
-            </button>
-          </form>
-        </FadeIn>
-        <FadeIn delay={0.25}>
-          <p className="text-[9px] text-white/15 mt-4 font-light tracking-wider">
-            Sem spam. Cancele quando quiser.
-          </p>
-        </FadeIn>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }}
+          className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-6"
+        >
+          Newsletter
+        </motion.p>
+        <motion.h2
+          initial={{ opacity: 0, y: 40, scale: 0.97 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.9, delay: 0.1, ease: [0.25, 0.4, 0.25, 1] }}
+          className="text-2xl sm:text-4xl font-display font-light tracking-wide mb-4"
+        >
+          Fique por dentro do mercado{" "}
+          <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100 font-normal">
+            imobiliário
+          </span>
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, delay: 0.2 }}
+          className="text-xs text-white/25 font-light max-w-md mx-auto mb-10 leading-relaxed tracking-wide"
+        >
+          Receba informações exclusivas sobre novos imóveis, tendências do mercado e novidades da região de Sinop.
+        </motion.p>
+        <motion.form
+          onSubmit={handleSubmit}
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.3, ease: [0.25, 0.4, 0.25, 1] }}
+          className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+        >
+          <input
+            type="email"
+            required
+            placeholder="Seu melhor e-mail"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="flex-1 px-5 py-3 rounded-full bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/20 font-light tracking-wide focus:outline-none focus:border-white/20 transition-colors"
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-7 py-3 rounded-full bg-white text-black text-xs font-medium tracking-wide uppercase hover:bg-white/90 transition-all disabled:opacity-50"
+          >
+            {loading ? "Enviando..." : "Inscrever-se"}
+          </button>
+        </motion.form>
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="text-[9px] text-white/15 mt-4 font-light tracking-wider"
+        >
+          Sem spam. Cancele quando quiser.
+        </motion.p>
       </div>
     </ScrollSection>
   );
