@@ -209,42 +209,7 @@ export default function CRM() {
       </Dialog>
       <h2 className="section-title">CRM — Comercial</h2>
 
-      <Tabs defaultValue="leads">
-        <TabsList className="h-8 bg-muted/50 rounded-md p-0.5 gap-0.5 mb-2 flex-wrap">
-          <TabsTrigger value="leads" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <Users className="h-3.5 w-3.5" /> Leads
-          </TabsTrigger>
-          <TabsTrigger value="contatos" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <Phone className="h-3.5 w-3.5" /> Contatos
-          </TabsTrigger>
-          <TabsTrigger value="kanban" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <Building2 className="h-3.5 w-3.5" /> Kanban
-          </TabsTrigger>
-          <TabsTrigger value="imoveis" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <Home className="h-3.5 w-3.5" /> Imóveis
-          </TabsTrigger>
-          <TabsTrigger value="funil" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <TrendingUp className="h-3.5 w-3.5" /> Funil de Vendas
-          </TabsTrigger>
-          <TabsTrigger value="criacao" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <ClipboardList className="h-3.5 w-3.5" /> Controle de Criação
-          </TabsTrigger>
-          <TabsTrigger value="analise" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <BarChart2 className="h-3.5 w-3.5" /> Análise de Leads
-          </TabsTrigger>
-          <TabsTrigger value="oportunidades" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <HandCoins className="h-3.5 w-3.5" /> Oportunidades
-          </TabsTrigger>
-          <TabsTrigger value="visitas" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <CalendarCheck className="h-3.5 w-3.5" /> Visitas
-          </TabsTrigger>
-          <TabsTrigger value="tarefas" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <CheckCircle2 className="h-3.5 w-3.5" /> Tarefas
-          </TabsTrigger>
-          <TabsTrigger value="relatorios" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <FileDown className="h-3.5 w-3.5" /> Relatórios
-          </TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v })}>
 
         {/* ── ABA: Leads (para qualificar) ── */}
         <TabsContent value="leads" className="space-y-6">
