@@ -147,7 +147,7 @@ export default function HomePage() {
             </h2>
           </FadeIn>
         </div>
-      </section>
+      </ScrollSection>
 
       {/* Full-width image */}
       <section className="relative h-[70vh] sm:h-[80vh]">
