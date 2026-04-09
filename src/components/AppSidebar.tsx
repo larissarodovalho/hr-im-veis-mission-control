@@ -7,9 +7,18 @@ import {
   Settings,
   Activity,
   Plug,
+  Phone,
+  Building2,
+  Home,
+  TrendingUp,
+  ClipboardList,
+  BarChart2,
+  HandCoins,
+  CalendarCheck,
+  CheckCircle2,
+  FileDown,
 } from "lucide-react";
-import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
+import { NavLink, useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import hrLogo from "@/assets/hr-imoveis-logo.png";
 import {
   Sidebar,
@@ -21,6 +30,20 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+
+const CRM_SUBTABS = [
+  { label: "Leads", value: "leads", icon: Users },
+  { label: "Contatos", value: "contatos", icon: Phone },
+  { label: "Kanban", value: "kanban", icon: Building2 },
+  { label: "Imóveis", value: "imoveis", icon: Home },
+  { label: "Funil de Vendas", value: "funil", icon: TrendingUp },
+  { label: "Controle de Criação", value: "criacao", icon: ClipboardList },
+  { label: "Análise de Leads", value: "analise", icon: BarChart2 },
+  { label: "Oportunidades", value: "oportunidades", icon: HandCoins },
+  { label: "Visitas", value: "visitas", icon: CalendarCheck },
+  { label: "Tarefas", value: "tarefas", icon: CheckCircle2 },
+  { label: "Relatórios", value: "relatorios", icon: FileDown },
+];
 
 const items = [
   { title: "Visão Geral", url: "/", icon: LayoutDashboard },
@@ -37,6 +60,10 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const isCRM = location.pathname === "/crm";
+  const activeTab = searchParams.get("tab") || "leads";
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
@@ -57,21 +84,44 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
-                const isActive = location.pathname === item.url;
+                const isActive = item.url === "/crm" ? isCRM : location.pathname === item.url;
                 return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={item.url}
-                        end={item.url === "/"}
-                        className={`transition-all duration-200 ${isActive ? "bg-sidebar-accent text-sidebar-primary" : "hover:bg-sidebar-accent/50"}`}
-                        activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                      >
-                        <item.icon className={`mr-2 h-4 w-4 ${isActive ? "text-sidebar-primary" : ""}`} />
-                        {!collapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  <div key={item.title}>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to={item.url === "/crm" ? "/crm?tab=leads" : item.url}
+                          end={item.url === "/"}
+                          className={`transition-all duration-200 ${isActive ? "bg-sidebar-accent text-sidebar-primary" : "hover:bg-sidebar-accent/50"}`}
+                        >
+                          <item.icon className={`mr-2 h-4 w-4 ${isActive ? "text-sidebar-primary" : ""}`} />
+                          {!collapsed && <span>{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    {/* CRM sub-tabs */}
+                    {item.url === "/crm" && isCRM && !collapsed && (
+                      <div className="ml-4 mt-1 mb-2 space-y-0.5 border-l-2 border-sidebar-accent pl-3">
+                        {CRM_SUBTABS.map((sub) => {
+                          const isSubActive = activeTab === sub.value;
+                          return (
+                            <button
+                              key={sub.value}
+                              onClick={() => navigate(`/crm?tab=${sub.value}`)}
+                              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-all duration-150 ${
+                                isSubActive
+                                  ? "bg-sidebar-accent text-sidebar-primary font-medium"
+                                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
+                              }`}
+                            >
+                              <sub.icon className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span>{sub.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </SidebarMenu>
