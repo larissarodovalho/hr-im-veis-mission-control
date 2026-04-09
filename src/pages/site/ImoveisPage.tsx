@@ -124,8 +124,18 @@ function ParallaxHero() {
 export default function ImoveisPage() {
   const [busca, setBusca] = useState("");
   const [tipoSelecionado, setTipoSelecionado] = useState<string>("Todos");
-  const [faixaMin, setFaixaMin] = useState("");
-  const [faixaMax, setFaixaMax] = useState("");
+  const [faixaSelecionada, setFaixaSelecionada] = useState<string>("Todos");
+
+  const FAIXAS = [
+    { label: "Todos", min: 0, max: Infinity },
+    { label: "Até 500K", min: 0, max: 500000 },
+    { label: "500K – 1M", min: 500000, max: 1000000 },
+    { label: "1M – 1,5M", min: 1000000, max: 1500000 },
+    { label: "1,5M – 2M", min: 1500000, max: 2000000 },
+    { label: "2M – 3M", min: 2000000, max: 3000000 },
+    { label: "3M – 5M", min: 3000000, max: 5000000 },
+    { label: "Acima de 5M", min: 5000000, max: Infinity },
+  ];
 
   const imoveis = useMemo(() => {
     return IMOVEIS_SITE
@@ -142,11 +152,11 @@ export default function ImoveisPage() {
         );
       })
       .filter((im) => {
-        const min = faixaMin ? Number(faixaMin) : 0;
-        const max = faixaMax ? Number(faixaMax) : Infinity;
-        return im.valor >= min && im.valor <= max;
+        const faixa = FAIXAS.find(f => f.label === faixaSelecionada);
+        if (!faixa || faixa.label === "Todos") return true;
+        return im.valor >= faixa.min && im.valor <= faixa.max;
       });
-  }, [busca, tipoSelecionado, faixaMin, faixaMax]);
+  }, [busca, tipoSelecionado, faixaSelecionada]);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -206,34 +216,40 @@ export default function ImoveisPage() {
 
               <div className="h-4 w-px bg-white/[0.06] hidden sm:block" />
 
-              {/* Price range */}
-              <div className="hidden md:flex items-center gap-2">
-                <span className="text-[10px] text-white/20 uppercase tracking-wider">Valor</span>
-                <input
-                  type="number"
-                  placeholder="Mín"
-                  value={faixaMin}
-                  onChange={(e) => setFaixaMin(e.target.value)}
-                  className="w-20 bg-transparent border-b border-white/[0.06] px-2 py-1.5 text-[11px] text-white placeholder:text-white/15 focus:outline-none focus:border-white/20 transition-all text-center"
-                />
-                <span className="text-white/10 text-[10px]">—</span>
-                <input
-                  type="number"
-                  placeholder="Máx"
-                  value={faixaMax}
-                  onChange={(e) => setFaixaMax(e.target.value)}
-                  className="w-20 bg-transparent border-b border-white/[0.06] px-2 py-1.5 text-[11px] text-white placeholder:text-white/15 focus:outline-none focus:border-white/20 transition-all text-center"
-                />
+              {/* Price range pills */}
+              <div className="hidden md:flex items-center gap-1">
+                {FAIXAS.map((faixa) => (
+                  <motion.button
+                    key={faixa.label}
+                    onClick={() => setFaixaSelecionada(faixa.label)}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className={`relative px-3 py-1.5 rounded-full text-[10px] font-medium transition-all duration-400 ${
+                      faixaSelecionada === faixa.label
+                        ? "text-white"
+                        : "text-white/25 hover:text-white/50"
+                    }`}
+                  >
+                    {faixaSelecionada === faixa.label && (
+                      <motion.div
+                        layoutId="activePrice"
+                        className="absolute inset-0 bg-white/10 border border-white/15 rounded-full"
+                        transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
+                      />
+                    )}
+                    <span className="relative z-10">{faixa.label}</span>
+                  </motion.button>
+                ))}
               </div>
 
               {/* Clear */}
               <AnimatePresence>
-                {(tipoSelecionado !== "Todos" || busca || faixaMin || faixaMax) && (
+                {(tipoSelecionado !== "Todos" || busca || faixaSelecionada !== "Todos") && (
                   <motion.button
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
-                    onClick={() => { setTipoSelecionado("Todos"); setBusca(""); setFaixaMin(""); setFaixaMax(""); }}
+                    onClick={() => { setTipoSelecionado("Todos"); setBusca(""); setFaixaSelecionada("Todos"); }}
                     className="w-7 h-7 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.1] transition-all"
                   >
                     <X className="h-3 w-3" />
@@ -414,7 +430,7 @@ export default function ImoveisPage() {
           >
             <p className="text-white/20 text-sm font-light">Nenhum imóvel encontrado com os filtros aplicados.</p>
             <button
-              onClick={() => { setTipoSelecionado("Todos"); setBusca(""); setFaixaMin(""); setFaixaMax(""); }}
+              onClick={() => { setTipoSelecionado("Todos"); setBusca(""); setFaixaSelecionada("Todos"); }}
               className="mt-4 px-5 py-2 rounded-xl text-xs text-white/40 hover:text-white/70 border border-white/10 hover:border-white/20 transition-all"
             >
               Limpar filtros
