@@ -290,31 +290,52 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-end justify-between mb-16">
             <div>
-              <FadeIn>
-                <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-4">Portfolio</p>
-              </FadeIn>
-              <FadeIn delay={0.1}>
-                <h2 className="text-3xl sm:text-4xl font-display font-light tracking-wide">
-                  Imóveis em destaque
-                </h2>
-              </FadeIn>
+              <motion.p
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-80px" }}
+                transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }}
+                className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-4"
+              >
+                Portfolio
+              </motion.p>
+              <motion.h2
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-80px" }}
+                transition={{ duration: 0.9, delay: 0.1, ease: [0.25, 0.4, 0.25, 1] }}
+                className="text-3xl sm:text-4xl font-display font-light tracking-wide"
+              >
+                Imóveis em destaque
+              </motion.h2>
             </div>
-            <FadeIn delay={0.2}>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
               <Link
                 to="/site/imoveis"
                 className="hidden sm:inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.3em] text-white/30 hover:text-white/60 transition-colors font-light"
               >
                 Ver todos <ArrowRight className="h-3 w-3" />
               </Link>
-            </FadeIn>
+            </motion.div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-px bg-white/[0.04] rounded-2xl overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-px bg-black rounded-2xl overflow-hidden">
             {destaque.map((imovel, i) => (
-              <FadeIn key={imovel.id} delay={i * 0.1}>
+              <motion.div
+                key={imovel.id}
+                initial={{ opacity: 0, y: 60, scale: 0.95 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.9, delay: i * 0.2, ease: [0.25, 0.4, 0.25, 1] }}
+              >
                 <Link
                   to={`/site/imoveis/${imovel.id}`}
-                  className="group block bg-[black] hover:bg-white/[0.02] transition-colors"
+                  className="group block bg-black hover:bg-white/[0.02] transition-colors"
                 >
                   <div className="aspect-[4/3] overflow-hidden">
                     <motion.img
@@ -344,20 +365,24 @@ export default function HomePage() {
                     </p>
                   </div>
                 </Link>
-              </FadeIn>
+              </motion.div>
             ))}
           </div>
 
-          <FadeIn>
-            <div className="sm:hidden mt-10 text-center">
-              <Link
-                to="/site/imoveis"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-white/10 text-white/40 text-xs font-light tracking-wide uppercase hover:bg-white/5 transition-all"
-              >
-                Ver todos <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          </FadeIn>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+            className="sm:hidden mt-10 text-center"
+          >
+            <Link
+              to="/site/imoveis"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-white/10 text-white/40 text-xs font-light tracking-wide uppercase hover:bg-white/5 transition-all"
+            >
+              Ver todos <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </motion.div>
         </div>
       </ScrollSection>
 
