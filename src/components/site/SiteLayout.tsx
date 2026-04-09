@@ -1,5 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
-import { Phone, Mail, MapPin, Instagram, Facebook } from "lucide-react";
+import { Phone, Mail, Instagram, Facebook, Menu, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import hrLogo from "@/assets/hr-imoveis-logo.png";
 
 const navLinks = [
@@ -11,34 +13,35 @@ const navLinks = [
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => setMobileOpen(false), [location.pathname]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      {/* Top bar */}
-      <div className="bg-foreground text-background text-xs py-2">
-        <div className="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> (66) 99999-0000</span>
-            <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> contato@hrimoveis.com.br</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <a href="#" className="hover:text-accent transition-colors"><Instagram className="h-3.5 w-3.5" /></a>
-            <a href="#" className="hover:text-accent transition-colors"><Facebook className="h-3.5 w-3.5" /></a>
-          </div>
-        </div>
-      </div>
-
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
-          <Link to="/site" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-foreground flex items-center justify-center overflow-hidden">
-              <img src={hrLogo} alt="HR Imóveis" className="w-8 h-8 object-contain" />
+    <div className="min-h-screen flex flex-col bg-[#0a0a0a] text-white">
+      {/* Sticky Nav */}
+      <motion.header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          scrolled
+            ? "bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/5"
+            : "bg-transparent"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-14">
+          <Link to="/site" className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
+              <img src={hrLogo} alt="HR Imóveis" className="w-6 h-6 object-contain" />
             </div>
-            <div>
-              <span className="font-display font-bold text-lg tracking-tight">HR Imóveis</span>
-              <span className="block text-[10px] text-muted-foreground -mt-1">Realizando sonhos em Sinop</span>
-            </div>
+            <span className="font-display font-semibold text-sm tracking-tight text-white/90">
+              HR Imóveis
+            </span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
@@ -46,10 +49,10 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               <Link
                 key={link.to}
                 to={link.to}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
                   location.pathname === link.to
-                    ? "bg-primary text-primary-foreground"
-                    : "text-foreground hover:bg-muted"
+                    ? "bg-white/10 text-white"
+                    : "text-white/50 hover:text-white/80"
                 }`}
               >
                 {link.label}
@@ -57,64 +60,101 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             ))}
           </nav>
 
-          <Link
-            to="/site/contato"
-            className="hidden sm:inline-flex px-4 py-2 rounded-lg text-sm font-semibold bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
-          >
-            Fale Conosco
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/site/contato"
+              className="hidden sm:inline-flex px-5 py-1.5 rounded-full text-xs font-medium bg-white text-black hover:bg-white/90 transition-all"
+            >
+              Fale Conosco
+            </Link>
+            <button
+              className="md:hidden text-white/70"
+              onClick={() => setMobileOpen(!mobileOpen)}
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
-      </header>
+
+        {/* Mobile menu */}
+        <AnimatePresence>
+          {mobileOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-white/5 overflow-hidden"
+            >
+              <div className="px-6 py-4 flex flex-col gap-1">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className={`px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                      location.pathname === link.to
+                        ? "bg-white/10 text-white"
+                        : "text-white/50"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.header>
 
       {/* Main */}
       <main className="flex-1">{children}</main>
 
-      {/* Footer */}
-      <footer className="bg-foreground text-background">
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center overflow-hidden">
-                  <img src={hrLogo} alt="HR Imóveis" className="w-8 h-8 object-contain" />
+      {/* Footer — minimal Apple-style */}
+      <footer className="border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-6 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
+                  <img src={hrLogo} alt="HR Imóveis" className="w-6 h-6 object-contain" />
                 </div>
-                <span className="font-display font-bold text-lg">HR Imóveis</span>
+                <span className="font-display font-semibold text-sm">HR Imóveis</span>
               </div>
-              <p className="text-sm text-background/60 leading-relaxed">
-                A HR Imóveis é referência no mercado imobiliário de Sinop-MT, oferecendo os melhores imóveis de alto padrão com atendimento personalizado.
+              <p className="text-xs text-white/30 leading-relaxed max-w-sm">
+                Referência no mercado imobiliário de Sinop-MT. Imóveis de alto padrão com atendimento personalizado.
               </p>
             </div>
 
             <div>
-              <h4 className="font-display font-bold mb-4">Links Rápidos</h4>
-              <ul className="space-y-2 text-sm text-background/70">
+              <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-4">Navegação</h4>
+              <ul className="space-y-2">
                 {navLinks.map((link) => (
                   <li key={link.to}>
-                    <Link to={link.to} className="hover:text-accent transition-colors">{link.label}</Link>
+                    <Link to={link.to} className="text-xs text-white/30 hover:text-white/60 transition-colors">
+                      {link.label}
+                    </Link>
                   </li>
                 ))}
               </ul>
             </div>
 
             <div>
-              <h4 className="font-display font-bold mb-4">Contato</h4>
-              <ul className="space-y-3 text-sm text-background/70">
-                <li className="flex items-center gap-2"><MapPin className="h-4 w-4 text-accent" /> Sinop, Mato Grosso</li>
-                <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-accent" /> (66) 99999-0000</li>
-                <li className="flex items-center gap-2"><Mail className="h-4 w-4 text-accent" /> contato@hrimoveis.com.br</li>
+              <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-4">Contato</h4>
+              <ul className="space-y-2 text-xs text-white/30">
+                <li className="flex items-center gap-2"><Phone className="h-3 w-3" /> (66) 99999-0000</li>
+                <li className="flex items-center gap-2"><Mail className="h-3 w-3" /> contato@hrimoveis.com.br</li>
               </ul>
-              <div className="flex gap-3 mt-4">
-                <a href="#" className="w-9 h-9 rounded-full bg-background/10 flex items-center justify-center hover:bg-accent hover:text-accent-foreground transition-colors">
-                  <Instagram className="h-4 w-4" />
+              <div className="flex gap-2 mt-4">
+                <a href="#" className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors text-white/30 hover:text-white/60">
+                  <Instagram className="h-3.5 w-3.5" />
                 </a>
-                <a href="#" className="w-9 h-9 rounded-full bg-background/10 flex items-center justify-center hover:bg-accent hover:text-accent-foreground transition-colors">
-                  <Facebook className="h-4 w-4" />
+                <a href="#" className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors text-white/30 hover:text-white/60">
+                  <Facebook className="h-3.5 w-3.5" />
                 </a>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-background/10 mt-8 pt-6 text-center text-xs text-background/40">
+          <div className="border-t border-white/5 mt-8 pt-6 text-center text-[10px] text-white/20">
             © {new Date().getFullYear()} HR Imóveis. Todos os direitos reservados.
           </div>
         </div>
