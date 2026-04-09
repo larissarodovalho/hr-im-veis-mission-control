@@ -276,43 +276,140 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* CTA — Comprar ou Vender */}
       <section className="py-36 sm:py-48">
-        <div className="max-w-7xl mx-auto px-6 text-center">
+        <div className="max-w-7xl mx-auto px-6">
           <FadeIn>
-            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-display font-light tracking-[-0.01em] leading-[1.15] mb-6">
-              Pronto para encontrar
-              <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100 italic font-normal">
-                seu imóvel ideal?
-              </span>
-            </h2>
+            <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-8 text-center">Como podemos ajudar</p>
           </FadeIn>
-          <FadeIn delay={0.1}>
-            <p className="text-sm text-white/25 max-w-md mx-auto mb-12 font-light leading-relaxed tracking-wide">
-              Entre em contato e deixe nossa equipe de consultores te ajudar a encontrar o imóvel dos seus sonhos.
-            </p>
-          </FadeIn>
-          <FadeIn delay={0.2}>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link
-                to="/site/contato"
-                className="inline-flex items-center gap-2.5 px-9 py-3.5 rounded-full bg-white text-black text-xs font-medium tracking-wide uppercase hover:bg-white/90 transition-all"
-              >
-                Fale com um Consultor <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-              <a
-                href="https://wa.me/5566999990000"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-9 py-3.5 rounded-full border border-white/10 text-white/40 text-xs font-light tracking-wide uppercase hover:bg-white/5 transition-all"
-              >
-                WhatsApp
-              </a>
-            </div>
-          </FadeIn>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-white/[0.04] rounded-2xl overflow-hidden">
+            <FadeIn>
+              <div className="bg-[#0a0a0a] p-10 sm:p-16 text-center flex flex-col items-center">
+                <MessageCircle className="h-8 w-8 text-white/15 mb-6" />
+                <h3 className="text-2xl sm:text-3xl font-display font-light tracking-wide mb-4">
+                  Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100">comprar</span> um imóvel?
+                </h3>
+                <p className="text-xs text-white/25 font-light leading-relaxed max-w-sm mb-8 tracking-wide">
+                  Nossa equipe de consultores vai te ajudar a encontrar o imóvel perfeito para você e sua família.
+                </p>
+                <div className="flex flex-wrap justify-center gap-3">
+                  <Link
+                    to="/site/contato"
+                    className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-white text-black text-xs font-medium tracking-wide uppercase hover:bg-white/90 transition-all"
+                  >
+                    Fale com um Consultor <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                  <a
+                    href="https://wa.me/5566999990000"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-7 py-3 rounded-full border border-white/10 text-white/40 text-xs font-light tracking-wide uppercase hover:bg-white/5 transition-all"
+                  >
+                    WhatsApp
+                  </a>
+                </div>
+              </div>
+            </FadeIn>
+            <FadeIn delay={0.1}>
+              <div className="bg-[#0a0a0a] p-10 sm:p-16 text-center flex flex-col items-center">
+                <Building2 className="h-8 w-8 text-white/15 mb-6" />
+                <h3 className="text-2xl sm:text-3xl font-display font-light tracking-wide mb-4">
+                  Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100">vender</span> seu imóvel?
+                </h3>
+                <p className="text-xs text-white/25 font-light leading-relaxed max-w-sm mb-8 tracking-wide">
+                  Avaliamos e anunciamos seu imóvel com exclusividade. Alcance compradores qualificados com a HR Imóveis.
+                </p>
+                <Link
+                  to="/site/contato"
+                  className="inline-flex items-center gap-2 px-7 py-3 rounded-full border border-white/10 text-white/40 text-xs font-light tracking-wide uppercase hover:border-white/20 hover:text-white/60 hover:bg-white/5 transition-all"
+                >
+                  Quero Vender meu Imóvel <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </FadeIn>
+          </div>
         </div>
       </section>
+
+      {/* Newsletter */}
+      <NewsletterSection />
     </div>
+  );
+}
+
+function NewsletterSection() {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from("newsletter_subscribers" as any)
+        .insert({ email: email.trim().toLowerCase() } as any);
+      if (error) {
+        if (error.code === "23505") {
+          toast.info("Você já está inscrito na nossa newsletter!");
+        } else {
+          toast.error("Erro ao se inscrever. Tente novamente.");
+        }
+      } else {
+        toast.success("Inscrito com sucesso! Você receberá nossas novidades.");
+        setEmail("");
+      }
+    } catch {
+      toast.error("Erro ao se inscrever. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section className="py-36 sm:py-48 border-t border-white/[0.04]">
+      <div className="max-w-7xl mx-auto px-6 text-center">
+        <FadeIn>
+          <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-6">Newsletter</p>
+        </FadeIn>
+        <FadeIn delay={0.1}>
+          <h2 className="text-2xl sm:text-4xl font-display font-light tracking-wide mb-4">
+            Fique por dentro do mercado{" "}
+            <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100 font-normal">
+              imobiliário
+            </span>
+          </h2>
+        </FadeIn>
+        <FadeIn delay={0.15}>
+          <p className="text-xs text-white/25 font-light max-w-md mx-auto mb-10 leading-relaxed tracking-wide">
+            Receba informações exclusivas sobre novos imóveis, tendências do mercado e novidades da região de Sinop.
+          </p>
+        </FadeIn>
+        <FadeIn delay={0.2}>
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+            <input
+              type="email"
+              required
+              placeholder="Seu melhor e-mail"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex-1 px-5 py-3 rounded-full bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/20 font-light tracking-wide focus:outline-none focus:border-white/20 transition-colors"
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-7 py-3 rounded-full bg-white text-black text-xs font-medium tracking-wide uppercase hover:bg-white/90 transition-all disabled:opacity-50"
+            >
+              {loading ? "Enviando..." : "Inscrever-se"}
+            </button>
+          </form>
+        </FadeIn>
+        <FadeIn delay={0.25}>
+          <p className="text-[9px] text-white/15 mt-4 font-light tracking-wider">
+            Sem spam. Cancele quando quiser.
+          </p>
+        </FadeIn>
+      </div>
+    </section>
   );
 }
