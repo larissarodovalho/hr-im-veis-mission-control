@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import ImoveisTab from "@/components/ImoveisTab";
 import OportunidadeDetalhe from "@/components/OportunidadeDetalhe";
+import PropostasTab from "@/components/PropostasTab";
 
 const ETAPAS_ORDEM: LeadEtapa[] = ["Lead recebido", "Qualificado", "Visita agendada", "Visita realizada", "Proposta", "Fechamento"];
 
@@ -211,7 +212,7 @@ export default function CRM() {
 
       <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v })}>
         <TabsList className="hidden">
-          {["leads","contatos","kanban","imoveis","funil","criacao","analise","oportunidades","visitas","tarefas","relatorios"].map(v => (
+          {["leads","contatos","kanban","imoveis","funil","criacao","analise","oportunidades","visitas","tarefas","relatorios","propostas"].map(v => (
             <TabsTrigger key={v} value={v}>{v}</TabsTrigger>
           ))}
         </TabsList>
@@ -1913,6 +1914,11 @@ export default function CRM() {
         {/* ── ABA: Relatórios ── */}
         <TabsContent value="relatorios" className="space-y-6">
           <RelatoriosTab listaLeads={listaLeads} imoveis={imoveis} />
+        </TabsContent>
+
+        {/* ── ABA: Propostas ── */}
+        <TabsContent value="propostas" className="space-y-6">
+          <PropostasTab leads={listaLeads} imoveis={imoveis} />
         </TabsContent>
 
       </Tabs>
