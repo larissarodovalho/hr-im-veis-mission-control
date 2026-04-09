@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Building2, MapPin, User, Phone, FileText, Image, Plus, ChevronDown, ChevronUp, Trash2, Search } from "lucide-react";
+import { Building2, MapPin, User, Phone, FileText, Image, Plus, ChevronDown, ChevronUp, Trash2, Search, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 export interface Imovel {
@@ -125,6 +125,7 @@ const emptyImovel = {
   rua: "", numero: "", bairro: "", condominio: "", cidade: "Sinop", estado: "MT",
   propNome: "", propTelefone: "", propEmail: "", propCpfCnpj: "",
   fotos: [] as string[],
+  documentos: [] as { nome: string; arquivo: string }[],
 };
 
 const statusColor = (s: Imovel["status"]) => {
@@ -173,7 +174,7 @@ export default function ImoveisTab() {
         email: form.propEmail.trim(), cpfCnpj: form.propCpfCnpj.trim(),
       },
       fotos: [...form.fotos],
-      documentos: [],
+      documentos: form.documentos.map(d => ({ nome: d.nome, tipo: d.nome.split('.').pop()?.toUpperCase() || "PDF", dataUpload: new Date().toISOString().slice(0, 10) })),
     };
     setImoveisList(prev => [novo, ...prev]);
     setForm({ ...emptyImovel });
@@ -274,6 +275,7 @@ export default function ImoveisTab() {
                 <TabsTrigger value="endereco" className="h-7 text-xs flex-1">Endereço</TabsTrigger>
                 <TabsTrigger value="proprietario" className="h-7 text-xs flex-1">Proprietário</TabsTrigger>
                 <TabsTrigger value="fotos" className="h-7 text-xs flex-1">Fotos</TabsTrigger>
+                <TabsTrigger value="documentos" className="h-7 text-xs flex-1">Documentos</TabsTrigger>
               </TabsList>
 
               <TabsContent value="dados" className="space-y-3 mt-3">
@@ -433,6 +435,65 @@ export default function ImoveisTab() {
                       <Image className="h-10 w-10 mb-2 opacity-40" />
                       <p className="text-sm">Nenhuma foto adicionada</p>
                       <p className="text-xs">Clique acima para selecionar fotos</p>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="documentos" className="space-y-3 mt-3">
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Adicionar Documentos do Imóvel</Label>
+                    <Input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                      multiple
+                      className="h-auto text-sm file:mr-3 file:h-8 file:px-3 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground file:text-xs file:font-medium hover:file:bg-primary/90 cursor-pointer"
+                      onChange={(e) => {
+                        const files = e.target.files;
+                        if (!files) return;
+                        Array.from(files).forEach(file => {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            const result = ev.target?.result as string;
+                            if (result) {
+                              setForm(p => ({
+                                ...p,
+                                documentos: [...p.documentos, { nome: file.name, arquivo: result }]
+                              }));
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        });
+                        e.target.value = "";
+                      }}
+                    />
+                    <p className="text-[10px] text-muted-foreground">Formatos aceitos: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG</p>
+                  </div>
+                  {form.documentos.length > 0 && (
+                    <div className="space-y-1.5">
+                      {form.documentos.map((doc, idx) => (
+                        <div key={idx} className="flex items-center justify-between bg-muted/40 rounded-md px-3 py-2 group">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-primary" />
+                            <span className="text-xs truncate max-w-[200px]">{doc.nome}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setForm(p => ({ ...p, documentos: p.documentos.filter((_, i) => i !== idx) }))}
+                            className="h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {form.documentos.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed border-border rounded-lg text-muted-foreground">
+                      <Upload className="h-10 w-10 mb-2 opacity-40" />
+                      <p className="text-sm">Nenhum documento adicionado</p>
+                      <p className="text-xs">Clique acima para selecionar documentos</p>
                     </div>
                   )}
                 </div>
