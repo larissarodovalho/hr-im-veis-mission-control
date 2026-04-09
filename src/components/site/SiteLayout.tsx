@@ -35,8 +35,8 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-14">
-          <Link to="/site" className="flex items-center">
-            <img src={hrLogo} alt="HR Imóveis" className="h-8 w-auto object-contain" />
+          <Link to="/site" className="font-display font-bold text-sm tracking-tight text-white/90">
+            HR Imóveis
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
