@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { MapPin, BedDouble, Bath, Car, Search, SlidersHorizontal, X, ArrowUpRight, Maximize2 } from "lucide-react";
+import { MapPin, BedDouble, Bath, Car, Search, X, ArrowUpRight, Maximize2 } from "lucide-react";
 import { IMOVEIS_SITE } from "@/data/imoveisCRM";
 
 import casaLuxo1 from "@/assets/imoveis/casa-luxo-1.jpg";
@@ -126,7 +126,6 @@ export default function ImoveisPage() {
   const [tipoSelecionado, setTipoSelecionado] = useState<string>("Todos");
   const [faixaMin, setFaixaMin] = useState("");
   const [faixaMax, setFaixaMax] = useState("");
-  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const imoveis = useMemo(() => {
     return IMOVEIS_SITE
