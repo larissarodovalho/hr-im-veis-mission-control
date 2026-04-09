@@ -174,7 +174,7 @@ export default function ImoveisTab() {
         email: form.propEmail.trim(), cpfCnpj: form.propCpfCnpj.trim(),
       },
       fotos: [...form.fotos],
-      documentos: [],
+      documentos: form.documentos.map(d => ({ nome: d.nome, tipo: d.nome.split('.').pop()?.toUpperCase() || "PDF", dataUpload: new Date().toISOString().slice(0, 10) })),
     };
     setImoveisList(prev => [novo, ...prev]);
     setForm({ ...emptyImovel });
