@@ -150,7 +150,7 @@ export default function HomePage() {
       </ScrollSection>
 
       {/* Full-width image */}
-      <section className="relative h-[70vh] sm:h-[80vh]">
+      <ScrollSection className="relative h-[70vh] sm:h-[80vh]">
         <ParallaxImage src={sectionLiving} alt="Interior de luxo" className="absolute inset-0 h-full" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-[#0a0a0a]/30" />
         <div className="relative z-10 flex items-end h-full max-w-7xl mx-auto px-6 pb-16">
@@ -161,10 +161,10 @@ export default function HomePage() {
             </p>
           </FadeIn>
         </div>
-      </section>
+      </ScrollSection>
 
       {/* Features */}
-      <section className="py-36 sm:py-48">
+      <ScrollSection className="py-36 sm:py-48">
         <div className="max-w-7xl mx-auto px-6">
           <FadeIn>
             <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-16">Nossos Diferenciais</p>
@@ -186,10 +186,10 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-      </section>
+      </ScrollSection>
 
       {/* Featured properties */}
-      <section className="py-36 sm:py-48">
+      <ScrollSection className="py-36 sm:py-48">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-end justify-between mb-16">
             <div>
@@ -259,12 +259,12 @@ export default function HomePage() {
             </div>
           </FadeIn>
         </div>
-      </section>
+      </ScrollSection>
 
 
 
       {/* CTA — Comprar ou Vender */}
-      <section className="py-36 sm:py-48">
+      <ScrollSection className="py-36 sm:py-48">
         <div className="max-w-7xl mx-auto px-6">
           <FadeIn>
             <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-8 text-center">Como podemos ajudar</p>
@@ -316,7 +316,7 @@ export default function HomePage() {
             </FadeIn>
           </div>
         </div>
-      </section>
+      </ScrollSection>
 
       {/* Newsletter */}
       <NewsletterSection />
@@ -354,7 +354,7 @@ function NewsletterSection() {
   };
 
   return (
-    <section className="py-36 sm:py-48 border-t border-white/[0.04]">
+    <ScrollSection className="py-36 sm:py-48 border-t border-white/[0.04]">
       <div className="max-w-7xl mx-auto px-6 text-center">
         <FadeIn>
           <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-6">Newsletter</p>
@@ -397,6 +397,6 @@ function NewsletterSection() {
           </p>
         </FadeIn>
       </div>
-    </section>
+    </ScrollSection>
   );
 }
