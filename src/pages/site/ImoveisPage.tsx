@@ -205,10 +205,15 @@ export default function ImoveisPage() {
             >
               <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl overflow-hidden hover:border-white/10 transition-all duration-500">
                 {/* Image placeholder */}
-                <div className="aspect-[4/3] bg-gradient-to-br from-white/[0.04] to-white/[0.02] relative overflow-hidden">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-white/10 text-6xl font-light">{im.tipo === "Terreno" ? "◇" : "⌂"}</span>
-                  </div>
+                <div className="aspect-[4/3] relative overflow-hidden bg-black">
+                  <img
+                    src={getImageForImovel(im.id, im.tipo)}
+                    alt={im.nome}
+                    loading="lazy"
+                    width={800}
+                    height={600}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
                   {/* Status badge */}
                   <div className="absolute top-3 left-3">
                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-medium backdrop-blur-md ${
