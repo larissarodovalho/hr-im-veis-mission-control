@@ -34,9 +34,9 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             : "bg-transparent"
         }`}
       >
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-14">
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
           <Link to="/site">
-            <img src={hrLogo} alt="HR Imóveis" className="h-7 w-auto object-contain" />
+            <img src={hrLogo} alt="HR Imóveis" className="h-12 w-auto object-contain" />
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
