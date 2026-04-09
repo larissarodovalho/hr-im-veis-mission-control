@@ -64,13 +64,17 @@ function ParallaxImage({ src, alt, className = "" }: { src: string; alt: string;
 
 export default function HomePage() {
   const heroRef = useRef(null);
+  const pageRef = useRef(null);
   const { scrollYProgress: heroScroll } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroOpacity = useTransform(heroScroll, [0, 0.5], [1, 0]);
   const heroScale = useTransform(heroScroll, [0, 0.5], [1, 1.1]);
   const heroTextY = useTransform(heroScroll, [0, 0.5], [0, 80]);
 
+  const { scrollYProgress: pageScroll } = useScroll({ target: pageRef, offset: ["start start", "end end"] });
+  const bgColor = useTransform(pageScroll, [0, 0.3, 0.6, 1], ["#0a0a0a", "#111115", "#151519", "#1a1a1f"]);
+
   return (
-    <div className="bg-[#0a0a0a]">
+    <motion.div ref={pageRef} style={{ backgroundColor: bgColor }}>
       {/* Hero */}
       <section ref={heroRef} className="relative h-screen flex items-end overflow-hidden">
         <motion.div className="absolute inset-0" style={{ scale: heroScale }}>
@@ -320,7 +324,7 @@ export default function HomePage() {
 
       {/* Newsletter */}
       <NewsletterSection />
-    </div>
+    </motion.div>
   );
 }
 
