@@ -216,24 +216,30 @@ export default function ImoveisPage() {
 
               <div className="h-4 w-px bg-white/[0.06] hidden sm:block" />
 
-              {/* Price range */}
-              <div className="hidden md:flex items-center gap-2">
-                <span className="text-[10px] text-white/20 uppercase tracking-wider">Valor</span>
-                <input
-                  type="number"
-                  placeholder="Mín"
-                  value={faixaMin}
-                  onChange={(e) => setFaixaMin(e.target.value)}
-                  className="w-20 bg-transparent border-b border-white/[0.06] px-2 py-1.5 text-[11px] text-white placeholder:text-white/15 focus:outline-none focus:border-white/20 transition-all text-center"
-                />
-                <span className="text-white/10 text-[10px]">—</span>
-                <input
-                  type="number"
-                  placeholder="Máx"
-                  value={faixaMax}
-                  onChange={(e) => setFaixaMax(e.target.value)}
-                  className="w-20 bg-transparent border-b border-white/[0.06] px-2 py-1.5 text-[11px] text-white placeholder:text-white/15 focus:outline-none focus:border-white/20 transition-all text-center"
-                />
+              {/* Price range pills */}
+              <div className="hidden md:flex items-center gap-1">
+                {FAIXAS.map((faixa) => (
+                  <motion.button
+                    key={faixa.label}
+                    onClick={() => setFaixaSelecionada(faixa.label)}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className={`relative px-3 py-1.5 rounded-full text-[10px] font-medium transition-all duration-400 ${
+                      faixaSelecionada === faixa.label
+                        ? "text-white"
+                        : "text-white/25 hover:text-white/50"
+                    }`}
+                  >
+                    {faixaSelecionada === faixa.label && (
+                      <motion.div
+                        layoutId="activePrice"
+                        className="absolute inset-0 bg-white/10 border border-white/15 rounded-full"
+                        transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
+                      />
+                    )}
+                    <span className="relative z-10">{faixa.label}</span>
+                  </motion.button>
+                ))}
               </div>
 
               {/* Clear */}
