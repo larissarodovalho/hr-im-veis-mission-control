@@ -29,9 +29,6 @@ const App = () => (
             <Route path="/" element={<VisaoGeral />} />
             <Route path="/crm" element={<CRMPage />} />
             <Route path="/marketing" element={<Marketing />} />
-            <Route path="/trafego" element={<TrafegoPago />} />
-            <Route path="/redes-sociais" element={<RedesSociais />} />
-            <Route path="/conteudo" element={<Conteudo />} />
             <Route path="/operacional" element={<Operacional />} />
             <Route path="/saude" element={<SaudeSistema />} />
             <Route path="/controle-criacao" element={<ControleDeCreacao />} />

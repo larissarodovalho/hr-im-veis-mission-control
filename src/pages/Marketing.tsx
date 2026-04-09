@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -43,6 +44,9 @@ import {
   BarChart2,
   Megaphone,
 } from "lucide-react";
+import TrafegoPago from "./TrafegoPago";
+import RedesSociais from "./RedesSociais";
+import Conteudo from "./Conteudo";
 
 // --- Mock Data ---
 
@@ -107,7 +111,7 @@ const tipoColor: Record<string, string> = {
   Relatório: "bg-slate-100 text-slate-700",
 };
 
-export default function Marketing() {
+function MarketingGeral() {
   const [campanhas, setCampanhas] = useState(campanhasMock);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [novaCampanha, setNovaCampanha] = useState({ nome: "", tipo: "Meta Ads", orcamento: "" });
@@ -145,7 +149,7 @@ export default function Marketing() {
       <div className="flex items-center justify-between">
         <h2 className="section-title flex items-center gap-2">
           <Megaphone className="h-5 w-5 text-primary" />
-          Marketing
+          Marketing — Visão Geral
         </h2>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -324,4 +328,20 @@ export default function Marketing() {
       </Card>
     </div>
   );
+}
+
+export default function Marketing() {
+  const [searchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "geral";
+
+  switch (tab) {
+    case "trafego":
+      return <TrafegoPago />;
+    case "redes-sociais":
+      return <RedesSociais />;
+    case "conteudo":
+      return <Conteudo />;
+    default:
+      return <MarketingGeral />;
+  }
 }
