@@ -3,6 +3,7 @@
 // const corretorId: string | undefined = undefined;
 
 import { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -58,6 +59,8 @@ const PeriodoSelect = ({ value, onChange }: { value: Periodo; onChange: (v: Peri
 );
 
 export default function CRM() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "leads";
   const [dialogNovoLead, setDialogNovoLead] = useState(false);
   const [novoLead, setNovoLead] = useState({
     nome: "", telefone: "", email: "", canal: "Meta Ads" as Lead["canal"],
@@ -206,41 +209,11 @@ export default function CRM() {
       </Dialog>
       <h2 className="section-title">CRM — Comercial</h2>
 
-      <Tabs defaultValue="leads">
-        <TabsList className="h-8 bg-muted/50 rounded-md p-0.5 gap-0.5 mb-2 flex-wrap">
-          <TabsTrigger value="leads" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <Users className="h-3.5 w-3.5" /> Leads
-          </TabsTrigger>
-          <TabsTrigger value="contatos" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <Phone className="h-3.5 w-3.5" /> Contatos
-          </TabsTrigger>
-          <TabsTrigger value="kanban" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <Building2 className="h-3.5 w-3.5" /> Kanban
-          </TabsTrigger>
-          <TabsTrigger value="imoveis" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <Home className="h-3.5 w-3.5" /> Imóveis
-          </TabsTrigger>
-          <TabsTrigger value="funil" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <TrendingUp className="h-3.5 w-3.5" /> Funil de Vendas
-          </TabsTrigger>
-          <TabsTrigger value="criacao" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <ClipboardList className="h-3.5 w-3.5" /> Controle de Criação
-          </TabsTrigger>
-          <TabsTrigger value="analise" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <BarChart2 className="h-3.5 w-3.5" /> Análise de Leads
-          </TabsTrigger>
-          <TabsTrigger value="oportunidades" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <HandCoins className="h-3.5 w-3.5" /> Oportunidades
-          </TabsTrigger>
-          <TabsTrigger value="visitas" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <CalendarCheck className="h-3.5 w-3.5" /> Visitas
-          </TabsTrigger>
-          <TabsTrigger value="tarefas" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <CheckCircle2 className="h-3.5 w-3.5" /> Tarefas
-          </TabsTrigger>
-          <TabsTrigger value="relatorios" className="h-7 text-xs px-3 flex items-center gap-1.5 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <FileDown className="h-3.5 w-3.5" /> Relatórios
-          </TabsTrigger>
+      <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v })}>
+        <TabsList className="hidden">
+          {["leads","contatos","kanban","imoveis","funil","criacao","analise","oportunidades","visitas","tarefas","relatorios"].map(v => (
+            <TabsTrigger key={v} value={v}>{v}</TabsTrigger>
+          ))}
         </TabsList>
 
         {/* ── ABA: Leads (para qualificar) ── */}
