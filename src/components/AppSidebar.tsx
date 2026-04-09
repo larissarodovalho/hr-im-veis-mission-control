@@ -17,7 +17,7 @@ import {
   CalendarCheck,
   CheckCircle2,
   FileDown,
-  FileText,
+  FileText as FileTextIcon,
 } from "lucide-react";
 import { NavLink, useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import hrLogo from "@/assets/hr-imoveis-logo.png";
