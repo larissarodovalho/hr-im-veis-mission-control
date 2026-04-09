@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import DashboardLayout from "@/components/DashboardLayout";
 import VisaoGeral from "@/pages/VisaoGeral";
 import CRMPage from "@/pages/CRMPage";
-import TrafegoPago from "@/pages/TrafegoPago";
 import Marketing from "@/pages/Marketing";
 import Operacional from "@/pages/Operacional";
 import SaudeSistema from "@/pages/SaudeSistema";
