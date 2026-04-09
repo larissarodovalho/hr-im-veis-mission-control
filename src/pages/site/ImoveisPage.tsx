@@ -27,7 +27,7 @@ function formatPrice(valor: number) {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 }
 
-const TIPOS = ["Todos", "Casa", "Terreno", "Apartamento", "Sobrado", "Cobertura"] as const;
+const TIPOS = ["Todos", "Casa", "Sobrado", "Apartamento"] as const;
 const STATUS_FILTER = ["Disponível", "Em negociação"] as const;
 
 const smoothEase = [0.25, 0.4, 0.25, 1] as const;
