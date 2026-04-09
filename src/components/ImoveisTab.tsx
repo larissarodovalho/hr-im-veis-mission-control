@@ -124,6 +124,7 @@ const emptyImovel = {
   corretor: "Hans" as Imovel["corretor"], descricao: "", area: "", quartos: "0", banheiros: "0", vagas: "0",
   rua: "", numero: "", bairro: "", condominio: "", cidade: "Sinop", estado: "MT",
   propNome: "", propTelefone: "", propEmail: "", propCpfCnpj: "",
+  fotos: [] as string[],
 };
 
 const statusColor = (s: Imovel["status"]) => {
@@ -171,7 +172,7 @@ export default function ImoveisTab() {
         nome: form.propNome.trim(), telefone: form.propTelefone.trim(),
         email: form.propEmail.trim(), cpfCnpj: form.propCpfCnpj.trim(),
       },
-      fotos: [],
+      fotos: [...form.fotos],
       documentos: [],
     };
     setImoveisList(prev => [novo, ...prev]);
@@ -272,6 +273,7 @@ export default function ImoveisTab() {
                 <TabsTrigger value="dados" className="h-7 text-xs flex-1">Dados do Imóvel</TabsTrigger>
                 <TabsTrigger value="endereco" className="h-7 text-xs flex-1">Endereço</TabsTrigger>
                 <TabsTrigger value="proprietario" className="h-7 text-xs flex-1">Proprietário</TabsTrigger>
+                <TabsTrigger value="fotos" className="h-7 text-xs flex-1">Fotos</TabsTrigger>
               </TabsList>
 
               <TabsContent value="dados" className="space-y-3 mt-3">
@@ -383,6 +385,58 @@ export default function ImoveisTab() {
                   </div>
                 </div>
               </TabsContent>
+
+              <TabsContent value="fotos" className="space-y-3 mt-3">
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Adicionar Fotos do Imóvel</Label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="h-auto text-sm file:mr-3 file:h-8 file:px-3 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground file:text-xs file:font-medium hover:file:bg-primary/90 cursor-pointer"
+                      onChange={(e) => {
+                        const files = e.target.files;
+                        if (!files) return;
+                        Array.from(files).forEach(file => {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            const result = ev.target?.result as string;
+                            if (result) {
+                              setForm(p => ({ ...p, fotos: [...p.fotos, result] }));
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        });
+                        e.target.value = "";
+                      }}
+                    />
+                  </div>
+                  {form.fotos.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2">
+                      {form.fotos.map((foto, idx) => (
+                        <div key={idx} className="relative group rounded-md overflow-hidden border border-border">
+                          <img src={foto} alt={`Foto ${idx + 1}`} className="w-full h-24 object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => setForm(p => ({ ...p, fotos: p.fotos.filter((_, i) => i !== idx) }))}
+                            className="absolute top-1 right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {form.fotos.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed border-border rounded-lg text-muted-foreground">
+                      <Image className="h-10 w-10 mb-2 opacity-40" />
+                      <p className="text-sm">Nenhuma foto adicionada</p>
+                      <p className="text-xs">Clique acima para selecionar fotos</p>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
             </Tabs>
             <DialogFooter className="mt-4">
               <Button variant="outline" size="sm" onClick={() => setDialogAberto(false)}>Cancelar</Button>
@@ -411,9 +465,13 @@ export default function ImoveisTab() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filtered.map(im => (
           <Card key={im.id} className="overflow-hidden hover:shadow-md transition-shadow">
-            {/* Foto placeholder */}
-            <div className="relative h-40 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-              <Building2 className="h-12 w-12 text-muted-foreground/30" />
+            {/* Foto ou placeholder */}
+            <div className="relative h-40 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
+              {im.fotos.length > 0 ? (
+                <img src={im.fotos[0]} alt={im.nome} className="w-full h-full object-cover" />
+              ) : (
+                <Building2 className="h-12 w-12 text-muted-foreground/30" />
+              )}
               <Badge className={`absolute bottom-3 right-3 text-[10px] ${statusColor(im.status)}`}>{im.status}</Badge>
             </div>
             <CardContent className="p-3 space-y-1.5">
