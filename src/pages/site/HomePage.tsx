@@ -83,7 +83,7 @@ export default function HomePage() {
       <section ref={heroRef} className="relative h-screen flex items-end overflow-hidden">
         <motion.div className="absolute inset-0" style={{ scale: heroScale }}>
           <img src={heroBg} alt="Imóveis de alto padrão em Sinop" className="w-full h-full object-cover" width={1920} height={1080} />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[black] via-[black]/40 to-transparent" />
         </motion.div>
 
         <motion.div
@@ -167,7 +167,7 @@ export default function HomePage() {
       {/* Full-width image */}
       <ScrollSection className="relative h-[70vh] sm:h-[80vh]">
         <ParallaxImage src={sectionLiving} alt="Interior de luxo" className="absolute inset-0 h-full" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-[#0a0a0a]/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[black] via-transparent to-[black]/30" />
         <div className="relative z-10 flex items-end h-full max-w-7xl mx-auto px-6 pb-16">
           <FadeIn>
             <p className="text-xl sm:text-2xl font-display font-light text-white/70 max-w-xl leading-relaxed tracking-wide">
@@ -192,7 +192,7 @@ export default function HomePage() {
               { num: "04", title: "Tradição & Confiança", desc: "Anos de experiência no mercado imobiliário de alto padrão." },
             ].map((item, i) => (
               <FadeIn key={item.num} delay={i * 0.1}>
-                <div className="bg-[#0a0a0a] p-8 sm:p-10 h-full">
+                <div className="bg-[black] p-8 sm:p-10 h-full">
                   <span className="text-[10px] text-white/15 tracking-[0.3em] font-light">{item.num}</span>
                   <h3 className="font-display font-normal text-lg sm:text-xl mt-5 mb-3 tracking-wide">{item.title}</h3>
                    <p className="text-sm text-white/25 leading-relaxed font-light">{item.desc}</p>
@@ -232,7 +232,7 @@ export default function HomePage() {
               <FadeIn key={imovel.id} delay={i * 0.1}>
                 <Link
                   to={`/site/imoveis/${imovel.id}`}
-                  className="group block bg-[#0a0a0a] hover:bg-white/[0.02] transition-colors"
+                  className="group block bg-[black] hover:bg-white/[0.02] transition-colors"
                 >
                   <div className="aspect-[4/3] overflow-hidden">
                     <motion.img
@@ -289,9 +289,9 @@ export default function HomePage() {
           </FadeIn>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-white/[0.04] rounded-2xl overflow-hidden">
              <FadeIn>
-              <div className="relative bg-[#0a0a0a] overflow-hidden">
+              <div className="relative bg-[black] overflow-hidden">
                 <img src={property1} alt="Comprar imóvel" className="absolute inset-0 w-full h-full object-cover opacity-20" loading="lazy" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-[#0a0a0a]/60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[black] via-[black]/80 to-[black]/60" />
                 <div className="relative p-10 sm:p-16 text-center flex flex-col items-center">
                   <MessageCircle className="h-8 w-8 text-white/15 mb-6" />
                   <h3 className="text-2xl sm:text-3xl font-display font-light tracking-wide mb-4">
@@ -320,9 +320,9 @@ export default function HomePage() {
               </div>
             </FadeIn>
             <FadeIn delay={0.1}>
-              <div className="relative bg-[#0a0a0a] overflow-hidden">
+              <div className="relative bg-[black] overflow-hidden">
                 <img src={featureInterior} alt="Vender imóvel" className="absolute inset-0 w-full h-full object-cover opacity-20" loading="lazy" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-[#0a0a0a]/60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[black] via-[black]/80 to-[black]/60" />
                 <div className="relative p-10 sm:p-16 text-center flex flex-col items-center">
                   <Building2 className="h-8 w-8 text-white/15 mb-6" />
                   <h3 className="text-2xl sm:text-3xl font-display font-light tracking-wide mb-4">
