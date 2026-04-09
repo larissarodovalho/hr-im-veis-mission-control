@@ -229,14 +229,17 @@ export default function HomePage() {
                   to={`/site/imoveis/${imovel.id}`}
                   className="group block bg-[#0a0a0a] hover:bg-white/[0.02] transition-colors"
                 >
-                  <div className="aspect-[4/3] bg-gradient-to-br from-white/[0.03] to-transparent flex items-center justify-center overflow-hidden">
-                    <motion.div
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <motion.img
+                      src={propertyImages[i] || property1}
+                      alt={imovel.nome}
                       whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.6 }}
-                      className="w-full h-full bg-gradient-to-br from-amber-900/10 to-transparent flex items-center justify-center"
-                    >
-                      <span className="text-7xl text-white/[0.03] font-display font-extralight italic">{imovel.tipo[0]}</span>
-                    </motion.div>
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      width={800}
+                      height={600}
+                    />
                   </div>
                   <div className="p-6 sm:p-8">
                     <div className="flex items-center justify-between mb-4">
@@ -280,9 +283,11 @@ export default function HomePage() {
             <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-8 text-center">Como podemos ajudar</p>
           </FadeIn>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-white/[0.04] rounded-2xl overflow-hidden">
-            <FadeIn>
-              <div className="bg-[#0a0a0a] p-10 sm:p-16 text-center flex flex-col items-center">
-                <MessageCircle className="h-8 w-8 text-white/15 mb-6" />
+             <FadeIn>
+              <div className="relative bg-[#0a0a0a] overflow-hidden">
+                <img src={property1} alt="Comprar imóvel" className="absolute inset-0 w-full h-full object-cover opacity-20" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-[#0a0a0a]/60" />
+                <div className="relative p-10 sm:p-16 text-center flex flex-col items-center">
                 <h3 className="text-2xl sm:text-3xl font-display font-light tracking-wide mb-4">
                   Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100">comprar</span> um imóvel?
                 </h3>
