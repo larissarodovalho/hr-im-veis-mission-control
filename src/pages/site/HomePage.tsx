@@ -391,16 +391,34 @@ export default function HomePage() {
       {/* CTA — Comprar ou Vender */}
       <ScrollSection className="py-36 sm:py-48">
         <div className="max-w-7xl mx-auto px-6">
-          <FadeIn>
-            <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-8 text-center">Como podemos ajudar</p>
-          </FadeIn>
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }}
+            className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-8 text-center"
+          >
+            Como podemos ajudar
+          </motion.p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-black rounded-2xl overflow-hidden">
-             <FadeIn>
-              <div className="relative bg-[black] overflow-hidden">
+            <motion.div
+              initial={{ opacity: 0, x: -50, scale: 0.95 }}
+              whileInView={{ opacity: 1, x: 0, scale: 1 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 1, ease: [0.25, 0.4, 0.25, 1] }}
+            >
+              <div className="relative bg-black overflow-hidden h-full">
                 <img src={property1} alt="Comprar imóvel" className="absolute inset-0 w-full h-full object-cover opacity-20" loading="lazy" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[black] via-[black]/80 to-[black]/60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/60" />
                 <div className="relative p-10 sm:p-16 text-center flex flex-col items-center">
-                  <MessageCircle className="h-8 w-8 text-white/15 mb-6" />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
+                  >
+                    <MessageCircle className="h-8 w-8 text-white/15 mb-6" />
+                  </motion.div>
                   <h3 className="text-2xl sm:text-3xl font-display font-light tracking-wide mb-4">
                     Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100">comprar</span> um imóvel?
                   </h3>
@@ -425,13 +443,25 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-            </FadeIn>
-            <FadeIn delay={0.1}>
-              <div className="relative bg-[black] overflow-hidden">
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 50, scale: 0.95 }}
+              whileInView={{ opacity: 1, x: 0, scale: 1 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 1, delay: 0.2, ease: [0.25, 0.4, 0.25, 1] }}
+            >
+              <div className="relative bg-black overflow-hidden h-full">
                 <img src={featureInterior} alt="Vender imóvel" className="absolute inset-0 w-full h-full object-cover opacity-20" loading="lazy" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[black] via-[black]/80 to-[black]/60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/60" />
                 <div className="relative p-10 sm:p-16 text-center flex flex-col items-center">
-                  <Building2 className="h-8 w-8 text-white/15 mb-6" />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.5 }}
+                  >
+                    <Building2 className="h-8 w-8 text-white/15 mb-6" />
+                  </motion.div>
                   <h3 className="text-2xl sm:text-3xl font-display font-light tracking-wide mb-4">
                     Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100">vender</span> seu imóvel?
                   </h3>
@@ -446,7 +476,7 @@ export default function HomePage() {
                   </Link>
                 </div>
               </div>
-            </FadeIn>
+            </motion.div>
           </div>
         </div>
       </ScrollSection>
