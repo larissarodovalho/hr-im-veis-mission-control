@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { MapPin, BedDouble, Bath, Car, Search, SlidersHorizontal, X, ArrowUpRight, Maximize2 } from "lucide-react";
+import { MapPin, BedDouble, Bath, Car, Search, X, ArrowUpRight, Maximize2 } from "lucide-react";
 import { IMOVEIS_SITE } from "@/data/imoveisCRM";
 
 import casaLuxo1 from "@/assets/imoveis/casa-luxo-1.jpg";
@@ -108,31 +108,14 @@ function ParallaxHero() {
           em Sinop e região. Cada detalhe, pensado para você.
         </motion.p>
 
-        {/* Stats */}
+        {/* Elegant accent line */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.7, ease: smoothEase }}
-          className="flex items-center gap-8 mt-10"
-        >
-          {[
-            { value: IMOVEIS_SITE.filter(i => STATUS_FILTER.includes(i.status as any)).length.toString(), label: "Imóveis disponíveis" },
-            { value: "R$ 580K", label: "A partir de" },
-            { value: "Sinop", label: "Mato Grosso" },
-          ].map((stat, i) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.8 + i * 0.1 }}
-              className="relative"
-            >
-              <p className="text-xl sm:text-2xl font-light tracking-tight">{stat.value}</p>
-              <p className="text-[10px] text-white/25 uppercase tracking-wider mt-0.5">{stat.label}</p>
-              {i < 2 && <div className="absolute right-[-16px] top-1/2 -translate-y-1/2 w-px h-6 bg-white/10 hidden sm:block" />}
-            </motion.div>
-          ))}
-        </motion.div>
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ duration: 1.2, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="w-16 h-px bg-gradient-to-r from-white/30 to-transparent mt-10"
+          style={{ transformOrigin: "left" }}
+        />
       </motion.div>
     </motion.section>
   );
@@ -143,7 +126,6 @@ export default function ImoveisPage() {
   const [tipoSelecionado, setTipoSelecionado] = useState<string>("Todos");
   const [faixaMin, setFaixaMin] = useState("");
   const [faixaMax, setFaixaMax] = useState("");
-  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const imoveis = useMemo(() => {
     return IMOVEIS_SITE
@@ -171,122 +153,111 @@ export default function ImoveisPage() {
       {/* Hero with parallax */}
       <ParallaxHero />
 
-      {/* Search & Filters — elegant glass bar */}
-      <section className="px-6 pb-10 -mt-4 relative z-10">
+      {/* Filter bar — premium inline */}
+      <section className="px-6 pb-12 -mt-2 relative z-10">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, ease: smoothEase }}
-            className="bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-2xl p-5 sm:p-6"
+            className="relative"
           >
-            {/* Search bar */}
-            <div className="flex items-center gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
+            {/* Type pills row */}
+            <div className="flex items-center gap-6 mb-6">
+              <div className="flex items-center gap-1">
+                {TIPOS.map((tipo) => (
+                  <motion.button
+                    key={tipo}
+                    onClick={() => setTipoSelecionado(tipo)}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className={`relative px-4 py-2 rounded-full text-[11px] font-medium transition-all duration-400 ${
+                      tipoSelecionado === tipo
+                        ? "text-white"
+                        : "text-white/30 hover:text-white/60"
+                    }`}
+                  >
+                    {tipoSelecionado === tipo && (
+                      <motion.div
+                        layoutId="activeType"
+                        className="absolute inset-0 bg-white/10 border border-white/15 rounded-full"
+                        transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
+                      />
+                    )}
+                    <span className="relative z-10">{tipo}</span>
+                  </motion.button>
+                ))}
+              </div>
+
+              <div className="h-4 w-px bg-white/[0.06] hidden sm:block" />
+
+              {/* Search */}
+              <div className="relative flex-1 max-w-xs hidden sm:block">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/15" />
                 <input
                   type="text"
-                  placeholder="Buscar por nome, bairro ou condomínio..."
+                  placeholder="Buscar..."
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
-                  className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-white/20 focus:bg-white/[0.06] transition-all duration-300"
+                  className="w-full bg-transparent border-b border-white/[0.06] pl-9 pr-3 py-2 text-xs text-white placeholder:text-white/15 focus:outline-none focus:border-white/20 transition-all duration-300"
                 />
               </div>
-              <motion.button
-                onClick={() => setFiltersOpen(!filtersOpen)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-medium transition-all duration-300 border ${
-                  filtersOpen
-                    ? "bg-white/10 border-white/20 text-white"
-                    : "bg-white/[0.04] border-white/[0.08] text-white/40 hover:text-white/70 hover:border-white/15"
-                }`}
-              >
-                <SlidersHorizontal className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Filtros</span>
-              </motion.button>
+
+              <div className="h-4 w-px bg-white/[0.06] hidden sm:block" />
+
+              {/* Price range */}
+              <div className="hidden md:flex items-center gap-2">
+                <span className="text-[10px] text-white/20 uppercase tracking-wider">Valor</span>
+                <input
+                  type="number"
+                  placeholder="Mín"
+                  value={faixaMin}
+                  onChange={(e) => setFaixaMin(e.target.value)}
+                  className="w-20 bg-transparent border-b border-white/[0.06] px-2 py-1.5 text-[11px] text-white placeholder:text-white/15 focus:outline-none focus:border-white/20 transition-all text-center"
+                />
+                <span className="text-white/10 text-[10px]">—</span>
+                <input
+                  type="number"
+                  placeholder="Máx"
+                  value={faixaMax}
+                  onChange={(e) => setFaixaMax(e.target.value)}
+                  className="w-20 bg-transparent border-b border-white/[0.06] px-2 py-1.5 text-[11px] text-white placeholder:text-white/15 focus:outline-none focus:border-white/20 transition-all text-center"
+                />
+              </div>
+
+              {/* Clear */}
+              <AnimatePresence>
+                {(tipoSelecionado !== "Todos" || busca || faixaMin || faixaMax) && (
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    onClick={() => { setTipoSelecionado("Todos"); setBusca(""); setFaixaMin(""); setFaixaMax(""); }}
+                    className="w-7 h-7 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.1] transition-all"
+                  >
+                    <X className="h-3 w-3" />
+                  </motion.button>
+                )}
+              </AnimatePresence>
             </div>
 
-            {/* Filter chips */}
-            <AnimatePresence>
-              {filtersOpen && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.4, ease: smoothEase }}
-                  className="overflow-hidden"
-                >
-                  <div className="flex flex-wrap items-end gap-4 pt-5 border-t border-white/[0.05] mt-5">
-                    <div className="flex flex-wrap gap-1.5">
-                      {TIPOS.map((tipo, i) => (
-                        <motion.button
-                          key={tipo}
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: i * 0.04 }}
-                          onClick={() => setTipoSelecionado(tipo)}
-                          whileHover={{ scale: 1.04 }}
-                          whileTap={{ scale: 0.96 }}
-                          className={`px-4 py-2 rounded-xl text-[11px] font-medium transition-all duration-300 border ${
-                            tipoSelecionado === tipo
-                              ? "bg-white text-[#0a0a0a] border-white shadow-lg shadow-white/10"
-                              : "bg-white/[0.04] border-white/[0.08] text-white/40 hover:text-white/70 hover:border-white/15"
-                          }`}
-                        >
-                          {tipo}
-                        </motion.button>
-                      ))}
-                    </div>
+            {/* Mobile search (visible on small screens) */}
+            <div className="sm:hidden mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/15" />
+                <input
+                  type="text"
+                  placeholder="Buscar por nome, bairro..."
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder:text-white/15 focus:outline-none focus:border-white/15 transition-all"
+                />
+              </div>
+            </div>
 
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        placeholder="Mín R$"
-                        value={faixaMin}
-                        onChange={(e) => setFaixaMin(e.target.value)}
-                        className="w-28 bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2 text-[11px] text-white placeholder:text-white/20 focus:outline-none focus:border-white/20 transition-all"
-                      />
-                      <span className="text-white/15 text-xs">—</span>
-                      <input
-                        type="number"
-                        placeholder="Máx R$"
-                        value={faixaMax}
-                        onChange={(e) => setFaixaMax(e.target.value)}
-                        className="w-28 bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2 text-[11px] text-white placeholder:text-white/20 focus:outline-none focus:border-white/20 transition-all"
-                      />
-                    </div>
-
-                    {(tipoSelecionado !== "Todos" || faixaMin || faixaMax) && (
-                      <motion.button
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        onClick={() => { setTipoSelecionado("Todos"); setFaixaMin(""); setFaixaMax(""); }}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] text-white/30 hover:text-white/60 transition-colors"
-                      >
-                        <X className="h-3 w-3" /> Limpar filtros
-                      </motion.button>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-
-          {/* Count with elegant line */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-            className="flex items-center gap-3 mt-8 mb-2"
-          >
-            <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
-            <p className="text-[11px] text-white/25 uppercase tracking-widest font-light">
-              {imoveis.length} {imoveis.length === 1 ? "imóvel" : "imóveis"}
-            </p>
-            <div className="h-px flex-1 bg-gradient-to-l from-white/10 to-transparent" />
+            {/* Subtle divider */}
+            <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
           </motion.div>
         </div>
       </section>
