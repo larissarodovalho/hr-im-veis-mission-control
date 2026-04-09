@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { leads as leadsIniciais, imoveis, corretoresRanking, funnelPorCorretor, contas, oportunidades, leadsPorOrigem, leadsTotaisPorOrigem, produtosPorLead, motivosDesqualificacao, oportunidadesFases, motivosDaPerda, vgv, ticketMedio, visitas as visitasIniciais, visitasPorTipoImovel, tarefas, type TipoTarefa, type StatusTarefa, type StatusVisita, type Visita, type Lead, type LeadEtapa } from "@/data/mockData";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line, CartesianGrid } from "recharts";
-import { ChevronDown, ChevronUp, Phone, MessageSquare, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList, BarChart2, HandCoins, CalendarCheck, CheckCircle2, Clock, AlertCircle, Circle, ArrowRight, Home, FileDown, Download, Paperclip, Eye, FileText, XCircle } from "lucide-react";
+import { ChevronDown, ChevronUp, Phone, MessageSquare, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList, BarChart2, HandCoins, CalendarCheck, CheckCircle2, Clock, AlertCircle, Circle, ArrowRight, Home, FileDown, Download, Paperclip, Eye, FileText, XCircle, Search } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import ImoveisTab from "@/components/ImoveisTab";
@@ -94,6 +94,14 @@ export default function CRM() {
   const [desqualificarLead, setDesqualificarLead] = useState<string | null>(null);
   const [motivoDesqualificacao, setMotivoDesqualificacao] = useState("");
   const [motivoDesqualificacaoOutro, setMotivoDesqualificacaoOutro] = useState("");
+  const [buscaContato, setBuscaContato] = useState("");
+
+  const contatosFiltrados = useMemo(() => {
+    const base = listaLeads.filter(l => l.etapa !== "Lead recebido");
+    if (!buscaContato.trim()) return base;
+    const termo = buscaContato.toLowerCase();
+    return base.filter(l => l.nome.toLowerCase().includes(termo) || l.telefone.includes(termo) || l.corretor.toLowerCase().includes(termo));
+  }, [listaLeads, buscaContato]);
 
   const MOTIVOS_DESQUALIFICACAO = [
     "Sem interesse",
@@ -399,9 +407,20 @@ export default function CRM() {
             })()
           ) : (
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-base">Contatos — Leads Qualificados</CardTitle>
-                <Badge variant="outline" className="text-xs">{listaLeads.filter(l => l.etapa !== "Lead recebido").length} contatos</Badge>
+              <CardHeader className="flex flex-row items-center justify-between gap-4">
+                <CardTitle className="text-base">Contatos</CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar contato..."
+                      className="h-8 w-48 pl-8 text-xs"
+                      value={buscaContato}
+                      onChange={(e) => setBuscaContato(e.target.value)}
+                    />
+                  </div>
+                  <Badge variant="outline" className="text-xs">{contatosFiltrados.length} contatos</Badge>
+                </div>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
@@ -418,7 +437,7 @@ export default function CRM() {
                       </tr>
                     </thead>
                     <tbody>
-                      {listaLeads.filter(l => l.etapa !== "Lead recebido").map((lead) => (
+                      {contatosFiltrados.map((lead) => (
                         <tr
                           key={lead.id}
                           className="border-b hover:bg-muted/30 cursor-pointer"
