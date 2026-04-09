@@ -253,28 +253,6 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-[#0a0a0a]/30" />
       </section>
 
-      {/* Numbers */}
-      <section className="py-36 sm:py-48">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-16">
-            {[
-              { num: "200+", label: "Imóveis Vendidos" },
-              { num: "500+", label: "Clientes Satisfeitos" },
-              { num: "10+", label: "Anos de Experiência" },
-              { num: "50+", label: "Condomínios" },
-            ].map((s, i) => (
-              <FadeIn key={s.label} delay={i * 0.1}>
-                <div className="text-center">
-                  <p className="text-4xl sm:text-5xl font-display font-extralight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/30 tracking-tight">
-                    {s.num}
-                  </p>
-                  <p className="text-[9px] text-white/20 mt-3 uppercase tracking-[0.4em] font-light">{s.label}</p>
-                </div>
-              </FadeIn>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* CTA — Comprar ou Vender */}
       <section className="py-36 sm:py-48">
