@@ -164,7 +164,52 @@ export default function VisaoGeral() {
         </Card>
       </div>
 
-      {/* Bottom row: Imóveis + Agenda + Funil */}
+      {/* Métricas de Propostas */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <FileText className="h-4 w-4 text-primary" />
+            Propostas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="text-center p-3 rounded-lg bg-muted/30">
+              <p className="text-2xl font-bold font-display">{propostasMock.total}</p>
+              <p className="text-xs text-muted-foreground">Total</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-muted/30">
+              <p className="text-2xl font-bold font-display text-yellow-500">{propostasMock.pendentes}</p>
+              <p className="text-xs text-muted-foreground">Pendentes</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-muted/30">
+              <p className="text-2xl font-bold font-display text-green-500">{propostasMock.aceitas}</p>
+              <p className="text-xs text-muted-foreground">Aceitas</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-muted/30">
+              <p className="text-2xl font-bold font-display text-destructive">{propostasMock.recusadas}</p>
+              <p className="text-xs text-muted-foreground">Recusadas</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-muted/30">
+              <p className="text-lg font-bold font-display">R$ {(propostasMock.valorTotal / 1e6).toFixed(1)}M</p>
+              <p className="text-xs text-muted-foreground">Valor Total</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-muted/30">
+              <p className="text-lg font-bold font-display text-primary">R$ {(propostasMock.valorAceitas / 1e6).toFixed(1)}M</p>
+              <p className="text-xs text-muted-foreground">Valor Aceitas</p>
+            </div>
+          </div>
+          <div className="mt-3">
+            <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+              <span>Taxa de aprovação</span>
+              <span>{((propostasMock.aceitas / propostasMock.total) * 100).toFixed(0)}%</span>
+            </div>
+            <Progress value={(propostasMock.aceitas / propostasMock.total) * 100} className="h-2" />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Bottom row: Agenda + Funil */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader className="pb-3">
