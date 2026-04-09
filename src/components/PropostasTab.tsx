@@ -56,7 +56,7 @@ export default function PropostasTab({ leads, imoveis }: PropostasTabProps) {
       return;
     }
     const lead = leads.find(l => l.id === clienteSel);
-    const imovel = imoveis.find(i => String(i.id) === imovelSel);
+    const imovel = imoveis.find(i => i.id === imovelSel);
     if (!lead || !imovel) return;
 
     const nova: Proposta = {
@@ -64,7 +64,7 @@ export default function PropostasTab({ leads, imoveis }: PropostasTabProps) {
       clienteId: lead.id,
       clienteNome: lead.nome,
       imovelId: imovel.id,
-      imovelTitulo: imovel.titulo,
+      imovelNome: imovel.nome,
       arquivo: arquivo || undefined,
       dataCriacao: new Date().toISOString().slice(0, 10),
       status: "Pendente",
@@ -131,7 +131,7 @@ export default function PropostasTab({ leads, imoveis }: PropostasTabProps) {
                     <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Selecione o imóvel" /></SelectTrigger>
                     <SelectContent>
                       {imoveis.map(i => (
-                        <SelectItem key={i.id} value={String(i.id)}>{i.titulo}</SelectItem>
+                        <SelectItem key={i.id} value={i.id}>{i.nome}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -186,7 +186,7 @@ export default function PropostasTab({ leads, imoveis }: PropostasTabProps) {
                   {propostas.map(p => (
                     <tr key={p.id} className="border-b hover:bg-muted/30 transition-colors">
                       <td className="p-3">{p.clienteNome}</td>
-                      <td className="p-3 text-xs">{p.imovelTitulo}</td>
+                      <td className="p-3 text-xs">{p.imovelNome}</td>
                       <td className="p-3 text-xs">{p.dataCriacao}</td>
                       <td className="p-3">
                         <Badge variant={p.status === "Aceita" ? "default" : p.status === "Recusada" ? "destructive" : "outline"} className="text-[10px]">
