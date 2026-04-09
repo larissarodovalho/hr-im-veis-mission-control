@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Building2, MapPin, User, Phone, FileText, Image, Plus, ChevronDown, ChevronUp, Trash2, Search } from "lucide-react";
+import { Building2, MapPin, User, Phone, FileText, Image, Plus, ChevronDown, ChevronUp, Trash2, Search, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 export interface Imovel {
@@ -125,6 +125,7 @@ const emptyImovel = {
   rua: "", numero: "", bairro: "", condominio: "", cidade: "Sinop", estado: "MT",
   propNome: "", propTelefone: "", propEmail: "", propCpfCnpj: "",
   fotos: [] as string[],
+  documentos: [] as { nome: string; arquivo: string }[],
 };
 
 const statusColor = (s: Imovel["status"]) => {
