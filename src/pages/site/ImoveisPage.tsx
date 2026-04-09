@@ -108,31 +108,14 @@ function ParallaxHero() {
           em Sinop e região. Cada detalhe, pensado para você.
         </motion.p>
 
-        {/* Stats */}
+        {/* Elegant accent line */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.7, ease: smoothEase }}
-          className="flex items-center gap-8 mt-10"
-        >
-          {[
-            { value: IMOVEIS_SITE.filter(i => STATUS_FILTER.includes(i.status as any)).length.toString(), label: "Imóveis disponíveis" },
-            { value: "R$ 580K", label: "A partir de" },
-            { value: "Sinop", label: "Mato Grosso" },
-          ].map((stat, i) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.8 + i * 0.1 }}
-              className="relative"
-            >
-              <p className="text-xl sm:text-2xl font-light tracking-tight">{stat.value}</p>
-              <p className="text-[10px] text-white/25 uppercase tracking-wider mt-0.5">{stat.label}</p>
-              {i < 2 && <div className="absolute right-[-16px] top-1/2 -translate-y-1/2 w-px h-6 bg-white/10 hidden sm:block" />}
-            </motion.div>
-          ))}
-        </motion.div>
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ duration: 1.2, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="w-16 h-px bg-gradient-to-r from-white/30 to-transparent mt-10"
+          style={{ transformOrigin: "left" }}
+        />
       </motion.div>
     </motion.section>
   );
