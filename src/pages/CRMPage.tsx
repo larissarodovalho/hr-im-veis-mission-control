@@ -1915,6 +1915,11 @@ export default function CRM() {
           <RelatoriosTab listaLeads={listaLeads} imoveis={imoveis} />
         </TabsContent>
 
+        {/* ── ABA: Propostas ── */}
+        <TabsContent value="propostas" className="space-y-6">
+          <PropostasTab leads={listaLeads} imoveis={imoveis} />
+        </TabsContent>
+
       </Tabs>
     </div>
   );
