@@ -210,6 +210,11 @@ export default function CRM() {
       <h2 className="section-title">CRM — Comercial</h2>
 
       <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v })}>
+        <TabsList className="hidden">
+          {["leads","contatos","kanban","imoveis","funil","criacao","analise","oportunidades","visitas","tarefas","relatorios"].map(v => (
+            <TabsTrigger key={v} value={v}>{v}</TabsTrigger>
+          ))}
+        </TabsList>
 
         {/* ── ABA: Leads (para qualificar) ── */}
         <TabsContent value="leads" className="space-y-6">
