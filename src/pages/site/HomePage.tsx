@@ -3,6 +3,7 @@ import { imoveis } from "@/data/mockData";
 import { ArrowRight, MapPin, ArrowUpRight } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
+import hrLogo from "@/assets/logo-hr-branco.png";
 import heroBg from "@/assets/hero-dark.jpg";
 import sectionLiving from "@/assets/section-living.jpg";
 import sectionCommunity from "@/assets/section-community.jpg";
@@ -71,14 +72,14 @@ export default function HomePage() {
           style={{ opacity: heroOpacity, y: heroTextY }}
           className="relative z-10 max-w-7xl mx-auto px-6 pb-24 w-full"
         >
-          <motion.p
+          <motion.img
+            src={hrLogo}
+            alt="HR Imóveis"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-xs uppercase tracking-[0.3em] text-white/40 mb-4"
-          >
-            Sinop — Mato Grosso
-          </motion.p>
+            className="h-16 sm:h-20 w-auto object-contain mb-8"
+          />
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
