@@ -143,24 +143,53 @@ export default function HomePage() {
       <ScrollSection className="py-36 sm:py-48">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
-            <FadeIn>
-              <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-8">Exclusividade</p>
-            </FadeIn>
-            <FadeIn delay={0.1}>
-              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-display font-light leading-[1.15] tracking-[-0.01em]">
-                Imóveis que definem{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100 italic font-normal">
-                  um novo padrão
-                </span>{" "}
-                de viver.
-              </h2>
-            </FadeIn>
+            <motion.p
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }}
+              className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-8"
+            >
+              Exclusividade
+            </motion.p>
+            <motion.h2
+              initial={{ opacity: 0, y: 50, scale: 0.97 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 1, delay: 0.15, ease: [0.25, 0.4, 0.25, 1] }}
+              className="text-3xl sm:text-5xl lg:text-6xl font-display font-light leading-[1.15] tracking-[-0.01em]"
+            >
+              Imóveis que definem{" "}
+              <motion.span
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: 0.5, ease: [0.25, 0.4, 0.25, 1] }}
+                className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100 italic font-normal"
+              >
+                um novo padrão
+              </motion.span>{" "}
+              de viver.
+            </motion.h2>
           </div>
-          <FadeIn delay={0.2}>
-            <div className="aspect-[4/3] rounded-2xl overflow-hidden">
-              <img src={property3} alt="Imóvel de alto padrão" className="w-full h-full object-cover" loading="lazy" width={800} height={600} />
-            </div>
-          </FadeIn>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 40 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 1, delay: 0.3, ease: [0.25, 0.4, 0.25, 1] }}
+            className="aspect-[4/3] rounded-2xl overflow-hidden"
+          >
+            <motion.img
+              src={property3}
+              alt="Imóvel de alto padrão"
+              className="w-full h-full object-cover"
+              loading="lazy"
+              width={800}
+              height={600}
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.6 }}
+            />
+          </motion.div>
         </div>
       </ScrollSection>
 
