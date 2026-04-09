@@ -3,6 +3,26 @@ import { motion } from "framer-motion";
 import { MapPin, BedDouble, Bath, Car, Search, SlidersHorizontal, X } from "lucide-react";
 import { IMOVEIS_SITE } from "@/data/imoveisCRM";
 
+import casaLuxo1 from "@/assets/imoveis/casa-luxo-1.jpg";
+import casaLuxo2 from "@/assets/imoveis/casa-luxo-2.jpg";
+import casaLuxo3 from "@/assets/imoveis/casa-luxo-3.jpg";
+import terreno1 from "@/assets/imoveis/terreno-1.jpg";
+import terreno2 from "@/assets/imoveis/terreno-2.jpg";
+import cobertura1 from "@/assets/imoveis/cobertura-1.jpg";
+import sobrado1 from "@/assets/imoveis/sobrado-1.jpg";
+import mansao1 from "@/assets/imoveis/mansao-1.jpg";
+
+const casaImages = [casaLuxo1, casaLuxo2, casaLuxo3, mansao1];
+const terrenoImages = [terreno1, terreno2];
+
+function getImageForImovel(id: string, tipo: string): string {
+  const numId = parseInt(id) || 0;
+  if (tipo === "Terreno") return terrenoImages[numId % terrenoImages.length];
+  if (tipo === "Cobertura") return cobertura1;
+  if (tipo === "Sobrado") return sobrado1;
+  return casaImages[numId % casaImages.length];
+}
+
 function formatPrice(valor: number) {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 }
@@ -185,10 +205,15 @@ export default function ImoveisPage() {
             >
               <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl overflow-hidden hover:border-white/10 transition-all duration-500">
                 {/* Image placeholder */}
-                <div className="aspect-[4/3] bg-gradient-to-br from-white/[0.04] to-white/[0.02] relative overflow-hidden">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-white/10 text-6xl font-light">{im.tipo === "Terreno" ? "◇" : "⌂"}</span>
-                  </div>
+                <div className="aspect-[4/3] relative overflow-hidden bg-black">
+                  <img
+                    src={getImageForImovel(im.id, im.tipo)}
+                    alt={im.nome}
+                    loading="lazy"
+                    width={800}
+                    height={600}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
                   {/* Status badge */}
                   <div className="absolute top-3 left-3">
                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-medium backdrop-blur-md ${
