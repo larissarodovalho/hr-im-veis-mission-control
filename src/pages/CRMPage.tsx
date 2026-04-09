@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { leads as leadsIniciais, imoveis, corretoresRanking, funnelPorCorretor, contas, oportunidades, leadsPorOrigem, leadsTotaisPorOrigem, produtosPorLead, motivosDesqualificacao, oportunidadesFases, motivosDaPerda, vgv, ticketMedio, visitas as visitasIniciais, visitasPorTipoImovel, tarefas, type TipoTarefa, type StatusTarefa, type StatusVisita, type Visita, type Lead, type LeadEtapa } from "@/data/mockData";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line, CartesianGrid } from "recharts";
-import { ChevronDown, ChevronUp, Phone, MessageSquare, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList, BarChart2, HandCoins, CalendarCheck, CheckCircle2, Clock, AlertCircle, Circle, ArrowRight, Home, FileDown, Download, Paperclip, Eye, FileText, XCircle } from "lucide-react";
+import { ChevronDown, ChevronUp, Phone, MessageSquare, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList, BarChart2, HandCoins, CalendarCheck, CheckCircle2, Clock, AlertCircle, Circle, ArrowRight, Home, FileDown, Download, Paperclip, Eye, FileText, XCircle, Search } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import ImoveisTab from "@/components/ImoveisTab";
@@ -94,6 +94,14 @@ export default function CRM() {
   const [desqualificarLead, setDesqualificarLead] = useState<string | null>(null);
   const [motivoDesqualificacao, setMotivoDesqualificacao] = useState("");
   const [motivoDesqualificacaoOutro, setMotivoDesqualificacaoOutro] = useState("");
+  const [buscaContato, setBuscaContato] = useState("");
+
+  const contatosFiltrados = useMemo(() => {
+    const base = listaLeads.filter(l => l.etapa !== "Lead recebido");
+    if (!buscaContato.trim()) return base;
+    const termo = buscaContato.toLowerCase();
+    return base.filter(l => l.nome.toLowerCase().includes(termo) || l.telefone.includes(termo) || l.corretor.toLowerCase().includes(termo));
+  }, [listaLeads, buscaContato]);
 
   const MOTIVOS_DESQUALIFICACAO = [
     "Sem interesse",
