@@ -275,6 +275,7 @@ export default function ImoveisTab() {
                 <TabsTrigger value="endereco" className="h-7 text-xs flex-1">Endereço</TabsTrigger>
                 <TabsTrigger value="proprietario" className="h-7 text-xs flex-1">Proprietário</TabsTrigger>
                 <TabsTrigger value="fotos" className="h-7 text-xs flex-1">Fotos</TabsTrigger>
+                <TabsTrigger value="documentos" className="h-7 text-xs flex-1">Documentos</TabsTrigger>
               </TabsList>
 
               <TabsContent value="dados" className="space-y-3 mt-3">
