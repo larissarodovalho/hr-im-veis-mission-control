@@ -399,9 +399,20 @@ export default function CRM() {
             })()
           ) : (
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-base">Contatos — Leads Qualificados</CardTitle>
-                <Badge variant="outline" className="text-xs">{listaLeads.filter(l => l.etapa !== "Lead recebido").length} contatos</Badge>
+              <CardHeader className="flex flex-row items-center justify-between gap-4">
+                <CardTitle className="text-base">Contatos</CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar contato..."
+                      className="h-8 w-48 pl-8 text-xs"
+                      value={buscaContato}
+                      onChange={(e) => setBuscaContato(e.target.value)}
+                    />
+                  </div>
+                  <Badge variant="outline" className="text-xs">{contatosFiltrados.length} contatos</Badge>
+                </div>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
