@@ -125,6 +125,7 @@ export default function ImoveisPage() {
   const [busca, setBusca] = useState("");
   const [tipoSelecionado, setTipoSelecionado] = useState<string>("Todos");
   const [faixaSelecionada, setFaixaSelecionada] = useState<string>("Todos");
+  const [valorDropdownOpen, setValorDropdownOpen] = useState(false);
 
   const FAIXAS = [
     { label: "Todos", min: 0, max: Infinity },
@@ -216,30 +217,64 @@ export default function ImoveisPage() {
 
               <div className="h-4 w-px bg-white/[0.06] hidden sm:block" />
 
-              {/* Price range pills */}
-              <div className="hidden md:flex items-center gap-1">
-                {FAIXAS.map((faixa) => (
-                  <motion.button
-                    key={faixa.label}
-                    onClick={() => setFaixaSelecionada(faixa.label)}
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    className={`relative px-3 py-1.5 rounded-full text-[10px] font-medium transition-all duration-400 ${
-                      faixaSelecionada === faixa.label
-                        ? "text-white"
-                        : "text-white/25 hover:text-white/50"
-                    }`}
+              {/* Price range dropdown */}
+              <div className="hidden md:block relative">
+                <motion.button
+                  onClick={() => setValorDropdownOpen(!valorDropdownOpen)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-medium transition-all duration-300 border ${
+                    faixaSelecionada !== "Todos"
+                      ? "bg-white/10 border-white/15 text-white"
+                      : "bg-transparent border-white/[0.08] text-white/35 hover:text-white/60 hover:border-white/15"
+                  }`}
+                >
+                  <span>{faixaSelecionada === "Todos" ? "Valor" : faixaSelecionada}</span>
+                  <motion.svg
+                    width="10" height="10" viewBox="0 0 10 10" fill="none"
+                    animate={{ rotate: valorDropdownOpen ? 180 : 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="text-white/30"
                   >
-                    {faixaSelecionada === faixa.label && (
-                      <motion.div
-                        layoutId="activePrice"
-                        className="absolute inset-0 bg-white/10 border border-white/15 rounded-full"
-                        transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
-                      />
-                    )}
-                    <span className="relative z-10">{faixa.label}</span>
-                  </motion.button>
-                ))}
+                    <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                  </motion.svg>
+                </motion.button>
+
+                <AnimatePresence>
+                  {valorDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                      transition={{ duration: 0.25, ease: smoothEase }}
+                      className="absolute top-full mt-2 right-0 min-w-[180px] bg-[#141414] border border-white/[0.08] rounded-xl overflow-hidden backdrop-blur-2xl shadow-2xl shadow-black/40 z-50"
+                    >
+                      {FAIXAS.map((faixa, i) => (
+                        <motion.button
+                          key={faixa.label}
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.03 }}
+                          onClick={() => { setFaixaSelecionada(faixa.label); setValorDropdownOpen(false); }}
+                          className={`w-full text-left px-4 py-2.5 text-[11px] font-medium transition-all duration-200 flex items-center justify-between ${
+                            faixaSelecionada === faixa.label
+                              ? "bg-white/[0.08] text-white"
+                              : "text-white/35 hover:bg-white/[0.04] hover:text-white/70"
+                          }`}
+                        >
+                          <span>{faixa.label}</span>
+                          {faixaSelecionada === faixa.label && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="w-1.5 h-1.5 rounded-full bg-white"
+                            />
+                          )}
+                        </motion.button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Clear */}
