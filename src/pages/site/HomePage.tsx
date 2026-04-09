@@ -167,14 +167,27 @@ export default function HomePage() {
       {/* Full-width image */}
       <ScrollSection className="relative h-[70vh] sm:h-[80vh]">
         <ParallaxImage src={sectionLiving} alt="Interior de luxo" className="absolute inset-0 h-full" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[black] via-transparent to-[black]/30" />
-        <div className="relative z-10 flex items-end h-full max-w-7xl mx-auto px-6 pb-16">
-          <FadeIn>
-            <p className="text-xl sm:text-2xl font-display font-light text-white/70 max-w-xl leading-relaxed tracking-wide">
-              Cada detalhe pensado para quem valoriza
-              <span className="italic text-white/90"> sofisticação</span> e qualidade de vida.
-            </p>
-          </FadeIn>
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/30" />
+        <div className="relative z-10 flex items-center justify-center h-full max-w-5xl mx-auto px-6 text-center">
+          <motion.h2
+            initial={{ opacity: 0, y: 60, scale: 0.95 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 1.2, ease: [0.25, 0.4, 0.25, 1] }}
+            className="text-3xl sm:text-5xl lg:text-7xl font-display font-extralight leading-[1.15] tracking-[-0.01em]"
+          >
+            Cada detalhe pensado para quem valoriza{" "}
+            <motion.span
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1, delay: 0.4, ease: [0.25, 0.4, 0.25, 1] }}
+              className="italic font-light text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100"
+            >
+              sofisticação
+            </motion.span>{" "}
+            e qualidade de vida.
+          </motion.h2>
         </div>
       </ScrollSection>
 
