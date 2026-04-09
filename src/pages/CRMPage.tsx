@@ -59,6 +59,8 @@ const PeriodoSelect = ({ value, onChange }: { value: Periodo; onChange: (v: Peri
 );
 
 export default function CRM() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "leads";
   const [dialogNovoLead, setDialogNovoLead] = useState(false);
   const [novoLead, setNovoLead] = useState({
     nome: "", telefone: "", email: "", canal: "Meta Ads" as Lead["canal"],
