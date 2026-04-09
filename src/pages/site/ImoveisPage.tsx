@@ -152,11 +152,11 @@ export default function ImoveisPage() {
         );
       })
       .filter((im) => {
-        const min = faixaMin ? Number(faixaMin) : 0;
-        const max = faixaMax ? Number(faixaMax) : Infinity;
-        return im.valor >= min && im.valor <= max;
+        const faixa = FAIXAS.find(f => f.label === faixaSelecionada);
+        if (!faixa || faixa.label === "Todos") return true;
+        return im.valor >= faixa.min && im.valor <= faixa.max;
       });
-  }, [busca, tipoSelecionado, faixaMin, faixaMax]);
+  }, [busca, tipoSelecionado, faixaSelecionada]);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
