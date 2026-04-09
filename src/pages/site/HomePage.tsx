@@ -70,7 +70,7 @@ export default function HomePage() {
 
         <motion.div
           style={{ opacity: heroOpacity, y: heroTextY }}
-          className="relative z-10 max-w-7xl mx-auto px-6 pb-24 w-full"
+          className="relative z-10 max-w-7xl mx-auto px-6 pb-24 w-full flex flex-col items-center text-center"
         >
           <motion.img
             src={hrLogo}
@@ -78,7 +78,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="h-16 sm:h-20 w-auto object-contain mb-8"
+            className="h-24 sm:h-32 w-auto object-contain mb-10"
           />
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
