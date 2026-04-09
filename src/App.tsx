@@ -8,8 +8,6 @@ import VisaoGeral from "@/pages/VisaoGeral";
 import CRMPage from "@/pages/CRMPage";
 import TrafegoPago from "@/pages/TrafegoPago";
 import Marketing from "@/pages/Marketing";
-import RedesSociais from "@/pages/RedesSociais";
-import Conteudo from "@/pages/Conteudo";
 import Operacional from "@/pages/Operacional";
 import SaudeSistema from "@/pages/SaudeSistema";
 import ControleDeCreacao from "@/pages/ControleDeCreacao";
