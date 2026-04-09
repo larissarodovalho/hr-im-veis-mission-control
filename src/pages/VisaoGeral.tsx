@@ -1,9 +1,10 @@
-import { Users, DollarSign, Wallet, CalendarCheck, Building, FileImage, TrendingUp, Home, MapPin, Tag, Calendar, Clock, User } from "lucide-react";
+import { Users, DollarSign, Wallet, CalendarCheck, Building, FileImage, TrendingUp, Home, MapPin, Tag, Calendar, Clock, User, FileText, CheckCircle2, XCircle, ClipboardList } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import {
   overviewCards, leadsPerDay, budgetDistribution,
-  acessosSite, imoveisMaisVisualizados, agendaVisaoGeral, performanceVendas, funnelData,
+  acessosSite, imoveisMaisVisualizados, agendaVisaoGeral, performanceVendas, funnelData, propostasMock,
 } from "@/data/mockData";
 import {
   LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
