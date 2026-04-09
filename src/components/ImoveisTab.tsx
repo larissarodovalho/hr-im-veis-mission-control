@@ -32,7 +32,7 @@ const statusColor = (s: Imovel["status"]) => {
 };
 
 export default function ImoveisTab() {
-  const [imoveisList, setImoveisList] = useState<Imovel[]>(IMOVEIS_INICIAIS);
+  const [imoveisList, setImoveisList] = useState<Imovel[]>(IMOVEIS_CRM);
   const [dialogAberto, setDialogAberto] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
