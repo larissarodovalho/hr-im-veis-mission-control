@@ -165,8 +165,8 @@ export default function HomePage() {
               <FadeIn key={item.num} delay={i * 0.1}>
                 <div className="bg-[#0a0a0a] p-8 sm:p-10 h-full">
                   <span className="text-[10px] text-white/15 tracking-[0.3em] font-light">{item.num}</span>
-                  <h3 className="font-display font-normal text-base mt-5 mb-3 tracking-wide">{item.title}</h3>
-                  <p className="text-xs text-white/25 leading-relaxed font-light">{item.desc}</p>
+                  <h3 className="font-display font-normal text-lg sm:text-xl mt-5 mb-3 tracking-wide">{item.title}</h3>
+                   <p className="text-sm text-white/25 leading-relaxed font-light">{item.desc}</p>
                 </div>
               </FadeIn>
             ))}
