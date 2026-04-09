@@ -9,6 +9,12 @@ import hrLogo from "@/assets/logo-hr-branco.png";
 import heroBg from "@/assets/hero-dark.jpg";
 import sectionLiving from "@/assets/section-living.jpg";
 import sectionCommunity from "@/assets/section-community.jpg";
+import property1 from "@/assets/property-1.jpg";
+import property2 from "@/assets/property-2.jpg";
+import property3 from "@/assets/property-3.jpg";
+import featureInterior from "@/assets/feature-interior.jpg";
+
+const propertyImages = [property1, property2, property3];
 
 const destaque = imoveis.filter((i) => i.status === "Disponível").slice(0, 3);
 
