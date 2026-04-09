@@ -143,18 +143,25 @@ export default function HomePage() {
 
       {/* Statement */}
       <ScrollSection className="py-36 sm:py-48">
-        <div className="max-w-7xl mx-auto px-6">
-          <FadeIn>
-            <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-8">Exclusividade</p>
-          </FadeIn>
-          <FadeIn delay={0.1}>
-            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-display font-light leading-[1.15] tracking-[-0.01em] max-w-4xl">
-              Imóveis que definem{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100 italic font-normal">
-                um novo padrão
-              </span>{" "}
-              de viver.
-            </h2>
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div>
+            <FadeIn>
+              <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-8">Exclusividade</p>
+            </FadeIn>
+            <FadeIn delay={0.1}>
+              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-display font-light leading-[1.15] tracking-[-0.01em]">
+                Imóveis que definem{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100 italic font-normal">
+                  um novo padrão
+                </span>{" "}
+                de viver.
+              </h2>
+            </FadeIn>
+          </div>
+          <FadeIn delay={0.2}>
+            <div className="aspect-[4/3] rounded-2xl overflow-hidden">
+              <img src={property3} alt="Imóvel de alto padrão" className="w-full h-full object-cover" loading="lazy" width={800} height={600} />
+            </div>
           </FadeIn>
         </div>
       </ScrollSection>
