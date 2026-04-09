@@ -481,6 +481,10 @@ export default function ImoveisTab() {
               </div>
               <p className="text-[10px] text-muted-foreground font-mono">{im.codigo}</p>
               <p className="text-sm font-bold text-primary">R$ {im.valor.toLocaleString("pt-BR")}</p>
+              <div className="flex items-center gap-1">
+                <User className="h-3 w-3 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground">{im.corretor}</span>
+              </div>
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-muted-foreground">{im.tipo} · {im.area}</span>
                 <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2"
