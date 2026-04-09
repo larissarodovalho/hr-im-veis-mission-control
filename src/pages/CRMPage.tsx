@@ -211,7 +211,7 @@ export default function CRM() {
 
       <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v })}>
         <TabsList className="hidden">
-          {["leads","contatos","kanban","imoveis","funil","criacao","analise","oportunidades","visitas","tarefas","relatorios"].map(v => (
+          {["leads","contatos","kanban","imoveis","funil","criacao","analise","oportunidades","visitas","tarefas","relatorios","propostas"].map(v => (
             <TabsTrigger key={v} value={v}>{v}</TabsTrigger>
           ))}
         </TabsList>
