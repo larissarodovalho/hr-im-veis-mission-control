@@ -223,23 +223,63 @@ export default function HomePage() {
       {/* Features */}
       <ScrollSection className="py-36 sm:py-48">
         <div className="max-w-7xl mx-auto px-6">
-          <FadeIn>
-            <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-16">Nossos Diferenciais</p>
-          </FadeIn>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-white/[0.04] rounded-2xl overflow-hidden">
+          <motion.p
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }}
+            className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-16"
+          >
+            Nossos Diferenciais
+          </motion.p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-black rounded-2xl overflow-hidden">
             {[
               { num: "01", title: "Curadoria Exclusiva", desc: "Seleção criteriosa dos melhores imóveis em condomínios fechados de Sinop." },
               { num: "02", title: "Segurança Jurídica", desc: "Assessoria completa em documentação e negociação." },
               { num: "03", title: "Atendimento Personalizado", desc: "Consultoria dedicada para encontrar o imóvel perfeito." },
               { num: "04", title: "Tradição & Confiança", desc: "Anos de experiência no mercado imobiliário de alto padrão." },
             ].map((item, i) => (
-              <FadeIn key={item.num} delay={i * 0.1}>
-                <div className="bg-[black] p-8 sm:p-10 h-full">
-                  <span className="text-[10px] text-white/15 tracking-[0.3em] font-light">{item.num}</span>
-                  <h3 className="font-display font-normal text-lg sm:text-xl mt-5 mb-3 tracking-wide">{item.title}</h3>
-                   <p className="text-sm text-white/25 leading-relaxed font-light">{item.desc}</p>
-                </div>
-              </FadeIn>
+              <motion.div
+                key={item.num}
+                initial={{ opacity: 0, y: 60, scale: 0.95 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{
+                  duration: 0.9,
+                  delay: i * 0.2,
+                  ease: [0.25, 0.4, 0.25, 1],
+                }}
+                whileHover={{ backgroundColor: "rgba(255,255,255,0.03)", y: -4 }}
+                className="bg-black p-8 sm:p-12 h-full border-b border-r border-white/[0.04] cursor-default transition-colors"
+              >
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: i * 0.2 + 0.3 }}
+                  className="inline-block text-[11px] text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100 tracking-[0.3em] font-medium"
+                >
+                  {item.num}
+                </motion.span>
+                <motion.h3
+                  initial={{ opacity: 0, x: -15 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.7, delay: i * 0.2 + 0.4 }}
+                  className="font-display font-normal text-lg sm:text-xl mt-6 mb-4 tracking-wide"
+                >
+                  {item.title}
+                </motion.h3>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.7, delay: i * 0.2 + 0.55 }}
+                  className="text-sm text-white/25 leading-relaxed font-light"
+                >
+                  {item.desc}
+                </motion.p>
+              </motion.div>
             ))}
           </div>
         </div>
