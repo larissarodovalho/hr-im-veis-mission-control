@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { imoveis } from "@/data/mockData";
-import { ArrowRight, MapPin, ArrowUpRight } from "lucide-react";
+import { ArrowRight, MapPin, ArrowUpRight, MessageCircle, Building2 } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import hrLogo from "@/assets/logo-hr-branco.png";
 import heroBg from "@/assets/hero-dark.jpg";
 import sectionLiving from "@/assets/section-living.jpg";
