@@ -3,6 +3,26 @@ import { motion } from "framer-motion";
 import { MapPin, BedDouble, Bath, Car, Search, SlidersHorizontal, X } from "lucide-react";
 import { IMOVEIS_SITE } from "@/data/imoveisCRM";
 
+import casaLuxo1 from "@/assets/imoveis/casa-luxo-1.jpg";
+import casaLuxo2 from "@/assets/imoveis/casa-luxo-2.jpg";
+import casaLuxo3 from "@/assets/imoveis/casa-luxo-3.jpg";
+import terreno1 from "@/assets/imoveis/terreno-1.jpg";
+import terreno2 from "@/assets/imoveis/terreno-2.jpg";
+import cobertura1 from "@/assets/imoveis/cobertura-1.jpg";
+import sobrado1 from "@/assets/imoveis/sobrado-1.jpg";
+import mansao1 from "@/assets/imoveis/mansao-1.jpg";
+
+const casaImages = [casaLuxo1, casaLuxo2, casaLuxo3, mansao1];
+const terrenoImages = [terreno1, terreno2];
+
+function getImageForImovel(id: string, tipo: string): string {
+  const numId = parseInt(id) || 0;
+  if (tipo === "Terreno") return terrenoImages[numId % terrenoImages.length];
+  if (tipo === "Cobertura") return cobertura1;
+  if (tipo === "Sobrado") return sobrado1;
+  return casaImages[numId % casaImages.length];
+}
+
 function formatPrice(valor: number) {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 }
