@@ -11,8 +11,8 @@ import { toast } from "sonner";
 import type { Lead } from "@/data/mockData";
 
 interface Imovel {
-  id: number;
-  titulo: string;
+  id: string;
+  nome: string;
   [key: string]: unknown;
 }
 
@@ -20,8 +20,8 @@ interface Proposta {
   id: string;
   clienteId: string;
   clienteNome: string;
-  imovelId: number;
-  imovelTitulo: string;
+  imovelId: string;
+  imovelNome: string;
   arquivo?: { nome: string; url: string; tipo: string };
   dataCriacao: string;
   status: "Pendente" | "Aceita" | "Recusada";
