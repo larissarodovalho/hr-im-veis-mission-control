@@ -125,6 +125,7 @@ export default function ImoveisPage() {
   const [busca, setBusca] = useState("");
   const [tipoSelecionado, setTipoSelecionado] = useState<string>("Todos");
   const [faixaSelecionada, setFaixaSelecionada] = useState<string>("Todos");
+  const [valorDropdownOpen, setValorDropdownOpen] = useState(false);
 
   const FAIXAS = [
     { label: "Todos", min: 0, max: Infinity },
