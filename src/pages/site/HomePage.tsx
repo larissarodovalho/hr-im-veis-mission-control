@@ -132,7 +132,7 @@ export default function HomePage() {
       </section>
 
       {/* Statement */}
-      <section className="py-36 sm:py-48">
+      <ScrollSection className="py-36 sm:py-48">
         <div className="max-w-7xl mx-auto px-6">
           <FadeIn>
             <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-8">Exclusividade</p>
