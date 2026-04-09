@@ -197,7 +197,7 @@ export default function ImoveisPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/15" />
                 <input
                   type="text"
-                  placeholder="Buscar..."
+                  placeholder="Buscar condomínio ou bairro"
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
                   className="w-full bg-transparent border-b border-white/[0.06] pl-9 pr-3 py-2 text-xs text-white placeholder:text-white/15 focus:outline-none focus:border-white/20 transition-all duration-300"
@@ -248,7 +248,7 @@ export default function ImoveisPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/15" />
                 <input
                   type="text"
-                  placeholder="Buscar por nome, bairro..."
+                  placeholder="Buscar condomínio ou bairro"
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
                   className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder:text-white/15 focus:outline-none focus:border-white/15 transition-all"
