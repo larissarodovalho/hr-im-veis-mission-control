@@ -50,6 +50,7 @@ const CRM_SUBTABS = [
 const items = [
   { title: "Visão Geral", url: "/", icon: LayoutDashboard },
   { title: "CRM — Comercial", url: "/crm", icon: Users },
+  { title: "Marketing", url: "/marketing", icon: TrendingUp },
   { title: "Tráfego Pago", url: "/trafego", icon: Megaphone },
   { title: "Redes Sociais", url: "/redes-sociais", icon: Share2 },
   { title: "Conteúdo", url: "/conteudo", icon: FileText },
