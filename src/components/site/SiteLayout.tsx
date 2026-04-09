@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Phone, Mail, Instagram, Facebook, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import hrLogo from "@/assets/hr-imoveis-logo.png";
+import hrLogo from "@/assets/logo-hr-branco.png";
 
 const navLinks = [
   { label: "Início", to: "/site" },
@@ -35,13 +35,8 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-14">
-          <Link to="/site" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
-              <img src={hrLogo} alt="HR Imóveis" className="w-6 h-6 object-contain" />
-            </div>
-            <span className="font-display font-semibold text-sm tracking-tight text-white/90">
-              HR Imóveis
-            </span>
+          <Link to="/site" className="flex items-center">
+            <img src={hrLogo} alt="HR Imóveis" className="h-8 w-auto object-contain" />
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
@@ -114,10 +109,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="md:col-span-2">
               <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
-                  <img src={hrLogo} alt="HR Imóveis" className="w-6 h-6 object-contain" />
-                </div>
-                <span className="font-display font-semibold text-sm">HR Imóveis</span>
+              <img src={hrLogo} alt="HR Imóveis" className="h-10 w-auto object-contain" />
               </div>
               <p className="text-xs text-white/30 leading-relaxed max-w-sm">
                 Referência no mercado imobiliário de Sinop-MT. Imóveis de alto padrão com atendimento personalizado.
