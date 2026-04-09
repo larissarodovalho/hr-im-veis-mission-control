@@ -9,6 +9,12 @@ import hrLogo from "@/assets/logo-hr-branco.png";
 import heroBg from "@/assets/hero-dark.jpg";
 import sectionLiving from "@/assets/section-living.jpg";
 import sectionCommunity from "@/assets/section-community.jpg";
+import property1 from "@/assets/property-1.jpg";
+import property2 from "@/assets/property-2.jpg";
+import property3 from "@/assets/property-3.jpg";
+import featureInterior from "@/assets/feature-interior.jpg";
+
+const propertyImages = [property1, property2, property3];
 
 const destaque = imoveis.filter((i) => i.status === "Disponível").slice(0, 3);
 
@@ -137,18 +143,25 @@ export default function HomePage() {
 
       {/* Statement */}
       <ScrollSection className="py-36 sm:py-48">
-        <div className="max-w-7xl mx-auto px-6">
-          <FadeIn>
-            <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-8">Exclusividade</p>
-          </FadeIn>
-          <FadeIn delay={0.1}>
-            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-display font-light leading-[1.15] tracking-[-0.01em] max-w-4xl">
-              Imóveis que definem{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100 italic font-normal">
-                um novo padrão
-              </span>{" "}
-              de viver.
-            </h2>
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div>
+            <FadeIn>
+              <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-8">Exclusividade</p>
+            </FadeIn>
+            <FadeIn delay={0.1}>
+              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-display font-light leading-[1.15] tracking-[-0.01em]">
+                Imóveis que definem{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100 italic font-normal">
+                  um novo padrão
+                </span>{" "}
+                de viver.
+              </h2>
+            </FadeIn>
+          </div>
+          <FadeIn delay={0.2}>
+            <div className="aspect-[4/3] rounded-2xl overflow-hidden">
+              <img src={property3} alt="Imóvel de alto padrão" className="w-full h-full object-cover" loading="lazy" width={800} height={600} />
+            </div>
           </FadeIn>
         </div>
       </ScrollSection>
@@ -223,14 +236,17 @@ export default function HomePage() {
                   to={`/site/imoveis/${imovel.id}`}
                   className="group block bg-[#0a0a0a] hover:bg-white/[0.02] transition-colors"
                 >
-                  <div className="aspect-[4/3] bg-gradient-to-br from-white/[0.03] to-transparent flex items-center justify-center overflow-hidden">
-                    <motion.div
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <motion.img
+                      src={propertyImages[i] || property1}
+                      alt={imovel.nome}
                       whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.6 }}
-                      className="w-full h-full bg-gradient-to-br from-amber-900/10 to-transparent flex items-center justify-center"
-                    >
-                      <span className="text-7xl text-white/[0.03] font-display font-extralight italic">{imovel.tipo[0]}</span>
-                    </motion.div>
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      width={800}
+                      height={600}
+                    />
                   </div>
                   <div className="p-6 sm:p-8">
                     <div className="flex items-center justify-between mb-4">
@@ -274,48 +290,56 @@ export default function HomePage() {
             <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-8 text-center">Como podemos ajudar</p>
           </FadeIn>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-white/[0.04] rounded-2xl overflow-hidden">
-            <FadeIn>
-              <div className="bg-[#0a0a0a] p-10 sm:p-16 text-center flex flex-col items-center">
-                <MessageCircle className="h-8 w-8 text-white/15 mb-6" />
-                <h3 className="text-2xl sm:text-3xl font-display font-light tracking-wide mb-4">
-                  Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100">comprar</span> um imóvel?
-                </h3>
-                <p className="text-xs text-white/25 font-light leading-relaxed max-w-sm mb-8 tracking-wide">
-                  Nossa equipe de consultores vai te ajudar a encontrar o imóvel perfeito para você e sua família.
-                </p>
-                <div className="flex flex-wrap justify-center gap-3">
-                  <Link
-                    to="/site/contato"
-                    className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-white text-black text-xs font-medium tracking-wide uppercase hover:bg-white/90 transition-all"
-                  >
-                    Fale com um Consultor <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                  <a
-                    href="https://wa.me/5566999990000"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-7 py-3 rounded-full border border-white/10 text-white/40 text-xs font-light tracking-wide uppercase hover:bg-white/5 transition-all"
-                  >
-                    WhatsApp
-                  </a>
+             <FadeIn>
+              <div className="relative bg-[#0a0a0a] overflow-hidden">
+                <img src={property1} alt="Comprar imóvel" className="absolute inset-0 w-full h-full object-cover opacity-20" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-[#0a0a0a]/60" />
+                <div className="relative p-10 sm:p-16 text-center flex flex-col items-center">
+                  <MessageCircle className="h-8 w-8 text-white/15 mb-6" />
+                  <h3 className="text-2xl sm:text-3xl font-display font-light tracking-wide mb-4">
+                    Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100">comprar</span> um imóvel?
+                  </h3>
+                  <p className="text-xs text-white/25 font-light leading-relaxed max-w-sm mb-8 tracking-wide">
+                    Nossa equipe de consultores vai te ajudar a encontrar o imóvel perfeito para você e sua família.
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-3">
+                    <Link
+                      to="/site/contato"
+                      className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-white text-black text-xs font-medium tracking-wide uppercase hover:bg-white/90 transition-all"
+                    >
+                      Fale com um Consultor <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                    <a
+                      href="https://wa.me/5566999990000"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-7 py-3 rounded-full border border-white/10 text-white/40 text-xs font-light tracking-wide uppercase hover:bg-white/5 transition-all"
+                    >
+                      WhatsApp
+                    </a>
+                  </div>
                 </div>
               </div>
             </FadeIn>
             <FadeIn delay={0.1}>
-              <div className="bg-[#0a0a0a] p-10 sm:p-16 text-center flex flex-col items-center">
-                <Building2 className="h-8 w-8 text-white/15 mb-6" />
-                <h3 className="text-2xl sm:text-3xl font-display font-light tracking-wide mb-4">
-                  Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100">vender</span> seu imóvel?
-                </h3>
-                <p className="text-xs text-white/25 font-light leading-relaxed max-w-sm mb-8 tracking-wide">
-                  Avaliamos e anunciamos seu imóvel com exclusividade. Alcance compradores qualificados com a HR Imóveis.
-                </p>
-                <Link
-                  to="/site/contato"
-                  className="inline-flex items-center gap-2 px-7 py-3 rounded-full border border-white/10 text-white/40 text-xs font-light tracking-wide uppercase hover:border-white/20 hover:text-white/60 hover:bg-white/5 transition-all"
-                >
-                  Quero Vender meu Imóvel <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
+              <div className="relative bg-[#0a0a0a] overflow-hidden">
+                <img src={featureInterior} alt="Vender imóvel" className="absolute inset-0 w-full h-full object-cover opacity-20" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-[#0a0a0a]/60" />
+                <div className="relative p-10 sm:p-16 text-center flex flex-col items-center">
+                  <Building2 className="h-8 w-8 text-white/15 mb-6" />
+                  <h3 className="text-2xl sm:text-3xl font-display font-light tracking-wide mb-4">
+                    Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-100">vender</span> seu imóvel?
+                  </h3>
+                  <p className="text-xs text-white/25 font-light leading-relaxed max-w-sm mb-8 tracking-wide">
+                    Avaliamos e anunciamos seu imóvel com exclusividade. Alcance compradores qualificados com a HR Imóveis.
+                  </p>
+                  <Link
+                    to="/site/contato"
+                    className="inline-flex items-center gap-2 px-7 py-3 rounded-full border border-white/10 text-white/40 text-xs font-light tracking-wide uppercase hover:border-white/20 hover:text-white/60 hover:bg-white/5 transition-all"
+                  >
+                    Quero Vender meu Imóvel <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
               </div>
             </FadeIn>
           </div>
