@@ -437,7 +437,7 @@ export default function CRM() {
                       </tr>
                     </thead>
                     <tbody>
-                      {listaLeads.filter(l => l.etapa !== "Lead recebido").map((lead) => (
+                      {contatosFiltrados.map((lead) => (
                         <tr
                           key={lead.id}
                           className="border-b hover:bg-muted/30 cursor-pointer"
