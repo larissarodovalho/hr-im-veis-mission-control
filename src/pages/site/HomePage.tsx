@@ -324,7 +324,7 @@ export default function HomePage() {
 
       {/* Newsletter */}
       <NewsletterSection />
-    </div>
+    </motion.div>
   );
 }
 
