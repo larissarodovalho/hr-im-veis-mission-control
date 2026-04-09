@@ -124,8 +124,18 @@ function ParallaxHero() {
 export default function ImoveisPage() {
   const [busca, setBusca] = useState("");
   const [tipoSelecionado, setTipoSelecionado] = useState<string>("Todos");
-  const [faixaMin, setFaixaMin] = useState("");
-  const [faixaMax, setFaixaMax] = useState("");
+  const [faixaSelecionada, setFaixaSelecionada] = useState<string>("Todos");
+
+  const FAIXAS = [
+    { label: "Todos", min: 0, max: Infinity },
+    { label: "Até 500K", min: 0, max: 500000 },
+    { label: "500K – 1M", min: 500000, max: 1000000 },
+    { label: "1M – 1,5M", min: 1000000, max: 1500000 },
+    { label: "1,5M – 2M", min: 1500000, max: 2000000 },
+    { label: "2M – 3M", min: 2000000, max: 3000000 },
+    { label: "3M – 5M", min: 3000000, max: 5000000 },
+    { label: "Acima de 5M", min: 5000000, max: Infinity },
+  ];
 
   const imoveis = useMemo(() => {
     return IMOVEIS_SITE
