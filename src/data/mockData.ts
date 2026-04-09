@@ -312,6 +312,20 @@ export const socialProfiles = [
     ],
   },
   {
+    nome: "Larissa",
+    handle: "@larissa.hrimoveis",
+    seguidores: 7200,
+    alcance: 19500,
+    engajamento: 1420,
+    posts: 7,
+    variacaoSemanal: [
+      { semana: "Sem 1", alcance: 14000, engajamento: 950 },
+      { semana: "Sem 2", alcance: 16000, engajamento: 1100 },
+      { semana: "Sem 3", alcance: 18000, engajamento: 1280 },
+      { semana: "Sem 4", alcance: 19500, engajamento: 1420 },
+    ],
+  },
+  {
     nome: "HR Imóveis",
     handle: "@hrimoveis",
     seguidores: 18700,
@@ -328,7 +342,8 @@ export const socialProfiles = [
 ];
 
 export const engajamentoPorPerfil = [
-  { perfil: "Hans",      curtidas: 1280, comentarios: 370 },
+  { perfil: "Hans",       curtidas: 1280, comentarios: 370 },
+  { perfil: "Larissa",    curtidas: 1050, comentarios: 290 },
   { perfil: "HR Imóveis", curtidas: 3300, comentarios: 900 },
 ];
 
