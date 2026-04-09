@@ -76,11 +76,9 @@ export default function HomePage() {
   const heroScale = useTransform(heroScroll, [0, 0.5], [1, 1.1]);
   const heroTextY = useTransform(heroScroll, [0, 0.5], [0, 80]);
 
-  const { scrollYProgress: pageScroll } = useScroll({ target: pageRef, offset: ["start start", "end end"] });
-  const bgColor = useTransform(pageScroll, [0, 0.3, 0.6, 1], ["#0a0a0a", "#111115", "#151519", "#1a1a1f"]);
 
   return (
-    <motion.div ref={pageRef} style={{ backgroundColor: bgColor }}>
+    <div ref={pageRef} className="bg-black">
       {/* Hero */}
       <section ref={heroRef} className="relative h-screen flex items-end overflow-hidden">
         <motion.div className="absolute inset-0" style={{ scale: heroScale }}>
