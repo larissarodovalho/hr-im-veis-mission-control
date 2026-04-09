@@ -13,7 +13,7 @@ export default function RedesSociais() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h2 className="section-title">Redes Sociais</h2>
         <div className="flex gap-2">
-          {["Todos", "Larissa", "Hans", "HR Imóveis"].map((f) => (
+          {["Todos", "Hans", "HR Imóveis"].map((f) => (
             <button
               key={f}
               onClick={() => setFiltro(f)}
