@@ -44,7 +44,7 @@ const CRM_SUBTABS = [
   { label: "Visitas", value: "visitas", icon: CalendarCheck },
   { label: "Tarefas", value: "tarefas", icon: CheckCircle2 },
   { label: "Relatórios", value: "relatorios", icon: FileDown },
-  { label: "Propostas", value: "propostas", icon: FileText },
+  { label: "Propostas", value: "propostas", icon: FileTextIcon },
 ];
 
 const items = [
