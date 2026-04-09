@@ -287,7 +287,7 @@ export default function HomePage() {
           <FadeIn>
             <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-light mb-8 text-center">Como podemos ajudar</p>
           </FadeIn>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-white/[0.04] rounded-2xl overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-black rounded-2xl overflow-hidden">
              <FadeIn>
               <div className="relative bg-[black] overflow-hidden">
                 <img src={property1} alt="Comprar imóvel" className="absolute inset-0 w-full h-full object-cover opacity-20" loading="lazy" />
