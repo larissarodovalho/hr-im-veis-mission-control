@@ -30,6 +30,20 @@ function FadeIn({ children, className = "", delay = 0 }: { children: React.React
   );
 }
 
+function ScrollSection({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const y = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [60, 0, 0, -40]);
+  const opacity = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [0.3, 1, 1, 0.3]);
+  const scale = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0.97, 1, 1, 0.97]);
+
+  return (
+    <motion.section ref={ref} style={{ y, opacity, scale }} className={className}>
+      {children}
+    </motion.section>
+  );
+}
+
 function ParallaxImage({ src, alt, className = "" }: { src: string; alt: string; className?: string }) {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
