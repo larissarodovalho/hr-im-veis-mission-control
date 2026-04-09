@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { MapPin, BedDouble, Bath, Car, Search, X, ArrowUpRight, Maximize2 } from "lucide-react";
+import { MapPin, BedDouble, Bath, Car, Search, X, ArrowUpRight, Maximize2, Eye } from "lucide-react";
 import { IMOVEIS_SITE } from "@/data/imoveisCRM";
 
 import casaLuxo1 from "@/assets/imoveis/casa-luxo-1.jpg";
@@ -439,18 +439,29 @@ export default function ImoveisPage() {
                     )}
                   </div>
 
-                  {/* CTA */}
-                  <motion.a
-                    href={`https://wa.me/5566999990000?text=Olá! Tenho interesse no imóvel ${im.codigo} - ${im.nome}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[11px] font-medium bg-white/[0.06] border border-white/[0.08] text-white/50 hover:bg-white/[0.12] hover:text-white hover:border-white/20 transition-all duration-400 group/btn"
-                  >
-                    Solicitar visita
-                    <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
-                  </motion.a>
+                  {/* CTAs */}
+                  <div className="flex gap-2">
+                    <motion.a
+                      href={`https://wa.me/5566999990000?text=Olá! Tenho interesse no imóvel ${im.codigo} - ${im.nome}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex items-center justify-center gap-2 flex-1 py-2.5 rounded-xl text-[11px] font-medium bg-white/[0.06] border border-white/[0.08] text-white/50 hover:bg-white/[0.12] hover:text-white hover:border-white/20 transition-all duration-400 group/btn"
+                    >
+                      Solicitar visita
+                      <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
+                    </motion.a>
+                    <motion.a
+                      href={`/site/imovel/${im.id}`}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex items-center justify-center gap-2 flex-1 py-2.5 rounded-xl text-[11px] font-medium bg-white/[0.06] border border-white/[0.08] text-white/50 hover:bg-white/[0.12] hover:text-white hover:border-white/20 transition-all duration-400 group/btn2"
+                    >
+                      Ver imóvel
+                      <Eye className="h-3.5 w-3.5 transition-transform duration-300 group-hover/btn2:scale-110" />
+                    </motion.a>
+                  </div>
                 </div>
               </motion.div>
             </motion.div>
