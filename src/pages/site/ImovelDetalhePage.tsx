@@ -58,9 +58,7 @@ export default function ImovelDetalhePage() {
   ];
 
   const enderecoCompleto = [
-    imovel.endereco.rua && `${imovel.endereco.rua}, ${imovel.endereco.numero}`,
-    imovel.endereco.bairro,
-    imovel.endereco.condominio,
+    imovel.endereco.condominio || imovel.endereco.bairro,
     `${imovel.endereco.cidade} - ${imovel.endereco.estado}`,
   ].filter(Boolean).join(" · ");
 
