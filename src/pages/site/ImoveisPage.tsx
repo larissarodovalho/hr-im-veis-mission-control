@@ -198,7 +198,7 @@ export default function ImoveisPage() {
             </motion.p>
 
             {/* Filter bar with subtle background */}
-            <div className="bg-white/[0.03] rounded-2xl p-5 sm:p-6 backdrop-blur-sm">
+            <div className="bg-black rounded-2xl p-5 sm:p-6 backdrop-blur-sm">
               {/* Type pills row */}
               <div className="flex items-center flex-wrap gap-4 sm:gap-6 mb-5">
                 <div className="flex items-center gap-1.5">
