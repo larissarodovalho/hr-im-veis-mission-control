@@ -84,7 +84,7 @@ export default function SobrePage() {
             transition={{ duration: 1, ease }}
             className="mb-8"
           >
-            <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-white/[0.06] bg-white/[0.02] text-[11px] text-white/30 tracking-widest uppercase">
+            <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-white/[0.06] bg-white/[0.02] text-xs text-white/30 tracking-widest uppercase">
               <Building2 className="h-3 w-3" />
               Desde 2012
             </span>
@@ -107,7 +107,7 @@ export default function SobrePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.5 }}
-            className="text-sm md:text-base text-white/20 font-light max-w-lg mx-auto leading-relaxed"
+            className="text-base md:text-lg text-white/20 font-light max-w-lg mx-auto leading-relaxed"
           >
             Uma experiência imobiliária diferente em Sinop.
             <br className="hidden md:block" />
@@ -142,13 +142,13 @@ export default function SobrePage() {
             className="rounded-3xl aspect-[3/4] lg:aspect-[4/5]"
           />
           <motion.div ref={textRef} style={{ opacity: textOpacity, x: textX }}>
-            <span className="text-[10px] text-white/20 uppercase tracking-[0.3em] mb-6 block">Nossa história</span>
-            <h2 className="text-3xl md:text-4xl font-extralight text-white/90 mb-8 leading-[1.1] tracking-tight">
+            <span className="text-xs text-white/20 uppercase tracking-[0.3em] mb-6 block">Nossa história</span>
+            <h2 className="text-4xl md:text-5xl font-extralight text-white/90 mb-8 leading-[1.1] tracking-tight">
               Referência no mercado
               <br />
               <span className="text-white/30">imobiliário de Sinop</span>
             </h2>
-            <div className="space-y-5 text-sm text-white/30 font-light leading-[1.8]">
+            <div className="space-y-5 text-base text-white/30 font-light leading-[1.8]">
               <p>
                 Fundada em 2012, a HR Imóveis surgiu com a missão de trazer um novo padrão de atendimento
                 ao mercado imobiliário de Sinop. Ao longo de 14 anos, construímos uma trajetória sólida
@@ -179,7 +179,7 @@ export default function SobrePage() {
           <div className="absolute inset-0 bg-black/50" />
           <div className="absolute inset-0 flex items-center justify-center">
             <motion.p
-              className="text-2xl md:text-4xl font-extralight text-white/70 tracking-tight text-center px-6 max-w-3xl leading-[1.3]"
+              className="text-3xl md:text-5xl font-extralight text-white/70 tracking-tight text-center px-6 max-w-3xl leading-[1.3]"
             >
               Encontrar o imóvel ideal vai além de metros quadrados,
               <span className="text-white/30"> é sobre encontrar um lugar que transforme vidas</span>
@@ -191,8 +191,8 @@ export default function SobrePage() {
       {/* Valores — staggered cards */}
       <ScrollReveal className="max-w-5xl mx-auto px-6 mb-40">
         <div className="text-center mb-16">
-          <span className="text-[10px] text-white/20 uppercase tracking-[0.3em] mb-4 block">Nossos valores</span>
-          <h2 className="text-3xl md:text-4xl font-extralight text-white/90 tracking-tight">
+          <span className="text-xs text-white/20 uppercase tracking-[0.3em] mb-4 block">Nossos valores</span>
+          <h2 className="text-4xl md:text-5xl font-extralight text-white/90 tracking-tight">
             O que nos move
           </h2>
         </div>
@@ -208,8 +208,8 @@ export default function SobrePage() {
               className="bg-[#0a0a0a] p-10 group hover:bg-white/[0.02] transition-colors duration-700"
             >
               <valor.icon className="h-5 w-5 text-white/15 mb-6 group-hover:text-white/40 transition-colors duration-700" />
-              <h4 className="text-sm font-medium text-white/60 mb-3 tracking-wide">{valor.title}</h4>
-              <p className="text-xs text-white/25 leading-relaxed font-light group-hover:text-white/40 transition-colors duration-700">
+              <h4 className="text-base font-medium text-white/60 mb-3 tracking-wide">{valor.title}</h4>
+              <p className="text-sm text-white/25 leading-relaxed font-light group-hover:text-white/40 transition-colors duration-700">
                 {valor.desc}
               </p>
             </motion.div>
@@ -221,13 +221,13 @@ export default function SobrePage() {
       <ScrollReveal className="max-w-6xl mx-auto px-6 mb-40">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="order-2 lg:order-1">
-            <span className="text-[10px] text-white/20 uppercase tracking-[0.3em] mb-6 block">Nossa missão</span>
-            <h2 className="text-3xl md:text-4xl font-extralight text-white/90 mb-8 leading-[1.1] tracking-tight">
+            <span className="text-xs text-white/20 uppercase tracking-[0.3em] mb-6 block">Nossa missão</span>
+            <h2 className="text-4xl md:text-5xl font-extralight text-white/90 mb-8 leading-[1.1] tracking-tight">
               Conectar pessoas aos
               <br />
               <span className="text-white/30">melhores imóveis de Sinop</span>
             </h2>
-            <p className="text-sm text-white/30 font-light leading-[1.8]">
+            <p className="text-base text-white/30 font-light leading-[1.8]">
               Nossa missão é proporcionar a melhor experiência na compra, venda e locação de imóveis de alto padrão
               em Sinop e região. Acreditamos que encontrar o imóvel ideal vai além de metros quadrados,
               é sobre encontrar um lugar que transforme a vida das pessoas.
@@ -247,11 +247,11 @@ export default function SobrePage() {
       <ScrollReveal className="max-w-4xl mx-auto px-6 mb-32 text-center">
         <div className="py-20">
           <motion.h3
-            className="text-3xl md:text-5xl font-extralight text-white/90 mb-4 tracking-tight"
+            className="text-4xl md:text-6xl font-extralight text-white/90 mb-4 tracking-tight"
           >
             Vamos conversar?
           </motion.h3>
-          <p className="text-xs text-white/20 font-light mb-10 max-w-sm mx-auto leading-relaxed">
+          <p className="text-sm text-white/20 font-light mb-10 max-w-sm mx-auto leading-relaxed">
             Entre em contato e descubra como podemos ajudar você a encontrar o imóvel ideal em Sinop.
           </p>
           <motion.a
@@ -260,7 +260,7 @@ export default function SobrePage() {
             rel="noopener noreferrer"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="inline-flex items-center gap-2 px-10 py-3.5 rounded-full text-xs font-medium bg-white text-black hover:bg-white/90 transition-all tracking-wide"
+            className="inline-flex items-center gap-2 px-10 py-3.5 rounded-full text-sm font-medium bg-white text-black hover:bg-white/90 transition-all tracking-wide"
           >
             Falar com a equipe
           </motion.a>
