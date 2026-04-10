@@ -167,65 +167,6 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* ─── Statement ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={1}>
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <motion.div
-              initial={{ opacity: 0, width: 0 }}
-              whileInView={{ opacity: 1, width: 32 }}
-              viewport={{ margin: "-40px" }}
-              transition={{ duration: 1, ease }}
-              className="h-[1px] bg-gradient-to-r from-amber-300/30 to-transparent mb-8"
-            />
-            <motion.p
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ margin: "-80px" }}
-              transition={{ duration: 0.8, ease: smoothEase }}
-              className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light mb-10"
-            >
-              Exclusividade
-            </motion.p>
-            <motion.h2
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ margin: "-80px" }}
-              transition={{ duration: 1.2, delay: 0.1, ease }}
-              className="text-3xl sm:text-5xl lg:text-6xl font-extralight leading-[1.12] tracking-[-0.02em]"
-            >
-              Imóveis que definem{" "}
-              <motion.span
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ margin: "-40px" }}
-                transition={{ duration: 1, delay: 0.5, ease }}
-                className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 italic font-light"
-              >
-                um novo padrão
-              </motion.span>{" "}
-              de viver.
-            </motion.h2>
-          </div>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.92 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ margin: "-80px" }}
-            transition={{ duration: 1.2, delay: 0.2, ease }}
-            className="aspect-[4/3] rounded-3xl overflow-hidden"
-          >
-            <motion.img
-              src={property3}
-              alt="Imóvel de alto padrão"
-              className="w-full h-full object-cover"
-              loading="lazy"
-              whileHover={{ scale: 1.04 }}
-              transition={{ duration: 0.8, ease: smoothEase }}
-            />
-          </motion.div>
-        </div>
-      </ScrollSection>
-
       {/* ─── Full-width Parallax ─── */}
       <ScrollSection className="relative h-[75vh] sm:h-[85vh] -mt-16" index={2}>
         <ParallaxImage src={sectionLiving} alt="Interior de luxo" className="absolute inset-0 h-full" />
