@@ -27,13 +27,14 @@ const smoothEase = [0.25, 0.4, 0.25, 1] as [number, number, number, number];
 function ScrollSection({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const y = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [80, 0, 0, -50]);
-  const opacity = useTransform(scrollYProgress, [0, 0.12, 0.88, 1], [0, 1, 1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0.95, 1, 1, 0.96]);
-  const rotateX = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [3, 0, 0, -2]);
+  const y = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [120, 0, 0, -60]);
+  const opacity = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [0, 1, 1, 0]);
+  const scale = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0.92, 1, 1, 0.95]);
+  const rotateX = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [4, 0, 0, -3]);
+  const filter = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], ["blur(6px)", "blur(0px)", "blur(0px)", "blur(4px)"]);
 
   return (
-    <motion.section ref={ref} style={{ y, opacity, scale, rotateX, perspective: 1200 }} className={className}>
+    <motion.section ref={ref} style={{ y, opacity, scale, rotateX, filter, perspective: 1200, transformStyle: "preserve-3d" }} className={className}>
       {children}
     </motion.section>
   );
@@ -152,8 +153,8 @@ export default function HomePage() {
       </section>
 
       {/* ─── Statement ─── */}
-      <ScrollSection className="py-24 sm:py-32">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+      <ScrollSection className="py-10 sm:py-14">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div>
             <motion.div
               initial={{ opacity: 0, width: 0 }}
@@ -241,7 +242,7 @@ export default function HomePage() {
       </ScrollSection>
 
       {/* ─── Diferenciais ─── */}
-      <ScrollSection className="py-16 sm:py-20">
+      <ScrollSection className="py-10 sm:py-14">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12">
             <motion.div
@@ -293,7 +294,7 @@ export default function HomePage() {
       </ScrollSection>
 
       {/* ─── Imóveis em Destaque ─── */}
-      <ScrollSection className="py-24 sm:py-32">
+      <ScrollSection className="py-10 sm:py-14">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-end justify-between mb-14">
             <div>
@@ -399,7 +400,7 @@ export default function HomePage() {
       </ScrollSection>
 
       {/* ─── Comprar ou Vender ─── */}
-      <ScrollSection className="py-24 sm:py-32">
+      <ScrollSection className="py-10 sm:py-14">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, width: 0 }}
@@ -524,7 +525,7 @@ function NewsletterSection() {
   };
 
   return (
-    <ScrollSection className="py-24 sm:py-32 border-t border-white/[0.03]">
+    <ScrollSection className="py-10 sm:py-14">
       <div className="max-w-7xl mx-auto px-6 text-center">
         <motion.div
           initial={{ opacity: 0, width: 0 }}
