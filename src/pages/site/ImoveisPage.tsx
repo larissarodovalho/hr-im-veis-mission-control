@@ -254,9 +254,9 @@ export default function ImoveisPage() {
                     onChange={(e) => setBusca(e.target.value)}
                     className="w-full bg-transparent border-b border-white/[0.08] pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-white/25 transition-all duration-300"
                   />
-              </div>
+                </div>
 
-              <div className="h-4 w-px bg-white/[0.06] hidden sm:block" />
+                <div className="h-5 w-px bg-white/[0.08] hidden sm:block" />
 
               {/* Price range dropdown */}
               <div className="hidden md:block relative">
