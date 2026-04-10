@@ -192,7 +192,7 @@ export default function ImoveisPage() {
       <ParallaxHero />
 
       {/* ─── Filter Section ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={1}>
+      <ScrollSection className="py-4 sm:py-6 -mt-16" index={1}>
         <div className="px-6 relative z-20">
           <div className="max-w-7xl mx-auto">
             {/* Section label — amber accent like HomePage */}
@@ -353,7 +353,7 @@ export default function ImoveisPage() {
       </ScrollSection>
 
       {/* ─── Grid — elegant cards ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={2}>
+      <ScrollSection className="py-4 sm:py-6 -mt-16" index={2}>
         <div className="px-6 relative z-20">
           <div className="max-w-7xl mx-auto">
             {/* Section header */}
@@ -550,7 +550,7 @@ export default function ImoveisPage() {
       </ScrollSection>
 
       {/* ─── Bottom CTA ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={3}>
+      <ScrollSection className="py-6 sm:py-10 -mt-16" index={3}>
         <div className="px-6 relative z-20">
           <div className="max-w-7xl mx-auto text-center">
             <motion.div
