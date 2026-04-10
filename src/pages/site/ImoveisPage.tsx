@@ -71,7 +71,7 @@ function ParallaxHero() {
   const heroTextY = useTransform(scrollYProgress, [0, 0.5], [0, 100]);
 
   return (
-    <section ref={ref} className="relative h-[70vh] flex items-end overflow-hidden">
+    <section ref={ref} className="relative h-[70vh] flex items-center justify-center overflow-hidden">
       {/* Background with scale effect */}
       <motion.div className="absolute inset-0" style={{ scale: heroScale }}>
         <img
@@ -90,7 +90,7 @@ function ParallaxHero() {
 
       <motion.div
         style={{ opacity: heroOpacity, y: heroTextY }}
-        className="relative z-10 max-w-7xl mx-auto px-6 pb-24 w-full flex flex-col items-center text-center"
+        className="relative z-10 max-w-7xl mx-auto px-6 w-full flex flex-col items-center text-center"
       >
         {/* Amber accent line */}
         <motion.div
