@@ -338,30 +338,9 @@ export default function ImoveisPage() {
       </ScrollSection>
 
       {/* ─── Grid — elegant cards ─── */}
-      <ScrollSection className="py-4 sm:py-6 -mt-16" index={2}>
+      <ScrollSection className="py-4 sm:py-6 -mt-8" index={2}>
         <div className="px-6 relative z-20">
           <div className="max-w-7xl mx-auto">
-            {/* Section header */}
-            <div className="flex items-center justify-between mb-10">
-              <div>
-                <motion.div
-                  initial={{ opacity: 0, width: 0 }}
-                  whileInView={{ opacity: 1, width: 32 }}
-                  viewport={{ margin: "-40px" }}
-                  transition={{ duration: 1, ease }}
-                  className="h-[1px] bg-gradient-to-r from-amber-300/30 to-transparent mb-6"
-                />
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ margin: "-40px" }}
-                  transition={{ duration: 0.8 }}
-                  className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light"
-                >
-                  {imoveis.length} {imoveis.length === 1 ? "imóvel" : "imóveis"} encontrados
-                </motion.p>
-              </div>
-            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
               {imoveis.map((im, i) => (
