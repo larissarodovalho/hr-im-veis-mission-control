@@ -100,14 +100,6 @@ function ParallaxHero() {
           className="h-[1px] bg-gradient-to-r from-transparent via-amber-300/40 to-transparent mb-8"
         />
 
-        <motion.p
-          initial={{ opacity: 0, letterSpacing: "0.2em" }}
-          animate={{ opacity: 1, letterSpacing: "0.5em" }}
-          transition={{ duration: 1.5, delay: 0.3, ease }}
-          className="text-[11px] uppercase text-white/25 font-light mb-8"
-        >
-          Portfólio Exclusivo
-        </motion.p>
 
         <motion.h1
           initial={{ opacity: 0, y: 40 }}
