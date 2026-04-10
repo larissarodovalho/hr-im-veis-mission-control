@@ -4,6 +4,7 @@ import { MapPin, BedDouble, Bath, Car, Search, X, ArrowUpRight, Maximize2, Eye }
 import { IMOVEIS_SITE } from "@/data/imoveisCRM";
 
 import casaLuxo1 from "@/assets/imoveis/casa-luxo-1.jpg";
+import heroImoveis from "@/assets/imoveis/hero-imoveis.jpg";
 import casaLuxo2 from "@/assets/imoveis/casa-luxo-2.jpg";
 import casaLuxo3 from "@/assets/imoveis/casa-luxo-3.jpg";
 import terreno1 from "@/assets/imoveis/terreno-1.jpg";
@@ -75,7 +76,7 @@ function ParallaxHero() {
       {/* Background with scale effect */}
       <motion.div className="absolute inset-0" style={{ scale: heroScale }}>
         <img
-          src={casaLuxo1}
+          src={heroImoveis}
           alt="Portfólio exclusivo de imóveis"
           className="w-full h-full object-cover"
         />
