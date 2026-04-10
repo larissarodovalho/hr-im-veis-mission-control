@@ -71,7 +71,7 @@ function ParallaxHero() {
   const heroTextY = useTransform(scrollYProgress, [0, 0.5], [0, 100]);
 
   return (
-    <section ref={ref} className="relative h-[50vh] flex items-end overflow-hidden">
+    <section ref={ref} className="relative h-[70vh] flex items-end overflow-hidden">
       {/* Background with scale effect */}
       <motion.div className="absolute inset-0" style={{ scale: heroScale }}>
         <img
@@ -192,7 +192,7 @@ export default function ImoveisPage() {
       <ParallaxHero />
 
       {/* ─── Filter Section ─── */}
-      <ScrollSection className="py-4 sm:py-6 -mt-16" index={1}>
+      <ScrollSection className="py-2 sm:py-4 -mt-24" index={1}>
         <div className="px-6 relative z-20">
           <div className="max-w-7xl mx-auto">
             {/* Section label — amber accent like HomePage */}
