@@ -158,14 +158,14 @@ export default function HomePage() {
             <motion.div
               initial={{ opacity: 0, width: 0 }}
               whileInView={{ opacity: 1, width: 32 }}
-              viewport={{ once: true }}
+              viewport={{ margin: "-40px" }}
               transition={{ duration: 1, ease }}
               className="h-[1px] bg-gradient-to-r from-amber-300/30 to-transparent mb-8"
             />
             <motion.p
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
-              viewport={{ once: true, margin: "-80px" }}
+              viewport={{ margin: "-80px" }}
               transition={{ duration: 0.8, ease: smoothEase }}
               className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light mb-10"
             >
@@ -174,7 +174,7 @@ export default function HomePage() {
             <motion.h2
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
+              viewport={{ margin: "-80px" }}
               transition={{ duration: 1.2, delay: 0.1, ease }}
               className="text-3xl sm:text-5xl lg:text-6xl font-extralight leading-[1.12] tracking-[-0.02em]"
             >
@@ -182,7 +182,7 @@ export default function HomePage() {
               <motion.span
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
+                viewport={{ margin: "-40px" }}
                 transition={{ duration: 1, delay: 0.5, ease }}
                 className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 italic font-light"
               >
@@ -194,7 +194,7 @@ export default function HomePage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.92 }}
             whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, margin: "-80px" }}
+            viewport={{ margin: "-80px" }}
             transition={{ duration: 1.2, delay: 0.2, ease }}
             className="aspect-[4/3] rounded-3xl overflow-hidden"
           >
@@ -219,14 +219,14 @@ export default function HomePage() {
             <motion.div
               initial={{ opacity: 0, width: 0 }}
               whileInView={{ opacity: 1, width: 40 }}
-              viewport={{ once: true }}
+              viewport={{ margin: "-40px" }}
               transition={{ duration: 1, ease }}
               className="h-[1px] bg-gradient-to-r from-transparent via-amber-300/30 to-transparent mx-auto mb-10"
             />
             <motion.h2
               initial={{ opacity: 0, y: 60 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
+              viewport={{ margin: "-100px" }}
               transition={{ duration: 1.4, ease }}
               className="text-3xl sm:text-5xl lg:text-7xl font-extralight leading-[1.12] tracking-[-0.02em]"
             >
@@ -248,14 +248,14 @@ export default function HomePage() {
               <motion.div
                 initial={{ opacity: 0, width: 0 }}
                 whileInView={{ opacity: 1, width: 32 }}
-                viewport={{ once: true }}
+                viewport={{ margin: "-40px" }}
                 transition={{ duration: 1, ease }}
                 className="h-[1px] bg-gradient-to-r from-amber-300/30 to-transparent mb-8"
               />
               <motion.p
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
+                viewport={{ margin: "-40px" }}
                 transition={{ duration: 0.8, ease: smoothEase }}
                 className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light"
               >
@@ -275,7 +275,7 @@ export default function HomePage() {
                 key={item.num}
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-60px" }}
+                viewport={{ margin: "-60px" }}
                 transition={{ duration: 1, delay: i * 0.15, ease }}
                 className="bg-[#050505] p-10 sm:p-14 group hover:bg-white/[0.02] transition-all duration-700 cursor-default"
               >
@@ -302,14 +302,14 @@ export default function HomePage() {
               <motion.div
                 initial={{ opacity: 0, width: 0 }}
                 whileInView={{ opacity: 1, width: 32 }}
-                viewport={{ once: true }}
+                viewport={{ margin: "-40px" }}
                 transition={{ duration: 1, ease }}
                 className="h-[1px] bg-gradient-to-r from-amber-300/30 to-transparent mb-8"
               />
               <motion.p
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
+                viewport={{ margin: "-40px" }}
                 transition={{ duration: 0.8, ease: smoothEase }}
                 className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light mb-4"
               >
@@ -318,7 +318,7 @@ export default function HomePage() {
               <motion.h2
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                viewport={{ margin: "-40px" }}
                 transition={{ duration: 1, delay: 0.1, ease }}
                 className="text-3xl sm:text-4xl font-extralight tracking-wide"
               >
@@ -328,7 +328,7 @@ export default function HomePage() {
             <motion.div
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
+              viewport={{ margin: "-40px" }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
               <Link
@@ -346,7 +346,7 @@ export default function HomePage() {
                 key={imovel.id}
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-60px" }}
+                viewport={{ margin: "-60px" }}
                 transition={{ duration: 1, delay: i * 0.15, ease }}
               >
                 <Link
@@ -386,7 +386,7 @@ export default function HomePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ margin: "-40px" }}
             transition={{ duration: 0.7, delay: 0.3 }}
             className="sm:hidden mt-12 text-center"
           >
@@ -406,14 +406,14 @@ export default function HomePage() {
           <motion.div
             initial={{ opacity: 0, width: 0 }}
             whileInView={{ opacity: 1, width: 40 }}
-            viewport={{ once: true }}
+            viewport={{ margin: "-40px" }}
             transition={{ duration: 1, ease }}
             className="h-[1px] bg-gradient-to-r from-transparent via-amber-300/30 to-transparent mx-auto mb-10"
           />
           <motion.p
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
+            viewport={{ margin: "-40px" }}
             transition={{ duration: 0.8, ease: smoothEase }}
             className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light mb-10 text-center"
           >
@@ -424,7 +424,7 @@ export default function HomePage() {
             <motion.div
               initial={{ opacity: 0, x: -40 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+              viewport={{ margin: "-40px" }}
               transition={{ duration: 1.2, ease }}
             >
               <div className="relative bg-[#050505] overflow-hidden h-full group">
@@ -462,7 +462,7 @@ export default function HomePage() {
             <motion.div
               initial={{ opacity: 0, x: 40 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+              viewport={{ margin: "-40px" }}
               transition={{ duration: 1.2, delay: 0.15, ease }}
             >
               <div className="relative bg-[#050505] overflow-hidden h-full group">
@@ -531,14 +531,14 @@ function NewsletterSection() {
         <motion.div
           initial={{ opacity: 0, width: 0 }}
           whileInView={{ opacity: 1, width: 40 }}
-          viewport={{ once: true }}
+          viewport={{ margin: "-40px" }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
           className="h-[1px] bg-gradient-to-r from-transparent via-amber-300/30 to-transparent mx-auto mb-10"
         />
         <motion.p
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
+          viewport={{ margin: "-40px" }}
           transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] as [number, number, number, number] }}
           className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light mb-8"
         >
@@ -547,7 +547,7 @@ function NewsletterSection() {
         <motion.h2
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ margin: "-40px" }}
           transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
           className="text-2xl sm:text-4xl font-extralight tracking-wide mb-5"
         >
@@ -559,7 +559,7 @@ function NewsletterSection() {
         <motion.p
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
+          viewport={{ margin: "-40px" }}
           transition={{ duration: 0.7, delay: 0.2 }}
           className="text-sm text-white/30 font-light max-w-md mx-auto mb-12 leading-[1.8]"
         >
@@ -569,7 +569,7 @@ function NewsletterSection() {
           onSubmit={handleSubmit}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ margin: "-40px" }}
           transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
           className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
         >
@@ -592,7 +592,7 @@ function NewsletterSection() {
         <motion.p
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
+          viewport={{ margin: "-40px" }}
           transition={{ duration: 0.6, delay: 0.4 }}
           className="text-[10px] text-white/20 mt-5 font-light tracking-[0.2em]"
         >
