@@ -176,24 +176,11 @@ export default function SobrePage() {
               <h3 className="text-2xl md:text-3xl font-extralight text-white/90 mb-6 leading-tight">
                 Conectar pessoas aos melhores imóveis de Sinop
               </h3>
-              <p className="text-sm text-white/40 font-light leading-relaxed mb-8">
+              <p className="text-sm text-white/40 font-light leading-relaxed">
                 Nossa missão é proporcionar a melhor experiência na compra, venda e locação de imóveis de alto padrão
-                em Sinop e região. Acreditamos que encontrar o imóvel ideal vai além de metros quadrados —
+                em Sinop e região. Acreditamos que encontrar o imóvel ideal vai além de metros quadrados,
                 é sobre encontrar um lugar que transforme a vida das pessoas.
               </p>
-
-              <div className="space-y-4">
-                <div className="flex gap-3">
-                  <div className="w-1 rounded-full bg-white/10 shrink-0" />
-                  <div>
-                    <p className="text-xs font-medium text-white/60 mb-1">Visão</p>
-                    <p className="text-xs text-white/30 font-light leading-relaxed">
-                      Ser a imobiliária mais admirada de Sinop, reconhecida pela excelência no atendimento
-                      e pela curadoria dos melhores imóveis da cidade.
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
           </FadeIn>
 
