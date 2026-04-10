@@ -31,6 +31,7 @@ const App = () => (
           <Route path="/site" element={<SiteLayout><HomePage /></SiteLayout>} />
           <Route path="/site/imoveis" element={<SiteLayout><ImoveisPage /></SiteLayout>} />
           <Route path="/site/imovel/:id" element={<SiteLayout><ImovelDetalhePage /></SiteLayout>} />
+          <Route path="/site/sobre" element={<SiteLayout><SobrePage /></SiteLayout>} />
           <Route path="/site/*" element={<SiteLayout><Routes><Route path="*" element={<NotFound />} /></Routes></SiteLayout>} />
 
           {/* Painel CRM */}
