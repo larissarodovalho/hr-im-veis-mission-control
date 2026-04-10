@@ -27,13 +27,14 @@ const smoothEase = [0.25, 0.4, 0.25, 1] as [number, number, number, number];
 function ScrollSection({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const y = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [80, 0, 0, -50]);
-  const opacity = useTransform(scrollYProgress, [0, 0.12, 0.88, 1], [0, 1, 1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0.95, 1, 1, 0.96]);
-  const rotateX = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [3, 0, 0, -2]);
+  const y = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [120, 0, 0, -60]);
+  const opacity = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [0, 1, 1, 0]);
+  const scale = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0.92, 1, 1, 0.95]);
+  const rotateX = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [4, 0, 0, -3]);
+  const filter = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], ["blur(6px)", "blur(0px)", "blur(0px)", "blur(4px)"]);
 
   return (
-    <motion.section ref={ref} style={{ y, opacity, scale, rotateX, perspective: 1200 }} className={className}>
+    <motion.section ref={ref} style={{ y, opacity, scale, rotateX, filter, perspective: 1200, transformStyle: "preserve-3d" }} className={className}>
       {children}
     </motion.section>
   );
