@@ -38,11 +38,11 @@ function ScrollSection({ children, className = "", index = 0 }: { children: Reac
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
 
-  const y = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [150, 0, 0, -80]);
-  const opacity = useTransform(scrollYProgress, [0, 0.18, 0.82, 1], [0, 1, 1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0.88, 1, 1, 0.94]);
-  const rotateX = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [6, 0, 0, -4]);
-  const filter = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], ["blur(8px)", "blur(0px)", "blur(0px)", "blur(5px)"]);
+  const y = useTransform(scrollYProgress, [0, 0.15, 0.8, 1], [60, 0, 0, -30]);
+  const opacity = useTransform(scrollYProgress, [0, 0.1, 0.85, 1], [0, 1, 1, 0]);
+  const scale = useTransform(scrollYProgress, [0, 0.15, 0.8, 1], [0.95, 1, 1, 0.97]);
+  const rotateX = useTransform(scrollYProgress, [0, 0.15, 0.8, 1], [3, 0, 0, -2]);
+  const filter = useTransform(scrollYProgress, [0, 0.1, 0.85, 1], ["blur(4px)", "blur(0px)", "blur(0px)", "blur(2px)"]);
 
   return (
     <motion.section
@@ -55,9 +55,9 @@ function ScrollSection({ children, className = "", index = 0 }: { children: Reac
       }}
       className={`relative ${className}`}
     >
-      <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#050505] to-transparent z-10 pointer-events-none" />
+      <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-[#050505] to-transparent z-10 pointer-events-none" />
       {children}
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#050505] to-transparent z-10 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#050505] to-transparent z-10 pointer-events-none" />
     </motion.section>
   );
 }
@@ -71,7 +71,7 @@ function ParallaxHero() {
   const heroTextY = useTransform(scrollYProgress, [0, 0.5], [0, 100]);
 
   return (
-    <section ref={ref} className="relative h-[70vh] flex items-end overflow-hidden">
+    <section ref={ref} className="relative h-[50vh] flex items-end overflow-hidden">
       {/* Background with scale effect */}
       <motion.div className="absolute inset-0" style={{ scale: heroScale }}>
         <img
@@ -192,7 +192,7 @@ export default function ImoveisPage() {
       <ParallaxHero />
 
       {/* ─── Filter Section ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={1}>
+      <ScrollSection className="py-4 sm:py-6 -mt-16" index={1}>
         <div className="px-6 relative z-20">
           <div className="max-w-7xl mx-auto">
             {/* Section label — amber accent like HomePage */}
@@ -353,7 +353,7 @@ export default function ImoveisPage() {
       </ScrollSection>
 
       {/* ─── Grid — elegant cards ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={2}>
+      <ScrollSection className="py-4 sm:py-6 -mt-16" index={2}>
         <div className="px-6 relative z-20">
           <div className="max-w-7xl mx-auto">
             {/* Section header */}
@@ -550,7 +550,7 @@ export default function ImoveisPage() {
       </ScrollSection>
 
       {/* ─── Bottom CTA ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={3}>
+      <ScrollSection className="py-6 sm:py-10 -mt-16" index={3}>
         <div className="px-6 relative z-20">
           <div className="max-w-7xl mx-auto text-center">
             <motion.div
