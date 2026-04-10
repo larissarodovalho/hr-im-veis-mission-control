@@ -314,13 +314,9 @@ export default function ImovelDetalhePage() {
               </motion.div>
             </div>
           </div>
-        </div>
-      </ScrollSection>
 
-      {/* ─── Description & Location ─── */}
-      <ScrollSection className="py-6 sm:py-10 -mt-8" index={2}>
-        <div className="max-w-7xl mx-auto px-6 relative z-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+          {/* ─── Description & Location ─── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 mt-14">
             {/* Description */}
             <div>
               <motion.div
