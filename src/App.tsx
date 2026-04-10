@@ -17,6 +17,7 @@ import HomePage from "@/pages/site/HomePage";
 import ImoveisPage from "@/pages/site/ImoveisPage";
 import ImovelDetalhePage from "@/pages/site/ImovelDetalhePage";
 import SobrePage from "@/pages/site/SobrePage";
+import ContatoPage from "@/pages/site/ContatoPage";
 
 const queryClient = new QueryClient();
 
