@@ -241,30 +241,28 @@ export default function HomePage() {
       </ScrollSection>
 
       {/* ─── Diferenciais ─── */}
-      <ScrollSection className="py-24 sm:py-32">
+      <ScrollSection className="py-16 sm:py-20">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-end justify-between mb-14">
-            <div>
-              <motion.div
-                initial={{ opacity: 0, width: 0 }}
-                whileInView={{ opacity: 1, width: 32 }}
-                viewport={{ margin: "-40px" }}
-                transition={{ duration: 1, ease }}
-                className="h-[1px] bg-gradient-to-r from-amber-300/30 to-transparent mb-8"
-              />
-              <motion.p
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ margin: "-40px" }}
-                transition={{ duration: 0.8, ease: smoothEase }}
-                className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light"
-              >
-                Nossos Diferenciais
-              </motion.p>
-            </div>
+          <div className="text-center mb-12">
+            <motion.div
+              initial={{ opacity: 0, width: 0 }}
+              whileInView={{ opacity: 1, width: 40 }}
+              viewport={{ margin: "-40px" }}
+              transition={{ duration: 1, ease }}
+              className="h-[1px] bg-gradient-to-r from-transparent via-amber-300/40 to-transparent mx-auto mb-6"
+            />
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ margin: "-40px" }}
+              transition={{ duration: 0.8, ease: smoothEase }}
+              className="text-xs uppercase tracking-[0.5em] text-amber-300/40 font-medium"
+            >
+              Nossos Diferenciais
+            </motion.p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[1px] bg-white/[0.03] rounded-3xl overflow-hidden">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[1px] bg-white/[0.04] rounded-3xl overflow-hidden">
             {[
               { num: "01", title: "Curadoria Exclusiva", desc: "Seleção criteriosa dos melhores imóveis em condomínios fechados de Sinop." },
               { num: "02", title: "Segurança Jurídica", desc: "Assessoria completa em documentação e negociação." },
@@ -273,19 +271,19 @@ export default function HomePage() {
             ].map((item, i) => (
               <motion.div
                 key={item.num}
-                initial={{ opacity: 0, y: 50 }}
+                initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ margin: "-60px" }}
-                transition={{ duration: 1, delay: i * 0.15, ease }}
-                className="bg-[#050505] p-10 sm:p-14 group hover:bg-white/[0.02] transition-all duration-700 cursor-default"
+                transition={{ duration: 0.9, delay: i * 0.12, ease }}
+                className="bg-[#050505] p-8 sm:p-10 group hover:bg-white/[0.03] transition-all duration-700 cursor-default"
               >
-                <span className="inline-block text-[11px] text-transparent bg-clip-text bg-gradient-to-r from-amber-300/60 to-amber-100/40 tracking-[0.4em] font-light mb-8 group-hover:from-amber-300 group-hover:to-amber-100 transition-all duration-700">
+                <span className="inline-block text-sm text-transparent bg-clip-text bg-gradient-to-r from-amber-300/70 to-amber-200/50 tracking-[0.3em] font-medium mb-5 group-hover:from-amber-300 group-hover:to-amber-100 transition-all duration-700">
                   {item.num}
                 </span>
-                <h3 className="font-light text-lg sm:text-xl mb-5 tracking-wide text-white/80 group-hover:text-white/95 transition-colors duration-700">
+                <h3 className="font-medium text-base sm:text-lg mb-3 tracking-wide text-white/85 group-hover:text-white transition-colors duration-700">
                   {item.title}
                 </h3>
-                <p className="text-sm text-white/30 leading-[1.8] font-light group-hover:text-white/35 transition-colors duration-700">
+                <p className="text-sm text-white/35 leading-[1.7] font-light group-hover:text-white/50 transition-colors duration-700">
                   {item.desc}
                 </p>
               </motion.div>
