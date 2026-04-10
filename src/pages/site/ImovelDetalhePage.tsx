@@ -97,7 +97,7 @@ export default function ImovelDetalhePage() {
   return (
     <div className="min-h-screen bg-[#050505] text-white">
       {/* ─── Hero — clean photo only ─── */}
-      <section ref={heroRef} className="relative h-[60vh] overflow-hidden">
+      <section ref={heroRef} className="relative h-[60vh] overflow-hidden mt-20">
         <motion.div className="absolute inset-0" style={{ scale: heroScale }}>
           <img src={image} alt={imovel.nome} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/30 to-black/10" />
