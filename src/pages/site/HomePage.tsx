@@ -27,12 +27,13 @@ const smoothEase = [0.25, 0.4, 0.25, 1] as [number, number, number, number];
 function ScrollSection({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const y = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [50, 0, 0, -30]);
-  const opacity = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [0.2, 1, 1, 0.2]);
-  const scale = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0.98, 1, 1, 0.98]);
+  const y = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [80, 0, 0, -50]);
+  const opacity = useTransform(scrollYProgress, [0, 0.12, 0.88, 1], [0, 1, 1, 0]);
+  const scale = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0.95, 1, 1, 0.96]);
+  const rotateX = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [3, 0, 0, -2]);
 
   return (
-    <motion.section ref={ref} style={{ y, opacity, scale }} className={className}>
+    <motion.section ref={ref} style={{ y, opacity, scale, rotateX, perspective: 1200 }} className={className}>
       {children}
     </motion.section>
   );
@@ -87,7 +88,7 @@ export default function HomePage() {
             initial={{ opacity: 0, letterSpacing: "0.2em" }}
             animate={{ opacity: 1, letterSpacing: "0.5em" }}
             transition={{ duration: 1.5, delay: 0.3, ease }}
-            className="text-[10px] uppercase text-white/25 font-light mb-8"
+            className="text-[11px] uppercase text-white/25 font-light mb-8"
           >
             Sinop — Mato Grosso
           </motion.p>
@@ -108,7 +109,7 @@ export default function HomePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.8 }}
-            className="text-sm sm:text-base text-white/20 max-w-lg mb-12 font-light leading-[1.8] tracking-wide"
+            className="text-sm sm:text-base text-white/30 max-w-lg mb-12 font-light leading-[1.8] tracking-wide"
           >
             Casas, terrenos e apartamentos de alto padrão nos melhores condomínios fechados.
           </motion.p>
@@ -151,7 +152,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── Statement ─── */}
-      <ScrollSection className="py-40 sm:py-56">
+      <ScrollSection className="py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
           <div>
             <motion.div
@@ -166,7 +167,7 @@ export default function HomePage() {
               whileInView={{ opacity: 1 }}
               viewport={{ once: true, margin: "-80px" }}
               transition={{ duration: 0.8, ease: smoothEase }}
-              className="text-[10px] uppercase tracking-[0.5em] text-white/15 font-light mb-10"
+              className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light mb-10"
             >
               Exclusividade
             </motion.p>
@@ -240,9 +241,9 @@ export default function HomePage() {
       </ScrollSection>
 
       {/* ─── Diferenciais ─── */}
-      <ScrollSection className="py-40 sm:py-56">
+      <ScrollSection className="py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-end justify-between mb-20">
+          <div className="flex items-end justify-between mb-14">
             <div>
               <motion.div
                 initial={{ opacity: 0, width: 0 }}
@@ -256,7 +257,7 @@ export default function HomePage() {
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, ease: smoothEase }}
-                className="text-[10px] uppercase tracking-[0.5em] text-white/15 font-light"
+                className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light"
               >
                 Nossos Diferenciais
               </motion.p>
@@ -278,13 +279,13 @@ export default function HomePage() {
                 transition={{ duration: 1, delay: i * 0.15, ease }}
                 className="bg-[#050505] p-10 sm:p-14 group hover:bg-white/[0.02] transition-all duration-700 cursor-default"
               >
-                <span className="inline-block text-[10px] text-transparent bg-clip-text bg-gradient-to-r from-amber-300/60 to-amber-100/40 tracking-[0.4em] font-light mb-8 group-hover:from-amber-300 group-hover:to-amber-100 transition-all duration-700">
+                <span className="inline-block text-[11px] text-transparent bg-clip-text bg-gradient-to-r from-amber-300/60 to-amber-100/40 tracking-[0.4em] font-light mb-8 group-hover:from-amber-300 group-hover:to-amber-100 transition-all duration-700">
                   {item.num}
                 </span>
                 <h3 className="font-light text-lg sm:text-xl mb-5 tracking-wide text-white/80 group-hover:text-white/95 transition-colors duration-700">
                   {item.title}
                 </h3>
-                <p className="text-[13px] text-white/20 leading-[1.8] font-light group-hover:text-white/35 transition-colors duration-700">
+                <p className="text-sm text-white/30 leading-[1.8] font-light group-hover:text-white/35 transition-colors duration-700">
                   {item.desc}
                 </p>
               </motion.div>
@@ -294,9 +295,9 @@ export default function HomePage() {
       </ScrollSection>
 
       {/* ─── Imóveis em Destaque ─── */}
-      <ScrollSection className="py-40 sm:py-56">
+      <ScrollSection className="py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-end justify-between mb-20">
+          <div className="flex items-end justify-between mb-14">
             <div>
               <motion.div
                 initial={{ opacity: 0, width: 0 }}
@@ -310,7 +311,7 @@ export default function HomePage() {
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, ease: smoothEase }}
-                className="text-[10px] uppercase tracking-[0.5em] text-white/15 font-light mb-4"
+                className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light mb-4"
               >
                 Portfolio
               </motion.p>
@@ -332,7 +333,7 @@ export default function HomePage() {
             >
               <Link
                 to="/site/imoveis"
-                className="hidden sm:inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-white/20 hover:text-white/50 transition-colors duration-500 font-light"
+                className="hidden sm:inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-white/30 hover:text-white/50 transition-colors duration-500 font-light"
               >
                 Ver todos <ArrowRight className="h-3 w-3" />
               </Link>
@@ -364,13 +365,13 @@ export default function HomePage() {
                   </div>
                   <div className="p-8 sm:p-10">
                     <div className="flex items-center justify-between mb-5">
-                      <span className="text-[9px] uppercase tracking-[0.4em] text-white/15 font-light">{imovel.tipo}</span>
-                      <ArrowUpRight className="h-3.5 w-3.5 text-white/10 group-hover:text-amber-300/50 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-500" />
+                      <span className="text-[10px] uppercase tracking-[0.4em] text-white/25 font-light">{imovel.tipo}</span>
+                      <ArrowUpRight className="h-3.5 w-3.5 text-white/20 group-hover:text-amber-300/50 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-500" />
                     </div>
                     <h3 className="font-light text-base mb-3 tracking-wide text-white/80 group-hover:text-white/95 transition-colors duration-500">
                       {imovel.nome}
                     </h3>
-                    <p className="flex items-center gap-1.5 text-[10px] text-white/15 mb-6 font-light tracking-[0.15em]">
+                    <p className="flex items-center gap-1.5 text-[11px] text-white/25 mb-6 font-light tracking-[0.15em]">
                       <MapPin className="h-2.5 w-2.5" /> Sinop, MT
                     </p>
                     <p className="text-xl font-extralight text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 tracking-wide">
@@ -400,7 +401,7 @@ export default function HomePage() {
       </ScrollSection>
 
       {/* ─── Comprar ou Vender ─── */}
-      <ScrollSection className="py-40 sm:py-56">
+      <ScrollSection className="py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, width: 0 }}
@@ -414,7 +415,7 @@ export default function HomePage() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, ease: smoothEase }}
-            className="text-[10px] uppercase tracking-[0.5em] text-white/15 font-light mb-10 text-center"
+            className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light mb-10 text-center"
           >
             Como podemos ajudar
           </motion.p>
@@ -430,11 +431,11 @@ export default function HomePage() {
                 <img src={property1} alt="Comprar imóvel" className="absolute inset-0 w-full h-full object-cover opacity-15 group-hover:opacity-25 transition-opacity duration-1000" loading="lazy" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/85 to-[#050505]/60" />
                 <div className="relative p-12 sm:p-20 text-center flex flex-col items-center">
-                  <MessageCircle className="h-7 w-7 text-white/10 mb-8" />
+                  <MessageCircle className="h-7 w-7 text-white/20 mb-8" />
                   <h3 className="text-2xl sm:text-3xl font-extralight tracking-wide mb-5">
                     Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 font-light">comprar</span> um imóvel?
                   </h3>
-                  <p className="text-[13px] text-white/20 font-light leading-[1.8] max-w-sm mb-10">
+                  <p className="text-sm text-white/30 font-light leading-[1.8] max-w-sm mb-10">
                     Nossa equipe de consultores vai te ajudar a encontrar o imóvel perfeito para você e sua família.
                   </p>
                   <div className="flex flex-wrap justify-center gap-3">
@@ -468,11 +469,11 @@ export default function HomePage() {
                 <img src={featureInterior} alt="Vender imóvel" className="absolute inset-0 w-full h-full object-cover opacity-15 group-hover:opacity-25 transition-opacity duration-1000" loading="lazy" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/85 to-[#050505]/60" />
                 <div className="relative p-12 sm:p-20 text-center flex flex-col items-center">
-                  <Building2 className="h-7 w-7 text-white/10 mb-8" />
+                  <Building2 className="h-7 w-7 text-white/20 mb-8" />
                   <h3 className="text-2xl sm:text-3xl font-extralight tracking-wide mb-5">
                     Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 font-light">vender</span> seu imóvel?
                   </h3>
-                  <p className="text-[13px] text-white/20 font-light leading-[1.8] max-w-sm mb-10">
+                  <p className="text-sm text-white/30 font-light leading-[1.8] max-w-sm mb-10">
                     Avaliamos e anunciamos seu imóvel com exclusividade. Alcance compradores qualificados com a HR Imóveis.
                   </p>
                   <Link
@@ -525,7 +526,7 @@ function NewsletterSection() {
   };
 
   return (
-    <ScrollSection className="py-40 sm:py-56 border-t border-white/[0.03]">
+    <ScrollSection className="py-24 sm:py-32 border-t border-white/[0.03]">
       <div className="max-w-7xl mx-auto px-6 text-center">
         <motion.div
           initial={{ opacity: 0, width: 0 }}
@@ -539,7 +540,7 @@ function NewsletterSection() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] as [number, number, number, number] }}
-          className="text-[10px] uppercase tracking-[0.5em] text-white/15 font-light mb-8"
+          className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light mb-8"
         >
           Newsletter
         </motion.p>
@@ -560,7 +561,7 @@ function NewsletterSection() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7, delay: 0.2 }}
-          className="text-[13px] text-white/20 font-light max-w-md mx-auto mb-12 leading-[1.8]"
+          className="text-sm text-white/30 font-light max-w-md mx-auto mb-12 leading-[1.8]"
         >
           Receba informações exclusivas sobre novos imóveis, tendências do mercado e novidades da região de Sinop.
         </motion.p>
@@ -578,7 +579,7 @@ function NewsletterSection() {
             placeholder="Seu melhor e-mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="flex-1 px-6 py-3.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-sm text-white placeholder:text-white/15 font-light tracking-wide focus:outline-none focus:border-white/[0.15] transition-all duration-500"
+            className="flex-1 px-6 py-3.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-sm text-white placeholder:text-white/25 font-light tracking-wide focus:outline-none focus:border-white/[0.15] transition-all duration-500"
           />
           <button
             type="submit"
@@ -593,7 +594,7 @@ function NewsletterSection() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="text-[9px] text-white/10 mt-5 font-light tracking-[0.2em]"
+          className="text-[10px] text-white/20 mt-5 font-light tracking-[0.2em]"
         >
           Sem spam. Cancele quando quiser.
         </motion.p>
