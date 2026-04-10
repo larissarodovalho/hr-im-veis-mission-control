@@ -121,7 +121,6 @@ function ParallaxHero() {
           </span>
         </motion.h1>
 
-        </motion.p>
 
         {/* Scroll hint */}
         <motion.div
