@@ -389,7 +389,7 @@ export default function ImovelDetalhePage() {
       </ScrollSection>
 
       {/* ─── Bottom CTA ─── */}
-      <ScrollSection className="py-8 sm:py-12 -mt-8" index={3}>
+      <ScrollSection className="py-8 sm:py-12 -mt-8" index={2}>
         <div className="max-w-7xl mx-auto px-6 relative z-20 text-center">
           <motion.div
             initial={{ opacity: 0, width: 0 }}
