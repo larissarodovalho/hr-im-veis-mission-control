@@ -96,117 +96,100 @@ export default function ImovelDetalhePage() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white">
-      {/* ─── Hero with parallax image ─── */}
-      <section ref={heroRef} className="relative h-[70vh] flex items-end overflow-hidden">
+      {/* ─── Hero — clean photo only ─── */}
+      <section ref={heroRef} className="relative h-[60vh] overflow-hidden">
         <motion.div className="absolute inset-0" style={{ scale: heroScale }}>
           <img src={image} alt={imovel.nome} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/30 to-black/10" />
         </motion.div>
 
-        {/* Line overlay */}
         <div
           className="absolute inset-0 pointer-events-none opacity-[0.03]"
           style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 119px, rgba(255,255,255,0.15) 120px)" }}
         />
 
+        {/* Back link only */}
         <motion.div
-          style={{ opacity: heroOpacity, y: heroTextY }}
-          className="relative z-10 max-w-7xl mx-auto px-6 pb-20 w-full"
+          style={{ opacity: heroOpacity }}
+          className="absolute top-24 left-6 z-10"
         >
-          {/* Back link */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, ease }}
-            className="mb-8"
+          <Link
+            to="/site/imoveis"
+            className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-white/40 hover:text-white/70 transition-all duration-300 backdrop-blur-sm bg-black/20 px-4 py-2 rounded-full border border-white/10"
           >
-            <Link
-              to="/site/imoveis"
-              className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-white/30 hover:text-white/60 transition-all duration-300"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Voltar
-            </Link>
-          </motion.div>
+            <ArrowLeft className="h-3 w-3" />
+            Voltar
+          </Link>
+        </motion.div>
+      </section>
 
+      {/* ─── Info Section: Title, Price, Specs, Description, Location ─── */}
+      <ScrollSection className="py-6 sm:py-8 -mt-12" index={1}>
+        <div className="max-w-7xl mx-auto px-6 relative z-20">
           {/* Badges */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2, ease }}
-            className="flex items-center gap-3 mb-6"
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, ease }}
+            className="flex items-center gap-2 mb-4"
           >
-            <span className="px-3 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider backdrop-blur-xl bg-white/10 text-white/70 border border-white/15">
+            <span className="px-2.5 py-1 rounded-lg text-[9px] font-semibold uppercase tracking-wider bg-white/10 text-white/60 border border-white/10">
               {imovel.tipo}
             </span>
-            <span className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider backdrop-blur-xl ${
+            <span className={`px-2.5 py-1 rounded-lg text-[9px] font-semibold uppercase tracking-wider ${
               imovel.status === "Disponível"
                 ? "bg-emerald-500/15 text-emerald-300 border border-emerald-400/20"
                 : "bg-amber-500/15 text-amber-300 border border-amber-400/20"
             }`}>
               {imovel.status}
             </span>
-            <span className="px-2.5 py-1.5 rounded-lg text-[10px] font-mono text-white/40 bg-black/30 backdrop-blur-xl border border-white/[0.08]">
+            <span className="px-2 py-1 rounded-lg text-[9px] font-mono text-white/35 bg-black/30 border border-white/[0.06]">
               {imovel.codigo}
             </span>
           </motion.div>
 
           {/* Title */}
-          <div className="overflow-hidden mb-3">
-            <motion.h1
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              transition={{ duration: 1, delay: 0.3, ease }}
-              className="text-4xl sm:text-5xl lg:text-6xl font-extralight tracking-[-0.02em] leading-[1.1]"
-            >
-              {imovel.nome}
-            </motion.h1>
-          </div>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.1, ease }}
+            className="text-2xl sm:text-3xl lg:text-4xl font-extralight tracking-[-0.02em] leading-[1.15] mb-2"
+          >
+            {imovel.nome}
+          </motion.h1>
 
-          {/* Location */}
+          {/* Location inline */}
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="flex items-center gap-2 text-white/30"
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex items-center gap-1.5 text-white/25 mb-8"
           >
-            <MapPin className="h-3.5 w-3.5" />
-            <span className="text-sm font-light">{enderecoCompleto}</span>
+            <MapPin className="h-3 w-3" />
+            <span className="text-xs font-light">{enderecoCompleto}</span>
           </motion.div>
-        </motion.div>
-      </section>
 
-      {/* ─── Price & Specs ─── */}
-      <ScrollSection className="py-6 sm:py-10 -mt-8" index={1}>
-        <div className="max-w-7xl mx-auto px-6 relative z-20">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            {/* Left — Price */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left column */}
             <div className="lg:col-span-2">
-              {/* Amber accent */}
+              {/* Price */}
               <motion.div
                 initial={{ opacity: 0, width: 0 }}
-                whileInView={{ opacity: 1, width: 48 }}
+                whileInView={{ opacity: 1, width: 36 }}
                 viewport={{ margin: "-40px" }}
                 transition={{ duration: 1, ease }}
-                className="h-[1px] bg-gradient-to-r from-amber-300/40 to-transparent mb-6"
+                className="h-[1px] bg-gradient-to-r from-amber-300/40 to-transparent mb-4"
               />
-
-              <motion.p
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ margin: "-40px" }}
-                transition={{ duration: 0.8 }}
-                className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light mb-4"
-              >
-                Valor do imóvel
-              </motion.p>
-
+              <p className="text-[10px] uppercase tracking-[0.4em] text-white/20 font-light mb-2">Valor</p>
               <motion.h2
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ margin: "-40px" }}
-                transition={{ duration: 1, ease }}
-                className="text-4xl sm:text-5xl lg:text-6xl font-extralight tracking-[-0.02em] mb-10"
+                transition={{ duration: 0.8, ease }}
+                className="text-3xl sm:text-4xl font-extralight tracking-[-0.02em] mb-8"
               >
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/90 to-amber-100/70">
                   {formatPrice(imovel.valor)}
@@ -214,40 +197,83 @@ export default function ImovelDetalhePage() {
               </motion.h2>
 
               {/* Specs grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-[1px] bg-white/[0.04] rounded-2xl overflow-hidden">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-[1px] bg-white/[0.04] rounded-xl overflow-hidden mb-8">
                 {specs.map((spec, i) => (
                   <motion.div
                     key={spec.label}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 15 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ delay: i * 0.1, duration: 0.6, ease }}
-                    className="flex flex-col items-center gap-3 py-8 bg-[#050505] hover:bg-white/[0.02] transition-all duration-500"
+                    transition={{ delay: i * 0.08, duration: 0.5, ease }}
+                    className="flex flex-col items-center gap-2 py-6 bg-[#050505] hover:bg-white/[0.02] transition-all duration-500"
                   >
-                    <spec.icon className="h-5 w-5 text-amber-300/40" />
-                    <span className="text-2xl font-extralight text-white/80">{spec.value}</span>
-                    <span className="text-[10px] uppercase tracking-[0.3em] text-white/25">{spec.label}</span>
+                    <spec.icon className="h-4 w-4 text-amber-300/40" />
+                    <span className="text-xl font-extralight text-white/80">{spec.value}</span>
+                    <span className="text-[9px] uppercase tracking-[0.3em] text-white/20">{spec.label}</span>
                   </motion.div>
                 ))}
+              </div>
+
+              {/* Description */}
+              <div className="mb-8">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-1 h-3 bg-gradient-to-b from-amber-300/40 to-transparent rounded-full" />
+                  <p className="text-[10px] uppercase tracking-[0.4em] text-white/20 font-light">Sobre o imóvel</p>
+                </div>
+                <motion.p
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ margin: "-40px" }}
+                  transition={{ duration: 0.6, ease: smoothEase }}
+                  className="text-sm text-white/35 leading-[1.9] font-light"
+                >
+                  {imovel.descricao}
+                </motion.p>
+              </div>
+
+              {/* Location */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-1 h-3 bg-gradient-to-b from-amber-300/40 to-transparent rounded-full" />
+                  <p className="text-[10px] uppercase tracking-[0.4em] text-white/20 font-light">Localização</p>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {[
+                    { label: "Bairro", value: imovel.endereco.bairro },
+                    ...(imovel.endereco.condominio ? [{ label: "Condomínio", value: imovel.endereco.condominio }] : []),
+                    { label: "Cidade", value: `${imovel.endereco.cidade} - ${imovel.endereco.estado}` },
+                  ].map((item, i) => (
+                    <motion.div
+                      key={item.label}
+                      initial={{ opacity: 0, y: 10 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.08, duration: 0.5, ease }}
+                    >
+                      <span className="text-[9px] uppercase tracking-[0.3em] text-white/15 block mb-1">{item.label}</span>
+                      <p className="text-sm font-light text-white/50">{item.value}</p>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
             </div>
 
             {/* Right — CTA sidebar */}
-            <div className="space-y-5">
+            <div className="space-y-4">
               <motion.div
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.2, ease }}
-                className="rounded-2xl bg-white/[0.02] border border-white/[0.06] p-7 space-y-6 hover:border-white/[0.1] transition-all duration-500"
+                transition={{ duration: 0.6, delay: 0.15, ease }}
+                className="rounded-2xl bg-white/[0.02] border border-white/[0.06] p-6 space-y-5 hover:border-white/[0.1] transition-all duration-500"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-amber-300/20 to-amber-500/10 flex items-center justify-center border border-amber-300/10">
-                    <Home className="h-4.5 w-4.5 text-amber-300/60" />
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-300/20 to-amber-500/10 flex items-center justify-center border border-amber-300/10">
+                    <Home className="h-4 w-4 text-amber-300/60" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-white/70">Interessado?</p>
-                    <p className="text-[11px] text-white/25 font-light">Fale com nosso consultor</p>
+                    <p className="text-xs font-medium text-white/60">Interessado?</p>
+                    <p className="text-[10px] text-white/20 font-light">Fale com nosso consultor</p>
                   </div>
                 </div>
 
@@ -257,10 +283,10 @@ export default function ImovelDetalhePage() {
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
-                  className="group flex items-center justify-center gap-3 w-full py-3.5 rounded-full text-[11px] font-medium tracking-[0.15em] uppercase bg-white text-black hover:bg-amber-50 transition-all duration-500"
+                  className="group flex items-center justify-center gap-2 w-full py-3 rounded-full text-[10px] font-medium tracking-[0.15em] uppercase bg-white text-black hover:bg-amber-50 transition-all duration-500"
                 >
                   Solicitar visita
-                  <ArrowUpRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300" />
+                  <ArrowUpRight className="h-3 w-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300" />
                 </motion.a>
 
                 <motion.a
@@ -269,120 +295,47 @@ export default function ImovelDetalhePage() {
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
-                  className="flex items-center justify-center gap-2 w-full py-3.5 rounded-full text-[11px] font-medium tracking-[0.1em] uppercase bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white/70 hover:border-white/15 transition-all duration-500"
+                  className="flex items-center justify-center gap-2 w-full py-3 rounded-full text-[10px] font-medium tracking-[0.1em] uppercase bg-white/[0.04] border border-white/[0.08] text-white/35 hover:bg-white/[0.08] hover:text-white/60 hover:border-white/15 transition-all duration-500"
                 >
-                  <MessageCircle className="h-3.5 w-3.5" />
+                  <MessageCircle className="h-3 w-3" />
                   Pedir informações
                 </motion.a>
               </motion.div>
 
               {/* Quick details */}
               <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.3, ease }}
-                className="rounded-2xl bg-white/[0.02] border border-white/[0.06] p-7 hover:border-white/[0.1] transition-all duration-500"
-              >
-                <div className="flex items-center gap-2 mb-5">
-                  <div className="w-1 h-4 bg-gradient-to-b from-amber-300/40 to-transparent rounded-full" />
-                  <h3 className="text-[11px] font-medium text-white/40 uppercase tracking-[0.3em]">Detalhes</h3>
-                </div>
-                <div className="space-y-0">
-                  {[
-                    { label: "Código", value: imovel.codigo },
-                    { label: "Tipo", value: imovel.tipo },
-                    { label: "Status", value: imovel.status },
-                    { label: "Área total", value: imovel.area },
-                    ...(imovel.quartos > 0 ? [{ label: "Quartos", value: `${imovel.quartos}` }] : []),
-                    ...(imovel.banheiros > 0 ? [{ label: "Banheiros", value: `${imovel.banheiros}` }] : []),
-                    ...(imovel.vagas > 0 ? [{ label: "Vagas", value: `${imovel.vagas}` }] : []),
-                  ].map((item, i) => (
-                    <motion.div
-                      key={item.label}
-                      initial={{ opacity: 0, x: -10 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.05, duration: 0.4 }}
-                      className="flex items-center justify-between py-3 border-b border-white/[0.04] last:border-0"
-                    >
-                      <span className="text-[11px] text-white/25 font-light">{item.label}</span>
-                      <span className="text-[11px] text-white/60 font-medium">{item.value}</span>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            </div>
-          </div>
-
-          {/* ─── Description & Location ─── */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 mt-14">
-            {/* Description */}
-            <div>
-              <motion.div
-                initial={{ opacity: 0, width: 0 }}
-                whileInView={{ opacity: 1, width: 32 }}
-                viewport={{ margin: "-40px" }}
-                transition={{ duration: 1, ease }}
-                className="h-[1px] bg-gradient-to-r from-amber-300/30 to-transparent mb-6"
-              />
-              <motion.p
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ margin: "-40px" }}
-                transition={{ duration: 0.8 }}
-                className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light mb-6"
-              >
-                Sobre o imóvel
-              </motion.p>
-              <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ margin: "-40px" }}
-                transition={{ duration: 0.8, delay: 0.1, ease: smoothEase }}
-                className="text-base sm:text-lg text-white/40 leading-[2] font-light"
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.2, ease }}
+                className="rounded-2xl bg-white/[0.02] border border-white/[0.06] p-6 hover:border-white/[0.1] transition-all duration-500"
               >
-                {imovel.descricao}
-              </motion.p>
-            </div>
-
-            {/* Location */}
-            <div>
-              <motion.div
-                initial={{ opacity: 0, width: 0 }}
-                whileInView={{ opacity: 1, width: 32 }}
-                viewport={{ margin: "-40px" }}
-                transition={{ duration: 1, ease }}
-                className="h-[1px] bg-gradient-to-r from-amber-300/30 to-transparent mb-6"
-              />
-              <motion.p
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ margin: "-40px" }}
-                transition={{ duration: 0.8 }}
-                className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light mb-8"
-              >
-                Localização
-              </motion.p>
-
-              <div className="space-y-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-1 h-3 bg-gradient-to-b from-amber-300/40 to-transparent rounded-full" />
+                  <h3 className="text-[10px] font-medium text-white/30 uppercase tracking-[0.3em]">Detalhes</h3>
+                </div>
                 {[
-                  { label: "Bairro", value: imovel.endereco.bairro },
-                  ...(imovel.endereco.condominio ? [{ label: "Condomínio", value: imovel.endereco.condominio }] : []),
-                  { label: "Cidade", value: `${imovel.endereco.cidade} - ${imovel.endereco.estado}` },
+                  { label: "Código", value: imovel.codigo },
+                  { label: "Tipo", value: imovel.tipo },
+                  { label: "Status", value: imovel.status },
+                  { label: "Área total", value: imovel.area },
+                  ...(imovel.quartos > 0 ? [{ label: "Quartos", value: `${imovel.quartos}` }] : []),
+                  ...(imovel.banheiros > 0 ? [{ label: "Banheiros", value: `${imovel.banheiros}` }] : []),
+                  ...(imovel.vagas > 0 ? [{ label: "Vagas", value: `${imovel.vagas}` }] : []),
                 ].map((item, i) => (
                   <motion.div
                     key={item.label}
-                    initial={{ opacity: 0, y: 15 }}
-                    whileInView={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, x: -8 }}
+                    whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
-                    transition={{ delay: i * 0.1, duration: 0.6, ease }}
+                    transition={{ delay: i * 0.04, duration: 0.3 }}
+                    className="flex items-center justify-between py-2.5 border-b border-white/[0.04] last:border-0"
                   >
-                    <span className="text-[10px] uppercase tracking-[0.4em] text-white/20 block mb-1">{item.label}</span>
-                    <p className="text-lg font-extralight text-white/60">{item.value}</p>
+                    <span className="text-[10px] text-white/20 font-light">{item.label}</span>
+                    <span className="text-[10px] text-white/50 font-medium">{item.value}</span>
                   </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </div>
           </div>
         </div>
