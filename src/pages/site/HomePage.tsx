@@ -168,7 +168,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── Statement ─── */}
-      <ScrollSection className="py-10 sm:py-14">
+      <ScrollSection className="py-10 sm:py-14 -mt-12" index={1}>
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div>
             <motion.div
@@ -227,7 +227,7 @@ export default function HomePage() {
       </ScrollSection>
 
       {/* ─── Full-width Parallax ─── */}
-      <ScrollSection className="relative h-[75vh] sm:h-[85vh]">
+      <ScrollSection className="relative h-[75vh] sm:h-[85vh] -mt-16" index={2}>
         <ParallaxImage src={sectionLiving} alt="Interior de luxo" className="absolute inset-0 h-full" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-[#050505]/20" />
         <div className="relative z-10 flex items-center justify-center h-full max-w-5xl mx-auto px-6 text-center">
@@ -257,7 +257,7 @@ export default function HomePage() {
       </ScrollSection>
 
       {/* ─── Diferenciais ─── */}
-      <ScrollSection className="py-10 sm:py-14">
+      <ScrollSection className="py-10 sm:py-14 -mt-12" index={3}>
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12">
             <motion.div
@@ -309,7 +309,7 @@ export default function HomePage() {
       </ScrollSection>
 
       {/* ─── Imóveis em Destaque ─── */}
-      <ScrollSection className="py-10 sm:py-14">
+      <ScrollSection className="py-10 sm:py-14 -mt-12" index={4}>
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-end justify-between mb-14">
             <div>
@@ -415,7 +415,7 @@ export default function HomePage() {
       </ScrollSection>
 
       {/* ─── Comprar ou Vender ─── */}
-      <ScrollSection className="py-10 sm:py-14">
+      <ScrollSection className="py-10 sm:py-14 -mt-12" index={5}>
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, width: 0 }}
@@ -540,7 +540,7 @@ function NewsletterSection() {
   };
 
   return (
-    <ScrollSection className="py-10 sm:py-14">
+    <ScrollSection className="py-10 sm:py-14 -mt-12" index={6}>
       <div className="max-w-7xl mx-auto px-6 text-center">
         <motion.div
           initial={{ opacity: 0, width: 0 }}
