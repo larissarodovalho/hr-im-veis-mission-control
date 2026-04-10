@@ -15,6 +15,7 @@ import Integracoes from "@/pages/Integracoes";
 import NotFound from "@/pages/NotFound";
 import HomePage from "@/pages/site/HomePage";
 import ImoveisPage from "@/pages/site/ImoveisPage";
+import ImovelDetalhePage from "@/pages/site/ImovelDetalhePage";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
           {/* Site público */}
           <Route path="/site" element={<SiteLayout><HomePage /></SiteLayout>} />
           <Route path="/site/imoveis" element={<SiteLayout><ImoveisPage /></SiteLayout>} />
+          <Route path="/site/imovel/:id" element={<SiteLayout><ImovelDetalhePage /></SiteLayout>} />
           <Route path="/site/*" element={<SiteLayout><Routes><Route path="*" element={<NotFound />} /></Routes></SiteLayout>} />
 
           {/* Painel CRM */}
