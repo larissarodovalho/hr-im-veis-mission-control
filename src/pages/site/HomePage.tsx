@@ -24,18 +24,33 @@ function formatPrice(valor: number) {
 const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];
 const smoothEase = [0.25, 0.4, 0.25, 1] as [number, number, number, number];
 
-function ScrollSection({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function ScrollSection({ children, className = "", index = 0 }: { children: React.ReactNode; className?: string; index?: number }) {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const y = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [120, 0, 0, -60]);
-  const opacity = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [0, 1, 1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0.92, 1, 1, 0.95]);
-  const rotateX = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [4, 0, 0, -3]);
-  const filter = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], ["blur(6px)", "blur(0px)", "blur(0px)", "blur(4px)"]);
+
+  // Enter: slide up from below with scale + blur
+  const y = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [150, 0, 0, -80]);
+  const opacity = useTransform(scrollYProgress, [0, 0.18, 0.82, 1], [0, 1, 1, 0]);
+  const scale = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0.88, 1, 1, 0.94]);
+  const rotateX = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [6, 0, 0, -4]);
+  const filter = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], ["blur(8px)", "blur(0px)", "blur(0px)", "blur(5px)"]);
 
   return (
-    <motion.section ref={ref} style={{ y, opacity, scale, rotateX, filter, perspective: 1200, transformStyle: "preserve-3d" }} className={className}>
+    <motion.section
+      ref={ref}
+      style={{
+        y, opacity, scale, rotateX, filter,
+        perspective: 1200,
+        transformStyle: "preserve-3d",
+        zIndex: index,
+      }}
+      className={`relative ${className}`}
+    >
+      {/* Top fade edge — blends into previous section */}
+      <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#050505] to-transparent z-10 pointer-events-none" />
       {children}
+      {/* Bottom fade edge — blends into next section */}
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#050505] to-transparent z-10 pointer-events-none" />
     </motion.section>
   );
 }
