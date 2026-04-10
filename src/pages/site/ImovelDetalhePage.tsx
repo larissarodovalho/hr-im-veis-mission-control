@@ -153,7 +153,6 @@ export default function ImovelDetalhePage() {
               <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Localização</h2>
               <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
                 {[
-                  { label: "Rua", value: `${imovel.endereco.rua}, ${imovel.endereco.numero}` },
                   { label: "Bairro", value: imovel.endereco.bairro },
                   ...(imovel.endereco.condominio ? [{ label: "Condomínio", value: imovel.endereco.condominio }] : []),
                   { label: "Cidade", value: `${imovel.endereco.cidade} - ${imovel.endereco.estado}` },
