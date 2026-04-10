@@ -121,13 +121,6 @@ function ParallaxHero() {
           </span>
         </motion.h1>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.8 }}
-          className="text-sm sm:text-base text-white/30 max-w-lg mb-12 font-light leading-[1.8] tracking-wide"
-        >
-          Uma seleção curada de propriedades de alto padrão em Sinop e região.
         </motion.p>
 
         {/* Scroll hint */}
