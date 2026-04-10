@@ -198,60 +198,62 @@ export default function ImoveisPage() {
             {/* Section label — amber accent like HomePage */}
             <motion.div
               initial={{ opacity: 0, width: 0 }}
-              whileInView={{ opacity: 1, width: 32 }}
+              whileInView={{ opacity: 1, width: 48 }}
               viewport={{ margin: "-40px" }}
               transition={{ duration: 1, ease }}
-              className="h-[1px] bg-gradient-to-r from-amber-300/30 to-transparent mb-6"
+              className="h-[1px] bg-gradient-to-r from-amber-300/40 to-transparent mb-5"
             />
             <motion.p
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ margin: "-40px" }}
               transition={{ duration: 0.8 }}
-              className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light mb-8"
+              className="text-sm uppercase tracking-[0.4em] text-white/40 font-light mb-8"
             >
-              Filtrar
+              Filtrar Imóveis
             </motion.p>
 
-            {/* Type pills row */}
-            <div className="flex items-center gap-6 mb-6">
-              <div className="flex items-center gap-1">
-                {TIPOS.map((tipo) => (
-                  <motion.button
-                    key={tipo}
-                    onClick={() => setTipoSelecionado(tipo)}
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    className={`relative px-4 py-2 rounded-full text-[11px] font-medium transition-all duration-400 ${
-                      tipoSelecionado === tipo
-                        ? "text-white"
-                        : "text-white/30 hover:text-white/60"
-                    }`}
-                  >
-                    {tipoSelecionado === tipo && (
-                      <motion.div
-                        layoutId="activeType"
-                        className="absolute inset-0 bg-white/10 border border-white/15 rounded-full"
-                        transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
-                      />
-                    )}
-                    <span className="relative z-10">{tipo}</span>
-                  </motion.button>
-                ))}
-              </div>
+            {/* Filter bar with subtle background */}
+            <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-5 sm:p-6 backdrop-blur-sm">
+              {/* Type pills row */}
+              <div className="flex items-center flex-wrap gap-4 sm:gap-6 mb-5">
+                <div className="flex items-center gap-1.5">
+                  {TIPOS.map((tipo) => (
+                    <motion.button
+                      key={tipo}
+                      onClick={() => setTipoSelecionado(tipo)}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      className={`relative px-5 py-2.5 rounded-full text-xs font-medium transition-all duration-400 ${
+                        tipoSelecionado === tipo
+                          ? "text-white"
+                          : "text-white/35 hover:text-white/60"
+                      }`}
+                    >
+                      {tipoSelecionado === tipo && (
+                        <motion.div
+                          layoutId="activeType"
+                          className="absolute inset-0 bg-white/10 border border-white/15 rounded-full"
+                          transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
+                        />
+                      )}
+                      <span className="relative z-10">{tipo}</span>
+                    </motion.button>
+                  ))}
+                </div>
 
-              <div className="h-4 w-px bg-white/[0.06] hidden sm:block" />
+                <div className="h-5 w-px bg-white/[0.08] hidden sm:block" />
 
-              {/* Search */}
-              <div className="relative flex-1 max-w-xs hidden sm:block">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/15" />
-                <input
-                  type="text"
-                  placeholder="Buscar condomínio ou bairro"
-                  value={busca}
-                  onChange={(e) => setBusca(e.target.value)}
-                  className="w-full bg-transparent border-b border-white/[0.06] pl-9 pr-3 py-2 text-xs text-white placeholder:text-white/15 focus:outline-none focus:border-white/20 transition-all duration-300"
-                />
+                {/* Search */}
+                <div className="relative flex-1 max-w-sm hidden sm:block">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
+                  <input
+                    type="text"
+                    placeholder="Buscar condomínio ou bairro"
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                    className="w-full bg-transparent border-b border-white/[0.08] pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-white/25 transition-all duration-300"
+                  />
               </div>
 
               <div className="h-4 w-px bg-white/[0.06] hidden sm:block" />
