@@ -144,7 +144,12 @@ export default function CRM() {
   const opsF    = useMemo(() => filtrarPorData(oportunidades, periodoOps),    [periodoOps]);
   const imoveisF = useMemo(() => filtrarPorData(imoveis, periodoImoveis), [periodoImoveis]);
   const reunioesF = useMemo(
-    () => filtrarPorData(listaVisitas.filter(v => v.status === "Agendada" || v.status === "Reagendada"), periodoReunioes),
+    () => filtrarPorData(
+      listaVisitas
+        .filter(v => v.status === "Agendada" || v.status === "Reagendada")
+        .map(v => ({ ...v, dataCreacao: v.dataCriacao })),
+      periodoReunioes
+    ),
     [periodoReunioes, listaVisitas]
   );
   const vendasF = useMemo(
