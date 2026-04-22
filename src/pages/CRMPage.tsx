@@ -143,8 +143,18 @@ export default function CRM() {
   const contasF = useMemo(() => filtrarPorData(contas,        periodoContas), [periodoContas]);
   const opsF    = useMemo(() => filtrarPorData(oportunidades, periodoOps),    [periodoOps]);
   const imoveisF = useMemo(() => filtrarPorData(imoveis, periodoImoveis), [periodoImoveis]);
+  const reunioesF = useMemo(
+    () => filtrarPorData(listaVisitas.filter(v => v.status === "Agendada" || v.status === "Reagendada"), periodoReunioes),
+    [periodoReunioes, listaVisitas]
+  );
+  const vendasF = useMemo(
+    () => filtrarPorData(imoveis.filter(i => i.status === "Vendido"), periodoVendas),
+    [periodoVendas]
+  );
 
   const leadsPorCorretor  = useMemo(() => porCorretor(leadsF),  [leadsF]);
+  const reunioesPorCorretor = useMemo(() => porCorretor(reunioesF), [reunioesF]);
+  const vendasPorCorretor   = useMemo(() => porCorretor(vendasF),   [vendasF]);
   const contasPorCorretor = useMemo(() => porCorretor(contasF), [contasF]);
   const opsPorCorretor    = useMemo(() => porCorretor(opsF),    [opsF]);
   const imoveisPorCorretor = useMemo(() => porCorretor(imoveisF), [imoveisF]);
