@@ -165,6 +165,14 @@ export default function CRM() {
   const opsPorCorretor    = useMemo(() => porCorretor(opsF),    [opsF]);
   const imoveisPorCorretor = useMemo(() => porCorretor(imoveisF), [imoveisF]);
 
+  const tarefasFiltradas = useMemo(
+    () => listaTarefas
+      .filter((t) => filtroCorretor === "Todos" || t.corretor === filtroCorretor)
+      .filter((t) => filtroTipo     === "Todos" || t.tipo     === filtroTipo)
+      .filter((t) => filtroStatus   === "Todos" || t.status   === filtroStatus),
+    [listaTarefas, filtroCorretor, filtroTipo, filtroStatus]
+  );
+
   const funnelDinamico = useMemo(() => ETAPAS_ORDEM.map((etapa, i) => ({
     etapa,
     quantidade: listaLeads.filter(l => l.etapa === etapa).length,
