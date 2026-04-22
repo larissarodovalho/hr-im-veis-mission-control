@@ -89,6 +89,8 @@ export default function CRM() {
   const [periodoContas, setPeriodoContas] = useState<Periodo>("Tudo");
   const [periodoOps, setPeriodoOps]       = useState<Periodo>("Tudo");
   const [periodoImoveis, setPeriodoImoveis] = useState<Periodo>("Tudo");
+  const [periodoReunioes, setPeriodoReunioes] = useState<Periodo>("Tudo");
+  const [periodoVendas, setPeriodoVendas]     = useState<Periodo>("Tudo");
   const [metricaAberta, setMetricaAberta] = useState<"reunioes" | "propostas" | "aceitas" | "nao_aceitas" | "vendas_fechadas" | null>(null);
   const [propostaDocs, setPropostaDocs] = useState<Record<string, { nome: string; url: string; tipo: string }>>({});
   const [docPreview, setDocPreview] = useState<{ nome: string; url: string; tipo: string } | null>(null);
@@ -141,8 +143,23 @@ export default function CRM() {
   const contasF = useMemo(() => filtrarPorData(contas,        periodoContas), [periodoContas]);
   const opsF    = useMemo(() => filtrarPorData(oportunidades, periodoOps),    [periodoOps]);
   const imoveisF = useMemo(() => filtrarPorData(imoveis, periodoImoveis), [periodoImoveis]);
+  const reunioesF = useMemo(
+    () => filtrarPorData(
+      listaVisitas
+        .filter(v => v.status === "Agendada" || v.status === "Reagendada")
+        .map(v => ({ ...v, dataCreacao: v.dataCriacao })),
+      periodoReunioes
+    ),
+    [periodoReunioes, listaVisitas]
+  );
+  const vendasF = useMemo(
+    () => filtrarPorData(imoveis.filter(i => i.status === "Vendido"), periodoVendas),
+    [periodoVendas]
+  );
 
   const leadsPorCorretor  = useMemo(() => porCorretor(leadsF),  [leadsF]);
+  const reunioesPorCorretor = useMemo(() => porCorretor(reunioesF), [reunioesF]);
+  const vendasPorCorretor   = useMemo(() => porCorretor(vendasF),   [vendasF]);
   const contasPorCorretor = useMemo(() => porCorretor(contasF), [contasF]);
   const opsPorCorretor    = useMemo(() => porCorretor(opsF),    [opsF]);
   const imoveisPorCorretor = useMemo(() => porCorretor(imoveisF), [imoveisF]);
@@ -1094,7 +1111,7 @@ export default function CRM() {
           </div>
 
           {/* Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Leads */}
             <Card>
               <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -1266,6 +1283,104 @@ export default function CRM() {
                     <div className="space-y-1.5">
                       {(["Apartamento","Casa","Terreno","Comercial"] as const).map((tipo) => {
                         const count = imoveisF.filter((i) => i.corretor === corretorSelecionado && i.tipo === tipo).length;
+                        return (
+                          <div key={tipo} className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">{tipo}</span>
+                            <span className="font-semibold">{count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Reuniões Agendadas */}
+            <Card>
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CalendarCheck className="h-4 w-4 text-cyan-500" />
+                  <CardTitle className="text-sm">Reuniões Agendadas</CardTitle>
+                </div>
+                <PeriodoSelect value={periodoReunioes} onChange={setPeriodoReunioes} />
+              </CardHeader>
+              <CardContent>
+                {visaoCC === "geral" ? (
+                  <>
+                    <p className="text-5xl font-bold font-display text-cyan-500 mb-4">{reunioesF.length}</p>
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart data={reunioesPorCorretor} layout="vertical" margin={{ left: 80 }}>
+                        <XAxis type="number" fontSize={11} allowDecimals={false} />
+                        <YAxis type="category" dataKey="nome" fontSize={11} width={75} />
+                        <Tooltip formatter={(v) => [v, "Reuniões"]} />
+                        <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
+                          {reunioesPorCorretor.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-5xl font-bold font-display text-cyan-500 mb-1">
+                      {reunioesF.filter((r) => r.corretor === corretorSelecionado).length}
+                    </p>
+                    <p className="text-xs text-muted-foreground mb-3">{corretorSelecionado}</p>
+                    <div className="space-y-1.5">
+                      {(["Agendada", "Reagendada"] as const).map((s) => {
+                        const count = reunioesF.filter((r) => r.corretor === corretorSelecionado && r.status === s).length;
+                        return (
+                          <div key={s} className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">{s}</span>
+                            <span className="font-semibold">{count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Vendas */}
+            <Card>
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <HandCoins className="h-4 w-4 text-emerald-600" />
+                  <CardTitle className="text-sm">Vendas</CardTitle>
+                </div>
+                <PeriodoSelect value={periodoVendas} onChange={setPeriodoVendas} />
+              </CardHeader>
+              <CardContent>
+                {visaoCC === "geral" ? (
+                  <>
+                    <p className="text-5xl font-bold font-display text-emerald-600 mb-1">{vendasF.length}</p>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      VGV: R$ {vendasF.reduce((s, v) => s + v.valor, 0).toLocaleString("pt-BR")}
+                    </p>
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart data={vendasPorCorretor} layout="vertical" margin={{ left: 80 }}>
+                        <XAxis type="number" fontSize={11} allowDecimals={false} />
+                        <YAxis type="category" dataKey="nome" fontSize={11} width={75} />
+                        <Tooltip formatter={(v) => [v, "Vendas"]} />
+                        <Bar dataKey="quantidade" radius={[0, 5, 5, 0]}>
+                          {vendasPorCorretor.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-5xl font-bold font-display text-emerald-600 mb-1">
+                      {vendasF.filter((v) => v.corretor === corretorSelecionado).length}
+                    </p>
+                    <p className="text-xs text-muted-foreground mb-1">{corretorSelecionado}</p>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      VGV: R$ {vendasF.filter(v => v.corretor === corretorSelecionado).reduce((s, v) => s + v.valor, 0).toLocaleString("pt-BR")}
+                    </p>
+                    <div className="space-y-1.5">
+                      {(["Apartamento","Casa","Terreno","Comercial"] as const).map((tipo) => {
+                        const count = vendasF.filter((v) => v.corretor === corretorSelecionado && v.tipo === tipo).length;
                         return (
                           <div key={tipo} className="flex justify-between text-xs">
                             <span className="text-muted-foreground">{tipo}</span>
