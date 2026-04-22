@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import ImoveisTab from "@/components/ImoveisTab";
 import OportunidadeDetalhe from "@/components/OportunidadeDetalhe";
 import PropostasTab from "@/components/PropostasTab";
+import ClientesSemContato from "@/components/ClientesSemContato";
 
 const ETAPAS_ORDEM: LeadEtapa[] = ["Lead recebido", "Qualificado", "Visita agendada", "Visita realizada", "Proposta", "Fechamento"];
 
