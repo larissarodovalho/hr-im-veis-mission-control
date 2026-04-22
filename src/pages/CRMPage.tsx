@@ -78,6 +78,7 @@ export default function CRM() {
   const [filtroStatusVisita, setFiltroStatusVisita] = useState<"Todos" | StatusVisita>("Todos");
   const [filtroCorretorVisita, setFiltroCorretorVisita] = useState<"Todos" | "Hans" | "Rafael" | "Gabriel">("Todos");
   const [listaVisitas, setListaVisitas] = useState<Visita[]>(visitasIniciais);
+  const [listaTarefas, setListaTarefas] = useState<Tarefa[]>(tarefasIniciais);
   const [dialogAberto, setDialogAberto] = useState(false);
   const [novaVisita, setNovaVisita] = useState({
     conta: "", corretor: "Hans" as "Hans" | "Rafael" | "Gabriel",
