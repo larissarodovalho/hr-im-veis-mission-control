@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { leads as leadsIniciais, imoveis, corretoresRanking, funnelPorCorretor, contas, oportunidades, leadsPorOrigem, leadsTotaisPorOrigem, produtosPorLead, motivosDesqualificacao, oportunidadesFases, motivosDaPerda, vgv, ticketMedio, visitas as visitasIniciais, visitasPorTipoImovel, tarefas, type TipoTarefa, type StatusTarefa, type StatusVisita, type Visita, type Lead, type LeadEtapa } from "@/data/mockData";
+import { leads as leadsIniciais, imoveis, corretoresRanking, funnelPorCorretor, contas, oportunidades, leadsPorOrigem, leadsTotaisPorOrigem, produtosPorLead, motivosDesqualificacao, oportunidadesFases, motivosDaPerda, vgv, ticketMedio, visitas as visitasIniciais, visitasPorTipoImovel, tarefas as tarefasIniciais, type TipoTarefa, type StatusTarefa, type StatusVisita, type Visita, type Lead, type LeadEtapa, type Tarefa } from "@/data/mockData";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line, CartesianGrid } from "recharts";
 import { ChevronDown, ChevronUp, Phone, MessageSquare, DollarSign, Users, Trophy, TrendingUp, Building2, ClipboardList, BarChart2, HandCoins, CalendarCheck, CheckCircle2, Clock, AlertCircle, Circle, ArrowRight, Home, FileDown, Download, Paperclip, Eye, FileText, XCircle, Search } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -78,6 +78,7 @@ export default function CRM() {
   const [filtroStatusVisita, setFiltroStatusVisita] = useState<"Todos" | StatusVisita>("Todos");
   const [filtroCorretorVisita, setFiltroCorretorVisita] = useState<"Todos" | "Hans" | "Rafael" | "Gabriel">("Todos");
   const [listaVisitas, setListaVisitas] = useState<Visita[]>(visitasIniciais);
+  const [listaTarefas, setListaTarefas] = useState<Tarefa[]>(tarefasIniciais);
   const [dialogAberto, setDialogAberto] = useState(false);
   const [novaVisita, setNovaVisita] = useState({
     conta: "", corretor: "Hans" as "Hans" | "Rafael" | "Gabriel",
@@ -163,6 +164,14 @@ export default function CRM() {
   const contasPorCorretor = useMemo(() => porCorretor(contasF), [contasF]);
   const opsPorCorretor    = useMemo(() => porCorretor(opsF),    [opsF]);
   const imoveisPorCorretor = useMemo(() => porCorretor(imoveisF), [imoveisF]);
+
+  const tarefasFiltradas = useMemo(
+    () => listaTarefas
+      .filter((t) => filtroCorretor === "Todos" || t.corretor === filtroCorretor)
+      .filter((t) => filtroTipo     === "Todos" || t.tipo     === filtroTipo)
+      .filter((t) => filtroStatus   === "Todos" || t.status   === filtroStatus),
+    [listaTarefas, filtroCorretor, filtroTipo, filtroStatus]
+  );
 
   const funnelDinamico = useMemo(() => ETAPAS_ORDEM.map((etapa, i) => ({
     etapa,
@@ -1955,10 +1964,10 @@ export default function CRM() {
           {/* KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: "Total",        value: tarefas.length,                                               color: "text-foreground",  icon: <Circle className="h-4 w-4" /> },
-              { label: "Pendentes",    value: tarefas.filter((t) => t.status === "Pendente").length,        color: "text-primary",     icon: <Clock className="h-4 w-4 text-primary" /> },
-              { label: "Em andamento", value: tarefas.filter((t) => t.status === "Em andamento").length,    color: "text-amber-500",   icon: <Clock className="h-4 w-4 text-amber-500" /> },
-              { label: "Atrasadas",    value: tarefas.filter((t) => t.status === "Atrasada").length,        color: "text-red-500",     icon: <AlertCircle className="h-4 w-4 text-red-500" /> },
+              { label: "Total",        value: listaTarefas.length,                                               color: "text-foreground",  icon: <Circle className="h-4 w-4" /> },
+              { label: "Pendentes",    value: listaTarefas.filter((t) => t.status === "Pendente").length,        color: "text-primary",     icon: <Clock className="h-4 w-4 text-primary" /> },
+              { label: "Em andamento", value: listaTarefas.filter((t) => t.status === "Em andamento").length,    color: "text-amber-500",   icon: <Clock className="h-4 w-4 text-amber-500" /> },
+              { label: "Atrasadas",    value: listaTarefas.filter((t) => t.status === "Atrasada").length,        color: "text-red-500",     icon: <AlertCircle className="h-4 w-4 text-red-500" /> },
             ].map((k) => (
               <div key={k.label} className="stat-card">
                 <div className="flex items-center gap-2 mb-1">{k.icon}<span className="text-xs text-muted-foreground">{k.label}</span></div>
@@ -1989,22 +1998,26 @@ export default function CRM() {
             </Select>
           </div>
 
-          {/* Lista de Tarefas */}
-          <div className="space-y-2">
-            {tarefas
-              .filter((t) => filtroCorretor === "Todos" || t.corretor === filtroCorretor)
-              .filter((t) => filtroTipo    === "Todos" || t.tipo      === filtroTipo)
-              .filter((t) => filtroStatus  === "Todos" || t.status    === filtroStatus)
-              .map((t) => (
+          {/* Sub-tabs Lista / Kanban */}
+          <Tabs defaultValue="lista">
+            <TabsList className="h-8 bg-muted/50 rounded-md p-0.5">
+              <TabsTrigger value="lista" className="h-7 text-xs px-3 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                Lista
+              </TabsTrigger>
+              <TabsTrigger value="kanban" className="h-7 text-xs px-3 rounded data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                Kanban
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Lista */}
+            <TabsContent value="lista" className="space-y-2 mt-3">
+              {tarefasFiltradas.map((t) => (
                 <div key={t.id} className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors">
-                  {/* Ícone do tipo */}
                   <div className={`mt-0.5 p-1.5 rounded-md ${t.tipo === "Ligação" ? "bg-primary/10" : "bg-amber-500/10"}`}>
                     {t.tipo === "Ligação"
                       ? <Phone className="h-4 w-4 text-primary" />
                       : <MessageSquare className="h-4 w-4 text-amber-500" />}
                   </div>
-
-                  {/* Conteúdo */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium text-sm">{t.titulo}</span>
@@ -2027,8 +2040,6 @@ export default function CRM() {
                       <span>📅 {t.dataVencimento}</span>
                     </div>
                   </div>
-
-                  {/* Status icon */}
                   <div className="mt-0.5">
                     {t.status === "Concluída"
                       ? <CheckCircle2 className="h-5 w-5 text-green-500" />
@@ -2038,14 +2049,88 @@ export default function CRM() {
                   </div>
                 </div>
               ))}
-            {tarefas.filter((t) =>
-              (filtroCorretor === "Todos" || t.corretor === filtroCorretor) &&
-              (filtroTipo    === "Todos" || t.tipo      === filtroTipo) &&
-              (filtroStatus  === "Todos" || t.status    === filtroStatus)
-            ).length === 0 && (
-              <p className="text-center text-sm text-muted-foreground py-8">Nenhuma tarefa encontrada com esses filtros.</p>
-            )}
-          </div>
+              {tarefasFiltradas.length === 0 && (
+                <p className="text-center text-sm text-muted-foreground py-8">Nenhuma tarefa encontrada com esses filtros.</p>
+              )}
+            </TabsContent>
+
+            {/* Kanban */}
+            <TabsContent value="kanban" className="mt-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {(["Pendente", "Em andamento", "Concluída", "Atrasada"] as StatusTarefa[]).map((coluna) => {
+                  const cor =
+                    coluna === "Pendente"    ? { bar: "bg-primary",    text: "text-primary",    soft: "bg-primary/5" } :
+                    coluna === "Em andamento"? { bar: "bg-amber-500",  text: "text-amber-600",  soft: "bg-amber-500/5" } :
+                    coluna === "Concluída"   ? { bar: "bg-green-500",  text: "text-green-600",  soft: "bg-green-500/5" } :
+                                               { bar: "bg-red-500",    text: "text-red-600",    soft: "bg-red-500/5" };
+                  const itens = tarefasFiltradas.filter(t => t.status === coluna);
+                  return (
+                    <div
+                      key={coluna}
+                      className={`rounded-lg border ${cor.soft} flex flex-col min-h-[200px]`}
+                      onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("ring-2","ring-primary/40"); }}
+                      onDragLeave={(e) => e.currentTarget.classList.remove("ring-2","ring-primary/40")}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.remove("ring-2","ring-primary/40");
+                        const id = e.dataTransfer.getData("text/plain");
+                        if (!id) return;
+                        setListaTarefas(prev => prev.map(t => t.id === id ? { ...t, status: coluna } : t));
+                        toast.success(`Tarefa movida para "${coluna}"`);
+                      }}
+                    >
+                      <div className="flex items-center justify-between px-3 py-2 border-b">
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-block w-2 h-2 rounded-full ${cor.bar}`} />
+                          <span className={`text-xs font-semibold ${cor.text}`}>{coluna}</span>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">{itens.length}</Badge>
+                      </div>
+                      <div className="flex-1 p-2 space-y-2">
+                        {itens.length === 0 && (
+                          <p className="text-center text-[11px] text-muted-foreground/60 py-6">Arraste tarefas aqui</p>
+                        )}
+                        {itens.map((t) => (
+                          <div
+                            key={t.id}
+                            draggable
+                            onDragStart={(e) => { e.dataTransfer.setData("text/plain", t.id); e.dataTransfer.effectAllowed = "move"; }}
+                            className="rounded-md border bg-card p-2.5 cursor-grab active:cursor-grabbing hover:shadow-sm transition-shadow"
+                          >
+                            <div className="flex items-start gap-2 mb-1.5">
+                              <div className={`p-1 rounded ${t.tipo === "Ligação" ? "bg-primary/10" : "bg-amber-500/10"}`}>
+                                {t.tipo === "Ligação"
+                                  ? <Phone className="h-3 w-3 text-primary" />
+                                  : <MessageSquare className="h-3 w-3 text-amber-500" />}
+                              </div>
+                              <p className="text-xs font-medium leading-tight flex-1">{t.titulo}</p>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground line-clamp-2 mb-2">{t.descricao}</p>
+                            <div className="flex items-center justify-between gap-1">
+                              <Badge variant="outline" className={`text-[9px] px-1 py-0 ${
+                                t.prioridade === "Alta"   ? "border-red-400 text-red-500" :
+                                t.prioridade === "Média"  ? "border-amber-400 text-amber-500" :
+                                "border-muted-foreground text-muted-foreground"
+                              }`}>{t.prioridade}</Badge>
+                              <span className="text-[10px] text-muted-foreground">📅 {t.dataVencimento}</span>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1.5 text-[10px] text-muted-foreground">
+                              <span className="truncate">👤 {t.lead}</span>
+                              <span>•</span>
+                              <span>{t.corretor}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-muted-foreground text-center mt-3">
+                💡 Arraste os cards entre as colunas para atualizar o status da tarefa.
+              </p>
+            </TabsContent>
+          </Tabs>
 
         </TabsContent>
 
