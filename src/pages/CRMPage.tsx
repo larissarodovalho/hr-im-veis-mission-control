@@ -548,6 +548,9 @@ export default function CRM() {
         {/* ── ABA: Funil de Vendas ── */}
         <TabsContent value="funil" className="space-y-6">
 
+      {/* Alerta — Clientes sem contato do corretor */}
+      <ClientesSemContato leads={listaLeads} />
+
       {/* Toggle Geral / Por Corretor */}
       <Tabs defaultValue="geral_funil">
         <TabsList className="h-8 bg-muted/50 rounded-md p-0.5 mb-4">
