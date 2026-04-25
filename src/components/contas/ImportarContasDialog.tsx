@@ -99,6 +99,27 @@ export default function ImportarContasDialog({ open, onOpenChange, onImported }:
     const { data: auth } = await supabase.auth.getUser();
     const userId = auth.user?.id;
 
+    const onlyDigits = (s: string) => (s || "").replace(/\D/g, "");
+
+    // Carrega base atual para dedupe (leads + contas)
+    const [{ data: existingContas }, { data: existingLeads }] = await Promise.all([
+      supabase.from("contas").select("email,telefone,documento"),
+      supabase.from("leads").select("email,telefone"),
+    ]);
+    const emailSet = new Set<string>();
+    const telSet = new Set<string>();
+    const docSet = new Set<string>();
+    const addExisting = (email?: string | null, telefone?: string | null, documento?: string | null) => {
+      if (email) emailSet.add(email.trim().toLowerCase());
+      const t = onlyDigits(telefone || "");
+      if (t.length >= 8) telSet.add(t.slice(-8));
+      const d = onlyDigits(documento || "");
+      if (d) docSet.add(d);
+    };
+    (existingContas ?? []).forEach((r: any) => addExisting(r.email, r.telefone, r.documento));
+    (existingLeads ?? []).forEach((r: any) => addExisting(r.email, r.telefone, null));
+
+    let skipped = 0;
     const payload = rows
       .map((r) => {
         const get = (k: string) => {
@@ -114,12 +135,33 @@ export default function ImportarContasDialog({ open, onOpenChange, onImported }:
           const doc = get("documento") || "";
           tipo = doc.replace(/\D/g, "").length > 11 ? "PJ" : "PF";
         }
+        const email = get("email");
+        const telefone = get("telefone");
+        const documento = get("documento");
+
+        // Verifica duplicidade
+        const emailKey = email?.toLowerCase();
+        const telKey = onlyDigits(telefone || "").slice(-8);
+        const docKey = onlyDigits(documento || "");
+        const isDup =
+          (emailKey && emailSet.has(emailKey)) ||
+          (telKey.length >= 8 && telSet.has(telKey)) ||
+          (docKey && docSet.has(docKey));
+        if (isDup) {
+          skipped++;
+          return null;
+        }
+        // Adiciona aos sets para evitar duplicar dentro do próprio arquivo
+        if (emailKey) emailSet.add(emailKey);
+        if (telKey.length >= 8) telSet.add(telKey);
+        if (docKey) docSet.add(docKey);
+
         return {
           nome,
           tipo,
-          documento: get("documento"),
-          email: get("email"),
-          telefone: get("telefone"),
+          documento,
+          email,
+          telefone,
           endereco: get("endereco"),
           observacoes: get("observacoes"),
           created_by: userId,
@@ -130,6 +172,7 @@ export default function ImportarContasDialog({ open, onOpenChange, onImported }:
 
     if (!payload.length) {
       setImporting(false);
+      if (skipped) return toast.error(`Nenhuma conta nova. ${skipped} duplicada(s) ignorada(s).`);
       return toast.error("Nenhuma linha válida encontrada");
     }
 
@@ -148,8 +191,12 @@ export default function ImportarContasDialog({ open, onOpenChange, onImported }:
     }
 
     setImporting(false);
-    if (inserted) toast.success(`${inserted} conta(s) importada(s)${failed ? ` · ${failed} falha(s)` : ""}`);
-    else toast.error("Falha ao importar");
+    const parts: string[] = [];
+    if (inserted) parts.push(`${inserted} importada(s)`);
+    if (skipped) parts.push(`${skipped} duplicada(s) ignorada(s)`);
+    if (failed) parts.push(`${failed} falha(s)`);
+    if (inserted) toast.success(parts.join(" · "));
+    else toast.error(parts.join(" · ") || "Falha ao importar");
     reset();
     onOpenChange(false);
     onImported();
