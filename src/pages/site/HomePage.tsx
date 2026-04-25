@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-const imoveis: Array<{ id: string; status: string; titulo?: string; valor?: number; bairro?: string; cidade?: string; quartos?: number; suites?: number; vagas?: number; areaUtil?: number; foto?: string }> = [];
+const imoveis: any[] = [];
 import { ArrowRight, MapPin, ArrowUpRight, MessageCircle, Building2 } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useState } from "react";
