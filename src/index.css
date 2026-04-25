@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,96 +6,96 @@
 
 @layer base {
   :root {
-    /* HR Imóveis — clone visual Brazil Lands
-       Cal Poly Green #004D2C • Dark Goldenrod #B28E40 • Preto #121212 • Branco #FFFFFF */
+    /* HR Imóveis — Identidade Grupo Rodovalho
+       Branco #FEFEFE • Cinza claro #C5C6C6 • Cinza médio #727271 • Preto #2B2A29 */
     --background: 0 0% 100%;
-    --foreground: 0 0% 7%;
+    --foreground: 60 2% 16%;          /* #2B2A29 */
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 7%;
+    --card-foreground: 60 2% 16%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 7%;
+    --popover-foreground: 60 2% 16%;
 
-    --primary: 150 100% 15%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 150 60% 25%;
+    --primary: 60 2% 16%;             /* preto Rodovalho #2B2A29 */
+    --primary-foreground: 0 0% 99%;
+    --primary-glow: 60 1% 45%;        /* cinza médio */
 
-    --secondary: 40 30% 96%;
-    --secondary-foreground: 0 0% 7%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 60 2% 16%;
 
-    --muted: 40 15% 95%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 60 1% 45%;    /* #727271 */
 
-    --accent: 40 47% 47%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 60 1% 45%;              /* cinza médio como acento */
+    --accent-foreground: 0 0% 99%;
 
     --destructive: 0 70% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 150 100% 20%;
-    --warning: 40 70% 50%;
+    --success: 145 60% 35%;
+    --warning: 38 90% 50%;
     --danger: 0 75% 50%;
 
-    --border: 40 10% 88%;
-    --input: 40 10% 88%;
-    --ring: 150 100% 15%;
+    --border: 0 1% 78%;               /* #C5C6C6 */
+    --input: 0 1% 78%;
+    --ring: 60 2% 16%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 150 100% 12%;
-    --sidebar-foreground: 0 0% 96%;
-    --sidebar-primary: 40 47% 55%;
-    --sidebar-primary-foreground: 0 0% 7%;
-    --sidebar-accent: 150 80% 18%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 150 60% 20%;
-    --sidebar-ring: 40 47% 55%;
+    --sidebar-background: 60 2% 16%;          /* preto #2B2A29 */
+    --sidebar-foreground: 0 0% 99%;           /* #FEFEFE */
+    --sidebar-primary: 0 0% 99%;              /* destaque branco */
+    --sidebar-primary-foreground: 60 2% 16%;
+    --sidebar-accent: 60 2% 22%;              /* preto suave para hover */
+    --sidebar-accent-foreground: 0 0% 99%;
+    --sidebar-border: 60 2% 22%;
+    --sidebar-ring: 0 0% 99%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(150 100% 15%), hsl(150 80% 22%));
-    --gradient-gold: linear-gradient(135deg, hsl(40 47% 47%), hsl(40 55% 60%));
-    --gradient-hero: linear-gradient(135deg, hsl(150 100% 12%) 0%, hsl(150 100% 8%) 100%);
-    --shadow-soft: 0 2px 8px -2px hsl(0 0% 7% / 0.08);
-    --shadow-card: 0 4px 16px -4px hsl(0 0% 7% / 0.1);
-    --shadow-gold: 0 4px 20px -4px hsl(40 47% 47% / 0.4);
+    --gradient-primary: linear-gradient(135deg, hsl(60 2% 16%), hsl(60 2% 28%));
+    --gradient-mono: linear-gradient(135deg, hsl(0 1% 78%), hsl(0 0% 99%));
+    --gradient-hero: linear-gradient(135deg, hsl(60 2% 16%) 0%, hsl(60 2% 10%) 100%);
+    --shadow-soft: 0 2px 8px -2px hsl(60 2% 16% / 0.08);
+    --shadow-card: 0 4px 16px -4px hsl(60 2% 16% / 0.1);
+    --shadow-elegant: 0 10px 30px -10px hsl(60 2% 16% / 0.25);
 
-    /* legacy tokens kept for site público (não tocar) */
-    --gold: 40 47% 47%;
-    --gold-light: 40 55% 60%;
-    --gold-dark: 40 47% 38%;
-    --surface: 40 15% 97%;
+    /* legacy tokens kept for site público */
+    --gold: 60 1% 45%;
+    --gold-light: 0 1% 78%;
+    --gold-dark: 60 2% 16%;
+    --surface: 0 0% 98%;
     --surface-raised: 0 0% 100%;
-    --chart-1: 150 100% 15%;
-    --chart-2: 40 47% 47%;
-    --chart-3: 160 60% 45%;
-    --chart-4: 280 60% 55%;
-    --chart-5: 350 70% 55%;
+    --chart-1: 60 2% 16%;
+    --chart-2: 60 1% 45%;
+    --chart-3: 0 1% 78%;
+    --chart-4: 60 2% 35%;
+    --chart-5: 60 1% 60%;
   }
 
   .dark {
-    --background: 0 0% 7%;
-    --foreground: 0 0% 96%;
-    --card: 150 30% 10%;
-    --card-foreground: 0 0% 96%;
-    --popover: 150 30% 10%;
-    --popover-foreground: 0 0% 96%;
-    --primary: 40 47% 55%;
-    --primary-foreground: 0 0% 7%;
-    --primary-glow: 40 55% 65%;
-    --secondary: 150 30% 14%;
-    --secondary-foreground: 0 0% 96%;
-    --muted: 150 20% 14%;
-    --muted-foreground: 40 10% 65%;
-    --accent: 40 47% 55%;
-    --accent-foreground: 0 0% 7%;
+    --background: 60 2% 10%;
+    --foreground: 0 0% 99%;
+    --card: 60 2% 14%;
+    --card-foreground: 0 0% 99%;
+    --popover: 60 2% 14%;
+    --popover-foreground: 0 0% 99%;
+    --primary: 0 0% 99%;
+    --primary-foreground: 60 2% 16%;
+    --primary-glow: 0 1% 78%;
+    --secondary: 60 2% 18%;
+    --secondary-foreground: 0 0% 99%;
+    --muted: 60 2% 18%;
+    --muted-foreground: 0 1% 65%;
+    --accent: 0 1% 78%;
+    --accent-foreground: 60 2% 16%;
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
-    --success: 150 60% 45%;
-    --warning: 40 70% 55%;
+    --success: 145 60% 45%;
+    --warning: 38 90% 55%;
     --danger: 0 75% 55%;
-    --border: 150 20% 18%;
-    --input: 150 20% 18%;
-    --ring: 40 47% 55%;
+    --border: 60 2% 22%;
+    --input: 60 2% 22%;
+    --ring: 0 0% 99%;
   }
 }
 
@@ -108,12 +108,13 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Montserrat', system-ui, sans-serif;
     overscroll-behavior-y: none;
   }
 
   h1, h2, h3, h4 {
-    font-family: 'Fraunces', Georgia, serif;
+    font-family: 'Montserrat', system-ui, sans-serif;
+    font-weight: 300;
     @apply tracking-tight;
   }
 }
@@ -124,11 +125,12 @@
   }
 
   .section-title {
-    @apply text-2xl font-semibold tracking-tight text-foreground;
-    font-family: 'Fraunces', Georgia, serif;
+    @apply text-2xl tracking-tight text-foreground;
+    font-family: 'Montserrat', system-ui, sans-serif;
+    font-weight: 300;
   }
 
   .gold-accent { color: hsl(var(--accent)); }
-  .gold-gradient { background: var(--gradient-gold); }
+  .gold-gradient { background: var(--gradient-mono); }
   .kanban-column { @apply bg-muted/40 rounded-xl p-4 min-h-[300px]; }
 }
