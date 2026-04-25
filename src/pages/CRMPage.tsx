@@ -4,14 +4,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LeadsTab from "@/components/LeadsTab";
 import ContatosTab from "@/components/ContatosTab";
+import ContasTab from "@/components/ContasTab";
 import WhatsAppTab from "@/components/WhatsAppTab";
 import EmptyState from "@/components/EmptyState";
 
-const CORRETOR_TABS = ["leads", "contatos", "whatsapp"] as const;
-const STAFF_EXTRA_TABS = ["kanban", "imoveis", "funil", "criacao", "analise", "oportunidades", "visitas", "tarefas", "relatorios", "propostas"] as const;
+const CORRETOR_TABS = ["leads", "contas", "contatos", "whatsapp"] as const;
+const STAFF_EXTRA_TABS = ["imoveis", "funil", "criacao", "analise", "oportunidades", "visitas", "tarefas", "relatorios", "propostas"] as const;
 
 const TAB_LABELS: Record<string, string> = {
   leads: "Leads",
+  contas: "Contas",
   contatos: "Contatos",
   whatsapp: "WhatsApp",
   kanban: "Kanban",
@@ -59,6 +61,10 @@ export default function CRM() {
 
         <TabsContent value="leads" className="space-y-6">
           <LeadsTab />
+        </TabsContent>
+
+        <TabsContent value="contas" className="space-y-6">
+          <ContasTab />
         </TabsContent>
 
         <TabsContent value="contatos" className="space-y-6">
