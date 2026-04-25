@@ -29,6 +29,7 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -78,9 +79,9 @@ export function AppSidebar() {
   const isMarketing = location.pathname === "/marketing";
   const activeTab = searchParams.get("tab") || (isCRM ? "leads" : "geral");
 
-  const navItems = [
-    ...items,
-    ...(isAdmin ? [{ title: "Usuários", url: "/usuarios", icon: Shield }] : []),
+  const adminItems = [
+    { title: "Usuários", url: "/usuarios", icon: Shield },
+    { title: "Configurações", url: "/configuracoes", icon: Settings },
   ];
 
   return (
@@ -101,7 +102,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => {
+              {items.map((item) => {
                 const isActive = item.url === "/crm" ? isCRM : item.url === "/marketing" ? isMarketing : location.pathname === item.url;
                 return (
                   <div key={item.title}>
