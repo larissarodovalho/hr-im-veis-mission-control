@@ -20,10 +20,8 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading } = useAuth();
-  const [tab, setTab] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [nome, setNome] = useState("");
   const [busy, setBusy] = useState(false);
 
   const from = (location.state as any)?.from?.pathname || "/";
@@ -47,31 +45,6 @@ export default function AuthPage() {
       return;
     }
     toast.success("Bem-vindo!");
-  }
-
-  async function signupEmail(e: React.FormEvent) {
-    e.preventDefault();
-    if (!nome.trim()) return toast.error("Informe seu nome");
-    const ev = emailSchema.safeParse(email);
-    const pv = passwordSchema.safeParse(password);
-    if (!ev.success) return toast.error(ev.error.errors[0].message);
-    if (!pv.success) return toast.error(pv.error.errors[0].message);
-    setBusy(true);
-    const { error } = await supabase.auth.signUp({
-      email, password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-        data: { nome: nome.trim() },
-      },
-    });
-    setBusy(false);
-    if (error) {
-      if (error.message.includes("registered")) toast.error("Este email já está cadastrado");
-      else toast.error(error.message);
-      return;
-    }
-    toast.success("Cadastro realizado! Verifique seu email para confirmar.");
-    setTab("login");
   }
 
   async function loginGoogle() {
