@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { findDuplicates, DuplicateMatch } from "@/lib/duplicates";
+import DuplicateAlert from "@/components/DuplicateAlert";
 
 interface Props {
   open: boolean;
@@ -16,6 +18,8 @@ interface Props {
 
 export default function NovaContaDialog({ open, onOpenChange, onCreated }: Props) {
   const [saving, setSaving] = useState(false);
+  const [duplicates, setDuplicates] = useState<DuplicateMatch[]>([]);
+  const [forceCreate, setForceCreate] = useState(false);
   const [form, setForm] = useState({
     nome: "",
     tipo: "PF",
@@ -26,10 +30,37 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated }: Props
     observacoes: "",
   });
 
-  const update = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
+  const update = (k: string, v: string) => {
+    setForm((p) => ({ ...p, [k]: v }));
+    setForceCreate(false);
+  };
+
+  // Verifica duplicidade ao digitar (debounced)
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(async () => {
+      if (!form.email && !form.telefone && !form.documento) {
+        setDuplicates([]);
+        return;
+      }
+      const m = await findDuplicates({ email: form.email, telefone: form.telefone, documento: form.documento });
+      setDuplicates(m);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [form.email, form.telefone, form.documento, open]);
+
+  useEffect(() => {
+    if (!open) {
+      setDuplicates([]);
+      setForceCreate(false);
+    }
+  }, [open]);
 
   const submit = async () => {
     if (!form.nome.trim()) return toast.error("Nome é obrigatório");
+    if (duplicates.length && !forceCreate) {
+      return toast.error("Contato já cadastrado. Confirme abaixo para prosseguir.");
+    }
     setSaving(true);
     const { data: auth } = await supabase.auth.getUser();
     const { error } = await supabase.from("contas").insert({
@@ -47,6 +78,8 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated }: Props
     if (error) return toast.error(error.message);
     toast.success("Conta criada");
     setForm({ nome: "", tipo: "PF", documento: "", email: "", telefone: "", endereco: "", observacoes: "" });
+    setDuplicates([]);
+    setForceCreate(false);
     onOpenChange(false);
     onCreated();
   };
@@ -96,10 +129,22 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated }: Props
             <Label>Observações</Label>
             <Textarea rows={3} value={form.observacoes} onChange={(e) => update("observacoes", e.target.value)} />
           </div>
+          {duplicates.length > 0 && (
+            <DuplicateAlert
+              matches={duplicates}
+              showActions
+              onIgnore={() => setForceCreate(true)}
+            />
+          )}
+          {forceCreate && (
+            <p className="text-xs text-amber-600">Cadastro será criado mesmo com duplicidade detectada.</p>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
-          <Button onClick={submit} disabled={saving}>{saving ? "Salvando…" : "Salvar"}</Button>
+          <Button onClick={submit} disabled={saving || (duplicates.length > 0 && !forceCreate)}>
+            {saving ? "Salvando…" : "Salvar"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -17,6 +17,8 @@ import { DndContext, DragEndEvent, useDraggable, useDroppable, PointerSensor, us
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/contexts/AuthContext";
+import { findDuplicates, DuplicateMatch } from "@/lib/duplicates";
+import DuplicateAlert from "@/components/DuplicateAlert";
 
 type Lead = {
   id: string; nome: string; email: string | null; telefone: string | null;
@@ -197,10 +199,27 @@ function DeleteLeadButton({ name, onConfirm, compact }: { name: string; onConfir
 function NewLeadDialog({ open, onOpenChange, onCreated, userId }: any) {
   const [form, setForm] = useState({ nome: "", email: "", telefone: "", imovel_interesse: "none", regiao: "", observacoes: "", origem: "manual" });
   const [saving, setSaving] = useState(false);
+  const [duplicates, setDuplicates] = useState<DuplicateMatch[]>([]);
+  const [forceCreate, setForceCreate] = useState(false);
+
+  useEffect(() => {
+    if (!open) { setDuplicates([]); setForceCreate(false); return; }
+    const t = setTimeout(async () => {
+      if (!form.email && !form.telefone) { setDuplicates([]); return; }
+      const m = await findDuplicates({ email: form.email, telefone: form.telefone });
+      setDuplicates(m);
+      setForceCreate(false);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [form.email, form.telefone, open]);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.nome.trim()) return toast.error("Nome obrigatório");
     if (!userId) return toast.error("Sessão expirada");
+    if (duplicates.length && !forceCreate) {
+      return toast.error("Contato já cadastrado. Confirme abaixo para prosseguir.");
+    }
     setSaving(true);
     const payload: any = { ...form, imovel_interesse: form.imovel_interesse === "none" ? null : form.imovel_interesse, created_by: userId };
     Object.keys(payload).forEach(k => { if (payload[k] === "") payload[k] = null; });
@@ -210,6 +229,8 @@ function NewLeadDialog({ open, onOpenChange, onCreated, userId }: any) {
     toast.success("Lead criado");
     onOpenChange(false);
     setForm({ nome: "", email: "", telefone: "", imovel_interesse: "none", regiao: "", observacoes: "", origem: "manual" });
+    setDuplicates([]);
+    setForceCreate(false);
     onCreated();
   };
   return (
@@ -235,7 +256,15 @@ function NewLeadDialog({ open, onOpenChange, onCreated, userId }: any) {
             <div><Label>Região</Label><Input value={form.regiao} onChange={e => setForm({ ...form, regiao: e.target.value })} /></div>
           </div>
           <div><Label>Observações</Label><Textarea value={form.observacoes} onChange={e => setForm({ ...form, observacoes: e.target.value })} /></div>
-          <DialogFooter><Button type="submit" disabled={saving}>{saving ? "Salvando…" : "Criar lead"}</Button></DialogFooter>
+          {duplicates.length > 0 && (
+            <DuplicateAlert matches={duplicates} showActions onIgnore={() => setForceCreate(true)} />
+          )}
+          {forceCreate && <p className="text-xs text-amber-600">Lead será criado mesmo com duplicidade detectada.</p>}
+          <DialogFooter>
+            <Button type="submit" disabled={saving || (duplicates.length > 0 && !forceCreate)}>
+              {saving ? "Salvando…" : "Criar lead"}
+            </Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
