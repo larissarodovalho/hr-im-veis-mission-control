@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import StaffRoute from "@/components/StaffRoute";
 import DashboardLayout from "@/components/DashboardLayout";
 import SiteLayout from "@/components/site/SiteLayout";
 import VisaoGeral from "@/pages/VisaoGeral";
@@ -50,13 +51,13 @@ const App = () => (
               <ProtectedRoute>
                 <DashboardLayout>
                   <Routes>
-                    <Route path="/" element={<VisaoGeral />} />
+                    <Route path="/" element={<StaffRoute><VisaoGeral /></StaffRoute>} />
                     <Route path="/crm" element={<CRMPage />} />
-                    <Route path="/marketing" element={<Marketing />} />
-                    <Route path="/operacional" element={<Operacional />} />
-                    <Route path="/saude" element={<SaudeSistema />} />
-                    <Route path="/controle-criacao" element={<ControleDeCreacao />} />
-                    <Route path="/integracoes" element={<Integracoes />} />
+                    <Route path="/marketing" element={<StaffRoute><Marketing /></StaffRoute>} />
+                    <Route path="/operacional" element={<StaffRoute><Operacional /></StaffRoute>} />
+                    <Route path="/saude" element={<StaffRoute><SaudeSistema /></StaffRoute>} />
+                    <Route path="/controle-criacao" element={<StaffRoute><ControleDeCreacao /></StaffRoute>} />
+                    <Route path="/integracoes" element={<StaffRoute><Integracoes /></StaffRoute>} />
                     <Route path="/usuarios" element={<UsuariosAdminPage />} />
                     <Route path="/configuracoes" element={<ConfiguracoesPage />} />
                     <Route path="*" element={<NotFound />} />
