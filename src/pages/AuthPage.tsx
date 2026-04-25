@@ -73,48 +73,23 @@ export default function AuthPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-            <TabsList className="grid grid-cols-2 w-full">
-              <TabsTrigger value="login">Entrar</TabsTrigger>
-              <TabsTrigger value="signup">Criar conta</TabsTrigger>
-            </TabsList>
+          <form onSubmit={loginEmail} className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="li-email">Email</Label>
+              <Input id="li-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@hrimoveis.com.br" required />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="li-pass">Senha</Label>
+              <Input id="li-pass" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
+            </div>
+            <Button type="submit" className="w-full" disabled={busy}>
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Mail className="h-4 w-4" /> Entrar</>}
+            </Button>
+          </form>
 
-            <TabsContent value="login" className="space-y-4 mt-4">
-              <form onSubmit={loginEmail} className="space-y-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="li-email">Email</Label>
-                  <Input id="li-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@hrimoveis.com.br" required />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="li-pass">Senha</Label>
-                  <Input id="li-pass" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
-                </div>
-                <Button type="submit" className="w-full" disabled={busy}>
-                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Mail className="h-4 w-4" /> Entrar</>}
-                </Button>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="signup" className="space-y-4 mt-4">
-              <form onSubmit={signupEmail} className="space-y-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="su-nome">Nome completo</Label>
-                  <Input id="su-nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="João da Silva" required />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="su-email">Email</Label>
-                  <Input id="su-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="su-pass">Senha</Label>
-                  <Input id="su-pass" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" required />
-                </div>
-                <Button type="submit" className="w-full" disabled={busy}>
-                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Criar conta"}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+          <p className="text-xs text-muted-foreground text-center mt-3">
+            Acesso restrito. Solicite seu cadastro ao administrador.
+          </p>
 
           <div className="relative my-5">
             <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
