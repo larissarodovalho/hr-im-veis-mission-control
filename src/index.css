@@ -1,129 +1,134 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
-
 @layer base {
   :root {
-    --background: 210 33% 99%;
-    --foreground: 222 47% 11%;
+    /* HR Imóveis — clone visual Brazil Lands
+       Cal Poly Green #004D2C • Dark Goldenrod #B28E40 • Preto #121212 • Branco #FFFFFF */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 7%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 0 0% 7%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 0 0% 7%;
 
-    --primary: 224 73% 40%;
+    --primary: 150 100% 15%;
     --primary-foreground: 0 0% 100%;
+    --primary-glow: 150 60% 25%;
 
-    --secondary: 210 40% 97%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 40 30% 96%;
+    --secondary-foreground: 0 0% 7%;
 
-    --muted: 210 33% 97%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 40 15% 95%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 43 76% 52%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 40 47% 47%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 70% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 224 73% 40%;
+    --success: 150 100% 20%;
+    --warning: 40 70% 50%;
+    --danger: 0 75% 50%;
 
-    --radius: 0.75rem;
+    --border: 40 10% 88%;
+    --input: 40 10% 88%;
+    --ring: 150 100% 15%;
 
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 90%;
-    --sidebar-primary: 43 76% 52%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 222 47% 16%;
-    --sidebar-accent-foreground: 210 40% 90%;
-    --sidebar-border: 222 47% 18%;
-    --sidebar-ring: 43 76% 52%;
+    --radius: 0.5rem;
 
-    --gold: 43 76% 52%;
-    --gold-light: 43 76% 72%;
-    --gold-dark: 43 76% 42%;
-    --surface: 210 33% 98%;
+    --sidebar-background: 150 100% 12%;
+    --sidebar-foreground: 0 0% 96%;
+    --sidebar-primary: 40 47% 55%;
+    --sidebar-primary-foreground: 0 0% 7%;
+    --sidebar-accent: 150 80% 18%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 150 60% 20%;
+    --sidebar-ring: 40 47% 55%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(150 100% 15%), hsl(150 80% 22%));
+    --gradient-gold: linear-gradient(135deg, hsl(40 47% 47%), hsl(40 55% 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(150 100% 12%) 0%, hsl(150 100% 8%) 100%);
+    --shadow-soft: 0 2px 8px -2px hsl(0 0% 7% / 0.08);
+    --shadow-card: 0 4px 16px -4px hsl(0 0% 7% / 0.1);
+    --shadow-gold: 0 4px 20px -4px hsl(40 47% 47% / 0.4);
+
+    /* legacy tokens kept for site público (não tocar) */
+    --gold: 40 47% 47%;
+    --gold-light: 40 55% 60%;
+    --gold-dark: 40 47% 38%;
+    --surface: 40 15% 97%;
     --surface-raised: 0 0% 100%;
-
-    --chart-1: 224 73% 40%;
-    --chart-2: 43 76% 52%;
+    --chart-1: 150 100% 15%;
+    --chart-2: 40 47% 47%;
     --chart-3: 160 60% 45%;
     --chart-4: 280 60% 55%;
     --chart-5: 350 70% 55%;
-
-    font-family: 'Montserrat', system-ui, sans-serif;
   }
 
   .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 8%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 224 73% 50%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 222 47% 14%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 222 47% 14%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 43 76% 52%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 222 47% 18%;
-    --input: 222 47% 18%;
-    --ring: 224 73% 50%;
-    --sidebar-background: 222 47% 6%;
-    --sidebar-foreground: 210 40% 90%;
-    --sidebar-primary: 43 76% 52%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 222 47% 12%;
-    --sidebar-accent-foreground: 210 40% 90%;
-    --sidebar-border: 222 47% 14%;
-    --sidebar-ring: 43 76% 52%;
+    --background: 0 0% 7%;
+    --foreground: 0 0% 96%;
+    --card: 150 30% 10%;
+    --card-foreground: 0 0% 96%;
+    --popover: 150 30% 10%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 40 47% 55%;
+    --primary-foreground: 0 0% 7%;
+    --primary-glow: 40 55% 65%;
+    --secondary: 150 30% 14%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 150 20% 14%;
+    --muted-foreground: 40 10% 65%;
+    --accent: 40 47% 55%;
+    --accent-foreground: 0 0% 7%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 150 60% 45%;
+    --warning: 40 70% 55%;
+    --danger: 0 75% 55%;
+    --border: 150 20% 18%;
+    --input: 150 20% 18%;
+    --ring: 40 47% 55%;
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
+  html, body, #root {
+    height: 100%;
   }
+
+  * { @apply border-border; }
 
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+    overscroll-behavior-y: none;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Montserrat', system-ui, sans-serif;
+  h1, h2, h3, h4 {
+    font-family: 'Fraunces', Georgia, serif;
+    @apply tracking-tight;
   }
 }
 
 @layer components {
   .stat-card {
-    @apply bg-card rounded-xl border border-border p-5 shadow-sm hover:shadow-md transition-shadow;
+    @apply bg-card rounded-xl border border-border p-5 shadow-soft hover:shadow-card transition-shadow;
   }
 
   .section-title {
-    @apply text-2xl font-bold tracking-tight text-foreground;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    @apply text-2xl font-semibold tracking-tight text-foreground;
+    font-family: 'Fraunces', Georgia, serif;
   }
 
-  .gold-accent {
-    color: hsl(var(--gold));
-  }
-
-  .gold-gradient {
-    background: linear-gradient(135deg, hsl(var(--gold)), hsl(var(--gold-light)));
-  }
-
-  .kanban-column {
-    @apply bg-muted/50 rounded-xl p-4 min-h-[300px];
-  }
+  .gold-accent { color: hsl(var(--accent)); }
+  .gold-gradient { background: var(--gradient-gold); }
+  .kanban-column { @apply bg-muted/40 rounded-xl p-4 min-h-[300px]; }
 }
