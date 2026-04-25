@@ -64,9 +64,21 @@ const PeriodoSelect = ({ value, onChange }: { value: Periodo; onChange: (v: Peri
   </Select>
 );
 
+const CORRETOR_ALLOWED_TABS = new Set(["leads", "contatos", "whatsapp"]);
+
 export default function CRM() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get("tab") || "leads";
+  const { isAdmin, isGestor } = useAuth();
+  const isCorretorOnly = !isAdmin && !isGestor;
+  const requested = searchParams.get("tab") || "leads";
+  const activeTab = isCorretorOnly && !CORRETOR_ALLOWED_TABS.has(requested) ? "leads" : requested;
+
+  // Auto-redirect URL when corretor lands on a restricted tab
+  useEffect(() => {
+    if (isCorretorOnly && requested !== activeTab) {
+      setSearchParams({ tab: activeTab }, { replace: true });
+    }
+  }, [isCorretorOnly, requested, activeTab, setSearchParams]);
   const [dialogNovoLead, setDialogNovoLead] = useState(false);
   const [novoLead, setNovoLead] = useState({
     nome: "", telefone: "", email: "", canal: "Meta Ads" as Lead["canal"],
