@@ -129,7 +129,7 @@ export function AppSidebar() {
                     {/* CRM sub-tabs */}
                     {item.url === "/crm" && isCRM && !collapsed && (
                       <div className="ml-4 mt-1 mb-2 space-y-0.5 border-l-2 border-sidebar-accent pl-3">
-                        {CRM_SUBTABS.map((sub) => {
+                        {visibleCrmSubtabs.map((sub) => {
                           const isSubActive = activeTab === sub.value;
                           return (
                             <button
