@@ -14,6 +14,110 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          created_at: string
+          descricao: string
+          id: string
+          metadata: Json | null
+          status: string | null
+          tipo: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          id?: string
+          metadata?: Json | null
+          status?: string | null
+          tipo: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          id?: string
+          metadata?: Json | null
+          status?: string | null
+          tipo?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      agentes: {
+        Row: {
+          created_at: string
+          detalhes: string | null
+          id: string
+          nome: string
+          status: string
+          tipo: string | null
+          ultima_atividade: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          detalhes?: string | null
+          id?: string
+          nome: string
+          status?: string
+          tipo?: string | null
+          ultima_atividade?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          detalhes?: string | null
+          id?: string
+          nome?: string
+          status?: string
+          tipo?: string | null
+          ultima_atividade?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      campanhas_metrics_daily: {
+        Row: {
+          campanha_id: string
+          cliques: number | null
+          created_at: string
+          data: string
+          gastos: number | null
+          id: string
+          impressoes: number | null
+          leads: number | null
+        }
+        Insert: {
+          campanha_id: string
+          cliques?: number | null
+          created_at?: string
+          data: string
+          gastos?: number | null
+          id?: string
+          impressoes?: number | null
+          leads?: number | null
+        }
+        Update: {
+          campanha_id?: string
+          cliques?: number | null
+          created_at?: string
+          data?: string
+          gastos?: number | null
+          id?: string
+          impressoes?: number | null
+          leads?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campanhas_metrics_daily_campanha_id_fkey"
+            columns: ["campanha_id"]
+            isOneToOne: false
+            referencedRelation: "campanhas_trafego"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campanhas_trafego: {
         Row: {
           budget: number | null
@@ -382,6 +486,36 @@ export type Database = {
         }
         Relationships: []
       }
+      notas: {
+        Row: {
+          autor_id: string
+          conteudo: string
+          created_at: string
+          entidade_id: string
+          entidade_tipo: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          autor_id: string
+          conteudo: string
+          created_at?: string
+          entidade_id: string
+          entidade_tipo: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          autor_id?: string
+          conteudo?: string
+          created_at?: string
+          entidade_id?: string
+          entidade_tipo?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           ativo: boolean
@@ -480,6 +614,146 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      social_metrics_daily: {
+        Row: {
+          alcance: number | null
+          created_at: string
+          data: string
+          engajamento: number | null
+          id: string
+          posts: number | null
+          profile_id: string
+          seguidores: number | null
+        }
+        Insert: {
+          alcance?: number | null
+          created_at?: string
+          data: string
+          engajamento?: number | null
+          id?: string
+          posts?: number | null
+          profile_id: string
+          seguidores?: number | null
+        }
+        Update: {
+          alcance?: number | null
+          created_at?: string
+          data?: string
+          engajamento?: number | null
+          id?: string
+          posts?: number | null
+          profile_id?: string
+          seguidores?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_metrics_daily_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "social_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_profiles: {
+        Row: {
+          alcance: number | null
+          created_at: string
+          engajamento: number | null
+          external_id: string | null
+          handle: string | null
+          id: string
+          nome: string
+          plataforma: string
+          posts: number | null
+          seguidores: number | null
+          updated_at: string
+        }
+        Insert: {
+          alcance?: number | null
+          created_at?: string
+          engajamento?: number | null
+          external_id?: string | null
+          handle?: string | null
+          id?: string
+          nome: string
+          plataforma: string
+          posts?: number | null
+          seguidores?: number | null
+          updated_at?: string
+        }
+        Update: {
+          alcance?: number | null
+          created_at?: string
+          engajamento?: number | null
+          external_id?: string | null
+          handle?: string | null
+          id?: string
+          nome?: string
+          plataforma?: string
+          posts?: number | null
+          seguidores?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      system_health_checks: {
+        Row: {
+          created_at: string
+          detalhe: string | null
+          id: string
+          servico: string
+          status: string
+          ultimo_check: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          detalhe?: string | null
+          id?: string
+          servico: string
+          status?: string
+          ultimo_check?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          detalhe?: string | null
+          id?: string
+          servico?: string
+          status?: string
+          ultimo_check?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      system_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
       }
       tarefas: {
         Row: {
