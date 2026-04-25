@@ -14,7 +14,7 @@ export default function Settings() {
 
       <Card className="p-6 space-y-3">
         <h2 className="font-display text-xl font-semibold">Sobre</h2>
-        <p className="text-sm text-muted-foreground">CRM HR Imóveis · Layout inspirado em Brazil Lands.</p>
+        <p className="text-sm text-muted-foreground">CRM HR Imóveis · Grupo Rodovalho</p>
       </Card>
     </div>
   );

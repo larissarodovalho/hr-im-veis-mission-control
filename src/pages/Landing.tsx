@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Users, TrendingUp } from "lucide-react";
-import logoCompleta from "@/assets/brand/logo-completa.png";
+import logoCompleta from "@/assets/brand/hr-imoveis-logo.png";
 
 export default function Landing() {
   return (

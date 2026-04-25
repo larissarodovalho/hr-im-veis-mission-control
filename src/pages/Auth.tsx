@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
-import logoMark from "@/assets/brand/logo-mark.png";
+import logoMark from "@/assets/brand/hr-imoveis-logo.png";
 
 export default function Auth() {
   const navigate = useNavigate();

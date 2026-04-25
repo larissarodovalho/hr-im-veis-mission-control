@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import logoMark from "@/assets/brand/logo-mark.png";
+import logoMark from "@/assets/brand/hr-imoveis-logo.png";
 
 export default function ForgotPassword() {
   const [loading, setLoading] = useState(false);
