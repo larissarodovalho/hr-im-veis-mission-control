@@ -19,7 +19,9 @@ import {
   FileDown,
   FileText as FileTextIcon,
   MessageCircle,
+  Shield,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { NavLink, useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import hrLogo from "@/assets/hr-imoveis-logo.png";
 import {
@@ -67,6 +69,7 @@ const items = [
 
 export function AppSidebar() {
   const { state } = useSidebar();
+  const { isAdmin } = useAuth();
   const collapsed = state === "collapsed";
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -74,6 +77,11 @@ export function AppSidebar() {
   const isCRM = location.pathname === "/crm";
   const isMarketing = location.pathname === "/marketing";
   const activeTab = searchParams.get("tab") || (isCRM ? "leads" : "geral");
+
+  const navItems = [
+    ...items,
+    ...(isAdmin ? [{ title: "Usuários", url: "/usuarios", icon: Shield }] : []),
+  ];
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
@@ -93,7 +101,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => {
+              {navItems.map((item) => {
                 const isActive = item.url === "/crm" ? isCRM : item.url === "/marketing" ? isMarketing : location.pathname === item.url;
                 return (
                   <div key={item.title}>

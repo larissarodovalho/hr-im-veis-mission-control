@@ -15,6 +15,7 @@ import SaudeSistema from "@/pages/SaudeSistema";
 import ControleDeCreacao from "@/pages/ControleDeCreacao";
 import Integracoes from "@/pages/Integracoes";
 import AuthPage from "@/pages/AuthPage";
+import UsuariosAdminPage from "@/pages/UsuariosAdminPage";
 import NotFound from "@/pages/NotFound";
 import HomePage from "@/pages/site/HomePage";
 import ImoveisPage from "@/pages/site/ImoveisPage";
@@ -55,6 +56,7 @@ const App = () => (
                     <Route path="/saude" element={<SaudeSistema />} />
                     <Route path="/controle-criacao" element={<ControleDeCreacao />} />
                     <Route path="/integracoes" element={<Integracoes />} />
+                    <Route path="/usuarios" element={<UsuariosAdminPage />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </DashboardLayout>
