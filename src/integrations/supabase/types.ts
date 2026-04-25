@@ -14,6 +14,155 @@ export type Database = {
   }
   public: {
     Tables: {
+      contatos: {
+        Row: {
+          cpf_cnpj: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          endereco: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          origem: string | null
+          responsavel_id: string | null
+          tags: string[] | null
+          telefone: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          cpf_cnpj?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          origem?: string | null
+          responsavel_id?: string | null
+          tags?: string[] | null
+          telefone?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          cpf_cnpj?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          origem?: string | null
+          responsavel_id?: string | null
+          tags?: string[] | null
+          telefone?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lead_historico: {
+        Row: {
+          data: string
+          descricao: string | null
+          id: string
+          lead_id: string
+          tipo: string
+          user_id: string | null
+        }
+        Insert: {
+          data?: string
+          descricao?: string | null
+          id?: string
+          lead_id: string
+          tipo: string
+          user_id?: string | null
+        }
+        Update: {
+          data?: string
+          descricao?: string | null
+          id?: string
+          lead_id?: string
+          tipo?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_historico_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          corretor_id: string | null
+          created_at: string
+          created_by: string | null
+          data_entrada: string
+          email: string | null
+          etapa_funil: string
+          id: string
+          imovel_interesse: string | null
+          nome: string
+          observacoes: string | null
+          origem: string | null
+          qualificacao: string | null
+          status: string
+          tags: string[] | null
+          telefone: string | null
+          ultima_interacao: string | null
+          updated_at: string
+          valor_estimado: number | null
+        }
+        Insert: {
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_entrada?: string
+          email?: string | null
+          etapa_funil?: string
+          id?: string
+          imovel_interesse?: string | null
+          nome: string
+          observacoes?: string | null
+          origem?: string | null
+          qualificacao?: string | null
+          status?: string
+          tags?: string[] | null
+          telefone?: string | null
+          ultima_interacao?: string | null
+          updated_at?: string
+          valor_estimado?: number | null
+        }
+        Update: {
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_entrada?: string
+          email?: string | null
+          etapa_funil?: string
+          id?: string
+          imovel_interesse?: string | null
+          nome?: string
+          observacoes?: string | null
+          origem?: string | null
+          qualificacao?: string | null
+          status?: string
+          tags?: string[] | null
+          telefone?: string | null
+          ultima_interacao?: string | null
+          updated_at?: string
+          valor_estimado?: number | null
+        }
+        Relationships: []
+      }
       newsletter_subscribers: {
         Row: {
           created_at: string
@@ -35,6 +184,66 @@ export type Database = {
           id?: string
           nome?: string | null
           status?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          ativo: boolean
+          avatar_url: string | null
+          cargo: string | null
+          created_at: string
+          email: string | null
+          id: string
+          nome: string | null
+          telefone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          avatar_url?: string | null
+          cargo?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          avatar_url?: string | null
+          cargo?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -126,10 +335,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "gestor" | "corretor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -256,6 +471,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "gestor", "corretor"],
+    },
   },
 } as const
