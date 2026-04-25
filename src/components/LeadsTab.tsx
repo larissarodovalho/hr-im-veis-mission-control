@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { useLeads, LeadDB } from "@/hooks/useLeads";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,21 +15,18 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Phone, Mail, Pencil, Trash2, Loader2, User, LayoutGrid, List as ListIcon, GripVertical } from "lucide-react";
-
-const ETAPAS = ["Prospecção", "Qualificação", "Visita", "Proposta", "Negociação", "Fechamento", "Desqualificado"];
-const ORIGENS = ["Site", "Instagram", "Facebook", "Google Ads", "Indicação", "Portais", "Carteira", "Outro"];
-const STATUS = ["Novo", "Em atendimento", "Aguardando retorno", "Convertido", "Perdido"];
-
-const ETAPA_COLORS: Record<string, string> = {
-  "Prospecção": "border-t-blue-500",
-  "Qualificação": "border-t-cyan-500",
-  "Visita": "border-t-violet-500",
-  "Proposta": "border-t-amber-500",
-  "Negociação": "border-t-orange-500",
-  "Fechamento": "border-t-emerald-500",
-  "Desqualificado": "border-t-rose-500",
-};
+import {
+  Plus, Search, Phone, Mail, Pencil, Trash2, Loader2, User,
+  LayoutGrid, List as ListIcon, GripVertical, ExternalLink,
+} from "lucide-react";
+import {
+  DndContext, DragEndEvent, useDraggable, useDroppable,
+  PointerSensor, useSensor, useSensors,
+} from "@dnd-kit/core";
+import {
+  ETAPAS, ORIGENS, STATUS, TEMPERATURAS, ETAPA_COLORS, TEMP_META,
+  daysSince, slaColor, slaLabel,
+} from "@/lib/leads";
 
 const empty: Partial<LeadDB> = {
   nome: "", telefone: "", email: "", origem: "Site",
@@ -37,6 +35,84 @@ const empty: Partial<LeadDB> = {
 };
 
 type View = "lista" | "kanban";
+
+function DroppableColumn({ etapa, children, count }: { etapa: string; children: React.ReactNode; count: number }) {
+  const { setNodeRef, isOver } = useDroppable({ id: etapa });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`w-72 shrink-0 rounded-lg border bg-muted/30 p-2 transition ${isOver ? "ring-2 ring-primary/50 bg-primary/5" : ""}`}
+    >
+      <div className="flex items-center justify-between px-2 py-1.5 mb-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{etapa}</h3>
+        <Badge variant="secondary" className="text-[10px]">{count}</Badge>
+      </div>
+      <div className="space-y-2 min-h-[60px]">
+        {count === 0 && (
+          <p className="text-[11px] text-muted-foreground/60 text-center py-4 italic">arraste leads aqui</p>
+        )}
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function DraggableCard({ lead, etapa, onEdit }: { lead: LeadDB; etapa: string; onEdit: (l: LeadDB) => void }) {
+  const { attributes, listeners, setNodeRef, isDragging, transform } = useDraggable({ id: lead.id });
+  const dias = daysSince(lead.ultima_interacao);
+  const temp = (lead as any).temperatura as keyof typeof TEMP_META | null;
+  const style = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+    : undefined;
+  return (
+    <Card
+      ref={setNodeRef}
+      style={style}
+      className={`border-t-2 ${ETAPA_COLORS[etapa] ?? "border-t-muted"} hover:shadow-md transition ${isDragging ? "opacity-40" : ""}`}
+    >
+      <CardContent className="p-3">
+        <div className="flex items-start gap-2">
+          <button
+            {...listeners}
+            {...attributes}
+            className="cursor-grab active:cursor-grabbing touch-none mt-0.5"
+            aria-label="Arrastar"
+          >
+            <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <p className="font-semibold text-sm truncate flex-1">{lead.nome}</p>
+              <Link to={`/crm/lead/${lead.id}`} aria-label="Abrir detalhe">
+                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
+              </Link>
+              <button onClick={() => onEdit(lead)} aria-label="Editar">
+                <Pencil className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              <Badge className="text-[9px] py-0 px-1.5 h-4">{lead.status}</Badge>
+              {lead.origem && <Badge variant="secondary" className="text-[9px] py-0 px-1.5 h-4">{lead.origem}</Badge>}
+              {temp && TEMP_META[temp] && (
+                <Badge variant="outline" className={`text-[9px] py-0 px-1.5 h-4 ${TEMP_META[temp].cls}`}>
+                  {TEMP_META[temp].emoji} {TEMP_META[temp].label}
+                </Badge>
+              )}
+              <Badge variant="outline" className={`text-[9px] py-0 px-1.5 h-4 ${slaColor(dias)}`}>
+                ⏱ {slaLabel(dias)}
+              </Badge>
+            </div>
+            <div className="mt-1.5 space-y-0.5 text-[11px] text-muted-foreground">
+              {lead.telefone && <p className="flex items-center gap-1 truncate"><Phone className="h-2.5 w-2.5" />{lead.telefone}</p>}
+              {lead.imovel_interesse && <p className="truncate">🏠 {lead.imovel_interesse}</p>}
+              {lead.valor_estimado && <p className="font-medium text-foreground/70">R$ {Number(lead.valor_estimado).toLocaleString("pt-BR")}</p>}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function LeadsTab() {
   const { leads, loading, createLead, updateLead, deleteLead } = useLeads();
@@ -47,8 +123,8 @@ export default function LeadsTab() {
   const [editing, setEditing] = useState<LeadDB | null>(null);
   const [form, setForm] = useState<Partial<LeadDB>>(empty);
   const [saving, setSaving] = useState(false);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [dragOverEtapa, setDragOverEtapa] = useState<string | null>(null);
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -62,7 +138,7 @@ export default function LeadsTab() {
     const map: Record<string, LeadDB[]> = {};
     ETAPAS.forEach(e => { map[e] = []; });
     filtered.forEach(l => {
-      const e = ETAPAS.includes(l.etapa_funil) ? l.etapa_funil : "Prospecção";
+      const e = (ETAPAS as readonly string[]).includes(l.etapa_funil) ? l.etapa_funil : "Prospecção";
       map[e].push(l);
     });
     return map;
@@ -80,13 +156,13 @@ export default function LeadsTab() {
     setOpen(false);
   }
 
-  async function handleDrop(etapa: string) {
-    if (!draggingId) return;
-    const lead = leads.find(l => l.id === draggingId);
-    setDraggingId(null);
-    setDragOverEtapa(null);
-    if (!lead || lead.etapa_funil === etapa) return;
-    await updateLead(lead.id, { etapa_funil: etapa });
+  async function onDragEnd(e: DragEndEvent) {
+    const id = String(e.active.id);
+    const newEtapa = e.over?.id as string | undefined;
+    if (!newEtapa) return;
+    const lead = leads.find(l => l.id === id);
+    if (!lead || lead.etapa_funil === newEtapa) return;
+    await updateLead(lead.id, { etapa_funil: newEtapa });
   }
 
   return (
@@ -106,20 +182,10 @@ export default function LeadsTab() {
           </Select>
         )}
         <div className="flex rounded-md border bg-muted/40 p-0.5">
-          <Button
-            size="sm"
-            variant={view === "lista" ? "default" : "ghost"}
-            className="h-8 px-3"
-            onClick={() => setView("lista")}
-          >
+          <Button size="sm" variant={view === "lista" ? "default" : "ghost"} className="h-8 px-3" onClick={() => setView("lista")}>
             <ListIcon className="h-4 w-4 mr-1" /> Lista
           </Button>
-          <Button
-            size="sm"
-            variant={view === "kanban" ? "default" : "ghost"}
-            className="h-8 px-3"
-            onClick={() => setView("kanban")}
-          >
+          <Button size="sm" variant={view === "kanban" ? "default" : "ghost"} className="h-8 px-3" onClick={() => setView("kanban")}>
             <LayoutGrid className="h-4 w-4 mr-1" /> Kanban
           </Button>
         </div>
@@ -169,8 +235,23 @@ export default function LeadsTab() {
                   </Select>
                 </div>
                 <div className="grid gap-1.5">
+                  <Label>Temperatura</Label>
+                  <Select value={(form as any).temperatura ?? ""} onValueChange={(v) => setForm({ ...form, ...(v ? { temperatura: v } : { temperatura: null }) } as any)}>
+                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      {TEMPERATURAS.map(t => <SelectItem key={t} value={t}>{TEMP_META[t].emoji} {TEMP_META[t].label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-1.5">
                   <Label>Valor estimado (R$)</Label>
                   <Input type="number" value={form.valor_estimado ?? ""} onChange={(e) => setForm({ ...form, valor_estimado: e.target.value ? Number(e.target.value) : null })} />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label>Região</Label>
+                  <Input value={(form as any).regiao ?? ""} onChange={(e) => setForm({ ...form, regiao: e.target.value } as any)} placeholder="Cidade / UF" />
                 </div>
               </div>
               <div className="grid gap-1.5">
@@ -199,105 +280,78 @@ export default function LeadsTab() {
           </CardContent></Card>
         ) : (
           <div className="grid gap-2">
-            {filtered.map(l => (
-              <Card key={l.id} className="border-border/50 hover:border-primary/40 transition">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-sm truncate">{l.nome}</p>
-                      <Badge variant="outline" className="text-[10px]">{l.etapa_funil}</Badge>
-                      <Badge className="text-[10px]">{l.status}</Badge>
-                      {l.origem && <Badge variant="secondary" className="text-[10px]">{l.origem}</Badge>}
-                    </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
-                      {l.telefone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{l.telefone}</span>}
-                      {l.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{l.email}</span>}
-                      {l.valor_estimado && <span>R$ {Number(l.valor_estimado).toLocaleString("pt-BR")}</span>}
-                    </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button size="icon" variant="ghost" onClick={() => openEdit(l)}><Pencil className="h-4 w-4" /></Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button size="icon" variant="ghost" className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Excluir lead?</AlertDialogTitle>
-                          <AlertDialogDescription>Esta ação não pode ser desfeita. O lead "{l.nome}" será removido.</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => deleteLead(l.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )
-      ) : (
-        // KANBAN
-        <div className="overflow-x-auto pb-2">
-          <div className="flex gap-3 min-w-max">
-            {ETAPAS.map(etapa => {
-              const items = porEtapa[etapa] ?? [];
-              const isOver = dragOverEtapa === etapa;
+            {filtered.map(l => {
+              const dias = daysSince(l.ultima_interacao);
+              const temp = (l as any).temperatura as keyof typeof TEMP_META | null;
               return (
-                <div
-                  key={etapa}
-                  onDragOver={(e) => { e.preventDefault(); setDragOverEtapa(etapa); }}
-                  onDragLeave={() => setDragOverEtapa(prev => prev === etapa ? null : prev)}
-                  onDrop={() => handleDrop(etapa)}
-                  className={`w-72 shrink-0 rounded-lg border bg-muted/30 p-2 transition ${isOver ? "ring-2 ring-primary/50 bg-primary/5" : ""}`}
-                >
-                  <div className="flex items-center justify-between px-2 py-1.5 mb-2">
-                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{etapa}</h3>
-                    <Badge variant="secondary" className="text-[10px]">{items.length}</Badge>
-                  </div>
-                  <div className="space-y-2 min-h-[60px]">
-                    {items.length === 0 && (
-                      <p className="text-[11px] text-muted-foreground/60 text-center py-4 italic">arraste leads aqui</p>
-                    )}
-                    {items.map(l => (
-                      <Card
-                        key={l.id}
-                        draggable
-                        onDragStart={() => setDraggingId(l.id)}
-                        onDragEnd={() => { setDraggingId(null); setDragOverEtapa(null); }}
-                        onClick={() => openEdit(l)}
-                        className={`cursor-grab active:cursor-grabbing border-t-2 ${ETAPA_COLORS[etapa] ?? "border-t-muted"} hover:shadow-md transition ${draggingId === l.id ? "opacity-40" : ""}`}
-                      >
-                        <CardContent className="p-3">
-                          <div className="flex items-start gap-2">
-                            <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50 mt-0.5 shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-sm truncate">{l.nome}</p>
-                              <div className="flex flex-wrap gap-1 mt-1.5">
-                                <Badge className="text-[9px] py-0 px-1.5 h-4">{l.status}</Badge>
-                                {l.origem && <Badge variant="secondary" className="text-[9px] py-0 px-1.5 h-4">{l.origem}</Badge>}
-                              </div>
-                              <div className="mt-1.5 space-y-0.5 text-[11px] text-muted-foreground">
-                                {l.telefone && <p className="flex items-center gap-1 truncate"><Phone className="h-2.5 w-2.5" />{l.telefone}</p>}
-                                {l.imovel_interesse && <p className="truncate">🏠 {l.imovel_interesse}</p>}
-                                {l.valor_estimado && <p className="font-medium text-foreground/70">R$ {Number(l.valor_estimado).toLocaleString("pt-BR")}</p>}
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
+                <Card key={l.id} className="border-border/50 hover:border-primary/40 transition">
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Link to={`/crm/lead/${l.id}`} className="font-semibold text-sm truncate hover:text-primary hover:underline">
+                          {l.nome}
+                        </Link>
+                        <Badge variant="outline" className="text-[10px]">{l.etapa_funil}</Badge>
+                        <Badge className="text-[10px]">{l.status}</Badge>
+                        {l.origem && <Badge variant="secondary" className="text-[10px]">{l.origem}</Badge>}
+                        {temp && TEMP_META[temp] && (
+                          <Badge variant="outline" className={`text-[10px] ${TEMP_META[temp].cls}`}>
+                            {TEMP_META[temp].emoji} {TEMP_META[temp].label}
+                          </Badge>
+                        )}
+                        <Badge variant="outline" className={`text-[10px] ${slaColor(dias)}`}>⏱ {slaLabel(dias)}</Badge>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
+                        {l.telefone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{l.telefone}</span>}
+                        {l.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{l.email}</span>}
+                        {l.valor_estimado && <span>R$ {Number(l.valor_estimado).toLocaleString("pt-BR")}</span>}
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button size="icon" variant="ghost" onClick={() => openEdit(l)}><Pencil className="h-4 w-4" /></Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="icon" variant="ghost" className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir lead?</AlertDialogTitle>
+                            <AlertDialogDescription>Esta ação não pode ser desfeita. O lead "{l.nome}" será removido.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deleteLead(l.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </CardContent>
+                </Card>
               );
             })}
           </div>
-        </div>
+        )
+      ) : (
+        // KANBAN com @dnd-kit
+        <DndContext sensors={sensors} onDragEnd={onDragEnd}>
+          <div className="overflow-x-auto pb-2">
+            <div className="flex gap-3 min-w-max">
+              {ETAPAS.map(etapa => {
+                const items = porEtapa[etapa] ?? [];
+                return (
+                  <DroppableColumn key={etapa} etapa={etapa} count={items.length}>
+                    {items.map(l => (
+                      <DraggableCard key={l.id} lead={l} etapa={etapa} onEdit={openEdit} />
+                    ))}
+                  </DroppableColumn>
+                );
+              })}
+            </div>
+          </div>
+        </DndContext>
       )}
     </div>
   );

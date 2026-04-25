@@ -10,6 +10,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import SiteLayout from "@/components/site/SiteLayout";
 import VisaoGeral from "@/pages/VisaoGeral";
 import CRMPage from "@/pages/CRMPage";
+import LeadDetalhe from "@/pages/LeadDetalhe";
 import Marketing from "@/pages/Marketing";
 import Operacional from "@/pages/Operacional";
 import SaudeSistema from "@/pages/SaudeSistema";
@@ -53,6 +54,7 @@ const App = () => (
                   <Routes>
                     <Route path="/" element={<StaffRoute><VisaoGeral /></StaffRoute>} />
                     <Route path="/crm" element={<CRMPage />} />
+                    <Route path="/crm/lead/:id" element={<LeadDetalhe />} />
                     <Route path="/marketing" element={<StaffRoute><Marketing /></StaffRoute>} />
                     <Route path="/operacional" element={<StaffRoute><Operacional /></StaffRoute>} />
                     <Route path="/saude" element={<StaffRoute><SaudeSistema /></StaffRoute>} />
