@@ -14,18 +14,20 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Fraunces", "Georgia", "serif"],
+        sans: ["Montserrat", "system-ui", "sans-serif"],
+        display: ["Montserrat", "system-ui", "sans-serif"],
       },
       backgroundImage: {
         'gradient-primary': 'var(--gradient-primary)',
-        'gradient-gold': 'var(--gradient-gold)',
+        'gradient-mono': 'var(--gradient-mono)',
+        'gradient-gold': 'var(--gradient-mono)',
         'gradient-hero': 'var(--gradient-hero)',
       },
       boxShadow: {
         'soft': 'var(--shadow-soft)',
         'card': 'var(--shadow-card)',
-        'gold': 'var(--shadow-gold)',
+        'elegant': 'var(--shadow-elegant)',
+        'gold': 'var(--shadow-elegant)',
       },
       colors: {
         border: "hsl(var(--border))",
