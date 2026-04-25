@@ -256,6 +256,7 @@ export type Database = {
           last_message_preview: string | null
           lead_id: string | null
           phone: string
+          responsavel_id: string | null
           unread_count: number
           updated_at: string
         }
@@ -267,6 +268,7 @@ export type Database = {
           last_message_preview?: string | null
           lead_id?: string | null
           phone: string
+          responsavel_id?: string | null
           unread_count?: number
           updated_at?: string
         }
@@ -278,6 +280,7 @@ export type Database = {
           last_message_preview?: string | null
           lead_id?: string | null
           phone?: string
+          responsavel_id?: string | null
           unread_count?: number
           updated_at?: string
         }
