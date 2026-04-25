@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   FileDown,
   FileText as FileTextIcon,
+  MessageCircle,
 } from "lucide-react";
 import { NavLink, useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import hrLogo from "@/assets/hr-imoveis-logo.png";
@@ -45,6 +46,7 @@ const CRM_SUBTABS = [
   { label: "Tarefas", value: "tarefas", icon: CheckCircle2 },
   { label: "Relatórios", value: "relatorios", icon: FileDown },
   { label: "Propostas", value: "propostas", icon: FileTextIcon },
+  { label: "WhatsApp", value: "whatsapp", icon: MessageCircle },
 ];
 
 const MARKETING_SUBTABS = [
