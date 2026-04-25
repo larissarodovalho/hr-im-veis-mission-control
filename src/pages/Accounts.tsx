@@ -5,11 +5,13 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Building2, ArrowRight, Trash2 } from "lucide-react";
+import { Search, Building2, ArrowRight, Trash2, Plus, FileSpreadsheet } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
+import NovaContaDialog from "@/components/contas/NovaContaDialog";
+import ImportarContasDialog from "@/components/contas/ImportarContasDialog";
 
 export default function Accounts() {
   const { isAdmin, isGestor } = useRole();
@@ -17,6 +19,8 @@ export default function Accounts() {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [novaOpen, setNovaOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -50,11 +54,22 @@ export default function Accounts() {
           </h1>
           <p className="text-muted-foreground mt-1">{filtered.length} de {accounts.length} clientes convertidos</p>
         </div>
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar…" className="pl-8 w-64" value={search} onChange={e => setSearch(e.target.value)} />
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar…" className="pl-8 w-64" value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <FileSpreadsheet className="h-4 w-4 mr-2" /> Importar Excel
+          </Button>
+          <Button onClick={() => setNovaOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" /> Nova conta
+          </Button>
         </div>
       </header>
+
+      <NovaContaDialog open={novaOpen} onOpenChange={setNovaOpen} onCreated={load} />
+      <ImportarContasDialog open={importOpen} onOpenChange={setImportOpen} onImported={load} />
 
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
