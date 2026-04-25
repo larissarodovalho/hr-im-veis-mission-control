@@ -172,6 +172,57 @@ export type Database = {
         }
         Relationships: []
       }
+      contas: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          documento: string | null
+          email: string | null
+          endereco: string | null
+          id: string
+          lead_id_origem: string | null
+          nome: string
+          observacoes: string | null
+          responsavel_id: string | null
+          tags: string[] | null
+          telefone: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          documento?: string | null
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          lead_id_origem?: string | null
+          nome: string
+          observacoes?: string | null
+          responsavel_id?: string | null
+          tags?: string[] | null
+          telefone?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          documento?: string | null
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          lead_id_origem?: string | null
+          nome?: string
+          observacoes?: string | null
+          responsavel_id?: string | null
+          tags?: string[] | null
+          telefone?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contatos: {
         Row: {
           cpf_cnpj: string | null
@@ -364,6 +415,45 @@ export type Database = {
         }
         Relationships: []
       }
+      interacoes: {
+        Row: {
+          agendado_para: string | null
+          conta_id: string | null
+          created_at: string
+          created_by: string | null
+          descricao: string | null
+          id: string
+          lead_id: string | null
+          proxima_acao: string | null
+          resultado: string | null
+          tipo: string
+        }
+        Insert: {
+          agendado_para?: string | null
+          conta_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          lead_id?: string | null
+          proxima_acao?: string | null
+          resultado?: string | null
+          tipo: string
+        }
+        Update: {
+          agendado_para?: string | null
+          conta_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          lead_id?: string | null
+          proxima_acao?: string | null
+          resultado?: string | null
+          tipo?: string
+        }
+        Relationships: []
+      }
       lead_historico: {
         Row: {
           data: string
@@ -413,9 +503,11 @@ export type Database = {
           observacoes: string | null
           origem: string | null
           qualificacao: string | null
+          regiao: string | null
           status: string
           tags: string[] | null
           telefone: string | null
+          temperatura: string | null
           ultima_interacao: string | null
           updated_at: string
           valor_estimado: number | null
@@ -433,9 +525,11 @@ export type Database = {
           observacoes?: string | null
           origem?: string | null
           qualificacao?: string | null
+          regiao?: string | null
           status?: string
           tags?: string[] | null
           telefone?: string | null
+          temperatura?: string | null
           ultima_interacao?: string | null
           updated_at?: string
           valor_estimado?: number | null
@@ -453,12 +547,56 @@ export type Database = {
           observacoes?: string | null
           origem?: string | null
           qualificacao?: string | null
+          regiao?: string | null
           status?: string
           tags?: string[] | null
           telefone?: string | null
+          temperatura?: string | null
           ultima_interacao?: string | null
           updated_at?: string
           valor_estimado?: number | null
+        }
+        Relationships: []
+      }
+      ligacoes: {
+        Row: {
+          conta_id: string | null
+          corretor_id: string | null
+          created_at: string
+          created_by: string | null
+          data: string
+          duracao_seg: number | null
+          gravacao_url: string | null
+          id: string
+          lead_id: string | null
+          notas: string | null
+          resultado: string | null
+        }
+        Insert: {
+          conta_id?: string | null
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          duracao_seg?: number | null
+          gravacao_url?: string | null
+          id?: string
+          lead_id?: string | null
+          notas?: string | null
+          resultado?: string | null
+        }
+        Update: {
+          conta_id?: string | null
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          duracao_seg?: number | null
+          gravacao_url?: string | null
+          id?: string
+          lead_id?: string | null
+          notas?: string | null
+          resultado?: string | null
         }
         Relationships: []
       }
@@ -614,6 +752,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      reunioes: {
+        Row: {
+          agendada_para: string
+          conta_id: string | null
+          corretor_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          lead_id: string | null
+          link: string | null
+          local: string | null
+          notas: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agendada_para: string
+          conta_id?: string | null
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lead_id?: string | null
+          link?: string | null
+          local?: string | null
+          notas?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agendada_para?: string
+          conta_id?: string | null
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lead_id?: string | null
+          link?: string | null
+          local?: string | null
+          notas?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       social_metrics_daily: {
         Row: {
