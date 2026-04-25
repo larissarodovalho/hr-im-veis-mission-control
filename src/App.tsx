@@ -5,21 +5,28 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import StaffRoute from "@/components/StaffRoute";
-import DashboardLayout from "@/components/DashboardLayout";
+import AppLayout from "@/components/AppLayout";
 import SiteLayout from "@/components/site/SiteLayout";
-import VisaoGeral from "@/pages/VisaoGeral";
-import CRMPage from "@/pages/CRMPage";
-import LeadDetalhe from "@/pages/LeadDetalhe";
-import Marketing from "@/pages/Marketing";
-import Operacional from "@/pages/Operacional";
-import SaudeSistema from "@/pages/SaudeSistema";
-import ControleDeCreacao from "@/pages/ControleDeCreacao";
-import Integracoes from "@/pages/Integracoes";
-import AuthPage from "@/pages/AuthPage";
-import UsuariosAdminPage from "@/pages/UsuariosAdminPage";
-import ConfiguracoesPage from "@/pages/ConfiguracoesPage";
+import Landing from "@/pages/Landing";
+import Auth from "@/pages/Auth";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
+import Dashboard from "@/pages/Dashboard";
+import Leads from "@/pages/Leads";
+import LeadDetail from "@/pages/LeadDetail";
+import Accounts from "@/pages/Accounts";
+import AccountDetail from "@/pages/AccountDetail";
+import Imoveis from "@/pages/Imoveis";
+import WhatsApp from "@/pages/WhatsApp";
+import Meetings from "@/pages/Meetings";
+import Calls from "@/pages/Calls";
+import Visits from "@/pages/Visits";
+import Schedule from "@/pages/Schedule";
+import Reports from "@/pages/Reports";
+import Users from "@/pages/Users";
+import Settings from "@/pages/Settings";
 import NotFound from "@/pages/NotFound";
+// Site público (mantido)
 import HomePage from "@/pages/site/HomePage";
 import ImoveisPage from "@/pages/site/ImoveisPage";
 import ImovelDetalhePage from "@/pages/site/ImovelDetalhePage";
@@ -36,37 +43,44 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* Auth */}
-            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/" element={<Landing />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/esqueci-senha" element={<ForgotPassword />} />
+            <Route path="/redefinir-senha" element={<ResetPassword />} />
 
-            {/* Site público */}
+            {/* Site público preservado */}
             <Route path="/site" element={<SiteLayout><HomePage /></SiteLayout>} />
             <Route path="/site/imoveis" element={<SiteLayout><ImoveisPage /></SiteLayout>} />
             <Route path="/site/imovel/:id" element={<SiteLayout><ImovelDetalhePage /></SiteLayout>} />
             <Route path="/site/sobre" element={<SiteLayout><SobrePage /></SiteLayout>} />
             <Route path="/site/contato" element={<SiteLayout><ContatoPage /></SiteLayout>} />
-            <Route path="/site/*" element={<SiteLayout><Routes><Route path="*" element={<NotFound />} /></Routes></SiteLayout>} />
 
-            {/* Painel CRM (protegido) */}
-            <Route path="/*" element={
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <Routes>
-                    <Route path="/" element={<StaffRoute><VisaoGeral /></StaffRoute>} />
-                    <Route path="/crm" element={<CRMPage />} />
-                    <Route path="/crm/lead/:id" element={<LeadDetalhe />} />
-                    <Route path="/marketing" element={<StaffRoute><Marketing /></StaffRoute>} />
-                    <Route path="/operacional" element={<StaffRoute><Operacional /></StaffRoute>} />
-                    <Route path="/saude" element={<StaffRoute><SaudeSistema /></StaffRoute>} />
-                    <Route path="/controle-criacao" element={<StaffRoute><ControleDeCreacao /></StaffRoute>} />
-                    <Route path="/integracoes" element={<StaffRoute><Integracoes /></StaffRoute>} />
-                    <Route path="/usuarios" element={<UsuariosAdminPage />} />
-                    <Route path="/configuracoes" element={<ConfiguracoesPage />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
+            {/* CRM (clone Brazil Lands) */}
+            <Route
+              path="/app"
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Dashboard />} />
+              <Route path="leads" element={<Leads />} />
+              <Route path="leads/:id" element={<LeadDetail />} />
+              <Route path="contas" element={<Accounts />} />
+              <Route path="contas/:id" element={<AccountDetail />} />
+              <Route path="imoveis" element={<Imoveis />} />
+              <Route path="whatsapp" element={<WhatsApp />} />
+              <Route path="reunioes" element={<Meetings />} />
+              <Route path="ligacoes" element={<Calls />} />
+              <Route path="visitas" element={<Visits />} />
+              <Route path="agenda" element={<Schedule />} />
+              <Route path="relatorios" element={<Reports />} />
+              <Route path="usuarios" element={<Users />} />
+              <Route path="configuracoes" element={<Settings />} />
+            </Route>
+
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
