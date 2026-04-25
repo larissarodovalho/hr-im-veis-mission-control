@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { MapPin, BedDouble, Bath, Car, Maximize2, ArrowLeft, ArrowUpRight, Home, Phone, MessageCircle } from "lucide-react";
-import { IMOVEIS_SITE } from "@/data/imoveisCRM";
+const IMOVEIS_SITE: any[] = [];
 
 import casaLuxo1 from "@/assets/imoveis/casa-luxo-1.jpg";
 import casaLuxo2 from "@/assets/imoveis/casa-luxo-2.jpg";

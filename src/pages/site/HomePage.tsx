@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { imoveis } from "@/data/mockData";
+const imoveis: any[] = [];
 import { ArrowRight, MapPin, ArrowUpRight, MessageCircle, Building2 } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useState } from "react";
