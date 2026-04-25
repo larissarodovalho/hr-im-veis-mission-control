@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      campanhas_trafego: {
+        Row: {
+          budget: number | null
+          cliques: number | null
+          created_at: string
+          created_by: string | null
+          data_fim: string | null
+          data_inicio: string | null
+          external_id: string | null
+          gastos: number | null
+          id: string
+          impressoes: number | null
+          leads: number | null
+          nome: string
+          plataforma: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          budget?: number | null
+          cliques?: number | null
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          external_id?: string | null
+          gastos?: number | null
+          id?: string
+          impressoes?: number | null
+          leads?: number | null
+          nome: string
+          plataforma: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          budget?: number | null
+          cliques?: number | null
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          external_id?: string | null
+          gastos?: number | null
+          id?: string
+          impressoes?: number | null
+          leads?: number | null
+          nome?: string
+          plataforma?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contatos: {
         Row: {
           cpf_cnpj: string | null
@@ -62,6 +116,147 @@ export type Database = {
           telefone?: string | null
           tipo?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      conteudo_posts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_planejada: string | null
+          formato: string | null
+          id: string
+          observacoes: string | null
+          perfil: string | null
+          prioridade: string
+          status: string
+          tema: string | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_planejada?: string | null
+          formato?: string | null
+          id?: string
+          observacoes?: string | null
+          perfil?: string | null
+          prioridade?: string
+          status?: string
+          tema?: string | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_planejada?: string | null
+          formato?: string | null
+          id?: string
+          observacoes?: string | null
+          perfil?: string | null
+          prioridade?: string
+          status?: string
+          tema?: string | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      imoveis: {
+        Row: {
+          area_total: number | null
+          area_util: number | null
+          bairro: string | null
+          banheiros: number | null
+          caracteristicas: string[] | null
+          cep: string | null
+          cidade: string | null
+          complemento: string | null
+          corretor_id: string | null
+          created_at: string
+          created_by: string | null
+          descricao: string | null
+          destaque: boolean
+          endereco: string | null
+          estado: string | null
+          finalidade: string
+          fotos: string[] | null
+          id: string
+          numero: string | null
+          quartos: number | null
+          status: string
+          suites: number | null
+          tipo: string
+          titulo: string
+          updated_at: string
+          vagas: number | null
+          valor: number | null
+          valor_condominio: number | null
+          valor_iptu: number | null
+        }
+        Insert: {
+          area_total?: number | null
+          area_util?: number | null
+          bairro?: string | null
+          banheiros?: number | null
+          caracteristicas?: string[] | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          destaque?: boolean
+          endereco?: string | null
+          estado?: string | null
+          finalidade?: string
+          fotos?: string[] | null
+          id?: string
+          numero?: string | null
+          quartos?: number | null
+          status?: string
+          suites?: number | null
+          tipo?: string
+          titulo: string
+          updated_at?: string
+          vagas?: number | null
+          valor?: number | null
+          valor_condominio?: number | null
+          valor_iptu?: number | null
+        }
+        Update: {
+          area_total?: number | null
+          area_util?: number | null
+          bairro?: string | null
+          banheiros?: number | null
+          caracteristicas?: string[] | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          destaque?: boolean
+          endereco?: string | null
+          estado?: string | null
+          finalidade?: string
+          fotos?: string[] | null
+          id?: string
+          numero?: string | null
+          quartos?: number | null
+          status?: string
+          suites?: number | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+          vagas?: number | null
+          valor?: number | null
+          valor_condominio?: number | null
+          valor_iptu?: number | null
         }
         Relationships: []
       }
@@ -226,6 +421,116 @@ export type Database = {
         }
         Relationships: []
       }
+      propostas: {
+        Row: {
+          condicoes: string | null
+          corretor_id: string | null
+          created_at: string
+          created_by: string | null
+          data_envio: string | null
+          id: string
+          imovel_id: string | null
+          lead_id: string | null
+          observacoes: string | null
+          status: string
+          updated_at: string
+          valor: number | null
+        }
+        Insert: {
+          condicoes?: string | null
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_envio?: string | null
+          id?: string
+          imovel_id?: string | null
+          lead_id?: string | null
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          valor?: number | null
+        }
+        Update: {
+          condicoes?: string | null
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_envio?: string | null
+          id?: string
+          imovel_id?: string | null
+          lead_id?: string | null
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "propostas_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "propostas_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarefas: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          descricao: string | null
+          id: string
+          lead_id: string | null
+          prazo: string | null
+          prioridade: string
+          responsavel_id: string | null
+          status: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          lead_id?: string | null
+          prazo?: string | null
+          prioridade?: string
+          responsavel_id?: string | null
+          status?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          lead_id?: string | null
+          prazo?: string | null
+          prioridade?: string
+          responsavel_id?: string | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -246,6 +551,60 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      visitas: {
+        Row: {
+          corretor_id: string | null
+          created_at: string
+          created_by: string | null
+          data_visita: string
+          id: string
+          imovel_id: string | null
+          lead_id: string | null
+          observacoes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_visita: string
+          id?: string
+          imovel_id?: string | null
+          lead_id?: string | null
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_visita?: string
+          id?: string
+          imovel_id?: string | null
+          lead_id?: string | null
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitas_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitas_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       whatsapp_conversations: {
         Row: {
