@@ -22,6 +22,8 @@ import OportunidadeDetalhe from "@/components/OportunidadeDetalhe";
 import PropostasTab from "@/components/PropostasTab";
 import ClientesSemContato from "@/components/ClientesSemContato";
 import WhatsAppTab from "@/components/WhatsAppTab";
+import LeadsTab from "@/components/LeadsTab";
+import ContatosTab from "@/components/ContatosTab";
 
 const ETAPAS_ORDEM: LeadEtapa[] = ["Lead recebido", "Qualificado", "Visita agendada", "Visita realizada", "Proposta", "Fechamento"];
 
