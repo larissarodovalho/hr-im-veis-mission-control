@@ -59,18 +59,21 @@ const MARKETING_SUBTABS = [
   { label: "Conteúdo", value: "conteudo", icon: FileText },
 ];
 
-const items = [
-  { title: "Visão Geral", url: "/", icon: LayoutDashboard },
-  { title: "CRM — Comercial", url: "/crm", icon: Users },
-  { title: "Marketing", url: "/marketing", icon: TrendingUp },
-  { title: "Integrações", url: "/integracoes", icon: Plug },
-  { title: "Operacional", url: "/operacional", icon: Settings },
-  { title: "Saúde do Sistema", url: "/saude", icon: Activity },
+const ALL_ITEMS = [
+  { title: "Visão Geral", url: "/", icon: LayoutDashboard, restricted: true },
+  { title: "CRM — Comercial", url: "/crm", icon: Users, restricted: false },
+  { title: "Marketing", url: "/marketing", icon: TrendingUp, restricted: true },
+  { title: "Integrações", url: "/integracoes", icon: Plug, restricted: true },
+  { title: "Operacional", url: "/operacional", icon: Settings, restricted: true },
+  { title: "Saúde do Sistema", url: "/saude", icon: Activity, restricted: true },
 ];
+
+const CORRETOR_ALLOWED_CRM = new Set(["leads", "contatos", "whatsapp"]);
 
 export function AppSidebar() {
   const { state } = useSidebar();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isGestor } = useAuth();
+  const isCorretorOnly = !isAdmin && !isGestor;
   const collapsed = state === "collapsed";
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -78,6 +81,11 @@ export function AppSidebar() {
   const isCRM = location.pathname === "/crm";
   const isMarketing = location.pathname === "/marketing";
   const activeTab = searchParams.get("tab") || (isCRM ? "leads" : "geral");
+
+  const items = ALL_ITEMS.filter((i) => !isCorretorOnly || !i.restricted);
+  const visibleCrmSubtabs = isCorretorOnly
+    ? CRM_SUBTABS.filter((s) => CORRETOR_ALLOWED_CRM.has(s.value))
+    : CRM_SUBTABS;
 
   const adminItems = [
     { title: "Usuários", url: "/usuarios", icon: Shield },
