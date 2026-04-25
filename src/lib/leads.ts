@@ -73,3 +73,16 @@ export function initials(name: string | null | undefined): string {
   if (!name) return '?';
   return name.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join('');
 }
+
+// ===== Compatibilidade com componentes antigos do HR (serão removidos depois) =====
+export const ETAPAS = STAGES.map(s => s.id);
+export const ORIGENS = Object.keys(SOURCES);
+export const STATUS = ['Novo', 'Em contato', 'Qualificado', 'Convertido', 'Perdido'];
+export const TEMPERATURAS = TEMPERATURES;
+export const ETAPA_COLORS: Record<string, string> = STAGES.reduce((acc, s) => {
+  acc[s.id] = s.color;
+  return acc;
+}, {} as Record<string, string>);
+export const TEMP_META = TEMPERATURES;
+export const INTERACAO_TIPOS = ['ligacao', 'mensagem', 'email', 'visita', 'reuniao', 'nota'];
+export const INTERACAO_RESULTADOS = ['atendeu', 'nao_atendeu', 'retornar', 'interessado', 'sem_interesse', 'agendou'];
