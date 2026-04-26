@@ -268,11 +268,25 @@ export default function LeadDetail() {
               </div>
               <div><Label>Endereço</Label><Input value={convertForm.endereco} onChange={e => setConvertForm({ ...convertForm, endereco: e.target.value })} /></div>
               <div><Label>Observações</Label><Textarea rows={3} value={convertForm.observacoes} onChange={e => setConvertForm({ ...convertForm, observacoes: e.target.value })} /></div>
+              {convertDups.length > 0 && (
+                <DuplicateAlert
+                  matches={convertDups}
+                  showActions
+                  onIgnore={() => setForceConvert(true)}
+                />
+              )}
+              {forceConvert && (
+                <p className="text-xs text-amber-600">Conta será criada mesmo com duplicidade detectada.</p>
+              )}
             </div>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setConvertOpen(false)} disabled={converting}>Cancelar</Button>
-            <Button onClick={confirmConvert} disabled={converting} className="bg-success hover:bg-success/90 text-success-foreground">
+            <Button
+              onClick={confirmConvert}
+              disabled={converting || (convertDups.length > 0 && !forceConvert)}
+              className="bg-success hover:bg-success/90 text-success-foreground"
+            >
               {converting ? "Convertendo…" : "Converter em conta"}
             </Button>
           </DialogFooter>
