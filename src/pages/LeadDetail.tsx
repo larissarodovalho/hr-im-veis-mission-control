@@ -15,6 +15,8 @@ import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Plus, Building
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { findDuplicates, onlyDigits, normEmail, DuplicateMatch } from "@/lib/duplicates";
+import DuplicateAlert from "@/components/DuplicateAlert";
 
 export default function LeadDetail() {
   const { id } = useParams();
