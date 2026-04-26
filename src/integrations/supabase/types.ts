@@ -44,6 +44,75 @@ export type Database = {
         }
         Relationships: []
       }
+      agenda_bloqueios: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          dia_inteiro: boolean
+          fim: string
+          id: string
+          inicio: string
+          motivo: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          dia_inteiro?: boolean
+          fim: string
+          id?: string
+          inicio: string
+          motivo?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          dia_inteiro?: boolean
+          fim?: string
+          id?: string
+          inicio?: string
+          motivo?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      agenda_ia_log: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          id: string
+          message_id: string | null
+          parsed: Json | null
+          raw_text: string | null
+          reuniao_id: string | null
+          status: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          parsed?: Json | null
+          raw_text?: string | null
+          reuniao_id?: string | null
+          status?: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          parsed?: Json | null
+          raw_text?: string | null
+          reuniao_id?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       agentes: {
         Row: {
           created_at: string
@@ -760,12 +829,16 @@ export type Database = {
           corretor_id: string | null
           created_at: string
           created_by: string | null
+          criado_por_ia: boolean
+          duracao_min: number
           id: string
           lead_id: string | null
           link: string | null
           local: string | null
           notas: string | null
           status: string
+          tipo: string
+          titulo: string | null
           updated_at: string
         }
         Insert: {
@@ -774,12 +847,16 @@ export type Database = {
           corretor_id?: string | null
           created_at?: string
           created_by?: string | null
+          criado_por_ia?: boolean
+          duracao_min?: number
           id?: string
           lead_id?: string | null
           link?: string | null
           local?: string | null
           notas?: string | null
           status?: string
+          tipo?: string
+          titulo?: string | null
           updated_at?: string
         }
         Update: {
@@ -788,12 +865,16 @@ export type Database = {
           corretor_id?: string | null
           created_at?: string
           created_by?: string | null
+          criado_por_ia?: boolean
+          duracao_min?: number
           id?: string
           lead_id?: string | null
           link?: string | null
           local?: string | null
           notas?: string | null
           status?: string
+          tipo?: string
+          titulo?: string | null
           updated_at?: string
         }
         Relationships: []
