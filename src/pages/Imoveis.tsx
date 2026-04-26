@@ -1,18 +1,22 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, Home as HomeIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, Home as HomeIcon, Plus } from "lucide-react";
+import NovoImovelDialog from "@/components/imoveis/NovoImovelDialog";
 
 export default function Imoveis() {
   const [items, setItems] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const [openNew, setOpenNew] = useState(false);
 
-  useEffect(() => {
+  const load = () => {
     supabase.from("imoveis").select("*").order("created_at", { ascending: false }).then(({ data }) => setItems(data ?? []));
-  }, []);
+  };
+
+  useEffect(() => { load(); }, []);
 
   const fmt = (n: number | null) => n == null ? "—" : n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
   const filtered = items.filter(i => !search || i.titulo?.toLowerCase().includes(search.toLowerCase()) || i.cidade?.toLowerCase().includes(search.toLowerCase()));
@@ -24,9 +28,14 @@ export default function Imoveis() {
           <h1 className="font-display text-3xl font-semibold flex items-center gap-2"><HomeIcon className="h-7 w-7 text-primary" /> Imóveis</h1>
           <p className="text-muted-foreground mt-1">{filtered.length} imóveis</p>
         </div>
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar…" className="pl-8 w-64" value={search} onChange={e => setSearch(e.target.value)} />
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar…" className="pl-8 w-64" value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+          <Button onClick={() => setOpenNew(true)}>
+            <Plus className="h-4 w-4 mr-1" /> Cadastrar imóvel
+          </Button>
         </div>
       </header>
 
@@ -53,8 +62,14 @@ export default function Imoveis() {
             </div>
           </Card>
         ))}
-        {filtered.length === 0 && <Card className="p-10 text-center text-muted-foreground col-span-full">Nenhum imóvel.</Card>}
+        {filtered.length === 0 && (
+          <Card className="p-10 text-center text-muted-foreground col-span-full">
+            Nenhum imóvel cadastrado. Clique em <strong>Cadastrar imóvel</strong> para começar.
+          </Card>
+        )}
       </div>
+
+      <NovoImovelDialog open={openNew} onOpenChange={setOpenNew} onCreated={load} />
     </div>
   );
 }
