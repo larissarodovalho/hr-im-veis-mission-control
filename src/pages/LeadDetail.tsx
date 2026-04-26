@@ -15,6 +15,8 @@ import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Plus, Building
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { findDuplicates, onlyDigits, normEmail, DuplicateMatch } from "@/lib/duplicates";
+import DuplicateAlert from "@/components/DuplicateAlert";
 
 export default function LeadDetail() {
   const { id } = useParams();
@@ -29,6 +31,8 @@ export default function LeadDetail() {
   const [convertOpen, setConvertOpen] = useState(false);
   const [convertForm, setConvertForm] = useState<any>(null);
   const [converting, setConverting] = useState(false);
+  const [convertDups, setConvertDups] = useState<DuplicateMatch[]>([]);
+  const [forceConvert, setForceConvert] = useState(false);
 
   const load = async () => {
     if (!id) return;
@@ -88,15 +92,99 @@ export default function LeadDetail() {
       nome: lead.nome, email: lead.email ?? "", telefone: lead.telefone ?? "",
       endereco: lead.regiao ?? "", tipo: "PF", documento: "", observacoes: lead.observacoes ?? "",
     });
+    setConvertDups([]);
+    setForceConvert(false);
     setConvertOpen(true);
   };
 
+  // Verifica duplicidade enquanto edita o formulário de conversão
+  useEffect(() => {
+    if (!convertOpen || !convertForm) return;
+    const t = setTimeout(async () => {
+      const matches = await findDuplicates({
+        email: convertForm.email,
+        telefone: convertForm.telefone,
+        documento: convertForm.documento,
+      });
+      // Também verifica nome + telefone (mesmo nome com mesmo telefone)
+      const nome = (convertForm.nome || "").trim().toLowerCase();
+      const telTail = onlyDigits(convertForm.telefone).slice(-8);
+      let extra: DuplicateMatch[] = [];
+      if (nome && telTail.length >= 8) {
+        const { data } = await supabase
+          .from("contas")
+          .select("id,nome,email,telefone,documento")
+          .ilike("nome", nome)
+          .ilike("telefone", `%${telTail}%`);
+        extra = (data ?? [])
+          .filter((r: any) => onlyDigits(r.telefone).slice(-8) === telTail)
+          .map((r: any) => ({
+            table: "contas" as const,
+            id: r.id,
+            nome: r.nome,
+            email: r.email,
+            telefone: r.telefone,
+            documento: r.documento,
+            matchedBy: ["telefone" as const],
+          }));
+      }
+      const map = new Map<string, DuplicateMatch>();
+      [...matches, ...extra].forEach((m) => {
+        const k = `${m.table}:${m.id}`;
+        if (!map.has(k)) map.set(k, m);
+      });
+      setConvertDups(Array.from(map.values()));
+      setForceConvert(false);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [convertOpen, convertForm?.nome, convertForm?.email, convertForm?.telefone, convertForm?.documento]);
+
   const confirmConvert = async () => {
     if (!convertForm.nome?.trim()) return toast.error("Nome obrigatório");
+    if (convertDups.length && !forceConvert) {
+      return toast.error("Conta já existe. Confirme abaixo para prosseguir mesmo assim.");
+    }
     setConverting(true);
+
+    // Revalidação no servidor para evitar corrida
+    const nome = convertForm.nome.trim();
+    const email = normEmail(convertForm.email);
+    const telTail = onlyDigits(convertForm.telefone).slice(-8);
+    const docDigits = onlyDigits(convertForm.documento);
+    let dupQ = supabase.from("contas").select("id,nome,telefone,email,documento");
+    const orParts: string[] = [];
+    if (email) orParts.push(`email.ilike.${email}`);
+    if (docDigits) orParts.push(`documento.ilike.%${docDigits}%`);
+    if (telTail.length >= 8) orParts.push(`telefone.ilike.%${telTail}%`);
+    if (orParts.length && !forceConvert) {
+      const { data: dups } = await dupQ.or(orParts.join(","));
+      const real = (dups ?? []).filter((r: any) => {
+        const tMatch = telTail && onlyDigits(r.telefone).slice(-8) === telTail;
+        const eMatch = email && (r.email || "").toLowerCase() === email;
+        const dMatch = docDigits && onlyDigits(r.documento).includes(docDigits);
+        const nMatch = (r.nome || "").trim().toLowerCase() === nome.toLowerCase();
+        return eMatch || dMatch || (tMatch && nMatch);
+      });
+      if (real.length) {
+        setConverting(false);
+        setConvertDups(
+          real.map((r: any) => ({
+            table: "contas" as const,
+            id: r.id,
+            nome: r.nome,
+            email: r.email,
+            telefone: r.telefone,
+            documento: r.documento,
+            matchedBy: ["telefone" as const],
+          }))
+        );
+        return toast.error("Conta duplicada detectada. Confirme para prosseguir.");
+      }
+    }
+
     const { data: created, error } = await supabase.from("contas").insert({
       lead_id_origem: lead.id,
-      nome: convertForm.nome.trim(),
+      nome,
       email: convertForm.email?.trim() || null,
       telefone: convertForm.telefone?.trim() || null,
       endereco: convertForm.endereco?.trim() || null,
@@ -180,11 +268,25 @@ export default function LeadDetail() {
               </div>
               <div><Label>Endereço</Label><Input value={convertForm.endereco} onChange={e => setConvertForm({ ...convertForm, endereco: e.target.value })} /></div>
               <div><Label>Observações</Label><Textarea rows={3} value={convertForm.observacoes} onChange={e => setConvertForm({ ...convertForm, observacoes: e.target.value })} /></div>
+              {convertDups.length > 0 && (
+                <DuplicateAlert
+                  matches={convertDups}
+                  showActions
+                  onIgnore={() => setForceConvert(true)}
+                />
+              )}
+              {forceConvert && (
+                <p className="text-xs text-amber-600">Conta será criada mesmo com duplicidade detectada.</p>
+              )}
             </div>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setConvertOpen(false)} disabled={converting}>Cancelar</Button>
-            <Button onClick={confirmConvert} disabled={converting} className="bg-success hover:bg-success/90 text-success-foreground">
+            <Button
+              onClick={confirmConvert}
+              disabled={converting || (convertDups.length > 0 && !forceConvert)}
+              className="bg-success hover:bg-success/90 text-success-foreground"
+            >
               {converting ? "Convertendo…" : "Converter em conta"}
             </Button>
           </DialogFooter>
