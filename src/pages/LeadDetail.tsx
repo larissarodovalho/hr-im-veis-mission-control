@@ -31,6 +31,8 @@ export default function LeadDetail() {
   const [convertOpen, setConvertOpen] = useState(false);
   const [convertForm, setConvertForm] = useState<any>(null);
   const [converting, setConverting] = useState(false);
+  const [convertDups, setConvertDups] = useState<DuplicateMatch[]>([]);
+  const [forceConvert, setForceConvert] = useState(false);
 
   const load = async () => {
     if (!id) return;
