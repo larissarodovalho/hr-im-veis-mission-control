@@ -83,14 +83,33 @@ Deno.serve(async (req) => {
       convId = created!.id;
     }
 
-    await supabase.from("whatsapp_messages").insert({
+    const { data: msgRow } = await supabase.from("whatsapp_messages").insert({
       conversation_id: convId,
       external_id: externalId,
       direction: fromMe ? "outbound" : "inbound",
       content,
       status: "delivered",
       timestamp: ts,
-    });
+    }).select("id").single();
+
+    // IA: tentar criar agendamento automático em mensagens recebidas
+    if (!fromMe && content && content !== "[mídia]") {
+      try {
+        await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/agenda-ai-parse`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
+          body: JSON.stringify({
+            conversation_id: convId,
+            message_id: msgRow?.id,
+            content,
+            phone,
+            contact_name: pushName,
+          }),
+        });
+      } catch (e) {
+        console.error("falha ao chamar agenda-ai-parse:", e);
+      }
+    }
 
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
