@@ -1,52 +1,24 @@
-# Replicar layout de Configurações da Brazil Lands
+# Corrigir rota /app/configuracoes
 
-Hoje a página `/app/configuracoes` do CRM HR usa abas (Empresa, WhatsApp, Integrações & IA, Notificações, Sistema). Na Brazil Lands é uma **página única scrollável** com cards na ordem do screenshot. Vou alinhar visualmente.
+**Problema encontrado:** a rota `/app/configuracoes` em `src/App.tsx` (linha 84) está renderizando o componente antigo `<Settings />` (de `src/pages/Settings.tsx`), que mostra apenas "Backend" e "Sobre". Por isso todas as edições que fizemos em `src/pages/ConfiguracoesPage.tsx` (Backup & Recuperação, Webhook captação, WhatsApp, IA, Landing) não aparecem — esse arquivo nunca é carregado.
 
-## Nova ordem da página (top → bottom)
+## Correção
 
-1. **Backup & Recuperação de dados** *(novo card)*
-   - Sub-cards: "Lixeira (até 30 dias)" → link para `/app/lixeira`
-   - "Auditoria (histórico completo)" → link para `/app/auditoria`
-   - "Backup automático do banco" (texto informativo sobre Lovable Cloud → Backups)
-   - Caixa de dica sobre permissões (apenas admin pode excluir definitivamente).
+Em `src/App.tsx`:
 
-2. **Webhook de captação de leads** *(já existe na aba, vai virar card no topo)*
-   - URL `https://...supabase.co/functions/v1/lead-webhook` com botão copiar.
-   - Exemplo de JSON: `full_name`, `phone`, `email`, `source`, `interest`, `region`, `notes`.
+1. Trocar o import (linha 29):
+   ```ts
+   // antes
+   import Settings from "@/pages/Settings";
+   // depois
+   import ConfiguracoesPage from "@/pages/ConfiguracoesPage";
+   ```
 
-3. **WhatsApp (Evolution API / Z-API)** *(novo card de instruções, igual Brazil Lands)*
-   - URL do webhook `whatsapp-webhook` com botão copiar.
-   - Caixa verde com "Próximos passos" (pedir ao Lovable para configurar credenciais, fornecer URL/API key/instância, colar webhook).
+2. Trocar o uso na rota (linha 84):
+   ```tsx
+   <Route path="configuracoes" element={<ConfiguracoesPage />} />
+   ```
 
-4. **Status / QR Code / Webhook ativo / Testar envio** *(mantém o `WhatsAppConnection` que já existe)*
-   - Status da instância (🟢/🔴) + Reiniciar / Desconectar
-   - Gerar QR Code com polling
-   - Configurar webhook na Evolution
-   - Testar envio
+3. Apagar o arquivo obsoleto `src/pages/Settings.tsx` para evitar confusão futura.
 
-5. **IA conversacional** *(card simples)*
-   - Texto: "A IA atende leads no chat público (`/captura`) e no WhatsApp quando o toggle está ativo."
-   - Badge com modelo `google/gemini-3-flash-preview` via Lovable AI.
-
-6. **Landing de captura**
-   - URL `https://.../captura` com botão copiar.
-
-7. **Configurações avançadas (abas no rodapé)**
-   - Mantém Empresa / Notificações / Sistema em `Tabs` no final, para não perder funcionalidades já existentes.
-
-## Detalhes técnicos
-
-Arquivo único alterado: `src/pages/ConfiguracoesPage.tsx`.
-
-- Remover `Tabs` no topo; substituir por sequência vertical de `Card`s.
-- Criar 5 componentes internos: `BackupRecuperacao`, `WebhookCaptacao`, `WhatsAppEvolutionInfo`, `IAConversacional`, `LandingCaptura`.
-- Reaproveitar `WhatsAppConnection` já existente (status + QR + teste de envio).
-- Importar ícones extras do `lucide-react`: `ShieldCheck`, `History`, `Trash2`, `HardDrive`.
-- Importar `Link` do `react-router-dom` para os atalhos de Lixeira/Auditoria.
-- Manter as funcionalidades de Empresa, Notificações e Sistema dentro de `Tabs` no final da página.
-
-## Fora do escopo deste passo
-
-- Criar a Edge Function `lead-webhook` (apenas mostramos a URL — se ainda não existir, peça depois "ativar webhook de captação de leads").
-- Criar a página pública `/captura` (apenas mostramos a URL).
-- Configurar credenciais reais da Evolution/Z-API (depende de você fornecer URL, API key e nome da instância).
+Sem outras alterações — `ConfiguracoesPage.tsx` já está pronto com o layout da Brazil Lands.
