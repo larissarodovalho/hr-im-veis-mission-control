@@ -22,7 +22,7 @@ export default function Imoveis() {
   const filtered = items.filter(i => !search || i.titulo?.toLowerCase().includes(search.toLowerCase()) || i.cidade?.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <header className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="font-display text-3xl font-semibold flex items-center gap-2"><HomeIcon className="h-7 w-7 text-primary" /> Imóveis</h1>

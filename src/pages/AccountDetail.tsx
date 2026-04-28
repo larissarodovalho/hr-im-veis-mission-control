@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ArrowLeft, Pencil, Building2, Phone, Mail, Save } from "lucide-react";
+import { ArrowLeft, Pencil, Building2, Phone, Mail, Save, FileSignature } from "lucide-react";
+import EntityDocumentsTab from "@/components/EntityDocumentsTab";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -25,7 +26,7 @@ export default function AccountDetail() {
   };
   useEffect(() => { load(); }, [id]);
 
-  if (!acc) return <div className="p-8 text-muted-foreground">Carregando…</div>;
+  if (!acc) return <div className="p-4 sm:p-6 lg:p-8 text-muted-foreground">Carregando…</div>;
 
   const save = async () => {
     if (!editing.nome.trim()) return toast.error("Nome obrigatório");
@@ -43,7 +44,7 @@ export default function AccountDetail() {
   };
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <Link to="/app/contas" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
       </Link>
@@ -64,6 +65,13 @@ export default function AccountDetail() {
 
       {acc.endereco && <Card className="p-5"><h3 className="font-display text-lg font-semibold mb-2">Endereço</h3><p className="text-sm text-muted-foreground">{acc.endereco}</p></Card>}
       {acc.observacoes && <Card className="p-5"><h3 className="font-display text-lg font-semibold mb-2">Observações</h3><p className="text-sm text-muted-foreground whitespace-pre-wrap">{acc.observacoes}</p></Card>}
+
+      <Card className="p-5">
+        <h3 className="font-display text-lg font-semibold mb-3 flex items-center gap-2">
+          <FileSignature className="h-5 w-5" /> Documentos para assinatura
+        </h3>
+        <EntityDocumentsTab contaId={acc.id} defaultSigner={{ name: acc.nome, email: acc.email }} />
+      </Card>
 
       <Dialog open={!!editing} onOpenChange={o => !o && setEditing(null)}>
         <DialogContent>

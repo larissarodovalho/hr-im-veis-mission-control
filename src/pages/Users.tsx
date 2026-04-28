@@ -28,8 +28,8 @@ export default function Users() {
     setLoading(false);
   };
 
-  if (roleLoading) return <div className="p-8 text-muted-foreground">Carregando…</div>;
-  if (!isAdmin) return <div className="p-8"><Card className="p-6 text-center"><Shield className="mx-auto h-10 w-10 text-muted-foreground mb-2" /><p>Apenas administradores.</p></Card></div>;
+  if (roleLoading) return <div className="p-4 sm:p-6 lg:p-8 text-muted-foreground">Carregando…</div>;
+  if (!isAdmin) return <div className="p-4 sm:p-6 lg:p-8"><Card className="p-6 text-center"><Shield className="mx-auto h-10 w-10 text-muted-foreground mb-2" /><p>Apenas administradores.</p></Card></div>;
 
   return (
     <div className="p-4 md:p-8 space-y-6">

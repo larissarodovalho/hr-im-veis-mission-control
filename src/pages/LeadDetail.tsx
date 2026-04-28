@@ -11,7 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, Stage, Temperature } from "@/lib/leads";
-import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Plus, Building2 } from "lucide-react";
+import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Plus, Building2, FileSignature } from "lucide-react";
+import EntityDocumentsTab from "@/components/EntityDocumentsTab";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -202,7 +203,7 @@ export default function LeadDetail() {
   };
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <Link to="/app/leads" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4 mr-1" /> Voltar</Link>
 
       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -296,7 +297,19 @@ export default function LeadDetail() {
       <div className="grid lg:grid-cols-3 gap-6">
         <Card className="p-5 space-y-3">
           <h3 className="font-display text-lg font-semibold">Contato</h3>
-          {lead.telefone && <div className="flex items-center gap-2 text-sm"><Phone className="h-4 w-4 text-muted-foreground" />{lead.telefone}</div>}
+          {lead.telefone && (
+            <div className="flex items-center justify-between gap-2 text-sm">
+              <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" />{lead.telefone}</div>
+              <a
+                href={`https://wa.me/${onlyDigits(lead.telefone).replace(/^0+/, "")}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-success/15 text-success border border-success/30 hover:bg-success/25"
+              >
+                <MessageSquare className="h-3 w-3" /> WhatsApp
+              </a>
+            </div>
+          )}
           {lead.email && <div className="flex items-center gap-2 text-sm"><Mail className="h-4 w-4 text-muted-foreground" />{lead.email}</div>}
           {lead.regiao && <div className="flex items-center gap-2 text-sm"><MapPin className="h-4 w-4 text-muted-foreground" />{lead.regiao}</div>}
           <div className="pt-2"><Label className="text-xs">Observações</Label>
@@ -313,6 +326,7 @@ export default function LeadDetail() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ligacao">Ligação</SelectItem>
+                    <SelectItem value="videochamada">Videochamada</SelectItem>
                     <SelectItem value="mensagem">Mensagem</SelectItem>
                     <SelectItem value="email">Email</SelectItem>
                     <SelectItem value="visita">Visita</SelectItem>
@@ -381,6 +395,13 @@ export default function LeadDetail() {
           </div>
         </Card>
       </div>
+
+      <Card className="p-5">
+        <h3 className="font-display text-lg font-semibold mb-3 flex items-center gap-2">
+          <FileSignature className="h-5 w-5" /> Documentos para assinatura
+        </h3>
+        <EntityDocumentsTab leadId={lead.id} defaultSigner={{ name: lead.nome, email: lead.email }} />
+      </Card>
     </div>
   );
 }

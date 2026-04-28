@@ -85,7 +85,7 @@ export default function Documents() {
       {loading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : filtered.length === 0 ? (
-        <Card className="p-8 text-center text-muted-foreground">
+        <Card className="p-4 sm:p-6 lg:p-8 text-center text-muted-foreground">
           <FileSignature className="h-10 w-10 mx-auto mb-2 opacity-50" />
           <p>Nenhum documento encontrado.</p>
         </Card>

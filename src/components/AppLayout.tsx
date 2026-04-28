@@ -15,6 +15,7 @@ import {
   Menu,
   Building2,
   Home,
+  FileSignature,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
@@ -35,6 +36,7 @@ const baseNav: NavItem[] = [
   { to: "/app/ligacoes", icon: Phone, label: "Ligações" },
   { to: "/app/visitas", icon: MapPin, label: "Visitas" },
   { to: "/app/agenda", icon: CalendarRange, label: "Agenda" },
+  { to: "/app/documentos", icon: FileSignature, label: "Documentos" },
 ];
 const adminNav: NavItem[] = [
   { to: "/app/relatorios", icon: BarChart3, label: "Relatórios" },
