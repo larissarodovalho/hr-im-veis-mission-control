@@ -26,7 +26,7 @@ import Documents from "@/pages/Documents";
 import DocumentDetail from "@/pages/DocumentDetail";
 import Reports from "@/pages/Reports";
 import Users from "@/pages/Users";
-import Settings from "@/pages/Settings";
+import ConfiguracoesPage from "@/pages/ConfiguracoesPage";
 import NotFound from "@/pages/NotFound";
 // Site público (mantido)
 import HomePage from "@/pages/site/HomePage";
@@ -81,7 +81,7 @@ const App = () => (
               <Route path="documentos/:id" element={<DocumentDetail />} />
               <Route path="relatorios" element={<Reports />} />
               <Route path="usuarios" element={<Users />} />
-              <Route path="configuracoes" element={<Settings />} />
+              <Route path="configuracoes" element={<ConfiguracoesPage />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
