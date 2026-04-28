@@ -165,6 +165,10 @@ export default function ConfiguracoesPage() {
           <WhatsAppConnection webhookUrl={webhookUrl} />
         </TabsContent>
 
+        <TabsContent value="integracoes">
+          <IntegracoesIA />
+        </TabsContent>
+
         <TabsContent value="notificacoes">
           <Card>
             <CardHeader>
