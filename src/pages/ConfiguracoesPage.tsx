@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   ShieldAlert, Settings, Building2, MessageCircle, Bell, Database, ExternalLink,
   Loader2, QrCode, RefreshCw, LogOut, Send, CheckCircle2, XCircle, AlertCircle, Copy,
+  Webhook, Bot, Globe, Check,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -118,9 +119,10 @@ export default function ConfiguracoesPage() {
       </div>
 
       <Tabs defaultValue="empresa">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="empresa"><Building2 className="h-4 w-4 mr-1" />Empresa</TabsTrigger>
           <TabsTrigger value="whatsapp"><MessageCircle className="h-4 w-4 mr-1" />WhatsApp</TabsTrigger>
+          <TabsTrigger value="integracoes"><Webhook className="h-4 w-4 mr-1" />Integrações & IA</TabsTrigger>
           <TabsTrigger value="notificacoes"><Bell className="h-4 w-4 mr-1" />Notificações</TabsTrigger>
           <TabsTrigger value="sistema"><Database className="h-4 w-4 mr-1" />Sistema</TabsTrigger>
         </TabsList>
@@ -161,6 +163,10 @@ export default function ConfiguracoesPage() {
 
         <TabsContent value="whatsapp">
           <WhatsAppConnection webhookUrl={webhookUrl} />
+        </TabsContent>
+
+        <TabsContent value="integracoes">
+          <IntegracoesIA />
         </TabsContent>
 
         <TabsContent value="notificacoes">
@@ -565,3 +571,106 @@ function WhatsAppConnection({ webhookUrl }: { webhookUrl: string }) {
     </div>
   );
 }
+
+// =================== Integrações & IA ===================
+
+function IntegracoesIA() {
+  const projectUrl = import.meta.env.VITE_SUPABASE_URL || "https://pbqiwdwwabvjmybbatdv.supabase.co";
+  const webhookLead = `${projectUrl}/functions/v1/lead-webhook`;
+  const landingUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/captura`;
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const copy = (s: string, k: string) => {
+    navigator.clipboard.writeText(s);
+    setCopied(k);
+    toast.success("Copiado");
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const jsonExample = `{ "full_name": "...", "phone": "...", "email": "...", "source": "meta_ads", "interest": "compra", "region": "MT", "notes": "..." }`;
+
+  return (
+    <div className="space-y-4">
+      {/* Webhook leads */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Webhook className="h-5 w-5" /> Webhook de captação de leads
+          </CardTitle>
+          <CardDescription>
+            Configure este endpoint no Meta Lead Ads, Google Ads ou em formulários externos.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="rounded-lg bg-muted p-3 flex items-center gap-2">
+            <code className="text-xs flex-1 break-all">{webhookLead}</code>
+            <Button size="sm" variant="ghost" onClick={() => copy(webhookLead, "lead")}>
+              {copied === "lead" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </Button>
+          </div>
+          <div className="text-xs text-muted-foreground space-y-1">
+            <p>Envie um <strong>POST</strong> com o seguinte JSON:</p>
+            <code className="block bg-muted px-2 py-1.5 rounded font-mono text-[11px] break-all">
+              {jsonExample}
+            </code>
+          </div>
+          <div className="rounded-lg border-l-4 border-amber-500 bg-amber-500/5 p-3 text-xs text-muted-foreground">
+            <strong className="text-amber-600">Atenção:</strong> o endpoint <code>lead-webhook</code> precisa
+            ser ativado. Peça ao Lovable: <em>"Ativar o webhook de captação de leads"</em>.
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* IA conversacional */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bot className="h-5 w-5" /> IA conversacional
+          </CardTitle>
+          <CardDescription>
+            A IA atende leads no WhatsApp quando o toggle "IA" está ativo na conversa.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Modelo:</span>
+            <Badge variant="secondary">google/gemini-3-flash-preview</Badge>
+            <span className="text-xs text-muted-foreground">via Lovable AI</span>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Comportamento padrão: a IA qualifica leads, captura interesse, sugere imóveis e agenda
+            visitas. Ao detectar intenção forte, transfere a conversa para um corretor humano
+            (basta desativar o toggle "IA" da conversa em <strong>WhatsApp</strong>).
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Para personalizar o prompt da IA, peça ao Lovable: <em>"Editar o prompt da IA do WhatsApp"</em>.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Landing */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5" /> Landing de captura
+          </CardTitle>
+          <CardDescription>
+            URL pública para divulgar em anúncios e redes sociais.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="rounded-lg bg-muted p-3 flex items-center gap-2">
+            <code className="text-xs flex-1 break-all">{landingUrl}</code>
+            <Button size="sm" variant="ghost" onClick={() => copy(landingUrl, "land")}>
+              {copied === "land" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Os leads que chegarem por essa página entram diretamente no funil em <strong>"Novo Lead"</strong>.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
