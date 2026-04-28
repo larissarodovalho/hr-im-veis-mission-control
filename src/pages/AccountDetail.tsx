@@ -66,6 +66,13 @@ export default function AccountDetail() {
       {acc.endereco && <Card className="p-5"><h3 className="font-display text-lg font-semibold mb-2">Endereço</h3><p className="text-sm text-muted-foreground">{acc.endereco}</p></Card>}
       {acc.observacoes && <Card className="p-5"><h3 className="font-display text-lg font-semibold mb-2">Observações</h3><p className="text-sm text-muted-foreground whitespace-pre-wrap">{acc.observacoes}</p></Card>}
 
+      <Card className="p-5">
+        <h3 className="font-display text-lg font-semibold mb-3 flex items-center gap-2">
+          <FileSignature className="h-5 w-5" /> Documentos para assinatura
+        </h3>
+        <EntityDocumentsTab contaId={acc.id} defaultSigner={{ name: acc.nome, email: acc.email }} />
+      </Card>
+
       <Dialog open={!!editing} onOpenChange={o => !o && setEditing(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Editar conta</DialogTitle></DialogHeader>
