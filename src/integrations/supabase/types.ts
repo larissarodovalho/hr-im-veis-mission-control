@@ -241,6 +241,54 @@ export type Database = {
         }
         Relationships: []
       }
+      conta_propriedades: {
+        Row: {
+          aptidao: string | null
+          conta_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          nome_fazenda: string | null
+          observacoes: string | null
+          operacao: string | null
+          regiao: string | null
+          tamanho_ha: number | null
+          updated_at: string
+          valor_comissao: number | null
+          valor_negocio: number | null
+        }
+        Insert: {
+          aptidao?: string | null
+          conta_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome_fazenda?: string | null
+          observacoes?: string | null
+          operacao?: string | null
+          regiao?: string | null
+          tamanho_ha?: number | null
+          updated_at?: string
+          valor_comissao?: number | null
+          valor_negocio?: number | null
+        }
+        Update: {
+          aptidao?: string | null
+          conta_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome_fazenda?: string | null
+          observacoes?: string | null
+          operacao?: string | null
+          regiao?: string | null
+          tamanho_ha?: number | null
+          updated_at?: string
+          valor_comissao?: number | null
+          valor_negocio?: number | null
+        }
+        Relationships: []
+      }
       contas: {
         Row: {
           created_at: string
@@ -249,10 +297,13 @@ export type Database = {
           email: string | null
           endereco: string | null
           id: string
+          interesse: string | null
+          is_partner: boolean
           lead_id_origem: string | null
           nome: string
           observacoes: string | null
           responsavel_id: string | null
+          status: string
           tags: string[] | null
           telefone: string | null
           tipo: string
@@ -265,10 +316,13 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           id?: string
+          interesse?: string | null
+          is_partner?: boolean
           lead_id_origem?: string | null
           nome: string
           observacoes?: string | null
           responsavel_id?: string | null
+          status?: string
           tags?: string[] | null
           telefone?: string | null
           tipo?: string
@@ -281,10 +335,13 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           id?: string
+          interesse?: string | null
+          is_partner?: boolean
           lead_id_origem?: string | null
           nome?: string
           observacoes?: string | null
           responsavel_id?: string | null
+          status?: string
           tags?: string[] | null
           telefone?: string | null
           tipo?: string
