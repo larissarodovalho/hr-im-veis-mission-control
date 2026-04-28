@@ -33,6 +33,8 @@ export default function Leads() {
   const [convertedIds, setConvertedIds] = useState<Set<string>>(new Set());
   const [view, setView] = useState<"kanban" | "list">("kanban");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"recent" | "idle">("recent");
+  const [needsNurture, setNeedsNurture] = useState(false);
   const [open, setOpen] = useState(false);
   const { isAdmin, isGestor } = useRole();
   const canDelete = isAdmin || isGestor;
