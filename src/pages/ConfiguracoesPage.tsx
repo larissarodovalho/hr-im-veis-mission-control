@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   ShieldAlert, Settings, Building2, MessageCircle, Bell, Database, ExternalLink,
   Loader2, QrCode, RefreshCw, LogOut, Send, CheckCircle2, XCircle, AlertCircle, Copy,
+  Webhook, Bot, Globe, Check,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -118,9 +119,10 @@ export default function ConfiguracoesPage() {
       </div>
 
       <Tabs defaultValue="empresa">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="empresa"><Building2 className="h-4 w-4 mr-1" />Empresa</TabsTrigger>
           <TabsTrigger value="whatsapp"><MessageCircle className="h-4 w-4 mr-1" />WhatsApp</TabsTrigger>
+          <TabsTrigger value="integracoes"><Webhook className="h-4 w-4 mr-1" />Integrações & IA</TabsTrigger>
           <TabsTrigger value="notificacoes"><Bell className="h-4 w-4 mr-1" />Notificações</TabsTrigger>
           <TabsTrigger value="sistema"><Database className="h-4 w-4 mr-1" />Sistema</TabsTrigger>
         </TabsList>

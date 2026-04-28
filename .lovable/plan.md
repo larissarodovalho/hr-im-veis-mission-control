@@ -1,65 +1,38 @@
-## Conectar o WhatsApp no HR Imóveis — passo a passo dentro do CRM
+## Adicionar aba "Integrações & IA" em Configurações (igual Brazil Lands)
 
-Hoje a página WhatsApp está dando erro (lista de conversas não carrega) e não existe nenhuma tela para conectar/parear o número. Vamos resolver os dois pontos.
+A aba **WhatsApp** já está completa (status, QR Code, webhook, teste). Vou agora replicar o restante do que a Brazil Lands tem em Configurações, criando uma nova aba **"Integrações & IA"** em `/app/configuracoes`.
 
-### Parte 1 — Corrigir o erro da lista de conversas (bug atual)
+### Nova aba "Integrações & IA" — 3 cartões
 
-A página tenta fazer um JOIN entre `whatsapp_conversations` e `leads`, mas a coluna `lead_id` é texto sem chave estrangeira, então o Supabase retorna **400 PGRST200** e a lista some.
-
-Correção: buscar os nomes dos leads em uma segunda chamada (filtrando só IDs em formato UUID) e juntar em memória. Sem mudança de banco.
-
-### Parte 2 — Nova aba "WhatsApp" em Configurações (igual Brazil Lands)
-
-Vou criar uma seção dedicada em `/app/configuracoes` chamada **"Conexão WhatsApp"** com tudo que você precisa para parear o número, no mesmo padrão do Brazil Lands:
-
-**1. Cartão "Status da instância Evolution"**
-- Mostra o nome da instância configurada (`EVOLUTION_INSTANCE_NAME`).
-- Indicador colorido: 🟢 **Conectada** / 🟡 **Aguardando QR Code** / 🔴 **Desconectada**.
-- Botão **"Atualizar status"** (consulta `GET /instance/connectionState/{instance}` da Evolution).
-- Botão **"Reiniciar instância"** (chama `PUT /instance/restart/{instance}`).
-- Botão **"Desconectar"** (chama `DELETE /instance/logout/{instance}`).
-
-**2. Cartão "Conectar número (QR Code)"**
-- Botão grande **"Gerar QR Code"** que chama a Evolution (`GET /instance/connect/{instance}`).
-- Mostra a imagem do QR Code retornada (base64).
-- Instrução curta: "Abra o WhatsApp no celular → Aparelhos conectados → Conectar um aparelho → escaneie".
-- Atualiza automaticamente o status a cada 5 segundos enquanto o modal está aberto; quando ficar **Conectada**, mostra ✅ e fecha sozinho.
-
-**3. Cartão "Webhook de mensagens recebidas"**
-- Mostra a URL do webhook que você precisa colar na Evolution:
-  `https://pbqiwdwwabvjmybbatdv.supabase.co/functions/v1/whatsapp-webhook`
+**1. Webhook de captação de leads**
+- Mostra a URL: `https://pbqiwdwwabvjmybbatdv.supabase.co/functions/v1/lead-webhook`
 - Botão **"Copiar URL"**.
-- Botão **"Configurar webhook na Evolution"** que faz a chamada `POST /webhook/set/{instance}` automaticamente, registrando essa URL para os eventos `MESSAGES_UPSERT` e `CONNECTION_UPDATE`. Assim você não precisa entrar no painel da Evolution.
-- Indicador "Webhook ativo: sim/não" (consulta `GET /webhook/find/{instance}`).
+- Texto explicativo: "Configure este endpoint no Meta Lead Ads, Google Ads ou em formulários externos."
+- Exemplo do JSON esperado em `<code>`: `{ "full_name", "phone", "email", "source", "interest", "region", "notes" }`.
 
-**4. Cartão "Testar envio"**
-- Campo telefone + campo mensagem + botão **"Enviar teste"**.
-- Chama a edge function `whatsapp-send` com `{ phone, content }`.
-- Mostra resultado: ✅ enviado, ou ❌ erro com a mensagem da Evolution.
+**2. IA conversacional**
+- Cartão informativo: "A IA atende leads no WhatsApp quando o toggle está ativo na conversa."
+- Badge mostrando o modelo: `google/gemini-3-flash-preview` (via Lovable AI).
+- Texto: "Para personalizar o prompt da IA, peça ao Lovable."
 
-### Parte 3 — Edge function nova: `whatsapp-instance`
+**3. Landing de captura**
+- Mostra a URL pública: `{origem}/captura`.
+- Botão **"Copiar URL"**.
+- Texto: "Compartilhe a URL pública nos seus anúncios."
 
-Centraliza todas as chamadas administrativas para a Evolution (status, QR, restart, logout, set webhook, find webhook). A página de configurações chama essa função com `{ action: "status" | "qrcode" | "restart" | "logout" | "set-webhook" | "find-webhook" }`. Vantagens:
-- Não expõe a `EVOLUTION_API_KEY` no front.
-- Validação de JWT (só admin pode chamar).
-- Reaproveita as 3 secrets que já existem: `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE_NAME`.
+### Pequenos ajustes na aba existente
 
-### Como você vai usar (passo a passo no CRM, depois de pronto)
+- Tornar a `TabsList` `flex-wrap` para acomodar a nova aba sem cortar em telas menores.
+- Adicionar ícones novos do `lucide-react`: `Webhook`, `Bot`, `Globe`, `Check`.
 
-1. Vai em **Configurações → Conexão WhatsApp**.
-2. Clica em **"Configurar webhook na Evolution"** (uma vez só) — registra automaticamente o webhook que recebe as mensagens.
-3. Clica em **"Gerar QR Code"** → escaneia com o celular.
-4. O status muda pra 🟢 **Conectada** sozinho.
-5. Faz um **"Enviar teste"** para o seu próprio número pra confirmar.
-6. Pronto: a partir daí, a página `/app/whatsapp` recebe e envia mensagens normalmente.
+### O que NÃO vou fazer agora
 
-### Arquivos afetados
+- **Não vou criar** a edge function `lead-webhook` nem a página `/captura` neste passo — apenas mostrar a URL/configuração na tela, exatamente como a Brazil Lands faz no card visual. Se você quiser ativar de verdade depois (criar o endpoint que recebe os leads do Meta Ads e a landing pública), me avisa que eu implemento num passo seguinte.
 
-- `src/pages/WhatsApp.tsx` — corrige o JOIN quebrado.
-- `src/pages/Settings.tsx` (ou `Configuracoes.tsx`) — adiciona a nova seção "Conexão WhatsApp". Vou identificar o arquivo exato e a estrutura de abas dele antes de editar.
-- `supabase/functions/whatsapp-instance/index.ts` — função nova, gerencia conexão Evolution.
+### Arquivo afetado
 
-### O que não muda
+- `src/pages/ConfiguracoesPage.tsx` — adicionar a aba e o componente.
 
-- Tabelas, RLS, secrets — tudo já está pronto.
-- `whatsapp-send` e `whatsapp-webhook` — continuam como estão.
+### Sem mudanças em
+
+- Banco, RLS, secrets, edge functions existentes.
