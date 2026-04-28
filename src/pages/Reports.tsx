@@ -32,7 +32,7 @@ export default function Reports() {
       if (!l.corretor_id) return;
       const s = map.get(l.corretor_id); if (!s) return;
       s.leads++;
-      if (l.etapa_funil === "Fechamento") s.conversoes++;
+      if (l.etapa_funil === "Fechado") s.conversoes++;
     });
     (reunioes ?? []).forEach((m: any) => {
       if (!m.corretor_id) return;
