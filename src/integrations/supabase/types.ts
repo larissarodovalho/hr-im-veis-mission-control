@@ -388,6 +388,107 @@ export type Database = {
         }
         Relationships: []
       }
+      document_events: {
+        Row: {
+          created_at: string
+          document_id: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          signer_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          signer_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          signer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_events_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "signed_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_events_signer_id_fkey"
+            columns: ["signer_id"]
+            isOneToOne: false
+            referencedRelation: "document_signers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_signers: {
+        Row: {
+          clicksign_signer_key: string | null
+          cpf: string | null
+          created_at: string
+          document_id: string
+          email: string
+          id: string
+          ip_address: string | null
+          name: string
+          role: string
+          sign_url: string | null
+          signed_at: string | null
+          status: Database["public"]["Enums"]["document_signer_status"]
+          updated_at: string
+          viewed_at: string | null
+        }
+        Insert: {
+          clicksign_signer_key?: string | null
+          cpf?: string | null
+          created_at?: string
+          document_id: string
+          email: string
+          id?: string
+          ip_address?: string | null
+          name: string
+          role?: string
+          sign_url?: string | null
+          signed_at?: string | null
+          status?: Database["public"]["Enums"]["document_signer_status"]
+          updated_at?: string
+          viewed_at?: string | null
+        }
+        Update: {
+          clicksign_signer_key?: string | null
+          cpf?: string | null
+          created_at?: string
+          document_id?: string
+          email?: string
+          id?: string
+          ip_address?: string | null
+          name?: string
+          role?: string
+          sign_url?: string | null
+          signed_at?: string | null
+          status?: Database["public"]["Enums"]["document_signer_status"]
+          updated_at?: string
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_signers_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "signed_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       imoveis: {
         Row: {
           area_total: number | null
@@ -879,6 +980,63 @@ export type Database = {
         }
         Relationships: []
       }
+      signed_documents: {
+        Row: {
+          canceled_at: string | null
+          clicksign_document_key: string | null
+          completed_at: string | null
+          conta_id: string | null
+          created_at: string
+          created_by: string | null
+          deadline_at: string | null
+          file_url: string | null
+          id: string
+          lead_id: string | null
+          message: string | null
+          name: string
+          sent_at: string | null
+          signed_file_url: string | null
+          status: Database["public"]["Enums"]["signed_document_status"]
+          updated_at: string
+        }
+        Insert: {
+          canceled_at?: string | null
+          clicksign_document_key?: string | null
+          completed_at?: string | null
+          conta_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deadline_at?: string | null
+          file_url?: string | null
+          id?: string
+          lead_id?: string | null
+          message?: string | null
+          name: string
+          sent_at?: string | null
+          signed_file_url?: string | null
+          status?: Database["public"]["Enums"]["signed_document_status"]
+          updated_at?: string
+        }
+        Update: {
+          canceled_at?: string | null
+          clicksign_document_key?: string | null
+          completed_at?: string | null
+          conta_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deadline_at?: string | null
+          file_url?: string | null
+          id?: string
+          lead_id?: string | null
+          message?: string | null
+          name?: string
+          sent_at?: string | null
+          signed_file_url?: string | null
+          status?: Database["public"]["Enums"]["signed_document_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       social_metrics_daily: {
         Row: {
           alcance: number | null
@@ -1242,9 +1400,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: never; Returns: boolean }
+      is_staff: { Args: never; Returns: boolean }
+      normalize_br_phone: { Args: { p: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "gestor" | "corretor"
+      document_signer_status: "pending" | "viewed" | "signed" | "refused"
+      signed_document_status:
+        | "draft"
+        | "sent"
+        | "partially_signed"
+        | "signed"
+        | "refused"
+        | "expired"
+        | "canceled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1373,6 +1543,16 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "gestor", "corretor"],
+      document_signer_status: ["pending", "viewed", "signed", "refused"],
+      signed_document_status: [
+        "draft",
+        "sent",
+        "partially_signed",
+        "signed",
+        "refused",
+        "expired",
+        "canceled",
+      ],
     },
   },
 } as const

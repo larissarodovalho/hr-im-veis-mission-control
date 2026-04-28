@@ -5,6 +5,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Normaliza telefone BR para o "tail" canônico de até 10 dígitos (DDD + 8).
+// Resolve duplicação por presença/ausência do "9" extra ou DDI 55.
+function normalizeBr(raw: string): string {
+  const digits = (raw || "").replace(/\D/g, "");
+  const noDdi = digits.length > 10 && digits.startsWith("55") ? digits.slice(2) : digits;
+  if (noDdi.length === 11 && noDdi[2] === "9") return noDdi.slice(0, 2) + noDdi.slice(3);
+  return noDdi.slice(-10);
+}
+
 // Webhook público da Evolution API. Configure na Evolution apontando para:
 // https://<project-ref>.supabase.co/functions/v1/whatsapp-webhook
 Deno.serve(async (req) => {
@@ -30,12 +39,15 @@ Deno.serve(async (req) => {
 
     const remoteJid: string = data?.key?.remoteJid || "";
     const fromMe: boolean = !!data?.key?.fromMe;
-    const phone = remoteJid.split("@")[0]?.replace(/\D/g, "");
-    if (!phone) {
+    const phoneRaw = remoteJid.split("@")[0]?.replace(/\D/g, "");
+    if (!phoneRaw) {
       return new Response(JSON.stringify({ ok: true, ignored: "no phone" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const phoneCanonical = normalizeBr(phoneRaw);
+    const tail8 = phoneCanonical.slice(-8);
 
     const content =
       data?.message?.conversation ||
@@ -53,12 +65,15 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Upsert conversa
-    const { data: existing } = await supabase
+    // Buscar conversa por tail canônico (evita duplicação por DDI/9 extra)
+    const { data: convs } = await supabase
       .from("whatsapp_conversations")
-      .select("id, unread_count")
-      .eq("phone", phone)
-      .maybeSingle();
+      .select("id, unread_count, phone")
+      .ilike("phone", `%${tail8}%`)
+      .order("created_at", { ascending: true })
+      .limit(5);
+
+    let existing = convs?.[0] ?? null;
 
     let convId: string;
     if (existing?.id) {
@@ -70,14 +85,26 @@ Deno.serve(async (req) => {
         unread_count: fromMe ? existing.unread_count : (existing.unread_count ?? 0) + 1,
       }).eq("id", convId);
     } else {
+      // Tentar achar lead existente pelo tail antes de criar conversa nova
+      let leadIdForConv: string | null = null;
+      const { data: leads } = await supabase
+        .from("leads")
+        .select("id, telefone")
+        .ilike("telefone", `%${tail8}%`)
+        .limit(5);
+      if (leads && leads.length > 0) {
+        leadIdForConv = leads[0].id;
+      }
+
       const { data: created } = await supabase
         .from("whatsapp_conversations")
         .insert({
-          phone,
+          phone: phoneRaw,
           contact_name: pushName,
           last_message_at: ts,
           last_message_preview: content,
           unread_count: fromMe ? 0 : 1,
+          lead_id: leadIdForConv,
         })
         .select("id").single();
       convId = created!.id;
@@ -102,7 +129,7 @@ Deno.serve(async (req) => {
             conversation_id: convId,
             message_id: msgRow?.id,
             content,
-            phone,
+            phone: phoneRaw,
             contact_name: pushName,
           }),
         });
