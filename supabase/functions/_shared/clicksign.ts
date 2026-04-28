@@ -2,13 +2,23 @@
 // Docs: https://developers.clicksign.com/
 
 export function getClicksignConfig() {
-  const token = Deno.env.get("CLICKSIGN_API_TOKEN")?.trim();
+  const rawToken = Deno.env.get("CLICKSIGN_API_TOKEN")?.trim();
   const env = (Deno.env.get("CLICKSIGN_ENV") || "sandbox").trim().toLowerCase();
+  const token = normalizeClicksignToken(rawToken);
   if (!token) throw new Error("CLICKSIGN_API_TOKEN não configurado");
   const baseUrl = env === "production"
     ? "https://app.clicksign.com/api/v1"
     : "https://sandbox.clicksign.com/api/v1";
   return { token, baseUrl, env };
+}
+
+function normalizeClicksignToken(value?: string) {
+  if (!value) return "";
+  let token = value.trim().replace(/^Bearer\s+/i, "");
+  const queryToken = token.match(/[?&]access_token=([^&\s]+)/i)?.[1];
+  if (queryToken) token = queryToken;
+  token = token.replace(/^access_token=/i, "").trim();
+  try { return decodeURIComponent(token).trim(); } catch { return token; }
 }
 
 export async function clicksignFetch(path: string, init: RequestInit = {}) {
@@ -28,6 +38,9 @@ export async function clicksignFetch(path: string, init: RequestInit = {}) {
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
   if (!res.ok) {
     const msg = typeof data === "object" ? JSON.stringify(data) : String(data);
+    if (res.status === 403 && msg.includes("Access Token inválido")) {
+      throw new Error("Clicksign recusou o token. Confirme se CLICKSIGN_ENV está como production e se CLICKSIGN_API_TOKEN é o token de API de produção da mesma conta Clicksign, sem aspas nem rótulos.");
+    }
     throw new Error(`Clicksign ${res.status}: ${msg}`);
   }
   return data;
