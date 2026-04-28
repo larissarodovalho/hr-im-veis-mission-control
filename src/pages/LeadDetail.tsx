@@ -297,7 +297,19 @@ export default function LeadDetail() {
       <div className="grid lg:grid-cols-3 gap-6">
         <Card className="p-5 space-y-3">
           <h3 className="font-display text-lg font-semibold">Contato</h3>
-          {lead.telefone && <div className="flex items-center gap-2 text-sm"><Phone className="h-4 w-4 text-muted-foreground" />{lead.telefone}</div>}
+          {lead.telefone && (
+            <div className="flex items-center justify-between gap-2 text-sm">
+              <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" />{lead.telefone}</div>
+              <a
+                href={`https://wa.me/${onlyDigits(lead.telefone).replace(/^0+/, "")}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-success/15 text-success border border-success/30 hover:bg-success/25"
+              >
+                <MessageSquare className="h-3 w-3" /> WhatsApp
+              </a>
+            </div>
+          )}
           {lead.email && <div className="flex items-center gap-2 text-sm"><Mail className="h-4 w-4 text-muted-foreground" />{lead.email}</div>}
           {lead.regiao && <div className="flex items-center gap-2 text-sm"><MapPin className="h-4 w-4 text-muted-foreground" />{lead.regiao}</div>}
           <div className="pt-2"><Label className="text-xs">Observações</Label>
