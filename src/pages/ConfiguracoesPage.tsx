@@ -5,11 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ShieldAlert, Settings, Building2, MessageCircle, Bell, Database, ExternalLink, Loader2 } from "lucide-react";
+import {
+  ShieldAlert, Settings, Building2, MessageCircle, Bell, Database, ExternalLink,
+  Loader2, QrCode, RefreshCw, LogOut, Send, CheckCircle2, XCircle, AlertCircle, Copy,
+} from "lucide-react";
 import { toast } from "sonner";
 
 const STORAGE_KEY = "hr-system-settings";
@@ -156,36 +160,7 @@ export default function ConfiguracoesPage() {
         </TabsContent>
 
         <TabsContent value="whatsapp">
-          <Card>
-            <CardHeader>
-              <CardTitle>Integração WhatsApp (Evolution API)</CardTitle>
-              <CardDescription>Configure o webhook na sua instância Evolution para receber mensagens em tempo real</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-1.5">
-                <Label>Nome da instância</Label>
-                <Input value={s.whatsapp_instancia} onChange={(e) => setS({ ...s, whatsapp_instancia: e.target.value })} placeholder="hr-imoveis" />
-                <p className="text-xs text-muted-foreground">Apenas referência visual. A instância real é definida via secret no backend.</p>
-              </div>
-              <Separator />
-              <div className="space-y-1.5">
-                <Label>URL do Webhook (cole na Evolution API)</Label>
-                <div className="flex gap-2">
-                  <Input value={webhookUrl} readOnly className="font-mono text-xs" />
-                  <Button variant="outline" onClick={() => { navigator.clipboard.writeText(webhookUrl); toast.success("Copiado"); }}>Copiar</Button>
-                </div>
-                <p className="text-xs text-muted-foreground">Eventos requeridos: <code className="bg-muted px-1 rounded">MESSAGES_UPSERT</code></p>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div>
-                  <Label>Webhook ativo</Label>
-                  <p className="text-xs text-muted-foreground">Habilita o recebimento automático de mensagens</p>
-                </div>
-                <Switch checked={s.whatsapp_webhook_ativo} onCheckedChange={(v) => setS({ ...s, whatsapp_webhook_ativo: v })} />
-              </div>
-              <Button onClick={save} disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}</Button>
-            </CardContent>
-          </Card>
+          <WhatsAppConnection webhookUrl={webhookUrl} />
         </TabsContent>
 
         <TabsContent value="notificacoes">
