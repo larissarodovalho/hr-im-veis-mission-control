@@ -59,7 +59,39 @@ export default function Leads() {
     return () => { supabase.removeChannel(ch); };
   }, []);
 
-  const filtered = leads.filter(l => !search || l.nome.toLowerCase().includes(search.toLowerCase()) || l.telefone?.includes(search) || l.email?.toLowerCase().includes(search.toLowerCase()));
+  const isClosedStage = (s: Stage) => s === "Fechamento" || s === "Perdido";
+
+  const needsNurtureCount = leads.filter(l => {
+    if (isClosedStage(l.etapa_funil)) return false;
+    const id = idleDays(l.ultima_interacao);
+    return id === null || id >= 4;
+  }).length;
+
+  let filtered = leads.filter(l => {
+    if (search) {
+      const s = search.toLowerCase();
+      const match = l.nome.toLowerCase().includes(s) || l.telefone?.includes(search) || l.email?.toLowerCase().includes(s);
+      if (!match) return false;
+    }
+    if (needsNurture) {
+      if (isClosedStage(l.etapa_funil)) return false;
+      const id = idleDays(l.ultima_interacao);
+      if (!(id === null || id >= 4)) return false;
+    }
+    return true;
+  });
+
+  if (sortBy === "idle") {
+    filtered = [...filtered].sort((a, b) => {
+      const ai = idleDays(a.ultima_interacao);
+      const bi = idleDays(b.ultima_interacao);
+      if (ai === null && bi === null) return 0;
+      if (ai === null) return -1;
+      if (bi === null) return 1;
+      return bi - ai;
+    });
+  }
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const onDragEnd = async (e: DragEndEvent) => {
