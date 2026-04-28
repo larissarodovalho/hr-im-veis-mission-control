@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
+import { useWhatsAppUnread } from "@/hooks/useWhatsAppUnread";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,7 @@ export default function AppLayout() {
   const { signOut, user } = useAuth();
   const { isAdmin, isGestor } = useRole();
   const navigate = useNavigate();
+  const { unread: waUnread } = useWhatsAppUnread();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [desktopOpen, setDesktopOpen] = useState(true);
 
@@ -80,7 +82,12 @@ export default function AppLayout() {
             }
           >
             <Icon className="h-4 w-4" />
-            {label}
+            <span className="flex-1">{label}</span>
+            {to === "/app/whatsapp" && waUnread > 0 && (
+              <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold flex items-center justify-center">
+                {waUnread > 9 ? "9+" : waUnread}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>
