@@ -1,67 +1,118 @@
-## O que peguei do Brazil Lands
+## Contexto
 
-O CRM deles é mais maduro em **gestão de relacionamento** (Leads → Contas → Interações) do que o nosso, que hoje é mais forte em **operação imobiliária** (Imóveis, Visitas, Propostas). Estes são os pontos que valem trazer:
+A cópia do CRM Brazil Lands → HR Imóveis foi feita em **25/04/2026 ~21:40**. De lá pra cá, o Brazil Lands recebeu várias melhorias que ainda não estão aqui. Listei o que faz sentido trazer (adaptando ao schema do HR Imóveis: `leads`, `contas`, `imoveis`, `interacoes`, `whatsapp_*`, `reunioes` etc.) e o que não vale.
 
-### Estruturalmente eles têm e nós não
+## O que vou trazer
 
-| Brazil Lands | Já temos? | Vale trazer? |
-|---|---|---|
-| **Contas** (cliente convertido a partir de lead) | Não — só `contatos` solto | Sim |
-| **Detalhe de Lead** com timeline de interações | Não — só lista/kanban | Sim |
-| **Interações** (ligação, mensagem, visita, reunião, nota, email) com resultado | Parcial (`lead_historico` mas não usado na UI) | Sim |
-| **Reuniões** com status (agendada/realizada/no-show) | Não | Sim |
-| **Ligações** registradas | Não | Sim |
-| **Captura pública** (`/captura`) que cria lead | Não | Opcional, deixar pra depois |
-| Kanban com **@dnd-kit** (mais robusto que HTML5 nativo) | Temos drag nativo | Sim, refatorar |
-| Tags de **temperatura** (frio/morno/quente) e **SLA** (dias sem contato com cor) | Não | Sim |
+### 1. Módulo de Documentos com Clicksign (assinatura eletrônica)
+Maior adição do período. Permite enviar contratos pra cliente assinar com validade jurídica, vinculando ao lead/conta.
 
-### Onde nós já estamos melhores
-Imóveis com fotos/storage, propostas formais, campanhas de tráfego, conteúdo, redes sociais, agentes/bots, health, settings. Isso fica como está.
+- **Banco**: tabelas novas `signed_documents`, `document_signers`, `document_events`; bucket privado `signed-documents`; RLS staff vê tudo, admin deleta; realtime ligado.
+- **Edge functions**:
+  - `clicksign-create-document` — upload do PDF + criação na Clicksign + signers
+  - `clicksign-webhook` (sem JWT, valida HMAC) — atualiza status em tempo real
+  - `clicksign-resend-notification`, `clicksign-cancel-document`, `clicksign-download-signed`
+  - `_shared/clicksign.ts` — helper de API + HMAC
+- **Páginas/componentes novos**: `Documents.tsx` (lista com filtros de status), `DocumentDetail.tsx` (timeline + ações), `SendDocumentDialog.tsx`, `EntityDocumentsTab.tsx`, `DocumentStatusBadge.tsx`.
+- **Integração nas telas**: aba "Documentos" em `LeadDetail.tsx` e `AccountDetail.tsx`, item no sidebar (`AppLayout.tsx`/`AppSidebar.tsx`), rotas em `App.tsx`.
+- **Validação**: signer precisa ter nome + sobrenome (mínimo 2 partes com 2+ caracteres) — front e edge.
+- **Secrets**: vou pedir `CLICKSIGN_API_TOKEN`, `CLICKSIGN_HMAC_SECRET`, `CLICKSIGN_ENV` (`sandbox` ou `production`). Webhook URL: `https://pbqiwdwwabvjmybbatdv.supabase.co/functions/v1/clicksign-webhook`.
 
----
+### 2. WhatsApp — normalização de telefone BR + sem duplicar lead
+Resolve o caso de o mesmo contato gerar conversa/lead novo só porque veio com/sem o "9" extra ou com/sem DDI 55.
 
-## Plano de implementação
+- Migração: função `public.normalize_br_phone(text)` que retorna DDD + 8 últimos dígitos (canônico).
+- `whatsapp-webhook/index.ts`: lookup de conversa e lead por **tail canônico** (últimos 8–10 dígitos) antes de criar registros novos.
+- `whatsapp-send/index.ts`: ajustar erro genérico (sumir "Z-API não configurado", priorizar Evolution se variáveis presentes).
 
-### 1. Banco — novas tabelas e enriquecimento
+### 3. Editar e excluir conversa no WhatsApp
+- `WhatsApp.tsx`: botão lápis (editar telefone) e lixeira (admin only, com `AlertDialog`); cascade delete em `whatsapp_messages` antes de remover a conversa; normalização de telefone na edição.
 
-**Novas tabelas:**
-- `contas` — cliente "convertido" (PF ou PJ): nome, doc, tipo, lead_id de origem, responsavel_id, created_by, observações
-- `interacoes` — polimórfica em lead OU conta: `lead_id`, `conta_id`, `tipo` (ligacao/mensagem/visita/reuniao/email/nota), `resultado`, `descricao`, `proxima_acao`, `agendado_para`, `created_by`
-- `reunioes` — `lead_id`, `agendada_para`, `local`, `link`, `status` (agendada/realizada/no_show/cancelada), `notas`, `corretor_id`
-- `ligacoes` — `lead_id`, `data`, `duracao_seg`, `resultado`, `gravacao_url`, `notas`, `corretor_id`
+### 4. Botão "Chamar no WhatsApp" no LeadDetail
+- Em `LeadDetail.tsx`: botão verde no card de Contato. Cria conversa em `whatsapp_conversations` se não existir e navega para `/app/whatsapp?conv={id}`.
+- Em `WhatsApp.tsx`: ler `?conv=` via `useSearchParams` e abrir a conversa automaticamente.
 
-**Enriquecer `leads`:**
-- `temperatura` text ('frio'|'morno'|'quente')
-- `regiao` text
-- (já temos `ultima_interacao`, então o SLA sai dali)
+### 5. Interação tipo "videochamada" no LeadDetail
+- Garantir que o select de "Registrar interação" tenha `Reunião` e `Videochamada` (em interacoes.tipo é text, basta adicionar opções e label amigável).
 
-**RLS:** mesmo padrão atual — admin/gestor veem tudo, corretor vê o que é dono ou criou.
+### 6. Badge "Convertido em conta" no Lead
+- `LeadDetail.tsx` e `Leads.tsx` (kanban + lista): se houver `contas.lead_id_origem = lead.id`, mostrar badge verde "Convertido em conta" (linkando pra `/app/contas`) ao invés do botão "Converter em conta".
+- Conversão **não muda** mais a etapa do funil — o lead continua onde estava.
 
-### 2. UI nova
+### 7. Botão "Editar lead" no LeadDetail
+- Dialog para corrigir nome, telefone, email, região, qualificação/interesse, valor estimado, temperatura.
 
-- **Sub-aba "Contas"** dentro do `/crm` ao lado de Leads — lista + criar + detalhe simples
-- **Página `LeadDetalhe`** (`/crm/lead/:id`) com: header do lead, abas (Visão geral, Interações, Reuniões, Ligações, Visitas, Propostas, Notas, Tarefas), botão "Converter em Conta"
-- **Refatorar `LeadsTab` Kanban** usando `@dnd-kit/core` (instalar) — drag mais suave, melhor mobile
-- **Badges visuais** no card do lead: temperatura (🧊/🌤️/🔥) e SLA por cor (verde <3d, amarelo 3-7d, vermelho >7d)
-- **Modal "Registrar interação"** rápido a partir do card / detalhe — atualiza `ultima_interacao` automaticamente
+### 8. Responsividade mobile (varredura)
+Aplicar o padrão usado no Brazil Lands em todas as páginas que ainda não estão adaptadas:
+- Padding adaptativo `p-4 sm:p-6 lg:p-8` (Leads, LeadDetail, AccountDetail, Schedule, Dashboard, Reports, Users, Settings, Meetings, Calls, Visits).
+- Headers `flex-col md:flex-row`.
+- Tabelas viram **cards no mobile** + tabela no desktop em Meetings/Calls/Visits/Leads (lista).
+- Kanban com `overflow-x-auto -mx-4 px-4` para edge-to-edge.
+- WhatsApp: alternar lista/chat em tela cheia no mobile, botão "voltar", URLs clicáveis com `break-all`, scroll automático para última mensagem ao abrir conversa.
+- `AppLayout.tsx`: `h-[100dvh]` + `overscroll-y-contain` + barra superior fixa no mobile.
+- `index.css`: `html/body/#root` com altura 100% e `overscroll-behavior-y: none`.
 
-### 3. O que NÃO vou copiar agora
-- Captura pública (`/captura`) — esperar você pedir
-- Página de Reuniões/Ligações standalone no menu lateral — vão viver dentro do detalhe do lead, evita inflar o menu
-- IA pública de chat na landing — fora de escopo
+### 9. Auth — mostrar/esconder senha
+- `Auth.tsx`: toggle olho (Eye/EyeOff) no campo senha.
 
-### 4. Arquivos afetados
-- `supabase/migrations/<novo>.sql` — tabelas + enum + colunas + RLS + triggers + index
-- `src/components/LeadsTab.tsx` — trocar drag nativo por @dnd-kit, adicionar temperatura/SLA
-- `src/components/ContasTab.tsx` — novo
-- `src/pages/LeadDetalhe.tsx` — novo
-- `src/components/InteracaoDialog.tsx`, `ReuniaoDialog.tsx`, `LigacaoDialog.tsx` — novos
-- `src/pages/CRMPage.tsx` — adicionar aba "Contas" e roteamento pro detalhe
-- `src/lib/leads.ts` — helpers (stages, temperatura, SLA color) inspirados nos deles
-- `package.json` — `@dnd-kit/core`
+### 10. Pequenos ajustes
+- `update-user` edge: usar `getClaims(token)` em vez de `getUser()` (resolve 401 stale token).
+- Validação de nome+sobrenome nos signers de documento (já listado no item 1, citando aqui pra reforço).
 
-### 5. Detalhes técnicos
-- Conversão Lead → Conta: cria registro em `contas` com `lead_id_origem` setado e marca `etapa_funil = 'Fechamento'` no lead
-- SLA helper: `daysSince(ultima_interacao)` → `< 3 verde`, `3-7 amarelo`, `> 7 vermelho`
-- Realtime: assinar `postgres_changes` em `leads` e `interacoes` na página de detalhe
-- @dnd-kit substitui o `draggable`/`onDrop` HTML5 atual em `LeadsTab` mantendo a mesma `handleDrop` que faz `updateLead({ etapa_funil })`
+## O que NÃO vou trazer (ou não se aplica)
+
+- **Páginas Audit, Trash, Unsubscribe, Capture pública, Agendar, AppointmentPicker, NotificationBell, AssignSelector** — são de produtos/fluxos do Brazil Lands (rural, captação pública, auditoria avançada) que não foram pedidos aqui.
+- **Edge functions: `available-slots`, `book-appointment`, `public-chat`, `lead-webhook`, `notify-*`, `*email*`, `invite-user`, `auth-email-hook`, `process-email-queue`, `send-transactional-email`** — pertencem a fluxos de captação pública e e-mails transacionais que o HR Imóveis não tem hoje.
+- **Refatorações específicas do AccountDetail do Brazil Lands** (múltiplas propriedades por conta com `account_properties`, comissão removida, exportação Excel da lista de contas) — o HR Imóveis tem modelo diferente de contas + página `Imoveis` separada; mexer aí é refator grande, fora do escopo "trazer alterações". Posso fazer em loop separado se quiser.
+
+## Detalhes técnicos
+
+### Migração principal (Documentos)
+```sql
+create type signed_document_status as enum ('draft','sent','viewed','signed','cancelled','expired');
+create type document_signer_status as enum ('pending','viewed','signed','refused');
+
+create table signed_documents (
+  id uuid primary key default gen_random_uuid(),
+  titulo text not null,
+  status signed_document_status not null default 'draft',
+  lead_id uuid references leads(id) on delete set null,
+  conta_id uuid references contas(id) on delete set null,
+  file_url text, signed_file_url text,
+  clicksign_key text, clicksign_env text,
+  created_by uuid not null, created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+-- + document_signers, document_events, RLS, índices, realtime
+```
+
+### Função de normalização BR
+```sql
+create or replace function public.normalize_br_phone(p text)
+returns text language plpgsql immutable as $$
+declare digits text;
+begin
+  digits := regexp_replace(coalesce(p,''), '\D', '', 'g');
+  if length(digits) > 10 and left(digits,2) = '55' then digits := substr(digits,3); end if;
+  if length(digits) = 11 and substr(digits,3,1) = '9' then
+    return substr(digits,1,2) || substr(digits,4);
+  end if;
+  return right(digits,10);
+end$$;
+```
+
+### supabase/config.toml
+Adicionar bloco com `verify_jwt = false` para `clicksign-webhook`.
+
+## Ordem de execução
+1. Migração SQL (Clicksign + normalize_br_phone) e bucket
+2. Edge functions Clicksign + ajustes em whatsapp-webhook/whatsapp-send
+3. Páginas/componentes Documentos + integração no sidebar e detail pages
+4. WhatsApp: editar/excluir, chamar do lead, deep-link `?conv=`
+5. LeadDetail: editar lead, badge convertido, videochamada, conversão sem mover etapa
+6. Auth: olho da senha
+7. Varredura mobile global (último porque toca muitos arquivos)
+8. Pedir os 3 secrets do Clicksign no final
+
+## Confirmação
+Posso seguir trazendo todos esses itens? Ou quer que eu pule algum (por ex. pular Clicksign agora e deixar pra depois, ou pular o item 8 de mobile)?
