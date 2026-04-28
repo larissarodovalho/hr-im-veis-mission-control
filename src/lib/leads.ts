@@ -2,13 +2,13 @@
 // Tabelas HR: leads, contas, interacoes, reunioes, ligacoes, imoveis, visitas, profiles, user_roles, whatsapp_*
 
 export type Stage =
-  | 'Prospecção'
-  | 'Qualificação'
-  | 'Apresentação'
+  | 'Novo Lead'
+  | 'Em Contato'
+  | 'Conversa Ativa'
+  | 'Reunião Agendada'
   | 'Visita'
   | 'Proposta'
-  | 'Negociação'
-  | 'Fechamento'
+  | 'Fechado'
   | 'Perdido';
 
 export type Temperature = 'frio' | 'morno' | 'quente';
@@ -20,13 +20,13 @@ export const TEMPERATURES: Record<Temperature, { label: string; emoji: string; c
 };
 
 export const STAGES: { id: Stage; label: string; color: string }[] = [
-  { id: 'Prospecção', label: 'Prospecção', color: 'bg-blue-500' },
-  { id: 'Qualificação', label: 'Qualificação', color: 'bg-cyan-500' },
-  { id: 'Apresentação', label: 'Apresentação', color: 'bg-indigo-500' },
+  { id: 'Novo Lead', label: 'Novo Lead', color: 'bg-blue-500' },
+  { id: 'Em Contato', label: 'Em Contato', color: 'bg-cyan-500' },
+  { id: 'Conversa Ativa', label: 'Conversa Ativa', color: 'bg-indigo-500' },
+  { id: 'Reunião Agendada', label: 'Reunião Agendada', color: 'bg-purple-500' },
   { id: 'Visita', label: 'Visita', color: 'bg-amber-500' },
   { id: 'Proposta', label: 'Proposta', color: 'bg-orange-500' },
-  { id: 'Negociação', label: 'Negociação', color: 'bg-purple-500' },
-  { id: 'Fechamento', label: 'Fechamento', color: 'bg-success' },
+  { id: 'Fechado', label: 'Fechado', color: 'bg-success' },
   { id: 'Perdido', label: 'Perdido', color: 'bg-danger' },
 ];
 

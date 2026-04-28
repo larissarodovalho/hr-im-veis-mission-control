@@ -30,11 +30,11 @@ export default function Dashboard() {
   }, []);
 
   const total = leads.length;
-  const closed = leads.filter(l => l.etapa_funil === "Fechamento").length;
+  const closed = leads.filter(l => l.etapa_funil === "Fechado").length;
   const rate = total ? Math.round((closed / total) * 100) : 0;
   const overdue = leads.filter(l => {
     const d = daysSince(l.ultima_interacao ?? l.created_at);
-    return d !== null && d > 3 && !["Fechamento", "Perdido"].includes(l.etapa_funil);
+    return d !== null && d > 3 && !["Fechado", "Perdido"].includes(l.etapa_funil);
   });
   const weekStart = new Date(); weekStart.setHours(0, 0, 0, 0);
   const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 7);
