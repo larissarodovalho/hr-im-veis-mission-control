@@ -3,13 +3,19 @@
 
 export function getClicksignConfig() {
   const rawToken = Deno.env.get("CLICKSIGN_API_TOKEN")?.trim();
-  const env = (Deno.env.get("CLICKSIGN_ENV") || "sandbox").trim().toLowerCase();
+  const env = normalizeClicksignEnv(Deno.env.get("CLICKSIGN_ENV"));
   const token = normalizeClicksignToken(rawToken);
   if (!token) throw new Error("CLICKSIGN_API_TOKEN não configurado");
   const baseUrl = env === "production"
     ? "https://app.clicksign.com/api/v1"
     : "https://sandbox.clicksign.com/api/v1";
   return { token, baseUrl, env };
+}
+
+function normalizeClicksignEnv(value?: string | null) {
+  const env = (value || "sandbox").trim().toLowerCase();
+  if (["production", "producao", "produção", "prod"].includes(env)) return "production";
+  return "sandbox";
 }
 
 function normalizeClicksignToken(value?: string) {
