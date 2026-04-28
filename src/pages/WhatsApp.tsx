@@ -26,7 +26,7 @@ type Conv = {
   ai_enabled: boolean;
   last_message_at: string | null;
   lead_id: string | null;
-  leads?: { nome: string | null } | null;
+  lead_nome?: string | null;
 };
 type Msg = {
   id: string;
@@ -65,10 +65,31 @@ export default function WhatsApp() {
   const loadConvs = async () => {
     const { data } = await supabase
       .from("whatsapp_conversations")
-      .select("id, phone, contact_name, ai_enabled, last_message_at, lead_id, leads(nome)")
+      .select("id, phone, contact_name, ai_enabled, last_message_at, lead_id")
       .order("last_message_at", { ascending: false, nullsFirst: false });
 
-    const nextConvs = (data as unknown as Conv[]) ?? [];
+    let nextConvs = (data as unknown as Conv[]) ?? [];
+
+    // lead_id é text sem FK — buscamos os nomes de leads em uma segunda chamada
+    const leadIds = Array.from(
+      new Set(
+        nextConvs
+          .map((c) => c.lead_id)
+          .filter((id): id is string => !!id && /^[0-9a-f-]{36}$/i.test(id))
+      )
+    );
+    if (leadIds.length > 0) {
+      const { data: leadsData } = await supabase
+        .from("leads")
+        .select("id, nome")
+        .in("id", leadIds);
+      const leadMap = new Map((leadsData ?? []).map((l: any) => [l.id, l.nome as string | null]));
+      nextConvs = nextConvs.map((c) => ({
+        ...c,
+        lead_nome: c.lead_id ? leadMap.get(c.lead_id) ?? null : null,
+      }));
+    }
+
     setConvs(nextConvs);
     const wantedId = searchParams.get("conv");
     setActive((current) => {
@@ -188,7 +209,7 @@ export default function WhatsApp() {
     toast.success("Conversa excluída");
   };
 
-  const activeLeadName = active?.leads?.nome?.trim() || active?.contact_name?.trim();
+  const activeLeadName = active?.lead_nome?.trim() || active?.contact_name?.trim();
   const activeDisplayName = activeLeadName && !activeLeadName.startsWith("WhatsApp ") ? activeLeadName : active?.phone;
 
   const renderContent = (content: string) => {
@@ -218,7 +239,7 @@ export default function WhatsApp() {
           )}
 
           {convs.map((c) => {
-            const leadName = c.leads?.nome?.trim() || c.contact_name?.trim();
+            const leadName = c.lead_nome?.trim() || c.contact_name?.trim();
             const hasLeadName = !!leadName && !leadName.startsWith("WhatsApp ");
             const displayName = hasLeadName ? leadName! : c.phone;
             const unreadCount = !c.ai_enabled ? (unreadByConv[c.id] || 0) : 0;
