@@ -2,8 +2,8 @@
 // Docs: https://developers.clicksign.com/
 
 export function getClicksignConfig() {
-  const token = Deno.env.get("CLICKSIGN_API_TOKEN");
-  const env = (Deno.env.get("CLICKSIGN_ENV") || "sandbox").toLowerCase();
+  const token = Deno.env.get("CLICKSIGN_API_TOKEN")?.trim();
+  const env = (Deno.env.get("CLICKSIGN_ENV") || "sandbox").trim().toLowerCase();
   if (!token) throw new Error("CLICKSIGN_API_TOKEN não configurado");
   const baseUrl = env === "production"
     ? "https://app.clicksign.com/api/v1"
