@@ -25,7 +25,7 @@ export default function AccountDetail() {
   };
   useEffect(() => { load(); }, [id]);
 
-  if (!acc) return <div className="p-8 text-muted-foreground">Carregando…</div>;
+  if (!acc) return <div className="p-4 sm:p-6 lg:p-8 text-muted-foreground">Carregando…</div>;
 
   const save = async () => {
     if (!editing.nome.trim()) return toast.error("Nome obrigatório");
@@ -43,7 +43,7 @@ export default function AccountDetail() {
   };
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <Link to="/app/contas" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
       </Link>

@@ -98,8 +98,8 @@ export default function DocumentDetail() {
     await downloadAsBlob(full, `${doc?.name || "documento"}.pdf`);
   };
 
-  if (loading) return <div className="p-8 text-muted-foreground">Carregando...</div>;
-  if (!doc) return <div className="p-8 text-muted-foreground">Documento não encontrado.</div>;
+  if (loading) return <div className="p-4 sm:p-6 lg:p-8 text-muted-foreground">Carregando...</div>;
+  if (!doc) return <div className="p-4 sm:p-6 lg:p-8 text-muted-foreground">Documento não encontrado.</div>;
 
   const isFinal = ["signed", "refused", "expired", "canceled"].includes(doc.status);
 
