@@ -15,6 +15,7 @@ import {
   Menu,
   Building2,
   Home,
+  FileSignature,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
