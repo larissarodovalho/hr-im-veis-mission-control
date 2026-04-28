@@ -1,46 +1,37 @@
-## Objetivo
+## Reconfigurar chaves do Clicksign
 
-Ativar a integração com o Clicksign (já implementada no código) cadastrando as duas chaves necessárias e validando que tudo funciona ponta a ponta: envio, assinatura, webhook e download.
+O token salvo (36 caracteres) está sendo recusado pela Clicksign no ambiente de produção (`app.clicksign.com`). Vamos pedir novamente as duas chaves para garantir que estão corretas e consistentes entre si.
 
-## O que vai acontecer ao aprovar
+### O que farei
 
-### 1. Solicitar as duas chaves
-Abro um formulário seguro pedindo:
+1. Disparar a solicitação para você atualizar dois secrets:
+   - **`CLICKSIGN_API_TOKEN`** — token da API Clicksign
+   - **`CLICKSIGN_ENV`** — `production` ou `sandbox`
 
-- **CLICKSIGN_API_TOKEN** — token de acesso à API (Configurações → API → Access Token no painel Clicksign).
-- **CLICKSIGN_HMAC_SECRET** — segredo do webhook (Configurações → API → Webhooks no painel Clicksign).
+2. Após você salvar, redeploy automático das edge functions que usam o cliente compartilhado:
+   - `clicksign-create-document`
+   - `clicksign-cancel-document`
+   - `clicksign-download-signed`
+   - `clicksign-resend-notification`
 
-Recomendado começar com o ambiente **Sandbox** do Clicksign para testar sem custo. Quando estiver tudo ok, troca pelas chaves de produção.
+3. Você testa reenviando um documento. Se ainda falhar, a mensagem de erro já mostra o ambiente alvo e o tamanho do token, facilitando diagnosticar.
 
-### 2. Configurar o webhook no Clicksign
-No painel do Clicksign, em Configurações → API → Webhooks, você cola:
+### Como obter o token correto na Clicksign
 
-```
-https://pbqiwdwwabvjmybbatdv.supabase.co/functions/v1/clicksign-webhook
-```
+1. Acesse o painel Clicksign **no mesmo ambiente** que vai usar:
+   - Produção: https://app.clicksign.com
+   - Sandbox: https://sandbox.clicksign.com
+2. Vá em **Configurações da conta → API**.
+3. Copie o **Access Token** (Token de API). É uma string única — cole **sem aspas, sem "Bearer", sem rótulo**.
 
-Eventos a marcar: `auto_close`, `sign`, `add_signer`, `cancel`, `deadline`, `refusal`.
+### Regra crítica
 
-### 3. Verificações automáticas
-Depois de salvar as chaves, eu:
+`CLICKSIGN_ENV` e `CLICKSIGN_API_TOKEN` devem ser do **mesmo ambiente**:
+- Token gerado em `app.clicksign.com` → `CLICKSIGN_ENV=production`
+- Token gerado em `sandbox.clicksign.com` → `CLICKSIGN_ENV=sandbox`
 
-- Confirmo que os secrets foram registrados.
-- Verifico os logs das edge functions (`clicksign-create-document` e `clicksign-webhook`) para garantir que não há erro de configuração.
-- Faço um teste de envio de documento simples pela tela `/app/documentos` para validar o fluxo.
+Tokens de sandbox **não funcionam** em produção e vice-versa — esse é o motivo mais provável do 403 atual.
 
-### 4. Pequenos ajustes se necessário
-Se algum log apontar problema (ex.: header errado, validação HMAC, lockfile da edge function), eu corrijo na hora.
+### Nenhuma alteração de código necessária
 
-## Detalhes técnicos
-
-- As chaves ficam armazenadas como secrets do backend e só são lidas pelas edge functions Clicksign (`clicksign-create-document`, `clicksign-webhook`, `clicksign-resend-notification`, `clicksign-cancel-document`, `clicksign-download-signed`).
-- A função `clicksign-webhook` valida a assinatura HMAC SHA-256 de cada notificação recebida, garantindo que só o Clicksign consegue atualizar o status dos documentos.
-- A função `clicksign-create-document` faz upload do PDF para o bucket privado `signed-documents`, cria o documento no Clicksign e adiciona os signatários.
-- Realtime já está habilitado em `signed_documents`, `document_signers` e `document_events`, então a UI atualiza sozinha conforme o webhook chega.
-
-## Pré-requisitos do seu lado
-
-- Conta no Clicksign com plano que libere a API (Sandbox é gratuito).
-- Acesso ao painel Clicksign para gerar Access Token e configurar Webhook.
-
-Posso prosseguir?
+A normalização de token e ambiente já está no lugar (`supabase/functions/_shared/clicksign.ts`). Só precisamos atualizar os secrets.
