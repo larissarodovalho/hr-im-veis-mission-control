@@ -1,37 +1,26 @@
-## Reconfigurar chaves do Clicksign
+## Recriar chave HMAC do webhook Clicksign
 
-O token salvo (36 caracteres) está sendo recusado pela Clicksign no ambiente de produção (`app.clicksign.com`). Vamos pedir novamente as duas chaves para garantir que estão corretas e consistentes entre si.
+Vamos regenerar o segredo HMAC que valida os webhooks que a Clicksign envia para nossa edge function `clicksign-webhook`.
 
-### O que farei
+### Passos
 
-1. Disparar a solicitação para você atualizar dois secrets:
-   - **`CLICKSIGN_API_TOKEN`** — token da API Clicksign
-   - **`CLICKSIGN_ENV`** — `production` ou `sandbox`
+1. **Gerar novo segredo na Clicksign**
+   - Painel Clicksign (production): https://app.clicksign.com → **Configurações da conta → API → Webhooks**
+   - Edite (ou crie) o webhook que aponta para nossa URL:
+     `https://pbqiwdwwabvjmybbatdv.supabase.co/functions/v1/clicksign-webhook`
+   - Gere/copie o **Secret HMAC** (string usada para assinar `Content-Hmac: sha256=...`)
+   - Salve na Clicksign
 
-2. Após você salvar, redeploy automático das edge functions que usam o cliente compartilhado:
-   - `clicksign-create-document`
-   - `clicksign-cancel-document`
-   - `clicksign-download-signed`
-   - `clicksign-resend-notification`
+2. **Atualizar o secret no Lovable Cloud**
+   - Vou abrir a tela para você colar o novo valor em `CLICKSIGN_HMAC_SECRET`
+   - Cole **sem aspas, sem espaços**, exatamente como veio da Clicksign
 
-3. Você testa reenviando um documento. Se ainda falhar, a mensagem de erro já mostra o ambiente alvo e o tamanho do token, facilitando diagnosticar.
+3. **Redeploy automático** da função `clicksign-webhook` para garantir que o novo valor seja lido
 
-### Como obter o token correto na Clicksign
+4. **Validação**
+   - Você dispara um evento na Clicksign (ex.: enviar/cancelar um documento de teste)
+   - Eu verifico os logs de `clicksign-webhook` para confirmar que a verificação HMAC passou (sem `403 invalid signature`)
 
-1. Acesse o painel Clicksign **no mesmo ambiente** que vai usar:
-   - Produção: https://app.clicksign.com
-   - Sandbox: https://sandbox.clicksign.com
-2. Vá em **Configurações da conta → API**.
-3. Copie o **Access Token** (Token de API). É uma string única — cole **sem aspas, sem "Bearer", sem rótulo**.
+### Observação
 
-### Regra crítica
-
-`CLICKSIGN_ENV` e `CLICKSIGN_API_TOKEN` devem ser do **mesmo ambiente**:
-- Token gerado em `app.clicksign.com` → `CLICKSIGN_ENV=production`
-- Token gerado em `sandbox.clicksign.com` → `CLICKSIGN_ENV=sandbox`
-
-Tokens de sandbox **não funcionam** em produção e vice-versa — esse é o motivo mais provável do 403 atual.
-
-### Nenhuma alteração de código necessária
-
-A normalização de token e ambiente já está no lugar (`supabase/functions/_shared/clicksign.ts`). Só precisamos atualizar os secrets.
+Nenhuma alteração de código é necessária — a função `verifyClicksignHmac` em `supabase/functions/_shared/clicksign.ts` já lê `CLICKSIGN_HMAC_SECRET` do ambiente e valida `Content-Hmac: sha256=...` com timing-safe compare.
