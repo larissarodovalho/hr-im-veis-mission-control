@@ -1361,6 +1361,7 @@ export type Database = {
       }
       whatsapp_conversations: {
         Row: {
+          ai_enabled: boolean
           contact_name: string | null
           created_at: string
           id: string
@@ -1373,6 +1374,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ai_enabled?: boolean
           contact_name?: string | null
           created_at?: string
           id?: string
@@ -1385,6 +1387,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ai_enabled?: boolean
           contact_name?: string | null
           created_at?: string
           id?: string
@@ -1400,6 +1403,7 @@ export type Database = {
       }
       whatsapp_messages: {
         Row: {
+          author: string
           content: string | null
           conversation_id: string
           created_at: string
@@ -1412,6 +1416,7 @@ export type Database = {
           timestamp: string
         }
         Insert: {
+          author?: string
           content?: string | null
           conversation_id: string
           created_at?: string
@@ -1424,6 +1429,7 @@ export type Database = {
           timestamp?: string
         }
         Update: {
+          author?: string
           content?: string | null
           conversation_id?: string
           created_at?: string
