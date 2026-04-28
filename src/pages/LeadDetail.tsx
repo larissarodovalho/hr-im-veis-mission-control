@@ -326,6 +326,7 @@ export default function LeadDetail() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ligacao">Ligação</SelectItem>
+                    <SelectItem value="videochamada">Videochamada</SelectItem>
                     <SelectItem value="mensagem">Mensagem</SelectItem>
                     <SelectItem value="email">Email</SelectItem>
                     <SelectItem value="visita">Visita</SelectItem>
