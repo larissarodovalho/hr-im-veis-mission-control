@@ -59,7 +59,7 @@ export default function Leads() {
     return () => { supabase.removeChannel(ch); };
   }, []);
 
-  const isClosedStage = (s: Stage) => s === "Fechamento" || s === "Perdido";
+  const isClosedStage = (s: Stage) => s === "Fechado" || s === "Perdido";
 
   const needsNurtureCount = leads.filter(l => {
     if (isClosedStage(l.etapa_funil)) return false;
@@ -129,7 +129,7 @@ export default function Leads() {
             size="sm"
             className="order-2 gap-1.5"
             onClick={() => setNeedsNurture(v => !v)}
-            title="Leads sem contato há 4+ dias (e fora de Fechamento/Perdido)"
+            title="Leads sem contato há 4+ dias (e fora de Fechado/Perdido)"
           >
             <Flame className="h-4 w-4" />
             <span className="hidden sm:inline">Precisam nutrição</span>
@@ -340,7 +340,7 @@ function NewLeadDialog({ open, onOpenChange, onCreated, userId }: any) {
   const updateExisting = async (dup: DuplicateMatch) => {
     const p = pendingPayload || {};
     const { data: cur } = await supabase.from("leads").select("nome, email, telefone, regiao, imovel_interesse, observacoes").eq("id", dup.id).maybeSingle();
-    const upd: any = { ultima_interacao: new Date().toISOString(), etapa_funil: "Prospecção" };
+    const upd: any = { ultima_interacao: new Date().toISOString(), etapa_funil: "Novo Lead" };
     if (p.nome && (!cur?.nome || cur.nome.startsWith("WhatsApp ") || cur.nome === "Lead sem nome")) upd.nome = p.nome;
     if (p.email && !cur?.email) upd.email = p.email;
     if (p.telefone && !cur?.telefone) upd.telefone = p.telefone;
@@ -349,7 +349,7 @@ function NewLeadDialog({ open, onOpenChange, onCreated, userId }: any) {
     if (p.observacoes) upd.observacoes = cur?.observacoes ? `${cur.observacoes}\n---\n${p.observacoes}` : p.observacoes;
     const { error } = await supabase.from("leads").update(upd).eq("id", dup.id);
     if (error) return toast.error(error.message);
-    toast.success("Lead atualizado e movido para 'Prospecção'");
+    toast.success("Lead atualizado e movido para 'Novo Lead'");
     onOpenChange(false);
     reset();
     onCreated();
@@ -417,7 +417,7 @@ function NewLeadDialog({ open, onOpenChange, onCreated, userId }: any) {
                     Abrir existente
                   </Button>
                   <Button size="sm" onClick={() => updateExisting(d)}>
-                    Atualizar e mover p/ Prospecção
+                    Atualizar e mover p/ Novo Lead
                   </Button>
                 </div>
               </div>
