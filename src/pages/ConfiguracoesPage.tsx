@@ -13,8 +13,9 @@ import { Separator } from "@/components/ui/separator";
 import {
   ShieldAlert, Settings, Building2, MessageCircle, Bell, Database, ExternalLink,
   Loader2, QrCode, RefreshCw, LogOut, Send, CheckCircle2, XCircle, AlertCircle, Copy,
-  Webhook, Bot, Globe, Check,
+  Webhook, Bot, Globe, Check, ShieldCheck, History, Trash2, HardDrive,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
 const STORAGE_KEY = "hr-system-settings";
