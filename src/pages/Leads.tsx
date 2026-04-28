@@ -11,8 +11,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
-import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, Stage, Temperature } from "@/lib/leads";
-import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2 } from "lucide-react";
+import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature } from "@/lib/leads";
+import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame } from "lucide-react";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
@@ -33,6 +33,8 @@ export default function Leads() {
   const [convertedIds, setConvertedIds] = useState<Set<string>>(new Set());
   const [view, setView] = useState<"kanban" | "list">("kanban");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"recent" | "idle">("recent");
+  const [needsNurture, setNeedsNurture] = useState(false);
   const [open, setOpen] = useState(false);
   const { isAdmin, isGestor } = useRole();
   const canDelete = isAdmin || isGestor;
@@ -57,7 +59,39 @@ export default function Leads() {
     return () => { supabase.removeChannel(ch); };
   }, []);
 
-  const filtered = leads.filter(l => !search || l.nome.toLowerCase().includes(search.toLowerCase()) || l.telefone?.includes(search) || l.email?.toLowerCase().includes(search.toLowerCase()));
+  const isClosedStage = (s: Stage) => s === "Fechamento" || s === "Perdido";
+
+  const needsNurtureCount = leads.filter(l => {
+    if (isClosedStage(l.etapa_funil)) return false;
+    const id = idleDays(l.ultima_interacao);
+    return id === null || id >= 4;
+  }).length;
+
+  let filtered = leads.filter(l => {
+    if (search) {
+      const s = search.toLowerCase();
+      const match = l.nome.toLowerCase().includes(s) || l.telefone?.includes(search) || l.email?.toLowerCase().includes(s);
+      if (!match) return false;
+    }
+    if (needsNurture) {
+      if (isClosedStage(l.etapa_funil)) return false;
+      const id = idleDays(l.ultima_interacao);
+      if (!(id === null || id >= 4)) return false;
+    }
+    return true;
+  });
+
+  if (sortBy === "idle") {
+    filtered = [...filtered].sort((a, b) => {
+      const ai = idleDays(a.ultima_interacao);
+      const bi = idleDays(b.ultima_interacao);
+      if (ai === null && bi === null) return 0;
+      if (ai === null) return -1;
+      if (bi === null) return 1;
+      return bi - ai;
+    });
+  }
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const onDragEnd = async (e: DragEndEvent) => {
@@ -73,61 +107,121 @@ export default function Leads() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      <header className="flex items-center justify-between gap-4 flex-wrap">
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-semibold">Leads</h1>
-          <p className="text-muted-foreground mt-1">{filtered.length} de {leads.length}</p>
+          <h1 className="font-display text-2xl sm:text-3xl font-semibold">Leads</h1>
+          <p className="text-muted-foreground mt-1 text-sm">{filtered.length} de {leads.length}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
+          <div className="relative w-full md:w-56 order-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar…" className="pl-8 w-56" value={search} onChange={e => setSearch(e.target.value)} />
+            <Input placeholder="Buscar…" className="pl-8 w-full" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <Tabs value={view} onValueChange={v => setView(v as any)}>
+          <Tabs value={view} onValueChange={v => setView(v as any)} className="order-2">
             <TabsList>
               <TabsTrigger value="kanban"><KanbanSquare className="h-4 w-4" /></TabsTrigger>
               <TabsTrigger value="list"><ListIcon className="h-4 w-4" /></TabsTrigger>
             </TabsList>
           </Tabs>
-          <NewLeadDialog open={open} onOpenChange={setOpen} onCreated={load} userId={user?.id} />
+          <Button
+            type="button"
+            variant={needsNurture ? "default" : "outline"}
+            size="sm"
+            className="order-2 gap-1.5"
+            onClick={() => setNeedsNurture(v => !v)}
+            title="Leads sem contato há 4+ dias (e fora de Fechamento/Perdido)"
+          >
+            <Flame className="h-4 w-4" />
+            <span className="hidden sm:inline">Precisam nutrição</span>
+            <Badge variant="secondary" className="ml-0.5 h-5 px-1.5 text-[10px]">{needsNurtureCount}</Badge>
+          </Button>
+          {view === "list" && (
+            <Select value={sortBy} onValueChange={v => setSortBy(v as any)}>
+              <SelectTrigger className="order-2 w-44 h-9 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Mais recentes</SelectItem>
+                <SelectItem value="idle">Mais antigos sem contato</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+          <div className="order-3 ml-auto md:ml-0">
+            <NewLeadDialog open={open} onOpenChange={setOpen} onCreated={load} userId={user?.id} />
+          </div>
         </div>
       </header>
 
       {view === "kanban" ? (
         <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-          <div className="flex gap-4 overflow-x-auto pb-4">
+          <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
             {STAGES.map(s => (
               <Column key={s.id} stage={s.id} label={s.label} color={s.color} leads={filtered.filter(l => l.etapa_funil === s.id)} canDelete={canDelete} onDelete={remove} convertedIds={convertedIds} />
             ))}
           </div>
         </DndContext>
       ) : (
-        <Card className="overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left"><tr>
-              <th className="p-3">Nome</th><th className="p-3">Origem</th><th className="p-3">Interesse</th><th className="p-3">Etapa</th><th className="p-3">SLA</th>{canDelete && <th className="p-3 w-12"></th>}
-            </tr></thead>
-            <tbody>
-              {filtered.map(l => {
-                const d = daysSince(l.ultima_interacao ?? l.created_at);
-                return (
-                  <tr key={l.id} className="border-t hover:bg-muted/30">
-                    <td className="p-3">
-                      <Link to={`/app/leads/${l.id}`} className="font-medium hover:underline">{l.nome}</Link>
-                      {convertedIds.has(l.id) && <Badge className="ml-2 bg-success/15 text-success border-success/30 border text-[10px] gap-0.5"><Building2 className="h-2.5 w-2.5" /> Conta</Badge>}
-                      <div className="text-xs text-muted-foreground">{l.telefone}</div>
-                    </td>
-                    <td className="p-3"><Badge variant="secondary">{SOURCES[l.origem || ""]?.emoji} {SOURCES[l.origem || ""]?.label || l.origem}</Badge></td>
-                    <td className="p-3 text-muted-foreground">{l.imovel_interesse || "—"}</td>
-                    <td className="p-3"><Badge variant="outline">{STAGES.find(s => s.id === l.etapa_funil)?.label}</Badge></td>
-                    <td className="p-3"><Badge className={slaColor(d) + " border"}>{slaLabel(d)}</Badge></td>
-                    {canDelete && <td className="p-3"><DeleteLeadButton name={l.nome} onConfirm={() => remove(l.id, l.nome)} /></td>}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </Card>
+        <>
+          {/* Mobile: cards */}
+          <div className="md:hidden space-y-3">
+            {filtered.map(l => {
+              const age = ageInDays(l.created_at);
+              const idle = idleDays(l.ultima_interacao);
+              return (
+                <Card key={l.id} className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <Link to={`/app/leads/${l.id}`} className="font-medium hover:underline block truncate">{l.nome}</Link>
+                      {l.telefone && <div className="text-xs text-muted-foreground truncate">{l.telefone}</div>}
+                    </div>
+                    {canDelete && <DeleteLeadButton name={l.nome} onConfirm={() => remove(l.id, l.nome)} />}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {l.origem && <Badge variant="secondary" className="text-[10px]">{SOURCES[l.origem]?.emoji} {SOURCES[l.origem]?.label || l.origem}</Badge>}
+                    {l.imovel_interesse && <Badge variant="outline" className="text-[10px]">{INTERESTS[l.imovel_interesse] || l.imovel_interesse}</Badge>}
+                    <Badge variant="outline" className="text-[10px]">{STAGES.find(s => s.id === l.etapa_funil)?.label}</Badge>
+                    <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
+                    <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
+                    {convertedIds.has(l.id) && <Badge className="bg-success/15 text-success border-success/30 border text-[10px] gap-0.5"><Building2 className="h-2.5 w-2.5" /> Conta</Badge>}
+                  </div>
+                </Card>
+              );
+            })}
+            {filtered.length === 0 && <Card className="p-6 text-center text-sm text-muted-foreground">Nenhum lead.</Card>}
+          </div>
+
+          {/* Desktop: table */}
+          <Card className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-left"><tr>
+                <th className="p-3">Nome</th><th className="p-3">Origem</th><th className="p-3">Interesse</th><th className="p-3">Etapa</th><th className="p-3">Tempo</th>{canDelete && <th className="p-3 w-12"></th>}
+              </tr></thead>
+              <tbody>
+                {filtered.map(l => {
+                  const age = ageInDays(l.created_at);
+                  const idle = idleDays(l.ultima_interacao);
+                  return (
+                    <tr key={l.id} className="border-t hover:bg-muted/30">
+                      <td className="p-3">
+                        <Link to={`/app/leads/${l.id}`} className="font-medium hover:underline">{l.nome}</Link>
+                        {convertedIds.has(l.id) && <Badge className="ml-2 bg-success/15 text-success border-success/30 border text-[10px] gap-0.5"><Building2 className="h-2.5 w-2.5" /> Conta</Badge>}
+                        <div className="text-xs text-muted-foreground">{l.telefone}</div>
+                      </td>
+                      <td className="p-3"><Badge variant="secondary">{SOURCES[l.origem || ""]?.emoji} {SOURCES[l.origem || ""]?.label || l.origem}</Badge></td>
+                      <td className="p-3 text-muted-foreground">{l.imovel_interesse ? (INTERESTS[l.imovel_interesse] || l.imovel_interesse) : "—"}</td>
+                      <td className="p-3"><Badge variant="outline">{STAGES.find(s => s.id === l.etapa_funil)?.label}</Badge></td>
+                      <td className="p-3">
+                        <div className="flex flex-col gap-1 items-start">
+                          <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
+                          <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
+                        </div>
+                      </td>
+                      {canDelete && <td className="p-3"><DeleteLeadButton name={l.nome} onConfirm={() => remove(l.id, l.nome)} /></td>}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </Card>
+        </>
       )}
     </div>
   );
@@ -136,12 +230,12 @@ export default function Leads() {
 function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds }: any) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   return (
-    <div ref={setNodeRef} className={"min-w-[280px] w-72 flex-shrink-0 rounded-xl bg-muted/40 p-3 transition " + (isOver ? "ring-2 ring-primary/40" : "")}>
+    <div ref={setNodeRef} className={"min-w-[280px] w-72 flex-shrink-0 rounded-xl bg-muted/40 p-3 transition flex flex-col min-h-[calc(100vh-220px)] " + (isOver ? "ring-2 ring-primary/40" : "")}>
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-2"><span className={"h-2 w-2 rounded-full " + color} /><span className="font-medium text-sm">{label}</span></div>
         <span className="text-xs text-muted-foreground">{leads.length}</span>
       </div>
-      <div className="space-y-2">{leads.map((l: Lead) => <LeadCard key={l.id} lead={l} canDelete={canDelete} onDelete={onDelete} converted={convertedIds.has(l.id)} />)}</div>
+      <div className="space-y-2 flex-1 overflow-y-auto pr-1">{leads.map((l: Lead) => <LeadCard key={l.id} lead={l} canDelete={canDelete} onDelete={onDelete} converted={convertedIds.has(l.id)} />)}</div>
     </div>
   );
 }
@@ -149,7 +243,8 @@ function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds 
 function LeadCard({ lead, canDelete, onDelete, converted }: { lead: Lead; canDelete: boolean; onDelete: (id: string, name: string) => void; converted: boolean }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
-  const d = daysSince(lead.ultima_interacao ?? lead.created_at);
+  const age = ageInDays(lead.created_at);
+  const idle = idleDays(lead.ultima_interacao);
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} style={style} className={"group rounded-lg bg-card border p-3 shadow-soft cursor-grab active:cursor-grabbing relative " + (isDragging ? "opacity-50" : "")}>
       {canDelete && (
@@ -164,11 +259,14 @@ function LeadCard({ lead, canDelete, onDelete, converted }: { lead: Lead; canDel
           {lead.regiao && <div className="text-xs text-muted-foreground truncate">{lead.regiao}</div>}
         </div>
       </div>
-      <div className="flex items-center justify-between mt-2 gap-1 flex-wrap">
+      <div className="flex items-center gap-1 mt-2 flex-wrap">
         {lead.origem && <Badge variant="secondary" className="text-[10px]">{SOURCES[lead.origem]?.emoji} {SOURCES[lead.origem]?.label || lead.origem}</Badge>}
         {lead.temperatura && <Badge className={TEMPERATURES[lead.temperatura].className + " border text-[10px]"}>{TEMPERATURES[lead.temperatura].emoji} {TEMPERATURES[lead.temperatura].label}</Badge>}
         {converted && <Badge className="bg-success/15 text-success border-success/30 border text-[10px] gap-0.5"><Building2 className="h-2.5 w-2.5" /> Conta</Badge>}
-        <Badge className={slaColor(d) + " border text-[10px]"}>{slaLabel(d)}</Badge>
+      </div>
+      <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+        <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
+        <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
       </div>
     </div>
   );

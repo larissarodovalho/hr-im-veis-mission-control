@@ -74,6 +74,52 @@ export function initials(name: string | null | undefined): string {
   return name.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join('');
 }
 
+// --- Acompanhamento de tempo do lead ---
+
+/** Idade do lead na base (em dias inteiros desde created_at). */
+export function ageInDays(createdAt: string | null | undefined): number {
+  if (!createdAt) return 0;
+  const ms = Date.now() - new Date(createdAt).getTime();
+  return Math.max(0, Math.floor(ms / 86400000));
+}
+
+/** Dias sem contato. Retorna null se nunca houve contato registrado. */
+export function idleDays(lastContactedAt: string | null | undefined): number | null {
+  if (!lastContactedAt) return null;
+  const ms = Date.now() - new Date(lastContactedAt).getTime();
+  return Math.max(0, Math.floor(ms / 86400000));
+}
+
+export function ageLabel(days: number): string {
+  if (days <= 0) return 'Hoje na base';
+  if (days === 1) return '1d na base';
+  return `${days}d na base`;
+}
+
+export function ageColor(_days: number): string {
+  return 'bg-muted text-muted-foreground border-border';
+}
+
+export function idleLabel(days: number | null): string {
+  if (days === null) return 'Nunca atendido';
+  if (days <= 0) return 'Contato hoje';
+  if (days === 1) return '1d sem contato';
+  return `${days}d sem contato`;
+}
+
+export function idleColor(days: number | null): string {
+  if (days === null) return 'bg-danger/15 text-danger border-danger/30';
+  if (days <= 0) return 'bg-success/15 text-success border-success/30';
+  if (days <= 3) return 'bg-warning/15 text-warning border-warning/30';
+  if (days <= 7) return 'bg-orange-500/15 text-orange-600 border-orange-500/30';
+  return 'bg-danger/15 text-danger border-danger/30';
+}
+
+export function formatDateBR(d: string | null | undefined): string {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
 // ===== Compatibilidade com componentes antigos do HR (serão removidos depois) =====
 export const ETAPAS = STAGES.map(s => s.id);
 export const ORIGENS = Object.keys(SOURCES);
