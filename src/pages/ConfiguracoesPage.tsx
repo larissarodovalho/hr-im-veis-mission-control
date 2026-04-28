@@ -119,11 +119,28 @@ export default function ConfiguracoesPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="empresa">
+      {/* Backup & Recuperação */}
+      <BackupRecuperacao />
+
+      {/* Webhook de captação */}
+      <WebhookCaptacao />
+
+      {/* WhatsApp (Evolution / Z-API) */}
+      <WhatsAppEvolutionInfo webhookUrl={webhookUrl} />
+
+      {/* Status / QR / testar envio (mantém o bloco já existente) */}
+      <WhatsAppConnection webhookUrl={webhookUrl} />
+
+      {/* IA conversacional */}
+      <IAConversacional />
+
+      {/* Landing de captura */}
+      <LandingCaptura />
+
+      {/* Configurações avançadas em abas */}
+      <Tabs defaultValue="empresa" className="pt-4">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="empresa"><Building2 className="h-4 w-4 mr-1" />Empresa</TabsTrigger>
-          <TabsTrigger value="whatsapp"><MessageCircle className="h-4 w-4 mr-1" />WhatsApp</TabsTrigger>
-          <TabsTrigger value="integracoes"><Webhook className="h-4 w-4 mr-1" />Integrações & IA</TabsTrigger>
           <TabsTrigger value="notificacoes"><Bell className="h-4 w-4 mr-1" />Notificações</TabsTrigger>
           <TabsTrigger value="sistema"><Database className="h-4 w-4 mr-1" />Sistema</TabsTrigger>
         </TabsList>
@@ -160,14 +177,6 @@ export default function ConfiguracoesPage() {
               <Button onClick={save} disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}</Button>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="whatsapp">
-          <WhatsAppConnection webhookUrl={webhookUrl} />
-        </TabsContent>
-
-        <TabsContent value="integracoes">
-          <IntegracoesIA />
         </TabsContent>
 
         <TabsContent value="notificacoes">
