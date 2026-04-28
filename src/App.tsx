@@ -22,6 +22,8 @@ import Meetings from "@/pages/Meetings";
 import Calls from "@/pages/Calls";
 import Visits from "@/pages/Visits";
 import Schedule from "@/pages/Schedule";
+import Documents from "@/pages/Documents";
+import DocumentDetail from "@/pages/DocumentDetail";
 import Reports from "@/pages/Reports";
 import Users from "@/pages/Users";
 import Settings from "@/pages/Settings";
