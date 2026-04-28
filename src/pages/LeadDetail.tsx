@@ -48,8 +48,6 @@ export default function LeadDetail() {
   };
 
   useEffect(() => { load(); }, [id]);
-  if (!lead) return <div className="p-8 text-muted-foreground">Carregando…</div>;
-  const d = daysSince(lead.ultima_interacao ?? lead.created_at);
 
   const updateLead = async (patch: any) => {
     const { error } = await supabase.from("leads").update(patch).eq("id", id);
@@ -139,6 +137,9 @@ export default function LeadDetail() {
     }, 400);
     return () => clearTimeout(t);
   }, [convertOpen, convertForm?.nome, convertForm?.email, convertForm?.telefone, convertForm?.documento]);
+
+  if (!lead) return <div className="p-8 text-muted-foreground">Carregando…</div>;
+  const d = daysSince(lead.ultima_interacao ?? lead.created_at);
 
   const confirmConvert = async () => {
     if (!convertForm.nome?.trim()) return toast.error("Nome obrigatório");
