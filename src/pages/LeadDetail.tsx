@@ -10,14 +10,45 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, Stage, Temperature } from "@/lib/leads";
-import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Plus, Building2, FileSignature } from "lucide-react";
+import {
+  STAGES, SOURCES, INTERESTS, TEMPERATURES,
+  ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, formatDateBR,
+  initials, Stage, Temperature,
+} from "@/lib/leads";
+import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Plus, Building2, FileSignature, Pencil } from "lucide-react";
 import EntityDocumentsTab from "@/components/EntityDocumentsTab";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { findDuplicates, onlyDigits, normEmail, DuplicateMatch } from "@/lib/duplicates";
 import DuplicateAlert from "@/components/DuplicateAlert";
+
+type MeetingFormat = "escritorio" | "virtual" | "ligacao";
+const FORMAT_LABEL: Record<MeetingFormat, string> = {
+  escritorio: "Reunião no escritório",
+  virtual: "Reunião virtual",
+  ligacao: "Ligação",
+};
+const INTERACTION_TYPE_LABEL: Record<string, string> = {
+  ligacao: "Ligação",
+  reuniao: "Reunião",
+  videochamada: "Videochamada",
+  mensagem: "Mensagem",
+  email: "Email",
+  visita: "Visita",
+  nota: "Nota",
+};
+const inferFormat = (m: any): MeetingFormat => {
+  if (m.tipo === "ligacao") return "ligacao";
+  if (m.link) return "virtual";
+  return "escritorio";
+};
+
+const normalizePhone = (raw: string) => {
+  const digits = (raw || "").replace(/\D/g, "");
+  if (!digits) return "";
+  return digits.startsWith("55") ? digits : `55${digits}`;
+};
 
 export default function LeadDetail() {
   const { id } = useParams();
@@ -28,7 +59,9 @@ export default function LeadDetail() {
   const [reunioes, setReunioes] = useState<any[]>([]);
   const [conta, setConta] = useState<any>(null);
   const [interaction, setInteraction] = useState({ tipo: "ligacao", resultado: "", descricao: "", proxima_acao: "" });
-  const [meeting, setMeeting] = useState({ agendada_para: "", local: "", link: "", notas: "" });
+  const [meeting, setMeeting] = useState<{ agendada_para: string; local: string; link: string; notas: string; format: MeetingFormat }>({ agendada_para: "", local: "", link: "", notas: "", format: "escritorio" });
+  const [editingMeeting, setEditingMeeting] = useState<any | null>(null);
+  const [editLead, setEditLead] = useState<any | null>(null);
   const [convertOpen, setConvertOpen] = useState(false);
   const [convertForm, setConvertForm] = useState<any>(null);
   const [converting, setConverting] = useState(false);
@@ -72,16 +105,48 @@ export default function LeadDetail() {
   const addMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!meeting.agendada_para) return toast.error("Data obrigatória");
-    const { error } = await supabase.from("reunioes").insert({
+    const tipo = meeting.format === "ligacao" ? "ligacao" : meeting.format === "virtual" ? "virtual" : "presencial";
+    const duracao_min = meeting.format === "ligacao" ? 30 : 60;
+    const payload: any = {
       lead_id: id!,
       agendada_para: new Date(meeting.agendada_para).toISOString(),
-      local: meeting.local || null, link: meeting.link || null, notas: meeting.notas || null,
+      tipo,
+      duracao_min,
+      local: meeting.format === "virtual" ? null : (meeting.local || null),
+      link: meeting.format === "virtual" ? (meeting.link || null) : null,
+      notas: meeting.notas || null,
       created_by: user?.id,
-    });
+    };
+    const { error } = await supabase.from("reunioes").insert(payload);
     if (error) return toast.error(error.message);
-    setMeeting({ agendada_para: "", local: "", link: "", notas: "" });
-    toast.success("Reunião agendada");
+    setMeeting({ agendada_para: "", local: "", link: "", notas: "", format: "escritorio" });
+    toast.success(meeting.format === "ligacao" ? "Ligação agendada" : "Reunião agendada");
     load();
+  };
+
+  const saveMeetingEdit = async () => {
+    if (!editingMeeting) return;
+    const tipo = editingMeeting.format === "ligacao" ? "ligacao" : editingMeeting.format === "virtual" ? "virtual" : "presencial";
+    const duracao_min = editingMeeting.format === "ligacao" ? 30 : 60;
+    const { error } = await supabase.from("reunioes").update({
+      agendada_para: new Date(editingMeeting.agendada_para).toISOString(),
+      tipo, duracao_min,
+      local: editingMeeting.format === "virtual" ? null : (editingMeeting.local || null),
+      link: editingMeeting.format === "virtual" ? (editingMeeting.link || null) : null,
+      notas: editingMeeting.notas || null,
+      status: editingMeeting.status,
+    }).eq("id", editingMeeting.id);
+    if (error) return toast.error(error.message);
+    setEditingMeeting(null);
+    toast.success("Agendamento atualizado");
+    load();
+  };
+
+  const openWhatsApp = () => {
+    if (!lead?.telefone) return toast.error("Lead sem telefone cadastrado");
+    const phone = normalizePhone(lead.telefone);
+    if (phone.length < 12) return toast.error("Telefone inválido");
+    window.open(`https://wa.me/${phone}`, "_blank", "noopener,noreferrer");
   };
 
   const openConvert = async () => {
@@ -105,7 +170,6 @@ export default function LeadDetail() {
         telefone: convertForm.telefone,
         documento: convertForm.documento,
       });
-      // Também verifica nome + telefone (mesmo nome com mesmo telefone)
       const nome = (convertForm.nome || "").trim().toLowerCase();
       const telTail = onlyDigits(convertForm.telefone).slice(-8);
       let extra: DuplicateMatch[] = [];
@@ -119,11 +183,7 @@ export default function LeadDetail() {
           .filter((r: any) => onlyDigits(r.telefone).slice(-8) === telTail)
           .map((r: any) => ({
             table: "contas" as const,
-            id: r.id,
-            nome: r.nome,
-            email: r.email,
-            telefone: r.telefone,
-            documento: r.documento,
+            id: r.id, nome: r.nome, email: r.email, telefone: r.telefone, documento: r.documento,
             matchedBy: ["telefone" as const],
           }));
       }
@@ -139,7 +199,6 @@ export default function LeadDetail() {
   }, [convertOpen, convertForm?.nome, convertForm?.email, convertForm?.telefone, convertForm?.documento]);
 
   if (!lead) return <div className="p-8 text-muted-foreground">Carregando…</div>;
-  const d = daysSince(lead.ultima_interacao ?? lead.created_at);
 
   const confirmConvert = async () => {
     if (!convertForm.nome?.trim()) return toast.error("Nome obrigatório");
@@ -148,7 +207,6 @@ export default function LeadDetail() {
     }
     setConverting(true);
 
-    // Revalidação no servidor para evitar corrida
     const nome = convertForm.nome.trim();
     const email = normEmail(convertForm.email);
     const telTail = onlyDigits(convertForm.telefone).slice(-8);
@@ -172,11 +230,7 @@ export default function LeadDetail() {
         setConvertDups(
           real.map((r: any) => ({
             table: "contas" as const,
-            id: r.id,
-            nome: r.nome,
-            email: r.email,
-            telefone: r.telefone,
-            documento: r.documento,
+            id: r.id, nome: r.nome, email: r.email, telefone: r.telefone, documento: r.documento,
             matchedBy: ["telefone" as const],
           }))
         );
@@ -207,31 +261,49 @@ export default function LeadDetail() {
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <Link to="/app/leads" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4 mr-1" /> Voltar</Link>
 
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-primary text-primary-foreground text-xl font-semibold">{initials(lead.nome)}</div>
-          <div>
-            <h1 className="font-display text-3xl font-semibold">{lead.nome}</h1>
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+          <div className="flex h-14 w-14 sm:h-16 sm:w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-primary text-primary-foreground text-lg sm:text-xl font-semibold">{initials(lead.nome)}</div>
+          <div className="min-w-0 flex-1">
+            <h1 className="font-display text-2xl sm:text-3xl font-semibold break-words">{lead.nome}</h1>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               {lead.origem && <Badge variant="secondary">{SOURCES[lead.origem]?.emoji} {SOURCES[lead.origem]?.label || lead.origem}</Badge>}
-              <Badge className={slaColor(d) + " border"}>{slaLabel(d)} sem contato</Badge>
+              <Badge className={ageColor(ageInDays(lead.created_at)) + " border"}>📅 {ageLabel(ageInDays(lead.created_at))}</Badge>
+              <Badge className={idleColor(idleDays(lead.ultima_interacao)) + " border"}>⏱️ {idleLabel(idleDays(lead.ultima_interacao))}</Badge>
               {lead.imovel_interesse && <Badge variant="outline">{INTERESTS[lead.imovel_interesse] || lead.imovel_interesse}</Badge>}
               {lead.temperatura && <Badge className={TEMPERATURES[lead.temperatura as Temperature].className + " border"}>{TEMPERATURES[lead.temperatura as Temperature].emoji} {TEMPERATURES[lead.temperatura as Temperature].label}</Badge>}
             </div>
+            <div className="text-xs text-muted-foreground mt-2">
+              Entrou em <strong className="text-foreground/80">{formatDateBR(lead.created_at)}</strong>
+              {" · "}
+              Última interação: <strong className="text-foreground/80">{lead.ultima_interacao ? formatDateBR(lead.ultima_interacao) : "nunca"}</strong>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap lg:items-center gap-2 w-full lg:w-auto">
           {conta ? (
-            <Link to={`/app/contas/${conta.id}`}>
-              <Badge className="bg-success/15 text-success border-success/30 border gap-1 py-1.5 px-3"><Building2 className="h-3.5 w-3.5" /> Convertido em conta</Badge>
+            <Link to={`/app/contas/${conta.id}`} className="w-full sm:w-auto">
+              <Badge className="bg-success/15 text-success border-success/30 border gap-1 py-1.5 px-3 w-full sm:w-auto justify-center">
+                <Building2 className="h-3.5 w-3.5" /> Convertido em conta
+              </Badge>
             </Link>
           ) : (
-            <Button size="sm" onClick={openConvert} className="bg-success hover:bg-success/90 text-success-foreground">
+            <Button size="sm" onClick={openConvert} className="bg-success hover:bg-success/90 text-success-foreground w-full sm:w-auto">
               <Building2 className="h-4 w-4 mr-1" /> Converter em conta
             </Button>
           )}
+          <Button variant="outline" size="sm" onClick={() => setEditLead({
+            nome: lead.nome ?? "",
+            email: lead.email ?? "",
+            telefone: lead.telefone ?? "",
+            regiao: lead.regiao ?? "",
+            imovel_interesse: lead.imovel_interesse ?? "",
+            valor_estimado: lead.valor_estimado ?? "",
+          })} className="w-full sm:w-auto">
+            <Pencil className="h-4 w-4 mr-1" /> Editar lead
+          </Button>
           <Select value={lead.temperatura ?? "none"} onValueChange={v => updateLead({ temperatura: v === "none" ? null : v })}>
-            <SelectTrigger className="w-40"><SelectValue placeholder="Temperatura" /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-44 lg:w-40"><SelectValue placeholder="Temperatura" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="none">Sem temperatura</SelectItem>
               {(Object.keys(TEMPERATURES) as Temperature[]).map(t => (
@@ -240,7 +312,7 @@ export default function LeadDetail() {
             </SelectContent>
           </Select>
           <Select value={lead.etapa_funil} onValueChange={v => updateLead({ etapa_funil: v as Stage })}>
-            <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-52 lg:w-56"><SelectValue /></SelectTrigger>
             <SelectContent>{STAGES.map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}</SelectContent>
           </Select>
         </div>
@@ -271,11 +343,7 @@ export default function LeadDetail() {
               <div><Label>Endereço</Label><Input value={convertForm.endereco} onChange={e => setConvertForm({ ...convertForm, endereco: e.target.value })} /></div>
               <div><Label>Observações</Label><Textarea rows={3} value={convertForm.observacoes} onChange={e => setConvertForm({ ...convertForm, observacoes: e.target.value })} /></div>
               {convertDups.length > 0 && (
-                <DuplicateAlert
-                  matches={convertDups}
-                  showActions
-                  onIgnore={() => setForceConvert(true)}
-                />
+                <DuplicateAlert matches={convertDups} showActions onIgnore={() => setForceConvert(true)} />
               )}
               {forceConvert && (
                 <p className="text-xs text-amber-600">Conta será criada mesmo com duplicidade detectada.</p>
@@ -295,24 +363,61 @@ export default function LeadDetail() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!editLead} onOpenChange={(o) => !o && setEditLead(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Editar lead</DialogTitle></DialogHeader>
+          {editLead && (
+            <div className="space-y-3">
+              <div><Label>Nome completo*</Label><Input value={editLead.nome} onChange={e => setEditLead({ ...editLead, nome: e.target.value })} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Telefone</Label><Input value={editLead.telefone} onChange={e => setEditLead({ ...editLead, telefone: e.target.value })} /></div>
+                <div><Label>Email</Label><Input type="email" value={editLead.email} onChange={e => setEditLead({ ...editLead, email: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Região</Label><Input value={editLead.regiao} onChange={e => setEditLead({ ...editLead, regiao: e.target.value })} /></div>
+                <div><Label>Valor estimado</Label><Input type="number" value={editLead.valor_estimado} onChange={e => setEditLead({ ...editLead, valor_estimado: e.target.value })} /></div>
+              </div>
+              <div><Label>Interesse</Label>
+                <Select value={editLead.imovel_interesse || "none"} onValueChange={v => setEditLead({ ...editLead, imovel_interesse: v === "none" ? "" : v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">—</SelectItem>
+                    {Object.entries(INTERESTS).map(([k, v]) => <SelectItem key={k} value={k}>{v as string}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditLead(null)}>Cancelar</Button>
+            <Button onClick={async () => {
+              if (!editLead.nome?.trim()) return toast.error("Nome é obrigatório");
+              await updateLead({
+                nome: editLead.nome.trim(),
+                email: editLead.email?.trim() || null,
+                telefone: editLead.telefone?.trim() || null,
+                regiao: editLead.regiao?.trim() || null,
+                imovel_interesse: editLead.imovel_interesse || null,
+                valor_estimado: editLead.valor_estimado === "" || editLead.valor_estimado == null ? null : Number(editLead.valor_estimado),
+              });
+              setEditLead(null);
+              toast.success("Lead atualizado");
+            }}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="grid lg:grid-cols-3 gap-6">
         <Card className="p-5 space-y-3">
           <h3 className="font-display text-lg font-semibold">Contato</h3>
-          {lead.telefone && (
-            <div className="flex items-center justify-between gap-2 text-sm">
-              <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" />{lead.telefone}</div>
-              <a
-                href={`https://wa.me/${onlyDigits(lead.telefone).replace(/^0+/, "")}`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-success/15 text-success border border-success/30 hover:bg-success/25"
-              >
-                <MessageSquare className="h-3 w-3" /> WhatsApp
-              </a>
-            </div>
-          )}
+          {lead.telefone && <div className="flex items-center gap-2 text-sm"><Phone className="h-4 w-4 text-muted-foreground" />{lead.telefone}</div>}
           {lead.email && <div className="flex items-center gap-2 text-sm"><Mail className="h-4 w-4 text-muted-foreground" />{lead.email}</div>}
           {lead.regiao && <div className="flex items-center gap-2 text-sm"><MapPin className="h-4 w-4 text-muted-foreground" />{lead.regiao}</div>}
+          {lead.telefone && (
+            <Button onClick={openWhatsApp} className="w-full bg-[#25D366] hover:bg-[#1ebe57] text-white">
+              <MessageSquare className="h-4 w-4 mr-2" /> Chamar no WhatsApp
+            </Button>
+          )}
           <div className="pt-2"><Label className="text-xs">Observações</Label>
             <Textarea defaultValue={lead.observacoes ?? ""} onBlur={e => e.target.value !== lead.observacoes && updateLead({ observacoes: e.target.value })} rows={4} />
           </div>
@@ -321,12 +426,13 @@ export default function LeadDetail() {
         <Card className="p-5 lg:col-span-2 space-y-4">
           <h3 className="font-display text-lg font-semibold flex items-center gap-2"><MessageSquare className="h-5 w-5" />Registrar interação</h3>
           <form onSubmit={addInteraction} className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><Label>Tipo</Label>
                 <Select value={interaction.tipo} onValueChange={v => setInteraction({ ...interaction, tipo: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ligacao">Ligação</SelectItem>
+                    <SelectItem value="reuniao">Reunião</SelectItem>
                     <SelectItem value="videochamada">Videochamada</SelectItem>
                     <SelectItem value="mensagem">Mensagem</SelectItem>
                     <SelectItem value="email">Email</SelectItem>
@@ -358,24 +464,92 @@ export default function LeadDetail() {
 
       <div className="grid lg:grid-cols-2 gap-6">
         <Card className="p-5">
-          <h3 className="font-display text-lg font-semibold mb-3 flex items-center gap-2"><Calendar className="h-5 w-5" />Agendar reunião</h3>
+          <h3 className="font-display text-lg font-semibold mb-3 flex items-center gap-2"><Calendar className="h-5 w-5" />Agendar reunião / ligação</h3>
           <form onSubmit={addMeeting} className="space-y-3">
-            <div><Label>Data e hora*</Label><Input type="datetime-local" value={meeting.agendada_para} onChange={e => setMeeting({ ...meeting, agendada_para: e.target.value })} required /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Local</Label><Input value={meeting.local} onChange={e => setMeeting({ ...meeting, local: e.target.value })} /></div>
-              <div><Label>Link</Label><Input value={meeting.link} onChange={e => setMeeting({ ...meeting, link: e.target.value })} placeholder="Meet, Zoom…" /></div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div><Label>Tipo</Label>
+                <Select value={meeting.format} onValueChange={(v: MeetingFormat) => setMeeting({ ...meeting, format: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="escritorio">Reunião no escritório</SelectItem>
+                    <SelectItem value="virtual">Reunião virtual</SelectItem>
+                    <SelectItem value="ligacao">Ligação</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label>Data e hora*</Label><Input type="datetime-local" value={meeting.agendada_para} onChange={e => setMeeting({ ...meeting, agendada_para: e.target.value })} required /></div>
             </div>
+            {meeting.format === "escritorio" && <div><Label>Local</Label><Input value={meeting.local} onChange={e => setMeeting({ ...meeting, local: e.target.value })} placeholder="Endereço, sala…" /></div>}
+            {meeting.format === "virtual" && <div><Label>Link</Label><Input value={meeting.link} onChange={e => setMeeting({ ...meeting, link: e.target.value })} placeholder="Meet, Zoom…" /></div>}
             <div><Label>Notas</Label><Textarea value={meeting.notas} onChange={e => setMeeting({ ...meeting, notas: e.target.value })} rows={2} /></div>
             <Button type="submit" size="sm"><Plus className="h-4 w-4 mr-1" />Agendar</Button>
           </form>
           <div className="mt-4 space-y-2">
-            {reunioes.map(m => (
-              <div key={m.id} className="text-sm border rounded-md p-2">
-                <div className="font-medium">{format(new Date(m.agendada_para), "Pp", { locale: ptBR })}</div>
-                <div className="text-muted-foreground text-xs">{m.local || m.link} · <Badge variant="outline" className="text-[10px]">{m.status}</Badge></div>
-              </div>
-            ))}
+            {reunioes.map(m => {
+              const fmt = inferFormat(m);
+              return (
+                <div key={m.id} className="text-sm border rounded-md p-2 flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-medium">{format(new Date(m.agendada_para), "Pp", { locale: ptBR })}</div>
+                    <div className="text-muted-foreground text-xs truncate">
+                      <Badge variant="secondary" className="text-[10px] mr-1">{FORMAT_LABEL[fmt]}</Badge>
+                      {m.local || m.link} · <Badge variant="outline" className="text-[10px]">{m.status}</Badge>
+                    </div>
+                  </div>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" onClick={() => setEditingMeeting({
+                    id: m.id,
+                    agendada_para: format(new Date(m.agendada_para), "yyyy-MM-dd'T'HH:mm"),
+                    format: fmt,
+                    local: m.local ?? "",
+                    link: m.link ?? "",
+                    notas: m.notas ?? "",
+                    status: m.status,
+                  })}><Pencil className="h-3.5 w-3.5" /></Button>
+                </div>
+              );
+            })}
           </div>
+
+          <Dialog open={!!editingMeeting} onOpenChange={(o) => !o && setEditingMeeting(null)}>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Editar agendamento</DialogTitle></DialogHeader>
+              {editingMeeting && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><Label>Tipo</Label>
+                      <Select value={editingMeeting.format} onValueChange={(v: MeetingFormat) => setEditingMeeting({ ...editingMeeting, format: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="escritorio">Reunião no escritório</SelectItem>
+                          <SelectItem value="virtual">Reunião virtual</SelectItem>
+                          <SelectItem value="ligacao">Ligação</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div><Label>Data e hora</Label><Input type="datetime-local" value={editingMeeting.agendada_para} onChange={e => setEditingMeeting({ ...editingMeeting, agendada_para: e.target.value })} /></div>
+                  </div>
+                  {editingMeeting.format === "escritorio" && <div><Label>Local</Label><Input value={editingMeeting.local} onChange={e => setEditingMeeting({ ...editingMeeting, local: e.target.value })} placeholder="Endereço, sala…" /></div>}
+                  {editingMeeting.format === "virtual" && <div><Label>Link</Label><Input value={editingMeeting.link} onChange={e => setEditingMeeting({ ...editingMeeting, link: e.target.value })} placeholder="Meet, Zoom…" /></div>}
+                  <div><Label>Status</Label>
+                    <Select value={editingMeeting.status} onValueChange={v => setEditingMeeting({ ...editingMeeting, status: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="agendada">Agendada</SelectItem>
+                        <SelectItem value="realizada">Realizada</SelectItem>
+                        <SelectItem value="no_show">No-show</SelectItem>
+                        <SelectItem value="cancelada">Cancelada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div><Label>Notas</Label><Textarea value={editingMeeting.notas} onChange={e => setEditingMeeting({ ...editingMeeting, notas: e.target.value })} rows={2} /></div>
+                </div>
+              )}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditingMeeting(null)}>Cancelar</Button>
+                <Button onClick={saveMeetingEdit}>Salvar</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </Card>
 
         <Card className="p-5">
@@ -385,7 +559,7 @@ export default function LeadDetail() {
             {interacoes.map(i => (
               <div key={i.id} className="border-l-2 border-primary/30 pl-3">
                 <div className="flex items-center gap-2 text-sm">
-                  <Badge variant="outline" className="text-[10px]">{i.tipo}</Badge>
+                  <Badge variant="outline" className="text-[10px]">{INTERACTION_TYPE_LABEL[i.tipo] ?? i.tipo}</Badge>
                   {i.resultado && <span className="text-xs text-muted-foreground">{i.resultado}</span>}
                   <span className="text-xs text-muted-foreground ml-auto">{format(new Date(i.created_at), "Pp", { locale: ptBR })}</span>
                 </div>
