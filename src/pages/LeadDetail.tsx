@@ -395,6 +395,13 @@ export default function LeadDetail() {
           </div>
         </Card>
       </div>
+
+      <Card className="p-5">
+        <h3 className="font-display text-lg font-semibold mb-3 flex items-center gap-2">
+          <FileSignature className="h-5 w-5" /> Documentos para assinatura
+        </h3>
+        <EntityDocumentsTab leadId={lead.id} contactName={lead.nome} contactEmail={lead.email} />
+      </Card>
     </div>
   );
 }
