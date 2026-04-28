@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   ShieldAlert, Settings, Building2, MessageCircle, Bell, Database, ExternalLink,
-  Loader2, QrCode, RefreshCw, LogOut, Send, CheckCircle2, XCircle, AlertCircle, Copy,
+  Loader2, Send, Copy,
   Webhook, Bot, Globe, Check, ShieldCheck, History, Trash2, HardDrive,
 } from "lucide-react";
 import { Link } from "react-router-dom";
