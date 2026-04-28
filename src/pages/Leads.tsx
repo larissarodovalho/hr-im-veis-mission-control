@@ -295,76 +295,140 @@ function DeleteLeadButton({ name, onConfirm, compact }: { name: string; onConfir
 }
 
 function NewLeadDialog({ open, onOpenChange, onCreated, userId }: any) {
+  const navigate = useNavigate();
   const [form, setForm] = useState({ nome: "", email: "", telefone: "", imovel_interesse: "none", regiao: "", observacoes: "", origem: "manual" });
   const [saving, setSaving] = useState(false);
   const [duplicates, setDuplicates] = useState<DuplicateMatch[]>([]);
-  const [forceCreate, setForceCreate] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState<any>(null);
 
-  useEffect(() => {
-    if (!open) { setDuplicates([]); setForceCreate(false); return; }
-    const t = setTimeout(async () => {
-      if (!form.email && !form.telefone) { setDuplicates([]); return; }
-      const m = await findDuplicates({ email: form.email, telefone: form.telefone });
-      setDuplicates(m);
-      setForceCreate(false);
-    }, 400);
-    return () => clearTimeout(t);
-  }, [form.email, form.telefone, open]);
+  const reset = () => {
+    setForm({ nome: "", email: "", telefone: "", imovel_interesse: "none", regiao: "", observacoes: "", origem: "manual" });
+    setDuplicates([]);
+    setPendingPayload(null);
+  };
+
+  const insertNew = async (payload: any) => {
+    const { error } = await supabase.from("leads").insert(payload);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Lead criado");
+    onOpenChange(false);
+    reset();
+    onCreated();
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.nome.trim()) return toast.error("Nome obrigatório");
     if (!userId) return toast.error("Sessão expirada");
-    if (duplicates.length && !forceCreate) {
-      return toast.error("Contato já cadastrado. Confirme abaixo para prosseguir.");
-    }
     setSaving(true);
-    const payload: any = { ...form, imovel_interesse: form.imovel_interesse === "none" ? null : form.imovel_interesse, created_by: userId };
-    Object.keys(payload).forEach(k => { if (payload[k] === "") payload[k] = null; });
-    const { error } = await supabase.from("leads").insert(payload);
-    setSaving(false);
+    try {
+      const payload: any = { ...form, imovel_interesse: form.imovel_interesse === "none" ? null : form.imovel_interesse, created_by: userId };
+      Object.keys(payload).forEach(k => { if (payload[k] === "") payload[k] = null; });
+
+      const dups = (await findDuplicates({ email: form.email, telefone: form.telefone })).filter(d => d.table === "leads");
+      if (dups.length > 0) {
+        setPendingPayload(payload);
+        setDuplicates(dups);
+        return;
+      }
+      await insertNew(payload);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateExisting = async (dup: DuplicateMatch) => {
+    const p = pendingPayload || {};
+    const { data: cur } = await supabase.from("leads").select("nome, email, telefone, regiao, imovel_interesse, observacoes").eq("id", dup.id).maybeSingle();
+    const upd: any = { ultima_interacao: new Date().toISOString(), etapa_funil: "Prospecção" };
+    if (p.nome && (!cur?.nome || cur.nome.startsWith("WhatsApp ") || cur.nome === "Lead sem nome")) upd.nome = p.nome;
+    if (p.email && !cur?.email) upd.email = p.email;
+    if (p.telefone && !cur?.telefone) upd.telefone = p.telefone;
+    if (p.regiao && !cur?.regiao) upd.regiao = p.regiao;
+    if (p.imovel_interesse && !cur?.imovel_interesse) upd.imovel_interesse = p.imovel_interesse;
+    if (p.observacoes) upd.observacoes = cur?.observacoes ? `${cur.observacoes}\n---\n${p.observacoes}` : p.observacoes;
+    const { error } = await supabase.from("leads").update(upd).eq("id", dup.id);
     if (error) return toast.error(error.message);
-    toast.success("Lead criado");
+    toast.success("Lead atualizado e movido para 'Prospecção'");
     onOpenChange(false);
-    setForm({ nome: "", email: "", telefone: "", imovel_interesse: "none", regiao: "", observacoes: "", origem: "manual" });
-    setDuplicates([]);
-    setForceCreate(false);
+    reset();
     onCreated();
   };
+
+  const createAnyway = async () => {
+    if (!pendingPayload) return;
+    setSaving(true);
+    try { await insertNew(pendingPayload); } finally { setSaving(false); }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-1" /> Novo lead</Button></DialogTrigger>
-      <DialogContent><DialogHeader><DialogTitle>Novo lead</DialogTitle></DialogHeader>
-        <form onSubmit={submit} className="space-y-3">
-          <div><Label>Nome*</Label><Input value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} required /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Telefone</Label><Input value={form.telefone} onChange={e => setForm({ ...form, telefone: e.target.value })} /></div>
-            <div><Label>Email</Label><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Interesse</Label>
-              <Select value={form.imovel_interesse} onValueChange={v => setForm({ ...form, imovel_interesse: v })}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">—</SelectItem>
-                  {Object.entries(INTERESTS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-                </SelectContent>
-              </Select>
+    <>
+      <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) reset(); }}>
+        <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-1" /> Novo lead</Button></DialogTrigger>
+        <DialogContent><DialogHeader><DialogTitle>Novo lead</DialogTitle></DialogHeader>
+          <form onSubmit={submit} className="space-y-3">
+            <div><Label>Nome*</Label><Input value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} required /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Telefone</Label><Input value={form.telefone} onChange={e => setForm({ ...form, telefone: e.target.value })} /></div>
+              <div><Label>Email</Label><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
             </div>
-            <div><Label>Região</Label><Input value={form.regiao} onChange={e => setForm({ ...form, regiao: e.target.value })} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Interesse</Label>
+                <Select value={form.imovel_interesse} onValueChange={v => setForm({ ...form, imovel_interesse: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">—</SelectItem>
+                    {Object.entries(INTERESTS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label>Região</Label><Input value={form.regiao} onChange={e => setForm({ ...form, regiao: e.target.value })} placeholder="MT, GO…" /></div>
+            </div>
+            <div><Label>Observações</Label><Textarea value={form.observacoes} onChange={e => setForm({ ...form, observacoes: e.target.value })} /></div>
+            <DialogFooter>
+              <Button type="submit" disabled={saving}>{saving ? "Salvando…" : "Criar lead"}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={duplicates.length > 0} onOpenChange={(o) => { if (!o) { setDuplicates([]); setPendingPayload(null); } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-warning" /> Lead já existe</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground">
+              Encontramos {duplicates.length === 1 ? "um lead" : `${duplicates.length} leads`} com o mesmo telefone ou e-mail:
+            </p>
+            {duplicates.map(d => (
+              <div key={d.id} className="rounded-lg border p-3 space-y-2">
+                <div>
+                  <div className="font-medium">{d.nome}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {d.telefone || "—"} · {d.email || "sem e-mail"}
+                  </div>
+                  <div className="text-xs text-amber-600 mt-1">
+                    Coincide por: <strong>{d.matchedBy.join(", ")}</strong>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={() => { onOpenChange(false); reset(); navigate(`/app/leads/${d.id}`); }}>
+                    Abrir existente
+                  </Button>
+                  <Button size="sm" onClick={() => updateExisting(d)}>
+                    Atualizar e mover p/ Prospecção
+                  </Button>
+                </div>
+              </div>
+            ))}
+            <div className="flex justify-between gap-2 pt-2 border-t">
+              <Button variant="ghost" onClick={() => { setDuplicates([]); setPendingPayload(null); }}>Cancelar</Button>
+              <Button variant="secondary" onClick={createAnyway} disabled={saving}>Criar novo mesmo assim</Button>
+            </div>
           </div>
-          <div><Label>Observações</Label><Textarea value={form.observacoes} onChange={e => setForm({ ...form, observacoes: e.target.value })} /></div>
-          {duplicates.length > 0 && (
-            <DuplicateAlert matches={duplicates} showActions onIgnore={() => setForceCreate(true)} />
-          )}
-          {forceCreate && <p className="text-xs text-amber-600">Lead será criado mesmo com duplicidade detectada.</p>}
-          <DialogFooter>
-            <Button type="submit" disabled={saving || (duplicates.length > 0 && !forceCreate)}>
-              {saving ? "Salvando…" : "Criar lead"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
