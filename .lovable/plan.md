@@ -1,48 +1,53 @@
-## Trazer especificações da aba Leads do Brazil Lands
+## Objetivo
+Atualizar a página de detalhes do lead (`/app/leads/:id`) para ter as mesmas especificações visuais e funcionais do projeto Brazil Lands, mantendo o schema atual em português (`nome`, `telefone`, `ultima_interacao`, etc.) e funcionalidades já existentes (conversão com detecção de duplicatas, documentos para assinatura).
 
-A aba Leads atual já tem kanban + lista + busca + criação com detecção de duplicidades. Vou portar as melhorias que existem no Brazil Lands e que **faltam aqui**, mantendo as etapas (`Prospecção`, `Qualificação`, etc.) e o schema atual (`leads.nome/telefone/email/etapa_funil/...`) intactos.
+## O que será adicionado/ajustado em `src/pages/LeadDetail.tsx`
 
-### O que será adicionado
+### 1. Cabeçalho do lead
+- Layout responsivo: `flex-col lg:flex-row`, avatar `14x14` no mobile / `16x16` no desktop, nome com `break-words`.
+- **Novos badges** ao lado da origem:
+  - 📅 Idade na base — `ageLabel(ageInDays(lead.created_at))` com `ageColor`.
+  - ⏱️ Tempo sem contato — `idleLabel(idleDays(lead.ultima_interacao))` com `idleColor`.
+  - Substitui o badge atual "Hoje sem contato" (slaLabel) por essa dupla mais informativa.
+- **Linha de metadados** abaixo dos badges:
+  - "Entrou em **DD/MM/AAAA** · Última interação: **DD/MM/AAAA** (ou nunca)" usando `formatDateBR`.
+- Ações (direita): empilham no mobile (`w-full sm:w-auto`).
 
-1. **Badges de tempo nos cards e na lista**
-   - **📅 Idade na base** — dias desde `created_at` (helpers `ageInDays`, `ageLabel`, `ageColor`).
-   - **⏱️ Tempo sem contato** — dias desde `ultima_interacao` (helpers `idleDays`, `idleLabel`, `idleColor`).
-   - Substitui/complementa o badge único de SLA atual com cores graduais (verde → amarelo → laranja → vermelho).
+### 2. Botão "Editar lead" + Diálogo
+- Novo botão `Pencil` ao lado de "Converter em conta".
+- Diálogo com campos: nome, telefone, email, região, valor estimado, interesse — atualiza via `updateLead`.
 
-2. **Filtro "Precisam nutrição"**
-   - Botão com ícone de chama 🔥 ao lado dos controles de view.
-   - Mostra leads sem contato há **4+ dias** ou **nunca contactados**, ignorando os que estão em `Fechamento`/`Perdido`.
-   - Badge com a contagem em tempo real.
+### 3. Card de Contato
+- Adicionar botão verde **"Chamar no WhatsApp"** (largura total) quando houver telefone, substituindo o link inline atual. Reaproveita normalização de telefone já existente em `onlyDigits` (adiciona prefixo 55 se faltar) e abre `https://wa.me/...` em nova aba.
+- Mantém: telefone, email, região, observações.
 
-3. **Ordenação na visualização de lista**
-   - Select com "Mais recentes" (padrão) e "Mais antigos sem contato".
-   - Aparece somente no modo lista.
+### 4. Registrar interação
+- Adicionar opção **"Reunião"** no select de Tipo (além das já existentes).
+- Mapear labels amigáveis no histórico via `INTERACTION_TYPE_LABEL`.
 
-4. **Layout responsivo da lista**
-   - Mobile: cards verticais (atualmente só tem tabela, que estoura no celular).
-   - Desktop: tabela existente, com as duas badges de tempo na coluna "Tempo".
+### 5. Agendar reunião / ligação
+- Substituir o formulário atual por versão com seletor **"Tipo"**:
+  - `escritorio` → mostra campo Local
+  - `virtual` → mostra campo Link
+  - `ligacao` → sem local/link, gera registro do tipo "ligação" (usar coluna `tipo` em `reunioes` que já existe).
+- `duracao_min`: 30 para ligação, 60 para reunião.
+- Após agendar, atualiza `etapa_funil` do lead para `Visita` (reunião) — mantém compatibilidade com STAGES atuais.
+- Lista de reuniões com badge de formato + botão de editar (ícone lápis) abrindo diálogo para alterar data, tipo, local/link, status e notas.
 
-5. **Header responsivo**
-   - Controles quebram em múltiplas linhas no mobile (busca em largura total, depois view/filtros).
+### 6. Histórico
+- Mantém estrutura atual; usa labels amigáveis para os tipos.
 
-6. **Ajuste no `NewLeadDialog`** (opcional, pequeno)
-   - Após criar o lead, dispara `supabase.functions.invoke("notify-new-lead", ...)` se existir — caso contrário ignora silenciosamente. _Nota: vou checar se essa edge function existe aqui antes de incluir; se não, removo essa parte._
+### 7. Documentos para assinatura
+- Mantém o card `EntityDocumentsTab` no final (já existe).
 
-### O que NÃO muda
+## Arquivos a editar
+- `src/pages/LeadDetail.tsx` — refatoração do cabeçalho, novos diálogos (editar lead, editar reunião), botão WhatsApp, formulário de agendar com tipo, badges de idade/inatividade.
+- `src/lib/leads.ts` — sem mudanças (helpers `ageInDays`, `ageLabel`, `ageColor`, `idleDays`, `idleLabel`, `idleColor`, `formatDateBR` já existem).
 
-- **Schema do banco** — campos atuais (`nome`, `telefone`, `email`, `etapa_funil`, `ultima_interacao`, etc.) permanecem.
-- **Etapas do funil** — continuam `Prospecção / Qualificação / Apresentação / Visita / Proposta / Negociação / Fechamento / Perdido`.
-- **Detecção de duplicidades** — já existente, será preservada.
-- **Realtime, drag-and-drop, criação de lead** — preservados.
-- **`LeadDetail.tsx`** — sem alterações nesta tarefa.
+## Fora de escopo
+- Integração com WhatsApp interno (Brazil Lands tem página `/app/whatsapp` própria); aqui usamos `wa.me` direto como já fazemos.
+- Sessões de chat IA (não há tabelas equivalentes neste projeto).
+- AssignSelector (não há sistema de atribuição equivalente aqui).
+- Mudanças de schema no banco — todas as colunas necessárias (`tipo`, `duracao_min` em `reunioes`) já existem.
 
-### Arquivos editados
-
-- `src/lib/leads.ts` — adicionar `ageInDays`, `idleDays`, `ageLabel`, `ageColor`, `idleLabel`, `idleColor`, `formatDateBR`.
-- `src/pages/Leads.tsx` — adicionar filtro nutrição, ordenação, layout responsivo, badges de tempo no kanban e lista.
-
-### Detalhes técnicos
-
-- Filtro nutrição usa `idleDays(l.ultima_interacao)`; `null` (nunca contactado) é incluído.
-- A tipagem `Lead` existente já contém `ultima_interacao` e `created_at` — sem mudança de tipos.
-- Cores das badges usam tokens semânticos do design system (`success`, `warning`, `danger`, `muted`) — sem cores diretas.
+Aprove para eu implementar.
