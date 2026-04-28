@@ -203,7 +203,7 @@ export default function LeadDetail() {
   };
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <Link to="/app/leads" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4 mr-1" /> Voltar</Link>
 
       <div className="flex items-start justify-between gap-4 flex-wrap">
