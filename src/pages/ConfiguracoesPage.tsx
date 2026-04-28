@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   ShieldAlert, Settings, Building2, MessageCircle, Bell, Database, ExternalLink,
-  Loader2, QrCode, RefreshCw, LogOut, Send, CheckCircle2, XCircle, AlertCircle, Copy,
+  Loader2, Send, Copy,
   Webhook, Bot, Globe, Check, ShieldCheck, History, Trash2, HardDrive,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -128,8 +128,8 @@ export default function ConfiguracoesPage() {
       {/* WhatsApp (Evolution / Z-API) */}
       <WhatsAppEvolutionInfo webhookUrl={webhookUrl} />
 
-      {/* Status / QR / testar envio (mantém o bloco já existente) */}
-      <WhatsAppConnection webhookUrl={webhookUrl} />
+      {/* Teste de envio do WhatsApp */}
+      <WhatsAppTestSend />
 
       {/* IA conversacional */}
       <IAConversacional />
@@ -280,139 +280,14 @@ function Stat({ label, value }: { label: string; value: number }) {
   );
 }
 
-// =================== WhatsApp Connection (Evolution) ===================
+// =================== WhatsApp — Teste de envio ===================
+// O QR Code, status e gerenciamento da instância são feitos diretamente
+// no painel da Evolution API. O CRM apenas envia/recebe mensagens.
 
-type ConnState = "open" | "connecting" | "close" | "unknown";
-
-function WhatsAppConnection({ webhookUrl }: { webhookUrl: string }) {
-  const [state, setState] = useState<ConnState>("unknown");
-  const [loadingStatus, setLoadingStatus] = useState(false);
-  const [qrcode, setQrcode] = useState<string | null>(null);
-  const [loadingQr, setLoadingQr] = useState(false);
-  const [restarting, setRestarting] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
-  const [webhookActive, setWebhookActive] = useState<boolean | null>(null);
-  const [settingWebhook, setSettingWebhook] = useState(false);
+function WhatsAppTestSend() {
   const [testPhone, setTestPhone] = useState("");
   const [testMsg, setTestMsg] = useState("Olá! Esta é uma mensagem de teste do CRM HR Imóveis.");
   const [sending, setSending] = useState(false);
-
-  async function call(action: string) {
-    const { data, error } = await supabase.functions.invoke("whatsapp-instance", {
-      body: { action },
-    });
-    if (error) throw new Error(error.message);
-    if ((data as any)?.error) throw new Error((data as any).error);
-    return data as { ok: boolean; data: any; webhookUrl: string };
-  }
-
-  async function refreshStatus() {
-    setLoadingStatus(true);
-    try {
-      const r = await call("status");
-      const s = (r.data?.instance?.state || r.data?.state || "unknown") as ConnState;
-      setState(s);
-      if (s === "open") setQrcode(null);
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setLoadingStatus(false);
-    }
-  }
-
-  async function refreshWebhook() {
-    try {
-      const r = await call("find-webhook");
-      const enabled = !!(r.data?.enabled ?? r.data?.webhook?.enabled);
-      const url = r.data?.url ?? r.data?.webhook?.url ?? "";
-      setWebhookActive(enabled && url === webhookUrl);
-    } catch {
-      setWebhookActive(false);
-    }
-  }
-
-  useEffect(() => {
-    refreshStatus();
-    refreshWebhook();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // poll enquanto QR está aberto
-  useEffect(() => {
-    if (!qrcode) return;
-    const id = setInterval(async () => {
-      try {
-        const r = await call("status");
-        const s = (r.data?.instance?.state || r.data?.state || "unknown") as ConnState;
-        setState(s);
-        if (s === "open") {
-          setQrcode(null);
-          toast.success("WhatsApp conectado!");
-        }
-      } catch {/* ignore */}
-    }, 5000);
-    return () => clearInterval(id);
-  }, [qrcode]);
-
-  async function generateQr() {
-    setLoadingQr(true);
-    setQrcode(null);
-    try {
-      const r = await call("qrcode");
-      const base64 = r.data?.base64 || r.data?.qrcode?.base64 || r.data?.code || null;
-      if (!base64) {
-        await refreshStatus();
-        if (state === "open") toast.info("WhatsApp já está conectado");
-        else toast.error("Não foi possível obter o QR Code");
-        return;
-      }
-      setQrcode(base64.startsWith("data:") ? base64 : `data:image/png;base64,${base64}`);
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setLoadingQr(false);
-    }
-  }
-
-  async function setWebhook() {
-    setSettingWebhook(true);
-    try {
-      await call("set-webhook");
-      toast.success("Webhook configurado na Evolution");
-      await refreshWebhook();
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setSettingWebhook(false);
-    }
-  }
-
-  async function restart() {
-    setRestarting(true);
-    try {
-      await call("restart");
-      toast.success("Instância reiniciada");
-      setTimeout(refreshStatus, 1500);
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setRestarting(false);
-    }
-  }
-
-  async function logout() {
-    if (!confirm("Desconectar o WhatsApp? Será necessário escanear o QR Code novamente.")) return;
-    setLoggingOut(true);
-    try {
-      await call("logout");
-      toast.success("WhatsApp desconectado");
-      setState("close");
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setLoggingOut(false);
-    }
-  }
 
   async function sendTest() {
     if (!testPhone.trim() || !testMsg.trim()) {
@@ -434,153 +309,35 @@ function WhatsAppConnection({ webhookUrl }: { webhookUrl: string }) {
     }
   }
 
-  const stateInfo = {
-    open: { label: "Conectada", color: "bg-emerald-500", icon: CheckCircle2 },
-    connecting: { label: "Aguardando QR Code", color: "bg-amber-500", icon: AlertCircle },
-    close: { label: "Desconectada", color: "bg-rose-500", icon: XCircle },
-    unknown: { label: "Status desconhecido", color: "bg-muted-foreground", icon: AlertCircle },
-  }[state];
-  const StateIcon = stateInfo.icon;
-
   return (
-    <div className="space-y-4">
-      {/* Status */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageCircle className="h-5 w-5" /> Status da instância Evolution
-          </CardTitle>
-          <CardDescription>Estado atual da conexão do número WhatsApp</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <div className="flex items-center gap-3">
-              <span className={`h-3 w-3 rounded-full ${stateInfo.color}`} />
-              <div>
-                <p className="font-medium flex items-center gap-2">
-                  <StateIcon className="h-4 w-4" /> {stateInfo.label}
-                </p>
-                <p className="text-xs text-muted-foreground">Instância configurada via secret no backend</p>
-              </div>
-            </div>
-            <Button variant="outline" size="sm" onClick={refreshStatus} disabled={loadingStatus}>
-              {loadingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              <span className="ml-1">Atualizar</span>
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={restart} disabled={restarting}>
-              {restarting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
-              Reiniciar instância
-            </Button>
-            <Button variant="outline" size="sm" onClick={logout} disabled={loggingOut || state !== "open"}>
-              {loggingOut ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <LogOut className="h-4 w-4 mr-1" />}
-              Desconectar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* QR Code */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><QrCode className="h-5 w-5" /> Conectar número (QR Code)</CardTitle>
-          <CardDescription>Escaneie com o WhatsApp do celular para parear o número</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {state === "open" ? (
-            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm">
-              <p className="flex items-center gap-2 font-medium text-emerald-600">
-                <CheckCircle2 className="h-4 w-4" /> WhatsApp já está conectado
-              </p>
-              <p className="text-muted-foreground mt-1">Para trocar de número, clique em "Desconectar" acima.</p>
-            </div>
-          ) : (
-            <>
-              <Button onClick={generateQr} disabled={loadingQr}>
-                {loadingQr ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <QrCode className="h-4 w-4 mr-1" />}
-                Gerar QR Code
-              </Button>
-              {qrcode && (
-                <div className="flex flex-col items-center gap-3 p-4 rounded-lg border bg-card">
-                  <img src={qrcode} alt="QR Code WhatsApp" className="w-64 h-64" />
-                  <ol className="text-sm text-muted-foreground space-y-1 max-w-md">
-                    <li>1. Abra o WhatsApp no celular</li>
-                    <li>2. Toque em <strong>Aparelhos conectados</strong></li>
-                    <li>3. <strong>Conectar um aparelho</strong> e escaneie o código</li>
-                  </ol>
-                  <p className="text-xs text-muted-foreground">Status atualiza automaticamente a cada 5 segundos…</p>
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Webhook */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Webhook de mensagens recebidas</CardTitle>
-          <CardDescription>Permite que a Evolution envie as mensagens recebidas para o CRM</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2"><Send className="h-5 w-5" /> Testar envio de WhatsApp</CardTitle>
+        <CardDescription>
+          Envie uma mensagem para confirmar que a conexão Evolution está funcionando.
+          O QR Code e o status da instância são gerenciados no <strong>painel da Evolution API</strong>.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="space-y-1.5">
-            <Label>URL do webhook</Label>
-            <div className="flex gap-2">
-              <Input value={webhookUrl} readOnly className="font-mono text-xs" />
-              <Button variant="outline" onClick={() => { navigator.clipboard.writeText(webhookUrl); toast.success("URL copiada"); }}>
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
+            <Label>Telefone (com DDD)</Label>
+            <Input value={testPhone} onChange={(e) => setTestPhone(e.target.value)} placeholder="11987654321" />
           </div>
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <div className="flex items-center gap-2">
-              {webhookActive === null ? (
-                <Badge variant="secondary">Verificando…</Badge>
-              ) : webhookActive ? (
-                <Badge className="bg-emerald-500 hover:bg-emerald-500"><CheckCircle2 className="h-3 w-3 mr-1" />Webhook ativo</Badge>
-              ) : (
-                <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Não configurado</Badge>
-              )}
-              <span className="text-xs text-muted-foreground">Eventos: MESSAGES_UPSERT, CONNECTION_UPDATE</span>
-            </div>
-            <Button size="sm" onClick={setWebhook} disabled={settingWebhook}>
-              {settingWebhook ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-              Configurar webhook na Evolution
-            </Button>
+          <div className="space-y-1.5 md:col-span-2">
+            <Label>Mensagem</Label>
+            <Textarea value={testMsg} onChange={(e) => setTestMsg(e.target.value)} rows={2} />
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Test send */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Send className="h-5 w-5" /> Testar envio</CardTitle>
-          <CardDescription>Envie uma mensagem para confirmar que tudo funciona</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="space-y-1.5">
-              <Label>Telefone (com DDD)</Label>
-              <Input value={testPhone} onChange={(e) => setTestPhone(e.target.value)} placeholder="11987654321" />
-            </div>
-            <div className="space-y-1.5 md:col-span-2">
-              <Label>Mensagem</Label>
-              <Textarea value={testMsg} onChange={(e) => setTestMsg(e.target.value)} rows={2} />
-            </div>
-          </div>
-          <Button onClick={sendTest} disabled={sending || state !== "open"}>
-            {sending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Send className="h-4 w-4 mr-1" />}
-            Enviar teste
-          </Button>
-          {state !== "open" && (
-            <p className="text-xs text-muted-foreground">Conecte o WhatsApp acima antes de testar o envio.</p>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+        <Button onClick={sendTest} disabled={sending}>
+          {sending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Send className="h-4 w-4 mr-1" />}
+          Enviar teste
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
+
 
 // =================== Backup & Recuperação ===================
 
@@ -715,15 +472,27 @@ function IAConversacional() {
         <CardTitle className="flex items-center gap-2">
           <Bot className="h-5 w-5" /> IA conversacional
         </CardTitle>
+        <CardDescription>Atende leads automaticamente no chat público e no WhatsApp</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
         <p className="text-muted-foreground">
-          A IA atende leads no chat público (<code>/captura</code>) e no WhatsApp quando o toggle
-          está ativo. Modelo: <Badge variant="secondary" className="font-mono">google/gemini-3-flash-preview</Badge>{" "}
-          via Lovable AI.
+          A IA <strong>Helena</strong> atende leads no chat público (<code>/captura</code>) e no
+          WhatsApp quando o toggle está ativo na conversa.
         </p>
+        <div className="rounded-lg border p-3 space-y-1.5 text-xs">
+          <p><strong>Modelos (cascata com fallback):</strong></p>
+          <div className="flex flex-wrap gap-1.5">
+            <Badge variant="secondary" className="font-mono">google/gemini-2.5-pro</Badge>
+            <Badge variant="secondary" className="font-mono">google/gemini-2.5-flash</Badge>
+            <Badge variant="secondary" className="font-mono">openai/gpt-5-mini</Badge>
+          </div>
+          <p className="text-muted-foreground pt-1">
+            Suporta <strong>transcrição de áudio</strong> (mensagens de voz no WhatsApp) e
+            <strong> tool calling</strong> (a IA atualiza o lead e aciona o corretor sozinha).
+          </p>
+        </div>
         <p className="text-muted-foreground">
-          Para personalizar o prompt da IA, peça ao Lovable.
+          Tudo via Lovable AI — sem necessidade de API key. Para ajustar o prompt, peça ao Lovable.
         </p>
       </CardContent>
     </Card>

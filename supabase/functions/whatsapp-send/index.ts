@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
 
     const EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL");
     const EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY");
-    const EVOLUTION_INSTANCE_NAME = Deno.env.get("EVOLUTION_INSTANCE_NAME");
+    const EVOLUTION_INSTANCE_NAME = Deno.env.get("EVOLUTION_INSTANCE") || Deno.env.get("EVOLUTION_INSTANCE_NAME");
 
     let sendOk = false;
     let sendError: string | null = null;
