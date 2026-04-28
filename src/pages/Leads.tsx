@@ -230,12 +230,12 @@ export default function Leads() {
 function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds }: any) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   return (
-    <div ref={setNodeRef} className={"min-w-[280px] w-72 flex-shrink-0 rounded-xl bg-muted/40 p-3 transition " + (isOver ? "ring-2 ring-primary/40" : "")}>
+    <div ref={setNodeRef} className={"min-w-[280px] w-72 flex-shrink-0 rounded-xl bg-muted/40 p-3 transition flex flex-col min-h-[calc(100vh-220px)] " + (isOver ? "ring-2 ring-primary/40" : "")}>
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-2"><span className={"h-2 w-2 rounded-full " + color} /><span className="font-medium text-sm">{label}</span></div>
         <span className="text-xs text-muted-foreground">{leads.length}</span>
       </div>
-      <div className="space-y-2">{leads.map((l: Lead) => <LeadCard key={l.id} lead={l} canDelete={canDelete} onDelete={onDelete} converted={convertedIds.has(l.id)} />)}</div>
+      <div className="space-y-2 flex-1 overflow-y-auto pr-1">{leads.map((l: Lead) => <LeadCard key={l.id} lead={l} canDelete={canDelete} onDelete={onDelete} converted={convertedIds.has(l.id)} />)}</div>
     </div>
   );
 }
@@ -243,7 +243,8 @@ function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds 
 function LeadCard({ lead, canDelete, onDelete, converted }: { lead: Lead; canDelete: boolean; onDelete: (id: string, name: string) => void; converted: boolean }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
-  const d = daysSince(lead.ultima_interacao ?? lead.created_at);
+  const age = ageInDays(lead.created_at);
+  const idle = idleDays(lead.ultima_interacao);
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} style={style} className={"group rounded-lg bg-card border p-3 shadow-soft cursor-grab active:cursor-grabbing relative " + (isDragging ? "opacity-50" : "")}>
       {canDelete && (
@@ -258,11 +259,14 @@ function LeadCard({ lead, canDelete, onDelete, converted }: { lead: Lead; canDel
           {lead.regiao && <div className="text-xs text-muted-foreground truncate">{lead.regiao}</div>}
         </div>
       </div>
-      <div className="flex items-center justify-between mt-2 gap-1 flex-wrap">
+      <div className="flex items-center gap-1 mt-2 flex-wrap">
         {lead.origem && <Badge variant="secondary" className="text-[10px]">{SOURCES[lead.origem]?.emoji} {SOURCES[lead.origem]?.label || lead.origem}</Badge>}
         {lead.temperatura && <Badge className={TEMPERATURES[lead.temperatura].className + " border text-[10px]"}>{TEMPERATURES[lead.temperatura].emoji} {TEMPERATURES[lead.temperatura].label}</Badge>}
         {converted && <Badge className="bg-success/15 text-success border-success/30 border text-[10px] gap-0.5"><Building2 className="h-2.5 w-2.5" /> Conta</Badge>}
-        <Badge className={slaColor(d) + " border text-[10px]"}>{slaLabel(d)}</Badge>
+      </div>
+      <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+        <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
+        <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
       </div>
     </div>
   );
