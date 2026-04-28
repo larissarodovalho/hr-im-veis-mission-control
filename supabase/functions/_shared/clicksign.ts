@@ -17,12 +17,28 @@ function normalizeClicksignToken(value?: string) {
   let token = value.trim().replace(/^Bearer\s+/i, "");
   const queryToken = token.match(/[?&]access_token=([^&\s]+)/i)?.[1];
   if (queryToken) token = queryToken;
-  token = token.replace(/^access_token=/i, "").trim();
+  token = token
+    .replace(/^access_token\s*[:=]\s*/i, "")
+    .replace(/^token\s*[:=]\s*/i, "")
+    .replace(/^api[_ -]?token\s*[:=]\s*/i, "")
+    .replace(/^['"`]|['"`]$/g, "")
+    .replace(/\s+/g, "")
+    .trim();
   try { return decodeURIComponent(token).trim(); } catch { return token; }
 }
 
+function getClicksignSafeDiagnostics(token: string, baseUrl: string, env: string) {
+  const host = new URL(baseUrl).host;
+  return {
+    env,
+    host,
+    tokenLength: token.length,
+    tokenPreview: token.length > 8 ? `${token.slice(0, 4)}…${token.slice(-4)}` : "curto-demais",
+  };
+}
+
 export async function clicksignFetch(path: string, init: RequestInit = {}) {
-  const { token, baseUrl } = getClicksignConfig();
+  const { token, baseUrl, env } = getClicksignConfig();
   const sep = path.includes("?") ? "&" : "?";
   const url = `${baseUrl}${path}${sep}access_token=${encodeURIComponent(token)}`;
   const res = await fetch(url, {
@@ -39,7 +55,8 @@ export async function clicksignFetch(path: string, init: RequestInit = {}) {
   if (!res.ok) {
     const msg = typeof data === "object" ? JSON.stringify(data) : String(data);
     if (res.status === 403 && msg.includes("Access Token inválido")) {
-      throw new Error("Clicksign recusou o token. Confirme se CLICKSIGN_ENV está como production e se CLICKSIGN_API_TOKEN é o token de API de produção da mesma conta Clicksign, sem aspas nem rótulos.");
+      console.error("Clicksign token rejected", getClicksignSafeDiagnostics(token, baseUrl, env));
+      throw new Error(`Clicksign recusou o token. Ambiente atual: ${env} (${new URL(baseUrl).host}). O token salvo tem ${token.length} caracteres após limpeza; confirme se é o token API desse mesmo ambiente.`);
     }
     throw new Error(`Clicksign ${res.status}: ${msg}`);
   }
