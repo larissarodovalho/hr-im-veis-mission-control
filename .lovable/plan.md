@@ -1,38 +1,52 @@
-## Adicionar aba "Integrações & IA" em Configurações (igual Brazil Lands)
+# Replicar layout de Configurações da Brazil Lands
 
-A aba **WhatsApp** já está completa (status, QR Code, webhook, teste). Vou agora replicar o restante do que a Brazil Lands tem em Configurações, criando uma nova aba **"Integrações & IA"** em `/app/configuracoes`.
+Hoje a página `/app/configuracoes` do CRM HR usa abas (Empresa, WhatsApp, Integrações & IA, Notificações, Sistema). Na Brazil Lands é uma **página única scrollável** com cards na ordem do screenshot. Vou alinhar visualmente.
 
-### Nova aba "Integrações & IA" — 3 cartões
+## Nova ordem da página (top → bottom)
 
-**1. Webhook de captação de leads**
-- Mostra a URL: `https://pbqiwdwwabvjmybbatdv.supabase.co/functions/v1/lead-webhook`
-- Botão **"Copiar URL"**.
-- Texto explicativo: "Configure este endpoint no Meta Lead Ads, Google Ads ou em formulários externos."
-- Exemplo do JSON esperado em `<code>`: `{ "full_name", "phone", "email", "source", "interest", "region", "notes" }`.
+1. **Backup & Recuperação de dados** *(novo card)*
+   - Sub-cards: "Lixeira (até 30 dias)" → link para `/app/lixeira`
+   - "Auditoria (histórico completo)" → link para `/app/auditoria`
+   - "Backup automático do banco" (texto informativo sobre Lovable Cloud → Backups)
+   - Caixa de dica sobre permissões (apenas admin pode excluir definitivamente).
 
-**2. IA conversacional**
-- Cartão informativo: "A IA atende leads no WhatsApp quando o toggle está ativo na conversa."
-- Badge mostrando o modelo: `google/gemini-3-flash-preview` (via Lovable AI).
-- Texto: "Para personalizar o prompt da IA, peça ao Lovable."
+2. **Webhook de captação de leads** *(já existe na aba, vai virar card no topo)*
+   - URL `https://...supabase.co/functions/v1/lead-webhook` com botão copiar.
+   - Exemplo de JSON: `full_name`, `phone`, `email`, `source`, `interest`, `region`, `notes`.
 
-**3. Landing de captura**
-- Mostra a URL pública: `{origem}/captura`.
-- Botão **"Copiar URL"**.
-- Texto: "Compartilhe a URL pública nos seus anúncios."
+3. **WhatsApp (Evolution API / Z-API)** *(novo card de instruções, igual Brazil Lands)*
+   - URL do webhook `whatsapp-webhook` com botão copiar.
+   - Caixa verde com "Próximos passos" (pedir ao Lovable para configurar credenciais, fornecer URL/API key/instância, colar webhook).
 
-### Pequenos ajustes na aba existente
+4. **Status / QR Code / Webhook ativo / Testar envio** *(mantém o `WhatsAppConnection` que já existe)*
+   - Status da instância (🟢/🔴) + Reiniciar / Desconectar
+   - Gerar QR Code com polling
+   - Configurar webhook na Evolution
+   - Testar envio
 
-- Tornar a `TabsList` `flex-wrap` para acomodar a nova aba sem cortar em telas menores.
-- Adicionar ícones novos do `lucide-react`: `Webhook`, `Bot`, `Globe`, `Check`.
+5. **IA conversacional** *(card simples)*
+   - Texto: "A IA atende leads no chat público (`/captura`) e no WhatsApp quando o toggle está ativo."
+   - Badge com modelo `google/gemini-3-flash-preview` via Lovable AI.
 
-### O que NÃO vou fazer agora
+6. **Landing de captura**
+   - URL `https://.../captura` com botão copiar.
 
-- **Não vou criar** a edge function `lead-webhook` nem a página `/captura` neste passo — apenas mostrar a URL/configuração na tela, exatamente como a Brazil Lands faz no card visual. Se você quiser ativar de verdade depois (criar o endpoint que recebe os leads do Meta Ads e a landing pública), me avisa que eu implemento num passo seguinte.
+7. **Configurações avançadas (abas no rodapé)**
+   - Mantém Empresa / Notificações / Sistema em `Tabs` no final, para não perder funcionalidades já existentes.
 
-### Arquivo afetado
+## Detalhes técnicos
 
-- `src/pages/ConfiguracoesPage.tsx` — adicionar a aba e o componente.
+Arquivo único alterado: `src/pages/ConfiguracoesPage.tsx`.
 
-### Sem mudanças em
+- Remover `Tabs` no topo; substituir por sequência vertical de `Card`s.
+- Criar 5 componentes internos: `BackupRecuperacao`, `WebhookCaptacao`, `WhatsAppEvolutionInfo`, `IAConversacional`, `LandingCaptura`.
+- Reaproveitar `WhatsAppConnection` já existente (status + QR + teste de envio).
+- Importar ícones extras do `lucide-react`: `ShieldCheck`, `History`, `Trash2`, `HardDrive`.
+- Importar `Link` do `react-router-dom` para os atalhos de Lixeira/Auditoria.
+- Manter as funcionalidades de Empresa, Notificações e Sistema dentro de `Tabs` no final da página.
 
-- Banco, RLS, secrets, edge functions existentes.
+## Fora do escopo deste passo
+
+- Criar a Edge Function `lead-webhook` (apenas mostramos a URL — se ainda não existir, peça depois "ativar webhook de captação de leads").
+- Criar a página pública `/captura` (apenas mostramos a URL).
+- Configurar credenciais reais da Evolution/Z-API (depende de você fornecer URL, API key e nome da instância).
