@@ -149,18 +149,6 @@ Deno.serve(async (req) => {
       } catch (e) {
         console.error("falha envio WhatsApp confirmação", e);
       }
-
-      // Garante registro inbound visual mesmo se whatsapp-send não persistir
-      if (link.conversation_id) {
-        await supabase.from("whatsapp_messages").insert({
-          conversation_id: link.conversation_id,
-          direction: "outbound",
-          author: "ia",
-          content: msg,
-          status: "sent",
-          timestamp: new Date().toISOString(),
-        }).then(() => {}, () => {});
-      }
     }
 
     return new Response(JSON.stringify({
