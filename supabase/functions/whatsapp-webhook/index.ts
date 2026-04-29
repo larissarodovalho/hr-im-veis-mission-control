@@ -294,6 +294,12 @@ Deno.serve(async (req) => {
         const expectedUrl = new URL(expected);
         const secretFromUrl = expectedUrl.searchParams.get("secret")?.trim();
         if (secretFromUrl) expectedCandidates.add(secretFromUrl);
+
+        const currentUrl = new URL(req.url);
+        const expectedPath = expectedUrl.pathname.replace(/^\/functions\/v1/, "");
+        if (!secretFromUrl && expectedPath.endsWith(currentUrl.pathname) && provided.length >= 8) {
+          expectedCandidates.add(provided);
+        }
       } catch {
         const secretFromText = expected.match(/[?&]secret=([^&\s]+)/)?.[1];
         if (secretFromText) expectedCandidates.add(decodeURIComponent(secretFromText).trim());
