@@ -568,13 +568,42 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (bookingKind) {
-      const labels: Record<string, string> = {
-        videochamada: "uma videochamada",
-        presencial: "uma reunião presencial",
-        ligacao: "uma ligação",
-      };
+    const KIND_LABELS: Record<string, string> = {
+      videochamada: "uma videochamada",
+      presencial: "uma reunião presencial",
+      ligacao: "uma ligação",
+      whatsapp: "um contato pelo WhatsApp",
+    };
 
+    if (immediateKind) {
+      // Marca lead como contato imediato + dispara email
+      const note = `🔥 Contato imediato solicitado: ${KIND_LABELS[immediateKind]} — ${new Date().toLocaleString("pt-BR")}`;
+      if (leadUuid) {
+        const { data: cur } = await supabase.from("leads").select("observacoes, tags").eq("id", leadUuid).maybeSingle();
+        const newTags = Array.from(new Set([...(cur?.tags ?? []), "urgente"]));
+        await supabase.from("leads").update({
+          observacoes: cur?.observacoes ? `${cur.observacoes}\n${note}` : note,
+          tags: newTags,
+          etapa_funil: "Contato Imediato",
+          ultima_interacao: new Date().toISOString(),
+        }).eq("id", leadUuid);
+
+        // Dispara notificação por email (não bloqueia resposta)
+        try {
+          await supabase.functions.invoke("notify-immediate-contact", {
+            body: { lead_id: leadUuid, contact_kind: immediateKind },
+          });
+        } catch (e) {
+          console.error("notify-immediate-contact invoke failed", e);
+        }
+      }
+
+      // Limpa URLs inventadas
+      reply = reply.replace(/https?:\/\/\S+/g, "").trim();
+      if (!reply) {
+        reply = `Show! Já avisei o Hans, ele vai te chamar agora mesmo via ${KIND_LABELS[immediateKind]} 🚀`;
+      }
+    } else if (bookingKind) {
       // Gera token único e cria o link de agendamento
       const token = (() => {
         const arr = new Uint8Array(24);
@@ -595,18 +624,16 @@ Deno.serve(async (req) => {
         || `https://id-preview--${Deno.env.get("SUPABASE_URL")?.match(/https:\/\/([^.]+)\./)?.[1] || "9ba329fa-bc86-4fa7-8521-f11e9da54abe"}.lovable.app`;
       const link = `${baseUrl.replace(/\/$/, "")}/agendar/${token}`;
 
-      // Remove URLs que o modelo possa ter inventado para não confundir
       reply = reply.replace(/https?:\/\/\S+/g, "").trim();
-      // Remove menção de "em breve" se sobrou
       reply = reply.replace(/em breve\.?$/i, "").trim();
 
       if (!reply) {
-        reply = `Perfeito! Te mando aqui o link pra você escolher o melhor dia e horário pra ${labels[bookingKind]} com o Hans 👇`;
+        reply = `Perfeito! Te mando aqui o link pra você escolher o melhor dia e horário pra ${KIND_LABELS[bookingKind]} com o Hans 👇`;
       }
       reply += `\n\n${link}`;
 
       if (leadUuid) {
-        const note = `📞 Lead solicitou: ${labels[bookingKind]} — link enviado`;
+        const note = `📞 Lead solicitou: ${KIND_LABELS[bookingKind]} — link enviado`;
         const { data: cur } = await supabase.from("leads").select("observacoes, etapa_funil").eq("id", leadUuid).maybeSingle();
         await supabase.from("leads").update({
           observacoes: cur?.observacoes ? `${cur.observacoes}\n${note}` : note,
