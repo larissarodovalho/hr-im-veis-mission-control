@@ -69,13 +69,16 @@ const TOOLS = [
     type: "function",
     function: {
       name: "update_lead_info",
-      description: "Salva nome completo, telefone informado em texto pelo lead, e/ou marca urgência. Chame assim que tiver cada dado novo.",
+      description: "Salva nome completo e/ou intenção do lead. Chame assim que tiver cada dado novo.",
       parameters: {
         type: "object",
         properties: {
           full_name: { type: "string", description: "Nome completo do lead (nome + sobrenome)" },
-          phone: { type: "string", description: "Telefone informado pelo lead em texto, com DDD" },
-          urgency: { type: "string", enum: ["urgente", "normal"], description: "urgente quando há prazo, mudança, herança, divórcio etc." },
+          interest: {
+            type: "string",
+            enum: ["compra", "venda", "aluguel", "investidor"],
+            description: "Intenção do lead",
+          },
         },
       },
     },
@@ -83,41 +86,18 @@ const TOOLS = [
   {
     type: "function",
     function: {
-      name: "request_broker",
-      description: "Aciona o corretor Hans para falar com o lead. Use 'agora' em casos de urgência; senão use a preferência do lead.",
+      name: "send_booking_link",
+      description: "Envia link/registra o agendamento com o Hans no formato escolhido pelo lead.",
       parameters: {
         type: "object",
         properties: {
           kind: {
             type: "string",
-            enum: ["visita", "videochamada", "ligacao", "agora"],
-            description: "visita=ver o imóvel; videochamada=vídeo; ligacao=telefone; agora=falar imediatamente",
+            enum: ["videochamada", "presencial", "ligacao"],
+            description: "videochamada=vídeo; presencial=reunião presencial; ligacao=telefone",
           },
-          topic: { type: "string", description: "Resumo do que o lead quer (1 frase)" },
         },
         required: ["kind"],
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "consultar_imoveis",
-      description: "Consulta o portfólio real da HR Imóveis. Use SEMPRE que o lead perguntar valor, bairro, quartos, suítes, área ou características. Não invente dados.",
-      parameters: {
-        type: "object",
-        properties: {
-          bairro: { type: "string", description: "Bairro/região, ex: Jardim Itália" },
-          tipo: { type: "string", description: "Casa, Apartamento, Terreno, Comercial" },
-          finalidade: { type: "string", enum: ["Venda", "Aluguel"] },
-          quartos_min: { type: "number" },
-          suites_min: { type: "number" },
-          preco_min: { type: "number" },
-          preco_max: { type: "number" },
-          area_min: { type: "number" },
-          query: { type: "string", description: "Texto livre para busca em título/descrição" },
-          limit: { type: "number", description: "Máximo de imóveis a retornar (padrão 5)" },
-        },
       },
     },
   },
