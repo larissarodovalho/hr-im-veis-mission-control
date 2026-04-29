@@ -483,6 +483,7 @@ Deno.serve(async (req) => {
     // Cascata + loop de tool calls
     let result: { text: string; toolCalls: ToolCall[]; raw?: any } = { text: "", toolCalls: [] };
     let bookingKind: string | null = null;
+    let immediateKind: string | null = null;
 
     const MODELS = ["google/gemini-2.5-pro", "google/gemini-2.5-flash", "openai/gpt-5-mini"];
     let workingMessages = [...aiMessages];
