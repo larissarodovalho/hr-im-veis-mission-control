@@ -455,15 +455,14 @@ Deno.serve(async (req) => {
       role: "system",
       content: `Contexto do lead:
 - Nome: ${hasName ? leadRow!.nome : "(faltando — pedir)"}
-- Telefone: ${hasPhone ? leadRow!.telefone : "(faltando — pedir)"}
-- Urgência marcada? ${isUrgent ? "SIM" : "não"}
+- Telefone (já temos do WhatsApp): ${phone}
+- Intenção registrada: ${(leadRow as any)?.observacoes && /Intenção:/i.test((leadRow as any).observacoes) ? "sim" : "(faltando — perguntar)"}
 - Hans já notificado nesta conversa? ${alreadyNotified ? "SIM" : "não"}`,
     });
 
-    // Cascata + loop de tool calls (até 2 rodadas para permitir consultar_imoveis antes de responder)
+    // Cascata + loop de tool calls
     let result: { text: string; toolCalls: ToolCall[]; raw?: any } = { text: "", toolCalls: [] };
-    let brokerKind: string | null = null;
-    let brokerTopic: string | undefined;
+    let bookingKind: string | null = null;
 
     const MODELS = ["google/gemini-2.5-pro", "google/gemini-2.5-flash", "openai/gpt-5-mini"];
     let workingMessages = [...aiMessages];
@@ -480,7 +479,6 @@ Deno.serve(async (req) => {
 
       if (result.toolCalls.length === 0) break;
 
-      // Adiciona a mensagem assistant com tool_calls ao histórico de trabalho
       const toolCallsForApi = result.toolCalls.map(tc => ({
         id: tc.id || `call_${Math.random().toString(36).slice(2)}`,
         type: "function",
@@ -488,7 +486,7 @@ Deno.serve(async (req) => {
       }));
       workingMessages.push({ role: "assistant", content: result.text || "", tool_calls: toolCallsForApi });
 
-      let didConsult = false;
+      let needAnotherRound = false;
       for (let i = 0; i < result.toolCalls.length; i++) {
         const tc = result.toolCalls[i];
         const callId = toolCallsForApi[i].id;
@@ -496,34 +494,29 @@ Deno.serve(async (req) => {
 
         if (tc.name === "update_lead_info" && leadUuid) {
           const fullName = String(tc.args?.full_name || "").trim();
-          const phoneTxt = String(tc.args?.phone || "").trim();
-          const urgency = tc.args?.urgency;
+          const interest = tc.args?.interest as string | undefined;
           const update: any = { ultima_interacao: new Date().toISOString() };
           if (fullName) update.nome = fullName;
-          if (phoneTxt) {
-            const digits = phoneTxt.replace(/\D/g, "");
-            if (digits.length >= 10) update.telefone = digits;
-          }
-          if (urgency === "urgente") {
-            const tags = Array.isArray(leadRow?.tags) ? Array.from(new Set([...leadRow!.tags, "urgente"])) : ["urgente"];
-            update.tags = tags;
+          if (interest && ["compra", "venda", "aluguel", "investidor"].includes(interest)) {
+            const { data: cur } = await supabase.from("leads").select("observacoes").eq("id", leadUuid).maybeSingle();
+            const note = `Intenção: ${interest}`;
+            update.observacoes = cur?.observacoes
+              ? (/Intenção:/i.test(cur.observacoes) ? cur.observacoes.replace(/Intenção:.*/i, note) : `${cur.observacoes}\n${note}`)
+              : note;
             update.etapa_funil = "Em Atendimento";
           }
           if (Object.keys(update).length > 1) {
             await supabase.from("leads").update(update).eq("id", leadUuid);
           }
           toolResult = { ok: true, saved: Object.keys(update).filter(k => k !== "ultima_interacao") };
-        } else if (tc.name === "request_broker") {
+          needAnotherRound = true;
+        } else if (tc.name === "send_booking_link") {
           const k = tc.args?.kind;
-          if (["visita", "videochamada", "ligacao", "agora"].includes(k)) {
-            brokerKind = k;
-            if (tc.args?.topic) brokerTopic = String(tc.args.topic).slice(0, 280);
+          if (["videochamada", "presencial", "ligacao"].includes(k)) {
+            bookingKind = k;
           }
-          toolResult = { ok: true, scheduled: brokerKind };
-        } else if (tc.name === "consultar_imoveis") {
-          const items = await consultarImoveis(supabase, tc.args || {});
-          toolResult = { count: items.length, items };
-          didConsult = true;
+          toolResult = { ok: true, scheduled: bookingKind };
+          needAnotherRound = true;
         } else {
           toolResult = { error: "unknown tool" };
         }
@@ -535,34 +528,30 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Se consultou imóveis, faz mais uma rodada para a Sofia formular a resposta usando os dados.
-      if (!didConsult) break;
+      if (!needAnotherRound) break;
     }
 
     let reply = result.text?.trim() || "";
     if (!reply) {
       if (!hasName) {
-        reply = "Olá! Sou a Sofia, consultora da HR Imóveis. Que bom falar com você! Para eu te atender da melhor forma, me diz seu nome completo?";
-      } else if (!hasPhone) {
-        reply = `Prazer, ${firstName}! Me passa um telefone para contato? Assim o Hans, nosso corretor especialista, já fica com seu registro.`;
+        reply = "Olá! Sou a Sofia, assistente da HR Imóveis, prazer falar com você!\n\nPara melhor te atender, me diz seu nome completo?";
       } else {
-        reply = `${firstName}, prefere conhecer o imóvel pessoalmente, por videochamada ou uma ligação rápida com o Hans?`;
+        reply = `Legal, ${firstName}! Você quer comprar um imóvel, vender, alugar ou é investidor?`;
       }
     }
 
-    if (brokerKind) {
+    if (bookingKind) {
       const labels: Record<string, string> = {
-        visita: "uma visita ao imóvel",
         videochamada: "uma videochamada",
+        presencial: "uma reunião presencial",
         ligacao: "uma ligação",
-        agora: "contato agora",
       };
       if (!/hans/i.test(reply)) {
-        reply += `\n\nJá repassei ao Hans para ${labels[brokerKind]}. Ele entra em contato em breve.`;
+        reply += `\n\nÓtimo! O Hans vai confirmar ${labels[bookingKind]} com você em breve.`;
       }
 
       if (leadUuid) {
-        const note = `📞 Lead solicitou: ${labels[brokerKind]}${brokerTopic ? ` — "${brokerTopic}"` : ""}`;
+        const note = `📞 Lead solicitou: ${labels[bookingKind]}`;
         const { data: cur } = await supabase.from("leads").select("observacoes, etapa_funil").eq("id", leadUuid).maybeSingle();
         await supabase.from("leads").update({
           observacoes: cur?.observacoes ? `${cur.observacoes}\n${note}` : note,
