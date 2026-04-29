@@ -515,7 +515,7 @@ Deno.serve(async (req) => {
           if (["videochamada", "presencial", "ligacao"].includes(k)) {
             bookingKind = k;
           }
-          toolResult = { ok: true, scheduled: bookingKind };
+          toolResult = { ok: true, scheduled: bookingKind, link_will_be_appended: true };
           needAnotherRound = true;
         } else {
           toolResult = { error: "unknown tool" };
