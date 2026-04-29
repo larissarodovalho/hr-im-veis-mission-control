@@ -266,6 +266,7 @@ function LeadCard({ lead, canDelete, onDelete, converted }: { lead: Lead; canDel
         </div>
       </div>
       <div className="flex items-center gap-1 mt-2 flex-wrap">
+        {isUrgent(lead) && <Badge className="bg-destructive text-destructive-foreground border-destructive border text-[10px] animate-pulse">🔥 Imediato</Badge>}
         {lead.origem && <Badge variant="secondary" className="text-[10px]">{SOURCES[lead.origem]?.emoji} {SOURCES[lead.origem]?.label || lead.origem}</Badge>}
         {lead.temperatura && <Badge className={TEMPERATURES[lead.temperatura].className + " border text-[10px]"}>{TEMPERATURES[lead.temperatura].emoji} {TEMPERATURES[lead.temperatura].label}</Badge>}
         {converted && <Badge className="bg-success/15 text-success border-success/30 border text-[10px] gap-0.5"><Building2 className="h-2.5 w-2.5" /> Conta</Badge>}
