@@ -207,6 +207,7 @@ export default function Leads() {
                     <tr key={l.id} className="border-t hover:bg-muted/30">
                       <td className="p-3">
                         <Link to={`/app/leads/${l.id}`} className="font-medium hover:underline">{l.nome}</Link>
+                        {isUrgent(l) && <Badge className="ml-2 bg-destructive text-destructive-foreground border-destructive border text-[10px] animate-pulse">🔥 Imediato</Badge>}
                         {convertedIds.has(l.id) && <Badge className="ml-2 bg-success/15 text-success border-success/30 border text-[10px] gap-0.5"><Building2 className="h-2.5 w-2.5" /> Conta</Badge>}
                         <div className="text-xs text-muted-foreground">{l.telefone}</div>
                       </td>
