@@ -179,6 +179,7 @@ export default function Leads() {
                     {canDelete && <DeleteLeadButton name={l.nome} onConfirm={() => remove(l.id, l.nome)} />}
                   </div>
                   <div className="flex flex-wrap gap-1.5 mt-3">
+                    {isUrgent(l) && <Badge className="bg-destructive text-destructive-foreground border-destructive border text-[10px] animate-pulse">🔥 Contato Imediato</Badge>}
                     {l.origem && <Badge variant="secondary" className="text-[10px]">{SOURCES[l.origem]?.emoji} {SOURCES[l.origem]?.label || l.origem}</Badge>}
                     {l.imovel_interesse && <Badge variant="outline" className="text-[10px]">{INTERESTS[l.imovel_interesse] || l.imovel_interesse}</Badge>}
                     <Badge variant="outline" className="text-[10px]">{STAGES.find(s => s.id === l.etapa_funil)?.label}</Badge>
