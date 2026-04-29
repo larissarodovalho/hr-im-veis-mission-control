@@ -24,8 +24,12 @@ type Lead = {
   id: string; nome: string; email: string | null; telefone: string | null;
   origem: string | null; etapa_funil: Stage; imovel_interesse: string | null; regiao: string | null;
   valor_estimado: number | null; ultima_interacao: string | null; created_at: string;
-  temperatura: Temperature | null;
+  temperatura: Temperature | null; tags: string[] | null;
 };
+
+const isUrgent = (l: { tags?: string[] | null; etapa_funil: Stage }) =>
+  (Array.isArray(l.tags) && l.tags.includes("urgente")) || (l.etapa_funil as string) === "Contato Imediato";
+
 
 export default function Leads() {
   const { user } = useAuth();
@@ -175,6 +179,7 @@ export default function Leads() {
                     {canDelete && <DeleteLeadButton name={l.nome} onConfirm={() => remove(l.id, l.nome)} />}
                   </div>
                   <div className="flex flex-wrap gap-1.5 mt-3">
+                    {isUrgent(l) && <Badge className="bg-destructive text-destructive-foreground border-destructive border text-[10px] animate-pulse">🔥 Contato Imediato</Badge>}
                     {l.origem && <Badge variant="secondary" className="text-[10px]">{SOURCES[l.origem]?.emoji} {SOURCES[l.origem]?.label || l.origem}</Badge>}
                     {l.imovel_interesse && <Badge variant="outline" className="text-[10px]">{INTERESTS[l.imovel_interesse] || l.imovel_interesse}</Badge>}
                     <Badge variant="outline" className="text-[10px]">{STAGES.find(s => s.id === l.etapa_funil)?.label}</Badge>
@@ -202,6 +207,7 @@ export default function Leads() {
                     <tr key={l.id} className="border-t hover:bg-muted/30">
                       <td className="p-3">
                         <Link to={`/app/leads/${l.id}`} className="font-medium hover:underline">{l.nome}</Link>
+                        {isUrgent(l) && <Badge className="ml-2 bg-destructive text-destructive-foreground border-destructive border text-[10px] animate-pulse">🔥 Imediato</Badge>}
                         {convertedIds.has(l.id) && <Badge className="ml-2 bg-success/15 text-success border-success/30 border text-[10px] gap-0.5"><Building2 className="h-2.5 w-2.5" /> Conta</Badge>}
                         <div className="text-xs text-muted-foreground">{l.telefone}</div>
                       </td>
@@ -260,6 +266,7 @@ function LeadCard({ lead, canDelete, onDelete, converted }: { lead: Lead; canDel
         </div>
       </div>
       <div className="flex items-center gap-1 mt-2 flex-wrap">
+        {isUrgent(lead) && <Badge className="bg-destructive text-destructive-foreground border-destructive border text-[10px] animate-pulse">🔥 Imediato</Badge>}
         {lead.origem && <Badge variant="secondary" className="text-[10px]">{SOURCES[lead.origem]?.emoji} {SOURCES[lead.origem]?.label || lead.origem}</Badge>}
         {lead.temperatura && <Badge className={TEMPERATURES[lead.temperatura].className + " border text-[10px]"}>{TEMPERATURES[lead.temperatura].emoji} {TEMPERATURES[lead.temperatura].label}</Badge>}
         {converted && <Badge className="bg-success/15 text-success border-success/30 border text-[10px] gap-0.5"><Building2 className="h-2.5 w-2.5" /> Conta</Badge>}
