@@ -546,12 +546,39 @@ Deno.serve(async (req) => {
         presencial: "uma reunião presencial",
         ligacao: "uma ligação",
       };
-      if (!/hans/i.test(reply)) {
-        reply += `\n\nÓtimo! O Hans vai confirmar ${labels[bookingKind]} com você em breve.`;
+
+      // Gera token único e cria o link de agendamento
+      const token = (() => {
+        const arr = new Uint8Array(24);
+        crypto.getRandomValues(arr);
+        return btoa(String.fromCharCode(...arr)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+      })();
+
+      await supabase.from("booking_links").insert({
+        token,
+        lead_id: leadUuid,
+        conversation_id: conv.id,
+        phone,
+        nome: hasName ? leadRow!.nome : (pushName || null),
+        kind: bookingKind,
+      });
+
+      const baseUrl = Deno.env.get("PUBLIC_APP_URL")
+        || `https://id-preview--${Deno.env.get("SUPABASE_URL")?.match(/https:\/\/([^.]+)\./)?.[1] || "9ba329fa-bc86-4fa7-8521-f11e9da54abe"}.lovable.app`;
+      const link = `${baseUrl.replace(/\/$/, "")}/agendar/${token}`;
+
+      // Remove URLs que o modelo possa ter inventado para não confundir
+      reply = reply.replace(/https?:\/\/\S+/g, "").trim();
+      // Remove menção de "em breve" se sobrou
+      reply = reply.replace(/em breve\.?$/i, "").trim();
+
+      if (!reply) {
+        reply = `Perfeito! Te mando aqui o link pra você escolher o melhor dia e horário pra ${labels[bookingKind]} com o Hans 👇`;
       }
+      reply += `\n\n${link}`;
 
       if (leadUuid) {
-        const note = `📞 Lead solicitou: ${labels[bookingKind]}`;
+        const note = `📞 Lead solicitou: ${labels[bookingKind]} — link enviado`;
         const { data: cur } = await supabase.from("leads").select("observacoes, etapa_funil").eq("id", leadUuid).maybeSingle();
         await supabase.from("leads").update({
           observacoes: cur?.observacoes ? `${cur.observacoes}\n${note}` : note,
