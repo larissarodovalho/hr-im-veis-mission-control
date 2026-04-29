@@ -216,6 +216,48 @@ export type Database = {
           },
         ]
       }
+      booking_links: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          kind: string
+          lead_id: string | null
+          nome: string | null
+          phone: string | null
+          reuniao_id: string | null
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          kind: string
+          lead_id?: string | null
+          nome?: string | null
+          phone?: string | null
+          reuniao_id?: string | null
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          kind?: string
+          lead_id?: string | null
+          nome?: string | null
+          phone?: string | null
+          reuniao_id?: string | null
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       campanhas_metrics_daily: {
         Row: {
           campanha_id: string
