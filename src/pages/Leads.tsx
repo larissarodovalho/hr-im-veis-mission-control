@@ -24,8 +24,12 @@ type Lead = {
   id: string; nome: string; email: string | null; telefone: string | null;
   origem: string | null; etapa_funil: Stage; imovel_interesse: string | null; regiao: string | null;
   valor_estimado: number | null; ultima_interacao: string | null; created_at: string;
-  temperatura: Temperature | null;
+  temperatura: Temperature | null; tags: string[] | null;
 };
+
+const isUrgent = (l: { tags?: string[] | null; etapa_funil: Stage }) =>
+  (Array.isArray(l.tags) && l.tags.includes("urgente")) || (l.etapa_funil as string) === "Contato Imediato";
+
 
 export default function Leads() {
   const { user } = useAuth();
