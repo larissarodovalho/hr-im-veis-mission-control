@@ -28,6 +28,7 @@ import Reports from "@/pages/Reports";
 import Users from "@/pages/Users";
 import ConfiguracoesPage from "@/pages/ConfiguracoesPage";
 import NotFound from "@/pages/NotFound";
+import AgendarPage from "@/pages/AgendarPage";
 // Site público (mantido)
 import HomePage from "@/pages/site/HomePage";
 import ImoveisPage from "@/pages/site/ImoveisPage";
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/esqueci-senha" element={<ForgotPassword />} />
             <Route path="/redefinir-senha" element={<ResetPassword />} />
+            <Route path="/agendar/:token" element={<AgendarPage />} />
 
             {/* Site público preservado */}
             <Route path="/site" element={<SiteLayout><HomePage /></SiteLayout>} />
