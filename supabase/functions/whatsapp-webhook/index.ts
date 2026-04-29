@@ -9,71 +9,76 @@ const corsHeaders = {
 };
 
 const AI_SYSTEM = `IDENTIDADE
-Você é a Sofia, consultora da HR Imóveis — empresa especializada em imóveis padrão e alto padrão em Sinop-MT, liderada pelo corretor Hans Rodovalho, com 14 anos de experiência e especialização em imóveis de R$ 500 mil a R$ 15 milhões. Você representa o Hans com o mesmo profissionalismo e cuidado que ele tem com cada cliente.
+Você é a Sofia, assistente de atendimento da HR Imóveis no WhatsApp. A HR Imóveis trabalha com compra, venda e aluguel de imóveis em Sinop-MT, do padrão ao alto padrão, junto com o corretor Hans Rodovalho.
 
-TOM DE VOZ E PERSONALIDADE
-- Sofisticada, acolhedora e consultiva. Nunca insistente ou genérica.
-- Linguagem informal e natural. Sem gírias. Sem emojis.
-- Faça perguntas inteligentes. Ouça mais do que fala.
-- Nunca pressione. O lead deve sentir que está sendo assessorado, não abordado.
-- Respostas curtas e objetivas. Máximo 3 linhas por mensagem.
+OBJETIVO PRINCIPAL (fluxo sequencial, não pule passos):
+1. Coletar NOME COMPLETO (nome e sobrenome).
+2. Assim que tiver o nome completo, chame update_lead_info com o nome, mesmo se a intenção ainda estiver faltando.
+3. Coletar INTENÇÃO: compra, venda, aluguel ou investidor.
+4. Assim que tiver a intenção clara, chame update_lead_info de novo com nome + intenção para completar o lead.
+5. Coletar PREFERÊNCIA DE CONTATO: videochamada, reunião presencial ou ligação.
+6. Chamar send_booking_link com a opção escolhida.
+7. Encerrar agradecendo e avisando que o Hans confirmará em breve.
 
-ATENDIMENTO POR ÁUDIO
-Quando o lead enviar áudio, você recebe a transcrição. Responda normalmente sem mencionar que foi transcrito.
+REGRAS DE LINGUAGEM E TOM
+- Simples, informal, direto — como mensagem de WhatsApp do dia a dia.
+- Público: comprador/vendedor de imóvel. Zero jargão, zero inglês, zero formalismo.
+- UMA pergunta por mensagem. Máximo 2 linhas curtas por mensagem.
+- Sem listas, sem numerações. No máximo 1 emoji por mensagem (e só se fizer sentido).
+- Linguagem neutra: use "você" sempre. Nunca "senhor", "senhora", "moço", "moça".
+- Apresente-se só na primeira mensagem ou se perguntarem.
+- Se a mensagem veio de áudio transcrito, responda normal em texto. Não comente que era áudio.
+- Nunca invente informação. Se a intenção for ambígua, peça clarificação sem assumir.
 
-CONTEXTO DO LEAD
-Este lead clicou em um anúncio de um imóvel específico (Instagram/Facebook) e chamou no WhatsApp. Ele já tem interesse — não é frio. Seu papel é capturar contato, responder dúvidas QUANDO ele perguntar, e agendar a visita com o Hans.
+FLUXO DETALHADO
 
-OBJETIVO
-Capturar contato → cadastrar no CRM → agendar visita com o Hans.
-Você NÃO fecha contratos — você abre portas para o Hans fechar.
+Passo 1 — Apresentação + nome (OBRIGATÓRIO: enviar EXATAMENTE este texto na primeira mensagem, palavra por palavra. É proibido usar qualquer outra variação da mensagem de apresentação. NÃO adicionar "oi", "boa tarde", "tudo bem", "como posso ajudar" nem qualquer outra variação. NÃO reescrever, NÃO resumir, NÃO traduzir, NÃO mudar pontuação.):
+"Olá! Sou a Sofia, assistente da HR Imóveis, prazer falar com você!
 
-REGRA Nº 1 — CAPTAÇÃO DE NOME E TELEFONE (PRIORIDADE ABSOLUTA)
-Antes de QUALQUER resposta, leia o histórico e o bloco "Contexto do lead".
-- Se o nome JÁ está no contexto/histórico: NUNCA peça o nome de novo.
-- Se o telefone JÁ está no contexto/histórico: NUNCA peça o telefone de novo.
-- Se ambos já existem: pule os passos 1 e 2 e retome o assunto chamando o lead pelo nome.
-Pedir um dado já fornecido é falha grave.
+Para melhor te atender, me diz seu nome completo?"
 
-PASSO 1 — Nome (somente se faltar):
-"Olá! Sou a Sofia, consultora da HR Imóveis. Que bom falar com você! Para eu te atender da melhor forma, me diz seu nome completo?"
-Quando receber o nome completo → chame update_lead_info com full_name.
+Se vier só primeiro nome: "E qual é seu sobrenome?"
+Quando tiver o nome completo → chame update_lead_info com full_name.
 
-PASSO 2 — Telefone (somente se faltar):
-"Prazer, [primeiro nome]! Me passa um telefone para contato? Assim o Hans, nosso corretor especialista, já fica com seu registro."
-Quando receber o telefone → chame update_lead_info de novo com phone.
+Passo 2 — Intenção:
+"Legal, [Nome]! Você quer comprar um imóvel, vender, alugar ou é investidor?"
 
-PASSO 3 — Conduzir para a visita:
-Com nome e telefone capturados, conduza naturalmente para agendar a visita com o Hans. Pergunte preferência: visita no imóvel, videochamada ou ligação.
-Quando o lead aceitar → chame request_broker.
+Se ambíguo: "Desculpa, não entendi. Você quer comprar, vender, alugar ou é investidor?"
+Quando tiver a intenção clara → chame update_lead_info com full_name + interest.
 
-DETALHES DO IMÓVEL
-- Espere o lead perguntar. Se não perguntar, NÃO ofereça especificações.
-- Quando ele perguntar valor, metragem, bairro, quartos etc.: chame consultar_imoveis e responda com base nos dados retornados.
-- NUNCA invente dado. Se a busca não retornar nada útil: "Vou confirmar esse detalhe com o Hans e te respondo em breve."
-- NUNCA revele preço nos dois primeiros turnos — qualifique antes (entenda o que ele busca).
-- Sempre destaque o lifestyle/experiência do imóvel ANTES das especificações técnicas.
+Passo 3 — Preferência de contato:
+"Perfeito! Como você prefere falar com o Hans: videochamada, reunião presencial ou ligação?"
 
-URGÊNCIA
-Se o lead mencionar mudança, herança, divórcio, prazo apertado: chame update_lead_info com urgency="urgente" e em seguida request_broker com kind="agora".
+Se não escolher uma das três: "Qual das três fica melhor pra você: videochamada, presencial ou ligação?"
+Quando escolher → chame send_booking_link.
 
-REGRAS GERAIS
-- Nunca fale mal de concorrentes.
-- Se não souber algo técnico: "Vou confirmar com o Hans e te respondo em breve."
-- Encerre confirmando que o Hans entra em contato em breve.`;
+Passo 4 — Encerramento:
+"Ótimo! O Hans vai confirmar a data com você em breve."
+
+CASOS ESPECIAIS
+- Pessoa repete info que já deu: não corrija nem avise. Só siga adiante.
+- Pessoa desvia do assunto: traga de volta gentilmente para o passo atual.
+- Pessoa diz "não sei ainda": "Sem pressa! Quando decidir é só chamar." Encerre.
+- Pessoa pergunta sobre preço, localização, detalhes do imóvel: "Ótima dúvida! O Hans vai esclarecer tudo quando vocês conversarem." Siga o fluxo.
+- Pessoa manda imagem, documento ou link: ignore e siga o fluxo. Se for muito relevante: "Vi aqui. Vou passar pro Hans, ele te ajuda melhor."
+
+IMPORTANTE: Chame update_lead_info assim que souber o nome completo, mesmo sem a intenção. Quando captar a intenção, chame update_lead_info de novo para completar. Só chame send_booking_link depois da intenção definida.`;
 
 const TOOLS = [
   {
     type: "function",
     function: {
       name: "update_lead_info",
-      description: "Salva nome completo, telefone informado em texto pelo lead, e/ou marca urgência. Chame assim que tiver cada dado novo.",
+      description: "Salva nome completo e/ou intenção do lead. Chame assim que tiver cada dado novo.",
       parameters: {
         type: "object",
         properties: {
           full_name: { type: "string", description: "Nome completo do lead (nome + sobrenome)" },
-          phone: { type: "string", description: "Telefone informado pelo lead em texto, com DDD" },
-          urgency: { type: "string", enum: ["urgente", "normal"], description: "urgente quando há prazo, mudança, herança, divórcio etc." },
+          interest: {
+            type: "string",
+            enum: ["compra", "venda", "aluguel", "investidor"],
+            description: "Intenção do lead",
+          },
         },
       },
     },
@@ -81,41 +86,18 @@ const TOOLS = [
   {
     type: "function",
     function: {
-      name: "request_broker",
-      description: "Aciona o corretor Hans para falar com o lead. Use 'agora' em casos de urgência; senão use a preferência do lead.",
+      name: "send_booking_link",
+      description: "Envia link/registra o agendamento com o Hans no formato escolhido pelo lead.",
       parameters: {
         type: "object",
         properties: {
           kind: {
             type: "string",
-            enum: ["visita", "videochamada", "ligacao", "agora"],
-            description: "visita=ver o imóvel; videochamada=vídeo; ligacao=telefone; agora=falar imediatamente",
+            enum: ["videochamada", "presencial", "ligacao"],
+            description: "videochamada=vídeo; presencial=reunião presencial; ligacao=telefone",
           },
-          topic: { type: "string", description: "Resumo do que o lead quer (1 frase)" },
         },
         required: ["kind"],
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "consultar_imoveis",
-      description: "Consulta o portfólio real da HR Imóveis. Use SEMPRE que o lead perguntar valor, bairro, quartos, suítes, área ou características. Não invente dados.",
-      parameters: {
-        type: "object",
-        properties: {
-          bairro: { type: "string", description: "Bairro/região, ex: Jardim Itália" },
-          tipo: { type: "string", description: "Casa, Apartamento, Terreno, Comercial" },
-          finalidade: { type: "string", enum: ["Venda", "Aluguel"] },
-          quartos_min: { type: "number" },
-          suites_min: { type: "number" },
-          preco_min: { type: "number" },
-          preco_max: { type: "number" },
-          area_min: { type: "number" },
-          query: { type: "string", description: "Texto livre para busca em título/descrição" },
-          limit: { type: "number", description: "Máximo de imóveis a retornar (padrão 5)" },
-        },
       },
     },
   },
@@ -473,15 +455,14 @@ Deno.serve(async (req) => {
       role: "system",
       content: `Contexto do lead:
 - Nome: ${hasName ? leadRow!.nome : "(faltando — pedir)"}
-- Telefone: ${hasPhone ? leadRow!.telefone : "(faltando — pedir)"}
-- Urgência marcada? ${isUrgent ? "SIM" : "não"}
+- Telefone (já temos do WhatsApp): ${phone}
+- Intenção registrada: ${(leadRow as any)?.observacoes && /Intenção:/i.test((leadRow as any).observacoes) ? "sim" : "(faltando — perguntar)"}
 - Hans já notificado nesta conversa? ${alreadyNotified ? "SIM" : "não"}`,
     });
 
-    // Cascata + loop de tool calls (até 2 rodadas para permitir consultar_imoveis antes de responder)
+    // Cascata + loop de tool calls
     let result: { text: string; toolCalls: ToolCall[]; raw?: any } = { text: "", toolCalls: [] };
-    let brokerKind: string | null = null;
-    let brokerTopic: string | undefined;
+    let bookingKind: string | null = null;
 
     const MODELS = ["google/gemini-2.5-pro", "google/gemini-2.5-flash", "openai/gpt-5-mini"];
     let workingMessages = [...aiMessages];
@@ -498,7 +479,6 @@ Deno.serve(async (req) => {
 
       if (result.toolCalls.length === 0) break;
 
-      // Adiciona a mensagem assistant com tool_calls ao histórico de trabalho
       const toolCallsForApi = result.toolCalls.map(tc => ({
         id: tc.id || `call_${Math.random().toString(36).slice(2)}`,
         type: "function",
@@ -506,7 +486,7 @@ Deno.serve(async (req) => {
       }));
       workingMessages.push({ role: "assistant", content: result.text || "", tool_calls: toolCallsForApi });
 
-      let didConsult = false;
+      let needAnotherRound = false;
       for (let i = 0; i < result.toolCalls.length; i++) {
         const tc = result.toolCalls[i];
         const callId = toolCallsForApi[i].id;
@@ -514,34 +494,29 @@ Deno.serve(async (req) => {
 
         if (tc.name === "update_lead_info" && leadUuid) {
           const fullName = String(tc.args?.full_name || "").trim();
-          const phoneTxt = String(tc.args?.phone || "").trim();
-          const urgency = tc.args?.urgency;
+          const interest = tc.args?.interest as string | undefined;
           const update: any = { ultima_interacao: new Date().toISOString() };
           if (fullName) update.nome = fullName;
-          if (phoneTxt) {
-            const digits = phoneTxt.replace(/\D/g, "");
-            if (digits.length >= 10) update.telefone = digits;
-          }
-          if (urgency === "urgente") {
-            const tags = Array.isArray(leadRow?.tags) ? Array.from(new Set([...leadRow!.tags, "urgente"])) : ["urgente"];
-            update.tags = tags;
+          if (interest && ["compra", "venda", "aluguel", "investidor"].includes(interest)) {
+            const { data: cur } = await supabase.from("leads").select("observacoes").eq("id", leadUuid).maybeSingle();
+            const note = `Intenção: ${interest}`;
+            update.observacoes = cur?.observacoes
+              ? (/Intenção:/i.test(cur.observacoes) ? cur.observacoes.replace(/Intenção:.*/i, note) : `${cur.observacoes}\n${note}`)
+              : note;
             update.etapa_funil = "Em Atendimento";
           }
           if (Object.keys(update).length > 1) {
             await supabase.from("leads").update(update).eq("id", leadUuid);
           }
           toolResult = { ok: true, saved: Object.keys(update).filter(k => k !== "ultima_interacao") };
-        } else if (tc.name === "request_broker") {
+          needAnotherRound = true;
+        } else if (tc.name === "send_booking_link") {
           const k = tc.args?.kind;
-          if (["visita", "videochamada", "ligacao", "agora"].includes(k)) {
-            brokerKind = k;
-            if (tc.args?.topic) brokerTopic = String(tc.args.topic).slice(0, 280);
+          if (["videochamada", "presencial", "ligacao"].includes(k)) {
+            bookingKind = k;
           }
-          toolResult = { ok: true, scheduled: brokerKind };
-        } else if (tc.name === "consultar_imoveis") {
-          const items = await consultarImoveis(supabase, tc.args || {});
-          toolResult = { count: items.length, items };
-          didConsult = true;
+          toolResult = { ok: true, scheduled: bookingKind };
+          needAnotherRound = true;
         } else {
           toolResult = { error: "unknown tool" };
         }
@@ -553,34 +528,30 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Se consultou imóveis, faz mais uma rodada para a Sofia formular a resposta usando os dados.
-      if (!didConsult) break;
+      if (!needAnotherRound) break;
     }
 
     let reply = result.text?.trim() || "";
     if (!reply) {
       if (!hasName) {
-        reply = "Olá! Sou a Sofia, consultora da HR Imóveis. Que bom falar com você! Para eu te atender da melhor forma, me diz seu nome completo?";
-      } else if (!hasPhone) {
-        reply = `Prazer, ${firstName}! Me passa um telefone para contato? Assim o Hans, nosso corretor especialista, já fica com seu registro.`;
+        reply = "Olá! Sou a Sofia, assistente da HR Imóveis, prazer falar com você!\n\nPara melhor te atender, me diz seu nome completo?";
       } else {
-        reply = `${firstName}, prefere conhecer o imóvel pessoalmente, por videochamada ou uma ligação rápida com o Hans?`;
+        reply = `Legal, ${firstName}! Você quer comprar um imóvel, vender, alugar ou é investidor?`;
       }
     }
 
-    if (brokerKind) {
+    if (bookingKind) {
       const labels: Record<string, string> = {
-        visita: "uma visita ao imóvel",
         videochamada: "uma videochamada",
+        presencial: "uma reunião presencial",
         ligacao: "uma ligação",
-        agora: "contato agora",
       };
       if (!/hans/i.test(reply)) {
-        reply += `\n\nJá repassei ao Hans para ${labels[brokerKind]}. Ele entra em contato em breve.`;
+        reply += `\n\nÓtimo! O Hans vai confirmar ${labels[bookingKind]} com você em breve.`;
       }
 
       if (leadUuid) {
-        const note = `📞 Lead solicitou: ${labels[brokerKind]}${brokerTopic ? ` — "${brokerTopic}"` : ""}`;
+        const note = `📞 Lead solicitou: ${labels[bookingKind]}`;
         const { data: cur } = await supabase.from("leads").select("observacoes, etapa_funil").eq("id", leadUuid).maybeSingle();
         await supabase.from("leads").update({
           observacoes: cur?.observacoes ? `${cur.observacoes}\n${note}` : note,
