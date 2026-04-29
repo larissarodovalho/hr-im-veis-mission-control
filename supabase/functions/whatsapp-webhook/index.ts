@@ -555,6 +555,10 @@ Deno.serve(async (req) => {
           const k = tc.args?.kind;
           if (["videochamada", "presencial", "ligacao", "whatsapp"].includes(k)) {
             immediateKind = k;
+          } else {
+            // Fallback defensivo: se LLM chamou sem kind ou inválido, default WhatsApp
+            immediateKind = "whatsapp";
+            console.warn(`[whatsapp-webhook] request_immediate_contact sem kind válido (${k}), usando whatsapp`);
           }
           toolResult = { ok: true, immediate: immediateKind, broker_will_be_notified: true };
           needAnotherRound = true;
