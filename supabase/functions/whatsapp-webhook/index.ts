@@ -533,10 +533,17 @@ Deno.serve(async (req) => {
           needAnotherRound = true;
         } else if (tc.name === "send_booking_link") {
           const k = tc.args?.kind;
-          if (["videochamada", "presencial", "ligacao"].includes(k)) {
+          if (["videochamada", "presencial", "ligacao", "whatsapp"].includes(k)) {
             bookingKind = k;
           }
           toolResult = { ok: true, scheduled: bookingKind, link_will_be_appended: true };
+          needAnotherRound = true;
+        } else if (tc.name === "request_immediate_contact") {
+          const k = tc.args?.kind;
+          if (["videochamada", "presencial", "ligacao", "whatsapp"].includes(k)) {
+            immediateKind = k;
+          }
+          toolResult = { ok: true, immediate: immediateKind, broker_will_be_notified: true };
           needAnotherRound = true;
         } else {
           toolResult = { error: "unknown tool" };
