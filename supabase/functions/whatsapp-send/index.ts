@@ -5,6 +5,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const normalizeEvolutionBaseUrl = (value: string) => {
+  const withProtocol = /^https?:\/\//i.test(value.trim()) ? value.trim() : `https://${value.trim()}`;
+  const url = new URL(withProtocol);
+  return url.origin;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -67,7 +73,7 @@ Deno.serve(async (req) => {
       sendError = "Evolution API não configurada (EVOLUTION_API_URL/KEY/INSTANCE_NAME).";
     } else {
       try {
-        const baseUrl = EVOLUTION_API_URL.replace(/\/$/, "");
+        const baseUrl = normalizeEvolutionBaseUrl(EVOLUTION_API_URL);
         const evoRes = await fetch(`${baseUrl}/message/sendText/${EVOLUTION_INSTANCE_NAME}`, {
           method: "POST",
           headers: { "Content-Type": "application/json", apikey: EVOLUTION_API_KEY },
