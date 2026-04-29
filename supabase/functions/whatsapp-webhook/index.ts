@@ -283,13 +283,23 @@ Deno.serve(async (req) => {
         req.headers.get("x-webhook-secret") ||
         req.headers.get("x-evolution-secret") ||
         req.headers.get("client-token") ||
+        req.headers.get("apikey") ||
         url.searchParams.get("secret") ||
         ""
       ).trim();
-      if (provided !== expectedSecretRaw.trim()) {
-        return new Response(JSON.stringify({ error: "unauthorized" }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      const expected = expectedSecretRaw.trim();
+      if (provided !== expected) {
+        const mask = (s: string) => s ? `${s.slice(0, 3)}…(${s.length})` : "(empty)";
+        console.warn(
+          `[whatsapp-webhook] invalid_secret. provided=${mask(provided)} expected_prefix=${mask(expected)} url=${req.url}`
+        );
+        return new Response(
+          JSON.stringify({
+            error: "invalid_secret",
+            hint: "Configure o webhook da Evolution com ?secret=<WHATSAPP_WEBHOOK_SECRET> ou header apikey/x-webhook-secret igual ao secret do projeto.",
+          }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
       }
     }
 
