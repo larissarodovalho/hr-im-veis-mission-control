@@ -59,7 +59,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    const cleanPhone = String(conv?.phone ?? directPhone ?? "").replace(/\D/g, "");
+    let cleanPhone = String(conv?.phone ?? directPhone ?? "").replace(/\D/g, "");
+    // Normaliza para formato BR internacional E.164 sem '+': 55 + DDD(2) + numero(8 ou 9)
+    if (cleanPhone.length <= 11 && !cleanPhone.startsWith("55")) {
+      cleanPhone = "55" + cleanPhone;
+    }
 
     const EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL");
     const EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY");
