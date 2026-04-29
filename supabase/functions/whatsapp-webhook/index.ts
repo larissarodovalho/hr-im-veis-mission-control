@@ -411,15 +411,16 @@ Deno.serve(async (req) => {
       }
     }
 
-    await supabase.from("whatsapp_messages").insert({
+    const { error: inboundErr } = await supabase.from("whatsapp_messages").insert({
       conversation_id: conv.id,
       external_id: externalId,
       direction: "inbound",
-      author: "lead",
+      author: "humano",
       content,
       status: "delivered",
       timestamp: ts,
     });
+    if (inboundErr) console.error("inbound insert failed", inboundErr);
 
     if (conv.ai_enabled === false) {
       return new Response(JSON.stringify({ ok: true, ai: "disabled" }), {
