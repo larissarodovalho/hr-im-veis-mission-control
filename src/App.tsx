@@ -28,6 +28,7 @@ import Reports from "@/pages/Reports";
 import Users from "@/pages/Users";
 import ConfiguracoesPage from "@/pages/ConfiguracoesPage";
 import NotFound from "@/pages/NotFound";
+import AgendarPage from "@/pages/AgendarPage";
 // Site público (mantido)
 import HomePage from "@/pages/site/HomePage";
 import ImoveisPage from "@/pages/site/ImoveisPage";
