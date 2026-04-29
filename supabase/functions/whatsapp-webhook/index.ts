@@ -48,7 +48,7 @@ Quando tiver a intenção clara → chame update_lead_info com full_name + inter
 
 Passo 3 — Forma de contato:
 "Perfeito! Como você prefere falar com o Hans: videochamada, reunião presencial, ligação ou WhatsApp?"
-Se não escolher: "Qual fica melhor pra você: videochamada, presencial, ligação ou WhatsApp?"
+Se não escolher de primeira: "Qual fica melhor pra você: videochamada, presencial, ligação ou WhatsApp?"
 
 Passo 4 — Urgência:
 "E você prefere falar com ele agora mesmo ou agendar um horário?"
@@ -60,13 +60,26 @@ Passo 5b — AGORA: chame request_immediate_contact com kind correspondente. Res
 Passo 6 — Encerramento:
 Se a conversa retomar depois (ex.: "ok", "obrigado"), apenas se despeça. NUNCA chame send_booking_link nem request_immediate_contact de novo.
 
+🔥 URGÊNCIA DETECTADA CEDO (REGRA CRÍTICA — NUNCA IGNORE)
+Se a qualquer momento o lead expressar urgência — palavras/frases como "agora", "agora mesmo", "urgente", "quero falar já", "pode me ligar agora", "queria falar com ele agora", "rápido", "hoje" — você DEVE:
+1. NÃO repetir a pergunta anterior. NÃO ignorar o sinal.
+2. Se a forma de contato (videochamada/presencial/ligação/WhatsApp) JÁ foi mencionada na mesma frase ou em mensagem anterior → chame request_immediate_contact direto com aquele kind. Não pergunte de novo.
+3. Se a forma de contato AINDA não foi escolhida → responda UMA única vez: "Show, já vou avisar o Hans! Pra ele te chamar, prefere por videochamada, ligação, presencial ou WhatsApp?" Quando o lead responder a forma, chame request_immediate_contact imediatamente.
+4. Se o lead responder com algo ambíguo ou disser "tanto faz", "qualquer um", "do jeito que for mais rápido" → chame request_immediate_contact com kind="whatsapp" (mais rápido) e siga.
+
+ANTI-LOOP (REGRA CRÍTICA)
+- NUNCA repita a mesma pergunta 3 vezes. Se já perguntou 2 vezes a forma de contato e o lead não escolheu claramente:
+  - Se ele demonstrou urgência → assuma kind="whatsapp" e chame request_immediate_contact.
+  - Se não demonstrou urgência → assuma kind="whatsapp", urgência="agendar" e chame send_booking_link com whatsapp.
+- Se a mensagem do lead contém "agora" e você já entendeu a forma → AÇÃO, não pergunta.
+
 CASOS ESPECIAIS
 - Pessoa repete info que já deu: não corrija, siga adiante.
 - Pessoa desvia do assunto: traga de volta gentilmente para o passo atual.
 - Pessoa diz "não sei ainda": "Sem pressa! Quando decidir é só chamar." Encerre.
 - Pessoa pergunta sobre preço, localização, detalhes: "Ótima dúvida! O Hans esclarece tudo quando vocês conversarem." Siga o fluxo.
 
-IMPORTANTE: Chame update_lead_info assim que tiver cada dado. Só chame send_booking_link OU request_immediate_contact (uma das duas, nunca as duas) depois de saber a forma de contato E a urgência.`;
+IMPORTANTE: Chame update_lead_info assim que tiver cada dado. Só chame send_booking_link OU request_immediate_contact (uma das duas, nunca as duas) depois de saber a forma de contato E a urgência — exceto no caso de urgência detectada cedo, onde você pode pular pra request_immediate_contact assim que tiver a forma.`;
 
 const TOOLS = [
   {
@@ -542,6 +555,10 @@ Deno.serve(async (req) => {
           const k = tc.args?.kind;
           if (["videochamada", "presencial", "ligacao", "whatsapp"].includes(k)) {
             immediateKind = k;
+          } else {
+            // Fallback defensivo: se LLM chamou sem kind ou inválido, default WhatsApp
+            immediateKind = "whatsapp";
+            console.warn(`[whatsapp-webhook] request_immediate_contact sem kind válido (${k}), usando whatsapp`);
           }
           toolResult = { ok: true, immediate: immediateKind, broker_will_be_notified: true };
           needAnotherRound = true;
