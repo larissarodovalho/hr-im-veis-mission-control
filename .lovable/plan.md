@@ -1,67 +1,43 @@
-## Objetivo
+## Diagnóstico
 
-Atualizar a Sofia para oferecer **4 formas de contato** com o corretor — videochamada, reunião presencial, ligação e WhatsApp — e disparar **notificação por email** ao admin quando o lead pedir contato imediato.
+A Sofia não caiu — ela travou num loop. Olhei a conversa da Larissa (20:48–20:52):
+
+```
+Sofia: como você prefere falar… videochamada, presencial, ligação ou WhatsApp?
+Lead:  "queria falar com ele agora"
+Sofia: "Qual das três fica melhor: videochamada, presencial ou ligação?"
+Lead:  "agora"
+Sofia: "Entendi, mas para agendar o contato, preciso que você escolha uma das opções."
+Lead:  (parou de responder)
+```
+
+O prompt obriga a sequência forma → urgência. Quando o lead expressa urgência antes de escolher a forma, a Sofia ignora o sinal e fica cobrando a forma. Como o lead já tinha dito "agora" duas vezes e a Sofia continuou pedindo opção, ela desistiu.
+
+Não há mensagens inbound bloqueadas — o único 401 nos logs é um health-check da Evolution com `?secret=` vazio, não mensagem real.
 
 ## Mudanças
 
-### 1. Fluxo da Sofia (WhatsApp + Web Chat)
+### 1. Atualizar `AI_SYSTEM` em `supabase/functions/whatsapp-webhook/index.ts`
 
-Atualizar prompts e ferramentas em `whatsapp-webhook/index.ts` e `public-chat/index.ts`:
+Adicionar regra explícita pra urgência detectada cedo:
 
-- **Passo 3** passa a oferecer 4 opções: `videochamada`, `presencial`, `ligacao` ou `whatsapp`.
-- Para cada opção, perguntar uma 2ª pergunta de **urgência**: "agora mesmo" (imediato) ou "agendar para outro horário".
-- Se **agendar** → mantém fluxo atual (gera link `/agendar/{token}` com slot picker).
-- Se **agora**:
-  - Marca o lead como `contato_imediato` (tag + nota + etapa `Contato Imediato`).
-  - **Não envia link de agendamento.**
-  - Dispara email para o admin (Hans).
-  - Sofia responde: "Show! Já avisei o Hans, ele vai te chamar agora mesmo 🚀".
+- Se o lead disser "agora", "urgente", "agora mesmo", "quero falar já", etc. **antes** de escolher a forma de contato → Sofia deve perguntar UMA vez: "Show, vou avisar o Hans! Pra ele te chamar, prefere por videochamada, ligação, presencial ou WhatsApp?" e em seguida chamar `request_immediate_contact` com a forma escolhida.
+- Se a forma de contato JÁ foi mencionada na mesma mensagem ("ligação agora", "WhatsApp agora") → chamar `request_immediate_contact` direto, sem perguntar de novo.
+- Reforçar: nunca repetir 3x a mesma pergunta. Após 2 tentativas sem clareza, escolher um default razoável (WhatsApp) e seguir.
 
-### 2. Nova ferramenta `request_immediate_contact`
+### 2. Adicionar fallback no handler `request_immediate_contact`
 
-```
-request_immediate_contact(kind: "videochamada"|"presencial"|"ligacao"|"whatsapp")
-```
+Se o LLM eventualmente chamar a tool sem `kind` ou com `kind` inválido, default para `whatsapp` em vez de erro silencioso.
 
-Handler no webhook:
-1. Atualiza lead: `etapa_funil = "Contato Imediato"`, adiciona tag `urgente`, observação com tipo + timestamp.
-2. Chama nova edge function `notify-immediate-contact` que envia email para o(s) admin(s).
+### 3. (Opcional, recomendado) Recuperar a Larissa
 
-### 3. Notificação por email
+A conversa `3b54aaf1-...` está parada. Posso disparar manualmente o `notify-immediate-contact` pra essa lead — ela já demonstrou intenção urgente clara — e marcar a tag `urgente` + etapa "Contato Imediato" no CRM.
 
-Usar **Lovable Emails** (infraestrutura built-in):
-- Configurar domínio de email (dialog `<lov-open-email-setup>`).
-- Criar template transacional `immediate-contact-alert.tsx` com: nome do lead, telefone, intenção, forma de contato pedida, link direto pro lead no CRM.
-- Destinatários: todos os usuários com role `admin` (hoje só Hans → `larissadefreitas@hotmail.com`).
-- Edge function `notify-immediate-contact` busca admins via `user_roles` + `profiles`, invoca `send-transactional-email` para cada um com `idempotencyKey = immediate-${lead_id}-${timestamp}`.
+## Arquivos editados
 
-### 4. Banco de dados
+- `supabase/functions/whatsapp-webhook/index.ts` — prompt + handler defensivo
 
-Nenhuma mudança de schema obrigatória — usa campos existentes (`tags`, `observacoes`, `etapa_funil`).
-Opcional: criar coluna `contato_imediato_em timestamptz` em `leads` para rastrear pedidos. **Vou pular para manter simples** — fica só nas observações + tag.
+## Verificação após deploy
 
-### 5. UI no CRM
-
-- Em `src/pages/Leads.tsx`, leads com tag `urgente` ou etapa `Contato Imediato` ganham um badge vermelho "🔥 Contato Imediato" para o corretor priorizar.
-
-## Detalhes técnicos
-
-**Arquivos editados:**
-- `supabase/functions/whatsapp-webhook/index.ts` — novo prompt, nova tool, handler
-- `supabase/functions/public-chat/index.ts` — espelhar mudanças
-- `src/pages/AgendarPage.tsx` — adicionar opção "WhatsApp" no slot picker (se kind=whatsapp, oferece slots normais — corretor liga via WhatsApp no horário)
-- `src/pages/Leads.tsx` — badge de urgência
-
-**Arquivos criados:**
-- `supabase/functions/notify-immediate-contact/index.ts` — busca admins e envia email
-- `supabase/functions/_shared/transactional-email-templates/immediate-contact-alert.tsx` — template
-
-**Pré-requisitos (executados pelo agente):**
-1. Configurar domínio de email (vai abrir o dialog para você).
-2. Setup da infraestrutura de email (queue, tabelas, cron).
-3. Scaffold de transactional emails.
-4. Deploy de todas as edge functions afetadas.
-
-## Pergunta antes de seguir
-
-Para o email: vai usar o **domínio próprio da HR Imóveis** (ex.: `notify.hrimoveis.com.br`)? Se sim, precisarei do domínio que você quer usar quando abrir o dialog de setup. Caso contrário, posso seguir e te perguntar na hora.
+- Testar fluxo: "oi" → nome → "comprar" → "quero falar agora" → Sofia pergunta forma 1x → "ligação" → tool chamada, email disparado, lead marcado.
+- Conferir nos logs da function que `request_immediate_contact` é invocada.
