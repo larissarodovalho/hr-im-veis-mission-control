@@ -50,6 +50,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/esqueci-senha" element={<ForgotPassword />} />
             <Route path="/redefinir-senha" element={<ResetPassword />} />
+            <Route path="/agendar/:token" element={<AgendarPage />} />
 
             {/* Site público preservado */}
             <Route path="/site" element={<SiteLayout><HomePage /></SiteLayout>} />
