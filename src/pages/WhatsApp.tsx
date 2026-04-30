@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useRole } from "@/hooks/useRole";
 import { initials } from "@/lib/leads";
-import { Send, Bot, User as UserIcon, ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { Send, Bot, User as UserIcon, ArrowLeft, Pencil, Trash2, MessageCircle, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { markWhatsAppSeen } from "@/hooks/useWhatsAppUnread";
 import { useWhatsAppPerConvUnread } from "@/hooks/useWhatsAppPerConvUnread";
@@ -49,6 +49,8 @@ export default function WhatsApp() {
   const { unreadByConv, markConvSeen } = useWhatsAppPerConvUnread();
   const [editConv, setEditConv] = useState<{ phone: string } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [loadingConvs, setLoadingConvs] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const scrollToBottom = () => {
     const c = messagesContainerRef.current;
@@ -63,10 +65,17 @@ export default function WhatsApp() {
   }, [msgs, active?.id]);
 
   const loadConvs = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("whatsapp_conversations")
       .select("id, phone, contact_name, ai_enabled, last_message_at, lead_id")
       .order("last_message_at", { ascending: false, nullsFirst: false });
+
+    setLoadingConvs(false);
+    if (error) {
+      setLoadError(error.message);
+      return;
+    }
+    setLoadError(null);
 
     let nextConvs = (data as unknown as Conv[]) ?? [];
 
