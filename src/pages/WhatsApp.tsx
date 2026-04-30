@@ -241,10 +241,32 @@ export default function WhatsApp() {
         </div>
 
         <div className="flex-1 overflow-auto">
-          {convs.length === 0 && (
-            <p className="p-4 text-sm text-muted-foreground">
-              Nenhuma conversa ainda. Configure o webhook em Configurações.
-            </p>
+          {loadingConvs && (
+            <p className="p-4 text-sm text-muted-foreground">Carregando conversas…</p>
+          )}
+
+          {loadError && (
+            <div className="m-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
+              <p className="font-medium text-destructive">Erro ao carregar conversas</p>
+              <p className="mt-1 text-xs text-muted-foreground break-words">{loadError}</p>
+            </div>
+          )}
+
+          {!loadingConvs && !loadError && convs.length === 0 && (
+            <div className="p-4 text-sm text-muted-foreground space-y-3">
+              <MessageCircle className="h-8 w-8 opacity-40" />
+              <div>
+                <p className="font-medium text-foreground">Nenhuma conversa recebida</p>
+                <p className="mt-1 text-xs">
+                  Se clientes já enviaram mensagens, confira se o webhook da Evolution/Z-API está com o token no final da URL.
+                </p>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/app/configuracoes">
+                  <Settings className="h-3.5 w-3.5 mr-1" /> Abrir configurações
+                </Link>
+              </Button>
+            </div>
           )}
 
           {convs.map((c) => {
