@@ -427,6 +427,30 @@ function WebhookCaptacao() {
 
 function WhatsAppEvolutionInfo({ webhookUrl }: { webhookUrl: string }) {
   const [copied, setCopied] = useState(false);
+  const [configuring, setConfiguring] = useState(false);
+  const [lastResult, setLastResult] = useState<any>(null);
+
+  const handleAutoConfigure = async () => {
+    setConfiguring(true);
+    setLastResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("whatsapp-configure-webhook", {});
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setLastResult(data);
+      const state = data?.connectionState?.instance?.state || data?.connectionState?.state;
+      toast.success("Webhook configurado na Evolution API!", {
+        description: state ? `Status da instância: ${state}` : "Mensagens recebidas devem começar a aparecer.",
+      });
+    } catch (err: any) {
+      const msg = err?.message || "Falha ao configurar webhook";
+      setLastResult({ error: msg });
+      toast.error("Erro ao configurar webhook", { description: msg });
+    } finally {
+      setConfiguring(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -451,13 +475,31 @@ function WhatsAppEvolutionInfo({ webhookUrl }: { webhookUrl: string }) {
             </Button>
           </div>
         </div>
+        <div className="rounded-lg border-l-4 border-primary bg-primary/5 p-3 space-y-2">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div className="text-xs space-y-1">
+              <p className="font-medium">Configurar automaticamente</p>
+              <p className="text-muted-foreground">
+                Registra o webhook acima na sua Evolution API e ativa os eventos de mensagens.
+              </p>
+            </div>
+            <Button size="sm" onClick={handleAutoConfigure} disabled={configuring}>
+              {configuring ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Webhook className="h-4 w-4 mr-2" />}
+              {configuring ? "Configurando..." : "Reconfigurar webhook"}
+            </Button>
+          </div>
+          {lastResult && (
+            <pre className="text-[10px] bg-background/60 rounded p-2 overflow-x-auto max-h-40">
+{JSON.stringify(lastResult, null, 2)}
+            </pre>
+          )}
+        </div>
         <div className="rounded-lg border-l-4 border-emerald-500 bg-emerald-500/5 p-3 text-xs space-y-1">
-          <p className="font-medium">Próximos passos:</p>
+          <p className="font-medium">Configuração manual (caso prefira):</p>
           <ol className="list-decimal ml-5 space-y-0.5 text-muted-foreground">
-            <li>Diga ao Lovable: <em>"Configure as credenciais da Evolution API"</em> (ou Z-API).</li>
-            <li>Você fornecerá: URL da instância, API key e nome da instância.</li>
-            <li>Substitua <code className="font-mono">SEU_TOKEN</code> pelo mesmo token salvo em <code className="font-mono">WHATSAPP_WEBHOOK_SECRET</code>.</li>
-            <li>Cole o webhook acima no evento de mensagens recebidas, como <code className="font-mono">messages.upsert</code>.</li>
+            <li>Acesse o painel da sua Evolution API / Z-API.</li>
+            <li>Cole a URL acima no campo de webhook de mensagens recebidas (<code className="font-mono">messages.upsert</code>).</li>
+            <li>Substitua <code className="font-mono">SEU_TOKEN</code> pelo valor de <code className="font-mono">WHATSAPP_WEBHOOK_SECRET</code>.</li>
           </ol>
         </div>
       </CardContent>
