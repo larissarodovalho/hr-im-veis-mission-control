@@ -173,6 +173,31 @@ const TOOLS = [
 
 type ToolCall = { name: string; args: any; id?: string };
 
+// Remove vazamentos de tool-call/parametros técnicos que o LLM às vezes coloca como texto
+function sanitizeReply(s: string): string {
+  if (!s) return "";
+  return s
+    .replace(/https?:\/\/\S+/gi, "")
+    .replace(/\bwww\.\S+/gi, "")
+    .replace(/\S*\b(?:kind|uuid|token|lead_id|conversation_id|reuniao_id)\s*=\s*\S+/gi, "")
+    .replace(/\b(send_booking_link|request_immediate_contact|update_lead_info)\s*\([^)]*\)/gi, "")
+    .replace(/\b(send_booking_link|request_immediate_contact|update_lead_info)\b/gi, "")
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/(^|\s)[A-Za-z0-9_-]{8,}\?(\s|$)/g, " ")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+// Detecta se o LLM "vazou" um intent de booking/imediato como texto
+function detectLeakedIntent(s: string): { kind: string | null; isImmediate: boolean } {
+  if (!s) return { kind: null, isImmediate: false };
+  const m = s.match(/kind\s*=\s*["']?(videochamada|presencial|ligacao|whatsapp)/i);
+  const kind = m?.[1]?.toLowerCase() ?? null;
+  const isImmediate = /request_immediate_contact|contato.{0,10}imediato/i.test(s);
+  return { kind, isImmediate };
+}
+
 function getEvolutionInstance(): string | null {
   return Deno.env.get("EVOLUTION_INSTANCE") || Deno.env.get("EVOLUTION_INSTANCE_NAME") || null;
 }
