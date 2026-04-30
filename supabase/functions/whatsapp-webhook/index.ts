@@ -8,6 +8,40 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-webhook-secret, x-evolution-secret, client-token",
 };
 
+function maskSecret(value: string): string {
+  return value ? `${value.slice(0, 3)}…(${value.length})` : "(empty)";
+}
+
+function extractSecretCandidates(raw: string): Set<string> {
+  const candidates = new Set<string>();
+  const expected = raw.trim();
+  if (!expected) return candidates;
+  candidates.add(expected);
+
+  try {
+    const expectedUrl = new URL(expected);
+    const secretFromUrl = expectedUrl.searchParams.get("secret")?.trim();
+    if (secretFromUrl) candidates.add(secretFromUrl);
+  } catch {
+    const secretFromText = expected.match(/[?&]secret=([^&\s]+)/)?.[1];
+    if (secretFromText) candidates.add(decodeURIComponent(secretFromText).trim());
+  }
+
+  return candidates;
+}
+
+function getProvidedWebhookSecret(req: Request): string {
+  const url = new URL(req.url);
+  return (
+    req.headers.get("x-webhook-secret") ||
+    req.headers.get("x-evolution-secret") ||
+    req.headers.get("client-token") ||
+    req.headers.get("apikey") ||
+    url.searchParams.get("secret") ||
+    ""
+  ).trim();
+}
+
 const AI_SYSTEM = `IDENTIDADE
 Você é a Sofia, assistente de atendimento da HR Imóveis no WhatsApp. A HR Imóveis trabalha com compra, venda e aluguel de imóveis em Sinop-MT, do padrão ao alto padrão, junto com o corretor Hans Rodovalho.
 
@@ -292,49 +326,29 @@ Deno.serve(async (req) => {
   try {
     const expectedSecretRaw = Deno.env.get("WHATSAPP_WEBHOOK_SECRET");
     if (expectedSecretRaw) {
-      const url = new URL(req.url);
-      const provided = (
-        req.headers.get("x-webhook-secret") ||
-        req.headers.get("x-evolution-secret") ||
-        req.headers.get("client-token") ||
-        req.headers.get("apikey") ||
-        url.searchParams.get("secret") ||
-        ""
-      ).trim();
-      const expected = expectedSecretRaw.trim();
-      const expectedCandidates = new Set<string>([expected]);
-
-      try {
-        const expectedUrl = new URL(expected);
-        const secretFromUrl = expectedUrl.searchParams.get("secret")?.trim();
-        if (secretFromUrl) expectedCandidates.add(secretFromUrl);
-
-        const currentUrl = new URL(req.url);
-        const expectedPath = expectedUrl.pathname.replace(/^\/functions\/v1/, "");
-        if (!secretFromUrl && expectedPath.endsWith(currentUrl.pathname) && provided.length >= 8) {
-          expectedCandidates.add(provided);
-        }
-      } catch {
-        const secretFromText = expected.match(/[?&]secret=([^&\s]+)/)?.[1];
-        if (secretFromText) expectedCandidates.add(decodeURIComponent(secretFromText).trim());
-      }
+      const provided = getProvidedWebhookSecret(req);
+      const expectedCandidates = extractSecretCandidates(expectedSecretRaw);
 
       if (!expectedCandidates.has(provided)) {
-        const mask = (s: string) => s ? `${s.slice(0, 3)}…(${s.length})` : "(empty)";
+        if ((req.method === "GET" || req.method === "HEAD") && !provided) {
+          return new Response(JSON.stringify({ ok: true, healthcheck: true, webhook: "whatsapp-webhook" }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
         console.warn(
-          `[whatsapp-webhook] invalid_secret. provided=${mask(provided)} expected_prefix=${mask(expected)} candidates=${expectedCandidates.size} url=${req.url}`
+          `[whatsapp-webhook] invalid_secret. provided=${maskSecret(provided)} expected_prefix=${maskSecret(expectedSecretRaw.trim())} candidates=${expectedCandidates.size} method=${req.method} url=${req.url}`
         );
         return new Response(
           JSON.stringify({
             error: "invalid_secret",
-            hint: "Configure o webhook da Evolution com ?secret=<WHATSAPP_WEBHOOK_SECRET> ou header apikey/x-webhook-secret igual ao secret do projeto.",
+            hint: "Configure o webhook da Evolution/Z-API com ?secret=SEU_TOKEN ou envie o mesmo token no header apikey/x-webhook-secret.",
           }),
           { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
     }
 
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     let phone: string | null = null;

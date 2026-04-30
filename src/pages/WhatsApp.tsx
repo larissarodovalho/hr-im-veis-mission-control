@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useRole } from "@/hooks/useRole";
 import { initials } from "@/lib/leads";
-import { Send, Bot, User as UserIcon, ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { Send, Bot, User as UserIcon, ArrowLeft, Pencil, Trash2, MessageCircle, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { markWhatsAppSeen } from "@/hooks/useWhatsAppUnread";
 import { useWhatsAppPerConvUnread } from "@/hooks/useWhatsAppPerConvUnread";
@@ -49,6 +49,8 @@ export default function WhatsApp() {
   const { unreadByConv, markConvSeen } = useWhatsAppPerConvUnread();
   const [editConv, setEditConv] = useState<{ phone: string } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [loadingConvs, setLoadingConvs] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const scrollToBottom = () => {
     const c = messagesContainerRef.current;
@@ -63,10 +65,17 @@ export default function WhatsApp() {
   }, [msgs, active?.id]);
 
   const loadConvs = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("whatsapp_conversations")
       .select("id, phone, contact_name, ai_enabled, last_message_at, lead_id")
       .order("last_message_at", { ascending: false, nullsFirst: false });
+
+    setLoadingConvs(false);
+    if (error) {
+      setLoadError(error.message);
+      return;
+    }
+    setLoadError(null);
 
     let nextConvs = (data as unknown as Conv[]) ?? [];
 
@@ -232,10 +241,32 @@ export default function WhatsApp() {
         </div>
 
         <div className="flex-1 overflow-auto">
-          {convs.length === 0 && (
-            <p className="p-4 text-sm text-muted-foreground">
-              Nenhuma conversa ainda. Configure o webhook em Configurações.
-            </p>
+          {loadingConvs && (
+            <p className="p-4 text-sm text-muted-foreground">Carregando conversas…</p>
+          )}
+
+          {loadError && (
+            <div className="m-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
+              <p className="font-medium text-destructive">Erro ao carregar conversas</p>
+              <p className="mt-1 text-xs text-muted-foreground break-words">{loadError}</p>
+            </div>
+          )}
+
+          {!loadingConvs && !loadError && convs.length === 0 && (
+            <div className="p-4 text-sm text-muted-foreground space-y-3">
+              <MessageCircle className="h-8 w-8 opacity-40" />
+              <div>
+                <p className="font-medium text-foreground">Nenhuma conversa recebida</p>
+                <p className="mt-1 text-xs">
+                  Se clientes já enviaram mensagens, confira se o webhook da Evolution/Z-API está com o token no final da URL.
+                </p>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/app/configuracoes">
+                  <Settings className="h-3.5 w-3.5 mr-1" /> Abrir configurações
+                </Link>
+              </Button>
+            </div>
           )}
 
           {convs.map((c) => {
