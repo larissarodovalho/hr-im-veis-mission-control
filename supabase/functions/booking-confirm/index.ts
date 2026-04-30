@@ -203,7 +203,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       ok: true,
-      reuniao_id: reuniao.id,
+      reuniao_id: createdId,
       kind: link.kind,
       datetime_iso: startIso,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
