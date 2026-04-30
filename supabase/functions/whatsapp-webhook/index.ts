@@ -554,6 +554,8 @@ Deno.serve(async (req) => {
             update.etapa_funil = "Em Atendimento";
           }
           if (Object.keys(update).length > 1) {
+            // Garante etapa válida do kanban quando movemos para "Em Contato"
+            if (update.etapa_funil === "Em Atendimento") update.etapa_funil = "Em Contato";
             await supabase.from("leads").update(update).eq("id", leadUuid);
           }
           toolResult = { ok: true, saved: Object.keys(update).filter(k => k !== "ultima_interacao") };
