@@ -630,11 +630,28 @@ Deno.serve(async (req) => {
       if (!needAnotherRound) break;
     }
 
-    let reply = result.text?.trim() || "";
+    let reply = sanitizeReply(result.text || "");
+
+    // Fallback: se o LLM "vazou" intent como texto em vez de chamar a tool, infere
+    if (!bookingKind && !immediateKind) {
+      const leaked = detectLeakedIntent(result.text || "");
+      if (leaked.kind) {
+        const lastUserMsg = (history ?? []).filter(h => h.direction === "inbound").slice(-1)[0]?.content || "";
+        const wantsNow = /\b(agora|urgente|j[áa]|hoje|rapido|r[áa]pido)\b/i.test(lastUserMsg);
+        if (leaked.isImmediate || wantsNow) {
+          immediateKind = leaked.kind;
+        } else {
+          bookingKind = leaked.kind;
+        }
+        console.warn("[whatsapp-webhook] intent vazado detectado, inferindo:", { leaked, immediateKind, bookingKind });
+        reply = ""; // descarta o texto bagunçado, vamos usar default abaixo
+      }
+    }
+
     if (!reply) {
       if (!hasName) {
         reply = "Olá! Sou a Sofia, assistente da HR Imóveis, prazer falar com você!\n\nPara melhor te atender, me diz seu nome completo?";
-      } else {
+      } else if (!immediateKind && !bookingKind) {
         reply = `Legal, ${firstName}! Você quer comprar um imóvel, vender, alugar ou é investidor?`;
       }
     }
