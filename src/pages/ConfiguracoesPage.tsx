@@ -107,7 +107,8 @@ export default function ConfiguracoesPage() {
     }
   }
 
-  const webhookUrl = `https://pbqiwdwwabvjmybbatdv.supabase.co/functions/v1/whatsapp-webhook`;
+  const projectUrl = import.meta.env.VITE_SUPABASE_URL || "https://pbqiwdwwabvjmybbatdv.supabase.co";
+  const webhookUrl = `${projectUrl}/functions/v1/whatsapp-webhook?secret=SEU_TOKEN`;
 
   return (
     <div className="p-6 space-y-4 max-w-5xl">
@@ -455,7 +456,8 @@ function WhatsAppEvolutionInfo({ webhookUrl }: { webhookUrl: string }) {
           <ol className="list-decimal ml-5 space-y-0.5 text-muted-foreground">
             <li>Diga ao Lovable: <em>"Configure as credenciais da Evolution API"</em> (ou Z-API).</li>
             <li>Você fornecerá: URL da instância, API key e nome da instância.</li>
-            <li>Cole o webhook acima nas configurações da Evolution/Z-API para receber mensagens.</li>
+            <li>Substitua <code className="font-mono">SEU_TOKEN</code> pelo mesmo token salvo em <code className="font-mono">WHATSAPP_WEBHOOK_SECRET</code>.</li>
+            <li>Cole o webhook acima no evento de mensagens recebidas, como <code className="font-mono">messages.upsert</code>.</li>
           </ol>
         </div>
       </CardContent>
