@@ -666,8 +666,7 @@ Deno.serve(async (req) => {
         kind: bookingKind,
       });
 
-      const baseUrl = Deno.env.get("PUBLIC_APP_URL")
-        || `https://id-preview--${Deno.env.get("SUPABASE_URL")?.match(/https:\/\/([^.]+)\./)?.[1] || "9ba329fa-bc86-4fa7-8521-f11e9da54abe"}.lovable.app`;
+      const baseUrl = Deno.env.get("PUBLIC_APP_URL") || "https://www.hrimoveis.com";
       const link = `${baseUrl.replace(/\/$/, "")}/agendar/${token}`;
 
       reply = reply.replace(/https?:\/\/\S+/g, "").trim();
