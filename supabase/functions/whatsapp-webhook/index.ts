@@ -687,10 +687,10 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Limpa URLs inventadas
-      reply = reply.replace(/https?:\/\/\S+/g, "").trim();
+      // Sanitiza qualquer URL/parametro inventado
+      reply = sanitizeReply(reply);
       if (!reply) {
-        reply = `Show! Já avisei o Hans, ele vai te chamar agora mesmo via ${KIND_LABELS[immediateKind]} 🚀`;
+        reply = `Pronto! Já avisei o Hans, ele vai te chamar agora mesmo via ${KIND_LABELS[immediateKind]}.`;
       }
     } else if (bookingKind) {
       // Gera token único e cria o link de agendamento
