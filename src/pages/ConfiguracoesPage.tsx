@@ -427,6 +427,30 @@ function WebhookCaptacao() {
 
 function WhatsAppEvolutionInfo({ webhookUrl }: { webhookUrl: string }) {
   const [copied, setCopied] = useState(false);
+  const [configuring, setConfiguring] = useState(false);
+  const [lastResult, setLastResult] = useState<any>(null);
+
+  const handleAutoConfigure = async () => {
+    setConfiguring(true);
+    setLastResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("whatsapp-configure-webhook", {});
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setLastResult(data);
+      const state = data?.connectionState?.instance?.state || data?.connectionState?.state;
+      toast.success("Webhook configurado na Evolution API!", {
+        description: state ? `Status da instância: ${state}` : "Mensagens recebidas devem começar a aparecer.",
+      });
+    } catch (err: any) {
+      const msg = err?.message || "Falha ao configurar webhook";
+      setLastResult({ error: msg });
+      toast.error("Erro ao configurar webhook", { description: msg });
+    } finally {
+      setConfiguring(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
