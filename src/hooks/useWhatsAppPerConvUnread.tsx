@@ -35,8 +35,8 @@ export function useWhatsAppPerConvUnread() {
     convs.forEach((c: any) => { aiMap[c.id] = !!c.ai_enabled; });
     aiEnabledRef.current = aiMap;
 
-    const humanIds = convs.filter((c: any) => !c.ai_enabled).map((c: any) => c.id as string);
-    if (humanIds.length === 0) {
+    const allIds = convs.map((c: any) => c.id as string);
+    if (allIds.length === 0) {
       setUnreadByConv({});
       return;
     }
@@ -44,7 +44,7 @@ export function useWhatsAppPerConvUnread() {
     const { data: msgs } = await supabase
       .from("whatsapp_messages")
       .select("conversation_id, created_at, direction")
-      .in("conversation_id", humanIds)
+      .in("conversation_id", allIds)
       .eq("direction", "inbound")
       .order("created_at", { ascending: false })
       .limit(1000);
@@ -81,7 +81,6 @@ export function useWhatsAppPerConvUnread() {
         (payload) => {
           const m = payload.new as { conversation_id: string; direction: string; created_at: string };
           if (m.direction !== "inbound") return;
-          if (aiEnabledRef.current[m.conversation_id]) return;
           const since = seenRef.current[m.conversation_id] || new Date(0).toISOString();
           if (m.created_at <= since) return;
           setUnreadByConv((prev) => ({

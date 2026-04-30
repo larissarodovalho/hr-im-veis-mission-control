@@ -468,6 +468,17 @@ Deno.serve(async (req) => {
     });
     if (inboundErr) console.error("inbound insert failed", inboundErr);
 
+    // Auto-move lead de "Novo Lead" para "Em Contato" assim que ele responde
+    if (leadUuid) {
+      const { data: leadStage } = await supabase.from("leads").select("etapa_funil").eq("id", leadUuid).maybeSingle();
+      if (leadStage?.etapa_funil === "Novo Lead") {
+        await supabase.from("leads").update({
+          etapa_funil: "Em Contato",
+          ultima_interacao: ts,
+        }).eq("id", leadUuid);
+      }
+    }
+
     if (conv.ai_enabled === false) {
       return new Response(JSON.stringify({ ok: true, ai: "disabled" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -551,9 +562,11 @@ Deno.serve(async (req) => {
             update.observacoes = cur?.observacoes
               ? (/Intenção:/i.test(cur.observacoes) ? cur.observacoes.replace(/Intenção:.*/i, note) : `${cur.observacoes}\n${note}`)
               : note;
-            update.etapa_funil = "Em Atendimento";
+            update.etapa_funil = "Em Contato";
           }
           if (Object.keys(update).length > 1) {
+            // Garante etapa válida do kanban quando movemos para "Em Contato"
+            if (update.etapa_funil === "Em Atendimento") update.etapa_funil = "Em Contato";
             await supabase.from("leads").update(update).eq("id", leadUuid);
           }
           toolResult = { ok: true, saved: Object.keys(update).filter(k => k !== "ultima_interacao") };
@@ -615,15 +628,16 @@ Deno.serve(async (req) => {
         await supabase.from("leads").update({
           observacoes: cur?.observacoes ? `${cur.observacoes}\n${note}` : note,
           tags: newTags,
-          etapa_funil: "Contato Imediato",
+          etapa_funil: "Conversa Ativa",
           ultima_interacao: new Date().toISOString(),
         }).eq("id", leadUuid);
 
         // Dispara notificação por email (não bloqueia resposta)
         try {
-          await supabase.functions.invoke("notify-immediate-contact", {
+          const { error: notifyErr } = await supabase.functions.invoke("notify-immediate-contact", {
             body: { lead_id: leadUuid, contact_kind: immediateKind },
           });
+          if (notifyErr) console.error("notify-immediate-contact returned error", notifyErr);
         } catch (e) {
           console.error("notify-immediate-contact invoke failed", e);
         }
@@ -668,7 +682,7 @@ Deno.serve(async (req) => {
         const { data: cur } = await supabase.from("leads").select("observacoes, etapa_funil").eq("id", leadUuid).maybeSingle();
         await supabase.from("leads").update({
           observacoes: cur?.observacoes ? `${cur.observacoes}\n${note}` : note,
-          etapa_funil: cur?.etapa_funil === "Novo Lead" ? "Em Atendimento" : cur?.etapa_funil,
+          etapa_funil: cur?.etapa_funil === "Novo Lead" ? "Conversa Ativa" : cur?.etapa_funil,
           ultima_interacao: new Date().toISOString(),
         }).eq("id", leadUuid);
       }

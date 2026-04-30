@@ -273,7 +273,7 @@ export default function WhatsApp() {
             const leadName = c.lead_nome?.trim() || c.contact_name?.trim();
             const hasLeadName = !!leadName && !leadName.startsWith("WhatsApp ");
             const displayName = hasLeadName ? leadName! : c.phone;
-            const unreadCount = !c.ai_enabled ? (unreadByConv[c.id] || 0) : 0;
+            const unreadCount = unreadByConv[c.id] || 0;
             const hasUnread = unreadCount > 0;
 
             return (

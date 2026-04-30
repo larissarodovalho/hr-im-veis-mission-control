@@ -1,64 +1,73 @@
-## Diagnóstico
+## Problema
 
-A aba WhatsApp está carregando, mas aparece sem conversas porque a tabela `whatsapp_conversations` está vazia. O problema principal não é visual: as mensagens do provedor de WhatsApp não estão entrando no sistema.
+Investiguei o caso da Larissa Rodovalho. Encontrei 3 problemas distintos:
 
-Nos logs da função `whatsapp-webhook`, a chamada recebida está sendo recusada com:
+### 1. Lead existe, mas sumiu do kanban de Leads
+A Larissa **está cadastrada** (id `4f3a1...`, vinculada à conversa do WhatsApp). O problema é que o webhook da Sofia move o lead para etapas **"Em Atendimento"** e **"Contato Imediato"** — mas o kanban (`src/lib/leads.ts`) só tem 8 colunas fixas: `Novo Lead, Em Contato, Conversa Ativa, Reunião Agendada, Visita, Proposta, Fechado, Perdido`. Como `etapa_funil` não bate com nenhuma coluna, o card simplesmente não aparece em lugar nenhum.
 
-```text
-invalid_secret. provided=(empty) ... url=.../whatsapp-webhook?secret=
-```
+### 2. Badge de não-lidas não aparece quando IA está atendendo
+O hook `useWhatsAppPerConvUnread` filtra `humanIds = convs.filter(c => !c.ai_enabled)` — ou seja, **só conta não-lidas em conversas onde a IA foi desativada**. O badge no menu lateral (`AppLayout`) usa outro hook (`useWhatsAppUnread`) que conta todas inbound, mas o badge **por conversa** dentro da página WhatsApp ignora qualquer mensagem enquanto a IA estiver ligada. Resultado: você não vê quais conversas têm mensagens novas que precisam de atenção humana.
 
-Ou seja: o webhook está chegando sem o token secreto. Como a função rejeita a chamada antes de salvar a conversa, a aba fica vazia e a Sofia não recebe nem responde.
+### 3. E-mail de contato imediato não está chegando
+A função `notify-immediate-contact` busca admins via `user_roles` e cai em fallback para `larissadefreitas@hotmail.com`. Precisa confirmar nos logs se está sendo invocada e se há admin cadastrado com e-mail correto do Hans. O webhook chama, mas não bloqueia em erro — pode estar falhando silenciosamente.
 
-Também encontrei dois pontos que precisam ser corrigidos para a aba ficar mais confiável:
+---
 
-- A tela de Configurações mostra a URL do webhook sem o `?secret=...`, o que induz à configuração errada no Evolution/Z-API.
-- A aba WhatsApp não mostra erro/estado de diagnóstico quando não há conversas; ela só mostra “Nenhuma conversa ainda”, sem orientar que o webhook pode estar bloqueado.
+## Solução
 
-## Plano de correção
+### Parte 1 — Alinhar o funil do WhatsApp com o kanban
 
-### 1. Corrigir autenticação do webhook do WhatsApp
+**Mudar o webhook (`supabase/functions/whatsapp-webhook/index.ts`)** para usar etapas que **existem** no kanban:
 
-Atualizar `supabase/functions/whatsapp-webhook/index.ts` para:
+- Quando a IA confirma intenção (`update_lead_info` com `interest`) → mover de `Novo Lead` para **`Em Contato`** (não "Em Atendimento").
+- Quando o lead responde algo (qualquer inbound após o primeiro) e ainda está em `Novo Lead` → mover para **`Em Contato`** automaticamente.
+- Quando o lead pede contato imediato (`request_immediate_contact`) → mover para **`Conversa Ativa`** + adicionar tag `urgente` (que já vira o badge 🔥 vermelho que existe em `Leads.tsx` linha 30-31).
+- Quando o lead pede agendamento (`send_booking_link`) → mover para **`Conversa Ativa`**.
 
-- aceitar o segredo via `?secret=...` e também por headers comuns (`x-webhook-secret`, `x-evolution-secret`, `client-token`, `apikey`);
-- tolerar casos em que o segredo salvo no backend esteja por engano como URL completa do webhook, extraindo o valor real de `secret` quando existir;
-- responder de forma mais clara quando vier health-check vazio do provedor;
-- manter proteção contra chamadas não autorizadas, sem abrir o webhook publicamente sem validação.
+Assim, todo lead que entra pelo WhatsApp passa por `Novo Lead → Em Contato → Conversa Ativa` no kanban, e os "quentes" ganham o badge 🔥 destacado.
 
-### 2. Atualizar a tela de Configurações
+**Migration de dados:** atualizar leads existentes que estão em `Em Atendimento` ou `Contato Imediato` para `Conversa Ativa` (com tag `urgente` quando vinha de "Contato Imediato"), para a Larissa e outros voltarem a aparecer.
 
-Atualizar `src/pages/ConfiguracoesPage.tsx` para deixar explícito que o webhook precisa ser configurado com segredo:
+### Parte 2 — Badge de não-lidas em modo humano E modo IA
 
-```text
-https://.../functions/v1/whatsapp-webhook?secret=SEU_TOKEN
-```
+Mudar `useWhatsAppPerConvUnread` para **contar não-lidas em TODAS as conversas** (não só humanas). Razão: mesmo com a Sofia respondendo, você quer ver no menu lateral e na lista de conversas quais têm mensagens novas para acompanhar.
 
-E adicionar uma instrução curta dizendo que no Evolution/Z-API o evento precisa apontar para `messages.upsert`/mensagens recebidas.
+Adicionalmente, no `WhatsApp.tsx` o `markConvSeen` é chamado quando você seleciona a conversa **mesmo que a IA esteja respondendo** — ok, esse comportamento fica. O importante é que mensagens que chegam em conversas **não abertas** sempre incrementem o contador, independente do `ai_enabled`.
 
-### 3. Melhorar a aba WhatsApp
+### Parte 3 — Garantir que o e-mail de contato imediato chegue
 
-Atualizar `src/pages/WhatsApp.tsx` para:
+1. Verificar nos logs da função `notify-immediate-contact` se foi invocada quando a Larissa pediu contato (provavelmente foi, porque etapa virou "Contato Imediato").
+2. Verificar se há um perfil admin com email do Hans em `profiles` + `user_roles`. Se não houver, o fallback envia para `larissadefreitas@hotmail.com` — perguntar ao usuário qual o e-mail correto que deve receber esses alertas.
+3. Adicionar log de erro mais explícito no webhook caso a invocação do `notify-immediate-contact` falhe (hoje só faz `console.error` — pelo menos garantir que registra).
 
-- mostrar um estado vazio mais útil, explicando que se não aparecem conversas é provável que o webhook ainda não esteja recebendo mensagens;
-- adicionar um botão/atalho para Configurações;
-- exibir erro de carregamento se a consulta falhar, em vez de parecer que está tudo certo;
-- manter atualização em tempo real quando novas conversas chegarem.
+---
 
-### 4. Corrigir inconsistência de payload no envio manual
+## Detalhes técnicos
 
-Revisar o envio pela aba WhatsApp e pela tela de teste para garantir que `whatsapp-send` receba sempre `content` e telefone/conversa no formato esperado.
+**Arquivos alterados:**
 
-### 5. Testar após o ajuste
+- `supabase/functions/whatsapp-webhook/index.ts`
+  - Trocar `etapa_funil: "Em Atendimento"` → `"Em Contato"` (linha ~554)
+  - Trocar `etapa_funil: "Contato Imediato"` → `"Conversa Ativa"` (linha ~618)
+  - No bloco de `bookingKind`, mudar de `"Em Atendimento"` para `"Conversa Ativa"` (linha ~671)
+  - Quando inbound chega e lead está em `Novo Lead`, mover para `Em Contato` (novo bloco antes do retorno IA)
 
-Depois de implementar, vou testar:
+- `src/hooks/useWhatsAppPerConvUnread.tsx`
+  - Remover filtro `humanIds`. Contar não-lidas em todas as conversas. Renomear estado se quiser, mas a interface (`unreadByConv`, `markConvSeen`, `totalUnread`) permanece.
+  - Em `WhatsApp.tsx` (linha 276), remover a checagem `!c.ai_enabled ? ... : 0` para mostrar o badge sempre.
 
-- leitura da aba WhatsApp;
-- chamada do webhook com payload de mensagem simulada e segredo válido;
-- criação de conversa/mensagem no banco;
-- resposta automática da Sofia quando `ai_enabled = true`;
-- envio manual pela aba WhatsApp.
+- `src/components/AppLayout.tsx` — sem mudança (já usa contador global).
 
-## Observação importante
+- **Migration SQL** (data fix, não schema):
+  ```sql
+  UPDATE leads
+  SET etapa_funil = 'Conversa Ativa',
+      tags = CASE
+        WHEN etapa_funil = 'Contato Imediato'
+          THEN array(SELECT DISTINCT unnest(coalesce(tags, ARRAY[]::text[]) || ARRAY['urgente']))
+        ELSE tags
+      END
+  WHERE etapa_funil IN ('Em Atendimento', 'Contato Imediato');
+  ```
 
-Depois do código corrigido, ainda será necessário garantir que o webhook no painel Evolution/Z-API esteja usando a URL com `?secret=SEU_TOKEN`. Se ele continuar chamando com `?secret=` vazio, nenhuma aplicação consegue receber as mensagens com segurança.
+**Pergunta antes de executar:** qual e-mail deve receber os alertas de contato imediato? Hoje o fallback (quando não há admin com e-mail no `profiles`) está enviando para `larissadefreitas@hotmail.com`. Confirma se é esse mesmo, ou quer trocar para outro (ex.: e-mail do Hans)?
