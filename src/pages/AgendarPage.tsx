@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Loader2, CheckCircle2, AlertCircle, Phone, Video, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import hrLogo from "@/assets/logo-hr-branco.png";
 
 type Kind = "videochamada" | "presencial" | "ligacao";
 
@@ -41,7 +39,6 @@ function fmtTime(iso: string) {
   });
 }
 function dayKey(iso: string) {
-  // chave YYYY-MM-DD no fuso SP
   const d = new Date(iso);
   const sp = new Date(d.getTime() - 180 * 60 * 1000);
   return sp.toISOString().slice(0, 10);
@@ -62,13 +59,10 @@ export default function AgendarPage() {
       try {
         const { data, error } = await supabase.functions.invoke("booking-info", {
           method: "GET" as any,
-          // edge function lê via querystring, então usamos invoke com path query
         });
-        // fallback usando fetch direto, pois invoke não passa query bem
         if (error || !data) throw error;
         setInfo(data as InfoResponse);
       } catch {
-        // Fallback explícito via fetch
         try {
           const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/booking-info?token=${encodeURIComponent(token)}`;
           const res = await fetch(url, {
@@ -97,7 +91,6 @@ export default function AgendarPage() {
 
   const availableDays = useMemo(() => Array.from(slotsByDay.keys()).sort(), [slotsByDay]);
 
-  // Auto-seleciona primeiro dia disponível
   useEffect(() => {
     if (!selectedDay && availableDays.length > 0) {
       const [y, m, d] = availableDays[0].split("-").map(Number);
@@ -127,7 +120,6 @@ export default function AgendarPage() {
       if (!res.ok) {
         if (data?.conflict) {
           toast.error("Esse horário acabou de ser ocupado. Escolha outro.");
-          // recarrega info
           setInfo(null);
           setLoading(true);
           const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/booking-info?token=${encodeURIComponent(token)}`, {
@@ -152,7 +144,7 @@ export default function AgendarPage() {
   if (loading) {
     return (
       <Wrapper>
-        <div className="flex items-center justify-center py-16 gap-2 text-muted-foreground">
+        <div className="flex items-center justify-center py-20 gap-2 text-white/60">
           <Loader2 className="h-5 w-5 animate-spin" /> Carregando…
         </div>
       </Wrapper>
@@ -186,12 +178,12 @@ export default function AgendarPage() {
     return (
       <Wrapper>
         <Status icon={CheckCircle2} title="Tudo certo!" tone="success">
-          Sua <strong>{kindMeta[confirmed.kind].label.toLowerCase()}</strong> com o Hans está marcada para{" "}
-          <strong>{fmtDay(confirmed.datetime_iso)} às {fmtTime(confirmed.datetime_iso)}</strong>.
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-3 py-1 text-sm">
+          Sua <strong className="text-white">{kindMeta[confirmed.kind].label.toLowerCase()}</strong> com o Hans está marcada para{" "}
+          <strong className="text-white">{fmtDay(confirmed.datetime_iso)} às {fmtTime(confirmed.datetime_iso)}</strong>.
+          <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/10 text-white px-4 py-1.5 text-sm">
             <Icon className="h-4 w-4" /> {kindMeta[confirmed.kind].label}
           </div>
-          <p className="text-sm text-muted-foreground mt-4">
+          <p className="text-sm text-white/50 mt-5">
             Enviamos a confirmação no seu WhatsApp. Até breve!
           </p>
         </Status>
@@ -204,27 +196,27 @@ export default function AgendarPage() {
 
   return (
     <Wrapper>
-      <Card className="p-6 md:p-8 space-y-6">
-        <header className="space-y-2">
-          <Badge variant="secondary" className="gap-1.5">
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-6 md:p-10 space-y-7 shadow-2xl">
+        <header className="space-y-3">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
             <Icon className="h-3.5 w-3.5" />
             {kind ? kindMeta[kind].label : "Agendamento"}
-          </Badge>
-          <h1 className="text-2xl md:text-3xl font-bold font-display">
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
             {info?.nome ? `Olá, ${info.nome.split(" ")[0]}!` : "Agende com o Hans"}
           </h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-white/50 text-sm md:text-base max-w-md">
             Escolha o dia e horário que ficam melhor para você. A {kind ? kindMeta[kind].label.toLowerCase() : "reunião"} dura {info?.duracao_min} minutos.
           </p>
         </header>
 
         {availableDays.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-8 text-center">
+          <p className="text-sm text-white/50 py-10 text-center">
             Sem horários disponíveis nos próximos dias. Fale com a Sofia no WhatsApp para alternativas.
           </p>
         ) : (
           <div className="grid md:grid-cols-[auto_1fr] gap-6">
-            <div className="rounded-lg border bg-card p-2">
+            <div className="rounded-xl border border-white/10 bg-black/40 p-2">
               <Calendar
                 mode="single"
                 selected={selectedDay}
@@ -233,18 +225,18 @@ export default function AgendarPage() {
                   const k = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
                   return !slotsByDay.has(k);
                 }}
-                className={cn("p-3 pointer-events-auto")}
+                className={cn("p-3 pointer-events-auto [&_button]:text-white/80 [&_button:hover]:bg-white/10 [&_[aria-selected=true]]:bg-white [&_[aria-selected=true]]:text-black [&_.rdp-day_disabled]:text-white/20 [&_.rdp-head_cell]:text-white/40 [&_.rdp-caption_label]:text-white [&_.rdp-nav_button]:text-white/70 [&_.rdp-nav_button:hover]:bg-white/10")}
               />
             </div>
 
             <div className="space-y-3 min-w-0">
-              <p className="text-sm font-medium">
+              <p className="text-sm font-medium text-white/80 capitalize">
                 {selectedDay
                   ? selectedDay.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })
                   : "Selecione um dia"}
               </p>
               {slotsForDay.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Sem horários neste dia.</p>
+                <p className="text-xs text-white/40">Sem horários neste dia.</p>
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                   {slotsForDay.map((s) => (
@@ -252,10 +244,10 @@ export default function AgendarPage() {
                       key={s}
                       onClick={() => setSelectedSlot(s)}
                       className={cn(
-                        "rounded-lg border px-2 py-2.5 text-sm transition hover:border-primary",
+                        "rounded-lg border px-2 py-2.5 text-sm transition",
                         selectedSlot === s
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-card"
+                          ? "bg-white text-black border-white"
+                          : "bg-white/[0.03] border-white/10 text-white/80 hover:bg-white/10 hover:border-white/20"
                       )}
                     >
                       {fmtTime(s)}
@@ -264,35 +256,50 @@ export default function AgendarPage() {
                 </div>
               )}
 
-              <Button
-                className="w-full mt-4"
-                size="lg"
+              <button
+                className={cn(
+                  "w-full mt-5 inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-medium transition-all",
+                  !selectedSlot || confirming
+                    ? "bg-white/10 text-white/40 cursor-not-allowed"
+                    : "bg-white text-black hover:bg-white/90"
+                )}
                 disabled={!selectedSlot || confirming}
                 onClick={confirmar}
               >
                 {confirming ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Confirmando…</>
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Confirmando…</>
                 ) : selectedSlot ? (
                   <>Confirmar {fmtDay(selectedSlot)} às {fmtTime(selectedSlot)}</>
                 ) : (
                   "Selecione um horário"
                 )}
-              </Button>
+              </button>
             </div>
           </div>
         )}
-      </Card>
-      <p className="text-xs text-center text-muted-foreground mt-6">
-        HR Imóveis · Hans Rodovalho · Sinop-MT
-      </p>
+      </div>
     </Wrapper>
   );
 }
 
 function Wrapper({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-background to-muted/30 px-4 py-8 md:py-16">
-      <div className="max-w-3xl mx-auto">{children}</div>
+    <main className="min-h-screen bg-[#0a0a0a] text-white">
+      <header className="border-b border-white/5">
+        <div className="max-w-3xl mx-auto px-6 h-20 flex items-center justify-center">
+          <img src={hrLogo} alt="HR Imóveis" className="h-12 w-auto object-contain" />
+        </div>
+      </header>
+
+      <div className="px-4 py-10 md:py-16">
+        <div className="max-w-3xl mx-auto">{children}</div>
+      </div>
+
+      <footer className="border-t border-white/5 mt-10">
+        <div className="max-w-3xl mx-auto px-6 py-6 text-center text-[11px] text-white/30">
+          HR Imóveis · Hans Rodovalho · Sinop-MT
+        </div>
+      </footer>
     </main>
   );
 }
@@ -303,15 +310,15 @@ function Status({
   icon: typeof CheckCircle2; title: string; children: React.ReactNode; tone: "success" | "error";
 }) {
   return (
-    <Card className="p-8 md:p-12 text-center space-y-4">
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-10 md:p-14 text-center space-y-5 shadow-2xl">
       <div className={cn(
-        "inline-flex h-14 w-14 items-center justify-center rounded-full mx-auto",
-        tone === "success" ? "bg-emerald-500/15 text-emerald-600" : "bg-destructive/15 text-destructive"
+        "inline-flex h-16 w-16 items-center justify-center rounded-full mx-auto",
+        tone === "success" ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"
       )}>
-        <Icon className="h-7 w-7" />
+        <Icon className="h-8 w-8" />
       </div>
-      <h1 className="text-2xl font-bold font-display">{title}</h1>
-      <div className="text-muted-foreground text-sm">{children}</div>
-    </Card>
+      <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{title}</h1>
+      <div className="text-white/60 text-sm md:text-base max-w-md mx-auto">{children}</div>
+    </div>
   );
 }
