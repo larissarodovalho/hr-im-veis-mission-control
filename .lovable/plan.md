@@ -1,43 +1,64 @@
 ## Diagnóstico
 
-A Sofia não caiu — ela travou num loop. Olhei a conversa da Larissa (20:48–20:52):
+A aba WhatsApp está carregando, mas aparece sem conversas porque a tabela `whatsapp_conversations` está vazia. O problema principal não é visual: as mensagens do provedor de WhatsApp não estão entrando no sistema.
 
-```
-Sofia: como você prefere falar… videochamada, presencial, ligação ou WhatsApp?
-Lead:  "queria falar com ele agora"
-Sofia: "Qual das três fica melhor: videochamada, presencial ou ligação?"
-Lead:  "agora"
-Sofia: "Entendi, mas para agendar o contato, preciso que você escolha uma das opções."
-Lead:  (parou de responder)
+Nos logs da função `whatsapp-webhook`, a chamada recebida está sendo recusada com:
+
+```text
+invalid_secret. provided=(empty) ... url=.../whatsapp-webhook?secret=
 ```
 
-O prompt obriga a sequência forma → urgência. Quando o lead expressa urgência antes de escolher a forma, a Sofia ignora o sinal e fica cobrando a forma. Como o lead já tinha dito "agora" duas vezes e a Sofia continuou pedindo opção, ela desistiu.
+Ou seja: o webhook está chegando sem o token secreto. Como a função rejeita a chamada antes de salvar a conversa, a aba fica vazia e a Sofia não recebe nem responde.
 
-Não há mensagens inbound bloqueadas — o único 401 nos logs é um health-check da Evolution com `?secret=` vazio, não mensagem real.
+Também encontrei dois pontos que precisam ser corrigidos para a aba ficar mais confiável:
 
-## Mudanças
+- A tela de Configurações mostra a URL do webhook sem o `?secret=...`, o que induz à configuração errada no Evolution/Z-API.
+- A aba WhatsApp não mostra erro/estado de diagnóstico quando não há conversas; ela só mostra “Nenhuma conversa ainda”, sem orientar que o webhook pode estar bloqueado.
 
-### 1. Atualizar `AI_SYSTEM` em `supabase/functions/whatsapp-webhook/index.ts`
+## Plano de correção
 
-Adicionar regra explícita pra urgência detectada cedo:
+### 1. Corrigir autenticação do webhook do WhatsApp
 
-- Se o lead disser "agora", "urgente", "agora mesmo", "quero falar já", etc. **antes** de escolher a forma de contato → Sofia deve perguntar UMA vez: "Show, vou avisar o Hans! Pra ele te chamar, prefere por videochamada, ligação, presencial ou WhatsApp?" e em seguida chamar `request_immediate_contact` com a forma escolhida.
-- Se a forma de contato JÁ foi mencionada na mesma mensagem ("ligação agora", "WhatsApp agora") → chamar `request_immediate_contact` direto, sem perguntar de novo.
-- Reforçar: nunca repetir 3x a mesma pergunta. Após 2 tentativas sem clareza, escolher um default razoável (WhatsApp) e seguir.
+Atualizar `supabase/functions/whatsapp-webhook/index.ts` para:
 
-### 2. Adicionar fallback no handler `request_immediate_contact`
+- aceitar o segredo via `?secret=...` e também por headers comuns (`x-webhook-secret`, `x-evolution-secret`, `client-token`, `apikey`);
+- tolerar casos em que o segredo salvo no backend esteja por engano como URL completa do webhook, extraindo o valor real de `secret` quando existir;
+- responder de forma mais clara quando vier health-check vazio do provedor;
+- manter proteção contra chamadas não autorizadas, sem abrir o webhook publicamente sem validação.
 
-Se o LLM eventualmente chamar a tool sem `kind` ou com `kind` inválido, default para `whatsapp` em vez de erro silencioso.
+### 2. Atualizar a tela de Configurações
 
-### 3. (Opcional, recomendado) Recuperar a Larissa
+Atualizar `src/pages/ConfiguracoesPage.tsx` para deixar explícito que o webhook precisa ser configurado com segredo:
 
-A conversa `3b54aaf1-...` está parada. Posso disparar manualmente o `notify-immediate-contact` pra essa lead — ela já demonstrou intenção urgente clara — e marcar a tag `urgente` + etapa "Contato Imediato" no CRM.
+```text
+https://.../functions/v1/whatsapp-webhook?secret=SEU_TOKEN
+```
 
-## Arquivos editados
+E adicionar uma instrução curta dizendo que no Evolution/Z-API o evento precisa apontar para `messages.upsert`/mensagens recebidas.
 
-- `supabase/functions/whatsapp-webhook/index.ts` — prompt + handler defensivo
+### 3. Melhorar a aba WhatsApp
 
-## Verificação após deploy
+Atualizar `src/pages/WhatsApp.tsx` para:
 
-- Testar fluxo: "oi" → nome → "comprar" → "quero falar agora" → Sofia pergunta forma 1x → "ligação" → tool chamada, email disparado, lead marcado.
-- Conferir nos logs da function que `request_immediate_contact` é invocada.
+- mostrar um estado vazio mais útil, explicando que se não aparecem conversas é provável que o webhook ainda não esteja recebendo mensagens;
+- adicionar um botão/atalho para Configurações;
+- exibir erro de carregamento se a consulta falhar, em vez de parecer que está tudo certo;
+- manter atualização em tempo real quando novas conversas chegarem.
+
+### 4. Corrigir inconsistência de payload no envio manual
+
+Revisar o envio pela aba WhatsApp e pela tela de teste para garantir que `whatsapp-send` receba sempre `content` e telefone/conversa no formato esperado.
+
+### 5. Testar após o ajuste
+
+Depois de implementar, vou testar:
+
+- leitura da aba WhatsApp;
+- chamada do webhook com payload de mensagem simulada e segredo válido;
+- criação de conversa/mensagem no banco;
+- resposta automática da Sofia quando `ai_enabled = true`;
+- envio manual pela aba WhatsApp.
+
+## Observação importante
+
+Depois do código corrigido, ainda será necessário garantir que o webhook no painel Evolution/Z-API esteja usando a URL com `?secret=SEU_TOKEN`. Se ele continuar chamando com `?secret=` vazio, nenhuma aplicação consegue receber as mensagens com segurança.
