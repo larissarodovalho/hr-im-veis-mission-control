@@ -550,7 +550,7 @@ Deno.serve(async (req) => {
     let bookingKind: string | null = null;
     let immediateKind: string | null = null;
 
-    const MODELS = ["google/gemini-2.5-pro", "google/gemini-2.5-flash", "openai/gpt-5-mini"];
+    const MODELS = ["openai/gpt-5-mini", "google/gemini-2.5-pro", "google/gemini-2.5-flash"];
     let workingMessages = [...aiMessages];
 
     for (let round = 0; round < 2; round++) {
