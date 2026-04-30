@@ -1,50 +1,42 @@
 ## Diagnóstico
 
-Dois bugs visíveis na conversa:
+Hoje a função `booking-confirm` cria SEMPRE um registro em `reunioes`, mesmo quando o lead escolheu **ligação**. A aba `/calls` lê de uma tabela diferente (`ligacoes`), então as ligações marcadas pelo link nunca aparecem lá.
 
-1. **Link antigo (id-preview)**: foi enviado às 11:15, ANTES do redeploy de hoje. Os próximos links já vão para `www.hrimoveis.com`. Nada mais a corrigir aqui — é só um resíduo da mensagem anterior.
+Tipos vindos do link (`booking_links.kind`): `videochamada`, `presencial`, `ligacao`, `whatsapp`.
+Tabelas-alvo:
+- `videochamada` e `presencial` → `reunioes` (já funciona, aparece na aba Reuniões/Agenda).
+- `ligacao` → `ligacoes` (não está sendo gravado).
+- `whatsapp` → não tem aba dedicada; fica registrado como interação no lead.
 
-2. **Resposta corrompida `5GaqdC1b? kind=presencial&uuid=fb0c6576-...`**: o Gemini "alucinou" e cuspiu como texto algo que parece uma chamada de função/URL, em vez de invocar a tool `send_booking_link` pelo canal `tool_calls`. O webhook então:
-   - Não detectou `bookingKind` (porque não foi tool_call de verdade).
-   - Mandou o texto cru pro WhatsApp.
-   - O regex `reply.replace(/https?:\/\/\S+/g, "")` só limpa URLs com `http(s)://`, não pega esse fragmento.
+## Mudanças
 
-## Correções
+### `supabase/functions/booking-confirm/index.ts`
 
-### `supabase/functions/whatsapp-webhook/index.ts`
+Substituir o trecho que insere em `reunioes` por uma lógica que escolhe a tabela conforme `link.kind`:
 
-**a) Sanitizador de resposta** — antes de gravar/enviar `reply`, remover qualquer "vazamento" de tool call ou parâmetro técnico:
+- **`presencial` / `videochamada`** → mantém `INSERT INTO reunioes` (com `tipo` correto, `link.lead_id`, `criado_por_ia=true`).
+- **`ligacao`** → `INSERT INTO ligacoes` com:
+  ```ts
+  {
+    lead_id: link.lead_id,
+    data: startIso,
+    duracao_seg: 30 * 60, // 30 min default
+    resultado: 'agendada',
+    notas: `Ligação agendada via WhatsApp/Sofia para ${link.nome ?? 'lead'}`,
+    corretor_id: <corretor_id do lead se houver>,
+  }
+  ```
+  Salvar o id retornado em `booking_links.reuniao_id` (nome do campo continua, só guarda o id da entidade criada — vou comentar no código).
+- **`whatsapp`** → não cria registro em nenhuma das duas; só marca o token como usado. Adiciona uma entrada em `interacoes` (`tipo='whatsapp'`, `agendado_para=startIso`, `descricao='Contato agendado via Sofia'`, `lead_id=link.lead_id`) para deixar trilha no lead.
 
-```ts
-function sanitizeReply(s: string): string {
-  return s
-    // URLs completas
-    .replace(/https?:\/\/\S+/g, "")
-    // Fragmentos com kind=... uuid=... token=...
-    .replace(/\S*(?:kind|uuid|token|lead_id|conversation_id)\s*=\s*\S+/gi, "")
-    // Tokens base64-like soltos no início (ex.: "5GaqdC1b?")
-    .replace(/(^|\s)[A-Za-z0-9_-]{8,}\?(\s|$)/g, " ")
-    // Marcadores de tool call em texto
-    .replace(/\b(send_booking_link|request_immediate_contact|update_lead_info)\s*\([^)]*\)/gi, "")
-    .replace(/```[\s\S]*?```/g, "")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-}
-```
-Aplicar em `reply` após o loop de tool calls (linha ~607) e novamente nos branches de `immediateKind`/`bookingKind`.
+A mensagem de confirmação no WhatsApp permanece igual (já usa `tipoLabel`).
 
-**b) Detecção de intent vazado** — se `reply` contém `kind=(videochamada|presencial|ligacao|whatsapp)` e nenhuma tool foi chamada, **inferir** a tool e tratar como `bookingKind` (ou `immediateKind` se a última msg do user tem urgência). Isso evita que o lead receba lixo quando o modelo falha em chamar a tool corretamente.
+### Sem mudanças no frontend
+As abas Reuniões, Agenda, Ligações e Detalhe do lead já consultam suas tabelas — só precisam dos dados certos lá.
 
-**c) Reforço no prompt do sistema** (`AI_SYSTEM`):
-- Adicionar regra explícita: "NUNCA escreva nomes de função, parâmetros (kind=, uuid=, token=) nem URLs na sua resposta. Para enviar o link de agendamento, use SEMPRE a tool `send_booking_link` — o sistema gera e anexa o link."
-
-**d) Reordenar cascata de modelos** — colocar `gpt-5-mini` antes do `gemini-2.5-pro`, já que o Gemini está alucinando mais com tool calls neste fluxo:
-```ts
-const MODELS = ["openai/gpt-5-mini", "google/gemini-2.5-pro", "google/gemini-2.5-flash"];
-```
-
-**e)** Redeployar `whatsapp-webhook`.
+### Deploy
+Redeployar `booking-confirm`.
 
 ## Fora de escopo
-- Não mexo na página `/agendar` (já funcionando com novo design).
-- Não mexo no fluxo de notificação por email.
+- Não mexo no fluxo do webhook (geração do link já está OK).
+- Não crio aba nova para "WhatsApp agendado".

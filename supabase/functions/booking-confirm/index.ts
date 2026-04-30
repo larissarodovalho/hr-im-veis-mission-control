@@ -97,31 +97,81 @@ Deno.serve(async (req) => {
       });
     }
 
-    const tipoDb = link.kind === "ligacao" ? "ligacao" : link.kind === "presencial" ? "presencial" : "videochamada";
     const titulo = `${tipoLabel(link.kind)} com ${link.nome || "lead WhatsApp"}`;
 
-    const { data: reuniao, error: reErr } = await supabase
-      .from("reunioes")
-      .insert({
-        agendada_para: startIso,
-        duracao_min: dur,
-        tipo: tipoDb,
-        titulo,
-        status: "agendada",
-        criado_por_ia: true,
-        lead_id: link.lead_id,
-      })
-      .select("id")
-      .single();
-    if (reErr || !reuniao) {
-      console.error("erro criar reuniao", reErr);
-      return new Response(JSON.stringify({ error: "falha ao criar reunião" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Busca corretor do lead (se houver) para preencher responsabilidade
+    let corretorId: string | null = null;
+    if (link.lead_id) {
+      const { data: leadRow } = await supabase
+        .from("leads")
+        .select("corretor_id")
+        .eq("id", link.lead_id)
+        .maybeSingle();
+      corretorId = leadRow?.corretor_id ?? null;
+    }
+
+    let createdId: string | null = null;
+
+    if (link.kind === "ligacao") {
+      // Vai para a aba Ligações (tabela `ligacoes`)
+      const { data: lig, error: ligErr } = await supabase
+        .from("ligacoes")
+        .insert({
+          lead_id: link.lead_id,
+          data: startIso,
+          duracao_seg: dur * 60,
+          resultado: "agendada",
+          notas: `Ligação agendada via WhatsApp/Sofia${link.nome ? ` com ${link.nome}` : ""}.`,
+          corretor_id: corretorId,
+        })
+        .select("id")
+        .single();
+      if (ligErr || !lig) {
+        console.error("erro criar ligacao", ligErr);
+        return new Response(JSON.stringify({ error: "falha ao registrar ligação" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      createdId = lig.id;
+    } else if (link.kind === "presencial" || link.kind === "videochamada") {
+      // Vai para a aba Reuniões / Agenda
+      const { data: reuniao, error: reErr } = await supabase
+        .from("reunioes")
+        .insert({
+          agendada_para: startIso,
+          duracao_min: dur,
+          tipo: link.kind,
+          titulo,
+          status: "agendada",
+          criado_por_ia: true,
+          lead_id: link.lead_id,
+          corretor_id: corretorId,
+        })
+        .select("id")
+        .single();
+      if (reErr || !reuniao) {
+        console.error("erro criar reuniao", reErr);
+        return new Response(JSON.stringify({ error: "falha ao criar reunião" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      createdId = reuniao.id;
+    } else {
+      // 'whatsapp' ou outro: registra apenas como interação no lead (sem reunião/ligação)
+      const { error: intErr } = await supabase
+        .from("interacoes")
+        .insert({
+          tipo: "whatsapp",
+          lead_id: link.lead_id,
+          agendado_para: startIso,
+          descricao: `Contato por WhatsApp agendado via Sofia${link.nome ? ` com ${link.nome}` : ""}.`,
+          created_by: corretorId,
+        });
+      if (intErr) console.error("erro criar interacao whatsapp", intErr);
     }
 
     await supabase.from("booking_links")
-      .update({ used_at: new Date().toISOString(), reuniao_id: reuniao.id })
+      .update({ used_at: new Date().toISOString(), reuniao_id: createdId })
       .eq("id", link.id);
 
     // Mensagem de volta no WhatsApp
