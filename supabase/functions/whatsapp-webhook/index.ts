@@ -712,11 +712,11 @@ Deno.serve(async (req) => {
       const baseUrl = Deno.env.get("PUBLIC_APP_URL") || "https://www.hrimoveis.com";
       const link = `${baseUrl.replace(/\/$/, "")}/agendar/${token}`;
 
-      reply = reply.replace(/https?:\/\/\S+/g, "").trim();
+      reply = sanitizeReply(reply);
       reply = reply.replace(/em breve\.?$/i, "").trim();
 
       if (!reply) {
-        reply = `Perfeito! Te mando aqui o link pra você escolher o melhor dia e horário pra ${KIND_LABELS[bookingKind]} com o Hans 👇`;
+        reply = `Perfeito! Te envio o link para você escolher o melhor dia e horário para ${KIND_LABELS[bookingKind]} com o Hans.`;
       }
       reply += `\n\n${link}`;
 
