@@ -348,7 +348,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     let phone: string | null = null;
