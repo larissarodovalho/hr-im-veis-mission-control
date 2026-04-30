@@ -468,6 +468,17 @@ Deno.serve(async (req) => {
     });
     if (inboundErr) console.error("inbound insert failed", inboundErr);
 
+    // Auto-move lead de "Novo Lead" para "Em Contato" assim que ele responde
+    if (leadUuid) {
+      const { data: leadStage } = await supabase.from("leads").select("etapa_funil").eq("id", leadUuid).maybeSingle();
+      if (leadStage?.etapa_funil === "Novo Lead") {
+        await supabase.from("leads").update({
+          etapa_funil: "Em Contato",
+          ultima_interacao: ts,
+        }).eq("id", leadUuid);
+      }
+    }
+
     if (conv.ai_enabled === false) {
       return new Response(JSON.stringify({ ok: true, ai: "disabled" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
