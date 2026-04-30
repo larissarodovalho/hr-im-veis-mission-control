@@ -62,6 +62,7 @@ REGRAS DE LINGUAGEM E TOM
 - UMA pergunta por mensagem. Máximo 2 linhas curtas por mensagem.
 - Sem listas, sem numerações. Não use emojis em hipótese alguma.
 - Não use gírias nem expressões informais como "show", "top", "massa", "beleza", "bora", "tranquilo", "suave". Use linguagem simples, clara e cordial.
+- NUNCA escreva nomes de função (send_booking_link, request_immediate_contact, update_lead_info), parâmetros técnicos (kind=, uuid=, token=, lead_id=) nem URLs/links na sua resposta. Para enviar o link de agendamento, use SEMPRE a tool send_booking_link — o sistema gera e anexa o link automaticamente. Sua mensagem deve conter APENAS texto natural em português.
 - Linguagem neutra: use "você" sempre. Nunca "senhor", "senhora", "moço", "moça".
 - Apresente-se só na primeira mensagem ou se perguntarem.
 - Se a mensagem veio de áudio transcrito, responda normal em texto.
@@ -171,6 +172,31 @@ const TOOLS = [
 ];
 
 type ToolCall = { name: string; args: any; id?: string };
+
+// Remove vazamentos de tool-call/parametros técnicos que o LLM às vezes coloca como texto
+function sanitizeReply(s: string): string {
+  if (!s) return "";
+  return s
+    .replace(/https?:\/\/\S+/gi, "")
+    .replace(/\bwww\.\S+/gi, "")
+    .replace(/\S*\b(?:kind|uuid|token|lead_id|conversation_id|reuniao_id)\s*=\s*\S+/gi, "")
+    .replace(/\b(send_booking_link|request_immediate_contact|update_lead_info)\s*\([^)]*\)/gi, "")
+    .replace(/\b(send_booking_link|request_immediate_contact|update_lead_info)\b/gi, "")
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/(^|\s)[A-Za-z0-9_-]{8,}\?(\s|$)/g, " ")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+// Detecta se o LLM "vazou" um intent de booking/imediato como texto
+function detectLeakedIntent(s: string): { kind: string | null; isImmediate: boolean } {
+  if (!s) return { kind: null, isImmediate: false };
+  const m = s.match(/kind\s*=\s*["']?(videochamada|presencial|ligacao|whatsapp)/i);
+  const kind = m?.[1]?.toLowerCase() ?? null;
+  const isImmediate = /request_immediate_contact|contato.{0,10}imediato/i.test(s);
+  return { kind, isImmediate };
+}
 
 function getEvolutionInstance(): string | null {
   return Deno.env.get("EVOLUTION_INSTANCE") || Deno.env.get("EVOLUTION_INSTANCE_NAME") || null;
@@ -524,7 +550,7 @@ Deno.serve(async (req) => {
     let bookingKind: string | null = null;
     let immediateKind: string | null = null;
 
-    const MODELS = ["google/gemini-2.5-pro", "google/gemini-2.5-flash", "openai/gpt-5-mini"];
+    const MODELS = ["openai/gpt-5-mini", "google/gemini-2.5-pro", "google/gemini-2.5-flash"];
     let workingMessages = [...aiMessages];
 
     for (let round = 0; round < 2; round++) {
@@ -604,11 +630,28 @@ Deno.serve(async (req) => {
       if (!needAnotherRound) break;
     }
 
-    let reply = result.text?.trim() || "";
+    let reply = sanitizeReply(result.text || "");
+
+    // Fallback: se o LLM "vazou" intent como texto em vez de chamar a tool, infere
+    if (!bookingKind && !immediateKind) {
+      const leaked = detectLeakedIntent(result.text || "");
+      if (leaked.kind) {
+        const lastUserMsg = (history ?? []).filter(h => h.direction === "inbound").slice(-1)[0]?.content || "";
+        const wantsNow = /\b(agora|urgente|j[áa]|hoje|rapido|r[áa]pido)\b/i.test(lastUserMsg);
+        if (leaked.isImmediate || wantsNow) {
+          immediateKind = leaked.kind;
+        } else {
+          bookingKind = leaked.kind;
+        }
+        console.warn("[whatsapp-webhook] intent vazado detectado, inferindo:", { leaked, immediateKind, bookingKind });
+        reply = ""; // descarta o texto bagunçado, vamos usar default abaixo
+      }
+    }
+
     if (!reply) {
       if (!hasName) {
         reply = "Olá! Sou a Sofia, assistente da HR Imóveis, prazer falar com você!\n\nPara melhor te atender, me diz seu nome completo?";
-      } else {
+      } else if (!immediateKind && !bookingKind) {
         reply = `Legal, ${firstName}! Você quer comprar um imóvel, vender, alugar ou é investidor?`;
       }
     }
@@ -644,10 +687,10 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Limpa URLs inventadas
-      reply = reply.replace(/https?:\/\/\S+/g, "").trim();
+      // Sanitiza qualquer URL/parametro inventado
+      reply = sanitizeReply(reply);
       if (!reply) {
-        reply = `Show! Já avisei o Hans, ele vai te chamar agora mesmo via ${KIND_LABELS[immediateKind]} 🚀`;
+        reply = `Pronto! Já avisei o Hans, ele vai te chamar agora mesmo via ${KIND_LABELS[immediateKind]}.`;
       }
     } else if (bookingKind) {
       // Gera token único e cria o link de agendamento
@@ -669,11 +712,11 @@ Deno.serve(async (req) => {
       const baseUrl = Deno.env.get("PUBLIC_APP_URL") || "https://www.hrimoveis.com";
       const link = `${baseUrl.replace(/\/$/, "")}/agendar/${token}`;
 
-      reply = reply.replace(/https?:\/\/\S+/g, "").trim();
+      reply = sanitizeReply(reply);
       reply = reply.replace(/em breve\.?$/i, "").trim();
 
       if (!reply) {
-        reply = `Perfeito! Te mando aqui o link pra você escolher o melhor dia e horário pra ${KIND_LABELS[bookingKind]} com o Hans 👇`;
+        reply = `Perfeito! Te envio o link para você escolher o melhor dia e horário para ${KIND_LABELS[bookingKind]} com o Hans.`;
       }
       reply += `\n\n${link}`;
 
