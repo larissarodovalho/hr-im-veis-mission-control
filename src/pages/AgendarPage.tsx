@@ -49,36 +49,46 @@ export default function AgendarPage() {
   const { token } = useParams<{ token: string }>();
   const [loading, setLoading] = useState(true);
   const [info, setInfo] = useState<InfoResponse | null>(null);
+  const [selectedKind, setSelectedKind] = useState<Kind | null>(null);
   const [selectedDay, setSelectedDay] = useState<Date | undefined>();
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState<{ datetime_iso: string; kind: Kind } | null>(null);
 
+  async function fetchInfo(kindOverride?: Kind) {
+    if (!token) return;
+    try {
+      const qs = new URLSearchParams({ token });
+      if (kindOverride) qs.set("kind", kindOverride);
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/booking-info?${qs.toString()}`;
+      const res = await fetch(url, {
+        headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+      });
+      const data = await res.json();
+      setInfo(data);
+      if (data?.kind && !selectedKind) setSelectedKind(data.kind as Kind);
+    } catch (e: any) {
+      setInfo({ error: e?.message || "Falha ao carregar" });
+    }
+  }
+
   useEffect(() => {
     if (!token) return;
     (async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke("booking-info", {
-          method: "GET" as any,
-        });
-        if (error || !data) throw error;
-        setInfo(data as InfoResponse);
-      } catch {
-        try {
-          const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/booking-info?token=${encodeURIComponent(token)}`;
-          const res = await fetch(url, {
-            headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
-          });
-          const data = await res.json();
-          setInfo(data);
-        } catch (e: any) {
-          setInfo({ error: e?.message || "Falha ao carregar" });
-        }
-      } finally {
-        setLoading(false);
-      }
+      await fetchInfo();
+      setLoading(false);
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  // Re-busca slots quando o usuário muda o tipo (durações diferentes)
+  useEffect(() => {
+    if (!selectedKind || !info || info.used || info.expired || info.error) return;
+    if (selectedKind === info.kind) return;
+    setSelectedSlot(null);
+    fetchInfo(selectedKind);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedKind]);
 
   const slotsByDay = useMemo(() => {
     const map = new Map<string, string[]>();
