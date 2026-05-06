@@ -183,6 +183,7 @@ export default function Schedule() {
         local: imovel?.endereco ?? null,
         link: null,
         notas: v.observacoes,
+        lead_id: v.lead_id,
         lead_nome: leadNome,
         criado_por_ia: false,
       };
