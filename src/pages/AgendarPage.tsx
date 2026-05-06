@@ -18,6 +18,7 @@ interface InfoResponse {
   expired?: boolean;
   error?: string;
   reuniao_id?: string;
+  datetime_iso?: string | null;
 }
 
 const kindMeta: Record<Kind, { label: string; icon: typeof Phone }> = {
