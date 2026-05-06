@@ -631,6 +631,7 @@ Deno.serve(async (req) => {
     let reply = sanitizeReply(result.text || "");
 
     // Fallback: se o LLM "vazou" intent como texto em vez de chamar a tool, infere
+    // SOMENTE para urgência real — nunca disparar booking sem o lead ter aceitado.
     if (!bookingKind && !immediateKind) {
       const leaked = detectLeakedIntent(result.text || "");
       if (leaked.kind) {
@@ -638,11 +639,13 @@ Deno.serve(async (req) => {
         const wantsNow = /\b(agora|urgente|j[áa]|hoje|rapido|r[áa]pido)\b/i.test(lastUserMsg);
         if (leaked.isImmediate || wantsNow) {
           immediateKind = leaked.kind;
+          console.warn("[whatsapp-webhook] intent imediato vazado detectado:", { leaked, immediateKind });
+          reply = "";
         } else {
-          bookingKind = leaked.kind;
+          // Não inferir bookingKind: lead não confirmou que quer falar com o Hans.
+          console.warn("[whatsapp-webhook] booking vazado IGNORADO (lead não confirmou):", leaked);
+          reply = "";
         }
-        console.warn("[whatsapp-webhook] intent vazado detectado, inferindo:", { leaked, immediateKind, bookingKind });
-        reply = ""; // descarta o texto bagunçado, vamos usar default abaixo
       }
     }
 
@@ -650,7 +653,7 @@ Deno.serve(async (req) => {
       if (!hasName) {
         reply = "Olá! Sou a Sofia, assistente da HR Imóveis, prazer falar com você!\n\nPara melhor te atender, me diz seu nome completo?";
       } else if (!immediateKind && !bookingKind) {
-        reply = `Legal, ${firstName}! Você quer comprar um imóvel, vender, alugar ou é investidor?`;
+        reply = `Prazer, ${firstName}! Me conta, em que posso te ajudar hoje? Está procurando algum imóvel, pensando em vender o seu, ou tem alguma outra dúvida?`;
       }
     }
 
