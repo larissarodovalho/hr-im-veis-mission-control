@@ -26,6 +26,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const token = String(body.token || "");
     const datetimeIso = String(body.datetime_iso || "");
+    const kindReq = String(body.kind || "");
     if (!/^[a-zA-Z0-9_-]{16,64}$/.test(token)) {
       return new Response(JSON.stringify({ error: "token inválido" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -70,6 +71,11 @@ Deno.serve(async (req) => {
       });
     }
 
+    const allowedKinds = ["videochamada", "presencial", "ligacao"];
+    if (kindReq && allowedKinds.includes(kindReq) && kindReq !== link.kind) {
+      await supabase.from("booking_links").update({ kind: kindReq }).eq("id", link.id);
+      link.kind = kindReq;
+    }
     const dur = durationMin(link.kind);
     const startIso = dt.toISOString();
     const endIso = new Date(dt.getTime() + dur * 60 * 1000).toISOString();

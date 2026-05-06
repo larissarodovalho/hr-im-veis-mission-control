@@ -52,6 +52,7 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
     const token = url.searchParams.get("token") || "";
+    const kindOverride = url.searchParams.get("kind") || "";
     if (!/^[a-zA-Z0-9_-]{16,64}$/.test(token)) {
       return new Response(JSON.stringify({ error: "token inválido" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -103,7 +104,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const dur = durationMin(link.kind);
+    const allowedKinds = ["videochamada", "presencial", "ligacao"];
+    const effectiveKind = allowedKinds.includes(kindOverride) ? kindOverride : link.kind;
+    const dur = durationMin(effectiveKind);
 
     // Janela: agora -> +21 dias
     const fromIso = new Date().toISOString();
@@ -137,7 +140,8 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       nome: link.nome,
-      kind: link.kind,
+      kind: effectiveKind,
+      original_kind: link.kind,
       duracao_min: dur,
       slots,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });

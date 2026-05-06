@@ -49,36 +49,46 @@ export default function AgendarPage() {
   const { token } = useParams<{ token: string }>();
   const [loading, setLoading] = useState(true);
   const [info, setInfo] = useState<InfoResponse | null>(null);
+  const [selectedKind, setSelectedKind] = useState<Kind | null>(null);
   const [selectedDay, setSelectedDay] = useState<Date | undefined>();
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState<{ datetime_iso: string; kind: Kind } | null>(null);
 
+  async function fetchInfo(kindOverride?: Kind) {
+    if (!token) return;
+    try {
+      const qs = new URLSearchParams({ token });
+      if (kindOverride) qs.set("kind", kindOverride);
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/booking-info?${qs.toString()}`;
+      const res = await fetch(url, {
+        headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+      });
+      const data = await res.json();
+      setInfo(data);
+      if (data?.kind && !selectedKind) setSelectedKind(data.kind as Kind);
+    } catch (e: any) {
+      setInfo({ error: e?.message || "Falha ao carregar" });
+    }
+  }
+
   useEffect(() => {
     if (!token) return;
     (async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke("booking-info", {
-          method: "GET" as any,
-        });
-        if (error || !data) throw error;
-        setInfo(data as InfoResponse);
-      } catch {
-        try {
-          const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/booking-info?token=${encodeURIComponent(token)}`;
-          const res = await fetch(url, {
-            headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
-          });
-          const data = await res.json();
-          setInfo(data);
-        } catch (e: any) {
-          setInfo({ error: e?.message || "Falha ao carregar" });
-        }
-      } finally {
-        setLoading(false);
-      }
+      await fetchInfo();
+      setLoading(false);
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  // Re-busca slots quando o usuário muda o tipo (durações diferentes)
+  useEffect(() => {
+    if (!selectedKind || !info || info.used || info.expired || info.error) return;
+    if (selectedKind === info.kind) return;
+    setSelectedSlot(null);
+    fetchInfo(selectedKind);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedKind]);
 
   const slotsByDay = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -115,7 +125,7 @@ export default function AgendarPage() {
           "Content-Type": "application/json",
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
-        body: JSON.stringify({ token, datetime_iso: selectedSlot }),
+        body: JSON.stringify({ token, datetime_iso: selectedSlot, kind: selectedKind || info?.kind }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -209,8 +219,9 @@ export default function AgendarPage() {
     );
   }
 
-  const kind = info?.kind as Kind | undefined;
+  const kind = (selectedKind || info?.kind) as Kind | undefined;
   const Icon = kind ? kindMeta[kind].icon : Phone;
+  const kindOptions: Kind[] = ["presencial", "videochamada", "ligacao"];
 
   return (
     <Wrapper>
@@ -224,9 +235,38 @@ export default function AgendarPage() {
             {info?.nome ? `Olá, ${info.nome.split(" ")[0]}!` : "Agende com o Hans"}
           </h1>
           <p className="text-white/50 text-sm md:text-base max-w-md">
-            Escolha o dia e horário que ficam melhor para você. A {kind ? kindMeta[kind].label.toLowerCase() : "reunião"} dura {info?.duracao_min} minutos.
+            Escolha o tipo de contato, depois o dia e horário que ficam melhor para você.
           </p>
         </header>
+
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-wider text-white/40">Como prefere falar?</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {kindOptions.map((k) => {
+              const Ico = kindMeta[k].icon;
+              const active = (selectedKind || info?.kind) === k;
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setSelectedKind(k)}
+                  className={cn(
+                    "rounded-xl border px-4 py-3 text-sm transition flex items-center gap-2.5 justify-center",
+                    active
+                      ? "bg-white text-black border-white"
+                      : "bg-white/[0.03] border-white/10 text-white/80 hover:bg-white/10 hover:border-white/20"
+                  )}
+                >
+                  <Ico className="h-4 w-4" />
+                  {kindMeta[k].label}
+                  <span className={cn("text-[11px]", active ? "text-black/60" : "text-white/40")}>
+                    · {k === "ligacao" ? "30min" : "60min"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {availableDays.length === 0 ? (
           <p className="text-sm text-white/50 py-10 text-center">
