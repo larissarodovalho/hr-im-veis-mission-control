@@ -105,7 +105,7 @@ export default function Meetings() {
             {items.map(m => (
               <tr key={m.id} className="border-t">
                 <td className="p-3 whitespace-nowrap">{format(new Date(m.agendada_para), "Pp", { locale: ptBR })}</td>
-                <td className="p-3">{m.leads?.id ? <Link to={`/app/leads/${m.lead_id}`} className="hover:underline font-medium">{m.leads.nome}</Link> : "—"}</td>
+                <td className="p-3">{m.leads?.id ? <Link to={`/app/leads/${m.lead_id}`} className="hover:underline font-medium">{m.leads.nome}</Link> : (m.titulo || "Sem lead")}</td>
                 <td className="p-3 text-muted-foreground">{m.local || m.link || "—"}</td>
                 <td className="p-3"><Badge variant="outline">{m.status}</Badge></td>
               </tr>
@@ -117,7 +117,7 @@ export default function Meetings() {
 
       <EventsCalendar
         title="Calendário de reuniões"
-        events={items.map(m => ({ id: m.id, date: new Date(m.agendada_para), title: m.leads?.nome || "Sem lead", lead_id: m.lead_id, status: m.status, description: m.local || m.notas }))}
+        events={items.map(m => ({ id: m.id, date: new Date(m.agendada_para), title: m.leads?.nome || m.titulo || "Sem lead", lead_id: m.lead_id, status: m.status, description: m.local || m.notas }))}
       />
     </div>
   );
