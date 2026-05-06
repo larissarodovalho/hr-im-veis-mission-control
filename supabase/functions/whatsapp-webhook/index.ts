@@ -575,6 +575,7 @@ Deno.serve(async (req) => {
     let result: { text: string; toolCalls: ToolCall[]; raw?: any } = { text: "", toolCalls: [] };
     let bookingKind: string | null = null;
     let immediateKind: string | null = null;
+    let bookingBlocked = false;
 
     const MODELS = ["openai/gpt-5-mini", "google/gemini-2.5-pro", "google/gemini-2.5-flash"];
     let workingMessages = [...aiMessages];
@@ -629,9 +630,12 @@ Deno.serve(async (req) => {
           if (bookingConsent && ["videochamada", "presencial", "ligacao", "whatsapp"].includes(k)) {
             bookingKind = k;
           } else {
+            bookingBlocked = true;
             console.warn("[whatsapp-webhook] send_booking_link BLOQUEADO sem aceite explícito", { k, lastUserMsg });
           }
-          toolResult = { ok: true, scheduled: bookingKind, link_will_be_appended: true };
+          toolResult = bookingKind
+            ? { ok: true, scheduled: bookingKind, link_will_be_appended: true }
+            : { ok: false, blocked: "lead_did_not_explicitly_accept_booking_link" };
           needAnotherRound = true;
         } else if (tc.name === "request_immediate_contact") {
           const k = tc.args?.kind;
@@ -659,6 +663,11 @@ Deno.serve(async (req) => {
     }
 
     let reply = sanitizeReply(result.text || "");
+    if (bookingBlocked && !bookingKind) {
+      reply = isGreetingOnly(lastUserMsg)
+        ? `${firstName ? `Bom dia, ${firstName}!` : "Bom dia!"} Em que posso te ajudar hoje?`
+        : "Entendi. Me conta um pouco melhor o que você precisa, para eu te orientar do jeito certo.";
+    }
 
     // Fallback: se o LLM "vazou" intent como texto em vez de chamar a tool, infere
     // SOMENTE para urgência real — nunca disparar booking sem o lead ter aceitado.
