@@ -30,8 +30,13 @@ export default function Dashboard() {
   }, []);
 
   const total = leads.length;
-  const closed = leads.filter(l => l.etapa_funil === "Fechado").length;
-  const rate = total ? Math.round((closed / total) * 100) : 0;
+  const leadsComReuniao = new Set(
+    reunioes
+      .filter((m: any) => ["agendada", "realizada", "confirmada"].includes((m.status || "agendada").toLowerCase()))
+      .map((m: any) => m.lead_id)
+      .filter(Boolean)
+  ).size;
+  const rate = total ? Math.round((leadsComReuniao / total) * 100) : 0;
   const overdue = leads.filter(l => {
     const d = daysSince(l.ultima_interacao ?? l.created_at);
     return d !== null && d > 3 && !["Fechado", "Perdido"].includes(l.etapa_funil);
