@@ -21,7 +21,9 @@ export default function Meetings() {
   const [items, setItems] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState({ lead_id: "none", agendada_para: "", local: "", link: "", notas: "" });
+  const [editForm, setEditForm] = useState({ tipo: "presencial", agendada_para: "", local: "", link: "", notas: "", status: "agendada" });
 
   const load = async () => {
     const { data: meetings, error } = await supabase.from("reunioes").select("*").order("agendada_para");
@@ -63,12 +65,60 @@ export default function Meetings() {
     load();
   };
 
+  const openEdit = (m: any) => {
+    setEditing(m);
+    const dt = new Date(m.agendada_para);
+    const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    setEditForm({
+      tipo: m.tipo || "presencial",
+      agendada_para: local,
+      local: m.local || "",
+      link: m.link || "",
+      notas: m.notas || "",
+      status: m.status || "agendada",
+    });
+  };
+
+  const saveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editing) return;
+    const { error } = await supabase.from("reunioes").update({
+      tipo: editForm.tipo,
+      agendada_para: new Date(editForm.agendada_para).toISOString(),
+      local: editForm.local || null,
+      link: editForm.link || null,
+      notas: editForm.notas || null,
+      status: editForm.status,
+    }).eq("id", editing.id);
+    if (error) return toast.error(error.message);
+    toast.success("Reunião atualizada");
+    setEditing(null);
+    load();
+  };
+
+  const quickStatus = async (m: any, status: string) => {
+    const { error } = await supabase.from("reunioes").update({ status }).eq("id", m.id);
+    if (error) return toast.error(error.message);
+    toast.success(`Status: ${status}`);
+    load();
+  };
+
+  const remove = async () => {
+    if (!editing) return;
+    if (!confirm("Excluir esta reunião?")) return;
+    const { error } = await supabase.from("reunioes").delete().eq("id", editing.id);
+    if (error) return toast.error(error.message);
+    toast.success("Reunião excluída");
+    setEditing(null);
+    load();
+  };
+
   return (
     <div className="p-4 md:p-8 space-y-4 md:space-y-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl md:text-3xl font-semibold flex items-center gap-2"><CalendarCheck className="h-7 w-7" /> Reuniões</h1>
-          <p className="text-sm text-muted-foreground mt-1">Agendamentos da equipe.</p>
+          <p className="text-sm text-muted-foreground mt-1">Clique numa linha para editar ou aprovar.</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" />Adicionar</Button></DialogTrigger>
@@ -100,20 +150,69 @@ export default function Meetings() {
 
       <Card className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left"><tr><th className="p-3">Data</th><th className="p-3">Lead</th><th className="p-3">Local</th><th className="p-3">Status</th></tr></thead>
+          <thead className="bg-muted/50 text-left"><tr><th className="p-3">Data</th><th className="p-3">Lead</th><th className="p-3">Local</th><th className="p-3">Status</th><th className="p-3 w-24">Ações</th></tr></thead>
           <tbody>
             {items.map(m => (
-              <tr key={m.id} className="border-t">
+              <tr key={m.id} className="border-t hover:bg-muted/40 cursor-pointer" onClick={() => openEdit(m)}>
                 <td className="p-3 whitespace-nowrap">{format(new Date(m.agendada_para), "Pp", { locale: ptBR })}</td>
-                <td className="p-3">{m.leads?.id ? <Link to={`/app/leads/${m.lead_id}`} className="hover:underline font-medium">{m.leads.nome}</Link> : (m.titulo || "Sem lead")}</td>
+                <td className="p-3" onClick={(e) => e.stopPropagation()}>{m.leads?.id ? <Link to={`/app/leads/${m.lead_id}`} className="hover:underline font-medium">{m.leads.nome}</Link> : (m.titulo || "Sem lead")}</td>
                 <td className="p-3 text-muted-foreground">{m.local || m.link || "—"}</td>
                 <td className="p-3"><Badge variant="outline">{m.status}</Badge></td>
+                <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                  {m.status !== "confirmada" && m.status !== "realizada" && (
+                    <Button size="sm" variant="outline" onClick={() => quickStatus(m, "confirmada")}>Aprovar</Button>
+                  )}
+                </td>
               </tr>
             ))}
-            {items.length === 0 && <tr><td colSpan={4} className="p-6 text-center text-muted-foreground">Nada por aqui.</td></tr>}
+            {items.length === 0 && <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">Nada por aqui.</td></tr>}
           </tbody>
         </table>
       </Card>
+
+      <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Editar reunião</DialogTitle></DialogHeader>
+          <form onSubmit={saveEdit} className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Tipo</Label>
+                <Select value={editForm.tipo} onValueChange={v => setEditForm({ ...editForm, tipo: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="presencial">Presencial</SelectItem>
+                    <SelectItem value="videochamada">Videochamada</SelectItem>
+                    <SelectItem value="ligacao">Ligação</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Select value={editForm.status} onValueChange={v => setEditForm({ ...editForm, status: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="agendada">Agendada</SelectItem>
+                    <SelectItem value="confirmada">Confirmada</SelectItem>
+                    <SelectItem value="realizada">Realizada</SelectItem>
+                    <SelectItem value="cancelada">Cancelada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div><Label>Data e hora</Label><Input type="datetime-local" value={editForm.agendada_para} onChange={e => setEditForm({ ...editForm, agendada_para: e.target.value })} /></div>
+            <div><Label>Local</Label><Input value={editForm.local} onChange={e => setEditForm({ ...editForm, local: e.target.value })} /></div>
+            <div><Label>Link</Label><Input value={editForm.link} onChange={e => setEditForm({ ...editForm, link: e.target.value })} /></div>
+            <div><Label>Notas</Label><Textarea value={editForm.notas} onChange={e => setEditForm({ ...editForm, notas: e.target.value })} /></div>
+            <DialogFooter className="flex-row justify-between sm:justify-between">
+              <Button type="button" variant="destructive" onClick={remove}>Excluir</Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
+                <Button type="submit">Salvar</Button>
+              </div>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <EventsCalendar
         title="Calendário de reuniões"

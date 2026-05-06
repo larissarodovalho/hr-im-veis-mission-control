@@ -22,7 +22,9 @@ export default function Visits() {
   const [leads, setLeads] = useState<any[]>([]);
   const [imoveis, setImoveis] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState({ lead_id: "", imovel_id: "none", data_visita: "", observacoes: "" });
+  const [editForm, setEditForm] = useState({ data_visita: "", imovel_id: "none", status: "Agendada", observacoes: "" });
 
   const load = async () => {
     const { data } = await supabase.from("visitas").select("*, leads(id,nome), imoveis(id,titulo)").order("data_visita", { ascending: false });
@@ -51,10 +53,57 @@ export default function Visits() {
     setOpen(false); load();
   };
 
+  const openEdit = (v: any) => {
+    setEditing(v);
+    const dt = new Date(v.data_visita);
+    const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    setEditForm({
+      data_visita: local,
+      imovel_id: v.imovel_id || "none",
+      status: v.status || "Agendada",
+      observacoes: v.observacoes || "",
+    });
+  };
+
+  const saveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editing) return;
+    const { error } = await supabase.from("visitas").update({
+      data_visita: new Date(editForm.data_visita).toISOString(),
+      imovel_id: editForm.imovel_id === "none" ? null : editForm.imovel_id,
+      status: editForm.status,
+      observacoes: editForm.observacoes || null,
+    }).eq("id", editing.id);
+    if (error) return toast.error(error.message);
+    toast.success("Visita atualizada");
+    setEditing(null);
+    load();
+  };
+
+  const quickStatus = async (v: any, status: string) => {
+    const { error } = await supabase.from("visitas").update({ status }).eq("id", v.id);
+    if (error) return toast.error(error.message);
+    toast.success(`Status: ${status}`);
+    load();
+  };
+
+  const remove = async () => {
+    if (!editing) return;
+    if (!confirm("Excluir esta visita?")) return;
+    const { error } = await supabase.from("visitas").delete().eq("id", editing.id);
+    if (error) return toast.error(error.message);
+    toast.success("Visita excluída");
+    setEditing(null);
+    load();
+  };
+
   return (
     <div className="p-4 md:p-8 space-y-4 md:space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <h1 className="font-display text-2xl md:text-3xl font-semibold">Visitas</h1>
+        <div>
+          <h1 className="font-display text-2xl md:text-3xl font-semibold">Visitas</h1>
+          <p className="text-sm text-muted-foreground mt-1">Clique numa linha para editar ou aprovar.</p>
+        </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button size="sm"><Plus className="mr-1 h-4 w-4" />Adicionar</Button></DialogTrigger>
           <DialogContent>
@@ -90,20 +139,66 @@ export default function Visits() {
 
       <Card className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left"><tr><th className="p-3">Quando</th><th className="p-3">Lead</th><th className="p-3">Imóvel</th><th className="p-3">Status</th></tr></thead>
+          <thead className="bg-muted/50 text-left"><tr><th className="p-3">Quando</th><th className="p-3">Lead</th><th className="p-3">Imóvel</th><th className="p-3">Status</th><th className="p-3 w-32">Ações</th></tr></thead>
           <tbody>
             {items.map(v => (
-              <tr key={v.id} className="border-t">
+              <tr key={v.id} className="border-t hover:bg-muted/40 cursor-pointer" onClick={() => openEdit(v)}>
                 <td className="p-3">{format(new Date(v.data_visita), "Pp", { locale: ptBR })}</td>
-                <td className="p-3">{v.leads?.id ? <Link to={`/app/leads/${v.lead_id}`} className="hover:underline font-medium">{v.leads.nome}</Link> : "—"}</td>
+                <td className="p-3" onClick={(e) => e.stopPropagation()}>{v.leads?.id ? <Link to={`/app/leads/${v.lead_id}`} className="hover:underline font-medium">{v.leads.nome}</Link> : "—"}</td>
                 <td className="p-3 text-muted-foreground">{v.imoveis?.titulo || "—"}</td>
                 <td className="p-3"><Badge variant="outline">{v.status}</Badge></td>
+                <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                  {v.status === "Agendada" && (
+                    <Button size="sm" variant="outline" onClick={() => quickStatus(v, "Confirmada")}>Aprovar</Button>
+                  )}
+                </td>
               </tr>
             ))}
-            {items.length === 0 && <tr><td colSpan={4} className="p-6 text-center text-muted-foreground">Sem visitas.</td></tr>}
+            {items.length === 0 && <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">Sem visitas.</td></tr>}
           </tbody>
         </table>
       </Card>
+
+      <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Editar visita</DialogTitle></DialogHeader>
+          <form onSubmit={saveEdit} className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Data e hora</Label><Input type="datetime-local" value={editForm.data_visita} onChange={e => setEditForm({ ...editForm, data_visita: e.target.value })} /></div>
+              <div>
+                <Label>Status</Label>
+                <Select value={editForm.status} onValueChange={v => setEditForm({ ...editForm, status: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Agendada">Agendada</SelectItem>
+                    <SelectItem value="Confirmada">Confirmada</SelectItem>
+                    <SelectItem value="Realizada">Realizada</SelectItem>
+                    <SelectItem value="Cancelada">Cancelada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label>Imóvel</Label>
+              <Select value={editForm.imovel_id} onValueChange={v => setEditForm({ ...editForm, imovel_id: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem imóvel</SelectItem>
+                  {imoveis.map(i => <SelectItem key={i.id} value={i.id}>{i.titulo}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Observações</Label><Textarea value={editForm.observacoes} onChange={e => setEditForm({ ...editForm, observacoes: e.target.value })} /></div>
+            <DialogFooter className="flex-row justify-between sm:justify-between">
+              <Button type="button" variant="destructive" onClick={remove}>Excluir</Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
+                <Button type="submit">Salvar</Button>
+              </div>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <EventsCalendar
         title="Calendário de visitas"

@@ -20,7 +20,9 @@ export default function Calls() {
   const [items, setItems] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState({ lead_id: "none", data: "", duracao_seg: 0, resultado: "atendeu", notas: "" });
+  const [editForm, setEditForm] = useState({ data: "", duracao_seg: 0, resultado: "atendeu", notas: "" });
 
   const load = async () => {
     const { data: calls, error } = await supabase
@@ -59,6 +61,50 @@ export default function Calls() {
     toast.success("Ligação registrada");
     setForm({ lead_id: "none", data: "", duracao_seg: 0, resultado: "atendeu", notas: "" });
     setOpen(false); load();
+  };
+
+  const openEdit = (c: any) => {
+    setEditing(c);
+    const dt = new Date(c.data);
+    const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    setEditForm({
+      data: local,
+      duracao_seg: c.duracao_seg || 0,
+      resultado: c.resultado || "atendeu",
+      notas: c.notas || "",
+    });
+  };
+
+  const saveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editing) return;
+    const { error } = await supabase.from("ligacoes").update({
+      data: new Date(editForm.data).toISOString(),
+      duracao_seg: Number(editForm.duracao_seg) || 0,
+      resultado: editForm.resultado,
+      notas: editForm.notas || null,
+    }).eq("id", editing.id);
+    if (error) return toast.error(error.message);
+    toast.success("Ligação atualizada");
+    setEditing(null);
+    load();
+  };
+
+  const quickResult = async (c: any, resultado: string) => {
+    const { error } = await supabase.from("ligacoes").update({ resultado }).eq("id", c.id);
+    if (error) return toast.error(error.message);
+    toast.success(`Resultado: ${resultado}`);
+    load();
+  };
+
+  const remove = async () => {
+    if (!editing) return;
+    if (!confirm("Excluir esta ligação?")) return;
+    const { error } = await supabase.from("ligacoes").delete().eq("id", editing.id);
+    if (error) return toast.error(error.message);
+    toast.success("Ligação excluída");
+    setEditing(null);
+    load();
   };
 
   return (
@@ -111,20 +157,58 @@ export default function Calls() {
 
       <Card className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left"><tr><th className="p-3">Quando</th><th className="p-3">Lead</th><th className="p-3">Duração</th><th className="p-3">Resultado</th></tr></thead>
+          <thead className="bg-muted/50 text-left"><tr><th className="p-3">Quando</th><th className="p-3">Lead</th><th className="p-3">Duração</th><th className="p-3">Resultado</th><th className="p-3 w-32">Ações</th></tr></thead>
           <tbody>
             {items.map(c => (
-              <tr key={c.id} className="border-t">
+              <tr key={c.id} className="border-t hover:bg-muted/40 cursor-pointer" onClick={() => openEdit(c)}>
                 <td className="p-3">{format(new Date(c.data), "Pp", { locale: ptBR })}</td>
-                <td className="p-3">{c.leads?.id ? <Link to={`/app/leads/${c.lead_id}`} className="hover:underline font-medium">{c.leads.nome}</Link> : (c.lead_id ? <span className="text-muted-foreground">Lead removido</span> : <span className="text-muted-foreground">Sem lead</span>)}</td>
+                <td className="p-3" onClick={(e) => e.stopPropagation()}>{c.leads?.id ? <Link to={`/app/leads/${c.lead_id}`} className="hover:underline font-medium">{c.leads.nome}</Link> : (c.lead_id ? <span className="text-muted-foreground">Lead removido</span> : <span className="text-muted-foreground">Sem lead</span>)}</td>
                 <td className="p-3 text-muted-foreground">{c.duracao_seg ? `${Math.floor(c.duracao_seg/60)}m ${c.duracao_seg%60}s` : "—"}</td>
                 <td className="p-3"><Badge variant="outline">{c.resultado || "—"}</Badge></td>
+                <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                  {(c.resultado === "agendada" || c.resultado === "agendou") && (
+                    <Button size="sm" variant="outline" onClick={() => quickResult(c, "atendeu")}>Aprovar</Button>
+                  )}
+                </td>
               </tr>
             ))}
-            {items.length === 0 && <tr><td colSpan={4} className="p-6 text-center text-muted-foreground">Nenhuma ligação.</td></tr>}
+            {items.length === 0 && <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">Nenhuma ligação.</td></tr>}
           </tbody>
         </table>
       </Card>
+
+      <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Editar ligação</DialogTitle></DialogHeader>
+          <form onSubmit={saveEdit} className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Data e hora</Label><Input type="datetime-local" value={editForm.data} onChange={e => setEditForm({ ...editForm, data: e.target.value })} /></div>
+              <div><Label>Duração (s)</Label><Input type="number" value={editForm.duracao_seg} onChange={e => setEditForm({ ...editForm, duracao_seg: Number(e.target.value) })} /></div>
+            </div>
+            <div>
+              <Label>Resultado</Label>
+              <Select value={editForm.resultado} onValueChange={v => setEditForm({ ...editForm, resultado: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="agendada">Agendada</SelectItem>
+                  <SelectItem value="atendeu">Atendeu</SelectItem>
+                  <SelectItem value="nao_atendeu">Não atendeu</SelectItem>
+                  <SelectItem value="caixa_postal">Caixa postal</SelectItem>
+                  <SelectItem value="agendou">Agendou</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Notas</Label><Textarea value={editForm.notas} onChange={e => setEditForm({ ...editForm, notas: e.target.value })} /></div>
+            <DialogFooter className="flex-row justify-between sm:justify-between">
+              <Button type="button" variant="destructive" onClick={remove}>Excluir</Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
+                <Button type="submit">Salvar</Button>
+              </div>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
