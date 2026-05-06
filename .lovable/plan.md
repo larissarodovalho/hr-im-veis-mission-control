@@ -1,78 +1,68 @@
-Vou corrigir o fluxo de ponta a ponta para que todo agendamento solicitado por WhatsApp/Sofia e pela página de captura fique visível no CRM, nas abas corretas.
+# Ajuste do comportamento da Sofia (WhatsApp)
 
-O que encontrei na varredura:
-- O WhatsApp/Sofia gera `booking_links` corretamente, mas os registros internos criados pelo `booking-confirm` ficam sem `created_by` e podem ficar sem `corretor_id` quando o lead não tem corretor atribuído. Isso pode impedir a visualização por usuários não-admin e deixa a sincronização frágil.
-- Ligações confirmadas pelo link vão para `ligacoes`, mas a Agenda do CRM hoje só escuta `reunioes`. Assim, ligações agendadas não aparecem na Agenda geral.
-- A aba de detalhe do lead ainda agenda ligação dentro de `reunioes`, enquanto a aba Ligações lê `ligacoes`. Isso mantém dois padrões diferentes no CRM.
-- A “página de captura” está anunciada em Configurações como `/captura`, mas não existe rota React `/captura` no app. Existe apenas a função `public-chat`, então a captura pública não está realmente integrada a uma página navegável.
-- A função `public-chat` salva lead e retorna `show_calendar`/`appointment_kind`, mas não cria `booking_links`, nem cria registros em `reunioes`/`ligacoes`; portanto o pedido de agendamento da captura pode ficar só como observação do lead.
+## Problema observado
 
-Plano de ajuste:
+Hoje a Sofia segue um fluxo rígido (nome → intenção → forma de contato → urgência → **dispara link de agendamento**). Isso faz ela despejar o link de agendar logo nas primeiras mensagens, mesmo quando o lead só queria tirar uma dúvida ou ainda não pediu para falar com o Hans.
 
-1. Blindar a confirmação de agendamento do WhatsApp/Sofia
-- Atualizar `supabase/functions/booking-confirm/index.ts` para resolver um responsável padrão:
-  - usar `leads.corretor_id` quando existir;
-  - se não existir, usar um usuário staff/admin ativo como fallback;
-  - preencher também `created_by` nos registros criados.
-- Manter o roteamento correto:
-  - `presencial` e `videochamada` -> `reunioes`;
-  - `ligacao` -> `ligacoes`;
-  - `whatsapp` -> `interacoes`.
-- Registrar histórico/interação no lead após a confirmação, para deixar rastreável que o agendamento veio da Sofia.
-- Melhorar logs de erro do `booking-confirm` para identificar se falhou ao criar reunião, ligação ou interação.
+Além disso, quando o lead volta dias depois ("bom dia", "oi de novo"), ela não cumprimenta de novo nem pergunta o que ele precisa — ou pior, pode tentar mandar o link mais uma vez.
 
-2. Fazer a Agenda mostrar ligações agendadas também
-- Atualizar `src/pages/Schedule.tsx` para carregar tanto `reunioes` quanto `ligacoes`.
-- Exibir ligações agendadas no calendário/agenda com ícone e tipo “Ligação”.
-- Assinar realtime também da tabela `ligacoes`, para aparecer sem recarregar.
-- Ajustar conflito de horário público para considerar reuniões e bloqueios; e, se necessário, considerar ligações agendadas como ocupação também.
+## Objetivo
 
-3. Unificar o padrão de ligação no detalhe do lead
-- Atualizar `src/pages/LeadDetail.tsx` para que quando o usuário agenda uma “Ligação”, o registro seja criado em `ligacoes` e não em `reunioes`.
-- Manter reuniões presenciais/virtuais em `reunioes`.
-- No detalhe do lead, mostrar os agendamentos de reunião e as ligações agendadas/registradas de forma consistente.
+A Sofia deve:
+1. Acolher e **descobrir o que o lead quer** antes de propor agendamento.
+2. **Só oferecer agendamento quando o lead demonstrar interesse claro** em falar com o Hans (ou quando ela já tiver entendido a necessidade e fizer sentido propor).
+3. Em retornos do lead ("bom dia novamente", "oi", "tudo bem?") → cumprimentar de volta e **perguntar de novo no que pode ajudar**, sem repetir agendamento.
 
-4. Criar a página pública `/captura` e conectá-la ao CRM
-- Adicionar a rota `/captura` no `src/App.tsx`.
-- Criar uma página pública de captura usando a função `public-chat` existente.
-- A página terá chat com a assistente, coleta de nome/telefone/interesse e, quando houver intenção de agendar, mostrará ação clara para escolher horário.
+## Alterações
 
-5. Integrar a captura pública ao mesmo mecanismo de agendamento interno
-- Atualizar `supabase/functions/public-chat/index.ts` para, quando tiver `lead_id` e `appointment_kind`, criar um `booking_link` interno igual ao fluxo da Sofia.
-- Mapear tipos da captura:
-  - `visita` -> `presencial` em `reunioes`;
-  - `videochamada` -> `videochamada` em `reunioes`;
-  - `ligacao` -> `ligacao` em `ligacoes` após confirmação.
-- Retornar `booking_url` para a página `/captura`, para o cliente escolher data/horário pelo fluxo `/agendar/:token` já existente.
-- Evitar duplicar links na mesma sessão quando já houver link aberto recente.
+### 1. `supabase/functions/whatsapp-webhook/index.ts` — Prompt da Sofia (`AI_SYSTEM`)
 
-6. Corrigir dados antigos que ficaram incompletos
-- Criar uma migração segura para preencher `created_by`/`corretor_id` em `reunioes` e `ligacoes` antigas quando estiverem nulos e houver lead relacionado.
-- Para registros sem corretor no lead, usar um staff/admin ativo como fallback.
-- Isso ajuda os agendamentos existentes a aparecerem corretamente para o CRM.
+Reescrever o fluxo para ser **consultivo**, não transacional:
 
-7. Testes e verificação
-- Testar a função `booking-info` com token válido.
-- Testar `booking-confirm` para `presencial`, `videochamada` e `ligacao`.
-- Conferir no banco se:
-  - reuniões entram em `reunioes`;
-  - ligações entram em `ligacoes`;
-  - links usados ficam com `used_at` e referência interna;
-  - registros têm `created_by`/`corretor_id` preenchidos.
-- Verificar no código que Agenda, Reuniões, Ligações e detalhe do lead leem as tabelas corretas.
+- **Passo 1**: apresentação + nome (mantém).
+- **Passo 2 (NOVO)**: perguntar **como pode ajudar** / o que ele procura (ex.: "Me conta, em que posso te ajudar hoje? Está procurando algum imóvel, quer vender o seu, ou tem outra dúvida?"). Coletar contexto antes de qualquer agendamento.
+- **Passo 3**: aprofundar a necessidade (região, tipo de imóvel, faixa, prazo) com 1–2 perguntas curtas — sem virar interrogatório.
+- **Passo 4 (gatilho de agendamento)**: só propor falar com o Hans quando:
+  - o lead pedir explicitamente ("quero falar com o corretor", "como agendo", "pode me ligar"), **ou**
+  - já houver contexto suficiente e ela perguntar primeiro: *"Quer que eu agende uma conversa com o Hans pra detalhar isso?"* — e o lead **aceitar**.
+- **Passo 5**: aí sim perguntar forma de contato (videochamada/presencial/ligação/WhatsApp) + urgência → chamar `send_booking_link` ou `request_immediate_contact`.
 
-Arquivos previstos:
-- `supabase/functions/booking-confirm/index.ts`
-- `supabase/functions/public-chat/index.ts`
-- `src/App.tsx`
-- nova página `src/pages/CapturaPage.tsx`
-- `src/pages/Schedule.tsx`
-- `src/pages/LeadDetail.tsx`
-- possível migração em `supabase/migrations/...sql`
+### 2. Regras anti-link-precoce (novas, no prompt)
 
-Resultado esperado:
-- Link enviado pela Sofia confirma e sincroniza automaticamente no CRM.
-- Reunião presencial e videochamada aparecem em Reuniões e Agenda.
-- Ligação aparece em Ligações e também na Agenda geral.
-- Captura pública `/captura` passa a existir e cria leads/agendamentos pelo mesmo fluxo interno.
-- Registros ficam vinculados a lead e responsável, evitando sumiço por regra de visualização.
+Adicionar regras explícitas:
+- **NUNCA** chamar `send_booking_link` antes de o lead confirmar que quer falar com o Hans.
+- Se o lead só fez pergunta informativa (preço, bairro, financiamento) → responder de forma acolhedora ("Ótima dúvida, o Hans tem várias opções nessa região…") e **só então** perguntar se ele quer que agende uma conversa. Não mandar link sem confirmação.
+- Se o lead disse "depois eu vejo", "vou pensar", "ainda não decidi" → **não** insistir, **não** mandar link. Encerrar gentil.
+
+### 3. Tratamento de retorno / reabertura de conversa
+
+Adicionar bloco "RETOMADA DE CONVERSA":
+- Se a última mensagem da Sofia foi há mais de algumas horas e o lead voltar com saudação ("bom dia", "oi", "boa tarde", "voltei"), ela deve:
+  - cumprimentar de volta pelo nome,
+  - **perguntar novamente no que pode ajudar agora** ("Bom dia, [Nome]! Em que posso te ajudar hoje?"),
+  - **não** reenviar link nem repetir o fluxo do zero.
+- Já existe a regra "NUNCA chame send_booking_link de novo" no encerramento — reforçar e estender para qualquer retomada.
+
+### 4. Fallback de resposta (código)
+
+No bloco `if (!reply) { ... }` (linhas ~651–657), o fallback atual quando já tem nome é pular direto para "quer comprar/vender/alugar". Trocar por uma pergunta mais aberta:
+- "Legal, [Nome]! Me conta, em que posso te ajudar hoje?"
+
+E remover o caminho que infere `bookingKind` automaticamente do "intent vazado" quando o lead **não** pediu agendamento — manter a inferência apenas para `immediateKind` quando há sinal claro de urgência. Isso evita que um vazamento do LLM vire link mandado sem o lead pedir.
+
+### 5. Anti-loop ajustado
+
+A regra atual (linhas 106–110) força `send_booking_link` após 2 perguntas sem resposta clara. Trocar por:
+- Após 2 tentativas sem clareza → encerrar educadamente ("Sem problema, quando precisar é só me chamar de volta!") em vez de mandar link.
+
+## Sem mudanças
+
+- Estrutura das tools (`update_lead_info`, `send_booking_link`, `request_immediate_contact`) permanece.
+- Geração do token e tabela `booking_links` permanecem.
+- Fluxo de `request_immediate_contact` (urgência real) permanece — quando lead pede "agora", ela continua avisando o Hans imediatamente.
+
+## Arquivos afetados
+
+- `supabase/functions/whatsapp-webhook/index.ts` (prompt `AI_SYSTEM` + ajuste no fallback de `reply` + ajuste no bloco de "intent vazado").
+
+Após aprovação, faço a edição e o redeploy da função.
