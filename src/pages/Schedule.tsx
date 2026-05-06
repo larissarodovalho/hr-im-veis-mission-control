@@ -139,8 +139,8 @@ export default function Schedule() {
         local: m.local,
         link: m.link,
         notas: m.notas,
+        lead_id: m.lead_id,
         lead_nome: leadNome,
-        criado_por_ia: m.criado_por_ia,
       };
     });
     const ligsAgendadas: Compromisso[] = ((ligs ?? []) as any[])
