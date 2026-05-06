@@ -158,17 +158,28 @@ export default function LeadDetail() {
 
   const saveMeetingEdit = async () => {
     if (!editingMeeting) return;
-    const tipo = editingMeeting.format === "ligacao" ? "ligacao" : editingMeeting.format === "virtual" ? "virtual" : "presencial";
-    const duracao_min = editingMeeting.format === "ligacao" ? 30 : 60;
-    const { error } = await supabase.from("reunioes").update({
-      agendada_para: new Date(editingMeeting.agendada_para).toISOString(),
-      tipo, duracao_min,
-      local: editingMeeting.format === "virtual" ? null : (editingMeeting.local || null),
-      link: editingMeeting.format === "virtual" ? (editingMeeting.link || null) : null,
-      notas: editingMeeting.notas || null,
-      status: editingMeeting.status,
-    }).eq("id", editingMeeting.id);
-    if (error) return toast.error(error.message);
+    if (editingMeeting.__isLigacao) {
+      const dur = 30;
+      const { error } = await supabase.from("ligacoes").update({
+        data: new Date(editingMeeting.agendada_para).toISOString(),
+        duracao_seg: dur * 60,
+        resultado: editingMeeting.status,
+        notas: editingMeeting.notas || null,
+      }).eq("id", editingMeeting.id);
+      if (error) return toast.error(error.message);
+    } else {
+      const tipo = editingMeeting.format === "ligacao" ? "ligacao" : editingMeeting.format === "virtual" ? "videochamada" : "presencial";
+      const duracao_min = editingMeeting.format === "ligacao" ? 30 : 60;
+      const { error } = await supabase.from("reunioes").update({
+        agendada_para: new Date(editingMeeting.agendada_para).toISOString(),
+        tipo, duracao_min,
+        local: editingMeeting.format === "virtual" ? null : (editingMeeting.local || null),
+        link: editingMeeting.format === "virtual" ? (editingMeeting.link || null) : null,
+        notas: editingMeeting.notas || null,
+        status: editingMeeting.status,
+      }).eq("id", editingMeeting.id);
+      if (error) return toast.error(error.message);
+    }
     setEditingMeeting(null);
     toast.success("Agendamento atualizado");
     load();
