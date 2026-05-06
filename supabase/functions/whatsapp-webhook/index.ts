@@ -618,7 +618,7 @@ Deno.serve(async (req) => {
 
     if (!reply) {
       if (!hasName) {
-        reply = "Olá! Sou a Sofia, da HR Imóveis. Para começar, qual seu nome completo?";
+        reply = "Olá! Sou a Sofia, da HR Imóveis. É um prazer falar com você! Para que eu possa te atender da melhor forma, pode me dizer seu nome e sobrenome?";
       } else if (!hasInterest) {
         reply = `Prazer, ${firstName}! Esse mesmo número de WhatsApp é o melhor para o corretor te chamar, ou prefere outro?`;
       } else if (!immediateKind && !bookingKind && !alreadyNotified && !alreadyBooked) {
