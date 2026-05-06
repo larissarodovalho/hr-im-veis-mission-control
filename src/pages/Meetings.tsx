@@ -24,8 +24,23 @@ export default function Meetings() {
   const [form, setForm] = useState({ lead_id: "none", agendada_para: "", local: "", link: "", notas: "" });
 
   const load = async () => {
-    const { data } = await supabase.from("reunioes").select("*, leads(id,nome)").order("agendada_para");
-    setItems(data ?? []);
+    const { data: meetings, error } = await supabase.from("reunioes").select("*").order("agendada_para");
+    if (error) {
+      toast.error("Não foi possível carregar as reuniões");
+      setItems([]);
+      return;
+    }
+
+    const leadIds = [...new Set((meetings ?? []).map((m) => m.lead_id).filter(Boolean))];
+    const { data: meetingLeads } = leadIds.length
+      ? await supabase.from("leads").select("id,nome").in("id", leadIds)
+      : { data: [] };
+    const leadsById = new Map((meetingLeads ?? []).map((lead) => [lead.id, lead]));
+
+    setItems((meetings ?? []).map((meeting) => ({
+      ...meeting,
+      leads: meeting.lead_id ? leadsById.get(meeting.lead_id) : null,
+    })));
   };
   useEffect(() => {
     load();
