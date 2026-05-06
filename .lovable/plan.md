@@ -1,51 +1,43 @@
-## Problema
+## Objetivo
 
-Quando o lead clica no link `/agendar/:token` **depois** de ter agendado, a página não exibe a confirmação com a data/hora. No domínio publicado (hrimoveis.com) a versão atual mostra apenas "Agendamento já confirmado" genérico — sem dia, horário ou tipo da reunião — o que dá a sensação de "página em branco" pra quem esperava ver o agendamento.
+Garantir que **todos** os agendamentos criados pela Sofia (inclusive os antigos) fiquem visíveis no CRM, e finalizar o fix da página de confirmação.
 
-Causa raiz: `booking-info` retorna apenas `{ used: true, nome, kind, reuniao_id }` quando o link já foi usado. A página `AgendarPage` então renderiza um `Status` genérico, sem buscar a data/hora da reunião/ligação criada.
+## Diagnóstico confirmado
 
-Confirmado no banco: o token `uwHQ4L8Lze66E27Qn30FRTE6_OVpRAw_` está com `used_at = 2026-05-06 15:09:53`, `reuniao_id` preenchido, `kind = presencial`.
+1. **Página em branco no link**: o backend já está corrigido — a edge function `booking-info` retorna `datetime_iso` corretamente (testei). O `AgendarPage.tsx` no repo também já trata isso. O `hrimoveis.com` ainda serve a versão antiga porque **falta clicar em Publish**. Não há mais código a alterar — basta publicar.
 
-## Mudanças
+2. **Reuniões "não aparecendo no CRM"**: as reuniões **estão sendo criadas** corretamente na tabela `reunioes`. O problema é que **2 registros antigos** (gerados antes do fix de corretor padrão) estão com `corretor_id = NULL`, e a RLS `Staff sees reunioes` esconde esses registros para corretores comuns — só admin/gestor enxerga.
 
-### 1) `supabase/functions/booking-info/index.ts`
+   Linhas atuais sem corretor:
+   - `2026-05-07 12:00` — Larissa Rodovalho (lead `4f3a1e56...`)
+   - `2026-05-01 12:00` — Larissa Rodovalho
 
-Quando `link.used_at` existir, buscar o registro correspondente em `reunioes` (kind = `presencial` | `videochamada`) ou `ligacoes` (kind = `ligacao`) usando `link.reuniao_id` e devolver também o horário marcado:
+## Mudança
 
-```ts
-if (link.used_at) {
-  let datetime_iso: string | null = null;
-  if (link.reuniao_id) {
-    if (link.kind === "ligacao") {
-      const { data } = await supabase.from("ligacoes")
-        .select("data").eq("id", link.reuniao_id).maybeSingle();
-      datetime_iso = data?.data ?? null;
-    } else {
-      const { data } = await supabase.from("reunioes")
-        .select("agendada_para").eq("id", link.reuniao_id).maybeSingle();
-      datetime_iso = data?.agendada_para ?? null;
-    }
-  }
-  return Response(... { used: true, nome, kind, reuniao_id, datetime_iso });
-}
+Migration de **backfill** em `supabase/migrations/`:
+
+```sql
+UPDATE public.reunioes
+SET corretor_id = '5e6a90fc-c806-4cd9-8dfe-9067126ece93',
+    created_by  = COALESCE(created_by, '5e6a90fc-c806-4cd9-8dfe-9067126ece93')
+WHERE corretor_id IS NULL
+  AND criado_por_ia = true;
+
+UPDATE public.ligacoes
+SET corretor_id = '5e6a90fc-c806-4cd9-8dfe-9067126ece93',
+    created_by  = COALESCE(created_by, '5e6a90fc-c806-4cd9-8dfe-9067126ece93')
+WHERE corretor_id IS NULL;
 ```
 
-### 2) `src/pages/AgendarPage.tsx`
+(O UUID `5e6a90fc-...` é o admin existente — Hans.)
 
-- Adicionar `datetime_iso` na interface `InfoResponse`.
-- Quando `info.used` e houver `datetime_iso`, renderizar o **mesmo bloco de sucesso** que aparece após a confirmação (ícone, "Tudo certo!", data/hora formatadas, badge do tipo, mensagem de WhatsApp), em vez do `Status` genérico de "já confirmado".
-- Se não vier `datetime_iso` (caso raro, link antigo), manter o fallback atual.
+## Após a migration
 
-### 3) Republish
+- Aba **Reuniões** do CRM passa a listar todos os agendamentos da Sofia, inclusive os antigos.
+- Novos agendamentos via link já vêm com `corretor_id` desde o último deploy do `booking-confirm`.
+- **Você precisa clicar em "Publish"** para o `hrimoveis.com` servir o frontend novo e a tela de confirmação aparecer corretamente para o lead.
 
-A versão atualmente no ar em `hrimoveis.com` é mais antiga que o código no repo (estilo claro vs. tema escuro novo com logo HR). Após as alterações, publicar para atualizar o domínio personalizado.
+## Resultado
 
-## Resultado esperado
-
-Lead clica no link após ter agendado → vê a tela de confirmação com:
-- "Tudo certo!"
-- "Sua reunião presencial com o Hans está marcada para quarta-feira, 13 de maio às 14:00"
-- Badge do tipo (Presencial / Videochamada / Ligação)
-- Aviso de WhatsApp
-
-Mesmo comportamento no fluxo recém-confirmado (já funciona) e em re-acessos posteriores ao link.
+- Link `/agendar/:token` já usado → mostra "Tudo certo! Sua reunião com o Hans está marcada para …" (após publish).
+- CRM → aba Reuniões mostra **todos** os registros, novos e antigos.
