@@ -22,7 +22,7 @@ export default function Dashboard() {
       const since = new Date(); since.setDate(since.getDate() - 30);
       const [l, r, i] = await Promise.all([
         supabase.from("leads").select("id,nome,etapa_funil,origem,ultima_interacao,created_at").order("created_at", { ascending: false }),
-        supabase.from("reunioes").select("id,status,agendada_para"),
+        supabase.from("reunioes").select("id,status,agendada_para,lead_id"),
         supabase.from("interacoes").select("id,tipo,resultado,created_at").gte("created_at", since.toISOString()),
       ]);
       setLeads(l.data ?? []); setReunioes(r.data ?? []); setInteracoes(i.data ?? []);
