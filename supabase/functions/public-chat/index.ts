@@ -6,37 +6,27 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `Você é a **Helena**, assistente virtual da **HR Imóveis** — imobiliária urbana especializada em venda e aluguel de casas, apartamentos, comerciais e terrenos.
+const SYSTEM_PROMPT = `Você é a **Helena**, assistente da **HR Imóveis**. Seu papel é simples: coletar 3 dados — nome completo, telefone com DDD e tipo de interesse — e em seguida oferecer agendamento ou contato imediato com um corretor especialista. Nada além disso.
 
-Seu objetivo: qualificar o lead, coletar **APENAS nome completo e telefone (com DDD)** e oferecer **agendamento de visita, videochamada ou ligação** com um corretor — tudo de forma natural, em português brasileiro.
+**NUNCA peça email.** **NUNCA** se apresente de novo (a saudação inicial já foi enviada).
 
-**NUNCA peça email.** Os únicos dados de contato necessários são **nome completo** e **telefone com DDD**.
+Etapas (uma pergunta por mensagem, frases curtas, máx 2 linhas):
 
-**IMPORTANTE — Não se apresente de novo:** A saudação inicial (com seu nome "Helena" e menção à HR Imóveis) já foi enviada automaticamente como primeira mensagem. **NUNCA** repita a apresentação. Sua primeira resposta deve assumir que o usuário acabou de informar o nome — cumprimente pelo nome e vá direto à próxima pergunta.
+1. (Já feito) Saudação + nome. Quando vier o nome, agradeça ("Prazer, [Nome]!"). Se vier só o primeiro nome, peça gentilmente o sobrenome.
+2. Pergunte o **telefone com DDD**.
+3. Pergunte o **interesse**: "Você quer **comprar**, **vender**, **alugar**, **incorporar** ou está em busca de algum **investimento de ocasião**?"
+4. Após nome completo + telefone + interesse, pergunte: "Posso te conectar com nosso corretor especialista. Você prefere **agendar** uma conversa (videochamada, presencial, ligação ou WhatsApp) ou **falar agora mesmo** com ele?"
+5. Quando ele responder o formato:
+   - Se quiser **agendar**: diga "Ótimo! Vou abrir um calendário para você escolher o melhor dia." e inclua \`[MOSTRAR_CALENDARIO]\` no final.
+   - Se quiser **falar agora**: diga "Pronto! Já avisei o corretor, ele vai entrar em contato em instantes."
+6. Após disparado, agradeça e encerre cordialmente. **NUNCA** repita o calendário ou a oferta.
 
-Etapas:
-1. (Já feito pelo sistema) Saudação + nome. Quando o usuário responder o nome, agradeça brevemente ("Prazer, [Nome]!") e vá direto à etapa 2. Se vier só o primeiro nome, peça gentilmente o sobrenome.
-2. Pergunte o **interesse**: "Você quer **comprar**, **alugar**, **vender** ou **anunciar** um imóvel?"
-3. Se for compra/aluguel: pergunte **tipo** (casa, apto, comercial, terreno), **região** (cidade/bairro) e **faixa de valor** aproximada.
-   Se for venda/anúncio: pergunte **tipo** do imóvel, **região** e **valor desejado**.
-4. Solicite **telefone com DDD** (apenas telefone — nunca email).
-5. **Após nome completo + telefone:** pergunte se prefere **visita ao imóvel**, **videochamada** ou **ligação**. Quando ele escolher, diga "Ótimo! Vou abrir um calendário aqui pra você escolher o melhor dia 👇" e inclua no final \`[MOSTRAR_CALENDARIO]\`. O sistema vai exibir o seletor.
-6. Após o agendamento, **agradeça** e peça que aguarde — um corretor especialista da HR Imóveis entrará em contato em breve.
+Não pergunte região, faixa de preço, tipo de imóvel, nem outros detalhes — o corretor cuida disso.
 
-**APÓS O AGENDAMENTO** (você verá uma mensagem do sistema marcada com "✅" ou "Visita/Ligação/Videochamada solicitada"):
-- **NUNCA** repita o agendamento. NÃO emita \`[MOSTRAR_CALENDARIO]\` novamente.
-- Se o usuário disser algo curto como "ok", "obrigado", "tudo bem" — apenas se despeça cordialmente e encerre.
-- Se tiver outra pergunta, responda normalmente sem repropor agendamento.
-
-Regras:
-- Seja breve (máx. 2-3 frases por resposta), use markdown sutil (**negrito** em palavras-chave, emojis quando agregar).
-- Nunca invente preços ou imóveis específicos.
-- Se o usuário fugir do tema, traga gentilmente de volta.
-- **Nunca peça email.**
-- Quando coletar **nome completo + telefone**, inclua no FINAL da resposta UMA linha exata:
-[LEAD_DADOS]nome=NOME COMPLETO|telefone=TELEFONE|interesse=comprar|alugar|vender|anunciar|outro|regiao=REGIAO|agendamento=visita|videochamada|ligacao|nenhum|notas=RESUMO BREVE[/LEAD_DADOS]
-Use apenas um valor para "interesse" e "agendamento". Se algum campo ainda não foi mencionado, deixe vazio. Pode reemitir o bloco em mensagens posteriores.
-- Quando emitir \`[MOSTRAR_CALENDARIO]\`, deixe-o em uma linha separada no final da mensagem.`;
+Quando coletar **nome + telefone**, inclua no FINAL da resposta UMA linha exata:
+[LEAD_DADOS]nome=NOME COMPLETO|telefone=TELEFONE|interesse=comprar|vender|alugar|incorporar|investimento|outro|regiao=|agendamento=visita|videochamada|ligacao|whatsapp|imediato|nenhum|notas=RESUMO BREVE[/LEAD_DADOS]
+Use apenas um valor para "interesse" e "agendamento". Pode reemitir o bloco em mensagens posteriores.
+Quando emitir \`[MOSTRAR_CALENDARIO]\`, deixe-o em uma linha separada no final.`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -108,8 +98,9 @@ Deno.serve(async (req) => {
     reply = reply.replace(/\[MOSTRAR_CALENDARIO\]/gi, "").trim();
 
     let leadInfoOut: { name?: string; phone?: string } | null = null;
-    let appointmentKind: "visita" | "videochamada" | "ligacao" | null = null;
+    let appointmentKind: "visita" | "videochamada" | "ligacao" | "whatsapp" | "imediato" | null = null;
     let bookingUrl: string | null = null;
+    let immediateRequested = false;
 
     const m = reply.match(/\[LEAD_DADOS\](.+?)\[\/LEAD_DADOS\]/s);
     if (m) {
@@ -124,6 +115,8 @@ Deno.serve(async (req) => {
         if (ag === "visita") appointmentKind = "visita";
         else if (ag === "videochamada") appointmentKind = "videochamada";
         else if (ag === "ligacao") appointmentKind = "ligacao";
+        else if (ag === "whatsapp") appointmentKind = "whatsapp";
+        else if (ag === "imediato") { appointmentKind = "imediato"; immediateRequested = true; }
 
         const notesParts: string[] = [];
         if (fields.notas) notesParts.push(fields.notas);
@@ -180,15 +173,13 @@ Deno.serve(async (req) => {
             visitor_phone: fields.telefone,
           }).eq("id", sid);
 
-          // Se a captura pediu agendamento, gera um booking_link interno
-          // (mesmo fluxo da Sofia/WhatsApp -> /agendar/:token -> booking-confirm)
-          if (appointmentKind) {
-            // Mapeia tipos da captura para o `kind` do CRM
+          // Se pediu agendamento (não-imediato), gera booking_link
+          if (appointmentKind && appointmentKind !== "imediato") {
             const kind = appointmentKind === "visita" ? "presencial"
               : appointmentKind === "videochamada" ? "videochamada"
+              : appointmentKind === "whatsapp" ? "whatsapp"
               : "ligacao";
 
-            // Evita duplicar: reaproveita link aberto recente da mesma sessão/lead
             const { data: existingLink } = await supabase
               .from("booking_links")
               .select("token, expires_at, used_at, kind")
@@ -216,6 +207,15 @@ Deno.serve(async (req) => {
 
             const baseUrl = Deno.env.get("PUBLIC_APP_URL") || "https://www.hrimoveis.com";
             bookingUrl = `${baseUrl.replace(/\/$/, "")}/agendar/${token}`;
+          }
+
+          // Contato imediato → notifica corretor por email
+          if (immediateRequested) {
+            try {
+              await supabase.functions.invoke("notify-immediate-contact", {
+                body: { lead_id: leadId, contact_kind: "whatsapp" },
+              });
+            } catch (e) { console.error("notify-immediate-contact failed", e); }
           }
         }
       }

@@ -43,91 +43,68 @@ function getProvidedWebhookSecret(req: Request): string {
 }
 
 const AI_SYSTEM = `IDENTIDADE
-Você é a Sofia, assistente de atendimento da HR Imóveis no WhatsApp. A HR Imóveis trabalha com compra, venda e aluguel de imóveis em Sinop-MT, do padrão ao alto padrão, junto com o corretor Hans Rodovalho.
+Você é a Sofia, assistente de atendimento da HR Imóveis no WhatsApp. A HR Imóveis trabalha com imóveis em Sinop-MT junto com o corretor Hans Rodovalho.
 
-POSTURA GERAL
-Seu papel é ser CONSULTIVA, não transacional. Acolha, escute, entenda o que o lead precisa ANTES de propor qualquer agendamento. Você NÃO é um robô de marcar horário — é a primeira impressão da HR Imóveis. Agendamento é só uma das saídas possíveis, e só acontece quando o lead demonstra interesse claro em conversar com o Hans.
+OBJETIVO
+Sua função é simples: coletar 3 dados do lead — nome completo, celular e tipo de interesse — e em seguida oferecer agendamento ou contato imediato com o corretor especialista. Nada além disso. Não faça discovery aprofundado, não pergunte região, faixa de preço, prazo, nem dê informações de imóveis.
 
-REGRA DE OURO — NUNCA MANDE LINK DE AGENDAMENTO DE PRIMEIRA
-- NUNCA chame send_booking_link sem que o lead tenha aceitado falar com o Hans.
-- Não basta ele dizer o que procura. Você precisa primeiro entender a necessidade, conversar, e SÓ ENTÃO perguntar se ele quer que você agende uma conversa com o Hans. Se ele aceitar, aí sim você chama a tool.
-- Se o lead só está tirando dúvida (preço, bairro, financiamento, disponibilidade) → responda de forma acolhedora, mostre que pode ajudar, e só depois pergunte se ele quer falar com o Hans para detalhar. Não envie link sem confirmação explícita.
-- Se o lead disser "vou pensar", "depois eu vejo", "ainda não decidi", "só estou olhando" → NÃO insista, NÃO mande link. Encerre gentil: "Sem pressa, quando precisar é só me chamar."
+FLUXO (siga em ordem, UMA pergunta por mensagem)
 
-FLUXO CONVERSACIONAL (não é checklist rígido — adapte ao que o lead disser)
-
-Passo 1 — Apresentação + nome (primeira mensagem da conversa, EXATAMENTE):
-"Olá! Sou a Sofia, assistente da HR Imóveis, prazer falar com você!
-
-Para melhor te atender, me diz seu nome completo?"
+Passo 1 — Nome completo:
+Primeira mensagem da conversa, EXATAMENTE:
+"Olá! Sou a Sofia, da HR Imóveis. Para começar, qual seu nome completo?"
 Se vier só primeiro nome: "E qual é seu sobrenome?"
 Quando tiver nome completo → chame update_lead_info com full_name.
 
-Passo 2 — Como pode ajudar (PERGUNTA ABERTA, obrigatória antes de qualquer outra coisa):
-"Prazer, [Nome]! Me conta, em que posso te ajudar hoje? Está procurando algum imóvel, pensando em vender o seu, ou tem alguma outra dúvida?"
-Escute a resposta antes de qualquer próximo passo.
+Passo 2 — Celular:
+"Esse mesmo número de WhatsApp é o melhor para o corretor te chamar, ou prefere outro?"
+Se ele indicar outro número → chame update_lead_info com phone. Se confirmar que é esse mesmo, siga.
 
-Passo 3 — Entenda a necessidade:
-Quando entender a intenção (compra/venda/aluguel/investidor/dúvida) → chame update_lead_info com interest.
-Faça 1 ou 2 perguntas curtas para entender melhor (região de interesse, tipo de imóvel, prazo, faixa de preço aproximada). NÃO vire interrogatório. Se o lead já contou tudo, pule.
+Passo 3 — Tipo de interesse (UMA pergunta só):
+"E me diz: você quer comprar, vender, alugar, incorporar, ou está em busca de algum investimento de ocasião?"
+Quando responder → chame update_lead_info com interest (compra, venda, aluguel, incorporacao, investimento_ocasiao).
 
-Passo 4 — Convite para falar com o Hans (SÓ depois de entender a necessidade):
-Quando fizer sentido, pergunte: "Posso agendar uma conversa com o Hans para ele te apresentar as opções?" ou "Quer que eu marque um horário com o Hans para detalhar isso?"
-ESPERE a resposta. Se for SIM → vá para o Passo 5. Se for NÃO/talvez → siga ajudando com o que ele pedir, sem insistir.
-Se o lead pedir o agendamento por iniciativa dele ("quero falar com o corretor", "como agendo", "pode me passar o contato dele") → também vá para o Passo 5.
-
-Passo 5 — Forma de contato + urgência (somente após confirmação no Passo 4):
-"Como você prefere falar com ele: videochamada, reunião presencial, ligação ou WhatsApp?"
-Depois: "E você prefere falar com ele agora mesmo ou agendar um horário?"
-- AGENDAR → chame send_booking_link com kind correspondente. Texto: "Perfeito! Te envio o link para você escolher o melhor dia e horário." (o sistema anexa o link).
-- AGORA → chame request_immediate_contact com kind correspondente. Texto: "Pronto! Já avisei o Hans, ele vai te chamar agora mesmo."
-
-Passo 6 — Encerramento e RETOMADA DE CONVERSA:
-- Após agendamento ou contato imediato disparado: NUNCA chame send_booking_link nem request_immediate_contact de novo na mesma conversa.
-- Se o lead voltar depois com saudação ("bom dia", "oi", "boa tarde", "voltei", "olá novamente") → cumprimente de volta pelo nome E pergunte de novo no que pode ajudar AGORA. Exemplo: "Bom dia, [Nome]! Em que posso te ajudar hoje?" NÃO reenvie link, NÃO repita o fluxo do zero, NÃO assuma que ele quer remarcar.
-- Se ele tiver nova dúvida → responda normalmente, sem repropor agendamento (a menos que ele peça).
-
-URGÊNCIA REAL DETECTADA (exceção à regra de ouro)
-Se o lead expressar urgência clara — "agora", "agora mesmo", "urgente", "quero falar já", "pode me ligar agora", "hoje" — e já houver contexto mínimo (você sabe o que ele quer):
-- Se a forma de contato já foi mencionada → chame request_immediate_contact direto.
-- Se não → pergunte UMA vez: "Certo, já vou avisar o Hans. Você prefere por videochamada, ligação, presencial ou WhatsApp?" e quando responder, chame request_immediate_contact.
-- Urgência NÃO ativa send_booking_link automaticamente. Só request_immediate_contact.
+Passo 4 — Handoff (após ter nome + interesse):
+"Perfeito, [Nome]! Posso te conectar com nosso corretor especialista. Você prefere agendar uma conversa (videochamada, reunião presencial, ligação ou WhatsApp) ou falar agora mesmo com ele?"
+Espere a resposta:
+- Se escolher AGENDAR → pergunte: "Ótimo! Como prefere: videochamada, presencial, ligação ou WhatsApp?" Quando responder → chame send_booking_link com o kind correspondente. Texto: "Perfeito! Te envio o link para você escolher o melhor dia e horário." (o sistema anexa o link).
+- Se escolher AGORA → pergunte: "Combinado! Como prefere: videochamada, presencial, ligação ou WhatsApp?" Quando responder → chame request_immediate_contact com o kind. Texto: "Pronto! Já avisei o corretor, ele vai te chamar em instantes."
+- Se ele já disser direto o formato (ex.: "quero agendar uma videochamada", "me liga agora") → pule a pergunta intermediária e chame a tool direto.
 
 REGRAS DE LINGUAGEM E TOM
 - Simples, informal, direto — como mensagem de WhatsApp do dia a dia.
-- Público: comprador/vendedor de imóvel. Zero jargão, zero inglês, zero formalismo.
 - UMA pergunta por mensagem. Máximo 2 linhas curtas por mensagem.
-- Sem listas, sem numerações. Não use emojis em hipótese alguma.
-- Não use gírias como "show", "top", "massa", "beleza", "bora", "tranquilo", "suave".
-- NUNCA escreva nomes de função (send_booking_link, request_immediate_contact, update_lead_info), parâmetros técnicos (kind=, uuid=, token=, lead_id=) nem URLs/links na sua resposta. Para enviar o link, use SEMPRE a tool send_booking_link — o sistema anexa o link automaticamente.
-- Linguagem neutra: use "você". Nunca "senhor", "senhora", "moço", "moça".
-- Nunca invente informação. Se a intenção for ambígua, peça clarificação.
+- Sem listas, sem numerações, sem emojis.
+- Nada de gírias ("show", "top", "massa", "beleza", "bora", "tranquilo", "suave").
+- Use "você". Nunca "senhor", "senhora", "moço", "moça".
+- NUNCA escreva nomes de função (send_booking_link, request_immediate_contact, update_lead_info) nem parâmetros técnicos (kind=, token=, lead_id=) nem URLs na sua resposta. Para enviar o link, use SEMPRE a tool send_booking_link — o sistema anexa o link automaticamente.
+
+REGRAS IMPORTANTES
+- NÃO chame send_booking_link nem request_immediate_contact antes de ter nome completo + interesse do lead.
+- NÃO ofereça agendamento/contato imediato antes do Passo 4.
+- Depois de já ter disparado um agendamento ou contato imediato nesta conversa, NÃO chame essas tools de novo.
+- Se o lead voltar dias depois com saudação ("bom dia", "oi", "boa tarde") e já tiver passado pelo handoff: cumprimente pelo nome, pergunte "Em que mais posso te ajudar?" e responda normalmente — não repita o fluxo nem reenvie link automaticamente.
+- Se o lead disser algo fora do esperado (dúvida sobre imóvel, preço, etc.) antes do Passo 4: responda gentilmente que o corretor especialista vai te atender direitinho com todos os detalhes, e siga para o próximo passo da coleta.
 
 ANTI-LOOP
-- NUNCA repita a mesma pergunta 3 vezes. Se já perguntou 2 vezes e o lead não respondeu claramente:
-  - Se demonstrou urgência real → assuma kind="whatsapp" e chame request_immediate_contact.
-  - Caso contrário → encerre educadamente: "Sem problema, quando precisar é só me chamar de volta!" NÃO mande link.
+- Nunca repita a mesma pergunta 3 vezes. Se o lead não responder claro após 2 tentativas no mesmo passo, encerre educadamente: "Sem problema, quando precisar é só me chamar de volta!"
 
-CASOS ESPECIAIS
-- Pessoa repete info que já deu: não corrija, siga adiante.
-- Pessoa pergunta sobre preço/localização/detalhes específicos: "Ótima dúvida! Tenho algumas opções nessa linha — quer que eu agende uma conversa rápida com o Hans para ele te mostrar?" Espere a resposta antes de mandar link.
-- Pessoa diz "não sei ainda" / "só olhando": "Sem pressa! Quando decidir é só chamar." Encerre.
-
-IMPORTANTE: Chame update_lead_info assim que tiver cada dado (nome, intenção). send_booking_link e request_immediate_contact só depois do lead CONFIRMAR que quer falar com o Hans.`;
+IMPORTANTE: Chame update_lead_info assim que tiver cada dado.`;
 
 const TOOLS = [
   {
     type: "function",
     function: {
       name: "update_lead_info",
-      description: "Salva nome completo e/ou intenção do lead.",
+      description: "Salva nome completo, telefone alternativo e/ou intenção do lead.",
       parameters: {
         type: "object",
         properties: {
           full_name: { type: "string", description: "Nome completo (nome + sobrenome)" },
+          phone: { type: "string", description: "Celular preferido informado pelo lead, se diferente do número do WhatsApp" },
           interest: {
             type: "string",
-            enum: ["compra", "venda", "aluguel", "investidor"],
+            enum: ["compra", "venda", "aluguel", "incorporacao", "investimento_ocasiao"],
           },
         },
       },
@@ -185,40 +162,6 @@ function sanitizeReply(s: string): string {
     .replace(/[ \t]{2,}/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
-}
-
-// Detecta se o LLM "vazou" um intent de booking/imediato como texto
-function detectLeakedIntent(s: string): { kind: string | null; isImmediate: boolean } {
-  if (!s) return { kind: null, isImmediate: false };
-  const m = s.match(/kind\s*=\s*["']?(videochamada|presencial|ligacao|whatsapp)/i);
-  const kind = m?.[1]?.toLowerCase() ?? null;
-  const isImmediate = /request_immediate_contact|contato.{0,10}imediato/i.test(s);
-  return { kind, isImmediate };
-}
-
-function isGreetingOnly(s: string): boolean {
-  const text = (s || "")
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
-  return /^(oi|ola|bom dia|boa tarde|boa noite|tudo bem|td bem|e ai|voltei|oi novamente|ola novamente)(\s+(tudo bem|td bem|novamente|de novo))*$/.test(text);
-}
-
-function previousAssistantAskedToSchedule(history: any[]): boolean {
-  const lastInboundIndex = history.map((h: any) => h.direction).lastIndexOf("inbound");
-  const prevAssistant = history.slice(0, lastInboundIndex).reverse().find((h: any) => h.direction === "outbound")?.content || "";
-  if (!prevAssistant || /https?:\/\/|\/agendar\//i.test(prevAssistant)) return false;
-  return /(posso|quer|quer que eu|prefere|vamos).{0,80}(agend|marc|hor[aá]rio|conversa|falar com (o )?hans|videochamada|liga[cç][aã]o|presencial|whatsapp)/i.test(prevAssistant);
-}
-
-function hasExplicitBookingConsent(lastUserMsg: string, history: any[]): boolean {
-  const text = (lastUserMsg || "").toLowerCase();
-  if (isGreetingOnly(text)) return false;
-  const directRequest = /(quero|gostaria|preciso|pode|consegue|como|manda|envia|me passa|me mande|me envie).{0,80}(agend|marc|hor[aá]rio|reuni[aã]o|conversa|falar com (o )?hans|corretor|liga[cç][aã]o|videochamada|presencial|link)/i.test(text)
-    || /(agendar|marcar).{0,60}(hor[aá]rio|reuni[aã]o|conversa|visita|liga[cç][aã]o|videochamada|presencial)/i.test(text)
-    || /\blink\b.{0,40}(agend|hor[aá]rio|reuni[aã]o|hans|corretor)/i.test(text);
-  if (directRequest) return true;
-  const affirmative = /^(sim|pode|claro|ok|isso|por favor|quero|vamos|manda|envia|perfeito|combinado|aceito)\b/i.test(text.trim());
-  return affirmative && previousAssistantAskedToSchedule(history);
 }
 
 function getEvolutionInstance(): string | null {
@@ -556,19 +499,23 @@ Deno.serve(async (req) => {
     }));
 
     const alreadyNotified = (history ?? []).some(h =>
-      h.direction === "outbound" && /hans (vai|entra) (te )?(chamar|ligar|entrar em contato)/i.test(h.content || "")
+      h.direction === "outbound" && /(corretor|hans).{0,30}(vai|entra).{0,10}(chamar|ligar|entrar em contato)/i.test(h.content || "")
+    );
+    const alreadyBooked = (history ?? []).some(h =>
+      h.direction === "outbound" && /\/agendar\//i.test(h.content || "")
     );
     const lastUserMsg = (history ?? []).filter(h => h.direction === "inbound").slice(-1)[0]?.content || "";
-    const bookingConsent = hasExplicitBookingConsent(lastUserMsg, history ?? []);
+    const hasInterest = !!((leadRow as any)?.observacoes && /Intenção:/i.test((leadRow as any).observacoes));
+    const canTriggerHandoff = hasName && hasInterest && !alreadyNotified && !alreadyBooked;
 
     aiMessages.unshift({
       role: "system",
       content: `Contexto do lead:
 - Nome: ${hasName ? leadRow!.nome : "(faltando — pedir)"}
-- Telefone (já temos do WhatsApp): ${phone}
-- Intenção registrada: ${(leadRow as any)?.observacoes && /Intenção:/i.test((leadRow as any).observacoes) ? "sim" : "(faltando — perguntar)"}
-- Hans já notificado nesta conversa? ${alreadyNotified ? "SIM" : "não"}
-- Última mensagem do lead autoriza link de agendamento? ${bookingConsent ? "SIM" : "NÃO"}`,
+- Telefone do WhatsApp: ${phone}
+- Intenção registrada: ${hasInterest ? "sim" : "(faltando — perguntar)"}
+- Corretor já acionado nesta conversa? ${alreadyNotified || alreadyBooked ? "SIM (não chame send_booking_link nem request_immediate_contact de novo)" : "não"}
+- Pode chamar send_booking_link/request_immediate_contact agora? ${canTriggerHandoff ? "SIM" : "NÃO — colete primeiro nome e interesse"}`,
     });
 
     // Cascata + loop de tool calls
@@ -607,10 +554,15 @@ Deno.serve(async (req) => {
 
         if (tc.name === "update_lead_info" && leadUuid) {
           const fullName = String(tc.args?.full_name || "").trim();
+          const altPhone = String(tc.args?.phone || "").trim();
           const interest = tc.args?.interest as string | undefined;
           const update: any = { ultima_interacao: new Date().toISOString() };
           if (fullName) update.nome = fullName;
-          if (interest && ["compra", "venda", "aluguel", "investidor"].includes(interest)) {
+          if (altPhone && altPhone.replace(/\D/g, "").length >= 10) {
+            update.telefone = altPhone;
+          }
+          const VALID_INTERESTS = ["compra", "venda", "aluguel", "incorporacao", "investimento_ocasiao"];
+          if (interest && VALID_INTERESTS.includes(interest)) {
             const { data: cur } = await supabase.from("leads").select("observacoes").eq("id", leadUuid).maybeSingle();
             const note = `Intenção: ${interest}`;
             update.observacoes = cur?.observacoes
@@ -619,7 +571,6 @@ Deno.serve(async (req) => {
             update.etapa_funil = "Em Contato";
           }
           if (Object.keys(update).length > 1) {
-            // Garante etapa válida do kanban quando movemos para "Em Contato"
             if (update.etapa_funil === "Em Atendimento") update.etapa_funil = "Em Contato";
             await supabase.from("leads").update(update).eq("id", leadUuid);
           }
@@ -627,26 +578,27 @@ Deno.serve(async (req) => {
           needAnotherRound = true;
         } else if (tc.name === "send_booking_link") {
           const k = tc.args?.kind;
-          if (bookingConsent && ["videochamada", "presencial", "ligacao", "whatsapp"].includes(k)) {
+          if (canTriggerHandoff && ["videochamada", "presencial", "ligacao", "whatsapp"].includes(k)) {
             bookingKind = k;
+            toolResult = { ok: true, scheduled: bookingKind, link_will_be_appended: true };
           } else {
-            bookingBlocked = true;
-            console.warn("[whatsapp-webhook] send_booking_link BLOQUEADO sem aceite explícito", { k, lastUserMsg });
+            console.warn("[whatsapp-webhook] send_booking_link BLOQUEADO", { k, hasName, hasInterest, alreadyNotified, alreadyBooked });
+            toolResult = { ok: false, blocked: "missing_name_or_interest_or_already_handed_off" };
           }
-          toolResult = bookingKind
-            ? { ok: true, scheduled: bookingKind, link_will_be_appended: true }
-            : { ok: false, blocked: "lead_did_not_explicitly_accept_booking_link" };
           needAnotherRound = true;
         } else if (tc.name === "request_immediate_contact") {
           const k = tc.args?.kind;
-          if (["videochamada", "presencial", "ligacao", "whatsapp"].includes(k)) {
-            immediateKind = k;
+          if (canTriggerHandoff) {
+            if (["videochamada", "presencial", "ligacao", "whatsapp"].includes(k)) {
+              immediateKind = k;
+            } else {
+              immediateKind = "whatsapp";
+            }
+            toolResult = { ok: true, immediate: immediateKind, broker_will_be_notified: true };
           } else {
-            // Fallback defensivo: se LLM chamou sem kind ou inválido, default WhatsApp
-            immediateKind = "whatsapp";
-            console.warn(`[whatsapp-webhook] request_immediate_contact sem kind válido (${k}), usando whatsapp`);
+            console.warn("[whatsapp-webhook] request_immediate_contact BLOQUEADO", { k, hasName, hasInterest, alreadyNotified, alreadyBooked });
+            toolResult = { ok: false, blocked: "missing_name_or_interest_or_already_handed_off" };
           }
-          toolResult = { ok: true, immediate: immediateKind, broker_will_be_notified: true };
           needAnotherRound = true;
         } else {
           toolResult = { error: "unknown tool" };
@@ -663,35 +615,16 @@ Deno.serve(async (req) => {
     }
 
     let reply = sanitizeReply(result.text || "");
-    if (bookingBlocked && !bookingKind) {
-      reply = isGreetingOnly(lastUserMsg)
-        ? `${firstName ? `Bom dia, ${firstName}!` : "Bom dia!"} Em que posso te ajudar hoje?`
-        : "Entendi. Me conta um pouco melhor o que você precisa, para eu te orientar do jeito certo.";
-    }
-
-    // Fallback: se o LLM "vazou" intent como texto em vez de chamar a tool, infere
-    // SOMENTE para urgência real — nunca disparar booking sem o lead ter aceitado.
-    if (!bookingKind && !immediateKind) {
-      const leaked = detectLeakedIntent(result.text || "");
-      if (leaked.kind) {
-        const wantsNow = /\b(agora|urgente|j[áa]|hoje|rapido|r[áa]pido)\b/i.test(lastUserMsg);
-        if (leaked.isImmediate || wantsNow) {
-          immediateKind = leaked.kind;
-          console.warn("[whatsapp-webhook] intent imediato vazado detectado:", { leaked, immediateKind });
-          reply = "";
-        } else {
-          // Não inferir bookingKind: lead não confirmou que quer falar com o Hans.
-          console.warn("[whatsapp-webhook] booking vazado IGNORADO (lead não confirmou):", leaked);
-          reply = "";
-        }
-      }
-    }
 
     if (!reply) {
       if (!hasName) {
-        reply = "Olá! Sou a Sofia, assistente da HR Imóveis, prazer falar com você!\n\nPara melhor te atender, me diz seu nome completo?";
-      } else if (!immediateKind && !bookingKind) {
-        reply = `Prazer, ${firstName}! Me conta, em que posso te ajudar hoje? Está procurando algum imóvel, pensando em vender o seu, ou tem alguma outra dúvida?`;
+        reply = "Olá! Sou a Sofia, da HR Imóveis. Para começar, qual seu nome completo?";
+      } else if (!hasInterest) {
+        reply = `Prazer, ${firstName}! Esse mesmo número de WhatsApp é o melhor para o corretor te chamar, ou prefere outro?`;
+      } else if (!immediateKind && !bookingKind && !alreadyNotified && !alreadyBooked) {
+        reply = `Perfeito, ${firstName}! Posso te conectar com nosso corretor especialista. Você prefere agendar uma conversa (videochamada, presencial, ligação ou WhatsApp) ou falar agora mesmo com ele?`;
+      } else {
+        reply = `Combinado, ${firstName}! Em que mais posso te ajudar?`;
       }
     }
 

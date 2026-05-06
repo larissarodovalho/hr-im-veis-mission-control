@@ -1,68 +1,45 @@
-# Ajuste do comportamento da Sofia (WhatsApp)
+## Sofia simplificada — captação + handoff com agendamento/contato imediato
 
-## Problema observado
+### Novo fluxo (4 passos)
 
-Hoje a Sofia segue um fluxo rígido (nome → intenção → forma de contato → urgência → **dispara link de agendamento**). Isso faz ela despejar o link de agendar logo nas primeiras mensagens, mesmo quando o lead só queria tirar uma dúvida ou ainda não pediu para falar com o Hans.
+1. **Nome completo** — "Olá! Sou a Sofia, da HR Imóveis. Para começar, qual seu nome completo?" Se vier só primeiro nome, pede sobrenome. Salva via `update_lead_info`.
 
-Além disso, quando o lead volta dias depois ("bom dia", "oi de novo"), ela não cumprimenta de novo nem pergunta o que ele precisa — ou pior, pode tentar mandar o link mais uma vez.
+2. **Celular** — "Esse mesmo número de WhatsApp é o melhor para o corretor te chamar, ou prefere outro?" Salva (se diferente). No fluxo da página de captura, pergunta o celular diretamente.
 
-## Objetivo
+3. **Tipo de interesse** — UMA pergunta:
+   "O que você procura: comprar, vender, alugar, incorporar, ou um investimento de ocasião?"
+   Salva como `interest` (enum: `compra`, `venda`, `aluguel`, `incorporacao`, `investimento_ocasiao`).
 
-A Sofia deve:
-1. Acolher e **descobrir o que o lead quer** antes de propor agendamento.
-2. **Só oferecer agendamento quando o lead demonstrar interesse claro** em falar com o Hans (ou quando ela já tiver entendido a necessidade e fizer sentido propor).
-3. Em retornos do lead ("bom dia novamente", "oi", "tudo bem?") → cumprimentar de volta e **perguntar de novo no que pode ajudar**, sem repetir agendamento.
+4. **Handoff com escolha** — Após coletar os 3 dados:
+   "Perfeito, [Nome]! Agora me diz: você prefere **agendar** uma conversa com nosso corretor especialista (videochamada, reunião presencial, ligação ou WhatsApp) ou **falar agora mesmo**?"
+   - Se escolher AGENDAR → pergunta o formato (vídeo / presencial / ligação / WhatsApp) → chama `send_booking_link` com o `kind` correspondente. Sistema anexa o link automaticamente.
+   - Se escolher AGORA → pergunta o formato → chama `request_immediate_contact` com o `kind`. Texto: "Pronto! Já avisei o corretor, ele vai te chamar em instantes."
 
-## Alterações
+Sem perguntas extras de região, faixa, prazo, etc. Sem discovery aprofundado.
 
-### 1. `supabase/functions/whatsapp-webhook/index.ts` — Prompt da Sofia (`AI_SYSTEM`)
+### Alterações em `supabase/functions/whatsapp-webhook/index.ts`
 
-Reescrever o fluxo para ser **consultivo**, não transacional:
+1. **Reescrever `AI_SYSTEM`** com os 4 passos acima. Remover o discovery longo, "REGRA DE OURO" anti-link, urgência inferida, etc. Manter:
+   - Tom (informal, sem emojis, sem gírias, uma pergunta por mensagem).
+   - Retomada: se o lead voltar depois com saudação, cumprimentar e perguntar em que ajudar — sem reenviar link automaticamente.
+   - Anti-loop simples: se já agendou ou disparou contato imediato, não chamar as tools de novo.
 
-- **Passo 1**: apresentação + nome (mantém).
-- **Passo 2 (NOVO)**: perguntar **como pode ajudar** / o que ele procura (ex.: "Me conta, em que posso te ajudar hoje? Está procurando algum imóvel, quer vender o seu, ou tem outra dúvida?"). Coletar contexto antes de qualquer agendamento.
-- **Passo 3**: aprofundar a necessidade (região, tipo de imóvel, faixa, prazo) com 1–2 perguntas curtas — sem virar interrogatório.
-- **Passo 4 (gatilho de agendamento)**: só propor falar com o Hans quando:
-  - o lead pedir explicitamente ("quero falar com o corretor", "como agendo", "pode me ligar"), **ou**
-  - já houver contexto suficiente e ela perguntar primeiro: *"Quer que eu agende uma conversa com o Hans pra detalhar isso?"* — e o lead **aceitar**.
-- **Passo 5**: aí sim perguntar forma de contato (videochamada/presencial/ligação/WhatsApp) + urgência → chamar `send_booking_link` ou `request_immediate_contact`.
+2. **Atualizar `update_lead_info`**: aceitar `full_name`, `phone` (opcional), `interest` com enum expandido (`compra`, `venda`, `aluguel`, `incorporacao`, `investimento_ocasiao`).
 
-### 2. Regras anti-link-precoce (novas, no prompt)
+3. **Manter** `send_booking_link` e `request_immediate_contact` (com `kind`: videochamada/presencial/ligacao/whatsapp). Só podem ser chamadas após os 3 dados coletados — controlar por instrução no prompt + checagem leve no servidor (se faltar nome ou interesse, ignorar a tool e voltar à pergunta pendente).
 
-Adicionar regras explícitas:
-- **NUNCA** chamar `send_booking_link` antes de o lead confirmar que quer falar com o Hans.
-- Se o lead só fez pergunta informativa (preço, bairro, financiamento) → responder de forma acolhedora ("Ótima dúvida, o Hans tem várias opções nessa região…") e **só então** perguntar se ele quer que agende uma conversa. Não mandar link sem confirmação.
-- Se o lead disse "depois eu vejo", "vou pensar", "ainda não decidi" → **não** insistir, **não** mandar link. Encerrar gentil.
+4. **Remover** as guard rails antigas (`hasExplicitBookingConsent`, `isGreetingOnly`, "intent vazado") — substituir por: só permite tools depois de ter `full_name` + `interest` no lead.
 
-### 3. Tratamento de retorno / reabertura de conversa
+### Alterações em `supabase/functions/public-chat/index.ts`
+Mesmo prompt e tools, adaptado para a página de captura (pede o celular explicitamente já que não vem do WhatsApp).
 
-Adicionar bloco "RETOMADA DE CONVERSA":
-- Se a última mensagem da Sofia foi há mais de algumas horas e o lead voltar com saudação ("bom dia", "oi", "boa tarde", "voltei"), ela deve:
-  - cumprimentar de volta pelo nome,
-  - **perguntar novamente no que pode ajudar agora** ("Bom dia, [Nome]! Em que posso te ajudar hoje?"),
-  - **não** reenviar link nem repetir o fluxo do zero.
-- Já existe a regra "NUNCA chame send_booking_link de novo" no encerramento — reforçar e estender para qualquer retomada.
+### `src/pages/CapturaPage.tsx`
+Mantém o botão "Escolher horário" (`bookingUrl`) — agora será usado de novo.
 
-### 4. Fallback de resposta (código)
+### Sem mudanças
+- Schema do banco (não precisa migração; `interest` é texto).
+- `booking-confirm`, `booking-info`, geração de token de agendamento.
+- `notify-immediate-contact` (continua disparando email ao Hans no contato imediato).
 
-No bloco `if (!reply) { ... }` (linhas ~651–657), o fallback atual quando já tem nome é pular direto para "quer comprar/vender/alugar". Trocar por uma pergunta mais aberta:
-- "Legal, [Nome]! Me conta, em que posso te ajudar hoje?"
-
-E remover o caminho que infere `bookingKind` automaticamente do "intent vazado" quando o lead **não** pediu agendamento — manter a inferência apenas para `immediateKind` quando há sinal claro de urgência. Isso evita que um vazamento do LLM vire link mandado sem o lead pedir.
-
-### 5. Anti-loop ajustado
-
-A regra atual (linhas 106–110) força `send_booking_link` após 2 perguntas sem resposta clara. Trocar por:
-- Após 2 tentativas sem clareza → encerrar educadamente ("Sem problema, quando precisar é só me chamar de volta!") em vez de mandar link.
-
-## Sem mudanças
-
-- Estrutura das tools (`update_lead_info`, `send_booking_link`, `request_immediate_contact`) permanece.
-- Geração do token e tabela `booking_links` permanecem.
-- Fluxo de `request_immediate_contact` (urgência real) permanece — quando lead pede "agora", ela continua avisando o Hans imediatamente.
-
-## Arquivos afetados
-
-- `supabase/functions/whatsapp-webhook/index.ts` (prompt `AI_SYSTEM` + ajuste no fallback de `reply` + ajuste no bloco de "intent vazado").
-
-Após aprovação, faço a edição e o redeploy da função.
+### Deploy
+Redeploy `whatsapp-webhook` e `public-chat`.
