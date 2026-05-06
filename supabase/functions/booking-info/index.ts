@@ -104,7 +104,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const dur = durationMin(link.kind);
+    const allowedKinds = ["videochamada", "presencial", "ligacao"];
+    const effectiveKind = allowedKinds.includes(kindOverride) ? kindOverride : link.kind;
+    const dur = durationMin(effectiveKind);
 
     // Janela: agora -> +21 dias
     const fromIso = new Date().toISOString();
@@ -138,7 +140,8 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       nome: link.nome,
-      kind: link.kind,
+      kind: effectiveKind,
+      original_kind: link.kind,
       duracao_min: dur,
       slots,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
