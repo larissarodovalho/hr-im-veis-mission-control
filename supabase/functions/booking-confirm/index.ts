@@ -26,6 +26,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const token = String(body.token || "");
     const datetimeIso = String(body.datetime_iso || "");
+    const kindReq = String(body.kind || "");
     if (!/^[a-zA-Z0-9_-]{16,64}$/.test(token)) {
       return new Response(JSON.stringify({ error: "token inválido" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
