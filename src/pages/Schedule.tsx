@@ -27,6 +27,7 @@ type Compromisso = {
   local?: string | null;
   link?: string | null;
   notas?: string | null;
+  lead_id?: string | null;
   lead_nome?: string | null;
   criado_por_ia?: boolean;
 };
