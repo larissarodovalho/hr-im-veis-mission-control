@@ -125,7 +125,7 @@ export default function AgendarPage() {
           "Content-Type": "application/json",
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
-        body: JSON.stringify({ token, datetime_iso: selectedSlot }),
+        body: JSON.stringify({ token, datetime_iso: selectedSlot, kind: selectedKind || info?.kind }),
       });
       const data = await res.json();
       if (!res.ok) {
