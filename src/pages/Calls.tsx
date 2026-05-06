@@ -23,8 +23,22 @@ export default function Calls() {
   const [form, setForm] = useState({ lead_id: "none", data: "", duracao_seg: 0, resultado: "atendeu", notas: "" });
 
   const load = async () => {
-    const { data } = await supabase.from("ligacoes").select("*, leads(id,nome)").order("data", { ascending: false });
-    setItems(data ?? []);
+    const { data: calls, error } = await supabase
+      .from("ligacoes")
+      .select("*")
+      .order("data", { ascending: false });
+    if (error) {
+      console.error("[Calls] load error", error);
+      setItems([]);
+      return;
+    }
+    const leadIds = [...new Set((calls ?? []).map((c: any) => c.lead_id).filter(Boolean))];
+    let leadsById = new Map<string, any>();
+    if (leadIds.length) {
+      const { data: ls } = await supabase.from("leads").select("id,nome").in("id", leadIds);
+      leadsById = new Map((ls ?? []).map((l: any) => [l.id, l]));
+    }
+    setItems((calls ?? []).map((c: any) => ({ ...c, leads: c.lead_id ? leadsById.get(c.lead_id) ?? null : null })));
   };
   useEffect(() => {
     load();
@@ -102,7 +116,7 @@ export default function Calls() {
             {items.map(c => (
               <tr key={c.id} className="border-t">
                 <td className="p-3">{format(new Date(c.data), "Pp", { locale: ptBR })}</td>
-                <td className="p-3">{c.leads?.id ? <Link to={`/app/leads/${c.lead_id}`} className="hover:underline font-medium">{c.leads.nome}</Link> : "—"}</td>
+                <td className="p-3">{c.leads?.id ? <Link to={`/app/leads/${c.lead_id}`} className="hover:underline font-medium">{c.leads.nome}</Link> : (c.lead_id ? <span className="text-muted-foreground">Lead removido</span> : <span className="text-muted-foreground">Sem lead</span>)}</td>
                 <td className="p-3 text-muted-foreground">{c.duracao_seg ? `${Math.floor(c.duracao_seg/60)}m ${c.duracao_seg%60}s` : "—"}</td>
                 <td className="p-3"><Badge variant="outline">{c.resultado || "—"}</Badge></td>
               </tr>
