@@ -110,7 +110,27 @@ Deno.serve(async (req) => {
       corretorId = leadRow?.corretor_id ?? null;
     }
 
+    // Fallback: se o lead ainda não tem corretor, usa o primeiro admin/gestor/corretor ativo
+    // para que os registros internos fiquem visíveis no CRM (RLS) e atribuídos a alguém.
+    if (!corretorId) {
+      const { data: staff } = await supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .in("role", ["admin", "gestor", "corretor"])
+        .limit(20);
+      const preferred = (staff ?? []).find((s: any) => s.role === "admin")
+        ?? (staff ?? []).find((s: any) => s.role === "gestor")
+        ?? (staff ?? [])[0];
+      corretorId = preferred?.user_id ?? null;
+
+      // Se atribuímos um corretor padrão, salva no lead também para futuras interações
+      if (corretorId && link.lead_id) {
+        await supabase.from("leads").update({ corretor_id: corretorId }).eq("id", link.lead_id);
+      }
+    }
+
     let createdId: string | null = null;
+    let createdTable: "reunioes" | "ligacoes" | "interacoes" | null = null;
 
     if (link.kind === "ligacao") {
       // Vai para a aba Ligações (tabela `ligacoes`)
