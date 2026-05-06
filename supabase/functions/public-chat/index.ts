@@ -115,6 +115,8 @@ Deno.serve(async (req) => {
         if (ag === "visita") appointmentKind = "visita";
         else if (ag === "videochamada") appointmentKind = "videochamada";
         else if (ag === "ligacao") appointmentKind = "ligacao";
+        else if (ag === "whatsapp") appointmentKind = "whatsapp";
+        else if (ag === "imediato") { appointmentKind = "imediato"; immediateRequested = true; }
 
         const notesParts: string[] = [];
         if (fields.notas) notesParts.push(fields.notas);
