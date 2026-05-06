@@ -161,6 +161,7 @@ export default function Schedule() {
           titulo: leadNome ? `Ligação com ${leadNome}` : "Ligação agendada",
           status: c.resultado || "agendada",
           notas: c.notas,
+          lead_id: c.lead_id,
           lead_nome: leadNome,
           criado_por_ia: false,
         };
