@@ -71,6 +71,11 @@ Deno.serve(async (req) => {
       });
     }
 
+    const allowedKinds = ["videochamada", "presencial", "ligacao"];
+    if (kindReq && allowedKinds.includes(kindReq) && kindReq !== link.kind) {
+      await supabase.from("booking_links").update({ kind: kindReq }).eq("id", link.id);
+      link.kind = kindReq;
+    }
     const dur = durationMin(link.kind);
     const startIso = dt.toISOString();
     const endIso = new Date(dt.getTime() + dur * 60 * 1000).toISOString();
