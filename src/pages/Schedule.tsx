@@ -486,7 +486,7 @@ export default function Schedule() {
                               </Badge>
                             )}
                           </div>
-                          {c.lead_nome && <div className="text-xs text-muted-foreground mt-0.5">Lead: {c.lead_nome}</div>}
+                          {c.lead_nome && <div className="text-xs text-muted-foreground mt-0.5">Lead: {c.lead_id ? <Link to={`/app/leads/${c.lead_id}`} className="text-primary hover:underline">{c.lead_nome}</Link> : c.lead_nome}</div>}
                           {(c.local || c.link) && <div className="text-xs text-muted-foreground mt-0.5">{c.local || c.link}</div>}
                           {c.notas && <div className="text-xs text-muted-foreground mt-1">{c.notas}</div>}
                         </div>
