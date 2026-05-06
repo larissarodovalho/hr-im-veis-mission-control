@@ -23,8 +23,22 @@ export default function Calls() {
   const [form, setForm] = useState({ lead_id: "none", data: "", duracao_seg: 0, resultado: "atendeu", notas: "" });
 
   const load = async () => {
-    const { data } = await supabase.from("ligacoes").select("*, leads(id,nome)").order("data", { ascending: false });
-    setItems(data ?? []);
+    const { data: calls, error } = await supabase
+      .from("ligacoes")
+      .select("*")
+      .order("data", { ascending: false });
+    if (error) {
+      console.error("[Calls] load error", error);
+      setItems([]);
+      return;
+    }
+    const leadIds = [...new Set((calls ?? []).map((c: any) => c.lead_id).filter(Boolean))];
+    let leadsById = new Map<string, any>();
+    if (leadIds.length) {
+      const { data: ls } = await supabase.from("leads").select("id,nome").in("id", leadIds);
+      leadsById = new Map((ls ?? []).map((l: any) => [l.id, l]));
+    }
+    setItems((calls ?? []).map((c: any) => ({ ...c, leads: c.lead_id ? leadsById.get(c.lead_id) ?? null : null })));
   };
   useEffect(() => {
     load();

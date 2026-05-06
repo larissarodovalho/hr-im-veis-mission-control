@@ -1,43 +1,53 @@
-## Objetivo
+## Contexto
 
-Garantir que **todos** os agendamentos criados pela Sofia (inclusive os antigos) fiquem visíveis no CRM, e finalizar o fix da página de confirmação.
+A aba **Reuniões** foi corrigida recentemente para evitar erro 400 no Supabase (causado por join implícito `reunioes -> leads` sem foreign key declarada) e para garantir que ligações/reuniões criadas via link público (booking-confirm) sempre tenham `corretor_id` preenchido — caso contrário ficavam invisíveis no CRM por causa do RLS.
 
-## Diagnóstico confirmado
+A aba **Ligações** (`src/pages/Calls.tsx`) ainda usa o mesmo padrão problemático:
 
-1. **Página em branco no link**: o backend já está corrigido — a edge function `booking-info` retorna `datetime_iso` corretamente (testei). O `AgendarPage.tsx` no repo também já trata isso. O `hrimoveis.com` ainda serve a versão antiga porque **falta clicar em Publish**. Não há mais código a alterar — basta publicar.
+```ts
+supabase.from("ligacoes").select("*, leads(id,nome)")
+```
 
-2. **Reuniões "não aparecendo no CRM"**: as reuniões **estão sendo criadas** corretamente na tabela `reunioes`. O problema é que **2 registros antigos** (gerados antes do fix de corretor padrão) estão com `corretor_id = NULL`, e a RLS `Staff sees reunioes` esconde esses registros para corretores comuns — só admin/gestor enxerga.
+Hoje a tabela `ligacoes` está vazia (0 registros), então o problema ainda não apareceu na prática — mas assim que a IA/Sofia agendar uma ligação via link, o mesmo bug do Meetings vai ocorrer: a chamada falha (400) ou o registro fica oculto.
 
-   Linhas atuais sem corretor:
-   - `2026-05-07 12:00` — Larissa Rodovalho (lead `4f3a1e56...`)
-   - `2026-05-01 12:00` — Larissa Rodovalho
+## Verificações já feitas
 
-## Mudança
+- `booking-confirm` já preenche `corretor_id` e `created_by` com fallback para admin/gestor/corretor. OK.
+- `booking-info` já lê de `ligacoes` corretamente. OK.
+- RLS de `ligacoes`: visível somente para admin/gestor, ou quando `corretor_id = auth.uid()` ou `created_by = auth.uid()`. Mesmo padrão de `reunioes`.
 
-Migration de **backfill** em `supabase/migrations/`:
+## Mudanças
+
+### 1. `src/pages/Calls.tsx` — eliminar join implícito
+
+Trocar a query única com join por duas queries (igual ao fix do Meetings):
+
+- `select("*")` em `ligacoes` ordenado por `data desc`
+- `select("id, nome")` em `leads` filtrando pelos `lead_id` distintos
+- merge no frontend via `Map`
+- fallback de exibição: se `lead_id` existir mas o lead não for visível/encontrado, mostrar "Lead removido"; se `lead_id` for null, mostrar "Sem lead"
+
+### 2. Backfill defensivo (opcional, só roda se houver órfãos)
+
+Como a tabela está vazia hoje, não é necessário rodar migration. Mas, por segurança, incluir um SQL idempotente que atribui ao corretor padrão (Hans `5e6a90fc-c806-4cd9-8dfe-9067126ece93`) qualquer `ligacoes` futura que entre com `corretor_id IS NULL`. Faremos isso via migration:
 
 ```sql
-UPDATE public.reunioes
-SET corretor_id = '5e6a90fc-c806-4cd9-8dfe-9067126ece93',
-    created_by  = COALESCE(created_by, '5e6a90fc-c806-4cd9-8dfe-9067126ece93')
-WHERE corretor_id IS NULL
-  AND criado_por_ia = true;
-
 UPDATE public.ligacoes
 SET corretor_id = '5e6a90fc-c806-4cd9-8dfe-9067126ece93',
     created_by  = COALESCE(created_by, '5e6a90fc-c806-4cd9-8dfe-9067126ece93')
 WHERE corretor_id IS NULL;
 ```
 
-(O UUID `5e6a90fc-...` é o admin existente — Hans.)
+(roda uma vez; não afeta nada se não houver linhas.)
 
-## Após a migration
+### 3. Sem alterações em `booking-confirm` / `booking-info`
 
-- Aba **Reuniões** do CRM passa a listar todos os agendamentos da Sofia, inclusive os antigos.
-- Novos agendamentos via link já vêm com `corretor_id` desde o último deploy do `booking-confirm`.
-- **Você precisa clicar em "Publish"** para o `hrimoveis.com` servir o frontend novo e a tela de confirmação aparecer corretamente para o lead.
+Já estão corretos para o fluxo de "ligação".
 
-## Resultado
+## Resultado esperado
 
-- Link `/agendar/:token` já usado → mostra "Tudo certo! Sua reunião com o Hans está marcada para …" (após publish).
-- CRM → aba Reuniões mostra **todos** os registros, novos e antigos.
+- Ligações criadas pela Sofia/link público aparecem imediatamente na aba **Ligações** e nos relatórios, atribuídas ao corretor padrão quando o lead não tiver corretor.
+- Sem mais erro 400 ao carregar a aba Ligações.
+- Mesma robustez já aplicada à aba Reuniões.
+
+Após aplicar, será necessário **Publicar** para sincronizar com `hrimoveis.com`.
