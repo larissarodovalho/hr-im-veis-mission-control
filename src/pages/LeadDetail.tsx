@@ -540,6 +540,7 @@ export default function LeadDetail() {
                     </div>
                   </div>
                   <Button size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" onClick={() => setEditingMeeting({
+                    __isLigacao: !!m.__isLigacao,
                     id: m.id,
                     agendada_para: format(new Date(m.agendada_para), "yyyy-MM-dd'T'HH:mm"),
                     format: fmt,
