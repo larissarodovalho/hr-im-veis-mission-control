@@ -98,8 +98,9 @@ Deno.serve(async (req) => {
     reply = reply.replace(/\[MOSTRAR_CALENDARIO\]/gi, "").trim();
 
     let leadInfoOut: { name?: string; phone?: string } | null = null;
-    let appointmentKind: "visita" | "videochamada" | "ligacao" | null = null;
+    let appointmentKind: "visita" | "videochamada" | "ligacao" | "whatsapp" | "imediato" | null = null;
     let bookingUrl: string | null = null;
+    let immediateRequested = false;
 
     const m = reply.match(/\[LEAD_DADOS\](.+?)\[\/LEAD_DADOS\]/s);
     if (m) {
