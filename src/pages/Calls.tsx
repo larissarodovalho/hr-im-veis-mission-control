@@ -116,7 +116,7 @@ export default function Calls() {
             {items.map(c => (
               <tr key={c.id} className="border-t">
                 <td className="p-3">{format(new Date(c.data), "Pp", { locale: ptBR })}</td>
-                <td className="p-3">{c.leads?.id ? <Link to={`/app/leads/${c.lead_id}`} className="hover:underline font-medium">{c.leads.nome}</Link> : "—"}</td>
+                <td className="p-3">{c.leads?.id ? <Link to={`/app/leads/${c.lead_id}`} className="hover:underline font-medium">{c.leads.nome}</Link> : (c.lead_id ? <span className="text-muted-foreground">Lead removido</span> : <span className="text-muted-foreground">Sem lead</span>)}</td>
                 <td className="p-3 text-muted-foreground">{c.duracao_seg ? `${Math.floor(c.duracao_seg/60)}m ${c.duracao_seg%60}s` : "—"}</td>
                 <td className="p-3"><Badge variant="outline">{c.resultado || "—"}</Badge></td>
               </tr>
