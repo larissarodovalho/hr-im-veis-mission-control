@@ -22,7 +22,7 @@ export default function Dashboard() {
       const since = new Date(); since.setDate(since.getDate() - 30);
       const [l, r, i] = await Promise.all([
         supabase.from("leads").select("id,nome,etapa_funil,origem,ultima_interacao,created_at").order("created_at", { ascending: false }),
-        supabase.from("reunioes").select("id,status,agendada_para"),
+        supabase.from("reunioes").select("id,status,agendada_para,lead_id"),
         supabase.from("interacoes").select("id,tipo,resultado,created_at").gte("created_at", since.toISOString()),
       ]);
       setLeads(l.data ?? []); setReunioes(r.data ?? []); setInteracoes(i.data ?? []);
@@ -30,8 +30,13 @@ export default function Dashboard() {
   }, []);
 
   const total = leads.length;
-  const closed = leads.filter(l => l.etapa_funil === "Fechado").length;
-  const rate = total ? Math.round((closed / total) * 100) : 0;
+  const leadsComReuniao = new Set(
+    reunioes
+      .filter((m: any) => ["agendada", "realizada", "confirmada"].includes((m.status || "agendada").toLowerCase()))
+      .map((m: any) => m.lead_id)
+      .filter(Boolean)
+  ).size;
+  const rate = total ? Math.round((leadsComReuniao / total) * 100) : 0;
   const overdue = leads.filter(l => {
     const d = daysSince(l.ultima_interacao ?? l.created_at);
     return d !== null && d > 3 && !["Fechado", "Perdido"].includes(l.etapa_funil);
