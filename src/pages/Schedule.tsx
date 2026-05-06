@@ -512,7 +512,7 @@ export default function Schedule() {
                         {c.criado_por_ia && <Badge variant="secondary" className="gap-1"><Sparkles className="h-3 w-3" />IA</Badge>}
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5">
-                        {TIPO_LABEL[c.tipo]} · {c.lead_nome || "sem lead"}{c.local || c.link ? ` · ${c.local || c.link}` : ""}
+                        {TIPO_LABEL[c.tipo]} · {c.lead_id && c.lead_nome ? <Link to={`/app/leads/${c.lead_id}`} className="text-primary hover:underline">{c.lead_nome}</Link> : (c.lead_nome || "sem lead")}{c.local || c.link ? ` · ${c.local || c.link}` : ""}
                       </div>
                     </div>
                     <Badge variant="outline">{c.status}</Badge>
