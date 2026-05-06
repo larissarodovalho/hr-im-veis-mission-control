@@ -558,6 +558,8 @@ Deno.serve(async (req) => {
     const alreadyNotified = (history ?? []).some(h =>
       h.direction === "outbound" && /hans (vai|entra) (te )?(chamar|ligar|entrar em contato)/i.test(h.content || "")
     );
+    const lastUserMsg = (history ?? []).filter(h => h.direction === "inbound").slice(-1)[0]?.content || "";
+    const bookingConsent = hasExplicitBookingConsent(lastUserMsg, history ?? []);
 
     aiMessages.unshift({
       role: "system",
@@ -565,7 +567,8 @@ Deno.serve(async (req) => {
 - Nome: ${hasName ? leadRow!.nome : "(faltando — pedir)"}
 - Telefone (já temos do WhatsApp): ${phone}
 - Intenção registrada: ${(leadRow as any)?.observacoes && /Intenção:/i.test((leadRow as any).observacoes) ? "sim" : "(faltando — perguntar)"}
-- Hans já notificado nesta conversa? ${alreadyNotified ? "SIM" : "não"}`,
+- Hans já notificado nesta conversa? ${alreadyNotified ? "SIM" : "não"}
+- Última mensagem do lead autoriza link de agendamento? ${bookingConsent ? "SIM" : "NÃO"}`,
     });
 
     // Cascata + loop de tool calls
@@ -623,8 +626,10 @@ Deno.serve(async (req) => {
           needAnotherRound = true;
         } else if (tc.name === "send_booking_link") {
           const k = tc.args?.kind;
-          if (["videochamada", "presencial", "ligacao", "whatsapp"].includes(k)) {
+          if (bookingConsent && ["videochamada", "presencial", "ligacao", "whatsapp"].includes(k)) {
             bookingKind = k;
+          } else {
+            console.warn("[whatsapp-webhook] send_booking_link BLOQUEADO sem aceite explícito", { k, lastUserMsg });
           }
           toolResult = { ok: true, scheduled: bookingKind, link_will_be_appended: true };
           needAnotherRound = true;
@@ -660,7 +665,6 @@ Deno.serve(async (req) => {
     if (!bookingKind && !immediateKind) {
       const leaked = detectLeakedIntent(result.text || "");
       if (leaked.kind) {
-        const lastUserMsg = (history ?? []).filter(h => h.direction === "inbound").slice(-1)[0]?.content || "";
         const wantsNow = /\b(agora|urgente|j[áa]|hoje|rapido|r[áa]pido)\b/i.test(lastUserMsg);
         if (leaked.isImmediate || wantsNow) {
           immediateKind = leaked.kind;
