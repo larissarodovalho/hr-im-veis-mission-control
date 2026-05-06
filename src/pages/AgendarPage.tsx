@@ -219,8 +219,9 @@ export default function AgendarPage() {
     );
   }
 
-  const kind = info?.kind as Kind | undefined;
+  const kind = (selectedKind || info?.kind) as Kind | undefined;
   const Icon = kind ? kindMeta[kind].icon : Phone;
+  const kindOptions: Kind[] = ["presencial", "videochamada", "ligacao"];
 
   return (
     <Wrapper>
@@ -234,9 +235,38 @@ export default function AgendarPage() {
             {info?.nome ? `Olá, ${info.nome.split(" ")[0]}!` : "Agende com o Hans"}
           </h1>
           <p className="text-white/50 text-sm md:text-base max-w-md">
-            Escolha o dia e horário que ficam melhor para você. A {kind ? kindMeta[kind].label.toLowerCase() : "reunião"} dura {info?.duracao_min} minutos.
+            Escolha o tipo de contato, depois o dia e horário que ficam melhor para você.
           </p>
         </header>
+
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-wider text-white/40">Como prefere falar?</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {kindOptions.map((k) => {
+              const Ico = kindMeta[k].icon;
+              const active = (selectedKind || info?.kind) === k;
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setSelectedKind(k)}
+                  className={cn(
+                    "rounded-xl border px-4 py-3 text-sm transition flex items-center gap-2.5 justify-center",
+                    active
+                      ? "bg-white text-black border-white"
+                      : "bg-white/[0.03] border-white/10 text-white/80 hover:bg-white/10 hover:border-white/20"
+                  )}
+                >
+                  <Ico className="h-4 w-4" />
+                  {kindMeta[k].label}
+                  <span className={cn("text-[11px]", active ? "text-black/60" : "text-white/40")}>
+                    · {k === "ligacao" ? "30min" : "60min"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {availableDays.length === 0 ? (
           <p className="text-sm text-white/50 py-10 text-center">
