@@ -196,6 +196,31 @@ function detectLeakedIntent(s: string): { kind: string | null; isImmediate: bool
   return { kind, isImmediate };
 }
 
+function isGreetingOnly(s: string): boolean {
+  const text = (s || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+  return /^(oi|ola|bom dia|boa tarde|boa noite|tudo bem|td bem|e ai|voltei|oi novamente|ola novamente)(\s+(tudo bem|td bem|novamente|de novo))*$/.test(text);
+}
+
+function previousAssistantAskedToSchedule(history: any[]): boolean {
+  const lastInboundIndex = history.map((h: any) => h.direction).lastIndexOf("inbound");
+  const prevAssistant = history.slice(0, lastInboundIndex).reverse().find((h: any) => h.direction === "outbound")?.content || "";
+  if (!prevAssistant || /https?:\/\/|\/agendar\//i.test(prevAssistant)) return false;
+  return /(posso|quer|quer que eu|prefere|vamos).{0,80}(agend|marc|hor[aá]rio|conversa|falar com (o )?hans|videochamada|liga[cç][aã]o|presencial|whatsapp)/i.test(prevAssistant);
+}
+
+function hasExplicitBookingConsent(lastUserMsg: string, history: any[]): boolean {
+  const text = (lastUserMsg || "").toLowerCase();
+  if (isGreetingOnly(text)) return false;
+  const directRequest = /(quero|gostaria|preciso|pode|consegue|como|manda|envia|me passa|me mande|me envie).{0,80}(agend|marc|hor[aá]rio|reuni[aã]o|conversa|falar com (o )?hans|corretor|liga[cç][aã]o|videochamada|presencial|link)/i.test(text)
+    || /(agendar|marcar).{0,60}(hor[aá]rio|reuni[aã]o|conversa|visita|liga[cç][aã]o|videochamada|presencial)/i.test(text)
+    || /\blink\b.{0,40}(agend|hor[aá]rio|reuni[aã]o|hans|corretor)/i.test(text);
+  if (directRequest) return true;
+  const affirmative = /^(sim|pode|claro|ok|isso|por favor|quero|vamos|manda|envia|perfeito|combinado|aceito)\b/i.test(text.trim());
+  return affirmative && previousAssistantAskedToSchedule(history);
+}
+
 function getEvolutionInstance(): string | null {
   return Deno.env.get("EVOLUTION_INSTANCE") || Deno.env.get("EVOLUTION_INSTANCE_NAME") || null;
 }
@@ -533,6 +558,8 @@ Deno.serve(async (req) => {
     const alreadyNotified = (history ?? []).some(h =>
       h.direction === "outbound" && /hans (vai|entra) (te )?(chamar|ligar|entrar em contato)/i.test(h.content || "")
     );
+    const lastUserMsg = (history ?? []).filter(h => h.direction === "inbound").slice(-1)[0]?.content || "";
+    const bookingConsent = hasExplicitBookingConsent(lastUserMsg, history ?? []);
 
     aiMessages.unshift({
       role: "system",
@@ -540,13 +567,15 @@ Deno.serve(async (req) => {
 - Nome: ${hasName ? leadRow!.nome : "(faltando — pedir)"}
 - Telefone (já temos do WhatsApp): ${phone}
 - Intenção registrada: ${(leadRow as any)?.observacoes && /Intenção:/i.test((leadRow as any).observacoes) ? "sim" : "(faltando — perguntar)"}
-- Hans já notificado nesta conversa? ${alreadyNotified ? "SIM" : "não"}`,
+- Hans já notificado nesta conversa? ${alreadyNotified ? "SIM" : "não"}
+- Última mensagem do lead autoriza link de agendamento? ${bookingConsent ? "SIM" : "NÃO"}`,
     });
 
     // Cascata + loop de tool calls
     let result: { text: string; toolCalls: ToolCall[]; raw?: any } = { text: "", toolCalls: [] };
     let bookingKind: string | null = null;
     let immediateKind: string | null = null;
+    let bookingBlocked = false;
 
     const MODELS = ["openai/gpt-5-mini", "google/gemini-2.5-pro", "google/gemini-2.5-flash"];
     let workingMessages = [...aiMessages];
@@ -598,10 +627,15 @@ Deno.serve(async (req) => {
           needAnotherRound = true;
         } else if (tc.name === "send_booking_link") {
           const k = tc.args?.kind;
-          if (["videochamada", "presencial", "ligacao", "whatsapp"].includes(k)) {
+          if (bookingConsent && ["videochamada", "presencial", "ligacao", "whatsapp"].includes(k)) {
             bookingKind = k;
+          } else {
+            bookingBlocked = true;
+            console.warn("[whatsapp-webhook] send_booking_link BLOQUEADO sem aceite explícito", { k, lastUserMsg });
           }
-          toolResult = { ok: true, scheduled: bookingKind, link_will_be_appended: true };
+          toolResult = bookingKind
+            ? { ok: true, scheduled: bookingKind, link_will_be_appended: true }
+            : { ok: false, blocked: "lead_did_not_explicitly_accept_booking_link" };
           needAnotherRound = true;
         } else if (tc.name === "request_immediate_contact") {
           const k = tc.args?.kind;
@@ -629,13 +663,17 @@ Deno.serve(async (req) => {
     }
 
     let reply = sanitizeReply(result.text || "");
+    if (bookingBlocked && !bookingKind) {
+      reply = isGreetingOnly(lastUserMsg)
+        ? `${firstName ? `Bom dia, ${firstName}!` : "Bom dia!"} Em que posso te ajudar hoje?`
+        : "Entendi. Me conta um pouco melhor o que você precisa, para eu te orientar do jeito certo.";
+    }
 
     // Fallback: se o LLM "vazou" intent como texto em vez de chamar a tool, infere
     // SOMENTE para urgência real — nunca disparar booking sem o lead ter aceitado.
     if (!bookingKind && !immediateKind) {
       const leaked = detectLeakedIntent(result.text || "");
       if (leaked.kind) {
-        const lastUserMsg = (history ?? []).filter(h => h.direction === "inbound").slice(-1)[0]?.content || "";
         const wantsNow = /\b(agora|urgente|j[áa]|hoje|rapido|r[áa]pido)\b/i.test(lastUserMsg);
         if (leaked.isImmediate || wantsNow) {
           immediateKind = leaked.kind;
