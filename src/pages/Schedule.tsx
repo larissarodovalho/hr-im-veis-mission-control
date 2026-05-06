@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Calendar as CalendarIcon, Phone, Video, MapPin, Plus, Ban, Sparkles, Trash2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 type Compromisso = {
   id: string;
@@ -27,6 +28,7 @@ type Compromisso = {
   local?: string | null;
   link?: string | null;
   notas?: string | null;
+  lead_id?: string | null;
   lead_nome?: string | null;
   criado_por_ia?: boolean;
 };
@@ -137,6 +139,7 @@ export default function Schedule() {
         local: m.local,
         link: m.link,
         notas: m.notas,
+        lead_id: m.lead_id,
         lead_nome: leadNome,
         criado_por_ia: m.criado_por_ia,
       };
@@ -158,6 +161,7 @@ export default function Schedule() {
           titulo: leadNome ? `Ligação com ${leadNome}` : "Ligação agendada",
           status: c.resultado || "agendada",
           notas: c.notas,
+          lead_id: c.lead_id,
           lead_nome: leadNome,
           criado_por_ia: false,
         };
@@ -179,6 +183,7 @@ export default function Schedule() {
         local: imovel?.endereco ?? null,
         link: null,
         notas: v.observacoes,
+        lead_id: v.lead_id,
         lead_nome: leadNome,
         criado_por_ia: false,
       };
@@ -481,7 +486,7 @@ export default function Schedule() {
                               </Badge>
                             )}
                           </div>
-                          {c.lead_nome && <div className="text-xs text-muted-foreground mt-0.5">Lead: {c.lead_nome}</div>}
+                          {c.lead_nome && <div className="text-xs text-muted-foreground mt-0.5">Lead: {c.lead_id ? <Link to={`/app/leads/${c.lead_id}`} className="text-primary hover:underline">{c.lead_nome}</Link> : c.lead_nome}</div>}
                           {(c.local || c.link) && <div className="text-xs text-muted-foreground mt-0.5">{c.local || c.link}</div>}
                           {c.notas && <div className="text-xs text-muted-foreground mt-1">{c.notas}</div>}
                         </div>
@@ -507,7 +512,7 @@ export default function Schedule() {
                         {c.criado_por_ia && <Badge variant="secondary" className="gap-1"><Sparkles className="h-3 w-3" />IA</Badge>}
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5">
-                        {TIPO_LABEL[c.tipo]} · {c.lead_nome || "sem lead"}{c.local || c.link ? ` · ${c.local || c.link}` : ""}
+                        {TIPO_LABEL[c.tipo]} · {c.lead_id && c.lead_nome ? <Link to={`/app/leads/${c.lead_id}`} className="text-primary hover:underline">{c.lead_nome}</Link> : (c.lead_nome || "sem lead")}{c.local || c.link ? ` · ${c.local || c.link}` : ""}
                       </div>
                     </div>
                     <Badge variant="outline">{c.status}</Badge>
