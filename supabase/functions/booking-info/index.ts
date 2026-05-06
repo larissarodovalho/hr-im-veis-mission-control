@@ -76,11 +76,24 @@ Deno.serve(async (req) => {
     }
 
     if (link.used_at) {
+      let datetime_iso: string | null = null;
+      if (link.reuniao_id) {
+        if (link.kind === "ligacao") {
+          const { data } = await supabase.from("ligacoes")
+            .select("data").eq("id", link.reuniao_id).maybeSingle();
+          datetime_iso = (data?.data as string) ?? null;
+        } else {
+          const { data } = await supabase.from("reunioes")
+            .select("agendada_para").eq("id", link.reuniao_id).maybeSingle();
+          datetime_iso = (data?.agendada_para as string) ?? null;
+        }
+      }
       return new Response(JSON.stringify({
         used: true,
         nome: link.nome,
         kind: link.kind,
         reuniao_id: link.reuniao_id,
+        datetime_iso,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 

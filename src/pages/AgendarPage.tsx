@@ -18,6 +18,7 @@ interface InfoResponse {
   expired?: boolean;
   error?: string;
   reuniao_id?: string;
+  datetime_iso?: string | null;
 }
 
 const kindMeta: Record<Kind, { label: string; icon: typeof Phone }> = {
@@ -152,6 +153,23 @@ export default function AgendarPage() {
   }
 
   if (info?.used && !confirmed) {
+    if (info.datetime_iso && info.kind) {
+      const Icon = kindMeta[info.kind].icon;
+      return (
+        <Wrapper>
+          <Status icon={CheckCircle2} title="Tudo certo!" tone="success">
+            Sua <strong className="text-white">{kindMeta[info.kind].label.toLowerCase()}</strong> com o Hans está marcada para{" "}
+            <strong className="text-white">{fmtDay(info.datetime_iso)} às {fmtTime(info.datetime_iso)}</strong>.
+            <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/10 text-white px-4 py-1.5 text-sm">
+              <Icon className="h-4 w-4" /> {kindMeta[info.kind].label}
+            </div>
+            <p className="text-sm text-white/50 mt-5">
+              Enviamos a confirmação no seu WhatsApp. Até breve!
+            </p>
+          </Status>
+        </Wrapper>
+      );
+    }
     return (
       <Wrapper>
         <Status icon={CheckCircle2} title="Agendamento já confirmado" tone="success">
