@@ -533,19 +533,23 @@ Deno.serve(async (req) => {
     }));
 
     const alreadyNotified = (history ?? []).some(h =>
-      h.direction === "outbound" && /hans (vai|entra) (te )?(chamar|ligar|entrar em contato)/i.test(h.content || "")
+      h.direction === "outbound" && /(corretor|hans).{0,30}(vai|entra).{0,10}(chamar|ligar|entrar em contato)/i.test(h.content || "")
+    );
+    const alreadyBooked = (history ?? []).some(h =>
+      h.direction === "outbound" && /\/agendar\//i.test(h.content || "")
     );
     const lastUserMsg = (history ?? []).filter(h => h.direction === "inbound").slice(-1)[0]?.content || "";
-    const bookingConsent = hasExplicitBookingConsent(lastUserMsg, history ?? []);
+    const hasInterest = !!((leadRow as any)?.observacoes && /Intenção:/i.test((leadRow as any).observacoes));
+    const canTriggerHandoff = hasName && hasInterest && !alreadyNotified && !alreadyBooked;
 
     aiMessages.unshift({
       role: "system",
       content: `Contexto do lead:
 - Nome: ${hasName ? leadRow!.nome : "(faltando — pedir)"}
-- Telefone (já temos do WhatsApp): ${phone}
-- Intenção registrada: ${(leadRow as any)?.observacoes && /Intenção:/i.test((leadRow as any).observacoes) ? "sim" : "(faltando — perguntar)"}
-- Hans já notificado nesta conversa? ${alreadyNotified ? "SIM" : "não"}
-- Última mensagem do lead autoriza link de agendamento? ${bookingConsent ? "SIM" : "NÃO"}`,
+- Telefone do WhatsApp: ${phone}
+- Intenção registrada: ${hasInterest ? "sim" : "(faltando — perguntar)"}
+- Corretor já acionado nesta conversa? ${alreadyNotified || alreadyBooked ? "SIM (não chame send_booking_link nem request_immediate_contact de novo)" : "não"}
+- Pode chamar send_booking_link/request_immediate_contact agora? ${canTriggerHandoff ? "SIM" : "NÃO — colete primeiro nome e interesse"}`,
     });
 
     // Cascata + loop de tool calls
