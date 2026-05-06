@@ -54,6 +54,7 @@ const App = () => (
             <Route path="/redefinir-senha" element={<ResetPassword />} />
             <Route path="/agendar/:token" element={<AgendarPage />} />
             <Route path="/unsubscribe" element={<UnsubscribePage />} />
+            <Route path="/captura" element={<CapturaPage />} />
 
             {/* Site público preservado */}
             <Route path="/site" element={<SiteLayout><HomePage /></SiteLayout>} />
