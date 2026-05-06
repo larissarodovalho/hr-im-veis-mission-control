@@ -196,6 +196,31 @@ function detectLeakedIntent(s: string): { kind: string | null; isImmediate: bool
   return { kind, isImmediate };
 }
 
+function isGreetingOnly(s: string): boolean {
+  const text = (s || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+  return /^(oi|ola|bom dia|boa tarde|boa noite|tudo bem|td bem|e ai|voltei|oi novamente|ola novamente)(\s+(tudo bem|td bem|novamente|de novo))*$/.test(text);
+}
+
+function previousAssistantAskedToSchedule(history: any[]): boolean {
+  const lastInboundIndex = history.map((h: any) => h.direction).lastIndexOf("inbound");
+  const prevAssistant = history.slice(0, lastInboundIndex).reverse().find((h: any) => h.direction === "outbound")?.content || "";
+  if (!prevAssistant || /https?:\/\/|\/agendar\//i.test(prevAssistant)) return false;
+  return /(posso|quer|quer que eu|prefere|vamos).{0,80}(agend|marc|hor[aá]rio|conversa|falar com (o )?hans|videochamada|liga[cç][aã]o|presencial|whatsapp)/i.test(prevAssistant);
+}
+
+function hasExplicitBookingConsent(lastUserMsg: string, history: any[]): boolean {
+  const text = (lastUserMsg || "").toLowerCase();
+  if (isGreetingOnly(text)) return false;
+  const directRequest = /(quero|gostaria|preciso|pode|consegue|como|manda|envia|me passa|me mande|me envie).{0,80}(agend|marc|hor[aá]rio|reuni[aã]o|conversa|falar com (o )?hans|corretor|liga[cç][aã]o|videochamada|presencial|link)/i.test(text)
+    || /(agendar|marcar).{0,60}(hor[aá]rio|reuni[aã]o|conversa|visita|liga[cç][aã]o|videochamada|presencial)/i.test(text)
+    || /\blink\b.{0,40}(agend|hor[aá]rio|reuni[aã]o|hans|corretor)/i.test(text);
+  if (directRequest) return true;
+  const affirmative = /^(sim|pode|claro|ok|isso|por favor|quero|vamos|manda|envia|perfeito|combinado|aceito)\b/i.test(text.trim());
+  return affirmative && previousAssistantAskedToSchedule(history);
+}
+
 function getEvolutionInstance(): string | null {
   return Deno.env.get("EVOLUTION_INSTANCE") || Deno.env.get("EVOLUTION_INSTANCE_NAME") || null;
 }
