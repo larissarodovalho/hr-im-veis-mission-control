@@ -74,8 +74,24 @@ export default function LeadDetail() {
     setLead(l);
     const { data: ints } = await supabase.from("interacoes").select("*").eq("lead_id", id).order("created_at", { ascending: false });
     setInteracoes(ints ?? []);
-    const { data: ms } = await supabase.from("reunioes").select("*").eq("lead_id", id).order("agendada_para", { ascending: false });
-    setReunioes(ms ?? []);
+    const [{ data: ms }, { data: ligs }] = await Promise.all([
+      supabase.from("reunioes").select("*").eq("lead_id", id).order("agendada_para", { ascending: false }),
+      supabase.from("ligacoes").select("*").eq("lead_id", id).order("data", { ascending: false }),
+    ]);
+    // Normaliza ligações para o mesmo formato da seção de agendamentos
+    const ligsAsMeetings = (ligs ?? []).map((c: any) => ({
+      __isLigacao: true,
+      id: c.id,
+      lead_id: c.lead_id,
+      agendada_para: c.data,
+      duracao_min: c.duracao_seg ? Math.round(c.duracao_seg / 60) : 30,
+      tipo: "ligacao",
+      local: null,
+      link: null,
+      notas: c.notas,
+      status: c.resultado || "agendada",
+    }));
+    setReunioes([...(ms ?? []), ...ligsAsMeetings].sort((a: any, b: any) => +new Date(b.agendada_para) - +new Date(a.agendada_para)));
     const { data: acc } = await supabase.from("contas").select("id, nome").eq("lead_id_origem", id).maybeSingle();
     setConta(acc ?? null);
   };
@@ -105,20 +121,36 @@ export default function LeadDetail() {
   const addMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!meeting.agendada_para) return toast.error("Data obrigatória");
-    const tipo = meeting.format === "ligacao" ? "ligacao" : meeting.format === "virtual" ? "virtual" : "presencial";
-    const duracao_min = meeting.format === "ligacao" ? 30 : 60;
-    const payload: any = {
-      lead_id: id!,
-      agendada_para: new Date(meeting.agendada_para).toISOString(),
-      tipo,
-      duracao_min,
-      local: meeting.format === "virtual" ? null : (meeting.local || null),
-      link: meeting.format === "virtual" ? (meeting.link || null) : null,
-      notas: meeting.notas || null,
-      created_by: user?.id,
-    };
-    const { error } = await supabase.from("reunioes").insert(payload);
-    if (error) return toast.error(error.message);
+    const startIso = new Date(meeting.agendada_para).toISOString();
+    if (meeting.format === "ligacao") {
+      // Ligação vai para a tabela `ligacoes` (aparece na aba Ligações e na Agenda)
+      const { error } = await supabase.from("ligacoes").insert({
+        lead_id: id!,
+        data: startIso,
+        duracao_seg: 30 * 60,
+        resultado: "agendada",
+        notas: meeting.notas || null,
+        created_by: user?.id,
+        corretor_id: user?.id,
+      });
+      if (error) return toast.error(error.message);
+    } else {
+      const tipo = meeting.format === "virtual" ? "videochamada" : "presencial";
+      const payload: any = {
+        lead_id: id!,
+        agendada_para: startIso,
+        tipo,
+        duracao_min: 60,
+        local: meeting.format === "virtual" ? null : (meeting.local || null),
+        link: meeting.format === "virtual" ? (meeting.link || null) : null,
+        notas: meeting.notas || null,
+        created_by: user?.id,
+        corretor_id: user?.id,
+        status: "agendada",
+      };
+      const { error } = await supabase.from("reunioes").insert(payload);
+      if (error) return toast.error(error.message);
+    }
     setMeeting({ agendada_para: "", local: "", link: "", notas: "", format: "escritorio" });
     toast.success(meeting.format === "ligacao" ? "Ligação agendada" : "Reunião agendada");
     load();
@@ -126,17 +158,28 @@ export default function LeadDetail() {
 
   const saveMeetingEdit = async () => {
     if (!editingMeeting) return;
-    const tipo = editingMeeting.format === "ligacao" ? "ligacao" : editingMeeting.format === "virtual" ? "virtual" : "presencial";
-    const duracao_min = editingMeeting.format === "ligacao" ? 30 : 60;
-    const { error } = await supabase.from("reunioes").update({
-      agendada_para: new Date(editingMeeting.agendada_para).toISOString(),
-      tipo, duracao_min,
-      local: editingMeeting.format === "virtual" ? null : (editingMeeting.local || null),
-      link: editingMeeting.format === "virtual" ? (editingMeeting.link || null) : null,
-      notas: editingMeeting.notas || null,
-      status: editingMeeting.status,
-    }).eq("id", editingMeeting.id);
-    if (error) return toast.error(error.message);
+    if (editingMeeting.__isLigacao) {
+      const dur = 30;
+      const { error } = await supabase.from("ligacoes").update({
+        data: new Date(editingMeeting.agendada_para).toISOString(),
+        duracao_seg: dur * 60,
+        resultado: editingMeeting.status,
+        notas: editingMeeting.notas || null,
+      }).eq("id", editingMeeting.id);
+      if (error) return toast.error(error.message);
+    } else {
+      const tipo = editingMeeting.format === "ligacao" ? "ligacao" : editingMeeting.format === "virtual" ? "videochamada" : "presencial";
+      const duracao_min = editingMeeting.format === "ligacao" ? 30 : 60;
+      const { error } = await supabase.from("reunioes").update({
+        agendada_para: new Date(editingMeeting.agendada_para).toISOString(),
+        tipo, duracao_min,
+        local: editingMeeting.format === "virtual" ? null : (editingMeeting.local || null),
+        link: editingMeeting.format === "virtual" ? (editingMeeting.link || null) : null,
+        notas: editingMeeting.notas || null,
+        status: editingMeeting.status,
+      }).eq("id", editingMeeting.id);
+      if (error) return toast.error(error.message);
+    }
     setEditingMeeting(null);
     toast.success("Agendamento atualizado");
     load();
@@ -497,6 +540,7 @@ export default function LeadDetail() {
                     </div>
                   </div>
                   <Button size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" onClick={() => setEditingMeeting({
+                    __isLigacao: !!m.__isLigacao,
                     id: m.id,
                     agendada_para: format(new Date(m.agendada_para), "yyyy-MM-dd'T'HH:mm"),
                     format: fmt,

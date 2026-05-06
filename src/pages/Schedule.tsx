@@ -80,14 +80,17 @@ export default function Schedule() {
   });
 
   const load = async () => {
-    const [{ data: r }, { data: b }, { data: l }] = await Promise.all([
+    const [{ data: r }, { data: b }, { data: l }, { data: ligs }] = await Promise.all([
       supabase.from("reunioes")
         .select("id, agendada_para, status, local, link, notas, tipo, duracao_min, titulo, criado_por_ia, leads(nome)")
         .order("agendada_para"),
       supabase.from("agenda_bloqueios" as any).select("*").order("inicio"),
       supabase.from("leads").select("id, nome").order("nome"),
+      supabase.from("ligacoes")
+        .select("id, data, duracao_seg, resultado, notas, leads(nome)")
+        .order("data"),
     ]);
-    setReunioes(((r ?? []) as any[]).map((m) => {
+    const reus: Compromisso[] = ((r ?? []) as any[]).map((m) => {
       const start = new Date(m.agendada_para);
       const end = new Date(start.getTime() + (m.duracao_min ?? 60) * 60000);
       return {
@@ -103,7 +106,29 @@ export default function Schedule() {
         lead_nome: m.leads?.nome,
         criado_por_ia: m.criado_por_ia,
       };
-    }));
+    });
+    // Ligações agendadas (resultado === 'agendada' ou resultado começando com 'agendad') também aparecem na agenda
+    const ligsAgendadas: Compromisso[] = ((ligs ?? []) as any[])
+      .filter((c) => {
+        const r = (c.resultado || "").toLowerCase();
+        return r === "agendada" || r === "agendado" || r === "agendou";
+      })
+      .map((c) => {
+        const start = new Date(c.data);
+        const dur = c.duracao_seg ? Math.round(c.duracao_seg / 60) : 30;
+        return {
+          id: `lig:${c.id}`,
+          date: start,
+          end: new Date(start.getTime() + dur * 60000),
+          tipo: "ligacao" as const,
+          titulo: c.leads?.nome ? `Ligação com ${c.leads.nome}` : "Ligação agendada",
+          status: c.resultado || "agendada",
+          notas: c.notas,
+          lead_nome: c.leads?.nome,
+          criado_por_ia: false,
+        };
+      });
+    setReunioes([...reus, ...ligsAgendadas].sort((a, b) => +a.date - +b.date));
     setBloqueios(((b ?? []) as any[]).map((x) => ({
       id: x.id,
       inicio: new Date(x.inicio),
@@ -120,6 +145,7 @@ export default function Schedule() {
     const ch = supabase
       .channel("agenda-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "reunioes" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "ligacoes" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "agenda_bloqueios" }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };

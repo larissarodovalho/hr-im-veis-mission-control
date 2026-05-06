@@ -109,6 +109,7 @@ Deno.serve(async (req) => {
 
     let leadInfoOut: { name?: string; phone?: string } | null = null;
     let appointmentKind: "visita" | "videochamada" | "ligacao" | null = null;
+    let bookingUrl: string | null = null;
 
     const m = reply.match(/\[LEAD_DADOS\](.+?)\[\/LEAD_DADOS\]/s);
     if (m) {
@@ -178,6 +179,44 @@ Deno.serve(async (req) => {
             visitor_name: nome,
             visitor_phone: fields.telefone,
           }).eq("id", sid);
+
+          // Se a captura pediu agendamento, gera um booking_link interno
+          // (mesmo fluxo da Sofia/WhatsApp -> /agendar/:token -> booking-confirm)
+          if (appointmentKind) {
+            // Mapeia tipos da captura para o `kind` do CRM
+            const kind = appointmentKind === "visita" ? "presencial"
+              : appointmentKind === "videochamada" ? "videochamada"
+              : "ligacao";
+
+            // Evita duplicar: reaproveita link aberto recente da mesma sessão/lead
+            const { data: existingLink } = await supabase
+              .from("booking_links")
+              .select("token, expires_at, used_at, kind")
+              .eq("lead_id", leadId)
+              .eq("kind", kind)
+              .is("used_at", null)
+              .gt("expires_at", new Date().toISOString())
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            let token = existingLink?.token as string | null;
+            if (!token) {
+              const arr = new Uint8Array(24);
+              crypto.getRandomValues(arr);
+              token = btoa(String.fromCharCode(...arr)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+              await supabase.from("booking_links").insert({
+                token,
+                lead_id: leadId,
+                phone: fields.telefone || null,
+                nome,
+                kind,
+              });
+            }
+
+            const baseUrl = Deno.env.get("PUBLIC_APP_URL") || "https://www.hrimoveis.com";
+            bookingUrl = `${baseUrl.replace(/\/$/, "")}/agendar/${token}`;
+          }
         }
       }
       reply = reply.replace(m[0], "").trim();
@@ -191,6 +230,7 @@ Deno.serve(async (req) => {
       show_calendar: showCalendar,
       lead_info: leadInfoOut,
       appointment_kind: appointmentKind,
+      booking_url: bookingUrl,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     console.error("public-chat error", e);
