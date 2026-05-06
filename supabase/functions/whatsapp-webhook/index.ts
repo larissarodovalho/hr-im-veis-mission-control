@@ -158,7 +158,7 @@ function sanitizeReply(s: string): string {
     .replace(/\b(send_booking_link|request_immediate_contact|update_lead_info)\s*\([^)]*\)/gi, "")
     .replace(/\b(send_booking_link|request_immediate_contact|update_lead_info)\b/gi, "")
     .replace(/```[\s\S]*?```/g, "")
-    .replace(/(^|\s)[A-Za-z0-9_-]{8,}\?(\s|$)/g, " ")
+    .replace(/(^|\s)[A-Za-z0-9_-]{8,}\?(\s|$)/g, (m, pre, post) => /[0-9_-]/.test(m) ? `${pre}${post}` : m)
     .replace(/[ \t]{2,}/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
