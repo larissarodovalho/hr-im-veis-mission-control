@@ -588,10 +588,15 @@ Deno.serve(async (req) => {
 
         if (tc.name === "update_lead_info" && leadUuid) {
           const fullName = String(tc.args?.full_name || "").trim();
+          const altPhone = String(tc.args?.phone || "").trim();
           const interest = tc.args?.interest as string | undefined;
           const update: any = { ultima_interacao: new Date().toISOString() };
           if (fullName) update.nome = fullName;
-          if (interest && ["compra", "venda", "aluguel", "investidor"].includes(interest)) {
+          if (altPhone && altPhone.replace(/\D/g, "").length >= 10) {
+            update.telefone = altPhone;
+          }
+          const VALID_INTERESTS = ["compra", "venda", "aluguel", "incorporacao", "investimento_ocasiao"];
+          if (interest && VALID_INTERESTS.includes(interest)) {
             const { data: cur } = await supabase.from("leads").select("observacoes").eq("id", leadUuid).maybeSingle();
             const note = `Intenção: ${interest}`;
             update.observacoes = cur?.observacoes
@@ -600,7 +605,6 @@ Deno.serve(async (req) => {
             update.etapa_funil = "Em Contato";
           }
           if (Object.keys(update).length > 1) {
-            // Garante etapa válida do kanban quando movemos para "Em Contato"
             if (update.etapa_funil === "Em Atendimento") update.etapa_funil = "Em Contato";
             await supabase.from("leads").update(update).eq("id", leadUuid);
           }
@@ -608,26 +612,27 @@ Deno.serve(async (req) => {
           needAnotherRound = true;
         } else if (tc.name === "send_booking_link") {
           const k = tc.args?.kind;
-          if (bookingConsent && ["videochamada", "presencial", "ligacao", "whatsapp"].includes(k)) {
+          if (canTriggerHandoff && ["videochamada", "presencial", "ligacao", "whatsapp"].includes(k)) {
             bookingKind = k;
+            toolResult = { ok: true, scheduled: bookingKind, link_will_be_appended: true };
           } else {
-            bookingBlocked = true;
-            console.warn("[whatsapp-webhook] send_booking_link BLOQUEADO sem aceite explícito", { k, lastUserMsg });
+            console.warn("[whatsapp-webhook] send_booking_link BLOQUEADO", { k, hasName, hasInterest, alreadyNotified, alreadyBooked });
+            toolResult = { ok: false, blocked: "missing_name_or_interest_or_already_handed_off" };
           }
-          toolResult = bookingKind
-            ? { ok: true, scheduled: bookingKind, link_will_be_appended: true }
-            : { ok: false, blocked: "lead_did_not_explicitly_accept_booking_link" };
           needAnotherRound = true;
         } else if (tc.name === "request_immediate_contact") {
           const k = tc.args?.kind;
-          if (["videochamada", "presencial", "ligacao", "whatsapp"].includes(k)) {
-            immediateKind = k;
+          if (canTriggerHandoff) {
+            if (["videochamada", "presencial", "ligacao", "whatsapp"].includes(k)) {
+              immediateKind = k;
+            } else {
+              immediateKind = "whatsapp";
+            }
+            toolResult = { ok: true, immediate: immediateKind, broker_will_be_notified: true };
           } else {
-            // Fallback defensivo: se LLM chamou sem kind ou inválido, default WhatsApp
-            immediateKind = "whatsapp";
-            console.warn(`[whatsapp-webhook] request_immediate_contact sem kind válido (${k}), usando whatsapp`);
+            console.warn("[whatsapp-webhook] request_immediate_contact BLOQUEADO", { k, hasName, hasInterest, alreadyNotified, alreadyBooked });
+            toolResult = { ok: false, blocked: "missing_name_or_interest_or_already_handed_off" };
           }
-          toolResult = { ok: true, immediate: immediateKind, broker_will_be_notified: true };
           needAnotherRound = true;
         } else {
           toolResult = { error: "unknown tool" };
@@ -644,35 +649,16 @@ Deno.serve(async (req) => {
     }
 
     let reply = sanitizeReply(result.text || "");
-    if (bookingBlocked && !bookingKind) {
-      reply = isGreetingOnly(lastUserMsg)
-        ? `${firstName ? `Bom dia, ${firstName}!` : "Bom dia!"} Em que posso te ajudar hoje?`
-        : "Entendi. Me conta um pouco melhor o que você precisa, para eu te orientar do jeito certo.";
-    }
-
-    // Fallback: se o LLM "vazou" intent como texto em vez de chamar a tool, infere
-    // SOMENTE para urgência real — nunca disparar booking sem o lead ter aceitado.
-    if (!bookingKind && !immediateKind) {
-      const leaked = detectLeakedIntent(result.text || "");
-      if (leaked.kind) {
-        const wantsNow = /\b(agora|urgente|j[áa]|hoje|rapido|r[áa]pido)\b/i.test(lastUserMsg);
-        if (leaked.isImmediate || wantsNow) {
-          immediateKind = leaked.kind;
-          console.warn("[whatsapp-webhook] intent imediato vazado detectado:", { leaked, immediateKind });
-          reply = "";
-        } else {
-          // Não inferir bookingKind: lead não confirmou que quer falar com o Hans.
-          console.warn("[whatsapp-webhook] booking vazado IGNORADO (lead não confirmou):", leaked);
-          reply = "";
-        }
-      }
-    }
 
     if (!reply) {
       if (!hasName) {
-        reply = "Olá! Sou a Sofia, assistente da HR Imóveis, prazer falar com você!\n\nPara melhor te atender, me diz seu nome completo?";
-      } else if (!immediateKind && !bookingKind) {
-        reply = `Prazer, ${firstName}! Me conta, em que posso te ajudar hoje? Está procurando algum imóvel, pensando em vender o seu, ou tem alguma outra dúvida?`;
+        reply = "Olá! Sou a Sofia, da HR Imóveis. Para começar, qual seu nome completo?";
+      } else if (!hasInterest) {
+        reply = `Prazer, ${firstName}! Esse mesmo número de WhatsApp é o melhor para o corretor te chamar, ou prefere outro?`;
+      } else if (!immediateKind && !bookingKind && !alreadyNotified && !alreadyBooked) {
+        reply = `Perfeito, ${firstName}! Posso te conectar com nosso corretor especialista. Você prefere agendar uma conversa (videochamada, presencial, ligação ou WhatsApp) ou falar agora mesmo com ele?`;
+      } else {
+        reply = `Combinado, ${firstName}! Em que mais posso te ajudar?`;
       }
     }
 
