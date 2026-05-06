@@ -173,15 +173,13 @@ Deno.serve(async (req) => {
             visitor_phone: fields.telefone,
           }).eq("id", sid);
 
-          // Se a captura pediu agendamento, gera um booking_link interno
-          // (mesmo fluxo da Sofia/WhatsApp -> /agendar/:token -> booking-confirm)
-          if (appointmentKind) {
-            // Mapeia tipos da captura para o `kind` do CRM
+          // Se pediu agendamento (não-imediato), gera booking_link
+          if (appointmentKind && appointmentKind !== "imediato") {
             const kind = appointmentKind === "visita" ? "presencial"
               : appointmentKind === "videochamada" ? "videochamada"
+              : appointmentKind === "whatsapp" ? "whatsapp"
               : "ligacao";
 
-            // Evita duplicar: reaproveita link aberto recente da mesma sessão/lead
             const { data: existingLink } = await supabase
               .from("booking_links")
               .select("token, expires_at, used_at, kind")
@@ -209,6 +207,15 @@ Deno.serve(async (req) => {
 
             const baseUrl = Deno.env.get("PUBLIC_APP_URL") || "https://www.hrimoveis.com";
             bookingUrl = `${baseUrl.replace(/\/$/, "")}/agendar/${token}`;
+          }
+
+          // Contato imediato → notifica corretor por email
+          if (immediateRequested) {
+            try {
+              await supabase.functions.invoke("notify-immediate-contact", {
+                body: { lead_id: leadId, contact_kind: "whatsapp" },
+              });
+            } catch (e) { console.error("notify-immediate-contact failed", e); }
           }
         }
       }
