@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Calendar as CalendarIcon, Phone, Video, MapPin, Plus, Ban, Sparkles, Trash2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 type Compromisso = {
   id: string;
