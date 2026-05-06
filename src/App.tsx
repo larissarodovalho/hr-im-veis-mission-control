@@ -30,6 +30,7 @@ import ConfiguracoesPage from "@/pages/ConfiguracoesPage";
 import NotFound from "@/pages/NotFound";
 import AgendarPage from "@/pages/AgendarPage";
 import UnsubscribePage from "@/pages/UnsubscribePage";
+import CapturaPage from "@/pages/CapturaPage";
 // Site público (mantido)
 import HomePage from "@/pages/site/HomePage";
 import ImoveisPage from "@/pages/site/ImoveisPage";
