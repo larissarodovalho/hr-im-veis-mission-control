@@ -52,6 +52,7 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
     const token = url.searchParams.get("token") || "";
+    const kindOverride = url.searchParams.get("kind") || "";
     if (!/^[a-zA-Z0-9_-]{16,64}$/.test(token)) {
       return new Response(JSON.stringify({ error: "token inválido" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
