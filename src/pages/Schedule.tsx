@@ -80,34 +80,49 @@ export default function Schedule() {
   });
 
   const load = async () => {
-    const [{ data: r }, { data: b }, { data: l }, { data: ligs }] = await Promise.all([
+    const [{ data: r, error: rErr }, { data: b }, { data: l }, { data: ligs, error: lErr }] = await Promise.all([
       supabase.from("reunioes")
-        .select("id, agendada_para, status, local, link, notas, tipo, duracao_min, titulo, criado_por_ia, leads(nome)")
+        .select("id, agendada_para, status, local, link, notas, tipo, duracao_min, titulo, criado_por_ia, lead_id")
         .order("agendada_para"),
       supabase.from("agenda_bloqueios" as any).select("*").order("inicio"),
       supabase.from("leads").select("id, nome").order("nome"),
       supabase.from("ligacoes")
-        .select("id, data, duracao_seg, resultado, notas, leads(nome)")
+        .select("id, data, duracao_seg, resultado, notas, lead_id")
         .order("data"),
     ]);
+    if (rErr) console.error("[Schedule] reunioes", rErr);
+    if (lErr) console.error("[Schedule] ligacoes", lErr);
+
+    const leadIds = [
+      ...new Set([
+        ...((r ?? []) as any[]).map((m) => m.lead_id).filter(Boolean),
+        ...((ligs ?? []) as any[]).map((c) => c.lead_id).filter(Boolean),
+      ]),
+    ];
+    let leadsById = new Map<string, any>();
+    if (leadIds.length) {
+      const { data: ls } = await supabase.from("leads").select("id, nome").in("id", leadIds);
+      leadsById = new Map((ls ?? []).map((x: any) => [x.id, x]));
+    }
+
     const reus: Compromisso[] = ((r ?? []) as any[]).map((m) => {
       const start = new Date(m.agendada_para);
       const end = new Date(start.getTime() + (m.duracao_min ?? 60) * 60000);
+      const leadNome = m.lead_id ? leadsById.get(m.lead_id)?.nome : null;
       return {
         id: m.id,
         date: start,
         end,
         tipo: (m.tipo ?? "presencial") as Compromisso["tipo"],
-        titulo: m.titulo || m.leads?.nome || "Compromisso",
+        titulo: m.titulo || leadNome || "Compromisso",
         status: m.status,
         local: m.local,
         link: m.link,
         notas: m.notas,
-        lead_nome: m.leads?.nome,
+        lead_nome: leadNome,
         criado_por_ia: m.criado_por_ia,
       };
     });
-    // Ligações agendadas (resultado === 'agendada' ou resultado começando com 'agendad') também aparecem na agenda
     const ligsAgendadas: Compromisso[] = ((ligs ?? []) as any[])
       .filter((c) => {
         const r = (c.resultado || "").toLowerCase();
@@ -116,15 +131,16 @@ export default function Schedule() {
       .map((c) => {
         const start = new Date(c.data);
         const dur = c.duracao_seg ? Math.round(c.duracao_seg / 60) : 30;
+        const leadNome = c.lead_id ? leadsById.get(c.lead_id)?.nome : null;
         return {
           id: `lig:${c.id}`,
           date: start,
           end: new Date(start.getTime() + dur * 60000),
           tipo: "ligacao" as const,
-          titulo: c.leads?.nome ? `Ligação com ${c.leads.nome}` : "Ligação agendada",
+          titulo: leadNome ? `Ligação com ${leadNome}` : "Ligação agendada",
           status: c.resultado || "agendada",
           notas: c.notas,
-          lead_nome: c.leads?.nome,
+          lead_nome: leadNome,
           criado_por_ia: false,
         };
       });
