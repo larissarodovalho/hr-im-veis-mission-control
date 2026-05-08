@@ -1,20 +1,18 @@
-
-## Plano — Ajustes na tabela de Reuniões
+## Plano — Cores de status nas Reuniões
 
 **Arquivo:** `src/pages/Meetings.tsx`
 
-### 1. Nome do lead clicável (visualmente)
-O nome já é um `<Link>` para `/app/leads/:id`, mas está discreto. Vou:
-- Deixar com `text-primary underline-offset-2 hover:underline` para ficar óbvio que é clicável.
-- Manter o `e.stopPropagation()` para não abrir o modal de edição ao clicar no nome.
+### Cores no badge de Status (coluna Status)
+Trocar o `<Badge variant="outline">` por badges coloridos por status:
+- **agendada** → vermelho (`bg-danger/15 text-danger border-danger/30`) — sinaliza que precisa de aprovação
+- **confirmada** → verde (`bg-success/15 text-success border-success/30`)
+- **realizada** → verde sólido / muted (`bg-success text-success-foreground`)
+- **cancelada** → cinza (`bg-muted text-muted-foreground`)
+- **no_show** → laranja/aviso (`bg-warning/15 text-warning border-warning/30`)
 
-### 2. Coluna "Local" mostrando o tipo
-Hoje a coluna mostra só `local || link || "—"`. Vou trocar por:
-- Um badge com o tipo (**Presencial** 🏠 / **Videochamada** 💻 / **Ligação** 📞) usando `m.tipo`.
-- Abaixo (ou ao lado), o detalhe: endereço quando presencial, ou o link clicável quando videochamada/ligação.
-- Renomear o cabeçalho para **"Tipo / Local"** para refletir melhor o conteúdo.
+### Botão "Aprovar" (coluna Ações)
+Quando o status for **agendada**, deixar o botão verde para indicar a ação positiva:
+- `className="bg-success text-success-foreground hover:bg-success/90"` (sem `variant="outline"`)
+- Continua aparecendo só quando `status !== "confirmada" && status !== "realizada"`
 
-### Observações
-- Sem mudanças de schema — `tipo` já existe em `reunioes` (`presencial` | `videochamada` | `ligacao`).
-- Sem mudanças no formulário "Nova reunião" (já tem campos local/link; o tipo é editado no modal de edição).
-- Mudança puramente visual/frontend.
+Mudança puramente visual, usando os tokens semânticos já existentes (`success`, `danger`, `warning`, `muted`).
