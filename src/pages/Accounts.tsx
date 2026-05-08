@@ -17,6 +17,9 @@ import { useRole } from "@/hooks/useRole";
 import * as XLSX from "xlsx";
 import NovaContaDialog from "@/components/contas/NovaContaDialog";
 import ImportarContasDialog from "@/components/contas/ImportarContasDialog";
+import ContasKanban from "@/components/contas/ContasKanban";
+import { EtapaFunil } from "@/lib/contasFunil";
+import { LayoutGrid, List as ListIcon } from "lucide-react";
 
 type Operation = "compra" | "venda" | "arrendamento" | "outro";
 type Status = "ativo" | "inativo";
