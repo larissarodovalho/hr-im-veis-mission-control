@@ -277,7 +277,8 @@ function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged }: {
         <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
         <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
       </div>
-      <div className="mt-2" onPointerDown={e => e.stopPropagation()}>
+      <div className="mt-2.5 pt-2 border-t flex items-center justify-between gap-2" onPointerDown={e => e.stopPropagation()}>
+        <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Follow-up</span>
         <FollowUpCell lead={lead} onChanged={onChanged} userId={userId} compact />
       </div>
     </div>
