@@ -1,53 +1,37 @@
-## Funil de atendimento (Kanban) em Carteira e Marketing
+## Problema
 
-Adicionar um pipeline visual dentro das subabas **Carteira** e **Marketing** de `/app/contas`, com 6 etapas fixas e cards arrastáveis representando cada conta.
+No Kanban (visualização padrão da página Leads), os botões **Follow-up IA** e **Follow-up Manual** já estão sendo renderizados dentro de cada card, mas:
 
-### Etapas (mesmas para Carteira e Marketing)
+1. Ficam escondidos no rodapé do card, abaixo de várias badges — visualmente passam despercebidos.
+2. O botão **IA** aparece esmaecido (`opacity-60`) quando o lead tem menos de 72h sem interação, então parece "desligado" / inexistente.
+3. Não há rótulo/separador indicando que aquela área é de "Follow-up".
 
-1. A contatar (default ao entrar/criar)
-2. Contatado
-3. Sem retorno
-4. Reunião
-5. Fechado
-6. Perdido
+Por isso a sensação de que "não apareceu nada" no Kanban.
 
-### Comportamento
+## Plano
 
-- Dentro de cada subaba (Carteira / Marketing) adicionar um toggle no topo: **Kanban** (default) | **Lista** — preserva a tabela atual como visão alternativa.
-- Visão Kanban: 6 colunas horizontais com scroll, cada coluna mostra os cards das contas naquela etapa, com contador no header.
-- Card mostra: nome (linkando para `/app/contas/:id`), telefone/email, badge de interesse e valor total das propriedades. Clique no nome navega para o detalhe da conta.
-- Drag-and-drop entre colunas atualiza a etapa imediatamente (otimista) e persiste no banco. Em caso de erro, reverte e mostra toast.
-- Subaba **Todos** continua mostrando apenas a Lista (sem Kanban), já que mistura categorias.
-- Filtros existentes (busca, tipo, interesse, aptidão, status) continuam funcionando no Kanban — filtram os cards visíveis em cada coluna.
+Tornar os botões de follow-up visíveis e claros em **todos os cards do Kanban**, sem mexer na lógica já existente (envio IA + registro manual continuam iguais).
 
-### Mudanças técnicas
+### Ajustes em `src/components/contas/...` — não, apenas em `src/pages/Leads.tsx`
 
-**Banco** (migration):
-- Adicionar coluna `etapa_funil text not null default 'a_contatar'` em `public.contas`.
-- Adicionar índice `idx_contas_etapa_funil` para queries por etapa.
-- Sem mudança de RLS (políticas atuais já cobrem update por responsável/admin).
+1. **Reorganizar o rodapé do `LeadCard` (Kanban)**:
+   - Adicionar um separador fino (`border-t`) acima da área de follow-up.
+   - Colocar um mini-rótulo "Follow-up" à esquerda dos botões para deixar claro o propósito.
+   - Aumentar levemente o tamanho dos botões (`h-8`, ícone `h-3.5`) para serem mais clicáveis e visíveis.
 
-**Frontend**:
-- Nova lib `src/lib/contasFunil.ts` com a constante `ETAPAS = [{ id, label, color }]` e helpers de label/cor.
-- Novo componente `src/components/contas/ContasKanban.tsx`:
-  - Recebe `accounts`, `propsByAccount` e callback `onMoveStage(contaId, novaEtapa)`.
-  - Usa `@dnd-kit/core` + `@dnd-kit/sortable` (já leve, sem dep extra de animação) — instalar.
-  - Renderiza 6 colunas `Card` com cabeçalho colorido, contador, e lista de `ContaCard`.
-- `src/pages/Accounts.tsx`:
-  - Carregar `etapa_funil` no `select`.
-  - Estado `view: "kanban" | "lista"` (querystring `?view=`), default `kanban` em Carteira/Marketing, forçado `lista` em Todos.
-  - Toggle de visão (`Tabs` ou dois `Button` agrupados) ao lado do tab principal.
-  - Função `moveStage(id, etapa)`: update otimista local + `supabase.from('contas').update({ etapa_funil }).eq('id', id)`; rollback em erro.
-  - Renderiza `<ContasKanban />` quando `view === "kanban"`, senão a tabela atual.
-- `NovaContaDialog`: incluir `etapa_funil: 'a_contatar'` no insert (já é o default do banco, mas explicitar).
-- Tipo `Account` ganha `etapa_funil: string`.
+2. **Sempre mostrar o botão IA, com estado claro**:
+   - Quando elegível (72h+ sem interação, fora de Fechado/Perdido, com telefone): destaque com cor primária + ícone Sparkles.
+   - Quando não elegível: manter visível mas com tooltip explicando "Disponível após 72h sem interação" e visual neutro (não esmaecido a ponto de sumir).
 
-### Dependências
+3. **Garantir que o clique nos botões não dispare drag-and-drop**:
+   - Já há `onPointerDown={e => e.stopPropagation()}` no wrapper, mas vou reforçar adicionando também nos próprios botões para evitar qualquer conflito com `useDraggable`.
 
-- `@dnd-kit/core` e `@dnd-kit/sortable` (leves, ~15KB gzip).
+4. **Lista (tabela desktop)**: nenhuma mudança — coluna "Follow-up" já existe e funciona.
 
-### O que NÃO muda
+5. **Mobile cards**: nenhuma mudança — já mostra abaixo das badges.
 
-- Tabela `contas` permanece com todas as funcionalidades atuais.
-- Subaba **Todos**, filtros, exportação, edição e detalhes da conta seguem iguais.
-- Tags `carteira`/`marketing` continuam sendo o que separa as subabas; etapa do funil é ortogonal.
+### Resultado esperado
+
+- No Kanban, cada card terá uma faixa clara no rodapé com "Follow-up: [✨ IA] [📋 Manual]".
+- Botão IA fica destacado quando o lead realmente precisa (72h+).
+- Clicar nos botões não inicia drag.
