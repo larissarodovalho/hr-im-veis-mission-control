@@ -37,6 +37,7 @@ type Account = {
   interesse: Interest | null;
   is_partner: boolean | null;
   tags: string[] | null;
+  etapa_funil: string | null;
 };
 
 type Property = {
