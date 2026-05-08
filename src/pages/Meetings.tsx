@@ -182,7 +182,8 @@ export default function Meetings() {
                   )}
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {items.length === 0 && <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">Nada por aqui.</td></tr>}
           </tbody>
         </table>
