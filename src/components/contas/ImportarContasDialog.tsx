@@ -12,6 +12,7 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onImported: () => void;
+  defaultTags?: string[];
 }
 
 const FIELDS: { key: string; label: string; required?: boolean }[] = [
