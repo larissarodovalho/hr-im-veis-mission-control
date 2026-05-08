@@ -197,7 +197,7 @@ export default function Leads() {
           <Card className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-left"><tr>
-                <th className="p-3">Nome</th><th className="p-3">Origem</th><th className="p-3">Interesse</th><th className="p-3">Etapa</th><th className="p-3">Tempo</th>{canDelete && <th className="p-3 w-12"></th>}
+                <th className="p-3">Nome</th><th className="p-3">Origem</th><th className="p-3">Interesse</th><th className="p-3">Etapa</th><th className="p-3">Tempo</th><th className="p-3">Follow-up</th>{canDelete && <th className="p-3 w-12"></th>}
               </tr></thead>
               <tbody>
                 {filtered.map(l => {
@@ -220,6 +220,7 @@ export default function Leads() {
                           <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
                         </div>
                       </td>
+                      <td className="p-3"><FollowUpCell lead={l} onChanged={load} userId={user?.id} /></td>
                       {canDelete && <td className="p-3"><DeleteLeadButton name={l.nome} onConfirm={() => remove(l.id, l.nome)} /></td>}
                     </tr>
                   );
