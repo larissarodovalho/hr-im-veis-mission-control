@@ -33,6 +33,7 @@ type Account = {
   created_at: string;
   interesse: Interest | null;
   is_partner: boolean | null;
+  tags: string[] | null;
 };
 
 type Property = {
