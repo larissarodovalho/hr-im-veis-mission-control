@@ -468,7 +468,7 @@ export default function Accounts() {
       </div>
 
       {/* Desktop */}
-      <Card className="overflow-hidden hidden md:block">
+      <Card className={`overflow-hidden ${view === "kanban" && lista !== "todos" ? "hidden" : "hidden md:block"}`}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left">
