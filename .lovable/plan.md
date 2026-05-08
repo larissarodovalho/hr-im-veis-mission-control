@@ -1,37 +1,20 @@
-## Problema
 
-No Kanban (visualização padrão da página Leads), os botões **Follow-up IA** e **Follow-up Manual** já estão sendo renderizados dentro de cada card, mas:
+## Plano — Ajustes na tabela de Reuniões
 
-1. Ficam escondidos no rodapé do card, abaixo de várias badges — visualmente passam despercebidos.
-2. O botão **IA** aparece esmaecido (`opacity-60`) quando o lead tem menos de 72h sem interação, então parece "desligado" / inexistente.
-3. Não há rótulo/separador indicando que aquela área é de "Follow-up".
+**Arquivo:** `src/pages/Meetings.tsx`
 
-Por isso a sensação de que "não apareceu nada" no Kanban.
+### 1. Nome do lead clicável (visualmente)
+O nome já é um `<Link>` para `/app/leads/:id`, mas está discreto. Vou:
+- Deixar com `text-primary underline-offset-2 hover:underline` para ficar óbvio que é clicável.
+- Manter o `e.stopPropagation()` para não abrir o modal de edição ao clicar no nome.
 
-## Plano
+### 2. Coluna "Local" mostrando o tipo
+Hoje a coluna mostra só `local || link || "—"`. Vou trocar por:
+- Um badge com o tipo (**Presencial** 🏠 / **Videochamada** 💻 / **Ligação** 📞) usando `m.tipo`.
+- Abaixo (ou ao lado), o detalhe: endereço quando presencial, ou o link clicável quando videochamada/ligação.
+- Renomear o cabeçalho para **"Tipo / Local"** para refletir melhor o conteúdo.
 
-Tornar os botões de follow-up visíveis e claros em **todos os cards do Kanban**, sem mexer na lógica já existente (envio IA + registro manual continuam iguais).
-
-### Ajustes em `src/components/contas/...` — não, apenas em `src/pages/Leads.tsx`
-
-1. **Reorganizar o rodapé do `LeadCard` (Kanban)**:
-   - Adicionar um separador fino (`border-t`) acima da área de follow-up.
-   - Colocar um mini-rótulo "Follow-up" à esquerda dos botões para deixar claro o propósito.
-   - Aumentar levemente o tamanho dos botões (`h-8`, ícone `h-3.5`) para serem mais clicáveis e visíveis.
-
-2. **Sempre mostrar o botão IA, com estado claro**:
-   - Quando elegível (72h+ sem interação, fora de Fechado/Perdido, com telefone): destaque com cor primária + ícone Sparkles.
-   - Quando não elegível: manter visível mas com tooltip explicando "Disponível após 72h sem interação" e visual neutro (não esmaecido a ponto de sumir).
-
-3. **Garantir que o clique nos botões não dispare drag-and-drop**:
-   - Já há `onPointerDown={e => e.stopPropagation()}` no wrapper, mas vou reforçar adicionando também nos próprios botões para evitar qualquer conflito com `useDraggable`.
-
-4. **Lista (tabela desktop)**: nenhuma mudança — coluna "Follow-up" já existe e funciona.
-
-5. **Mobile cards**: nenhuma mudança — já mostra abaixo das badges.
-
-### Resultado esperado
-
-- No Kanban, cada card terá uma faixa clara no rodapé com "Follow-up: [✨ IA] [📋 Manual]".
-- Botão IA fica destacado quando o lead realmente precisa (72h+).
-- Clicar nos botões não inicia drag.
+### Observações
+- Sem mudanças de schema — `tipo` já existe em `reunioes` (`presencial` | `videochamada` | `ligacao`).
+- Sem mudanças no formulário "Nova reunião" (já tem campos local/link; o tipo é editado no modal de edição).
+- Mudança puramente visual/frontend.
