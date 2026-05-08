@@ -150,13 +150,31 @@ export default function Meetings() {
 
       <Card className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left"><tr><th className="p-3">Data</th><th className="p-3">Lead</th><th className="p-3">Local</th><th className="p-3">Status</th><th className="p-3 w-24">Ações</th></tr></thead>
+          <thead className="bg-muted/50 text-left"><tr><th className="p-3">Data</th><th className="p-3">Lead</th><th className="p-3">Tipo / Local</th><th className="p-3">Status</th><th className="p-3 w-24">Ações</th></tr></thead>
           <tbody>
-            {items.map(m => (
+            {items.map(m => {
+              const tipoMeta: Record<string, { label: string; emoji: string }> = {
+                presencial: { label: "Presencial", emoji: "🏠" },
+                videochamada: { label: "Videochamada", emoji: "💻" },
+                ligacao: { label: "Ligação", emoji: "📞" },
+              };
+              const t = tipoMeta[m.tipo] || { label: m.tipo || "—", emoji: "📌" };
+              return (
               <tr key={m.id} className="border-t hover:bg-muted/40 cursor-pointer" onClick={() => openEdit(m)}>
                 <td className="p-3 whitespace-nowrap">{format(new Date(m.agendada_para), "Pp", { locale: ptBR })}</td>
-                <td className="p-3" onClick={(e) => e.stopPropagation()}>{m.leads?.id ? <Link to={`/app/leads/${m.lead_id}`} className="hover:underline font-medium">{m.leads.nome}</Link> : (m.titulo || "Sem lead")}</td>
-                <td className="p-3 text-muted-foreground">{m.local || m.link || "—"}</td>
+                <td className="p-3" onClick={(e) => e.stopPropagation()}>{m.leads?.id ? <Link to={`/app/leads/${m.lead_id}`} className="font-medium text-primary underline-offset-2 hover:underline">{m.leads.nome}</Link> : (m.titulo || "Sem lead")}</td>
+                <td className="p-3">
+                  <div className="flex flex-col gap-1">
+                    <Badge variant="secondary" className="w-fit">{t.emoji} {t.label}</Badge>
+                    {(m.local || m.link) && (
+                      m.link ? (
+                        <a href={m.link} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline truncate max-w-[240px]" onClick={(e) => e.stopPropagation()}>{m.link}</a>
+                      ) : (
+                        <span className="text-xs text-muted-foreground truncate max-w-[240px]">{m.local}</span>
+                      )
+                    )}
+                  </div>
+                </td>
                 <td className="p-3"><Badge variant="outline">{m.status}</Badge></td>
                 <td className="p-3" onClick={(e) => e.stopPropagation()}>
                   {m.status !== "confirmada" && m.status !== "realizada" && (
@@ -164,7 +182,8 @@ export default function Meetings() {
                   )}
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {items.length === 0 && <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">Nada por aqui.</td></tr>}
           </tbody>
         </table>
