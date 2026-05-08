@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
 import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature } from "@/lib/leads";
-import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle } from "lucide-react";
+import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2 } from "lucide-react";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
@@ -158,7 +158,7 @@ export default function Leads() {
         <DndContext sensors={sensors} onDragEnd={onDragEnd}>
           <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
             {STAGES.map(s => (
-              <Column key={s.id} stage={s.id} label={s.label} color={s.color} leads={filtered.filter(l => l.etapa_funil === s.id)} canDelete={canDelete} onDelete={remove} convertedIds={convertedIds} />
+              <Column key={s.id} stage={s.id} label={s.label} color={s.color} leads={filtered.filter(l => l.etapa_funil === s.id)} canDelete={canDelete} onDelete={remove} convertedIds={convertedIds} userId={user?.id} onChanged={load} />
             ))}
           </div>
         </DndContext>
@@ -187,6 +187,7 @@ export default function Leads() {
                     <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
                     {convertedIds.has(l.id) && <Badge className="bg-success/15 text-success border-success/30 border text-[10px] gap-0.5"><Building2 className="h-2.5 w-2.5" /> Conta</Badge>}
                   </div>
+                  <div className="mt-3"><FollowUpCell lead={l} onChanged={load} userId={user?.id} /></div>
                 </Card>
               );
             })}
@@ -197,7 +198,7 @@ export default function Leads() {
           <Card className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-left"><tr>
-                <th className="p-3">Nome</th><th className="p-3">Origem</th><th className="p-3">Interesse</th><th className="p-3">Etapa</th><th className="p-3">Tempo</th>{canDelete && <th className="p-3 w-12"></th>}
+                <th className="p-3">Nome</th><th className="p-3">Origem</th><th className="p-3">Interesse</th><th className="p-3">Etapa</th><th className="p-3">Tempo</th><th className="p-3">Follow-up</th>{canDelete && <th className="p-3 w-12"></th>}
               </tr></thead>
               <tbody>
                 {filtered.map(l => {
@@ -220,6 +221,7 @@ export default function Leads() {
                           <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
                         </div>
                       </td>
+                      <td className="p-3"><FollowUpCell lead={l} onChanged={load} userId={user?.id} /></td>
                       {canDelete && <td className="p-3"><DeleteLeadButton name={l.nome} onConfirm={() => remove(l.id, l.nome)} /></td>}
                     </tr>
                   );
@@ -233,7 +235,7 @@ export default function Leads() {
   );
 }
 
-function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds }: any) {
+function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds, userId, onChanged }: any) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   return (
     <div ref={setNodeRef} className={"min-w-[280px] w-72 flex-shrink-0 rounded-xl bg-muted/40 p-3 transition flex flex-col min-h-[calc(100vh-220px)] " + (isOver ? "ring-2 ring-primary/40" : "")}>
@@ -241,12 +243,12 @@ function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds 
         <div className="flex items-center gap-2"><span className={"h-2 w-2 rounded-full " + color} /><span className="font-medium text-sm">{label}</span></div>
         <span className="text-xs text-muted-foreground">{leads.length}</span>
       </div>
-      <div className="space-y-2 flex-1 overflow-y-auto pr-1">{leads.map((l: Lead) => <LeadCard key={l.id} lead={l} canDelete={canDelete} onDelete={onDelete} converted={convertedIds.has(l.id)} />)}</div>
+      <div className="space-y-2 flex-1 overflow-y-auto pr-1">{leads.map((l: Lead) => <LeadCard key={l.id} lead={l} canDelete={canDelete} onDelete={onDelete} converted={convertedIds.has(l.id)} userId={userId} onChanged={onChanged} />)}</div>
     </div>
   );
 }
 
-function LeadCard({ lead, canDelete, onDelete, converted }: { lead: Lead; canDelete: boolean; onDelete: (id: string, name: string) => void; converted: boolean }) {
+function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged }: { lead: Lead; canDelete: boolean; onDelete: (id: string, name: string) => void; converted: boolean; userId?: string; onChanged: () => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
   const age = ageInDays(lead.created_at);
@@ -275,7 +277,106 @@ function LeadCard({ lead, canDelete, onDelete, converted }: { lead: Lead; canDel
         <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
         <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
       </div>
+      <div className="mt-2" onPointerDown={e => e.stopPropagation()}>
+        <FollowUpCell lead={lead} onChanged={onChanged} userId={userId} compact />
+      </div>
     </div>
+  );
+}
+
+function FollowUpCell({ lead, onChanged, userId, compact }: { lead: Lead; onChanged: () => void; userId?: string; compact?: boolean }) {
+  const [loadingIa, setLoadingIa] = useState(false);
+  const [openManual, setOpenManual] = useState(false);
+  const [nota, setNota] = useState("");
+  const [savingManual, setSavingManual] = useState(false);
+  const idle = idleDays(lead.ultima_interacao);
+  const isClosed = lead.etapa_funil === "Fechado" || lead.etapa_funil === "Perdido";
+  const iaEligible = !isClosed && (idle === null || idle >= 3) && !!lead.telefone;
+
+  const sendIa = async () => {
+    if (!iaEligible) return;
+    setLoadingIa(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("lead-followup-ia", { body: { lead_id: lead.id } });
+      if (error) throw error;
+      if ((data as any)?.ok) toast.success("Follow-up IA enviado");
+      else toast.error((data as any)?.error || "Falha ao enviar");
+      onChanged();
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao enviar");
+    } finally {
+      setLoadingIa(false);
+    }
+  };
+
+  const saveManual = async () => {
+    if (!userId) return toast.error("Sessão expirada");
+    setSavingManual(true);
+    try {
+      const { error } = await supabase.from("interacoes").insert({
+        lead_id: lead.id,
+        tipo: "followup_manual",
+        descricao: nota.trim() || "Follow-up manual registrado",
+        created_by: userId,
+      });
+      if (error) throw error;
+      await supabase.from("leads").update({ ultima_interacao: new Date().toISOString() }).eq("id", lead.id);
+      toast.success("Follow-up registrado");
+      setNota("");
+      setOpenManual(false);
+      onChanged();
+    } catch (e: any) {
+      toast.error(e?.message || "Erro");
+    } finally {
+      setSavingManual(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="flex items-center gap-1">
+        <Button
+          type="button"
+          size={compact ? "sm" : "sm"}
+          variant="outline"
+          className={"gap-1 h-7 px-2 text-[11px] " + (iaEligible ? "border-primary/40 text-primary hover:bg-primary/10" : "opacity-60")}
+          disabled={!iaEligible || loadingIa}
+          onClick={sendIa}
+          title={iaEligible ? "Enviar mensagem de reaquecimento via IA" : "Disponível para leads sem interação há 72h+"}
+        >
+          {loadingIa ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+          IA
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="gap-1 h-7 px-2 text-[11px]"
+          onClick={() => setOpenManual(true)}
+          title="Registrar follow-up manual"
+        >
+          <ClipboardCheck className="h-3 w-3" />
+          Manual
+        </Button>
+      </div>
+
+      <Dialog open={openManual} onOpenChange={setOpenManual}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Registrar follow-up manual</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">Lead: <strong>{lead.nome}</strong></p>
+            <div>
+              <Label>Notas (opcional)</Label>
+              <Textarea value={nota} onChange={e => setNota(e.target.value)} placeholder="O que foi conversado, próximos passos…" rows={4} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpenManual(false)}>Cancelar</Button>
+            <Button onClick={saveManual} disabled={savingManual}>{savingManual ? "Salvando…" : "Registrar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
