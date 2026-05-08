@@ -5,6 +5,8 @@ export type Stage =
   | 'Novo Lead'
   | 'Em Contato'
   | 'Conversa Ativa'
+  | 'IA de acompanhamento'
+  | 'Manual de acompanhamento'
   | 'Reunião Agendada'
   | 'Visita'
   | 'Proposta'
@@ -23,6 +25,8 @@ export const STAGES: { id: Stage; label: string; color: string }[] = [
   { id: 'Novo Lead', label: 'Novo Lead', color: 'bg-blue-500' },
   { id: 'Em Contato', label: 'Em Contato', color: 'bg-cyan-500' },
   { id: 'Conversa Ativa', label: 'Conversa Ativa', color: 'bg-indigo-500' },
+  { id: 'IA de acompanhamento', label: '🤖 IA de acompanhamento', color: 'bg-violet-500' },
+  { id: 'Manual de acompanhamento', label: '👤 Manual de acompanhamento', color: 'bg-fuchsia-500' },
   { id: 'Reunião Agendada', label: 'Reunião Agendada', color: 'bg-purple-500' },
   { id: 'Visita', label: 'Visita', color: 'bg-amber-500' },
   { id: 'Proposta', label: 'Proposta', color: 'bg-orange-500' },
