@@ -325,15 +325,16 @@ export default function Accounts() {
         </div>
       </header>
 
-      <Tabs value={lista} onValueChange={(v) => setLista(v as "carteira" | "marketing")}>
+      <Tabs value={lista} onValueChange={(v) => setLista(v as "todos" | "carteira" | "marketing")}>
         <TabsList>
+          <TabsTrigger value="todos">Todos</TabsTrigger>
           <TabsTrigger value="carteira">Carteira</TabsTrigger>
           <TabsTrigger value="marketing">Marketing</TabsTrigger>
         </TabsList>
       </Tabs>
 
-      <NovaContaDialog open={novaOpen} onOpenChange={setNovaOpen} onCreated={load} defaultTags={[lista]} />
-      <ImportarContasDialog open={importOpen} onOpenChange={setImportOpen} onImported={load} defaultTags={[lista]} />
+      <NovaContaDialog open={novaOpen} onOpenChange={setNovaOpen} onCreated={load} defaultTags={lista === "todos" ? [] : [lista]} />
+      <ImportarContasDialog open={importOpen} onOpenChange={setImportOpen} onImported={load} defaultTags={lista === "todos" ? [] : [lista]} />
 
       {/* Mobile */}
       <div className="md:hidden space-y-3">
