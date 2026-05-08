@@ -91,7 +91,7 @@ function Column({
       </div>
       <div
         ref={setNodeRef}
-        className={`flex-1 p-2 space-y-2 bg-muted/20 border border-t-0 rounded-b-md min-h-[300px] transition-colors ${
+        className={`flex-1 p-2 space-y-2 bg-muted/20 border border-t-0 rounded-b-md min-h-[calc(100vh-260px)] overflow-y-auto transition-colors ${
           isOver ? "bg-primary/5 border-primary/40" : ""
         }`}
       >
