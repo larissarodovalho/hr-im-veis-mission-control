@@ -72,6 +72,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
       telefone: form.telefone || null,
       endereco: form.endereco || null,
       observacoes: form.observacoes || null,
+      tags: defaultTags && defaultTags.length ? defaultTags : null,
       created_by: auth.user?.id,
       responsavel_id: auth.user?.id,
     });
