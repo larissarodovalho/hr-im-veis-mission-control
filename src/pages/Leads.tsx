@@ -187,6 +187,7 @@ export default function Leads() {
                     <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
                     {convertedIds.has(l.id) && <Badge className="bg-success/15 text-success border-success/30 border text-[10px] gap-0.5"><Building2 className="h-2.5 w-2.5" /> Conta</Badge>}
                   </div>
+                  <div className="mt-3"><FollowUpCell lead={l} onChanged={load} userId={user?.id} /></div>
                 </Card>
               );
             })}
