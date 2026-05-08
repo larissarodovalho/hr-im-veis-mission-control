@@ -140,8 +140,10 @@ export default function Accounts() {
   }, {});
 
   const filtered = accounts.filter((a) => {
-    const tags = (a.tags ?? []).map((t) => t.toLowerCase());
-    if (!tags.includes(lista)) return false;
+    if (lista !== "todos") {
+      const tags = (a.tags ?? []).map((t) => t.toLowerCase());
+      if (!tags.includes(lista)) return false;
+    }
     const status = (a.status ?? "ativo") as Status;
     if (statusFilter !== "todos" && status !== statusFilter) return false;
     if (interestFilter !== "todos" && a.interesse !== interestFilter) return false;
