@@ -322,8 +322,15 @@ export default function Accounts() {
         </div>
       </header>
 
-      <NovaContaDialog open={novaOpen} onOpenChange={setNovaOpen} onCreated={load} />
-      <ImportarContasDialog open={importOpen} onOpenChange={setImportOpen} onImported={load} />
+      <Tabs value={lista} onValueChange={(v) => setLista(v as "carteira" | "marketing")}>
+        <TabsList>
+          <TabsTrigger value="carteira">Carteira</TabsTrigger>
+          <TabsTrigger value="marketing">Marketing</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      <NovaContaDialog open={novaOpen} onOpenChange={setNovaOpen} onCreated={load} defaultTags={[lista]} />
+      <ImportarContasDialog open={importOpen} onOpenChange={setImportOpen} onImported={load} defaultTags={[lista]} />
 
       {/* Mobile */}
       <div className="md:hidden space-y-3">
