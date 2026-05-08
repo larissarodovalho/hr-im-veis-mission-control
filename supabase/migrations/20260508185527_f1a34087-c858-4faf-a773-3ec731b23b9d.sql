@@ -1,0 +1,2 @@
+ALTER TABLE public.reunioes DROP CONSTRAINT reunioes_status_check;
+ALTER TABLE public.reunioes ADD CONSTRAINT reunioes_status_check CHECK (status = ANY (ARRAY['agendada'::text, 'confirmada'::text, 'realizada'::text, 'no_show'::text, 'cancelada'::text]));
