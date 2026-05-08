@@ -203,6 +203,18 @@ export default function Meetings() {
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Editar reunião</DialogTitle></DialogHeader>
+          {editing?.leads?.id && (
+            <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm flex items-center justify-between gap-2">
+              <span className="text-muted-foreground">Lead:</span>
+              <Link
+                to={`/app/leads/${editing.lead_id}`}
+                className="font-medium text-primary underline-offset-2 hover:underline truncate"
+                onClick={() => setEditing(null)}
+              >
+                {editing.leads.nome} →
+              </Link>
+            </div>
+          )}
           <form onSubmit={saveEdit} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
