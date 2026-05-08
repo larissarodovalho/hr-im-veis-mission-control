@@ -347,16 +347,48 @@ export default function Accounts() {
         </div>
       </header>
 
-      <Tabs value={lista} onValueChange={(v) => setLista(v as "todos" | "carteira" | "marketing")}>
-        <TabsList>
-          <TabsTrigger value="todos">Todos</TabsTrigger>
-          <TabsTrigger value="carteira">Carteira</TabsTrigger>
-          <TabsTrigger value="marketing">Marketing</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Tabs value={lista} onValueChange={(v) => setLista(v as "todos" | "carteira" | "marketing")}>
+          <TabsList>
+            <TabsTrigger value="todos">Todos</TabsTrigger>
+            <TabsTrigger value="carteira">Carteira</TabsTrigger>
+            <TabsTrigger value="marketing">Marketing</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        {lista !== "todos" && (
+          <div className="hidden md:inline-flex rounded-md border bg-background p-0.5">
+            <Button
+              variant={view === "kanban" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-8"
+              onClick={() => setView("kanban")}
+            >
+              <LayoutGrid className="h-4 w-4 mr-1" /> Kanban
+            </Button>
+            <Button
+              variant={view === "lista" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-8"
+              onClick={() => setView("lista")}
+            >
+              <ListIcon className="h-4 w-4 mr-1" /> Lista
+            </Button>
+          </div>
+        )}
+      </div>
 
       <NovaContaDialog open={novaOpen} onOpenChange={setNovaOpen} onCreated={load} defaultTags={lista === "todos" ? [] : [lista]} />
       <ImportarContasDialog open={importOpen} onOpenChange={setImportOpen} onImported={load} defaultTags={lista === "todos" ? [] : [lista]} />
+
+      {view === "kanban" && lista !== "todos" ? (
+        loading ? (
+          <Card className="p-6 text-center text-muted-foreground hidden md:block">Carregando…</Card>
+        ) : (
+          <div className="hidden md:block">
+            <ContasKanban accounts={filtered as any} propsByAccount={propsByAccount} onMoveStage={moveStage} />
+          </div>
+        )
+      ) : null}
 
       {/* Mobile */}
       <div className="md:hidden space-y-3">
