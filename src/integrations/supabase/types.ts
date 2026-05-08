@@ -408,6 +408,7 @@ export type Database = {
           documento: string | null
           email: string | null
           endereco: string | null
+          etapa_funil: string
           id: string
           interesse: string | null
           is_partner: boolean
@@ -427,6 +428,7 @@ export type Database = {
           documento?: string | null
           email?: string | null
           endereco?: string | null
+          etapa_funil?: string
           id?: string
           interesse?: string | null
           is_partner?: boolean
@@ -446,6 +448,7 @@ export type Database = {
           documento?: string | null
           email?: string | null
           endereco?: string | null
+          etapa_funil?: string
           id?: string
           interesse?: string | null
           is_partner?: boolean
