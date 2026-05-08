@@ -94,8 +94,9 @@ export default function Accounts() {
   const { isAdmin, isGestor } = useRole();
   const canDelete = isAdmin || isGestor;
   const [searchParams, setSearchParams] = useSearchParams();
-  const lista = (searchParams.get("lista") === "marketing" ? "marketing" : "carteira") as "carteira" | "marketing";
-  const setLista = (v: "carteira" | "marketing") => {
+  const listaParam = searchParams.get("lista");
+  const lista = (listaParam === "marketing" ? "marketing" : listaParam === "carteira" ? "carteira" : "todos") as "todos" | "carteira" | "marketing";
+  const setLista = (v: "todos" | "carteira" | "marketing") => {
     const sp = new URLSearchParams(searchParams);
     sp.set("lista", v);
     setSearchParams(sp, { replace: true });
@@ -139,8 +140,10 @@ export default function Accounts() {
   }, {});
 
   const filtered = accounts.filter((a) => {
-    const tags = (a.tags ?? []).map((t) => t.toLowerCase());
-    if (!tags.includes(lista)) return false;
+    if (lista !== "todos") {
+      const tags = (a.tags ?? []).map((t) => t.toLowerCase());
+      if (!tags.includes(lista)) return false;
+    }
     const status = (a.status ?? "ativo") as Status;
     if (statusFilter !== "todos" && status !== statusFilter) return false;
     if (interestFilter !== "todos" && a.interesse !== interestFilter) return false;
@@ -322,15 +325,16 @@ export default function Accounts() {
         </div>
       </header>
 
-      <Tabs value={lista} onValueChange={(v) => setLista(v as "carteira" | "marketing")}>
+      <Tabs value={lista} onValueChange={(v) => setLista(v as "todos" | "carteira" | "marketing")}>
         <TabsList>
+          <TabsTrigger value="todos">Todos</TabsTrigger>
           <TabsTrigger value="carteira">Carteira</TabsTrigger>
           <TabsTrigger value="marketing">Marketing</TabsTrigger>
         </TabsList>
       </Tabs>
 
-      <NovaContaDialog open={novaOpen} onOpenChange={setNovaOpen} onCreated={load} defaultTags={[lista]} />
-      <ImportarContasDialog open={importOpen} onOpenChange={setImportOpen} onImported={load} defaultTags={[lista]} />
+      <NovaContaDialog open={novaOpen} onOpenChange={setNovaOpen} onCreated={load} defaultTags={lista === "todos" ? [] : [lista]} />
+      <ImportarContasDialog open={importOpen} onOpenChange={setImportOpen} onImported={load} defaultTags={lista === "todos" ? [] : [lista]} />
 
       {/* Mobile */}
       <div className="md:hidden space-y-3">
