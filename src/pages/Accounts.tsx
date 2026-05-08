@@ -94,8 +94,9 @@ export default function Accounts() {
   const { isAdmin, isGestor } = useRole();
   const canDelete = isAdmin || isGestor;
   const [searchParams, setSearchParams] = useSearchParams();
-  const lista = (searchParams.get("lista") === "marketing" ? "marketing" : "carteira") as "carteira" | "marketing";
-  const setLista = (v: "carteira" | "marketing") => {
+  const listaParam = searchParams.get("lista");
+  const lista = (listaParam === "marketing" ? "marketing" : listaParam === "carteira" ? "carteira" : "todos") as "todos" | "carteira" | "marketing";
+  const setLista = (v: "todos" | "carteira" | "marketing") => {
     const sp = new URLSearchParams(searchParams);
     sp.set("lista", v);
     setSearchParams(sp, { replace: true });
