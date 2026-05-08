@@ -93,6 +93,13 @@ const fmt = (v: number | null) =>
 export default function Accounts() {
   const { isAdmin, isGestor } = useRole();
   const canDelete = isAdmin || isGestor;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const lista = (searchParams.get("lista") === "marketing" ? "marketing" : "carteira") as "carteira" | "marketing";
+  const setLista = (v: "carteira" | "marketing") => {
+    const sp = new URLSearchParams(searchParams);
+    sp.set("lista", v);
+    setSearchParams(sp, { replace: true });
+  };
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [search, setSearch] = useState("");
@@ -107,7 +114,7 @@ export default function Accounts() {
   const load = async () => {
     setLoading(true);
     const [{ data: accs, error }, { data: props }] = await Promise.all([
-      supabase.from("contas").select("id, nome, email, telefone, status, observacoes, created_at, interesse, is_partner").order("created_at", { ascending: false }),
+      supabase.from("contas").select("id, nome, email, telefone, status, observacoes, created_at, interesse, is_partner, tags").order("created_at", { ascending: false }),
       supabase.from("conta_propriedades" as any).select("*"),
     ]);
     if (error) toast.error(error.message);
