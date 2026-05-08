@@ -63,9 +63,10 @@ export function EventsCalendar({ events, title = "Calendário" }: EventsCalendar
                   <li key={ev.id} className="flex items-start justify-between gap-3 p-3 rounded-md border bg-card">
                     <div className="min-w-0">
                       <div className="text-sm font-medium">
-                        {format(ev.date, "HH:mm", { locale: ptBR })} —{" "}
+                        <span className="text-muted-foreground font-normal">{format(ev.date, "HH:mm", { locale: ptBR })}</span>
+                        {" — "}
                         {ev.lead_id ? (
-                          <Link to={`/app/leads/${ev.lead_id}`} className="hover:underline">
+                          <Link to={`/app/leads/${ev.lead_id}`} className="text-primary underline-offset-2 hover:underline">
                             {ev.title}
                           </Link>
                         ) : (
