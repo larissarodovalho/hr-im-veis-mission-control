@@ -165,6 +165,7 @@ export default function ImportarContasDialog({ open, onOpenChange, onImported, d
           telefone,
           endereco: get("endereco"),
           observacoes: get("observacoes"),
+          tags: defaultTags && defaultTags.length ? defaultTags : null,
           created_by: userId,
           responsavel_id: userId,
         };
