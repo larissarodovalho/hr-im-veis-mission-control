@@ -253,6 +253,16 @@ export default function Accounts() {
     toast.success("Arquivo CSV gerado");
   };
 
+  const moveStage = async (id: string, etapa: EtapaFunil) => {
+    const prev = accounts;
+    setAccounts((cur) => cur.map((a) => (a.id === id ? { ...a, etapa_funil: etapa } : a)));
+    const { error } = await supabase.from("contas").update({ etapa_funil: etapa } as any).eq("id", id);
+    if (error) {
+      setAccounts(prev);
+      toast.error("Não foi possível mover: " + error.message);
+    }
+  };
+
   const remove = async (id: string, name: string) => {
     const { error } = await supabase.from("contas").delete().eq("id", id);
     if (error) return toast.error(error.message);
