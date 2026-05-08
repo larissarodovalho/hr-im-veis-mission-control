@@ -105,6 +105,14 @@ export default function Accounts() {
     sp.set("lista", v);
     setSearchParams(sp, { replace: true });
   };
+  const viewParam = searchParams.get("view");
+  const view: "kanban" | "lista" =
+    lista === "todos" ? "lista" : viewParam === "lista" ? "lista" : "kanban";
+  const setView = (v: "kanban" | "lista") => {
+    const sp = new URLSearchParams(searchParams);
+    sp.set("view", v);
+    setSearchParams(sp, { replace: true });
+  };
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [search, setSearch] = useState("");
@@ -119,7 +127,7 @@ export default function Accounts() {
   const load = async () => {
     setLoading(true);
     const [{ data: accs, error }, { data: props }] = await Promise.all([
-      supabase.from("contas").select("id, nome, email, telefone, status, observacoes, created_at, interesse, is_partner, tags").order("created_at", { ascending: false }),
+      supabase.from("contas").select("id, nome, email, telefone, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil").order("created_at", { ascending: false }),
       supabase.from("conta_propriedades" as any).select("*"),
     ]);
     if (error) toast.error(error.message);
