@@ -14,9 +14,10 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onCreated: () => void;
+  defaultTags?: string[];
 }
 
-export default function NovaContaDialog({ open, onOpenChange, onCreated }: Props) {
+export default function NovaContaDialog({ open, onOpenChange, onCreated, defaultTags }: Props) {
   const [saving, setSaving] = useState(false);
   const [duplicates, setDuplicates] = useState<DuplicateMatch[]>([]);
   const [forceCreate, setForceCreate] = useState(false);
