@@ -335,28 +335,28 @@ function FollowUpCell({ lead, onChanged, userId, compact }: { lead: Lead; onChan
 
   return (
     <>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <Button
           type="button"
-          size={compact ? "sm" : "sm"}
-          variant="outline"
-          className={"gap-1 h-7 px-2 text-[11px] " + (iaEligible ? "border-primary/40 text-primary hover:bg-primary/10" : "opacity-60")}
+          size="sm"
+          variant={iaEligible ? "default" : "outline"}
+          className={"gap-1 h-8 px-2.5 text-[11px] " + (iaEligible ? "bg-primary text-primary-foreground hover:bg-primary/90" : "")}
           disabled={!iaEligible || loadingIa}
-          onClick={sendIa}
+          onClick={(e) => { e.stopPropagation(); sendIa(); }}
           title={iaEligible ? "Enviar mensagem de reaquecimento via IA" : "Disponível para leads sem interação há 72h+"}
         >
-          {loadingIa ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+          {loadingIa ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
           IA
         </Button>
         <Button
           type="button"
           size="sm"
           variant="outline"
-          className="gap-1 h-7 px-2 text-[11px]"
-          onClick={() => setOpenManual(true)}
+          className="gap-1 h-8 px-2.5 text-[11px]"
+          onClick={(e) => { e.stopPropagation(); setOpenManual(true); }}
           title="Registrar follow-up manual"
         >
-          <ClipboardCheck className="h-3 w-3" />
+          <ClipboardCheck className="h-3.5 w-3.5" />
           Manual
         </Button>
       </div>
