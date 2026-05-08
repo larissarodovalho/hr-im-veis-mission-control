@@ -12,6 +12,7 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onImported: () => void;
+  defaultTags?: string[];
 }
 
 const FIELDS: { key: string; label: string; required?: boolean }[] = [
@@ -46,7 +47,7 @@ function guessMapping(headers: string[]): Record<string, string> {
   return map;
 }
 
-export default function ImportarContasDialog({ open, onOpenChange, onImported }: Props) {
+export default function ImportarContasDialog({ open, onOpenChange, onImported, defaultTags }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState("");
   const [headers, setHeaders] = useState<string[]>([]);
@@ -164,6 +165,7 @@ export default function ImportarContasDialog({ open, onOpenChange, onImported }:
           telefone,
           endereco: get("endereco"),
           observacoes: get("observacoes"),
+          tags: defaultTags && defaultTags.length ? defaultTags : null,
           created_by: userId,
           responsavel_id: userId,
         };

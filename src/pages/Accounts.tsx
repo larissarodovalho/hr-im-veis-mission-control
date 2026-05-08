@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,7 @@ type Account = {
   created_at: string;
   interesse: Interest | null;
   is_partner: boolean | null;
+  tags: string[] | null;
 };
 
 type Property = {
@@ -91,6 +93,13 @@ const fmt = (v: number | null) =>
 export default function Accounts() {
   const { isAdmin, isGestor } = useRole();
   const canDelete = isAdmin || isGestor;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const lista = (searchParams.get("lista") === "marketing" ? "marketing" : "carteira") as "carteira" | "marketing";
+  const setLista = (v: "carteira" | "marketing") => {
+    const sp = new URLSearchParams(searchParams);
+    sp.set("lista", v);
+    setSearchParams(sp, { replace: true });
+  };
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [search, setSearch] = useState("");
@@ -105,7 +114,7 @@ export default function Accounts() {
   const load = async () => {
     setLoading(true);
     const [{ data: accs, error }, { data: props }] = await Promise.all([
-      supabase.from("contas").select("id, nome, email, telefone, status, observacoes, created_at, interesse, is_partner").order("created_at", { ascending: false }),
+      supabase.from("contas").select("id, nome, email, telefone, status, observacoes, created_at, interesse, is_partner, tags").order("created_at", { ascending: false }),
       supabase.from("conta_propriedades" as any).select("*"),
     ]);
     if (error) toast.error(error.message);
@@ -130,6 +139,8 @@ export default function Accounts() {
   }, {});
 
   const filtered = accounts.filter((a) => {
+    const tags = (a.tags ?? []).map((t) => t.toLowerCase());
+    if (!tags.includes(lista)) return false;
     const status = (a.status ?? "ativo") as Status;
     if (statusFilter !== "todos" && status !== statusFilter) return false;
     if (interestFilter !== "todos" && a.interesse !== interestFilter) return false;
@@ -311,8 +322,15 @@ export default function Accounts() {
         </div>
       </header>
 
-      <NovaContaDialog open={novaOpen} onOpenChange={setNovaOpen} onCreated={load} />
-      <ImportarContasDialog open={importOpen} onOpenChange={setImportOpen} onImported={load} />
+      <Tabs value={lista} onValueChange={(v) => setLista(v as "carteira" | "marketing")}>
+        <TabsList>
+          <TabsTrigger value="carteira">Carteira</TabsTrigger>
+          <TabsTrigger value="marketing">Marketing</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      <NovaContaDialog open={novaOpen} onOpenChange={setNovaOpen} onCreated={load} defaultTags={[lista]} />
+      <ImportarContasDialog open={importOpen} onOpenChange={setImportOpen} onImported={load} defaultTags={[lista]} />
 
       {/* Mobile */}
       <div className="md:hidden space-y-3">
