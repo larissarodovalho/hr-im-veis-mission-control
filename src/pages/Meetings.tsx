@@ -175,10 +175,21 @@ export default function Meetings() {
                     )}
                   </div>
                 </td>
-                <td className="p-3"><Badge variant="outline">{m.status}</Badge></td>
+                <td className="p-3">
+                  {(() => {
+                    const styles: Record<string, string> = {
+                      agendada: "bg-danger/15 text-danger border-danger/30",
+                      confirmada: "bg-success/15 text-success border-success/30",
+                      realizada: "bg-success text-success-foreground border-transparent",
+                      cancelada: "bg-muted text-muted-foreground border-border",
+                      no_show: "bg-warning/15 text-warning border-warning/30",
+                    };
+                    return <Badge variant="outline" className={styles[m.status] || ""}>{m.status}</Badge>;
+                  })()}
+                </td>
                 <td className="p-3" onClick={(e) => e.stopPropagation()}>
                   {m.status !== "confirmada" && m.status !== "realizada" && (
-                    <Button size="sm" variant="outline" onClick={() => quickStatus(m, "confirmada")}>Aprovar</Button>
+                    <Button size="sm" className="bg-success text-success-foreground hover:bg-success/90" onClick={() => quickStatus(m, "confirmada")}>Aprovar</Button>
                   )}
                 </td>
               </tr>
