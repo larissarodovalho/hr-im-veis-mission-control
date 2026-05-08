@@ -17,6 +17,9 @@ import { useRole } from "@/hooks/useRole";
 import * as XLSX from "xlsx";
 import NovaContaDialog from "@/components/contas/NovaContaDialog";
 import ImportarContasDialog from "@/components/contas/ImportarContasDialog";
+import ContasKanban from "@/components/contas/ContasKanban";
+import { EtapaFunil } from "@/lib/contasFunil";
+import { LayoutGrid, List as ListIcon } from "lucide-react";
 
 type Operation = "compra" | "venda" | "arrendamento" | "outro";
 type Status = "ativo" | "inativo";
@@ -34,6 +37,7 @@ type Account = {
   interesse: Interest | null;
   is_partner: boolean | null;
   tags: string[] | null;
+  etapa_funil: string | null;
 };
 
 type Property = {
@@ -101,6 +105,14 @@ export default function Accounts() {
     sp.set("lista", v);
     setSearchParams(sp, { replace: true });
   };
+  const viewParam = searchParams.get("view");
+  const view: "kanban" | "lista" =
+    lista === "todos" ? "lista" : viewParam === "lista" ? "lista" : "kanban";
+  const setView = (v: "kanban" | "lista") => {
+    const sp = new URLSearchParams(searchParams);
+    sp.set("view", v);
+    setSearchParams(sp, { replace: true });
+  };
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [search, setSearch] = useState("");
@@ -115,7 +127,7 @@ export default function Accounts() {
   const load = async () => {
     setLoading(true);
     const [{ data: accs, error }, { data: props }] = await Promise.all([
-      supabase.from("contas").select("id, nome, email, telefone, status, observacoes, created_at, interesse, is_partner, tags").order("created_at", { ascending: false }),
+      supabase.from("contas").select("id, nome, email, telefone, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil").order("created_at", { ascending: false }),
       supabase.from("conta_propriedades" as any).select("*"),
     ]);
     if (error) toast.error(error.message);
@@ -241,6 +253,16 @@ export default function Accounts() {
     toast.success("Arquivo CSV gerado");
   };
 
+  const moveStage = async (id: string, etapa: EtapaFunil) => {
+    const prev = accounts;
+    setAccounts((cur) => cur.map((a) => (a.id === id ? { ...a, etapa_funil: etapa } : a)));
+    const { error } = await supabase.from("contas").update({ etapa_funil: etapa } as any).eq("id", id);
+    if (error) {
+      setAccounts(prev);
+      toast.error("Não foi possível mover: " + error.message);
+    }
+  };
+
   const remove = async (id: string, name: string) => {
     const { error } = await supabase.from("contas").delete().eq("id", id);
     if (error) return toast.error(error.message);
@@ -325,16 +347,48 @@ export default function Accounts() {
         </div>
       </header>
 
-      <Tabs value={lista} onValueChange={(v) => setLista(v as "todos" | "carteira" | "marketing")}>
-        <TabsList>
-          <TabsTrigger value="todos">Todos</TabsTrigger>
-          <TabsTrigger value="carteira">Carteira</TabsTrigger>
-          <TabsTrigger value="marketing">Marketing</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Tabs value={lista} onValueChange={(v) => setLista(v as "todos" | "carteira" | "marketing")}>
+          <TabsList>
+            <TabsTrigger value="todos">Todos</TabsTrigger>
+            <TabsTrigger value="carteira">Carteira</TabsTrigger>
+            <TabsTrigger value="marketing">Marketing</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        {lista !== "todos" && (
+          <div className="hidden md:inline-flex rounded-md border bg-background p-0.5">
+            <Button
+              variant={view === "kanban" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-8"
+              onClick={() => setView("kanban")}
+            >
+              <LayoutGrid className="h-4 w-4 mr-1" /> Kanban
+            </Button>
+            <Button
+              variant={view === "lista" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-8"
+              onClick={() => setView("lista")}
+            >
+              <ListIcon className="h-4 w-4 mr-1" /> Lista
+            </Button>
+          </div>
+        )}
+      </div>
 
       <NovaContaDialog open={novaOpen} onOpenChange={setNovaOpen} onCreated={load} defaultTags={lista === "todos" ? [] : [lista]} />
       <ImportarContasDialog open={importOpen} onOpenChange={setImportOpen} onImported={load} defaultTags={lista === "todos" ? [] : [lista]} />
+
+      {view === "kanban" && lista !== "todos" ? (
+        loading ? (
+          <Card className="p-6 text-center text-muted-foreground hidden md:block">Carregando…</Card>
+        ) : (
+          <div className="hidden md:block">
+            <ContasKanban accounts={filtered as any} propsByAccount={propsByAccount} onMoveStage={moveStage} />
+          </div>
+        )
+      ) : null}
 
       {/* Mobile */}
       <div className="md:hidden space-y-3">
@@ -414,7 +468,7 @@ export default function Accounts() {
       </div>
 
       {/* Desktop */}
-      <Card className="overflow-hidden hidden md:block">
+      <Card className={`overflow-hidden ${view === "kanban" && lista !== "todos" ? "hidden" : "hidden md:block"}`}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left">
