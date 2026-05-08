@@ -47,7 +47,7 @@ function guessMapping(headers: string[]): Record<string, string> {
   return map;
 }
 
-export default function ImportarContasDialog({ open, onOpenChange, onImported }: Props) {
+export default function ImportarContasDialog({ open, onOpenChange, onImported, defaultTags }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState("");
   const [headers, setHeaders] = useState<string[]>([]);
