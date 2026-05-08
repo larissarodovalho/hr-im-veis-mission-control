@@ -277,7 +277,8 @@ function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged }: {
         <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
         <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
       </div>
-      <div className="mt-2" onPointerDown={e => e.stopPropagation()}>
+      <div className="mt-2.5 pt-2 border-t flex items-center justify-between gap-2" onPointerDown={e => e.stopPropagation()}>
+        <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Follow-up</span>
         <FollowUpCell lead={lead} onChanged={onChanged} userId={userId} compact />
       </div>
     </div>
@@ -334,28 +335,28 @@ function FollowUpCell({ lead, onChanged, userId, compact }: { lead: Lead; onChan
 
   return (
     <>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <Button
           type="button"
-          size={compact ? "sm" : "sm"}
-          variant="outline"
-          className={"gap-1 h-7 px-2 text-[11px] " + (iaEligible ? "border-primary/40 text-primary hover:bg-primary/10" : "opacity-60")}
+          size="sm"
+          variant={iaEligible ? "default" : "outline"}
+          className={"gap-1 h-8 px-2.5 text-[11px] " + (iaEligible ? "bg-primary text-primary-foreground hover:bg-primary/90" : "")}
           disabled={!iaEligible || loadingIa}
-          onClick={sendIa}
+          onClick={(e) => { e.stopPropagation(); sendIa(); }}
           title={iaEligible ? "Enviar mensagem de reaquecimento via IA" : "Disponível para leads sem interação há 72h+"}
         >
-          {loadingIa ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+          {loadingIa ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
           IA
         </Button>
         <Button
           type="button"
           size="sm"
           variant="outline"
-          className="gap-1 h-7 px-2 text-[11px]"
-          onClick={() => setOpenManual(true)}
+          className="gap-1 h-8 px-2.5 text-[11px]"
+          onClick={(e) => { e.stopPropagation(); setOpenManual(true); }}
           title="Registrar follow-up manual"
         >
-          <ClipboardCheck className="h-3 w-3" />
+          <ClipboardCheck className="h-3.5 w-3.5" />
           Manual
         </Button>
       </div>
