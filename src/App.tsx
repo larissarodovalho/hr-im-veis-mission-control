@@ -53,7 +53,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/esqueci-senha" element={<ForgotPassword />} />
             <Route path="/redefinir-senha" element={<ResetPassword />} />
-            <Route path="/agendar/:token" element={<AgendarPage />} />
+            <Route path="/agendar/:token" element={<AgendarErrorBoundary><AgendarPage /></AgendarErrorBoundary>} />
             <Route path="/unsubscribe" element={<UnsubscribePage />} />
             <Route path="/captura" element={<CapturaPage />} />
 
