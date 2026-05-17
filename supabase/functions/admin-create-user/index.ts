@@ -70,15 +70,24 @@ Deno.serve(async (req) => {
       const origin = req.headers.get("origin") ?? "https://www.hrimoveis.com";
       const loginUrl = `${origin.replace(/\/$/, "")}/app`;
       try {
-        await admin.functions.invoke("send-transactional-email", {
-          body: {
+        console.log("Enviando e-mail de boas-vindas para", email);
+        const mailRes = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${SERVICE_ROLE}`,
+            apikey: SERVICE_ROLE,
+          },
+          body: JSON.stringify({
             templateName: "user-welcome",
             recipientEmail: email,
             idempotencyKey: `user-welcome-${newId}`,
             purpose: "transactional",
             templateData: { nome, email, senha: password, loginUrl },
-          },
+          }),
         });
+        const mailText = await mailRes.text();
+        console.log("send-transactional-email status:", mailRes.status, mailText);
       } catch (mailErr) {
         console.error("Falha ao enviar e-mail de boas-vindas:", mailErr);
       }
