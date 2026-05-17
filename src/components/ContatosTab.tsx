@@ -15,6 +15,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Plus, Search, Phone, Mail, Pencil, Trash2, Loader2, User } from "lucide-react";
+import { useRole } from "@/hooks/useRole";
 
 const TIPOS = ["Cliente", "Comprador", "Vendedor", "Parceiro", "Investidor", "Outro"];
 
@@ -25,6 +26,7 @@ const empty: Partial<ContatoDB> = {
 
 export default function ContatosTab() {
   const { contatos, loading, createContato, updateContato, deleteContato } = useContatos();
+  const { isAdmin } = useRole();
   const [search, setSearch] = useState("");
   const [filtroTipo, setFiltroTipo] = useState("Todos");
   const [open, setOpen] = useState(false);
@@ -143,21 +145,23 @@ export default function ContatosTab() {
                 </div>
                 <div className="flex gap-1">
                   <Button size="icon" variant="ghost" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button size="icon" variant="ghost" className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Excluir contato?</AlertDialogTitle>
-                        <AlertDialogDescription>O contato "{c.nome}" será removido.</AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => deleteContato(c.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  {isAdmin && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="icon" variant="ghost" className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir contato?</AlertDialogTitle>
+                          <AlertDialogDescription>O contato "{c.nome}" será removido.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => deleteContato(c.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
               </CardContent>
             </Card>

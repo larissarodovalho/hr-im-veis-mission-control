@@ -130,7 +130,7 @@ export default function ContaInteracoesTimeline({ contaId }: { contaId: string }
             const meta = tipoMeta(it.tipo);
             const Icon = meta.icon;
             const autor = it.created_by ? (authorMap[it.created_by] ?? "—") : "—";
-            const canDelete = isAdmin || isGestor || it.created_by === userId;
+            const canDelete = isAdmin;
             return (
               <li key={it.id} className="ml-4">
                 <span className={`absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full border ${meta.color}`}>

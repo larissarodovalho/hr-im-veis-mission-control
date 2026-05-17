@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRole } from "@/hooks/useRole";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,7 @@ const TipoIcon = ({ tipo }: { tipo: Compromisso["tipo"] }) => {
 
 export default function Schedule() {
   const { user } = useAuth();
+  const { isAdmin } = useRole();
   const [reunioes, setReunioes] = useState<Compromisso[]>([]);
   const [bloqueios, setBloqueios] = useState<Bloqueio[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
@@ -473,9 +475,11 @@ export default function Schedule() {
                           {format(b.inicio, "Pp", { locale: ptBR })} → {format(b.fim, "Pp", { locale: ptBR })}
                         </div>
                       </div>
-                      <Button size="icon" variant="ghost" onClick={() => removerBloqueio(b.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {isAdmin && (
+                        <Button size="icon" variant="ghost" onClick={() => removerBloqueio(b.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -547,9 +551,11 @@ export default function Schedule() {
                       {format(b.inicio, "Pp", { locale: ptBR })} → {format(b.fim, "Pp", { locale: ptBR })}
                     </div>
                   </div>
-                  <Button size="icon" variant="ghost" onClick={() => removerBloqueio(b.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {isAdmin && (
+                    <Button size="icon" variant="ghost" onClick={() => removerBloqueio(b.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               ))}
             </TabsContent>

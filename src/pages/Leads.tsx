@@ -41,7 +41,7 @@ export default function Leads() {
   const [needsNurture, setNeedsNurture] = useState(false);
   const [open, setOpen] = useState(false);
   const { isAdmin, isGestor } = useRole();
-  const canDelete = isAdmin || isGestor;
+  const canDelete = isAdmin;
 
   const remove = async (id: string, name: string) => {
     const { error } = await supabase.from("leads").delete().eq("id", id);

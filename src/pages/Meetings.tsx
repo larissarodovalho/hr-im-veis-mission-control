@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRole } from "@/hooks/useRole";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import { SearchableSelect } from "@/components/SearchableSelect";
 
 export default function Meetings() {
   const { user } = useAuth();
+  const { isAdmin } = useRole();
   const [items, setItems] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
   const [contas, setContas] = useState<any[]>([]);
@@ -293,7 +295,7 @@ export default function Meetings() {
             <div><Label>Link</Label><Input value={editForm.link} onChange={e => setEditForm({ ...editForm, link: e.target.value })} /></div>
             <div><Label>Notas</Label><Textarea value={editForm.notas} onChange={e => setEditForm({ ...editForm, notas: e.target.value })} /></div>
             <DialogFooter className="flex-row justify-between sm:justify-between">
-              <Button type="button" variant="destructive" onClick={remove}>Excluir</Button>
+              {isAdmin ? <Button type="button" variant="destructive" onClick={remove}>Excluir</Button> : <span />}
               <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
                 <Button type="submit">Salvar</Button>
