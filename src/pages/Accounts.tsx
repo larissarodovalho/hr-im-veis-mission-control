@@ -449,6 +449,12 @@ export default function Accounts() {
                       ) : <span className="text-muted-foreground">—</span>;
                     })()}
                   </div>
+                  <div>
+                    <span className="text-xs text-muted-foreground">Interesse: </span>
+                    {a.interesse ? (
+                      <Badge variant="outline" className="bg-amber-500/15 text-amber-700 border-amber-500/30">{a.interesse}</Badge>
+                    ) : <span className="text-muted-foreground">—</span>}
+                  </div>
                   <div><span className="text-xs text-muted-foreground">Responsável: </span><span>{owner}</span></div>
                 </div>
                 <div className="flex gap-2 pt-1">
@@ -490,6 +496,7 @@ export default function Accounts() {
                 <th className="p-3">E-mail</th>
                 <th className="p-3">CPF/CNPJ</th>
                 <th className="p-3">Qualificação</th>
+                <th className="p-3">Interesse</th>
                 <th className="p-3">Responsável</th>
                 <th className="p-3">Status</th>
                 <th className="p-3 w-24"></th>
@@ -497,9 +504,9 @@ export default function Accounts() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Carregando…</td></tr>
+                <tr><td colSpan={9} className="p-6 text-center text-muted-foreground">Carregando…</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={8} className="p-10 text-center text-muted-foreground">{accounts.length === 0 ? "Nenhuma conta ainda. Converta um lead para criar a primeira conta." : "Nenhuma conta corresponde aos filtros."}</td></tr>
+                <tr><td colSpan={9} className="p-10 text-center text-muted-foreground">{accounts.length === 0 ? "Nenhuma conta ainda. Converta um lead para criar a primeira conta." : "Nenhuma conta corresponde aos filtros."}</td></tr>
               ) : (
                 filtered.map((a) => {
                   const status = (a.status ?? "ativo") as Status;
@@ -529,6 +536,11 @@ export default function Accounts() {
                             </Badge>
                           ) : <span className="text-muted-foreground">—</span>;
                         })()}
+                      </td>
+                      <td className="p-3">
+                        {a.interesse ? (
+                          <Badge variant="outline" className="bg-amber-500/15 text-amber-700 border-amber-500/30">{a.interesse}</Badge>
+                        ) : <span className="text-muted-foreground">—</span>}
                       </td>
                       <td className="p-3">{owner === "—" ? <span className="text-muted-foreground">—</span> : owner}</td>
                       <td className="p-3">

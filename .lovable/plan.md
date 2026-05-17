@@ -1,20 +1,12 @@
-### Ajuste: Novas opções de Interesse no contato
+### Exibir Interesse na lista e no detalhe da conta
 
-#### Contexto
-Hoje, ao editar um contato em `src/pages/AccountDetail.tsx`, o campo **Interesse** só oferece: Compra, Venda, Permuta, Outro. O usuário quer ampliar para 7 opções específicas.
+#### 1. Lista de contas — `src/pages/Accounts.tsx`
+- Adicionar nova coluna **Interesse** na tabela desktop (entre "Qualificação" e "Responsável"), com `<Badge variant="outline">` em tom âmbar/accent exibindo `a.interesse`, ou "—" quando vazio.
+- Adicionar linha "Interesse" no card mobile, com o mesmo badge.
+- Atualizar `<thead>` para incluir a nova coluna e ajustar `colSpan` das linhas de loading/empty de 8 para 9.
 
-O campo `contas.interesse` no banco é `text` (sem enum), então não há necessidade de migração.
+#### 2. Detalhe da conta — `src/pages/AccountDetail.tsx`
+- Substituir o badge atual `Interesse: {acc.interesse}` por um badge maior, destacado, com cor própria (tom âmbar/accent) e ícone, exibido na linha de status logo abaixo do nome.
 
-#### Alteração proposta
-**`src/pages/AccountDetail.tsx`** — substituir os `<SelectItem>` do campo Interesse pelas opções:
-- Comprar
-- Vender
-- Alugar
-- Incorporar
-- Investimento
-- Ocasião de oportunidade
-- Permuta
-
-#### Fora de escopo (manter como está)
-- Filtro de Interesse na listagem `/app/contas` (`Accounts.tsx`) continua com as opções atuais. Se desejar alinhar o filtro às novas opções depois, abrir outro ajuste.
-- Sem mudanças no banco de dados.
+#### Fora de escopo
+- Filtros, banco de dados e exportação permanecem inalterados.

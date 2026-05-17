@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ArrowLeft, Pencil, Building2, Phone, Save, FileSignature, Plus, Trash2, MapPin } from "lucide-react";
+import { ArrowLeft, Pencil, Building2, Phone, Save, FileSignature, Plus, Trash2, MapPin, Target } from "lucide-react";
 import EntityDocumentsTab from "@/components/EntityDocumentsTab";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -151,7 +151,11 @@ export default function AccountDetail() {
           <div className="flex items-center gap-3 mt-2 flex-wrap text-sm text-muted-foreground">
             {acc.telefone && <span className="inline-flex items-center gap-1"><Phone className="h-3.5 w-3.5" /> {acc.telefone}</span>}
             <Badge variant="outline" className={statusBadge}>{acc.status === "ativo" ? "Ativo" : (acc.status || "Inativo")}</Badge>
-            {acc.interesse && <Badge variant="outline">Interesse: {acc.interesse}</Badge>}
+            {acc.interesse && (
+              <Badge className="bg-amber-500/15 text-amber-700 border-amber-500/30 border text-sm px-2.5 py-1">
+                <Target className="h-3.5 w-3.5 mr-1" /> Interesse: {acc.interesse}
+              </Badge>
+            )}
             {listaAtual !== "nenhuma" && (
               <Badge variant="outline" className={listaAtual === "carteira" ? "bg-blue-500/15 text-blue-700 border-blue-500/30" : "bg-pink-500/15 text-pink-700 border-pink-500/30"}>
                 {listaAtual === "carteira" ? "Carteira" : "Marketing"}
