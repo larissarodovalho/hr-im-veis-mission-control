@@ -207,6 +207,8 @@ export default function AccountDetail() {
         </Card>
       </div>
 
+      <ContaAgendaQuickAdd contaId={acc.id} responsavelId={acc.responsavel_id} onCreated={load} />
+
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-xl font-semibold">Propriedades / Negócios</h2>
