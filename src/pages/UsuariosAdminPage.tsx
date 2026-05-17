@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, ShieldAlert, UserPlus, KeyRound, Trash2, Copy } from "lucide-react";
+import { Loader2, ShieldAlert, UserPlus, KeyRound, Trash2, Copy, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 type Row = {
