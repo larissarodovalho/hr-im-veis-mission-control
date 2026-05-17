@@ -102,10 +102,10 @@ const App = () => (
               <Route path="agenda" element={<Schedule />} />
               <Route path="documentos" element={<Documents />} />
               <Route path="documentos/:id" element={<DocumentDetail />} />
-              <Route path="relatorios" element={<Reports />} />
-              <Route path="usuarios" element={<Users />} />
-              <Route path="configuracoes" element={<ConfiguracoesPage />} />
-              <Route path="newsletter" element={<Newsletter />} />
+              <Route path="relatorios" element={<StaffRoute><Reports /></StaffRoute>} />
+              <Route path="usuarios" element={<StaffRoute><Users /></StaffRoute>} />
+              <Route path="configuracoes" element={<StaffRoute><ConfiguracoesPage /></StaffRoute>} />
+              <Route path="newsletter" element={<StaffRoute><Newsletter /></StaffRoute>} />
             </Route>
 
             {/* Redirect das URLs antigas do CRM */}
