@@ -182,7 +182,7 @@ export default function ImoveisPage() {
         if (!faixa || faixa.label === "Todos") return true;
         return im.valor >= faixa.min && im.valor <= faixa.max;
       });
-  }, [busca, tipoSelecionado, faixaSelecionada]);
+  }, [busca, tipoSelecionado, faixaSelecionada, IMOVEIS_SITE]);
 
   return (
     <div className="min-h-screen bg-[#050505] text-white">
@@ -373,7 +373,7 @@ export default function ImoveisPage() {
                     {/* Image */}
                     <div className="aspect-[16/10] relative overflow-hidden">
                       <motion.img
-                        src={getImageForImovel(im.id, im.tipo)}
+                        src={im.imagem || getImageForImovel(im.id, im.tipo)}
                         alt={im.nome}
                         loading="lazy"
                         width={800}
