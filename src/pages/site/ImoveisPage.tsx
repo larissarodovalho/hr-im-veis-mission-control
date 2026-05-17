@@ -174,17 +174,17 @@ export default function ImoveisPage() {
             </motion.p>
 
             {/* Filter bar with subtle background */}
-            <div className="bg-black rounded-2xl p-5 sm:p-6 backdrop-blur-sm">
+            <div className="bg-black rounded-2xl p-4 sm:p-6 backdrop-blur-sm overflow-visible">
               {/* Type pills row */}
-              <div className="flex items-center flex-wrap gap-4 sm:gap-6 mb-5">
-                <div className="flex items-center gap-1.5">
+              <div className="flex items-center flex-wrap gap-3 sm:gap-6 mb-5">
+                <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
                   {TIPOS.map((tipo) => (
                     <motion.button
                       key={tipo}
                       onClick={() => setTipoSelecionado(tipo)}
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
-                      className={`relative px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-400 ${
+                      className={`relative px-4 sm:px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-400 ${
                         tipoSelecionado === tipo
                           ? "text-white"
                           : "text-white/60 hover:text-white/60"
@@ -219,12 +219,12 @@ export default function ImoveisPage() {
                 <div className="h-5 w-px bg-white/[0.08] hidden sm:block" />
 
                 {/* Price range dropdown */}
-                <div className="hidden md:block relative">
+                <div className="relative w-full sm:w-auto">
                   <motion.button
                     onClick={() => setValorDropdownOpen(!valorDropdownOpen)}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 border ${
+                    className={`flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 border ${
                       faixaSelecionada !== "Todos"
                         ? "bg-white/10 border-white/15 text-white"
                         : "bg-transparent border-white/[0.08] text-white/60 hover:text-white/60 hover:border-white/15"
@@ -248,7 +248,7 @@ export default function ImoveisPage() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 8, scale: 0.96 }}
                         transition={{ duration: 0.25, ease: smoothEase }}
-                        className="absolute top-full mt-2 right-0 min-w-[180px] bg-[#111111] border border-white/[0.08] rounded-xl overflow-hidden backdrop-blur-2xl shadow-2xl shadow-black/40 z-50"
+                        className="absolute top-full mt-2 left-0 right-0 sm:left-auto sm:right-0 sm:min-w-[180px] bg-[#111111] border border-white/[0.08] rounded-xl overflow-hidden backdrop-blur-2xl shadow-2xl shadow-black/40 z-50"
                       >
                         {FAIXAS.map((faixa, i) => (
                           <motion.button
