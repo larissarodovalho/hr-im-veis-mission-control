@@ -401,22 +401,22 @@ export default function HomePage() {
                     Nossa equipe de consultores vai te ajudar a encontrar o imóvel perfeito para você e sua família.
                   </p>
                   <div className="flex flex-wrap justify-center gap-3">
-                    <Link
-                      to="/contato"
-                      className="group/btn inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-white text-black text-[11px] font-medium tracking-[0.12em] uppercase hover:bg-amber-50 transition-all duration-500"
-                    >
-                      Fale com um Consultor
-                      <ArrowRight className="h-3.5 w-3.5 group-hover/btn:translate-x-1 transition-transform duration-300" />
-                    </Link>
                     <a
                       href={createWhatsAppUrl("Olá, tudo bem? Quero falar com um corretor de imóveis.")}
                       onClick={(event) => openWhatsApp(event, "Olá, tudo bem? Quero falar com um corretor de imóveis.")}
                       target="_blank"
                       rel="noopener noreferrer"
+                      className="group/btn inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-white text-black text-[11px] font-medium tracking-[0.12em] uppercase hover:bg-amber-50 transition-all duration-500"
+                    >
+                      Fale com um Consultor
+                      <ArrowRight className="h-3.5 w-3.5 group-hover/btn:translate-x-1 transition-transform duration-300" />
+                    </a>
+                    <Link
+                      to="/contato"
                       className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full border border-white/[0.08] text-white/60 text-[11px] font-light tracking-[0.12em] uppercase hover:bg-white/[0.04] hover:border-white/[0.15] transition-all duration-500"
                     >
-                      WhatsApp
-                    </a>
+                      Contato
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -439,13 +439,16 @@ export default function HomePage() {
                   <p className="text-base text-white/60 font-light leading-[1.8] max-w-sm mb-10">
                     Avaliamos e anunciamos seu imóvel com exclusividade. Alcance compradores qualificados com a HR Imóveis.
                   </p>
-                  <Link
-                    to="/contato"
+                  <a
+                    href={createWhatsAppUrl("Olá, tudo bem? Quero vender meu imóvel.")}
+                    onClick={(event) => openWhatsApp(event, "Olá, tudo bem? Quero vender meu imóvel.")}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="group/btn inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full border border-white/[0.08] text-white/60 text-[11px] font-light tracking-[0.12em] uppercase hover:border-white/[0.15] hover:text-white/50 hover:bg-white/[0.04] transition-all duration-500"
                   >
                     Quero Vender meu Imóvel
                     <ArrowRight className="h-3.5 w-3.5 group-hover/btn:translate-x-1 transition-transform duration-300" />
-                  </Link>
+                  </a>
                 </div>
               </div>
             </motion.div>
