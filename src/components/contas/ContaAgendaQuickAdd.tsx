@@ -1,0 +1,167 @@
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { CalendarPlus, Phone, MapPin, Save } from "lucide-react";
+import { toast } from "sonner";
+
+type Kind = "reuniao" | "ligacao" | "visita";
+
+interface Props {
+  contaId: string;
+  responsavelId?: string | null;
+  onCreated?: () => void;
+}
+
+const nowLocal = () => {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 16);
+};
+
+export default function ContaAgendaQuickAdd({ contaId, responsavelId, onCreated }: Props) {
+  const [open, setOpen] = useState<Kind | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState<any>({});
+
+  const openDialog = (kind: Kind) => {
+    setForm({
+      when: nowLocal(),
+      duracao: kind === "ligacao" ? 30 : 60,
+      tipo: "presencial",
+      local: "",
+      link: "",
+      notas: "",
+    });
+    setOpen(kind);
+  };
+
+  const close = () => { setOpen(null); setForm({}); };
+
+  const save = async () => {
+    if (!open) return;
+    if (!form.when) return toast.error("Informe data e hora");
+    setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    const uid = user?.id ?? null;
+    const corretor = responsavelId || uid;
+    const whenISO = new Date(form.when).toISOString();
+    let error: any;
+
+    if (open === "reuniao") {
+      ({ error } = await supabase.from("reunioes").insert({
+        conta_id: contaId,
+        agendada_para: whenISO,
+        duracao_min: Number(form.duracao) || 60,
+        tipo: form.tipo || "presencial",
+        local: form.local?.trim() || null,
+        link: form.link?.trim() || null,
+        notas: form.notas?.trim() || null,
+        status: "agendada",
+        created_by: uid,
+        corretor_id: corretor,
+      }));
+    } else if (open === "ligacao") {
+      ({ error } = await supabase.from("ligacoes").insert({
+        conta_id: contaId,
+        data: whenISO,
+        duracao_seg: (Number(form.duracao) || 30) * 60,
+        notas: form.notas?.trim() || null,
+        resultado: "agendada",
+        created_by: uid,
+        corretor_id: corretor,
+      }));
+    } else if (open === "visita") {
+      ({ error } = await supabase.from("visitas").insert({
+        conta_id: contaId,
+        data_visita: whenISO,
+        observacoes: form.notas?.trim() || null,
+        status: "Agendada",
+        created_by: uid,
+        corretor_id: corretor,
+      } as any));
+    }
+
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Agendado com sucesso");
+    close();
+    onCreated?.();
+  };
+
+  const title = open === "reuniao" ? "Nova reunião" : open === "ligacao" ? "Nova ligação" : "Nova visita";
+
+  return (
+    <Card className="p-5">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h3 className="font-display text-lg font-semibold">Agendar</h3>
+          <p className="text-sm text-muted-foreground">Cria o compromisso e já reserva o horário na agenda geral.</p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => openDialog("reuniao")}>
+            <CalendarPlus className="h-4 w-4 mr-1" /> Reunião
+          </Button>
+          <Button variant="outline" onClick={() => openDialog("ligacao")}>
+            <Phone className="h-4 w-4 mr-1" /> Ligação
+          </Button>
+          <Button variant="outline" onClick={() => openDialog("visita")}>
+            <MapPin className="h-4 w-4 mr-1" /> Visita
+          </Button>
+        </div>
+      </div>
+
+      <Dialog open={!!open} onOpenChange={o => !o && close()}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Data e hora</Label>
+                <Input type="datetime-local" value={form.when ?? ""} onChange={e => setForm({ ...form, when: e.target.value })} />
+              </div>
+              <div>
+                <Label>Duração (min)</Label>
+                <Input type="number" min={5} step={5} value={form.duracao ?? ""} onChange={e => setForm({ ...form, duracao: e.target.value })} />
+              </div>
+            </div>
+
+            {open === "reuniao" && (
+              <>
+                <div>
+                  <Label>Tipo</Label>
+                  <Select value={form.tipo || "presencial"} onValueChange={v => setForm({ ...form, tipo: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="presencial">Presencial</SelectItem>
+                      <SelectItem value="videochamada">Videochamada</SelectItem>
+                      <SelectItem value="ligacao">Ligação</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>Local</Label><Input value={form.local ?? ""} onChange={e => setForm({ ...form, local: e.target.value })} /></div>
+                  <div><Label>Link</Label><Input value={form.link ?? ""} onChange={e => setForm({ ...form, link: e.target.value })} /></div>
+                </div>
+              </>
+            )}
+
+            <div>
+              <Label>{open === "visita" ? "Observações" : "Notas"}</Label>
+              <Textarea rows={3} value={form.notas ?? ""} onChange={e => setForm({ ...form, notas: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={close}>Cancelar</Button>
+            <Button onClick={save} disabled={saving}><Save className="h-4 w-4 mr-1" />Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
+  );
+}
