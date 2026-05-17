@@ -289,6 +289,17 @@ export default function AccountDetail() {
                   </Select>
                 </div>
               </div>
+              <div>
+                <Label>Lista</Label>
+                <Select value={editing.lista || "nenhuma"} onValueChange={v => setEditing({ ...editing, lista: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nenhuma">Sem lista</SelectItem>
+                    <SelectItem value="carteira">Carteira</SelectItem>
+                    <SelectItem value="marketing">Marketing</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div><Label>Endereço</Label><Input value={editing.endereco ?? ""} onChange={e => setEditing({ ...editing, endereco: e.target.value })} /></div>
               <div><Label>Observações</Label><Textarea rows={3} value={editing.observacoes ?? ""} onChange={e => setEditing({ ...editing, observacoes: e.target.value })} /></div>
             </div>
