@@ -29,6 +29,7 @@ import Users from "@/pages/Users";
 import ConfiguracoesPage from "@/pages/ConfiguracoesPage";
 import NotFound from "@/pages/NotFound";
 import AgendarPage from "@/pages/AgendarPage";
+import AgendarErrorBoundary from "@/components/AgendarErrorBoundary";
 import UnsubscribePage from "@/pages/UnsubscribePage";
 import CapturaPage from "@/pages/CapturaPage";
 // Site público (mantido)
