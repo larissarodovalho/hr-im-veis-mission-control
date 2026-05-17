@@ -70,7 +70,7 @@ export default function Meetings() {
     });
     if (error) return toast.error(error.message);
     toast.success("Reunião adicionada");
-    setForm({ lead_id: "none", agendada_para: "", local: "", link: "", notas: "" });
+    setForm({ lead_id: "none", conta_id: "none", agendada_para: "", local: "", link: "", notas: "" });
     setOpen(false);
     load();
   };
@@ -81,6 +81,8 @@ export default function Meetings() {
     const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     setEditForm({
       tipo: m.tipo || "presencial",
+      lead_id: m.lead_id || "none",
+      conta_id: m.conta_id || "none",
       agendada_para: local,
       local: m.local || "",
       link: m.link || "",
@@ -94,6 +96,8 @@ export default function Meetings() {
     if (!editing) return;
     const { error } = await supabase.from("reunioes").update({
       tipo: editForm.tipo,
+      lead_id: editForm.lead_id === "none" ? null : editForm.lead_id,
+      conta_id: editForm.conta_id === "none" ? null : editForm.conta_id,
       agendada_para: new Date(editForm.agendada_para).toISOString(),
       local: editForm.local || null,
       link: editForm.link || null,
