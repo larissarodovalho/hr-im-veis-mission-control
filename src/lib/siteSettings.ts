@@ -94,9 +94,10 @@ export async function uploadSiteAsset(file: File, key: SiteImageKey): Promise<st
 
 /** Hook: returns a resolver `img(key, fallback)` plus the raw map. */
 export function useSiteImages() {
-  const [map, setMap] = useState<ImagesRecord>({});
-  const [loaded, setLoaded] = useState(false);
+  const [map, setMap] = useState<ImagesRecord>(() => imagesCache ?? {});
+  const [loaded, setLoaded] = useState<boolean>(() => imagesCache !== null);
   useEffect(() => {
+    if (imagesCache) return;
     fetchSiteImages()
       .then((m) => setMap(m))
       .finally(() => setLoaded(true));
