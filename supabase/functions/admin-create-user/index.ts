@@ -87,6 +87,40 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
+    if (action === "update_profile") {
+      const { user_id, nome, email, telefone, cargo, role } = body as {
+        user_id?: string; nome?: string; email?: string;
+        telefone?: string; cargo?: string; role?: Role;
+      };
+      if (!user_id) return json({ error: "user_id obrigatório" }, 400);
+
+      if (email) {
+        const { error: eErr } = await admin.auth.admin.updateUserById(user_id, { email });
+        if (eErr) return json({ error: eErr.message }, 400);
+      }
+
+      const profileUpdate: Record<string, unknown> = {};
+      if (nome !== undefined) profileUpdate.nome = nome;
+      if (email !== undefined) profileUpdate.email = email;
+      if (telefone !== undefined) profileUpdate.telefone = telefone;
+      if (cargo !== undefined) profileUpdate.cargo = cargo;
+      if (Object.keys(profileUpdate).length > 0) {
+        const { error: pErr } = await admin.from("profiles").update(profileUpdate).eq("user_id", user_id);
+        if (pErr) return json({ error: pErr.message }, 400);
+      }
+
+      if (role && ["admin", "gestor", "corretor"].includes(role)) {
+        if (user_id === callerId && role !== "admin") {
+          return json({ error: "Você não pode remover seu próprio papel de admin" }, 400);
+        }
+        await admin.from("user_roles").delete().eq("user_id", user_id);
+        const { error: rErr } = await admin.from("user_roles").insert({ user_id, role });
+        if (rErr) return json({ error: rErr.message }, 400);
+      }
+
+      return json({ ok: true });
+    }
+
     if (action === "reset_password") {
       const { user_id, password } = body as { user_id?: string; password?: string };
       if (!user_id || !password) return json({ error: "user_id e password obrigatórios" }, 400);

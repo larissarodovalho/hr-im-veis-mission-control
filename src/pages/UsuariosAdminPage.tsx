@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, ShieldAlert, UserPlus, KeyRound, Trash2, Copy } from "lucide-react";
+import { Loader2, ShieldAlert, UserPlus, KeyRound, Trash2, Copy, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 type Row = {
@@ -45,6 +45,9 @@ export default function UsuariosAdminPage() {
 
   const [resetTarget, setResetTarget] = useState<Row | null>(null);
   const [newPass, setNewPass] = useState("");
+
+  const [editTarget, setEditTarget] = useState<Row | null>(null);
+  const [editForm, setEditForm] = useState({ nome: "", email: "", telefone: "", cargo: "", role: "corretor" as AppRole });
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -139,6 +142,28 @@ export default function UsuariosAdminPage() {
       toast.success("Senha redefinida");
       navigator.clipboard?.writeText(`${resetTarget.email} / ${newPass}`).catch(() => {});
       setResetTarget(null); setNewPass("");
+    } catch (err: any) { toast.error(err.message); }
+    finally { setBusy(false); }
+  }
+
+  function openEdit(r: Row) {
+    setEditTarget(r);
+    setEditForm({
+      nome: r.nome ?? "", email: r.email ?? "",
+      telefone: r.telefone ?? "", cargo: r.cargo ?? "", role: r.role,
+    });
+  }
+
+  async function handleEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editTarget) return;
+    if (!editForm.nome.trim() || !editForm.email.trim()) return toast.error("Nome e email obrigatórios");
+    setBusy(true);
+    try {
+      await callAdmin({ action: "update_profile", user_id: editTarget.user_id, ...editForm });
+      toast.success("Usuário atualizado");
+      setEditTarget(null);
+      fetchUsers();
     } catch (err: any) { toast.error(err.message); }
     finally { setBusy(false); }
   }
@@ -238,6 +263,9 @@ export default function UsuariosAdminPage() {
                       </Select>
                     </TableCell>
                     <TableCell className="text-right space-x-1">
+                      <Button size="icon" variant="ghost" onClick={() => openEdit(r)} title="Editar">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
                       <Button size="icon" variant="ghost" onClick={() => { setResetTarget(r); setNewPass(genPassword()); }} title="Redefinir senha">
                         <KeyRound className="h-4 w-4" />
                       </Button>
@@ -270,6 +298,54 @@ export default function UsuariosAdminPage() {
             <Button variant="outline" onClick={() => setResetTarget(null)}>Cancelar</Button>
             <Button onClick={handleReset} disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Redefinir"}</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editTarget} onOpenChange={(o) => !o && setEditTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar usuário</DialogTitle>
+            <DialogDescription>Atualize dados e papel de {editTarget?.email}</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEdit} className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5 col-span-2">
+                <Label>Nome completo *</Label>
+                <Input value={editForm.nome} onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })} required />
+              </div>
+              <div className="space-y-1.5 col-span-2">
+                <Label>Email *</Label>
+                <Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} required />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Telefone</Label>
+                <Input value={editForm.telefone} onChange={(e) => setEditForm({ ...editForm, telefone: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Cargo</Label>
+                <Input value={editForm.cargo} onChange={(e) => setEditForm({ ...editForm, cargo: e.target.value })} />
+              </div>
+              <div className="space-y-1.5 col-span-2">
+                <Label>Papel *</Label>
+                <Select
+                  value={editForm.role}
+                  onValueChange={(v) => setEditForm({ ...editForm, role: v as AppRole })}
+                  disabled={editTarget?.user_id === user?.id}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="gestor">Gestor</SelectItem>
+                    <SelectItem value="corretor">Corretor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditTarget(null)}>Cancelar</Button>
+              <Button type="submit" disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
