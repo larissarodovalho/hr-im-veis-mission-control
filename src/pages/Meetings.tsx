@@ -20,10 +20,11 @@ export default function Meetings() {
   const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
+  const [contas, setContas] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
-  const [form, setForm] = useState({ lead_id: "none", agendada_para: "", local: "", link: "", notas: "" });
-  const [editForm, setEditForm] = useState({ tipo: "presencial", agendada_para: "", local: "", link: "", notas: "", status: "agendada" });
+  const [form, setForm] = useState({ lead_id: "none", conta_id: "none", agendada_para: "", local: "", link: "", notas: "" });
+  const [editForm, setEditForm] = useState({ tipo: "presencial", lead_id: "none", conta_id: "none", agendada_para: "", local: "", link: "", notas: "", status: "agendada" });
 
   const load = async () => {
     const { data: meetings, error } = await supabase.from("reunioes").select("*").order("agendada_para");
@@ -39,14 +40,22 @@ export default function Meetings() {
       : { data: [] };
     const leadsById = new Map((meetingLeads ?? []).map((lead) => [lead.id, lead]));
 
-    setItems((meetings ?? []).map((meeting) => ({
+    const contaIds = [...new Set((meetings ?? []).map((m: any) => m.conta_id).filter(Boolean))];
+    const { data: meetingContas } = contaIds.length
+      ? await (supabase.from("contas" as any).select("id,nome").in("id", contaIds) as any)
+      : { data: [] };
+    const contasById = new Map(((meetingContas ?? []) as any[]).map((c: any) => [c.id, c]));
+
+    setItems((meetings ?? []).map((meeting: any) => ({
       ...meeting,
       leads: meeting.lead_id ? leadsById.get(meeting.lead_id) : null,
+      conta: meeting.conta_id ? contasById.get(meeting.conta_id) : null,
     })));
   };
   useEffect(() => {
     load();
     supabase.from("leads").select("id, nome").order("nome").then(({ data }) => setLeads(data ?? []));
+    (supabase.from("contas" as any).select("id, nome").order("nome") as any).then(({ data }: any) => setContas(data ?? []));
   }, []);
 
   const add = async (e: React.FormEvent) => {
@@ -54,13 +63,14 @@ export default function Meetings() {
     if (!form.agendada_para) return toast.error("Informe data");
     const { error } = await supabase.from("reunioes").insert({
       lead_id: form.lead_id === "none" ? null : form.lead_id,
+      conta_id: form.conta_id === "none" ? null : form.conta_id,
       agendada_para: new Date(form.agendada_para).toISOString(),
       local: form.local || null, link: form.link || null, notas: form.notas || null,
       created_by: user?.id, corretor_id: user?.id,
     });
     if (error) return toast.error(error.message);
     toast.success("Reunião adicionada");
-    setForm({ lead_id: "none", agendada_para: "", local: "", link: "", notas: "" });
+    setForm({ lead_id: "none", conta_id: "none", agendada_para: "", local: "", link: "", notas: "" });
     setOpen(false);
     load();
   };
@@ -71,6 +81,8 @@ export default function Meetings() {
     const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     setEditForm({
       tipo: m.tipo || "presencial",
+      lead_id: m.lead_id || "none",
+      conta_id: m.conta_id || "none",
       agendada_para: local,
       local: m.local || "",
       link: m.link || "",
@@ -84,6 +96,8 @@ export default function Meetings() {
     if (!editing) return;
     const { error } = await supabase.from("reunioes").update({
       tipo: editForm.tipo,
+      lead_id: editForm.lead_id === "none" ? null : editForm.lead_id,
+      conta_id: editForm.conta_id === "none" ? null : editForm.conta_id,
       agendada_para: new Date(editForm.agendada_para).toISOString(),
       local: editForm.local || null,
       link: editForm.link || null,
@@ -135,6 +149,16 @@ export default function Meetings() {
                   </SelectContent>
                 </Select>
               </div>
+              <div>
+                <Label>Conta</Label>
+                <Select value={form.conta_id} onValueChange={v => setForm({ ...form, conta_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Sem conta vinculada" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem conta vinculada</SelectItem>
+                    {contas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <div><Label>Data e hora</Label><Input type="datetime-local" value={form.agendada_para} onChange={e => setForm({ ...form, agendada_para: e.target.value })} /></div>
               <div><Label>Local</Label><Input value={form.local} onChange={e => setForm({ ...form, local: e.target.value })} /></div>
               <div><Label>Link</Label><Input value={form.link} onChange={e => setForm({ ...form, link: e.target.value })} /></div>
@@ -162,7 +186,7 @@ export default function Meetings() {
               return (
               <tr key={m.id} className="border-t hover:bg-muted/40 cursor-pointer" onClick={() => openEdit(m)}>
                 <td className="p-3 whitespace-nowrap">{format(new Date(m.agendada_para), "Pp", { locale: ptBR })}</td>
-                <td className="p-3" onClick={(e) => e.stopPropagation()}>{m.leads?.id ? <Link to={`/app/leads/${m.lead_id}`} className="font-medium text-primary underline-offset-2 hover:underline">{m.leads.nome}</Link> : (m.titulo || "Sem lead")}</td>
+                <td className="p-3" onClick={(e) => e.stopPropagation()}>{m.leads?.id ? <Link to={`/app/leads/${m.lead_id}`} className="font-medium text-primary underline-offset-2 hover:underline">{m.leads.nome}</Link> : m.conta?.id ? <Link to={`/app/contas/${m.conta_id}`} className="font-medium text-primary underline-offset-2 hover:underline">{m.conta.nome}</Link> : (m.titulo || "Sem lead")}</td>
                 <td className="p-3">
                   <div className="flex flex-col gap-1">
                     <Badge variant="secondary" className="w-fit">{t.emoji} {t.label}</Badge>
@@ -218,6 +242,28 @@ export default function Meetings() {
           <form onSubmit={saveEdit} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
+                <Label>Lead</Label>
+                <Select value={editForm.lead_id} onValueChange={v => setEditForm({ ...editForm, lead_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Sem lead" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem lead vinculado</SelectItem>
+                    {leads.map(l => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Conta</Label>
+                <Select value={editForm.conta_id} onValueChange={v => setEditForm({ ...editForm, conta_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Sem conta" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem conta vinculada</SelectItem>
+                    {contas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
                 <Label>Tipo</Label>
                 <Select value={editForm.tipo} onValueChange={v => setEditForm({ ...editForm, tipo: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -258,7 +304,7 @@ export default function Meetings() {
 
       <EventsCalendar
         title="Calendário de reuniões"
-        events={items.map(m => ({ id: m.id, date: new Date(m.agendada_para), title: m.leads?.nome || m.titulo || "Sem lead", lead_id: m.lead_id, status: m.status, description: m.local || m.notas }))}
+        events={items.map(m => ({ id: m.id, date: new Date(m.agendada_para), title: m.leads?.nome || m.conta?.nome || m.titulo || "Sem lead", lead_id: m.lead_id, status: m.status, description: m.local || m.notas }))}
       />
     </div>
   );
