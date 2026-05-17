@@ -11,7 +11,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ETAPAS, EtapaFunil } from "@/lib/contasFunil";
-import { Handshake } from "lucide-react";
+import { Handshake, Target } from "lucide-react";
 
 type Account = {
   id: string;
@@ -64,6 +64,11 @@ function ContaCard({ a, total }: { a: Account; total: number }) {
         )}
       </div>
       <div className="text-xs text-muted-foreground truncate">{a.telefone || a.email || "—"}</div>
+      {a.interesse && (
+        <Badge variant="outline" className="bg-amber-500/15 text-amber-700 border-amber-500/30 text-[10px]">
+          <Target className="h-3 w-3 mr-1" /> {a.interesse}
+        </Badge>
+      )}
       {total > 0 && <div className="text-xs font-medium">{fmt(total)}</div>}
     </Card>
   );
