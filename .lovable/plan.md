@@ -1,18 +1,22 @@
-## Plano — Sofia coleta apenas Nome + Interesse
+## Plano — Sofia explica o que fazer ao receber o link de agendamento
 
 **Arquivo:** `supabase/functions/whatsapp-webhook/index.ts`
 
-O número do WhatsApp já é capturado automaticamente pelo CRM, então o Passo 2 (celular) é redundante.
+Hoje, ao disparar `send_booking_link`, a Sofia responde algo curto tipo "Combinado, Larisse, em que mais pode te ajudar?" sem explicar o que o lead deve fazer no link. Precisamos garantir que ela sempre explique o passo a passo.
 
-### Mudanças no prompt `AI_SYSTEM`
-- **OBJETIVO:** trocar "coletar 3 dados — nome completo, celular e tipo de interesse" por "coletar 2 dados — nome completo e tipo de interesse". Adicionar: "O número de WhatsApp é registrado automaticamente pelo CRM, então NÃO pergunte celular."
-- **FLUXO:** remover Passo 2 (Celular). Renumerar:
-  - Passo 1 — Nome completo (igual)
-  - Passo 2 — Tipo de interesse (antigo Passo 3)
-  - Passo 3 — Handoff (antigo Passo 4)
-- **REGRAS DE ORDEM OBRIGATÓRIA:** atualizar para "Passo 1 (nome) → Passo 2 (interesse) → Passo 3 (handoff)". Trocar "logo após receber o nome completo, a PRÓXIMA pergunta é SEMPRE sobre o celular" por "logo após receber o nome completo, a PRÓXIMA pergunta é SEMPRE sobre o tipo de interesse".
+### Mudanças
 
-### Mudança na tool `update_lead_info`
-- Remover a propriedade `phone` do schema e atualizar a description para "Salva nome completo e/ou intenção do lead."
+1. **Prompt (Passo 3, agendar) — linha 66**
+   Trocar a instrução para deixar explícito o texto que ela deve enviar antes do link, com passo a passo claro conforme o formato escolhido (videochamada / presencial / ligação / WhatsApp). Exemplo:
+   - Presencial: "Perfeito, [Nome]! Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para você vir até o nosso escritório conversar pessoalmente com o Hans."
+   - Videochamada: "...escolher o melhor dia e horário para sua videochamada com o Hans. No horário marcado você recebe o link da chamada."
+   - Ligação: "...escolher o melhor dia e horário para o Hans te ligar."
+   - WhatsApp: "...escolher o melhor dia e horário para o Hans te chamar aqui no WhatsApp."
 
-Mudança apenas no prompt e schema da tool — sem alterar lógica do webhook, handlers ou banco.
+2. **Fallback no código — linha 689**
+   O `reply` padrão (quando o modelo não escreve nada) também precisa orientar o lead. Trocar a frase genérica por uma versão por `kind`, com instrução "clique no link abaixo e escolha o melhor dia e horário para [contexto da reunião]".
+
+3. **Regra anti-loop / mensagem pós-link**
+   Adicionar regra: após o link ser enviado, a próxima mensagem da Sofia (se o lead só agradecer) deve ser de encerramento amigável, sem repetir explicação nem reenviar link.
+
+Sem mudanças em schema, tools ou lógica de banco.

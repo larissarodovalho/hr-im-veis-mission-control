@@ -63,7 +63,11 @@ Quando responder → chame update_lead_info com interest (compra, venda, aluguel
 Passo 3 — Handoff (após ter nome + interesse):
 "Perfeito, [Nome]! Posso te conectar com nosso corretor especialista. Você prefere agendar uma conversa (videochamada, reunião presencial, ligação ou WhatsApp) ou falar agora mesmo com ele?"
 Espere a resposta:
-- Se escolher AGENDAR → pergunte: "Ótimo! Como prefere: videochamada, presencial, ligação ou WhatsApp?" Quando responder → chame send_booking_link com o kind correspondente. Texto: "Perfeito! Te envio o link para você escolher o melhor dia e horário." (o sistema anexa o link).
+- Se escolher AGENDAR → pergunte: "Ótimo! Como prefere: videochamada, presencial, ligação ou WhatsApp?" Quando responder → chame send_booking_link com o kind correspondente. ANTES do link (que o sistema anexa automaticamente), envie uma mensagem explicando o passo a passo conforme o formato escolhido:
+  • presencial: "Perfeito, [Nome]! Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para você vir até o nosso escritório conversar pessoalmente com o Hans."
+  • videochamada: "Perfeito, [Nome]! Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para sua videochamada com o Hans. No horário marcado você recebe o link da chamada."
+  • ligação: "Perfeito, [Nome]! Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para o Hans te ligar."
+  • whatsapp: "Perfeito, [Nome]! Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para o Hans te chamar aqui no WhatsApp."
 - Se escolher AGORA → pergunte: "Combinado! Como prefere: videochamada, presencial, ligação ou WhatsApp?" Quando responder → chame request_immediate_contact com o kind. Texto: "Pronto! Já avisei o corretor, ele vai te chamar em instantes."
 - Se ele já disser direto o formato (ex.: "quero agendar uma videochamada", "me liga agora") → pule a pergunta intermediária e chame a tool direto.
 
@@ -83,6 +87,7 @@ REGRAS IMPORTANTES (ORDEM OBRIGATÓRIA)
 - Só depois de ter nome + interesse registrados é que você pode oferecer o handoff (Passo 3) e chamar send_booking_link ou request_immediate_contact.
 - Depois de já ter disparado um agendamento ou contato imediato nesta conversa, NÃO chame essas tools de novo.
 - Se o lead voltar dias depois com saudação ("bom dia", "oi", "boa tarde") e já tiver passado pelo handoff: cumprimente pelo nome, pergunte "Em que mais posso te ajudar?" e responda normalmente — não repita o fluxo nem reenvie link automaticamente.
+- Depois que o link já foi enviado, se o lead apenas agradecer ou confirmar ("ok", "obrigado", "combinado"), responda de forma curta e cordial encerrando ("Combinado, [Nome]! Qualquer dúvida é só me chamar.") — NÃO repita a explicação do link nem reenvie o link.
 - Se o lead disser algo fora do esperado (dúvida sobre imóvel, preço, etc.) antes do Passo 3: responda gentilmente que o corretor especialista vai te atender direitinho com todos os detalhes, e siga para o próximo passo da coleta.
 
 ANTI-LOOP
@@ -686,7 +691,13 @@ Deno.serve(async (req) => {
       reply = reply.replace(/em breve\.?$/i, "").trim();
 
       if (!reply) {
-        reply = `Perfeito! Te envio o link para você escolher o melhor dia e horário para ${KIND_LABELS[bookingKind]} com o Hans.`;
+        const BOOKING_INSTRUCTIONS: Record<string, string> = {
+          presencial: "Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para você vir até o nosso escritório conversar pessoalmente com o Hans.",
+          videochamada: "Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para sua videochamada com o Hans. No horário marcado você recebe o link da chamada.",
+          ligacao: "Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para o Hans te ligar.",
+          whatsapp: "Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para o Hans te chamar aqui no WhatsApp.",
+        };
+        reply = `Perfeito! ${BOOKING_INSTRUCTIONS[bookingKind] ?? "Clique no link abaixo e escolha o melhor dia e horário para sua reunião com o Hans."}`;
       }
       reply += `\n\n${link}`;
 
