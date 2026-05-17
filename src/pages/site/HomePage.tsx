@@ -220,7 +220,7 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[1px] bg-white/[0.04] rounded-3xl overflow-hidden">
             {[
-              { num: "01", title: "Curadoria Exclusiva", desc: "Seleção criteriosa dos melhores imóveis em condomínios fechados de Sinop." },
+              { num: "01", title: "Condutores Patrimoniais", desc: "Seleção criteriosa dos melhores imóveis em condomínios fechados de Sinop." },
               { num: "02", title: "Segurança Jurídica", desc: "Assessoria completa em documentação e negociação." },
               { num: "03", title: "Atendimento Personalizado", desc: "Consultoria dedicada para encontrar o imóvel perfeito." },
               { num: "04", title: "Tradição & Confiança", desc: "14 anos de experiência no mercado imobiliário de alto padrão." },
