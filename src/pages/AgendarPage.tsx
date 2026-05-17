@@ -64,7 +64,16 @@ export default function AgendarPage() {
       const res = await fetch(url, {
         headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
       });
-      const data = await res.json();
+      const text = await res.text();
+      let data: InfoResponse = {};
+      try { data = text ? JSON.parse(text) : {}; } catch { data = {}; }
+      if (!res.ok && !data?.error) {
+        data.error = res.status === 410 ? "expirado" : res.status === 404 ? "não encontrado" : `falha ${res.status}`;
+        if (res.status === 410) data.expired = true;
+      }
+      if (!res.ok && res.status >= 500) {
+        data = { error: "Não foi possível carregar agora. Tente novamente em instantes." };
+      }
       setInfo(data);
       if (data?.kind && !selectedKind) setSelectedKind(data.kind as Kind);
     } catch (e: any) {
