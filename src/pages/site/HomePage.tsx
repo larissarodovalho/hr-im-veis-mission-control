@@ -453,16 +453,23 @@ export default function HomePage() {
 
 function NewsletterSection() {
   const [email, setEmail] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    const emailClean = email.trim().toLowerCase();
+    const telClean = telefone.replace(/\D/g, "");
+    if (!emailClean) return;
+    if (telClean.length < 10 || telClean.length > 13) {
+      toast.error("Informe um telefone válido com DDD.");
+      return;
+    }
     setLoading(true);
     try {
       const { error } = await supabase
         .from("newsletter_subscribers" as any)
-        .insert({ email: email.trim().toLowerCase() } as any);
+        .insert({ email: emailClean, telefone: telClean } as any);
       if (error) {
         if (error.code === "23505") {
           toast.info("Você já está inscrito na nossa newsletter!");
@@ -472,6 +479,7 @@ function NewsletterSection() {
       } else {
         toast.success("Inscrito com sucesso! Você receberá nossas novidades.");
         setEmail("");
+        setTelefone("");
       }
     } catch {
       toast.error("Erro ao se inscrever. Tente novamente.");
@@ -526,7 +534,7 @@ function NewsletterSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ margin: "-40px" }}
           transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
-          className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+          className="flex flex-col gap-3 max-w-md mx-auto"
         >
           <input
             type="email"
@@ -534,7 +542,17 @@ function NewsletterSection() {
             placeholder="Seu melhor e-mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="flex-1 px-6 py-3.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-base text-white placeholder:text-white/45 font-light tracking-wide focus:outline-none focus:border-white/[0.15] transition-all duration-500"
+            maxLength={255}
+            className="px-6 py-3.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-base text-white placeholder:text-white/45 font-light tracking-wide focus:outline-none focus:border-white/[0.15] transition-all duration-500"
+          />
+          <input
+            type="tel"
+            required
+            placeholder="Seu telefone com DDD"
+            value={telefone}
+            onChange={(e) => setTelefone(e.target.value)}
+            maxLength={20}
+            className="px-6 py-3.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-base text-white placeholder:text-white/45 font-light tracking-wide focus:outline-none focus:border-white/[0.15] transition-all duration-500"
           />
           <button
             type="submit"
