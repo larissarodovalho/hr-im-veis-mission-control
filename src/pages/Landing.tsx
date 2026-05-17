@@ -10,7 +10,7 @@ export default function Landing() {
         <img src={logoCompleta} alt="HR Imóveis" className="h-16 w-auto object-contain" />
         <div className="flex gap-2">
           <Button variant="ghost" asChild>
-            <Link to="/site">Ver site público</Link>
+            <Link to="/">Ver site público</Link>
           </Button>
           <Button asChild>
             <Link to="/auth">Acessar CRM</Link>
@@ -39,7 +39,7 @@ export default function Landing() {
               className="bg-transparent border-accent text-accent hover:bg-accent hover:text-accent-foreground"
               asChild
             >
-              <Link to="/site">Ir para o site</Link>
+              <Link to="/">Ir para o site</Link>
             </Button>
           </div>
         </div>

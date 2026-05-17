@@ -74,7 +74,7 @@ export default function ImovelDetalhePage() {
           >
             Imóvel não encontrado
           </motion.h1>
-          <Link to="/site/imoveis" className="text-sm text-white/40 hover:text-white/70 transition-colors underline underline-offset-4">
+          <Link to="/imoveis" className="text-sm text-white/40 hover:text-white/70 transition-colors underline underline-offset-4">
             Voltar para imóveis
           </Link>
         </div>
@@ -115,7 +115,7 @@ export default function ImovelDetalhePage() {
           className="absolute top-24 left-6 z-10"
         >
           <Link
-            to="/site/imoveis"
+            to="/imoveis"
             className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/80 hover:text-white transition-all duration-300 backdrop-blur-md bg-black/40 px-5 py-2.5 rounded-full border border-white/20 hover:border-white/40 hover:bg-black/60 shadow-lg"
           >
             <ArrowLeft className="h-3 w-3" />

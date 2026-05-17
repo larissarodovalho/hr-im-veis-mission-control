@@ -194,7 +194,7 @@ export default function LeadDetail() {
 
   const openConvert = async () => {
     const { data: existing } = await supabase.from("contas").select("id, nome").eq("lead_id_origem", lead.id).maybeSingle();
-    if (existing) { toast.info(`Já convertido: ${existing.nome}`); navigate("/app/contas"); return; }
+    if (existing) { toast.info(`Já convertido: ${existing.nome}`); navigate("/crm/contas"); return; }
     setConvertForm({
       nome: lead.nome, email: lead.email ?? "", telefone: lead.telefone ?? "",
       endereco: lead.regiao ?? "", tipo: "PF", documento: "", observacoes: lead.observacoes ?? "",
@@ -297,12 +297,12 @@ export default function LeadDetail() {
     if (error) return toast.error(error.message);
     setConvertOpen(false);
     toast.success("Lead convertido em conta!");
-    navigate(created?.id ? `/app/contas/${created.id}` : "/app/contas");
+    navigate(created?.id ? `/crm/contas/${created.id}` : "/crm/contas");
   };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      <Link to="/app/leads" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4 mr-1" /> Voltar</Link>
+      <Link to="/crm/leads" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4 mr-1" /> Voltar</Link>
 
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
@@ -325,7 +325,7 @@ export default function LeadDetail() {
         </div>
         <div className="flex flex-col sm:flex-row sm:flex-wrap lg:items-center gap-2 w-full lg:w-auto">
           {conta ? (
-            <Link to={`/app/contas/${conta.id}`} className="w-full sm:w-auto">
+            <Link to={`/crm/contas/${conta.id}`} className="w-full sm:w-auto">
               <Badge className="bg-success/15 text-success border-success/30 border gap-1 py-1.5 px-3 w-full sm:w-auto justify-center">
                 <Building2 className="h-3.5 w-3.5" /> Convertido em conta
               </Badge>

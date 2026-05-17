@@ -19,7 +19,7 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    if (user) navigate("/app");
+    if (user) navigate("/crm");
   }, [user, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -28,7 +28,7 @@ export default function Auth() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) return toast.error(error.message);
-    navigate("/app");
+    navigate("/crm");
   };
 
   const handleGoogle = async () => {

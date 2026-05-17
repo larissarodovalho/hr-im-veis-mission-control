@@ -7,10 +7,10 @@ import { createWhatsAppUrl, openWhatsApp } from "@/lib/whatsapp";
 import ScrollToTop from "./ScrollToTop";
 
 const navLinks = [
-  { label: "Início", to: "/site" },
-  { label: "Imóveis", to: "/site/imoveis" },
-  { label: "Sobre", to: "/site/sobre" },
-  { label: "Contato", to: "/site/contato" },
+  { label: "Início", to: "/" },
+  { label: "Imóveis", to: "/imoveis" },
+  { label: "Sobre", to: "/sobre" },
+  { label: "Contato", to: "/contato" },
 ];
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
@@ -38,7 +38,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
-          <Link to="/site">
+          <Link to="/">
             <img src={hrLogo} alt="HR Imóveis" className="h-12 w-auto object-contain" />
           </Link>
 
@@ -60,7 +60,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
 
           <div className="flex items-center gap-3">
             <Link
-              to="/site/contato"
+              to="/contato"
               className="hidden sm:inline-flex px-5 py-1.5 rounded-full text-sm font-medium bg-white text-black hover:bg-white/90 transition-all"
             >
               Fale Conosco

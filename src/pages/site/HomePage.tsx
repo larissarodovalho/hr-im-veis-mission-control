@@ -166,14 +166,14 @@ export default function HomePage() {
             className="flex gap-4"
           >
             <Link
-              to="/site/imoveis"
+              to="/imoveis"
               className="group inline-flex items-center gap-3 px-9 py-3.5 rounded-full bg-white text-black text-[11px] font-medium tracking-[0.15em] uppercase hover:bg-amber-50 transition-all duration-500"
             >
               Explorar Imóveis
               <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform duration-300" />
             </Link>
             <Link
-              to="/site/contato"
+              to="/contato"
               className="inline-flex items-center gap-2 px-9 py-3.5 rounded-full border border-white/[0.08] text-white/60 text-[11px] font-light tracking-[0.15em] uppercase hover:bg-white/[0.04] hover:border-white/[0.15] hover:text-white/50 transition-all duration-500"
             >
               Contato
@@ -286,7 +286,7 @@ export default function HomePage() {
               transition={{ duration: 0.8, delay: 0.2 }}
             >
               <Link
-                to="/site/imoveis"
+                to="/imoveis"
                 className="hidden sm:inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-white/60 hover:text-white/50 transition-colors duration-500 font-light"
               >
                 Ver todos <ArrowRight className="h-3 w-3" />
@@ -304,7 +304,7 @@ export default function HomePage() {
                 transition={{ duration: 1, delay: i * 0.15, ease }}
               >
                 <Link
-                  to={`/site/imovel/${imovel.id}`}
+                  to={`/imovel/${imovel.id}`}
                   className="group block bg-[#050505] hover:bg-white/[0.02] transition-all duration-700"
                 >
                   <div className="aspect-[4/3] overflow-hidden">
@@ -345,7 +345,7 @@ export default function HomePage() {
             className="sm:hidden mt-12 text-center"
           >
             <Link
-              to="/site/imoveis"
+              to="/imoveis"
               className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full border border-white/[0.08] text-white/60 text-[11px] font-light tracking-[0.15em] uppercase hover:bg-white/[0.04] transition-all duration-500"
             >
               Ver todos <ArrowRight className="h-3.5 w-3.5" />
@@ -394,7 +394,7 @@ export default function HomePage() {
                   </p>
                   <div className="flex flex-wrap justify-center gap-3">
                     <Link
-                      to="/site/contato"
+                      to="/contato"
                       className="group/btn inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-white text-black text-[11px] font-medium tracking-[0.12em] uppercase hover:bg-amber-50 transition-all duration-500"
                     >
                       Fale com um Consultor
@@ -432,7 +432,7 @@ export default function HomePage() {
                     Avaliamos e anunciamos seu imóvel com exclusividade. Alcance compradores qualificados com a HR Imóveis.
                   </p>
                   <Link
-                    to="/site/contato"
+                    to="/contato"
                     className="group/btn inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full border border-white/[0.08] text-white/60 text-[11px] font-light tracking-[0.12em] uppercase hover:border-white/[0.15] hover:text-white/50 hover:bg-white/[0.04] transition-all duration-500"
                   >
                     Quero Vender meu Imóvel

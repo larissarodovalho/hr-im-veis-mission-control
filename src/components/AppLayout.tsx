@@ -28,21 +28,21 @@ import logoBlack from "@/assets/brand/hr-imoveis-logo.png";
 
 type NavItem = { to: string; icon: any; label: string; end?: boolean };
 const baseNav: NavItem[] = [
-  { to: "/app", icon: LayoutDashboard, label: "Dashboard", end: true },
-  { to: "/app/leads", icon: UsersIcon, label: "Leads" },
-  { to: "/app/contas", icon: Building2, label: "Contas" },
-  { to: "/app/imoveis", icon: Home, label: "Imóveis" },
-  { to: "/app/whatsapp", icon: MessageSquare, label: "WhatsApp" },
-  { to: "/app/reunioes", icon: Calendar, label: "Reuniões" },
-  { to: "/app/ligacoes", icon: Phone, label: "Ligações" },
-  { to: "/app/visitas", icon: MapPin, label: "Visitas" },
-  { to: "/app/agenda", icon: CalendarRange, label: "Agenda" },
-  { to: "/app/documentos", icon: FileSignature, label: "Documentos" },
+  { to: "/crm", icon: LayoutDashboard, label: "Dashboard", end: true },
+  { to: "/crm/leads", icon: UsersIcon, label: "Leads" },
+  { to: "/crm/contas", icon: Building2, label: "Contas" },
+  { to: "/crm/imoveis", icon: Home, label: "Imóveis" },
+  { to: "/crm/whatsapp", icon: MessageSquare, label: "WhatsApp" },
+  { to: "/crm/reunioes", icon: Calendar, label: "Reuniões" },
+  { to: "/crm/ligacoes", icon: Phone, label: "Ligações" },
+  { to: "/crm/visitas", icon: MapPin, label: "Visitas" },
+  { to: "/crm/agenda", icon: CalendarRange, label: "Agenda" },
+  { to: "/crm/documentos", icon: FileSignature, label: "Documentos" },
 ];
 const adminNav: NavItem[] = [
-  { to: "/app/relatorios", icon: BarChart3, label: "Relatórios" },
-  { to: "/app/usuarios", icon: UserCog, label: "Usuários" },
-  { to: "/app/configuracoes", icon: Settings, label: "Configurações" },
+  { to: "/crm/relatorios", icon: BarChart3, label: "Relatórios" },
+  { to: "/crm/usuarios", icon: UserCog, label: "Usuários" },
+  { to: "/crm/configuracoes", icon: Settings, label: "Configurações" },
 ];
 
 export default function AppLayout() {
@@ -83,7 +83,7 @@ export default function AppLayout() {
           >
             <Icon className="h-4 w-4" />
             <span className="flex-1">{label}</span>
-            {to === "/app/whatsapp" && waUnread > 0 && (
+            {to === "/crm/whatsapp" && waUnread > 0 && (
               <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold flex items-center justify-center">
                 {waUnread > 9 ? "9+" : waUnread}
               </span>
