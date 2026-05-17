@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
       };
       if (!email || !password || !nome) return json({ error: "email, password, nome obrigatórios" }, 400);
       if (password.length < 8) return json({ error: "Senha mínima 8 caracteres" }, 400);
-      const finalRole: Role = role && ["admin", "gestor", "corretor"].includes(role) ? role : "corretor";
+      const finalRole: UiRole = role && VALID_UI_ROLES.includes(role as UiRole) ? (role as UiRole) : "corretor";
 
       const { data: created, error: cErr } = await admin.auth.admin.createUser({
         email,
@@ -74,8 +74,8 @@ Deno.serve(async (req) => {
       await admin.from("profiles").update({ nome, telefone, cargo }).eq("user_id", newId);
 
       if (finalRole !== "corretor") {
-        await admin.from("user_roles").delete().eq("user_id", newId);
-        await admin.from("user_roles").insert({ user_id: newId, role: finalRole });
+        try { await applyRoles(admin, newId, finalRole); }
+        catch (e) { return json({ error: (e as Error).message }, 400); }
       }
 
       // Envia e-mail de boas-vindas com senha temporária (best-effort)
