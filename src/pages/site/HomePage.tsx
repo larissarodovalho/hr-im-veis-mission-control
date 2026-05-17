@@ -195,38 +195,8 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* ─── Full-width Parallax ─── */}
-      <ScrollSection className="relative h-[75vh] sm:h-[85vh] -mt-16" index={2}>
-        <ParallaxImage src={img("section_living", sectionLiving)} alt="Interior de luxo" className="absolute inset-0 h-full" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-[#050505]/20" />
-        <div className="relative z-10 flex items-center justify-center h-full max-w-5xl mx-auto px-6 text-center">
-          <div>
-            <motion.div
-              initial={{ opacity: 0, width: 0 }}
-              whileInView={{ opacity: 1, width: 40 }}
-              viewport={{ margin: "-40px" }}
-              transition={{ duration: 1, ease }}
-              className="h-[1px] bg-gradient-to-r from-transparent via-amber-300/30 to-transparent mx-auto mb-10"
-            />
-            <motion.h2
-              initial={{ opacity: 0, y: 60 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ margin: "-100px" }}
-              transition={{ duration: 1.4, ease }}
-              className="text-3xl sm:text-5xl lg:text-7xl font-extralight leading-[1.12] tracking-[-0.02em]"
-            >
-              Cada detalhe pensado para quem valoriza{" "}
-              <span className="italic font-light text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60">
-                sofisticação
-              </span>{" "}
-              e qualidade de vida.
-            </motion.h2>
-          </div>
-        </div>
-      </ScrollSection>
-
       {/* ─── Diferenciais ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={3}>
+      <ScrollSection className="py-10 sm:py-14" index={2}>
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12">
             <motion.div
