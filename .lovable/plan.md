@@ -1,42 +1,34 @@
 ## Objetivo
 
-Permitir, dentro de cada conta, escolher se ela pertence à **Carteira** ou ao **Marketing**, alinhando com as abas já existentes em `/app/contas` (que filtram por essas tags) para suportar qualificação e nutrição.
+Classificar todas as **1.355 contas** da base como **Carteira**, para começar a qualificação e nutrição pela aba Carteira em `/app/contas`.
 
-## Como funciona hoje
+## Situação atual
 
-- A classificação "carteira" / "marketing" já existe como tag no array `contas.tags`.
-- A página `Accounts.tsx` (linhas 113, 195–198) filtra a lista pela tag.
-- No detalhe da conta (`AccountDetail.tsx`) **não há** controle para definir/alterar essa lista — só dá pra setar na criação/importação.
+- Total: **1.355** contas
+- Já marcadas como `carteira`: **0**
+- Marcadas como `marketing`: **0**
 
-## Mudança
+## Operação
 
-Adicionar um seletor "Lista" no detalhe da conta, mantendo as demais tags intactas.
+Atualização em massa na tabela `contas`, adicionando `"carteira"` ao array `tags` de toda conta que ainda não tenha essa tag. Demais tags (ex.: `importado-2026-05`, `hr-imoveis`, `dono:...`) são preservadas.
 
-### Arquivo: `src/pages/AccountDetail.tsx`
+```sql
+UPDATE public.contas
+SET tags = array_append(COALESCE(tags, ARRAY[]::text[]), 'carteira')
+WHERE NOT ('carteira' = ANY(COALESCE(tags, ARRAY[]::text[])));
+```
 
-1. **Header da conta** — exibir badge da lista atual ("Carteira" / "Marketing") ao lado do nome, quando aplicável. Derivar de `acc.tags`.
+Como nenhuma conta está em `marketing`, não há conflito a resolver.
 
-2. **Dialog "Editar conta"** — adicionar campo:
-   ```
-   <Label>Lista</Label>
-   <Select value={listaAtual} onValueChange={...}>
-     <SelectItem value="nenhuma">Nenhuma</SelectItem>
-     <SelectItem value="carteira">Carteira</SelectItem>
-     <SelectItem value="marketing">Marketing</SelectItem>
-   </Select>
-   ```
-   - O state `editing` ganha um campo `lista` derivado de `tags` na abertura.
-   - No `save()`, recompor `tags`: remover `"carteira"` e `"marketing"` das existentes e adicionar a nova (se diferente de "nenhuma"). Persistir junto no `update` em `contas`.
+## Resultado esperado
 
-3. **Adicionar botão de atalho** no header da conta: "Mover para Carteira" / "Mover para Marketing" via dropdown rápido (opcional, mas útil — fica visível sem abrir o dialog).
+- 1.355 contas com tag `carteira`
+- Visíveis na aba **Carteira** de `/app/contas`
+- Nenhuma alteração de schema, RLS ou outras tabelas
 
-### Não muda
+## Reversão (se precisar)
 
-- Schema: `tags text[]` já existe em `contas`.
-- RLS: já cobre update por dono/admin/gestor.
-- Listagem `/app/contas`: continua filtrando pelas mesmas tags automaticamente.
-- Página de leads / outras telas: fora do escopo.
-
-## Observação
-
-As tags são mutuamente exclusivas para essa dimensão: uma conta fica em **uma** lista por vez (Carteira **ou** Marketing **ou** nenhuma). Se você quiser permitir as duas ao mesmo tempo, me avise antes de eu implementar.
+```sql
+UPDATE public.contas
+SET tags = array_remove(tags, 'carteira');
+```
