@@ -1,32 +1,33 @@
-## Objetivo
-Quando um admin cadastrar um novo usuário em **Usuários**, o sistema envia automaticamente um e-mail para esse usuário com:
-- saudação personalizada (nome)
-- link de acesso ao CRM
-- e-mail de login + senha temporária
-- orientação para trocar a senha no primeiro acesso
+## Diagnóstico
+Verifiquei os logs: `send-transactional-email` **não foi chamado nem uma vez** e não há nenhum registro de envio. O `admin-create-user` tentou disparar via `admin.functions.invoke(...)`, mas o cliente Supabase service-role criado dentro de uma edge function não propaga corretamente o token nessa chamada — ela falha silenciosamente e o `try/catch` engole o erro.
 
-## Como funciona
+## Correção
 
-1. **Novo template transacional** `user-welcome` na infraestrutura de e-mails já existente do projeto (a mesma usada hoje para alertas de contato imediato — não precisa configurar Resend nem domínio novo).
-   - Assunto: "Seu acesso ao CRM HR Imóveis"
-   - Corpo com nome, e-mail, senha temporária em destaque, botão "Acessar CRM" e nota sobre alterar a senha após o primeiro login.
+Trocar a invocação interna por um **`fetch` direto** ao endpoint `/functions/v1/send-transactional-email`, autenticado com o `SUPABASE_SERVICE_ROLE_KEY` (padrão recomendado para chamadas server-to-server entre edge functions).
 
-2. **Registrar** o template em `_shared/transactional-email-templates/registry.ts` para ficar disponível na função `send-transactional-email`.
+Mudanças em `supabase/functions/admin-create-user/index.ts`:
+- Substituir `admin.functions.invoke("send-transactional-email", …)` por:
+  ```ts
+  await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${SERVICE_ROLE}`,
+      apikey: SERVICE_ROLE,
+    },
+    body: JSON.stringify({ templateName: "user-welcome", recipientEmail: email, idempotencyKey: `user-welcome-${newId}`, purpose: "transactional", templateData: { nome, email, senha: password, loginUrl } }),
+  });
+  ```
+- Logar `console.log` antes/depois com `status` da resposta para facilitar debug futuro.
+- Manter best-effort: se falhar, o usuário ainda é criado e o admin vê a senha na tela.
 
-3. **Atualizar** `admin-create-user` (ação `create`): logo após criar o usuário com sucesso, dispara `send-transactional-email` com o template `user-welcome` para o e-mail do novo usuário, passando nome, e-mail, senha e URL do app.
-   - O envio é "best effort" — se falhar, o usuário ainda é criado e o admin recebe a senha na tela (igual hoje). Erro vai apenas para o log.
+Após editar, faço o redeploy do `admin-create-user`.
 
-4. **UI** em `UsuariosAdminPage.tsx`: após criar com sucesso, mostrar toast informando "Usuário criado. E-mail de boas-vindas enviado para {email}".
-
-## Detalhes técnicos
-
-- Arquivos criados/editados:
-  - `supabase/functions/_shared/transactional-email-templates/user-welcome.tsx` (novo)
-  - `supabase/functions/_shared/transactional-email-templates/registry.ts` (adicionar entrada)
-  - `supabase/functions/admin-create-user/index.ts` (chamar `send-transactional-email` via fetch interno após criar)
-  - `src/pages/UsuariosAdminPage.tsx` (texto do toast)
-- Deploy: `admin-create-user` e `send-transactional-email`.
-- Nenhuma migração de banco necessária — infra de e-mail e domínio já estão configurados.
+## Verificação
+Após o redeploy, ao cadastrar um novo usuário:
+1. Olho os logs de `admin-create-user` para confirmar que o fetch retornou 200.
+2. Olho `email_send_log` para ver o registro `pending → sent`.
+3. Caso `pending` fique parado, é problema do queue/DNS — aí investigo `process-email-queue` e status do domínio.
 
 ## Fora do escopo
-- Não altera fluxo de redefinição de senha (botão "redefinir senha" continua só mostrando a nova senha ao admin, como hoje). Posso depois adicionar envio por e-mail também se quiser.
+- Reenviar o e-mail para o Hans (já criado) — posso fazer manualmente depois com `curl_edge_functions` se quiser.
