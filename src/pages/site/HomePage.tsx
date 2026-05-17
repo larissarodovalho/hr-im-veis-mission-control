@@ -411,12 +411,6 @@ export default function HomePage() {
                       Fale com um Consultor
                       <ArrowRight className="h-3.5 w-3.5 group-hover/btn:translate-x-1 transition-transform duration-300" />
                     </a>
-                    <Link
-                      to="/contato"
-                      className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full border border-white/[0.08] text-white/60 text-[11px] font-light tracking-[0.12em] uppercase hover:bg-white/[0.04] hover:border-white/[0.15] transition-all duration-500"
-                    >
-                      Contato
-                    </Link>
                   </div>
                 </div>
               </div>
