@@ -12,6 +12,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, ShieldAlert, UserPlus, KeyRound, Trash2, Copy, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
+type UiRole = AppRole | "gestor_corretor";
+
+const ROLE_LABELS: Record<UiRole, string> = {
+  admin: "Admin",
+  gestor: "Gestor",
+  corretor: "Corretor",
+  gestor_corretor: "Gestor + Corretor",
+};
+
 type Row = {
   id: string;
   user_id: string;
@@ -21,7 +30,7 @@ type Row = {
   cargo: string | null;
   ativo: boolean;
   created_at: string;
-  role: AppRole;
+  role: UiRole;
 };
 
 function genPassword() {
