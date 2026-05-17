@@ -95,12 +95,11 @@ const TOOLS = [
     type: "function",
     function: {
       name: "update_lead_info",
-      description: "Salva nome completo, telefone alternativo e/ou intenção do lead.",
+      description: "Salva nome completo e/ou intenção do lead.",
       parameters: {
         type: "object",
         properties: {
           full_name: { type: "string", description: "Nome completo (nome + sobrenome)" },
-          phone: { type: "string", description: "Celular preferido informado pelo lead, se diferente do número do WhatsApp" },
           interest: {
             type: "string",
             enum: ["compra", "venda", "aluguel", "incorporacao", "investimento_ocasiao"],
