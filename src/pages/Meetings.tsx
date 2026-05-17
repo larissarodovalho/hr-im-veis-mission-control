@@ -242,6 +242,28 @@ export default function Meetings() {
           <form onSubmit={saveEdit} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
+                <Label>Lead</Label>
+                <Select value={editForm.lead_id} onValueChange={v => setEditForm({ ...editForm, lead_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Sem lead" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem lead vinculado</SelectItem>
+                    {leads.map(l => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Conta</Label>
+                <Select value={editForm.conta_id} onValueChange={v => setEditForm({ ...editForm, conta_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Sem conta" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem conta vinculada</SelectItem>
+                    {contas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
                 <Label>Tipo</Label>
                 <Select value={editForm.tipo} onValueChange={v => setEditForm({ ...editForm, tipo: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
