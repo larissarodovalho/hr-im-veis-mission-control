@@ -137,20 +137,43 @@ export default function Accounts() {
 
   const [ownerMap, setOwnerMap] = useState<Record<string, string>>({});
 
+  const fetchAllContas = async () => {
+    const PAGE = 1000;
+    let from = 0;
+    const all: any[] = [];
+    while (true) {
+      const { data, error } = await supabase
+        .from("contas")
+        .select("id, nome, email, telefone, documento, tipo, responsavel_id, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil")
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE - 1);
+      if (error) throw error;
+      if (!data?.length) break;
+      all.push(...data);
+      if (data.length < PAGE) break;
+      from += PAGE;
+    }
+    return all;
+  };
+
   const load = async () => {
     setLoading(true);
-    const [{ data: accs, error }, { data: props }, { data: profs }] = await Promise.all([
-      supabase.from("contas").select("id, nome, email, telefone, documento, tipo, responsavel_id, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil").order("created_at", { ascending: false }),
-      supabase.from("conta_propriedades" as any).select("*"),
-      supabase.from("profiles").select("user_id, nome"),
-    ]);
-    if (error) toast.error(error.message);
-    setAccounts(((accs as any) ?? []) as Account[]);
-    setProperties(((props as any) ?? []) as Property[]);
-    const map: Record<string, string> = {};
-    ((profs as any) ?? []).forEach((p: any) => { if (p.user_id) map[p.user_id] = p.nome || "—"; });
-    setOwnerMap(map);
-    setLoading(false);
+    try {
+      const [accs, { data: props }, { data: profs }] = await Promise.all([
+        fetchAllContas(),
+        supabase.from("conta_propriedades" as any).select("*"),
+        supabase.from("profiles").select("user_id, nome"),
+      ]);
+      setAccounts((accs ?? []) as Account[]);
+      setProperties(((props as any) ?? []) as Property[]);
+      const map: Record<string, string> = {};
+      ((profs as any) ?? []).forEach((p: any) => { if (p.user_id) map[p.user_id] = p.nome || "—"; });
+      setOwnerMap(map);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao carregar contas");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
