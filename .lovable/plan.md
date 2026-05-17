@@ -1,11 +1,22 @@
 ## Objetivo
-Remover o filtro **Aptidão** ("Todas as aptidões") da barra de filtros da página de Contas.
+Alinhar as opções do filtro **Interesse** (página Contas) aos valores realmente salvos no cadastro do contato (em `AccountDetail`).
 
-## Mudanças (`src/pages/Accounts.tsx`)
-1. Remover o `<Select>` de aptidão (linhas ~342–352) do grid de filtros.
-2. Remover o estado `aptitudeFilter` e o tipo `Aptitude` se não usado em outro lugar (manter `APT_LABEL`/`APT_BADGE` se ainda usados em exibição de propriedades).
-3. Remover a condição `aptitudeFilter !== "todas"` da função `filtered`.
-4. Ajustar o grid de `lg:grid-cols-5` para `lg:grid-cols-4`.
+## Contexto
+- O Select de edição da conta salva strings: `Comprar`, `Vender`, `Alugar`, `Incorporar`, `Investimento`, `Ocasião de oportunidade`, `Permuta`.
+- O filtro em `Accounts.tsx` ainda usa valores antigos (`compra`, `venda`, `arrendamento`, `compra_arrendamento`, `outro`) — por isso filtrar nunca casa com nada salvo.
+
+## Mudança (`src/pages/Accounts.tsx`)
+Substituir os `<SelectItem>` do filtro Interesse pelos mesmos valores usados no cadastro:
+- Todos os interesses
+- Comprar
+- Vender
+- Alugar
+- Incorporar
+- Investimento
+- Ocasião de oportunidade
+- Permuta
+
+Ajustar o tipo `Interest` e o estado `interestFilter` para aceitar string (já que os valores agora são livres, idênticos ao que está salvo). Remover constantes `INTEREST_LABEL` se não usadas.
 
 ## Fora de escopo
-Banco de dados, abas Todos/Carteira/Marketing e demais filtros permanecem inalterados.
+Banco, formulário de edição (já correto) e exibição das badges.
