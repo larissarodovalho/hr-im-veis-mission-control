@@ -281,10 +281,13 @@ export default function AccountDetail() {
                   <Select value={editing.interesse || ""} onValueChange={v => setEditing({ ...editing, interesse: v })}>
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Compra">Compra</SelectItem>
-                      <SelectItem value="Venda">Venda</SelectItem>
+                      <SelectItem value="Comprar">Comprar</SelectItem>
+                      <SelectItem value="Vender">Vender</SelectItem>
+                      <SelectItem value="Alugar">Alugar</SelectItem>
+                      <SelectItem value="Incorporar">Incorporar</SelectItem>
+                      <SelectItem value="Investimento">Investimento</SelectItem>
+                      <SelectItem value="Ocasião de oportunidade">Ocasião de oportunidade</SelectItem>
                       <SelectItem value="Permuta">Permuta</SelectItem>
-                      <SelectItem value="Outro">Outro</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
