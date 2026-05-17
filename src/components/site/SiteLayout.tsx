@@ -105,7 +105,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
 
       {/* Floating WhatsApp button */}
       <a
-        href="https://wa.me/5566999955881?text=Olá! Gostaria de mais informações."
+        href={`https://wa.me/5566999955881?text=${encodeURIComponent("Olá! Gostaria de mais informações.")}`}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Falar no WhatsApp"
