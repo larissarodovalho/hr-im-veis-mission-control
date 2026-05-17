@@ -336,7 +336,7 @@ export default function SobrePage() {
               </motion.p>
             </div>
             <ParallaxImage
-              src={sectionLiving}
+              src={img("section_living", sectionLiving)}
               alt="Missão HR Imóveis"
               className="rounded-2xl aspect-[3/4] lg:aspect-[4/5]"
             />
