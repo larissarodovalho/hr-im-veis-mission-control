@@ -218,12 +218,13 @@ export default function UsuariosAdminPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Papel *</Label>
-                  <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as AppRole })}>
+                  <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as UiRole })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="gestor">Gestor</SelectItem>
                       <SelectItem value="corretor">Corretor</SelectItem>
+                      <SelectItem value="gestor_corretor">Gestor + Corretor</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
