@@ -337,17 +337,6 @@ export default function Accounts() {
               <SelectItem value="outro">Outro</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={aptitudeFilter} onValueChange={(v: any) => setAptitudeFilter(v)}>
-            <SelectTrigger><SelectValue placeholder="Aptidão" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas as aptidões</SelectItem>
-              <SelectItem value="agricultura">Agricultura</SelectItem>
-              <SelectItem value="pecuaria">Pecuária</SelectItem>
-              <SelectItem value="arrendamento">Arrendamento</SelectItem>
-              <SelectItem value="misto">Misto</SelectItem>
-              <SelectItem value="outro">Outro</SelectItem>
-            </SelectContent>
-          </Select>
           <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
             <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
