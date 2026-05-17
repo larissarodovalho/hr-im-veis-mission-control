@@ -4,6 +4,7 @@ export type EtapaFunil =
   | "sem_retorno"
   | "reuniao"
   | "visita"
+  | "proposta"
   | "fechado"
   | "perdido";
 
@@ -13,6 +14,7 @@ export const ETAPAS: { id: EtapaFunil; label: string; color: string }[] = [
   { id: "sem_retorno", label: "Sem retorno", color: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
   { id: "reuniao", label: "Reunião", color: "bg-violet-500/15 text-violet-700 border-violet-500/30" },
   { id: "visita", label: "Visita", color: "bg-teal-500/15 text-teal-700 border-teal-500/30" },
+  { id: "proposta", label: "Proposta", color: "bg-sky-500/15 text-sky-700 border-sky-500/30" },
   { id: "fechado", label: "Fechado", color: "bg-success/15 text-success border-success/30" },
   { id: "perdido", label: "Perdido", color: "bg-destructive/15 text-destructive border-destructive/30" },
 ];
