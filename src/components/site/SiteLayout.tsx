@@ -131,8 +131,8 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               <p className="text-sm text-white/60 leading-relaxed max-w-sm">
                 Referência no mercado imobiliário de Sinop-MT. Imóveis de alto padrão com atendimento personalizado.
               </p>
-              <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-amber-500/30 bg-amber-500/10">
-                <span className="text-amber-300 text-sm font-semibold tracking-wide">CRECI Jurídico 18.050</span>
+              <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 bg-white/5">
+                <span className="text-white/80 text-sm font-medium tracking-wide">CRECI Jurídico 18.050</span>
               </div>
             </div>
 
