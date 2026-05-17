@@ -135,15 +135,21 @@ export default function Accounts() {
   const [novaOpen, setNovaOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
 
+  const [ownerMap, setOwnerMap] = useState<Record<string, string>>({});
+
   const load = async () => {
     setLoading(true);
-    const [{ data: accs, error }, { data: props }] = await Promise.all([
-      supabase.from("contas").select("id, nome, email, telefone, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil").order("created_at", { ascending: false }),
+    const [{ data: accs, error }, { data: props }, { data: profs }] = await Promise.all([
+      supabase.from("contas").select("id, nome, email, telefone, documento, tipo, responsavel_id, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil").order("created_at", { ascending: false }),
       supabase.from("conta_propriedades" as any).select("*"),
+      supabase.from("profiles").select("user_id, nome"),
     ]);
     if (error) toast.error(error.message);
     setAccounts(((accs as any) ?? []) as Account[]);
     setProperties(((props as any) ?? []) as Property[]);
+    const map: Record<string, string> = {};
+    ((profs as any) ?? []).forEach((p: any) => { if (p.user_id) map[p.user_id] = p.nome || "—"; });
+    setOwnerMap(map);
     setLoading(false);
   };
 
