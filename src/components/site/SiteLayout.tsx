@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Phone, Mail, Instagram, Facebook, Menu, X } from "lucide-react";
+import { Phone, Mail, Instagram, Facebook, Menu, X, MessageCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import hrLogo from "@/assets/logo-hr-branco.png";
