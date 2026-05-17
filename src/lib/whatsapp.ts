@@ -6,37 +6,24 @@ export function createWhatsAppUrl(message?: string) {
   return `${base}?text=${encodeURIComponent(message)}`;
 }
 
-type WhatsAppClickEvent = { preventDefault: () => void };
-
-function isInsideFrame() {
-  try {
-    return window.self !== window.top;
-  } catch {
-    return true;
-  }
-}
+type WhatsAppClickEvent = {
+  preventDefault: () => void;
+  defaultPrevented?: boolean;
+};
 
 export function openWhatsApp(event?: WhatsAppClickEvent, message?: string) {
-  event?.preventDefault();
+  // Deixa o comportamento nativo do <a target="_blank"> abrir a nova aba.
+  // Só intervém se, por algum motivo, o navegador não tiver aberto nada.
+  if (event?.defaultPrevented) return;
+
   const url = createWhatsAppUrl(message);
 
-  if (isInsideFrame()) {
-    const topNavigation = window.open(url, "_top");
-
-    if (!topNavigation) {
-      try {
-        window.top?.location.assign(url);
-      } catch {
-        window.location.assign(url);
-      }
+  try {
+    const win = window.open(url, "_blank", "noopener,noreferrer");
+    if (win) {
+      event?.preventDefault();
     }
-
-    return;
-  }
-
-  const popup = window.open(url, "_blank", "noopener,noreferrer");
-
-  if (!popup) {
-    window.location.assign(url);
+  } catch {
+    // ignora — o link nativo cuidará da navegação
   }
 }
