@@ -153,7 +153,7 @@ export default function HomePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.8 }}
-            className="text-sm sm:text-base text-white/60 max-w-lg mb-12 font-light leading-[1.8] tracking-wide"
+            className="text-base sm:text-base text-white/60 max-w-lg mb-12 font-light leading-[1.8] tracking-wide"
           >
             Casas, terrenos e apartamentos de alto padrão nos melhores condomínios fechados.
           </motion.p>
@@ -238,7 +238,7 @@ export default function HomePage() {
                 <h3 className="font-medium text-base sm:text-lg mb-3 tracking-wide text-white/85 group-hover:text-white transition-colors duration-700">
                   {item.title}
                 </h3>
-                <p className="text-sm text-white/60 leading-[1.7] font-light group-hover:text-white/75 transition-colors duration-700">
+                <p className="text-base text-white/60 leading-[1.7] font-light group-hover:text-white/75 transition-colors duration-700">
                   {item.desc}
                 </p>
               </motion.div>
@@ -388,7 +388,7 @@ export default function HomePage() {
                   <h3 className="text-2xl sm:text-3xl font-extralight tracking-wide mb-5">
                     Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 font-light">comprar</span> um imóvel?
                   </h3>
-                  <p className="text-sm text-white/60 font-light leading-[1.8] max-w-sm mb-10">
+                  <p className="text-base text-white/60 font-light leading-[1.8] max-w-sm mb-10">
                     Nossa equipe de consultores vai te ajudar a encontrar o imóvel perfeito para você e sua família.
                   </p>
                   <div className="flex flex-wrap justify-center gap-3">
@@ -426,7 +426,7 @@ export default function HomePage() {
                   <h3 className="text-2xl sm:text-3xl font-extralight tracking-wide mb-5">
                     Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 font-light">vender</span> seu imóvel?
                   </h3>
-                  <p className="text-sm text-white/60 font-light leading-[1.8] max-w-sm mb-10">
+                  <p className="text-base text-white/60 font-light leading-[1.8] max-w-sm mb-10">
                     Avaliamos e anunciamos seu imóvel com exclusividade. Alcance compradores qualificados com a HR Imóveis.
                   </p>
                   <Link
@@ -514,7 +514,7 @@ function NewsletterSection() {
           whileInView={{ opacity: 1 }}
           viewport={{ margin: "-40px" }}
           transition={{ duration: 0.7, delay: 0.2 }}
-          className="text-sm text-white/60 font-light max-w-md mx-auto mb-12 leading-[1.8]"
+          className="text-base text-white/60 font-light max-w-md mx-auto mb-12 leading-[1.8]"
         >
           Receba informações exclusivas sobre novos imóveis, tendências do mercado e novidades da região de Sinop.
         </motion.p>
@@ -532,7 +532,7 @@ function NewsletterSection() {
             placeholder="Seu melhor e-mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="flex-1 px-6 py-3.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-sm text-white placeholder:text-white/45 font-light tracking-wide focus:outline-none focus:border-white/[0.15] transition-all duration-500"
+            className="flex-1 px-6 py-3.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-base text-white placeholder:text-white/45 font-light tracking-wide focus:outline-none focus:border-white/[0.15] transition-all duration-500"
           />
           <button
             type="submit"

@@ -153,7 +153,7 @@ export default function ContatoPage() {
             <br />
             <span className="text-white/60">dos seus sonhos</span>
           </h3>
-          <p className="text-sm text-white/50 font-light mb-10 max-w-sm mx-auto leading-relaxed">
+          <p className="text-base text-white/50 font-light mb-10 max-w-sm mx-auto leading-relaxed">
             14 anos de experiência no mercado imobiliário de Sinop, com atendimento exclusivo e personalizado.
           </p>
           <motion.a
