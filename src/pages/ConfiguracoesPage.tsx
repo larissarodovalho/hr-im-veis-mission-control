@@ -13,8 +13,9 @@ import { Separator } from "@/components/ui/separator";
 import {
   ShieldAlert, Settings, Building2, MessageCircle, Bell, Database, ExternalLink,
   Loader2, Send, Copy,
-  Webhook, Bot, Globe, Check, ShieldCheck, History, Trash2, HardDrive,
+  Webhook, Bot, Globe, Check, ShieldCheck, History, Trash2, HardDrive, Image as ImageIcon,
 } from "lucide-react";
+import SiteSettingsTab from "@/components/configuracoes/SiteSettingsTab";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -142,9 +143,14 @@ export default function ConfiguracoesPage() {
       <Tabs defaultValue="empresa" className="pt-4">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="empresa"><Building2 className="h-4 w-4 mr-1" />Empresa</TabsTrigger>
+          <TabsTrigger value="site"><ImageIcon className="h-4 w-4 mr-1" />Site</TabsTrigger>
           <TabsTrigger value="notificacoes"><Bell className="h-4 w-4 mr-1" />Notificações</TabsTrigger>
           <TabsTrigger value="sistema"><Database className="h-4 w-4 mr-1" />Sistema</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="site">
+          <SiteSettingsTab />
+        </TabsContent>
 
         <TabsContent value="empresa">
           <Card>

@@ -12,6 +12,7 @@ import terreno2 from "@/assets/imoveis/terreno-2.jpg";
 import cobertura1 from "@/assets/imoveis/cobertura-1.jpg";
 import sobrado1 from "@/assets/imoveis/sobrado-1.jpg";
 import mansao1 from "@/assets/imoveis/mansao-1.jpg";
+import { useSiteImages } from "@/lib/siteSettings";
 
 const casaImages = [casaLuxo1, casaLuxo2, casaLuxo3, mansao1];
 const terrenoImages = [terreno1, terreno2];
@@ -70,13 +71,14 @@ function ParallaxHero() {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.08]);
   const heroTextY = useTransform(scrollYProgress, [0, 0.5], [0, 100]);
+  const { img } = useSiteImages();
 
   return (
     <section ref={ref} className="relative h-[70vh] flex items-center justify-center overflow-hidden">
       {/* Background with scale effect */}
       <motion.div className="absolute inset-0" style={{ scale: heroScale }}>
         <img
-          src={heroImoveis}
+          src={img("hero_imoveis", heroImoveis)}
           alt="Portfólio exclusivo de imóveis"
           className="w-full h-full object-cover"
         />

@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
-const imoveis: any[] = [];
 import { ArrowRight, MapPin, ArrowUpRight, MessageCircle, Building2 } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import hrLogo from "@/assets/logo-hr-branco.png";
@@ -13,9 +12,9 @@ import property1 from "@/assets/property-1.jpg";
 import property2 from "@/assets/property-2.jpg";
 import property3 from "@/assets/property-3.jpg";
 import featureInterior from "@/assets/feature-interior.jpg";
+import { useSiteImages, fetchFeaturedImoveis } from "@/lib/siteSettings";
 
 const propertyImages = [property1, property2, property3];
-const destaque = imoveis.filter((i) => i.status === "Disponível").slice(0, 3);
 
 function formatPrice(valor: number) {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
@@ -75,12 +74,41 @@ export default function HomePage() {
   const heroScale = useTransform(heroScroll, [0, 0.5], [1, 1.08]);
   const heroTextY = useTransform(heroScroll, [0, 0.5], [0, 100]);
 
+  const { img } = useSiteImages();
+  const [destaque, setDestaque] = useState<any[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const ids = await fetchFeaturedImoveis();
+      if (ids.length === 0) {
+        // Fallback: 3 most recent available
+        const { data } = await supabase
+          .from("imoveis")
+          .select("id, titulo, cidade, valor, fotos, tipo, status")
+          .eq("status", "disponivel")
+          .order("created_at", { ascending: false })
+          .limit(3);
+        setDestaque(data ?? []);
+        return;
+      }
+      const { data } = await supabase
+        .from("imoveis")
+        .select("id, titulo, cidade, valor, fotos, tipo, status")
+        .in("id", ids);
+      // preserve admin order
+      const ordered = ids
+        .map((id) => (data ?? []).find((d) => d.id === id))
+        .filter(Boolean) as any[];
+      setDestaque(ordered);
+    })();
+  }, []);
+
   return (
     <div ref={pageRef} className="bg-[#050505]">
       {/* ─── Hero ─── */}
       <section ref={heroRef} className="relative h-screen flex items-end overflow-hidden">
         <motion.div className="absolute inset-0" style={{ scale: heroScale }}>
-          <img src={heroBg} alt="Imóveis de alto padrão em Sinop" className="w-full h-full object-cover" />
+          <img src={img("hero_home", heroBg)} alt="Imóveis de alto padrão em Sinop" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/50 to-transparent" />
         </motion.div>
 
@@ -169,7 +197,7 @@ export default function HomePage() {
 
       {/* ─── Full-width Parallax ─── */}
       <ScrollSection className="relative h-[75vh] sm:h-[85vh] -mt-16" index={2}>
-        <ParallaxImage src={sectionLiving} alt="Interior de luxo" className="absolute inset-0 h-full" />
+        <ParallaxImage src={img("section_living", sectionLiving)} alt="Interior de luxo" className="absolute inset-0 h-full" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-[#050505]/20" />
         <div className="relative z-10 flex items-center justify-center h-full max-w-5xl mx-auto px-6 text-center">
           <div>
@@ -310,8 +338,8 @@ export default function HomePage() {
                 >
                   <div className="aspect-[4/3] overflow-hidden">
                     <motion.img
-                      src={propertyImages[i] || property1}
-                      alt={imovel.nome}
+                      src={imovel.fotos?.[0] || propertyImages[i] || property1}
+                      alt={imovel.titulo}
                       whileHover={{ scale: 1.04 }}
                       transition={{ duration: 0.8, ease: smoothEase }}
                       className="w-full h-full object-cover"
@@ -324,13 +352,13 @@ export default function HomePage() {
                       <ArrowUpRight className="h-3.5 w-3.5 text-white/20 group-hover:text-amber-300/50 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-500" />
                     </div>
                     <h3 className="font-light text-base mb-3 tracking-wide text-white/80 group-hover:text-white/95 transition-colors duration-500">
-                      {imovel.nome}
+                      {imovel.titulo}
                     </h3>
                     <p className="flex items-center gap-1.5 text-[11px] text-white/25 mb-6 font-light tracking-[0.15em]">
-                      <MapPin className="h-2.5 w-2.5" /> Sinop, MT
+                      <MapPin className="h-2.5 w-2.5" /> {imovel.cidade || "Sinop, MT"}
                     </p>
                     <p className="text-xl font-extralight text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 tracking-wide">
-                      {formatPrice(imovel.valor)}
+                      {formatPrice(imovel.valor || 0)}
                     </p>
                   </div>
                 </Link>
@@ -383,7 +411,7 @@ export default function HomePage() {
               transition={{ duration: 1.2, ease }}
             >
               <div className="relative bg-[#050505] overflow-hidden h-full group">
-                <img src={property1} alt="Comprar imóvel" className="absolute inset-0 w-full h-full object-cover opacity-15 group-hover:opacity-25 transition-opacity duration-1000" loading="lazy" />
+                <img src={img("section_community", sectionCommunity)} alt="Comprar imóvel" className="absolute inset-0 w-full h-full object-cover opacity-15 group-hover:opacity-25 transition-opacity duration-1000" loading="lazy" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/85 to-[#050505]/60" />
                 <div className="relative p-12 sm:p-20 text-center flex flex-col items-center">
                   <MessageCircle className="h-7 w-7 text-white/20 mb-8" />
@@ -421,7 +449,7 @@ export default function HomePage() {
               transition={{ duration: 1.2, delay: 0.15, ease }}
             >
               <div className="relative bg-[#050505] overflow-hidden h-full group">
-                <img src={featureInterior} alt="Vender imóvel" className="absolute inset-0 w-full h-full object-cover opacity-15 group-hover:opacity-25 transition-opacity duration-1000" loading="lazy" />
+                <img src={img("feature_interior", featureInterior)} alt="Vender imóvel" className="absolute inset-0 w-full h-full object-cover opacity-15 group-hover:opacity-25 transition-opacity duration-1000" loading="lazy" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/85 to-[#050505]/60" />
                 <div className="relative p-12 sm:p-20 text-center flex flex-col items-center">
                   <Building2 className="h-7 w-7 text-white/20 mb-8" />

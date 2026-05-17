@@ -4,6 +4,7 @@ import { Building2, Target, Heart, Shield, TrendingUp, ArrowUpRight } from "luci
 import sectionCommunity from "@/assets/section-community.jpg";
 import sectionLiving from "@/assets/section-living.jpg";
 import featureInterior from "@/assets/feature-interior.jpg";
+import { useSiteImages } from "@/lib/siteSettings";
 
 const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];
 const smoothEase = [0.25, 0.4, 0.25, 1] as [number, number, number, number];
@@ -56,13 +57,14 @@ export default function SobrePage() {
   const heroOpacity = useTransform(heroScroll, [0, 0.5], [1, 0]);
   const heroScale = useTransform(heroScroll, [0, 0.5], [1, 1.08]);
   const heroTextY = useTransform(heroScroll, [0, 0.5], [0, 100]);
+  const { img } = useSiteImages();
 
   return (
     <div className="bg-[#050505]">
       {/* ─── Hero ─── */}
       <section ref={heroRef} className="relative h-screen flex items-end overflow-hidden">
         <motion.div className="absolute inset-0" style={{ scale: heroScale }}>
-          <img src={sectionCommunity} alt="HR Imóveis — Sobre nós" className="w-full h-full object-cover" />
+          <img src={img("section_community", sectionCommunity)} alt="HR Imóveis — Sobre nós" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/50 to-transparent" />
         </motion.div>
 
@@ -138,7 +140,7 @@ export default function SobrePage() {
         <div className="max-w-7xl mx-auto px-6 relative z-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <ParallaxImage
-              src={sectionCommunity}
+              src={img("section_community", sectionCommunity)}
               alt="HR Imóveis"
               className="rounded-2xl aspect-[3/4] lg:aspect-[4/5]"
             />
@@ -199,7 +201,7 @@ export default function SobrePage() {
         <div className="relative z-20">
           <div className="relative h-[50vh] overflow-hidden rounded-none">
             <ParallaxImage
-              src={featureInterior}
+              src={img("feature_interior", featureInterior)}
               alt="Interior de alto padrão"
               className="absolute inset-0 h-full"
             />
@@ -334,7 +336,7 @@ export default function SobrePage() {
               </motion.p>
             </div>
             <ParallaxImage
-              src={sectionLiving}
+              src={img("section_living", sectionLiving)}
               alt="Missão HR Imóveis"
               className="rounded-2xl aspect-[3/4] lg:aspect-[4/5]"
             />

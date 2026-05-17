@@ -1,39 +1,34 @@
-## Objetivo
-Adicionar à página **Relatórios** (`/app/relatorios`) uma seção "Funil de Contas" que mostra, em números e gráfico, como anda a carteira de cada lista (**Carteira** e **Marketing**), com quantidade de contas em cada etapa do kanban e taxas de conversão entre etapas.
+## Painel "Site" em Configurações para gerenciar imagens
 
-## 1. Novo componente `src/components/reports/FunilContasReport.tsx`
-- Carrega `contas` (`id, etapa_funil, tags, responsavel_id, valor_negocio?`) — uma única query.
-- Carrega `profiles` para o filtro "Corretor" (opcional, "Todos").
-- Estado local:
-  - `lista`: `"carteira" | "marketing" | "todas"` (Tabs no topo).
-  - `corretor`: `user_id | "todos"` (Select).
-- Filtra contas pela tag selecionada (mesma lógica de `Accounts.tsx`) e pelo responsável.
+Adicionar uma aba **Site** dentro de `/app/configuracoes` onde você controla as imagens que aparecem no site público (`/site`), sem depender de mim para trocar nada.
 
-### Métricas calculadas
-Para a lista filtrada, usando a ordem de `ETAPAS` de `src/lib/contasFunil.ts`:
-- **Cards de topo** (4):
-  - Total de contas
-  - Ativos no funil (`total − fechado − perdido`)
-  - Fechados
-  - Perdidos
-  - Taxa de conversão geral: `fechados / (fechados + perdidos)`
-- **Tabela / lista por etapa**: para cada etapa em ordem, mostrar nome, quantidade, % do total, e — para etapas de funil ativo — taxa de avanço para a próxima etapa "fluxo" (`contas naquela etapa ou posteriores no fluxo / contas na etapa atual ou posteriores`). Fluxo considerado: `a_contatar → contatado → contato_estabelecido → reuniao → visita → proposta → fechado`. `sem_retorno` e `perdido` são exibidos à parte.
+### O que você vai poder fazer
 
-### Gráficos (recharts)
-- **Funil/Barra horizontal** (`BarChart` com `layout="vertical"`): uma barra por etapa do fluxo, com valor de quantidade; cores semânticas (usar cores já mapeadas em `ETAPAS`, mas convertidas para hsl tokens do tema — para evitar atrito uso `hsl(var(--primary))` com opacidade decrescente, e cores específicas para `fechado` (success) e `perdido` (destructive)).
-- **PieChart** mostrando proporção: Em andamento / Fechado / Perdido / Sem retorno.
+1. **Fundo do Hero (capa)** — uma imagem por página: Início, Imóveis e Contato.
+2. **Fundos das seções internas** — as imagens "living", "community" e "interior" usadas em Início e Sobre.
+3. **Imóveis em destaque na home** — escolher até 3 imóveis já cadastrados em `/app/imoveis` para aparecer nos cards da home (puxando o título, cidade, valor e a 1ª foto do próprio imóvel).
 
-### Comparação Carteira × Marketing
-Quando a aba selecionada for "Todas", exibir adicionalmente uma seção com **BarChart agrupado** comparando contagem por etapa entre Carteira e Marketing lado a lado.
+Para cada item: pré-visualização atual, botão **Trocar imagem** (upload direto) e **Restaurar padrão**.
 
-## 2. Integração em `src/pages/Reports.tsx`
-- Renderizar `<FunilContasReport />` logo abaixo do cabeçalho, antes dos cartões de "Exportar leads / Performance".
-- Mantém as restrições de role existentes (admin/gestor).
+### Como vai funcionar por baixo
 
-## 3. Sem mudanças de schema
-Tudo derivado das tabelas atuais (`contas`, `profiles`). Sem migrações.
+- Nova tabela `site_settings` (key/value) guardando as URLs das imagens e a lista de IDs de imóveis em destaque.
+- Novo bucket público `site-assets` no storage para receber os uploads.
+- Páginas `HomePage`, `ImoveisPage`, `SobrePage`, `ContatoPage` deixam de importar JPGs fixos e passam a buscar de `site_settings`, com **fallback** nas imagens atuais caso nada esteja configurado (o site nunca quebra).
+- Leitura pública (qualquer visitante do site enxerga), escrita apenas para admin/gestor (RLS).
 
-## Observações de UX
-- Toggle em Tabs no topo (Carteira | Marketing | Todas), com a mesma estética usada em `Accounts.tsx`.
-- Filtro de corretor à direita.
-- Todos os números clicáveis levam ao kanban filtrado (link `/app/contas?lista={lista}` — sem filtro por etapa por enquanto, para evitar alterar a página de contas).
+### Estrutura
+
+```text
+/app/configuracoes
+   └── aba "Site"
+        ├── Hero — Início / Imóveis / Contato     [upload | restaurar]
+        ├── Seções — Living / Community / Interior [upload | restaurar]
+        └── Imóveis em destaque                    [selector dos imóveis do CRM]
+```
+
+### Fora do escopo (posso fazer depois se quiser)
+
+- Trocar a logo do topo/rodapé.
+- Editar textos das páginas do site.
+- Trocar as imagens estáticas da página `/site/imoveis` (a listagem completa) — hoje ela usa fotos fixas; o ideal é, num próximo passo, ela também puxar de `/app/imoveis`.
