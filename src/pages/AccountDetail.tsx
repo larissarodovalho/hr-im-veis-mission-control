@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { ArrowLeft, Pencil, Building2, Phone, Save, FileSignature, Plus, Trash2, MapPin, Target } from "lucide-react";
 import EntityDocumentsTab from "@/components/EntityDocumentsTab";
 import ContaInteracoesTimeline from "@/components/contas/ContaInteracoesTimeline";
+import ContaAgendaQuickAdd from "@/components/contas/ContaAgendaQuickAdd";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -205,6 +206,8 @@ export default function AccountDetail() {
           )}
         </Card>
       </div>
+
+      <ContaAgendaQuickAdd contaId={acc.id} responsavelId={acc.responsavel_id} onCreated={load} />
 
       <div>
         <div className="flex items-center justify-between mb-3">

@@ -90,15 +90,15 @@ export default function Schedule() {
       { data: vis, error: vErr },
     ] = await Promise.all([
       supabase.from("reunioes")
-        .select("id, agendada_para, status, local, link, notas, tipo, duracao_min, titulo, criado_por_ia, lead_id")
+        .select("id, agendada_para, status, local, link, notas, tipo, duracao_min, titulo, criado_por_ia, lead_id, conta_id")
         .order("agendada_para"),
       supabase.from("agenda_bloqueios" as any).select("*").order("inicio"),
       supabase.from("leads").select("id, nome").order("nome"),
       supabase.from("ligacoes")
-        .select("id, data, duracao_seg, resultado, notas, lead_id")
+        .select("id, data, duracao_seg, resultado, notas, lead_id, conta_id")
         .order("data"),
       supabase.from("visitas")
-        .select("id, data_visita, status, observacoes, lead_id, imovel_id")
+        .select("id, data_visita, status, observacoes, lead_id, imovel_id, conta_id")
         .order("data_visita"),
     ]);
     if (rErr) console.error("[Schedule] reunioes", rErr);
@@ -112,12 +112,24 @@ export default function Schedule() {
         ...((vis ?? []) as any[]).map((v) => v.lead_id).filter(Boolean),
       ]),
     ];
+    const contaIds = [
+      ...new Set([
+        ...((r ?? []) as any[]).map((m) => m.conta_id).filter(Boolean),
+        ...((ligs ?? []) as any[]).map((c) => c.conta_id).filter(Boolean),
+        ...((vis ?? []) as any[]).map((v) => v.conta_id).filter(Boolean),
+      ]),
+    ];
     const imovelIds = [...new Set(((vis ?? []) as any[]).map((v) => v.imovel_id).filter(Boolean))];
 
     let leadsById = new Map<string, any>();
     if (leadIds.length) {
       const { data: ls } = await supabase.from("leads").select("id, nome").in("id", leadIds);
       leadsById = new Map((ls ?? []).map((x: any) => [x.id, x]));
+    }
+    let contasById = new Map<string, any>();
+    if (contaIds.length) {
+      const { data: cs } = await supabase.from("contas").select("id, nome").in("id", contaIds);
+      contasById = new Map((cs ?? []).map((x: any) => [x.id, x]));
     }
     let imoveisById = new Map<string, any>();
     if (imovelIds.length) {
@@ -129,12 +141,13 @@ export default function Schedule() {
       const start = new Date(m.agendada_para);
       const end = new Date(start.getTime() + (m.duracao_min ?? 60) * 60000);
       const leadNome = m.lead_id ? leadsById.get(m.lead_id)?.nome : null;
+      const contaNome = m.conta_id ? contasById.get(m.conta_id)?.nome : null;
       return {
         id: m.id,
         date: start,
         end,
         tipo: (m.tipo ?? "presencial") as Compromisso["tipo"],
-        titulo: m.titulo || leadNome || "Compromisso",
+        titulo: m.titulo || leadNome || contaNome || "Compromisso",
         status: m.status,
         local: m.local,
         link: m.link,
@@ -153,12 +166,14 @@ export default function Schedule() {
         const start = new Date(c.data);
         const dur = c.duracao_seg ? Math.round(c.duracao_seg / 60) : 30;
         const leadNome = c.lead_id ? leadsById.get(c.lead_id)?.nome : null;
+        const contaNome = c.conta_id ? contasById.get(c.conta_id)?.nome : null;
+        const alvo = leadNome || contaNome;
         return {
           id: `lig:${c.id}`,
           date: start,
           end: new Date(start.getTime() + dur * 60000),
           tipo: "ligacao" as const,
-          titulo: leadNome ? `Ligação com ${leadNome}` : "Ligação agendada",
+          titulo: alvo ? `Ligação com ${alvo}` : "Ligação agendada",
           status: c.resultado || "agendada",
           notas: c.notas,
           lead_id: c.lead_id,
@@ -169,10 +184,12 @@ export default function Schedule() {
     const visitasAgendadas: Compromisso[] = ((vis ?? []) as any[]).map((v) => {
       const start = new Date(v.data_visita);
       const leadNome = v.lead_id ? leadsById.get(v.lead_id)?.nome : null;
+      const contaNome = v.conta_id ? contasById.get(v.conta_id)?.nome : null;
       const imovel = v.imovel_id ? imoveisById.get(v.imovel_id) : null;
+      const alvo = leadNome || contaNome;
       const titulo = imovel?.titulo
-        ? `Visita: ${imovel.titulo}${leadNome ? ` (${leadNome})` : ""}`
-        : leadNome ? `Visita com ${leadNome}` : "Visita";
+        ? `Visita: ${imovel.titulo}${alvo ? ` (${alvo})` : ""}`
+        : alvo ? `Visita com ${alvo}` : "Visita";
       return {
         id: `vis:${v.id}`,
         date: start,

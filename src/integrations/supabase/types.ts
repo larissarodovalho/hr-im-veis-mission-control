@@ -1533,6 +1533,7 @@ export type Database = {
       }
       visitas: {
         Row: {
+          conta_id: string | null
           corretor_id: string | null
           created_at: string
           created_by: string | null
@@ -1545,6 +1546,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          conta_id?: string | null
           corretor_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1557,6 +1559,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          conta_id?: string | null
           corretor_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1569,6 +1572,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "visitas_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "visitas_imovel_id_fkey"
             columns: ["imovel_id"]
