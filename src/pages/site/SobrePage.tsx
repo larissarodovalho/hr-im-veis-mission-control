@@ -6,44 +6,10 @@ import sectionLiving from "@/assets/section-living.jpg";
 import featureInterior from "@/assets/feature-interior.jpg";
 import { useSiteImages } from "@/lib/siteSettings";
 import { createWhatsAppUrl, openWhatsApp } from "@/lib/whatsapp";
+import { ScrollSection, ParallaxImage } from "@/components/site/MotionSections";
 
 const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];
 const smoothEase = [0.25, 0.4, 0.25, 1] as [number, number, number, number];
-
-function ScrollSection({ children, className = "", index = 0 }: { children: React.ReactNode; className?: string; index?: number }) {
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-
-  const y = useTransform(scrollYProgress, [0, 0.15, 0.8, 1], [60, 0, 0, -30]);
-  const opacity = useTransform(scrollYProgress, [0, 0.1, 0.85, 1], [0, 1, 1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.15, 0.8, 1], [0.95, 1, 1, 0.97]);
-  const rotateX = useTransform(scrollYProgress, [0, 0.15, 0.8, 1], [3, 0, 0, -2]);
-  const filter = useTransform(scrollYProgress, [0, 0.1, 0.85, 1], ["blur(4px)", "blur(0px)", "blur(0px)", "blur(2px)"]);
-
-  return (
-    <motion.section
-      ref={ref}
-      style={{ y, opacity, scale, rotateX, filter, perspective: 1200, transformStyle: "preserve-3d", zIndex: index }}
-      className={`relative ${className}`}
-    >
-      <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-[#050505] to-transparent z-10 pointer-events-none" />
-      {children}
-      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#050505] to-transparent z-10 pointer-events-none" />
-    </motion.section>
-  );
-}
-
-function ParallaxImage({ src, alt, className = "" }: { src: string; alt: string; className?: string }) {
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const y = useTransform(scrollYProgress, [0, 1], ["-8%", "8%"]);
-
-  return (
-    <div ref={ref} className={`overflow-hidden ${className}`}>
-      <motion.img src={src} alt={alt} style={{ y }} className="w-full h-[120%] object-cover" loading="lazy" />
-    </div>
-  );
-}
 
 const valores = [
   { icon: Target, title: "Excelência", desc: "Atenção personalizada e soluções sob medida para cada cliente." },
@@ -63,7 +29,7 @@ export default function SobrePage() {
   return (
     <div className="bg-[#050505]">
       {/* ─── Hero ─── */}
-      <section ref={heroRef} className="relative h-screen flex items-end overflow-hidden">
+      <section ref={heroRef} className="relative h-screen min-h-[100svh] flex items-end overflow-hidden">
         <motion.div className="absolute inset-0" style={{ scale: heroScale }}>
           <img src={img("section_community", sectionCommunity)} alt="HR Imóveis — Sobre nós" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/50 to-transparent" />
@@ -137,7 +103,7 @@ export default function SobrePage() {
       </section>
 
       {/* ─── Nossa História ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={1}>
+      <ScrollSection className="py-10 sm:py-14 md:-mt-12" index={1}>
         <div className="max-w-7xl mx-auto px-6 relative z-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <ParallaxImage
@@ -198,7 +164,7 @@ export default function SobrePage() {
       </ScrollSection>
 
       {/* ─── Quote Divider ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={2}>
+      <ScrollSection className="py-10 sm:py-14 md:-mt-12" index={2}>
         <div className="relative z-20">
           <div className="relative h-[50vh] overflow-hidden rounded-none">
             <ParallaxImage
@@ -235,7 +201,7 @@ export default function SobrePage() {
       </ScrollSection>
 
       {/* ─── Valores ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={3}>
+      <ScrollSection className="py-10 sm:py-14 md:-mt-12" index={3}>
         <div className="max-w-6xl mx-auto px-6 relative z-20">
           <div className="text-center mb-14">
             <motion.div
@@ -292,7 +258,7 @@ export default function SobrePage() {
       </ScrollSection>
 
       {/* ─── Missão ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={4}>
+      <ScrollSection className="py-10 sm:py-14 md:-mt-12" index={4}>
         <div className="max-w-7xl mx-auto px-6 relative z-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -346,7 +312,7 @@ export default function SobrePage() {
       </ScrollSection>
 
       {/* ─── CTA Final ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={5}>
+      <ScrollSection className="py-10 sm:py-14 md:-mt-12" index={5}>
         <div className="max-w-7xl mx-auto px-6 relative z-20 text-center">
           <motion.div
             initial={{ opacity: 0, width: 0 }}

@@ -14,6 +14,7 @@ import property3 from "@/assets/property-3.jpg";
 import featureInterior from "@/assets/feature-interior.jpg";
 import { useSiteImages, fetchFeaturedImoveis } from "@/lib/siteSettings";
 import { createWhatsAppUrl, openWhatsApp } from "@/lib/whatsapp";
+import { ScrollSection, ParallaxImage } from "@/components/site/MotionSections";
 
 const propertyImages = [property1, property2, property3];
 
@@ -23,49 +24,6 @@ function formatPrice(valor: number) {
 
 const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];
 const smoothEase = [0.25, 0.4, 0.25, 1] as [number, number, number, number];
-
-function ScrollSection({ children, className = "", index = 0 }: { children: React.ReactNode; className?: string; index?: number }) {
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-
-  // Enter: slide up from below with scale + blur
-  const y = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [150, 0, 0, -80]);
-  const opacity = useTransform(scrollYProgress, [0, 0.18, 0.82, 1], [0, 1, 1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0.88, 1, 1, 0.94]);
-  const rotateX = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [6, 0, 0, -4]);
-  const filter = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], ["blur(8px)", "blur(0px)", "blur(0px)", "blur(5px)"]);
-
-  return (
-    <motion.section
-      ref={ref}
-      style={{
-        y, opacity, scale, rotateX, filter,
-        perspective: 1200,
-        transformStyle: "preserve-3d",
-        zIndex: index,
-      }}
-      className={`relative ${className}`}
-    >
-      {/* Top fade edge — blends into previous section */}
-      <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#050505] to-transparent z-10 pointer-events-none" />
-      {children}
-      {/* Bottom fade edge — blends into next section */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#050505] to-transparent z-10 pointer-events-none" />
-    </motion.section>
-  );
-}
-
-function ParallaxImage({ src, alt, className = "" }: { src: string; alt: string; className?: string }) {
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const y = useTransform(scrollYProgress, [0, 1], ["-8%", "8%"]);
-
-  return (
-    <div ref={ref} className={`overflow-hidden ${className}`}>
-      <motion.img src={src} alt={alt} style={{ y }} className="w-full h-[120%] object-cover" loading="lazy" />
-    </div>
-  );
-}
 
 export default function HomePage() {
   const heroRef = useRef(null);
@@ -107,7 +65,7 @@ export default function HomePage() {
   return (
     <div ref={pageRef} className="bg-[#050505]">
       {/* ─── Hero ─── */}
-      <section ref={heroRef} className="relative h-screen flex items-end overflow-hidden">
+      <section ref={heroRef} className="relative h-screen min-h-[100svh] flex items-end overflow-hidden">
         <motion.div className="absolute inset-0 bg-[#050505]" style={{ scale: heroScale }}>
           {imagesLoaded && (
             <img
@@ -171,7 +129,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1 }}
-            className="flex gap-4"
+            className="flex flex-wrap justify-center gap-3 sm:gap-4"
           >
             <Link
               to="/imoveis"
@@ -205,7 +163,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── Diferenciais ─── */}
-      <ScrollSection className="py-10 sm:py-14" index={2}>
+      <ScrollSection strong className="py-16 sm:py-14" index={2}>
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12">
             <motion.div
@@ -257,7 +215,7 @@ export default function HomePage() {
       </ScrollSection>
 
       {/* ─── Imóveis em Destaque ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={4}>
+      <ScrollSection strong className="py-16 sm:py-14 md:-mt-12" index={4}>
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-end justify-between mb-14">
             <div>
@@ -363,7 +321,7 @@ export default function HomePage() {
       </ScrollSection>
 
       {/* ─── Comprar ou Vender ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={5}>
+      <ScrollSection strong className="py-16 sm:py-14 md:-mt-12" index={5}>
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, width: 0 }}
@@ -494,7 +452,7 @@ function NewsletterSection() {
   };
 
   return (
-    <ScrollSection className="py-10 sm:py-14 -mt-12" index={6}>
+    <ScrollSection strong className="py-16 sm:py-14 md:-mt-12" index={6}>
       <div className="max-w-7xl mx-auto px-6 text-center">
         <motion.div
           initial={{ opacity: 0, width: 0 }}
