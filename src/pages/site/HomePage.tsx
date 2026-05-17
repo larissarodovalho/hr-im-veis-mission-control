@@ -163,7 +163,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── Diferenciais ─── */}
-      <ScrollSection className="py-10 sm:py-14" index={2}>
+      <ScrollSection strong className="py-16 sm:py-14" index={2}>
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12">
             <motion.div
@@ -215,7 +215,7 @@ export default function HomePage() {
       </ScrollSection>
 
       {/* ─── Imóveis em Destaque ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={4}>
+      <ScrollSection strong className="py-16 sm:py-14 md:-mt-12" index={4}>
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-end justify-between mb-14">
             <div>
@@ -321,7 +321,7 @@ export default function HomePage() {
       </ScrollSection>
 
       {/* ─── Comprar ou Vender ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={5}>
+      <ScrollSection strong className="py-16 sm:py-14 md:-mt-12" index={5}>
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, width: 0 }}
@@ -452,7 +452,7 @@ function NewsletterSection() {
   };
 
   return (
-    <ScrollSection className="py-10 sm:py-14 -mt-12" index={6}>
+    <ScrollSection strong className="py-16 sm:py-14 md:-mt-12" index={6}>
       <div className="max-w-7xl mx-auto px-6 text-center">
         <motion.div
           initial={{ opacity: 0, width: 0 }}
