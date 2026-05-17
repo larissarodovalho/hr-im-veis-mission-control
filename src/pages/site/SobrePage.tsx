@@ -201,7 +201,7 @@ export default function SobrePage() {
         <div className="relative z-20">
           <div className="relative h-[50vh] overflow-hidden rounded-none">
             <ParallaxImage
-              src={featureInterior}
+              src={img("feature_interior", featureInterior)}
               alt="Interior de alto padrão"
               className="absolute inset-0 h-full"
             />
