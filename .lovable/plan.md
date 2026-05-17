@@ -1,40 +1,32 @@
 ## Objetivo
-Quando o lead pedir contato imediato (via Sofia no WhatsApp ou chat do site), além do email que já é disparado para os admins, enviar também uma **mensagem de WhatsApp** para o Hans avisando que tem lead quente esperando.
+Quando um admin cadastrar um novo usuário em **Usuários**, o sistema envia automaticamente um e-mail para esse usuário com:
+- saudação personalizada (nome)
+- link de acesso ao CRM
+- e-mail de login + senha temporária
+- orientação para trocar a senha no primeiro acesso
 
-## Onde mexer
-Tudo no edge function **`supabase/functions/notify-immediate-contact/index.ts`** (único ponto chamado tanto pelo `whatsapp-webhook` quanto pelo `public-chat`). Sem mudanças no frontend.
+## Como funciona
 
-## Mudanças
+1. **Novo template transacional** `user-welcome` na infraestrutura de e-mails já existente do projeto (a mesma usada hoje para alertas de contato imediato — não precisa configurar Resend nem domínio novo).
+   - Assunto: "Seu acesso ao CRM HR Imóveis"
+   - Corpo com nome, e-mail, senha temporária em destaque, botão "Acessar CRM" e nota sobre alterar a senha após o primeiro login.
 
-1. **Buscar telefones dos admins** junto com os emails
-   - Hoje a função puxa `email, nome` de `profiles` dos `user_roles.role = 'admin'`.
-   - Passar a puxar também `telefone`.
-   - Fallback: se nenhum admin tiver telefone, usar número fixo do Hans (mesmo padrão do fallback do email `larissadefreitas@hotmail.com`). Vou precisar **perguntar para a Larissa qual número WhatsApp do Hans usar como fallback**.
+2. **Registrar** o template em `_shared/transactional-email-templates/registry.ts` para ficar disponível na função `send-transactional-email`.
 
-2. **Montar mensagem curta para WhatsApp**
-   ```
-   🔥 Lead quente pedindo contato AGORA
-   Nome: {leadName}
-   Telefone: {leadPhone}
-   Canal preferido: {contactKind} (videochamada / presencial / ligação / whatsapp)
-   Interesse: {interest}
-   Abrir lead: {leadUrl}
-   ```
+3. **Atualizar** `admin-create-user` (ação `create`): logo após criar o usuário com sucesso, dispara `send-transactional-email` com o template `user-welcome` para o e-mail do novo usuário, passando nome, e-mail, senha e URL do app.
+   - O envio é "best effort" — se falhar, o usuário ainda é criado e o admin recebe a senha na tela (igual hoje). Erro vai apenas para o log.
 
-3. **Disparar via `whatsapp-send`** (função interna já usada pela Sofia)
-   - Para cada admin com `telefone`, chamar `supabase.functions.invoke("whatsapp-send", { body: { phone, message } })`.
-   - Não bloquear a resposta — usar `Promise.allSettled` e logar erro se algum envio falhar.
-   - Manter idempotência simples: incluir `lead.id` no texto evita duplicação visual; não criar tabela nova.
-
-4. **Manter o envio de email** exatamente como está hoje (não mexer no template).
-
-5. **Retorno da função**
-   - Continuar respondendo `{ ok: true, sent: [...] }`, agora incluindo também `{ whatsapp: [...] }` com status de cada envio para fins de debug nos logs.
+4. **UI** em `UsuariosAdminPage.tsx`: após criar com sucesso, mostrar toast informando "Usuário criado. E-mail de boas-vindas enviado para {email}".
 
 ## Detalhes técnicos
-- Normalizar número antes de mandar pro `whatsapp-send` (mesmo padrão já usado em `lead-followup-ia`: só dígitos, prefixar `55` se faltar).
-- Não precisa migration, não precisa secret novo (já temos `EVOLUTION_*`).
-- Deploy: republicar apenas `notify-immediate-contact`.
 
-## Pergunta antes de implementar
-Qual número de WhatsApp do Hans devo usar como **fallback** caso nenhum admin tenha telefone cadastrado no perfil? (formato: `+55 11 9XXXX-XXXX`)
+- Arquivos criados/editados:
+  - `supabase/functions/_shared/transactional-email-templates/user-welcome.tsx` (novo)
+  - `supabase/functions/_shared/transactional-email-templates/registry.ts` (adicionar entrada)
+  - `supabase/functions/admin-create-user/index.ts` (chamar `send-transactional-email` via fetch interno após criar)
+  - `src/pages/UsuariosAdminPage.tsx` (texto do toast)
+- Deploy: `admin-create-user` e `send-transactional-email`.
+- Nenhuma migração de banco necessária — infra de e-mail e domínio já estão configurados.
+
+## Fora do escopo
+- Não altera fluxo de redefinição de senha (botão "redefinir senha" continua só mostrando a nova senha ao admin, como hoje). Posso depois adicionar envio por e-mail também se quiser.

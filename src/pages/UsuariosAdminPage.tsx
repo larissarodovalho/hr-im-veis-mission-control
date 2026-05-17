@@ -102,7 +102,7 @@ export default function UsuariosAdminPage() {
     setBusy(true);
     try {
       await callAdmin({ action: "create", ...form });
-      toast.success(`Usuário ${form.email} criado!`);
+      toast.success(`Usuário criado! E-mail de boas-vindas enviado para ${form.email}`);
       navigator.clipboard?.writeText(`${form.email} / ${form.password}`).catch(() => {});
       setOpenCreate(false);
       setForm({ nome: "", email: "", telefone: "", cargo: "", role: "corretor", password: genPassword() });
