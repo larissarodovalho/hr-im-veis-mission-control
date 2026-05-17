@@ -561,7 +561,7 @@ export default function ImoveisPage() {
             </motion.p>
 
             <motion.a
-              href="https://wa.me/5566999955881?text=Olá! Gostaria de ajuda para encontrar um imóvel."
+              href={`https://wa.me/5566999955881?text=${encodeURIComponent("Olá! Gostaria de ajuda para encontrar um imóvel.")}`}
               target="_blank"
               rel="noopener noreferrer"
               initial={{ opacity: 0, y: 20 }}
