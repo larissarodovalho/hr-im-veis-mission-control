@@ -20,6 +20,7 @@ import { SearchableSelect } from "@/components/SearchableSelect";
 
 export default function Visits() {
   const { user } = useAuth();
+  const { isAdmin } = useRole();
   const [items, setItems] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
   const [contas, setContas] = useState<any[]>([]);
