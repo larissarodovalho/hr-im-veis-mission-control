@@ -681,12 +681,17 @@ Deno.serve(async (req) => {
 
     let reply = sanitizeReply(result.text || "");
 
-    if (!reply) {
-      if (!hasName) {
+    if (!reply && !bookingKind && !immediateKind) {
+      // Rede de segurança: se a última mensagem da Sofia já foi a saudação do Passo 1,
+      // não repete — pede pra reconfirmar o nome de outra forma.
+      const lastWasGreeting = /sou a sofia.*hr im[óo]veis.*nome e sobrenome/i.test(lastAssistantMsg);
+      if (!hasName && lastWasGreeting) {
+        reply = "Desculpa, não entendi direito. Pode me confirmar seu nome completo (nome e sobrenome)?";
+      } else if (!hasName) {
         reply = "Olá! Sou a Sofia, da HR Imóveis. É um prazer falar com você! Para que eu possa te atender da melhor forma, pode me dizer seu nome e sobrenome?";
       } else if (!hasInterest) {
-        reply = `Prazer, ${firstName}! Esse mesmo número de WhatsApp é o melhor para o corretor te chamar, ou prefere outro?`;
-      } else if (!immediateKind && !bookingKind && !alreadyNotified && !alreadyBooked) {
+        reply = `Prazer, ${firstName}! E me diz: você quer comprar, vender, alugar, incorporar, ou está em busca de algum investimento de ocasião?`;
+      } else if (!alreadyNotified && !alreadyBooked) {
         reply = `Perfeito, ${firstName}! Posso te conectar com nosso corretor especialista. Você prefere agendar uma conversa (videochamada, presencial, ligação ou WhatsApp) ou falar agora mesmo com ele?`;
       } else {
         reply = `Combinado, ${firstName}! Em que mais posso te ajudar?`;
