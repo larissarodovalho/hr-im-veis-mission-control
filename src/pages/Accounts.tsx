@@ -270,7 +270,7 @@ export default function Accounts() {
               <Building2 className="h-6 w-6 md:h-7 md:w-7 text-primary" /> Contas
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {filtered.length} de {accounts.length} · Negócios: <strong>{fmt(totalValue || null)}</strong> · Comissões: <strong>{fmt(totalCommission || null)}</strong>
+              {filtered.length} de {accounts.length} contas
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
