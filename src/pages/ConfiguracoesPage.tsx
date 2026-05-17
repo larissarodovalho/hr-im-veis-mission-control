@@ -13,8 +13,9 @@ import { Separator } from "@/components/ui/separator";
 import {
   ShieldAlert, Settings, Building2, MessageCircle, Bell, Database, ExternalLink,
   Loader2, Send, Copy,
-  Webhook, Bot, Globe, Check, ShieldCheck, History, Trash2, HardDrive,
+  Webhook, Bot, Globe, Check, ShieldCheck, History, Trash2, HardDrive, Image as ImageIcon,
 } from "lucide-react";
+import SiteSettingsTab from "@/components/configuracoes/SiteSettingsTab";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
