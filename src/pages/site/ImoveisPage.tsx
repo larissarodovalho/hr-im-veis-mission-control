@@ -1,7 +1,35 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { MapPin, BedDouble, Bath, Car, Search, X, ArrowUpRight, Maximize2, Eye } from "lucide-react";
-const IMOVEIS_SITE: any[] = [];
+import { supabase } from "@/integrations/supabase/client";
+
+function mapImovelFromDb(row: any) {
+  const areaNum = row.area_util ?? row.area_total;
+  const area = areaNum != null ? `${Number(areaNum).toLocaleString("pt-BR")} m²` : "—";
+  return {
+    id: row.id,
+    codigo: `HR-${String(row.id).slice(0, 6).toUpperCase()}`,
+    nome: row.titulo,
+    tipo: row.tipo,
+    status: row.status,
+    valor: Number(row.valor ?? 0),
+    quartos: row.quartos ?? 0,
+    banheiros: row.banheiros ?? 0,
+    suites: row.suites ?? 0,
+    vagas: row.vagas ?? 0,
+    area,
+    descricao: row.descricao ?? "",
+    caracteristicas: row.caracteristicas ?? [],
+    fotos: row.fotos ?? [],
+    imagem: row.fotos?.[0] ?? null,
+    endereco: {
+      bairro: row.bairro ?? "",
+      condominio: row.complemento ?? "",
+      cidade: row.cidade ?? "",
+      estado: row.estado ?? "",
+    },
+  };
+}
 
 import casaLuxo1 from "@/assets/imoveis/casa-luxo-1.jpg";
 import heroImoveis from "@/assets/imoveis/hero-imoveis.jpg";
@@ -113,6 +141,16 @@ export default function ImoveisPage() {
   const [tipoSelecionado, setTipoSelecionado] = useState<string>("Todos");
   const [faixaSelecionada, setFaixaSelecionada] = useState<string>("Todos");
   const [valorDropdownOpen, setValorDropdownOpen] = useState(false);
+  const [IMOVEIS_SITE, setImoveisSite] = useState<any[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("imoveis")
+      .select("*")
+      .eq("status", "Disponível")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setImoveisSite((data ?? []).map(mapImovelFromDb)));
+  }, []);
 
   const FAIXAS = [
     { label: "Todos", min: 0, max: Infinity },
