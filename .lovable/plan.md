@@ -1,33 +1,45 @@
-# Lista de Contas com colunas separadas
+## Problema
 
-## Objetivo
-Na tela `/app/contas`, exibir cada conta em **colunas independentes**: Nome, Telefone, E-mail, CPF/CNPJ e Proprietário (responsável). Hoje a tabela mistura tudo numa coluna "Cliente" e mostra Interesse/Operação/Valor — vou substituir por essas 5 colunas.
+A página `/app/contas` mostra **1.000 contas**, mas o banco tem **1.355**. Os 355 ausentes não foram perdidos — o Supabase aplica um limite padrão de 1.000 linhas por requisição e a query atual não pagina.
 
-## Mudanças
+Arquivo: `src/pages/Accounts.tsx`, linha 143:
+```ts
+supabase.from("contas").select("...").order("created_at", { ascending: false })
+```
 
-### `src/pages/Accounts.tsx`
-1. Adicionar `documento` e `responsavel_id` ao `select` da query de contas e ao tipo `Account`.
-2. Buscar em paralelo os perfis (`profiles: user_id, nome`) e montar mapa `user_id → nome` para exibir o proprietário.
-3. **Tabela desktop** — substituir cabeçalhos atuais por:
-   - Nome (com badge "Parceiro" se aplicável, link para detalhe)
-   - Telefone (formatado, `—` quando vazio)
-   - E-mail (`—` quando vazio)
-   - CPF/CNPJ (formatado conforme `tipo` PF/PJ, `—` quando vazio)
-   - Proprietário (nome do perfil, `—` quando não atribuído)
-   - Status (mantém badge ativo/inativo, mais compacto)
-   - Ações (abrir + excluir, inalterado)
-   
-   Remover colunas: Interesse, Operação/Aptidão, Propriedades, Valor total, Comissão.
-4. **Card mobile** — reorganizar para mostrar as mesmas 5 informações em linhas rotuladas (Telefone, E-mail, CPF/CNPJ, Proprietário), removendo blocos de Propriedades/Valor/Comissão.
-5. Ajustar `buildExportRows` (Excel/CSV) para refletir as mesmas colunas: Nome, Telefone, E-mail, CPF/CNPJ, Proprietário, Status, Criado em.
-6. Atualizar o resumo no header: remover "Negócios"/"Comissões" (não há mais essas colunas visíveis) e manter só `X de Y contas`.
+## Solução
 
-### Sem mudanças
-- Kanban (`ContasKanban`) permanece como está.
-- Detalhe da conta (`/app/contas/:id`) permanece como está.
-- Schema do banco — `documento` e `responsavel_id` já existem.
+Buscar as contas em páginas de 1.000 linhas usando `.range(from, to)` até esgotar os resultados, e concatenar antes de seguir o fluxo atual de `load()`.
 
-## Notas técnicas
-- Formatação de CPF (`000.000.000-00`) e CNPJ (`00.000.000/0000-00`) feita no front por helper local.
-- Como `contas.responsavel_id` não tem FK declarada para `profiles`, faço a query separada e junto no cliente (consistente com o resto do app).
-- RLS de `profiles` permite a admin/gestor ver todos; corretor só vê o próprio. Para corretor o nome de outros responsáveis vai aparecer como `—` (aceitável, pois ele só enxerga as próprias contas mesmo).
+### Mudança em `src/pages/Accounts.tsx`
+
+Substituir a chamada única dentro do `Promise.all` por um helper:
+
+```ts
+async function fetchAllContas() {
+  const PAGE = 1000;
+  let from = 0;
+  const all: any[] = [];
+  while (true) {
+    const { data, error } = await supabase
+      .from("contas")
+      .select("id, nome, email, telefone, documento, tipo, responsavel_id, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil")
+      .order("created_at", { ascending: false })
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    if (!data?.length) break;
+    all.push(...data);
+    if (data.length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
+}
+```
+
+E usar `fetchAllContas()` no lugar da query direta no `Promise.all`. O restante do `load()` (profiles, mapeamento, contagem do header) continua igual e passará a refletir os 1.355 registros automaticamente.
+
+### Notas
+
+- RLS permanece respeitada (admin/gestor vê tudo; corretor vê só as suas — para esses, o total real já é menor que 1.000 e nada muda).
+- Sem alterações de schema, RLS ou outras telas.
+- Kanban de contas (`ContasKanban`) deve ser revisado em seguida se também listar contas — fora do escopo desta correção, mas posso incluir se quiser.
