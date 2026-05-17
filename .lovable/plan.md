@@ -1,53 +1,25 @@
 ## Objetivo
 
-Restringir **todas as exclusões** do sistema apenas ao papel `admin`. Hoje o `gestor` também consegue excluir em quase todas as tabelas — isso será removido.
+Permitir que o **admin** exclua definitivamente documentos de assinatura quando estiverem em estado final (cancelado, expirado, recusado). Hoje só dá pra cancelar — não há como remover da lista.
 
-Corretor e gestor continuam podendo criar e editar normalmente; apenas a ação de excluir (DELETE) passa a ser exclusiva do admin.
+## Mudanças
 
-## Mudanças no banco (RLS)
+### 1. `src/pages/DocumentDetail.tsx`
+- Adicionar botão **"Excluir definitivamente"** (variant destructive, ícone Trash2) no header da página.
+- Visível **apenas para admin** (`useRole().isAdmin`) e somente quando `doc.status` for `canceled`, `expired` ou `refused`.
+- AlertDialog de confirmação ("Esta ação é irreversível...").
+- Ação: deletar `signed_documents` pelo id (cascata já remove signers/events via RLS admin-only que já existe). Após sucesso, `toast.success` + `navigate("/crm/documentos")`.
 
-Substituir as policies de DELETE nas tabelas abaixo, trocando `has_role(uid,'admin') OR has_role(uid,'gestor')` (e variações com autor/owner) por **apenas** `has_role(auth.uid(), 'admin')`:
+### 2. `src/pages/Documents.tsx`
+- Adicionar botão de excluir (ícone Trash2) no canto do card, visível só para admin e só quando status for final (`canceled`/`expired`/`refused`).
+- `stopPropagation` no clique pra não abrir o detalhe.
+- AlertDialog de confirmação + delete + `load()` pra atualizar a lista.
 
-- `agenda_bloqueios`
-- `agentes`
-- `campanhas_metrics_daily`
-- `campanhas_trafego`
-- `conta_propriedades`
-- `contas`
-- `contatos`
-- `conteudo_posts`
-- `document_events`, `document_signers`, `signed_documents` (hoje usam `is_admin()` que inclui gestor — trocar para `has_role(uid,'admin')`)
-- `imoveis`
-- `interacoes`
-- `leads`
-- `ligacoes`
-- `notas`
-- `propostas`
-- `reunioes`
-
-A função `public.is_admin()` será mantida intacta (é usada em SELECT/UPDATE de várias policies; mexer nela teria efeito colateral). As policies de DELETE deixam de chamá-la e passam a usar `has_role` diretamente.
-
-Tabelas que já são admin-only ou irrelevantes (`activity_log` sem DELETE, `email_*` só service_role, `profiles`/`lead_historico`/`newsletter_subscribers` sem DELETE) ficam como estão.
-
-## Mudanças no frontend
-
-Esconder/desabilitar botões de excluir para quem não é admin, evitando que o usuário clique e tome erro de RLS:
-
-- `UsuariosAdminPage` — já é admin-only (página inteira), sem mudança.
-- Telas/componentes que oferecem exclusão e hoje aparecem para gestor: ocultar o botão quando `!isAdmin`. Lista preliminar a confirmar durante a implementação:
-  - `Leads` / `LeadDetail`
-  - `Accounts` / `AccountDetail` (incluindo `ContaInteracoesTimeline`, `ContaAgendaQuickAdd`)
-  - `Imoveis`
-  - `Documents` / `DocumentDetail`
-  - `Calls`, `Meetings`, `Visits`, `Schedule`, `AgendarPage`
-  - `Conteudo`, `TrafegoPago`, `RedesSociais`, `Marketing`
-  - `Newsletter`
-  - Componentes de timeline/notas
-
-Padrão: `{isAdmin && <Button …>Excluir</Button>}` usando `useAuth()` / `useRole()`.
+### 3. Banco
+- Nenhuma mudança. A policy `docs delete admin only` já existe em `signed_documents`, `document_signers` e `document_events`.
+- Verificar se há FK com `ON DELETE CASCADE` entre `document_signers/events` → `signed_documents`. Se não houver, fazer o delete em cascata manual no frontend (signers → events → document) ou adicionar a FK via migração. Confirmar durante a implementação.
 
 ## Fora de escopo
 
-- Não cria novos papéis nem altera o enum `app_role`.
-- Não muda lógica de SELECT/UPDATE: gestor continua vendo tudo e editando.
-- Não toca em edge functions (admin-create-user já valida admin internamente).
+- Não permite excluir documentos ativos (status `sent`, `partially_signed`, `signed`) — pra esses continua só a opção de cancelar.
+- Gestor/corretor continuam sem poder excluir.
