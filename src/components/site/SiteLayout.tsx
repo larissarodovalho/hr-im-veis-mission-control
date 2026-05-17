@@ -3,6 +3,7 @@ import { Phone, Mail, Instagram, Facebook, Menu, X, MessageCircle } from "lucide
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import hrLogo from "@/assets/logo-hr-branco.png";
+import { createWhatsAppUrl, openWhatsApp } from "@/lib/whatsapp";
 
 const navLinks = [
   { label: "Início", to: "/site" },
@@ -105,7 +106,8 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
 
       {/* Floating WhatsApp button */}
       <a
-        href={`https://wa.me/5566999955881?text=${encodeURIComponent("Olá! Gostaria de mais informações.")}`}
+        href={createWhatsAppUrl("Olá! Gostaria de mais informações.")}
+        onClick={(event) => openWhatsApp(event, "Olá! Gostaria de mais informações.")}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Falar no WhatsApp"
