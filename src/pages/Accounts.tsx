@@ -107,7 +107,7 @@ const fmt = (v: number | null) =>
 
 export default function Accounts() {
   const { isAdmin, isGestor } = useRole();
-  const canDelete = isAdmin || isGestor;
+  const canDelete = isAdmin;
   const [searchParams, setSearchParams] = useSearchParams();
   const listaParam = searchParams.get("lista");
   const lista = (listaParam === "marketing" ? "marketing" : listaParam === "carteira" ? "carteira" : "todos") as "todos" | "carteira" | "marketing";
