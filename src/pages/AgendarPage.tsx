@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import hrLogo from "@/assets/logo-hr-branco.png";
 
-type Kind = "videochamada" | "presencial" | "ligacao";
+type Kind = "videochamada" | "presencial" | "ligacao" | "whatsapp";
 
 interface InfoResponse {
   nome?: string;
@@ -25,6 +25,7 @@ const kindMeta: Record<Kind, { label: string; icon: typeof Phone }> = {
   videochamada: { label: "Videochamada", icon: Video },
   presencial: { label: "Reunião presencial", icon: Users },
   ligacao: { label: "Ligação", icon: Phone },
+  whatsapp: { label: "WhatsApp", icon: Phone },
 };
 
 function fmtDay(iso: string) {
@@ -253,7 +254,7 @@ export default function AgendarPage() {
 
   const kind = (selectedKind || info?.kind) as Kind | undefined;
   const Icon = kind ? kindMeta[kind].icon : Phone;
-  const kindOptions: Kind[] = ["presencial", "videochamada", "ligacao"];
+  const kindOptions: Kind[] = ["presencial", "videochamada", "ligacao", "whatsapp"];
 
   return (
     <Wrapper>
