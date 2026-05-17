@@ -3,6 +3,7 @@ import { useRef } from "react";
 import { MapPin, Phone, Mail, Clock, ArrowUpRight } from "lucide-react";
 import heroBg from "@/assets/hero-dark.jpg";
 import sectionLiving from "@/assets/section-living.jpg";
+import { useSiteImages } from "@/lib/siteSettings";
 
 function ScrollSection({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   const ref = useRef(null);
