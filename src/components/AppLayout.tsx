@@ -16,6 +16,7 @@ import {
   Building2,
   Home,
   FileSignature,
+  Mail,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
@@ -41,6 +42,7 @@ const baseNav: NavItem[] = [
 ];
 const adminNav: NavItem[] = [
   { to: "/crm/relatorios", icon: BarChart3, label: "Relatórios" },
+  { to: "/crm/newsletter", icon: Mail, label: "Newsletter" },
   { to: "/crm/usuarios", icon: UserCog, label: "Usuários" },
   { to: "/crm/configuracoes", icon: Settings, label: "Configurações" },
 ];
