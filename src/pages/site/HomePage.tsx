@@ -449,7 +449,7 @@ export default function HomePage() {
               transition={{ duration: 1.2, delay: 0.15, ease }}
             >
               <div className="relative bg-[#050505] overflow-hidden h-full group">
-                <img src={featureInterior} alt="Vender imóvel" className="absolute inset-0 w-full h-full object-cover opacity-15 group-hover:opacity-25 transition-opacity duration-1000" loading="lazy" />
+                <img src={img("feature_interior", featureInterior)} alt="Vender imóvel" className="absolute inset-0 w-full h-full object-cover opacity-15 group-hover:opacity-25 transition-opacity duration-1000" loading="lazy" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/85 to-[#050505]/60" />
                 <div className="relative p-12 sm:p-20 text-center flex flex-col items-center">
                   <Building2 className="h-7 w-7 text-white/20 mb-8" />
