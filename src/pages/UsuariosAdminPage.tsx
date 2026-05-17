@@ -263,6 +263,9 @@ export default function UsuariosAdminPage() {
                       </Select>
                     </TableCell>
                     <TableCell className="text-right space-x-1">
+                      <Button size="icon" variant="ghost" onClick={() => openEdit(r)} title="Editar">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
                       <Button size="icon" variant="ghost" onClick={() => { setResetTarget(r); setNewPass(genPassword()); }} title="Redefinir senha">
                         <KeyRound className="h-4 w-4" />
                       </Button>
