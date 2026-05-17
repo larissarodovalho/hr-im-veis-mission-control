@@ -509,7 +509,41 @@ Deno.serve(async (req) => {
     );
     const lastUserMsg = (history ?? []).filter(h => h.direction === "inbound").slice(-1)[0]?.content || "";
     const hasInterest = !!((leadRow as any)?.observacoes && /Intenção:/i.test((leadRow as any).observacoes));
-    const canTriggerHandoff = hasName && hasInterest && !alreadyNotified && !alreadyBooked;
+
+    // Detecta se Sofia JÁ coletou nome + interesse na conversa (mesmo se não persistiu no lead row)
+    const conversationCoveredName = !!(history ?? []).find(h =>
+      h.direction === "outbound" && /prazer,?\s+\S+/i.test(h.content || "")
+    );
+    const conversationCoveredInterest = !!(history ?? []).find(h =>
+      h.direction === "outbound" && /comprar.*vender.*alugar|tipo de interesse/i.test(h.content || "")
+    ) && (history ?? []).filter(h => h.direction === "inbound").length >= 2;
+
+    const canTriggerHandoff =
+      (hasName || conversationCoveredName) &&
+      (hasInterest || conversationCoveredInterest) &&
+      !alreadyNotified && !alreadyBooked;
+
+    // ATALHO DETERMINÍSTICO: depois que Sofia ofereceu o handoff (Passo 3),
+    // qualquer resposta combinando com um dos 4 formatos vira link/contato direto,
+    // sem depender de o LLM lembrar de chamar a tool.
+    const lastAssistantMsg = (history ?? []).filter(h => h.direction === "outbound").slice(-1)[0]?.content || "";
+    const askedForFormat = /posso te conectar|prefere agendar|falar agora mesmo|videochamada.*presencial|prefere:?\s*videochamada/i.test(lastAssistantMsg);
+    const userLower = (content || "").toLowerCase();
+    let forcedBookingKind: string | null = null;
+    let forcedImmediateKind: string | null = null;
+    if (askedForFormat && canTriggerHandoff) {
+      let kind: string | null = null;
+      if (/presenc|pessoal|escrit[óo]rio|reuni[ãa]o/.test(userLower)) kind = "presencial";
+      else if (/v[íi]deo|videocham|chamada de v/.test(userLower)) kind = "videochamada";
+      else if (/ligaç|ligar|telefon|me liga/.test(userLower)) kind = "ligacao";
+      else if (/whats|zap|aqui mesmo|por aqui/.test(userLower)) kind = "whatsapp";
+      const wantsNow = /\b(agora|j[áa]|imediat|urg)\b/.test(userLower);
+      if (kind && wantsNow) forcedImmediateKind = kind;
+      else if (kind) forcedBookingKind = kind;
+      if (forcedBookingKind || forcedImmediateKind) {
+        console.log("[whatsapp-webhook] atalho determinístico", { forcedBookingKind, forcedImmediateKind, askedForFormat });
+      }
+    }
 
     aiMessages.unshift({
       role: "system",
@@ -523,14 +557,42 @@ Deno.serve(async (req) => {
 
     // Cascata + loop de tool calls
     let result: { text: string; toolCalls: ToolCall[]; raw?: any } = { text: "", toolCalls: [] };
-    let bookingKind: string | null = null;
-    let immediateKind: string | null = null;
+    let bookingKind: string | null = forcedBookingKind;
+    let immediateKind: string | null = forcedImmediateKind;
     let bookingBlocked = false;
 
     const MODELS = ["openai/gpt-5-mini", "google/gemini-2.5-pro", "google/gemini-2.5-flash"];
     let workingMessages = [...aiMessages];
 
-    for (let round = 0; round < 2; round++) {
+    // Se atalho determinístico disparou, pula o LLM completamente
+    const skipLLM = !!(forcedBookingKind || forcedImmediateKind);
+    if (skipLLM && leadUuid) {
+      // Garante nome + interesse salvos (em caso de falha anterior do update_lead_info)
+      const update: any = { ultima_interacao: new Date().toISOString() };
+      if (!hasName && pushName && !pushName.startsWith("WhatsApp ")) update.nome = pushName;
+      if (!hasInterest) {
+        const inboundTexts = (history ?? []).filter(h => h.direction === "inbound").map(h => (h.content || "").toLowerCase()).join(" | ");
+        let interest: string | null = null;
+        if (/vender|venda/.test(inboundTexts)) interest = "venda";
+        else if (/comprar|compra/.test(inboundTexts)) interest = "compra";
+        else if (/alug/.test(inboundTexts)) interest = "aluguel";
+        else if (/incorpor/.test(inboundTexts)) interest = "incorporacao";
+        else if (/investiment|ocasi/.test(inboundTexts)) interest = "investimento_ocasiao";
+        if (interest) {
+          const { data: cur } = await supabase.from("leads").select("observacoes").eq("id", leadUuid).maybeSingle();
+          const note = `Intenção: ${interest}`;
+          update.observacoes = cur?.observacoes
+            ? (/Intenção:/i.test(cur.observacoes) ? cur.observacoes.replace(/Intenção:.*/i, note) : `${cur.observacoes}\n${note}`)
+            : note;
+          update.etapa_funil = "Em Contato";
+        }
+      }
+      if (Object.keys(update).length > 1) {
+        await supabase.from("leads").update(update).eq("id", leadUuid);
+      }
+    }
+
+    for (let round = 0; round < 2 && !skipLLM; round++) {
       result = { text: "", toolCalls: [] };
       try {
         for (const model of MODELS) {
@@ -619,12 +681,17 @@ Deno.serve(async (req) => {
 
     let reply = sanitizeReply(result.text || "");
 
-    if (!reply) {
-      if (!hasName) {
+    if (!reply && !bookingKind && !immediateKind) {
+      // Rede de segurança: se a última mensagem da Sofia já foi a saudação do Passo 1,
+      // não repete — pede pra reconfirmar o nome de outra forma.
+      const lastWasGreeting = /sou a sofia.*hr im[óo]veis.*nome e sobrenome/i.test(lastAssistantMsg);
+      if (!hasName && lastWasGreeting) {
+        reply = "Desculpa, não entendi direito. Pode me confirmar seu nome completo (nome e sobrenome)?";
+      } else if (!hasName) {
         reply = "Olá! Sou a Sofia, da HR Imóveis. É um prazer falar com você! Para que eu possa te atender da melhor forma, pode me dizer seu nome e sobrenome?";
       } else if (!hasInterest) {
-        reply = `Prazer, ${firstName}! Esse mesmo número de WhatsApp é o melhor para o corretor te chamar, ou prefere outro?`;
-      } else if (!immediateKind && !bookingKind && !alreadyNotified && !alreadyBooked) {
+        reply = `Prazer, ${firstName}! E me diz: você quer comprar, vender, alugar, incorporar, ou está em busca de algum investimento de ocasião?`;
+      } else if (!alreadyNotified && !alreadyBooked) {
         reply = `Perfeito, ${firstName}! Posso te conectar com nosso corretor especialista. Você prefere agendar uma conversa (videochamada, presencial, ligação ou WhatsApp) ou falar agora mesmo com ele?`;
       } else {
         reply = `Combinado, ${firstName}! Em que mais posso te ajudar?`;
