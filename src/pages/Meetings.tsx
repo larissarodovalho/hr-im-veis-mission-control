@@ -20,10 +20,11 @@ export default function Meetings() {
   const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
+  const [contas, setContas] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
-  const [form, setForm] = useState({ lead_id: "none", agendada_para: "", local: "", link: "", notas: "" });
-  const [editForm, setEditForm] = useState({ tipo: "presencial", agendada_para: "", local: "", link: "", notas: "", status: "agendada" });
+  const [form, setForm] = useState({ lead_id: "none", conta_id: "none", agendada_para: "", local: "", link: "", notas: "" });
+  const [editForm, setEditForm] = useState({ tipo: "presencial", lead_id: "none", conta_id: "none", agendada_para: "", local: "", link: "", notas: "", status: "agendada" });
 
   const load = async () => {
     const { data: meetings, error } = await supabase.from("reunioes").select("*").order("agendada_para");
@@ -39,14 +40,22 @@ export default function Meetings() {
       : { data: [] };
     const leadsById = new Map((meetingLeads ?? []).map((lead) => [lead.id, lead]));
 
-    setItems((meetings ?? []).map((meeting) => ({
+    const contaIds = [...new Set((meetings ?? []).map((m: any) => m.conta_id).filter(Boolean))];
+    const { data: meetingContas } = contaIds.length
+      ? await (supabase.from("contas" as any).select("id,nome").in("id", contaIds) as any)
+      : { data: [] };
+    const contasById = new Map(((meetingContas ?? []) as any[]).map((c: any) => [c.id, c]));
+
+    setItems((meetings ?? []).map((meeting: any) => ({
       ...meeting,
       leads: meeting.lead_id ? leadsById.get(meeting.lead_id) : null,
+      conta: meeting.conta_id ? contasById.get(meeting.conta_id) : null,
     })));
   };
   useEffect(() => {
     load();
     supabase.from("leads").select("id, nome").order("nome").then(({ data }) => setLeads(data ?? []));
+    (supabase.from("contas" as any).select("id, nome").order("nome") as any).then(({ data }: any) => setContas(data ?? []));
   }, []);
 
   const add = async (e: React.FormEvent) => {
@@ -54,6 +63,7 @@ export default function Meetings() {
     if (!form.agendada_para) return toast.error("Informe data");
     const { error } = await supabase.from("reunioes").insert({
       lead_id: form.lead_id === "none" ? null : form.lead_id,
+      conta_id: form.conta_id === "none" ? null : form.conta_id,
       agendada_para: new Date(form.agendada_para).toISOString(),
       local: form.local || null, link: form.link || null, notas: form.notas || null,
       created_by: user?.id, corretor_id: user?.id,
