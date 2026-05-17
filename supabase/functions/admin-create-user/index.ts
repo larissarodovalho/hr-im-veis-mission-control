@@ -7,6 +7,18 @@ const corsHeaders = {
 };
 
 type Role = "admin" | "gestor" | "corretor";
+type UiRole = Role | "gestor_corretor";
+
+const VALID_UI_ROLES: UiRole[] = ["admin", "gestor", "corretor", "gestor_corretor"];
+
+async function applyRoles(admin: ReturnType<typeof createClient>, userId: string, role: UiRole) {
+  await admin.from("user_roles").delete().eq("user_id", userId);
+  const rows = role === "gestor_corretor"
+    ? [{ user_id: userId, role: "gestor" }, { user_id: userId, role: "corretor" }]
+    : [{ user_id: userId, role }];
+  const { error } = await admin.from("user_roles").insert(rows);
+  if (error) throw new Error(error.message);
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
