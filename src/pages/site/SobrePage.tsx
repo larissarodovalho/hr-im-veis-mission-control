@@ -178,7 +178,7 @@ export default function SobrePage() {
                 {[
                   "Fundada em 2012, a HR Imóveis surgiu com a missão de trazer um novo padrão de atendimento ao mercado imobiliário de Sinop. Ao longo de 14 anos, construímos uma trajetória sólida baseada em confiança, transparência e resultados.",
                   "Com profundo conhecimento da região e dos melhores empreendimentos, oferecemos consultoria especializada para quem busca imóveis de alto padrão.",
-                  "Hoje, somos reconhecidos como uma das imobiliárias mais confiáveis de Sinop, com centenas de famílias atendidas e uma carteira de imóveis que reflete o melhor da cidade."
+                  "Hoje, somos reconhecidos como um dos escritórios mais confiáveis de Sinop, com centenas de famílias atendidas e uma carteira de imóveis que reflete o melhor da cidade."
                 ].map((text, i) => (
                   <motion.p
                     key={i}
