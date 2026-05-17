@@ -75,7 +75,7 @@ export default function HomePage() {
   const heroScale = useTransform(heroScroll, [0, 0.5], [1, 1.08]);
   const heroTextY = useTransform(heroScroll, [0, 0.5], [0, 100]);
 
-  const { img } = useSiteImages();
+  const { img, loaded: imagesLoaded } = useSiteImages();
   const [destaque, setDestaque] = useState<any[]>([]);
 
   useEffect(() => {
@@ -108,8 +108,16 @@ export default function HomePage() {
     <div ref={pageRef} className="bg-[#050505]">
       {/* ─── Hero ─── */}
       <section ref={heroRef} className="relative h-screen flex items-end overflow-hidden">
-        <motion.div className="absolute inset-0" style={{ scale: heroScale }}>
-          <img src={img("hero_home", heroBg)} alt="Imóveis de alto padrão em Sinop" className="w-full h-full object-cover" />
+        <motion.div className="absolute inset-0 bg-[#050505]" style={{ scale: heroScale }}>
+          {imagesLoaded && (
+            <img
+              src={img("hero_home", heroBg)}
+              alt="Imóveis de alto padrão em Sinop"
+              className="w-full h-full object-cover animate-in fade-in duration-500"
+              fetchPriority="high"
+              decoding="async"
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/50 to-transparent" />
         </motion.div>
 

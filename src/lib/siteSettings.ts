@@ -24,14 +24,29 @@ const FEATURED_KEY = "featured_imoveis";
 
 type ImagesRecord = Partial<Record<SiteImageKey, string>>;
 
+let imagesCache: ImagesRecord | null = null;
+let imagesPromise: Promise<ImagesRecord> | null = null;
+
 export async function fetchSiteImages(): Promise<ImagesRecord> {
-  const { data } = await supabase
-    .from(TABLE as any)
-    .select("value")
-    .eq("key", IMAGES_KEY)
-    .maybeSingle();
-  const value = (data as any)?.value;
-  return (value && typeof value === "object" ? value : {}) as ImagesRecord;
+  if (imagesCache) return imagesCache;
+  if (imagesPromise) return imagesPromise;
+  imagesPromise = (async () => {
+    const { data } = await supabase
+      .from(TABLE as any)
+      .select("value")
+      .eq("key", IMAGES_KEY)
+      .maybeSingle();
+    const value = (data as any)?.value;
+    const result = (value && typeof value === "object" ? value : {}) as ImagesRecord;
+    imagesCache = result;
+    return result;
+  })();
+  return imagesPromise;
+}
+
+export function invalidateSiteImagesCache() {
+  imagesCache = null;
+  imagesPromise = null;
 }
 
 export async function saveSiteImage(key: SiteImageKey, url: string | null) {
@@ -43,6 +58,7 @@ export async function saveSiteImage(key: SiteImageKey, url: string | null) {
     .from(TABLE as any)
     .upsert({ key: IMAGES_KEY, value: next as any }, { onConflict: "key" });
   if (error) throw error;
+  invalidateSiteImagesCache();
 }
 
 export async function fetchFeaturedImoveis(): Promise<string[]> {
@@ -78,9 +94,10 @@ export async function uploadSiteAsset(file: File, key: SiteImageKey): Promise<st
 
 /** Hook: returns a resolver `img(key, fallback)` plus the raw map. */
 export function useSiteImages() {
-  const [map, setMap] = useState<ImagesRecord>({});
-  const [loaded, setLoaded] = useState(false);
+  const [map, setMap] = useState<ImagesRecord>(() => imagesCache ?? {});
+  const [loaded, setLoaded] = useState<boolean>(() => imagesCache !== null);
   useEffect(() => {
+    if (imagesCache) return;
     fetchSiteImages()
       .then((m) => setMap(m))
       .finally(() => setLoaded(true));
