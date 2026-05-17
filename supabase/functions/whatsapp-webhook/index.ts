@@ -509,7 +509,41 @@ Deno.serve(async (req) => {
     );
     const lastUserMsg = (history ?? []).filter(h => h.direction === "inbound").slice(-1)[0]?.content || "";
     const hasInterest = !!((leadRow as any)?.observacoes && /Intenção:/i.test((leadRow as any).observacoes));
-    const canTriggerHandoff = hasName && hasInterest && !alreadyNotified && !alreadyBooked;
+
+    // Detecta se Sofia JÁ coletou nome + interesse na conversa (mesmo se não persistiu no lead row)
+    const conversationCoveredName = !!(history ?? []).find(h =>
+      h.direction === "outbound" && /prazer,?\s+\S+/i.test(h.content || "")
+    );
+    const conversationCoveredInterest = !!(history ?? []).find(h =>
+      h.direction === "outbound" && /comprar.*vender.*alugar|tipo de interesse/i.test(h.content || "")
+    ) && (history ?? []).filter(h => h.direction === "inbound").length >= 2;
+
+    const canTriggerHandoff =
+      (hasName || conversationCoveredName) &&
+      (hasInterest || conversationCoveredInterest) &&
+      !alreadyNotified && !alreadyBooked;
+
+    // ATALHO DETERMINÍSTICO: depois que Sofia ofereceu o handoff (Passo 3),
+    // qualquer resposta combinando com um dos 4 formatos vira link/contato direto,
+    // sem depender de o LLM lembrar de chamar a tool.
+    const lastAssistantMsg = (history ?? []).filter(h => h.direction === "outbound").slice(-1)[0]?.content || "";
+    const askedForFormat = /posso te conectar|prefere agendar|falar agora mesmo|videochamada.*presencial|prefere:?\s*videochamada/i.test(lastAssistantMsg);
+    const userLower = (content || "").toLowerCase();
+    let forcedBookingKind: string | null = null;
+    let forcedImmediateKind: string | null = null;
+    if (askedForFormat && canTriggerHandoff) {
+      let kind: string | null = null;
+      if (/presenc|pessoal|escrit[óo]rio|reuni[ãa]o/.test(userLower)) kind = "presencial";
+      else if (/v[íi]deo|videocham|chamada de v/.test(userLower)) kind = "videochamada";
+      else if (/ligaç|ligar|telefon|me liga/.test(userLower)) kind = "ligacao";
+      else if (/whats|zap|aqui mesmo|por aqui/.test(userLower)) kind = "whatsapp";
+      const wantsNow = /\b(agora|j[áa]|imediat|urg)\b/.test(userLower);
+      if (kind && wantsNow) forcedImmediateKind = kind;
+      else if (kind) forcedBookingKind = kind;
+      if (forcedBookingKind || forcedImmediateKind) {
+        console.log("[whatsapp-webhook] atalho determinístico", { forcedBookingKind, forcedImmediateKind, askedForFormat });
+      }
+    }
 
     aiMessages.unshift({
       role: "system",
