@@ -449,6 +449,12 @@ export default function Accounts() {
                       ) : <span className="text-muted-foreground">—</span>;
                     })()}
                   </div>
+                  <div>
+                    <span className="text-xs text-muted-foreground">Interesse: </span>
+                    {a.interesse ? (
+                      <Badge variant="outline" className="bg-amber-500/15 text-amber-700 border-amber-500/30">{a.interesse}</Badge>
+                    ) : <span className="text-muted-foreground">—</span>}
+                  </div>
                   <div><span className="text-xs text-muted-foreground">Responsável: </span><span>{owner}</span></div>
                 </div>
                 <div className="flex gap-2 pt-1">
