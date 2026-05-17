@@ -158,9 +158,9 @@ export default function ContatoPage() {
         <div className="py-16">
           <p className="text-[11px] uppercase tracking-[0.4em] text-white/15 font-light mb-8">HR Imóveis</p>
           <h3 className="text-3xl md:text-5xl font-extralight text-white/90 tracking-tight mb-4 leading-[1.05]">
-            Encontre o imóvel
+            Não perca mais tempo,
             <br />
-            <span className="text-white/60">dos seus sonhos</span>
+            <span className="text-white/60">fale conosco agora</span>
           </h3>
           <p className="text-base text-white/50 font-light mb-10 max-w-sm mx-auto leading-relaxed">
             14 anos de experiência no mercado imobiliário de Sinop, com atendimento exclusivo e personalizado.
