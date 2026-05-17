@@ -213,23 +213,23 @@ export default function Meetings() {
             <form onSubmit={add} className="space-y-3">
               <div>
                 <Label>Lead</Label>
-                <Select value={form.lead_id} onValueChange={v => setForm({ ...form, lead_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Sem lead vinculado" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sem lead vinculado</SelectItem>
-                    {leads.map(l => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  value={form.lead_id}
+                  onChange={(v) => setForm({ ...form, lead_id: v })}
+                  options={leads}
+                  placeholder="Buscar lead..."
+                  emptyLabel="Sem lead vinculado"
+                />
               </div>
               <div>
                 <Label>Conta</Label>
-                <Select value={form.conta_id} onValueChange={v => setForm({ ...form, conta_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Sem conta vinculada" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sem conta vinculada</SelectItem>
-                    {contas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  value={form.conta_id}
+                  onChange={(v) => setForm({ ...form, conta_id: v })}
+                  options={contas}
+                  placeholder="Buscar conta..."
+                  emptyLabel="Sem conta vinculada"
+                />
               </div>
               <div><Label>Data e hora</Label><Input type="datetime-local" value={form.agendada_para} onChange={e => setForm({ ...form, agendada_para: e.target.value })} /></div>
               <div><Label>Local</Label><Input value={form.local} onChange={e => setForm({ ...form, local: e.target.value })} /></div>
