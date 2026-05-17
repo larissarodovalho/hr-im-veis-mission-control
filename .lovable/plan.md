@@ -1,12 +1,18 @@
-## Plano — Nome do lead clicável no calendário de Reuniões
+## Plano — Sofia coleta apenas Nome + Interesse
 
-**Arquivo:** `src/components/EventsCalendar.tsx`
+**Arquivo:** `supabase/functions/whatsapp-webhook/index.ts`
 
-A tabela de cima já tem o nome do lead clicável (em azul). No **calendário de reuniões**, ao selecionar um dia, o nome do lead também é um `<Link>` mas está visualmente discreto — parece texto comum.
+O número do WhatsApp já é capturado automaticamente pelo CRM, então o Passo 2 (celular) é redundante.
 
-### Mudança
-- Estilizar o `<Link>` com `text-primary underline-offset-2 hover:underline` para ficar claramente clicável.
-- Mostrar o horário em `text-muted-foreground` separado, para dar destaque ao nome.
-- Já navega corretamente para `/app/leads/:id` (página `LeadDetail` com histórico, interações e detalhes do contato).
+### Mudanças no prompt `AI_SYSTEM`
+- **OBJETIVO:** trocar "coletar 3 dados — nome completo, celular e tipo de interesse" por "coletar 2 dados — nome completo e tipo de interesse". Adicionar: "O número de WhatsApp é registrado automaticamente pelo CRM, então NÃO pergunte celular."
+- **FLUXO:** remover Passo 2 (Celular). Renumerar:
+  - Passo 1 — Nome completo (igual)
+  - Passo 2 — Tipo de interesse (antigo Passo 3)
+  - Passo 3 — Handoff (antigo Passo 4)
+- **REGRAS DE ORDEM OBRIGATÓRIA:** atualizar para "Passo 1 (nome) → Passo 2 (interesse) → Passo 3 (handoff)". Trocar "logo após receber o nome completo, a PRÓXIMA pergunta é SEMPRE sobre o celular" por "logo após receber o nome completo, a PRÓXIMA pergunta é SEMPRE sobre o tipo de interesse".
 
-Mudança puramente visual, sem alterar lógica nem dados.
+### Mudança na tool `update_lead_info`
+- Remover a propriedade `phone` do schema e atualizar a description para "Salva nome completo e/ou intenção do lead."
+
+Mudança apenas no prompt e schema da tool — sem alterar lógica do webhook, handlers ou banco.
