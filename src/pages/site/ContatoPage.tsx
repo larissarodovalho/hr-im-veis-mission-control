@@ -33,7 +33,7 @@ function ParallaxImage({ src, alt, className = "" }: { src: string; alt: string;
 
 const infos = [
   { icon: MapPin, label: "Endereço", value: "Av. dos Ingás, 2075\nJd. Maringá — Sinop, MT" },
-  { icon: Phone, label: "Telefone", value: "(66) 99999-0000" },
+  { icon: Phone, label: "Telefone", value: "(66) 99995-5881" },
   { icon: Mail, label: "E-mail", value: "contato@hrimoveis.com.br" },
   { icon: Clock, label: "Horário", value: "Seg a Sex: 08h – 18h\nSáb: 08h – 12h" },
 ];
@@ -157,7 +157,7 @@ export default function ContatoPage() {
             14 anos de experiência no mercado imobiliário de Sinop, com atendimento exclusivo e personalizado.
           </p>
           <motion.a
-            href="https://wa.me/5566999990000?text=Olá! Gostaria de mais informações."
+            href="https://wa.me/5566999955881?text=Olá! Gostaria de mais informações."
             target="_blank"
             rel="noopener noreferrer"
             whileHover={{ scale: 1.03 }}

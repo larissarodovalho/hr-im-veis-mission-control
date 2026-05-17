@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Phone, Mail, Instagram, Facebook, Menu, X } from "lucide-react";
+import { Phone, Mail, Instagram, Facebook, Menu, X, MessageCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import hrLogo from "@/assets/logo-hr-branco.png";
@@ -103,6 +103,19 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       {/* Main */}
       <main className="flex-1">{children}</main>
 
+      {/* Floating WhatsApp button */}
+      <a
+        href="https://wa.me/5566999955881?text=Olá! Gostaria de mais informações."
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Falar no WhatsApp"
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-black/40 hover:scale-110 transition-transform"
+        style={{ backgroundColor: "#25D366" }}
+      >
+        <span className="absolute inset-0 rounded-full animate-ping opacity-30" style={{ backgroundColor: "#25D366" }} />
+        <MessageCircle className="h-7 w-7 text-white relative z-10" fill="white" strokeWidth={0} />
+      </a>
+
       {/* Footer — minimal Apple-style */}
       <footer className="border-t border-white/5">
         <div className="max-w-7xl mx-auto px-6 py-12">
@@ -132,7 +145,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             <div>
               <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-4">Contato</h4>
               <ul className="space-y-2 text-sm text-white/60">
-                <li className="flex items-center gap-2"><Phone className="h-3 w-3" /> (66) 99999-0000</li>
+                <li className="flex items-center gap-2"><Phone className="h-3 w-3" /> (66) 99995-5881</li>
                 <li className="flex items-center gap-2"><Mail className="h-3 w-3" /> contato@hrimoveis.com.br</li>
               </ul>
               <div className="flex gap-2 mt-4">

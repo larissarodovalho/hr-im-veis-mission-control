@@ -278,7 +278,7 @@ export default function ImovelDetalhePage() {
                 </div>
 
                 <motion.a
-                  href={`https://wa.me/5566999990000?text=Olá! Tenho interesse no imóvel ${imovel.codigo} - ${imovel.nome}`}
+                  href={`https://wa.me/5566999955881?text=Olá! Tenho interesse no imóvel ${imovel.codigo} - ${imovel.nome}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.02 }}
@@ -290,7 +290,7 @@ export default function ImovelDetalhePage() {
                 </motion.a>
 
                 <motion.a
-                  href={`https://wa.me/5566999990000?text=Olá! Gostaria de mais informações sobre o imóvel ${imovel.codigo}`}
+                  href={`https://wa.me/5566999955881?text=Olá! Gostaria de mais informações sobre o imóvel ${imovel.codigo}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.02 }}
@@ -386,7 +386,7 @@ export default function ImovelDetalhePage() {
           </motion.p>
 
           <motion.a
-            href={`https://wa.me/5566999990000?text=Olá! Gostaria de agendar uma visita ao imóvel ${imovel.codigo} - ${imovel.nome}`}
+            href={`https://wa.me/5566999955881?text=Olá! Gostaria de agendar uma visita ao imóvel ${imovel.codigo} - ${imovel.nome}`}
             target="_blank"
             rel="noopener noreferrer"
             initial={{ opacity: 0, y: 20 }}
