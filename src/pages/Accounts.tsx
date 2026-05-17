@@ -31,6 +31,9 @@ type Account = {
   nome: string;
   email: string | null;
   telefone: string | null;
+  documento: string | null;
+  tipo: "PF" | "PJ" | null;
+  responsavel_id: string | null;
   status: Status | null;
   observacoes: string | null;
   created_at: string;
@@ -38,6 +41,14 @@ type Account = {
   is_partner: boolean | null;
   tags: string[] | null;
   etapa_funil: string | null;
+};
+
+const formatDoc = (doc: string | null, tipo: string | null) => {
+  if (!doc) return "—";
+  const d = doc.replace(/\D/g, "");
+  if (d.length === 11) return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  if (d.length === 14) return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+  return doc;
 };
 
 type Property = {
@@ -124,15 +135,21 @@ export default function Accounts() {
   const [novaOpen, setNovaOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
 
+  const [ownerMap, setOwnerMap] = useState<Record<string, string>>({});
+
   const load = async () => {
     setLoading(true);
-    const [{ data: accs, error }, { data: props }] = await Promise.all([
-      supabase.from("contas").select("id, nome, email, telefone, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil").order("created_at", { ascending: false }),
+    const [{ data: accs, error }, { data: props }, { data: profs }] = await Promise.all([
+      supabase.from("contas").select("id, nome, email, telefone, documento, tipo, responsavel_id, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil").order("created_at", { ascending: false }),
       supabase.from("conta_propriedades" as any).select("*"),
+      supabase.from("profiles").select("user_id, nome"),
     ]);
     if (error) toast.error(error.message);
     setAccounts(((accs as any) ?? []) as Account[]);
     setProperties(((props as any) ?? []) as Property[]);
+    const map: Record<string, string> = {};
+    ((profs as any) ?? []).forEach((p: any) => { if (p.user_id) map[p.user_id] = p.nome || "—"; });
+    setOwnerMap(map);
     setLoading(false);
   };
 
@@ -186,45 +203,19 @@ export default function Accounts() {
   );
 
   const buildExportRows = () => {
-    const rows: any[] = [];
-    filtered.forEach((a) => {
-      const accProps = propsByAccount[a.id] ?? [];
+    return filtered.map((a) => {
       const status = (a.status ?? "ativo") as Status;
-      const baseRow = {
-        Cliente: a.nome,
-        Tipo: a.is_partner ? "Parceiro" : "Cliente",
-        Interesse: a.interesse ? INTEREST_LABEL[a.interesse] : "",
+      return {
+        Nome: a.nome,
         Telefone: a.telefone ?? "",
         Email: a.email ?? "",
+        "CPF/CNPJ": a.documento ? formatDoc(a.documento, a.tipo) : "",
+        Proprietário: a.responsavel_id ? (ownerMap[a.responsavel_id] ?? "") : "",
+        Tipo: a.is_partner ? "Parceiro" : "Cliente",
+        Status: status === "ativo" ? "Ativo" : "Inativo",
+        "Criado em": format(new Date(a.created_at), "dd/MM/yyyy", { locale: ptBR }),
       };
-      if (accProps.length === 0) {
-        rows.push({
-          ...baseRow,
-          Operação: "", Aptidão: "", Fazenda: "", Região: "",
-          "Tamanho (ha)": "", "Valor do negócio (R$)": "", "Comissão (R$)": "",
-          Status: status === "ativo" ? "Ativo" : "Inativo",
-          "Convertido em": format(new Date(a.created_at), "dd/MM/yyyy", { locale: ptBR }),
-          Observações: a.observacoes ?? "",
-        });
-      } else {
-        accProps.forEach((p) => {
-          rows.push({
-            ...baseRow,
-            Operação: p.operacao ? OP_LABEL[p.operacao] : "",
-            Aptidão: p.aptidao ? APT_LABEL[p.aptidao] : "",
-            Fazenda: p.nome_fazenda ?? "",
-            Região: p.regiao ?? "",
-            "Tamanho (ha)": p.tamanho_ha ?? "",
-            "Valor do negócio (R$)": p.valor_negocio ?? "",
-            "Comissão (R$)": p.valor_comissao ?? "",
-            Status: status === "ativo" ? "Ativo" : "Inativo",
-            "Convertido em": format(new Date(a.created_at), "dd/MM/yyyy", { locale: ptBR }),
-            Observações: p.observacoes ?? a.observacoes ?? "",
-          });
-        });
-      }
     });
-    return rows;
   };
 
   const exportXlsx = () => {
@@ -279,7 +270,7 @@ export default function Accounts() {
               <Building2 className="h-6 w-6 md:h-7 md:w-7 text-primary" /> Contas
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {filtered.length} de {accounts.length} · Negócios: <strong>{fmt(totalValue || null)}</strong> · Comissões: <strong>{fmt(totalCommission || null)}</strong>
+              {filtered.length} de {accounts.length} contas
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -400,12 +391,8 @@ export default function Accounts() {
           </Card>
         ) : (
           filtered.map((a) => {
-            const accProps = propsByAccount[a.id] ?? [];
-            const ops = Array.from(new Set(accProps.map((p) => p.operacao).filter(Boolean))) as Operation[];
-            const apts = Array.from(new Set(accProps.map((p) => p.aptidao).filter(Boolean))) as Aptitude[];
-            const totalVal = accProps.reduce((s, p) => s + (p.valor_negocio ?? 0), 0);
-            const totalCom = accProps.reduce((s, p) => s + (p.valor_comissao ?? 0), 0);
             const status = (a.status ?? "ativo") as Status;
+            const owner = a.responsavel_id ? (ownerMap[a.responsavel_id] ?? "—") : "—";
             return (
               <Card key={a.id} className="p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
@@ -418,26 +405,16 @@ export default function Accounts() {
                         </Badge>
                       )}
                     </div>
-                    <div className="text-xs text-muted-foreground truncate mt-0.5">{a.telefone || a.email || "—"}</div>
                   </div>
                   <Badge className={status === "ativo" ? "bg-success/15 text-success border-success/30 border shrink-0" : "bg-muted text-muted-foreground border shrink-0"}>
                     {status === "ativo" ? "Ativo" : "Inativo"}
                   </Badge>
                 </div>
-                {a.interesse && (
-                  <div className="text-xs"><span className="text-muted-foreground">Interesse: </span><span className="font-medium">{INTEREST_LABEL[a.interesse]}</span></div>
-                )}
-                {(ops.length > 0 || apts.length > 0) && (
-                  <div className="flex flex-wrap gap-1">
-                    {ops.map((o) => <Badge key={"o" + o} className={OP_BADGE[o] + " border text-[10px]"}>{OP_LABEL[o]}</Badge>)}
-                    {apts.map((ap) => <Badge key={"a" + ap} className={APT_BADGE[ap] + " border text-[10px]"}>{APT_LABEL[ap]}</Badge>)}
-                  </div>
-                )}
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div><div className="text-xs text-muted-foreground">Propriedades</div><div className="font-medium">{accProps.length}</div></div>
-                  <div><div className="text-xs text-muted-foreground">Convertido</div><div className="text-xs">{format(new Date(a.created_at), "dd/MM/yyyy", { locale: ptBR })}</div></div>
-                  <div><div className="text-xs text-muted-foreground">Valor total</div><div className="font-medium">{fmt(totalVal || null)}</div></div>
-                  <div><div className="text-xs text-muted-foreground">Comissão</div><div>{fmt(totalCom || null)}</div></div>
+                <div className="grid grid-cols-1 gap-2 text-sm">
+                  <div><span className="text-xs text-muted-foreground">Telefone: </span><span>{a.telefone || "—"}</span></div>
+                  <div className="truncate"><span className="text-xs text-muted-foreground">E-mail: </span><span>{a.email || "—"}</span></div>
+                  <div><span className="text-xs text-muted-foreground">CPF/CNPJ: </span><span>{formatDoc(a.documento, a.tipo)}</span></div>
+                  <div><span className="text-xs text-muted-foreground">Proprietário: </span><span>{owner}</span></div>
                 </div>
                 <div className="flex gap-2 pt-1">
                   <Link to={`/app/contas/${a.id}`} className="flex-1">
@@ -451,7 +428,7 @@ export default function Accounts() {
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Excluir conta?</AlertDialogTitle>
-                          <AlertDialogDescription>Tem certeza que deseja excluir <strong>{a.nome}</strong>? Todas as propriedades vinculadas também serão removidas. Esta ação não pode ser desfeita.</AlertDialogDescription>
+                          <AlertDialogDescription>Tem certeza que deseja excluir <strong>{a.nome}</strong>? Esta ação não pode ser desfeita.</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancelar</AlertDialogCancel>
@@ -473,29 +450,24 @@ export default function Accounts() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left">
               <tr>
-                <th className="p-3">Cliente</th>
-                <th className="p-3">Interesse</th>
-                <th className="p-3">Operação / Aptidão</th>
-                <th className="p-3">Propriedades</th>
-                <th className="p-3 text-right">Valor total</th>
-                <th className="p-3 text-right">Comissão</th>
+                <th className="p-3">Nome</th>
+                <th className="p-3">Telefone</th>
+                <th className="p-3">E-mail</th>
+                <th className="p-3">CPF/CNPJ</th>
+                <th className="p-3">Proprietário</th>
                 <th className="p-3">Status</th>
                 <th className="p-3 w-24"></th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Carregando…</td></tr>
+                <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Carregando…</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={8} className="p-10 text-center text-muted-foreground">{accounts.length === 0 ? "Nenhuma conta ainda. Converta um lead para criar a primeira conta." : "Nenhuma conta corresponde aos filtros."}</td></tr>
+                <tr><td colSpan={7} className="p-10 text-center text-muted-foreground">{accounts.length === 0 ? "Nenhuma conta ainda. Converta um lead para criar a primeira conta." : "Nenhuma conta corresponde aos filtros."}</td></tr>
               ) : (
                 filtered.map((a) => {
-                  const accProps = propsByAccount[a.id] ?? [];
-                  const ops = Array.from(new Set(accProps.map((p) => p.operacao).filter(Boolean))) as Operation[];
-                  const apts = Array.from(new Set(accProps.map((p) => p.aptidao).filter(Boolean))) as Aptitude[];
-                  const totalVal = accProps.reduce((s, p) => s + (p.valor_negocio ?? 0), 0);
-                  const totalCom = accProps.reduce((s, p) => s + (p.valor_comissao ?? 0), 0);
                   const status = (a.status ?? "ativo") as Status;
+                  const owner = a.responsavel_id ? (ownerMap[a.responsavel_id] ?? "—") : "—";
                   return (
                     <tr key={a.id} className="border-t hover:bg-muted/30">
                       <td className="p-3">
@@ -507,27 +479,11 @@ export default function Accounts() {
                             </Badge>
                           )}
                         </div>
-                        <div className="text-xs text-muted-foreground">{a.telefone || a.email || "—"}</div>
                       </td>
-                      <td className="p-3">
-                        {a.interesse ? <Badge variant="outline" className="text-[10px]">{INTEREST_LABEL[a.interesse]}</Badge> : <span className="text-muted-foreground">—</span>}
-                      </td>
-                      <td className="p-3">
-                        {ops.length === 0 && apts.length === 0 ? <span className="text-muted-foreground">—</span> : (
-                          <div className="flex flex-wrap gap-1">
-                            {ops.map((o) => <Badge key={"o" + o} className={OP_BADGE[o] + " border text-[10px]"}>{OP_LABEL[o]}</Badge>)}
-                            {apts.map((ap) => <Badge key={"a" + ap} className={APT_BADGE[ap] + " border text-[10px]"}>{APT_LABEL[ap]}</Badge>)}
-                          </div>
-                        )}
-                      </td>
-                      <td className="p-3">
-                        <div className="font-medium">{accProps.length}</div>
-                        {accProps.length > 0 && (
-                          <div className="text-xs text-muted-foreground truncate max-w-[200px]">{accProps.map((p) => p.nome_fazenda || "Sem nome").join(", ")}</div>
-                        )}
-                      </td>
-                      <td className="p-3 text-right font-medium">{fmt(totalVal || null)}</td>
-                      <td className="p-3 text-right">{fmt(totalCom || null)}</td>
+                      <td className="p-3 whitespace-nowrap">{a.telefone || <span className="text-muted-foreground">—</span>}</td>
+                      <td className="p-3">{a.email || <span className="text-muted-foreground">—</span>}</td>
+                      <td className="p-3 whitespace-nowrap">{a.documento ? formatDoc(a.documento, a.tipo) : <span className="text-muted-foreground">—</span>}</td>
+                      <td className="p-3">{owner === "—" ? <span className="text-muted-foreground">—</span> : owner}</td>
                       <td className="p-3">
                         <Badge className={status === "ativo" ? "bg-success/15 text-success border-success/30 border" : "bg-muted text-muted-foreground border"}>
                           {status === "ativo" ? "Ativo" : "Inativo"}
@@ -544,7 +500,7 @@ export default function Accounts() {
                               <AlertDialogContent>
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>Excluir conta?</AlertDialogTitle>
-                                  <AlertDialogDescription>Tem certeza que deseja excluir <strong>{a.nome}</strong>? Todas as propriedades vinculadas também serão removidas. Esta ação não pode ser desfeita.</AlertDialogDescription>
+                                  <AlertDialogDescription>Tem certeza que deseja excluir <strong>{a.nome}</strong>? Esta ação não pode ser desfeita.</AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
