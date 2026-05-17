@@ -7,6 +7,18 @@ const corsHeaders = {
 };
 
 type Role = "admin" | "gestor" | "corretor";
+type UiRole = Role | "gestor_corretor";
+
+const VALID_UI_ROLES: UiRole[] = ["admin", "gestor", "corretor", "gestor_corretor"];
+
+async function applyRoles(admin: ReturnType<typeof createClient>, userId: string, role: UiRole) {
+  await admin.from("user_roles").delete().eq("user_id", userId);
+  const rows = role === "gestor_corretor"
+    ? [{ user_id: userId, role: "gestor" }, { user_id: userId, role: "corretor" }]
+    : [{ user_id: userId, role }];
+  const { error } = await admin.from("user_roles").insert(rows);
+  if (error) throw new Error(error.message);
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -47,7 +59,7 @@ Deno.serve(async (req) => {
       };
       if (!email || !password || !nome) return json({ error: "email, password, nome obrigatórios" }, 400);
       if (password.length < 8) return json({ error: "Senha mínima 8 caracteres" }, 400);
-      const finalRole: Role = role && ["admin", "gestor", "corretor"].includes(role) ? role : "corretor";
+      const finalRole: UiRole = role && VALID_UI_ROLES.includes(role as UiRole) ? (role as UiRole) : "corretor";
 
       const { data: created, error: cErr } = await admin.auth.admin.createUser({
         email,
@@ -62,8 +74,8 @@ Deno.serve(async (req) => {
       await admin.from("profiles").update({ nome, telefone, cargo }).eq("user_id", newId);
 
       if (finalRole !== "corretor") {
-        await admin.from("user_roles").delete().eq("user_id", newId);
-        await admin.from("user_roles").insert({ user_id: newId, role: finalRole });
+        try { await applyRoles(admin, newId, finalRole); }
+        catch (e) { return json({ error: (e as Error).message }, 400); }
       }
 
       // Envia e-mail de boas-vindas com senha temporária (best-effort)
@@ -105,19 +117,18 @@ Deno.serve(async (req) => {
     }
 
     if (action === "update_role") {
-      const { user_id, role } = body as { user_id?: string; role?: Role };
+      const { user_id, role } = body as { user_id?: string; role?: UiRole };
       if (!user_id || !role) return json({ error: "user_id e role obrigatórios" }, 400);
-      if (!["admin", "gestor", "corretor"].includes(role)) return json({ error: "Role inválido" }, 400);
-      await admin.from("user_roles").delete().eq("user_id", user_id);
-      const { error: rErr } = await admin.from("user_roles").insert({ user_id, role });
-      if (rErr) return json({ error: rErr.message }, 400);
+      if (!VALID_UI_ROLES.includes(role)) return json({ error: "Role inválido" }, 400);
+      try { await applyRoles(admin, user_id, role); }
+      catch (e) { return json({ error: (e as Error).message }, 400); }
       return json({ ok: true });
     }
 
     if (action === "update_profile") {
       const { user_id, nome, email, telefone, cargo, role } = body as {
         user_id?: string; nome?: string; email?: string;
-        telefone?: string; cargo?: string; role?: Role;
+        telefone?: string; cargo?: string; role?: UiRole;
       };
       if (!user_id) return json({ error: "user_id obrigatório" }, 400);
 
@@ -136,13 +147,12 @@ Deno.serve(async (req) => {
         if (pErr) return json({ error: pErr.message }, 400);
       }
 
-      if (role && ["admin", "gestor", "corretor"].includes(role)) {
+      if (role && VALID_UI_ROLES.includes(role)) {
         if (user_id === callerId && role !== "admin") {
           return json({ error: "Você não pode remover seu próprio papel de admin" }, 400);
         }
-        await admin.from("user_roles").delete().eq("user_id", user_id);
-        const { error: rErr } = await admin.from("user_roles").insert({ user_id, role });
-        if (rErr) return json({ error: rErr.message }, 400);
+        try { await applyRoles(admin, user_id, role); }
+        catch (e) { return json({ error: (e as Error).message }, 400); }
       }
 
       return json({ ok: true });

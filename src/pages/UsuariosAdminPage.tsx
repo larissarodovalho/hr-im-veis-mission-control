@@ -12,6 +12,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, ShieldAlert, UserPlus, KeyRound, Trash2, Copy, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
+type UiRole = AppRole | "gestor_corretor";
+
+const ROLE_LABELS: Record<UiRole, string> = {
+  admin: "Admin",
+  gestor: "Gestor",
+  corretor: "Corretor",
+  gestor_corretor: "Gestor + Corretor",
+};
+
 type Row = {
   id: string;
   user_id: string;
@@ -21,7 +30,7 @@ type Row = {
   cargo: string | null;
   ativo: boolean;
   created_at: string;
-  role: AppRole;
+  role: UiRole;
 };
 
 function genPassword() {
@@ -40,14 +49,14 @@ export default function UsuariosAdminPage() {
   const [openCreate, setOpenCreate] = useState(false);
   const [form, setForm] = useState({
     nome: "", email: "", telefone: "", cargo: "",
-    role: "corretor" as AppRole, password: genPassword(),
+    role: "corretor" as UiRole, password: genPassword(),
   });
 
   const [resetTarget, setResetTarget] = useState<Row | null>(null);
   const [newPass, setNewPass] = useState("");
 
   const [editTarget, setEditTarget] = useState<Row | null>(null);
-  const [editForm, setEditForm] = useState({ nome: "", email: "", telefone: "", cargo: "", role: "corretor" as AppRole });
+  const [editForm, setEditForm] = useState({ nome: "", email: "", telefone: "", cargo: "", role: "corretor" as UiRole });
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -55,14 +64,19 @@ export default function UsuariosAdminPage() {
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("user_id, role"),
     ]);
-    const roleMap = new Map<string, AppRole>();
+    const rolesByUser = new Map<string, Set<AppRole>>();
     (roles ?? []).forEach((r: any) => {
-      // Priority: admin > gestor > corretor
-      const cur = roleMap.get(r.user_id);
-      const priority = (x: string) => (x === "admin" ? 3 : x === "gestor" ? 2 : 1);
-      if (!cur || priority(r.role) > priority(cur)) roleMap.set(r.user_id, r.role);
+      if (!rolesByUser.has(r.user_id)) rolesByUser.set(r.user_id, new Set());
+      rolesByUser.get(r.user_id)!.add(r.role);
     });
-    setRows(((profs ?? []) as any[]).map((p) => ({ ...p, role: roleMap.get(p.user_id) ?? "corretor" })));
+    const resolve = (set: Set<AppRole> | undefined): UiRole => {
+      if (!set) return "corretor";
+      if (set.has("admin")) return "admin";
+      if (set.has("gestor") && set.has("corretor")) return "gestor_corretor";
+      if (set.has("gestor")) return "gestor";
+      return "corretor";
+    };
+    setRows(((profs ?? []) as any[]).map((p) => ({ ...p, role: resolve(rolesByUser.get(p.user_id)) })));
     setLoading(false);
   }, []);
 
@@ -112,7 +126,7 @@ export default function UsuariosAdminPage() {
     } finally { setBusy(false); }
   }
 
-  async function handleRoleChange(r: Row, role: AppRole) {
+  async function handleRoleChange(r: Row, role: UiRole) {
     setBusy(true);
     try {
       await callAdmin({ action: "update_role", user_id: r.user_id, role });
@@ -204,12 +218,13 @@ export default function UsuariosAdminPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Papel *</Label>
-                  <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as AppRole })}>
+                  <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as UiRole })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="gestor">Gestor</SelectItem>
                       <SelectItem value="corretor">Corretor</SelectItem>
+                      <SelectItem value="gestor_corretor">Gestor + Corretor</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -253,12 +268,13 @@ export default function UsuariosAdminPage() {
                     <TableCell className="text-sm text-muted-foreground">{r.email}</TableCell>
                     <TableCell className="text-sm">{r.cargo ?? "—"}</TableCell>
                     <TableCell>
-                      <Select value={r.role} onValueChange={(v) => handleRoleChange(r, v as AppRole)} disabled={busy || r.user_id === user?.id}>
-                        <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+                      <Select value={r.role} onValueChange={(v) => handleRoleChange(r, v as UiRole)} disabled={busy || r.user_id === user?.id}>
+                        <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="admin">Admin</SelectItem>
                           <SelectItem value="gestor">Gestor</SelectItem>
                           <SelectItem value="corretor">Corretor</SelectItem>
+                          <SelectItem value="gestor_corretor">Gestor + Corretor</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -329,7 +345,7 @@ export default function UsuariosAdminPage() {
                 <Label>Papel *</Label>
                 <Select
                   value={editForm.role}
-                  onValueChange={(v) => setEditForm({ ...editForm, role: v as AppRole })}
+                  onValueChange={(v) => setEditForm({ ...editForm, role: v as UiRole })}
                   disabled={editTarget?.user_id === user?.id}
                 >
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -337,6 +353,7 @@ export default function UsuariosAdminPage() {
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="gestor">Gestor</SelectItem>
                     <SelectItem value="corretor">Corretor</SelectItem>
+                    <SelectItem value="gestor_corretor">Gestor + Corretor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
