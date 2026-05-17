@@ -141,12 +141,13 @@ export default function Schedule() {
       const start = new Date(m.agendada_para);
       const end = new Date(start.getTime() + (m.duracao_min ?? 60) * 60000);
       const leadNome = m.lead_id ? leadsById.get(m.lead_id)?.nome : null;
+      const contaNome = m.conta_id ? contasById.get(m.conta_id)?.nome : null;
       return {
         id: m.id,
         date: start,
         end,
         tipo: (m.tipo ?? "presencial") as Compromisso["tipo"],
-        titulo: m.titulo || leadNome || "Compromisso",
+        titulo: m.titulo || leadNome || contaNome || "Compromisso",
         status: m.status,
         local: m.local,
         link: m.link,
@@ -165,12 +166,14 @@ export default function Schedule() {
         const start = new Date(c.data);
         const dur = c.duracao_seg ? Math.round(c.duracao_seg / 60) : 30;
         const leadNome = c.lead_id ? leadsById.get(c.lead_id)?.nome : null;
+        const contaNome = c.conta_id ? contasById.get(c.conta_id)?.nome : null;
+        const alvo = leadNome || contaNome;
         return {
           id: `lig:${c.id}`,
           date: start,
           end: new Date(start.getTime() + dur * 60000),
           tipo: "ligacao" as const,
-          titulo: leadNome ? `Ligação com ${leadNome}` : "Ligação agendada",
+          titulo: alvo ? `Ligação com ${alvo}` : "Ligação agendada",
           status: c.resultado || "agendada",
           notas: c.notas,
           lead_id: c.lead_id,
@@ -181,10 +184,12 @@ export default function Schedule() {
     const visitasAgendadas: Compromisso[] = ((vis ?? []) as any[]).map((v) => {
       const start = new Date(v.data_visita);
       const leadNome = v.lead_id ? leadsById.get(v.lead_id)?.nome : null;
+      const contaNome = v.conta_id ? contasById.get(v.conta_id)?.nome : null;
       const imovel = v.imovel_id ? imoveisById.get(v.imovel_id) : null;
+      const alvo = leadNome || contaNome;
       const titulo = imovel?.titulo
-        ? `Visita: ${imovel.titulo}${leadNome ? ` (${leadNome})` : ""}`
-        : leadNome ? `Visita com ${leadNome}` : "Visita";
+        ? `Visita: ${imovel.titulo}${alvo ? ` (${alvo})` : ""}`
+        : alvo ? `Visita com ${alvo}` : "Visita";
       return {
         id: `vis:${v.id}`,
         date: start,
