@@ -158,8 +158,8 @@ export default function ContatoPage() {
             14 anos de experiência no mercado imobiliário de Sinop, com atendimento exclusivo e personalizado.
           </p>
           <motion.a
-            href={createWhatsAppUrl("Olá! Gostaria de mais informações.")}
-            onClick={(event) => openWhatsApp(event, "Olá! Gostaria de mais informações.")}
+            href={createWhatsAppUrl("Olá, tudo bem? Quero falar com um corretor de imóveis.")}
+            onClick={(event) => openWhatsApp(event, "Olá, tudo bem? Quero falar com um corretor de imóveis.")}
             target="_blank"
             rel="noopener noreferrer"
             whileHover={{ scale: 1.03 }}

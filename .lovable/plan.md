@@ -1,16 +1,22 @@
-## Correção de links da navegação lateral e autenticação
+## Objetivo
 
-### Problema identificado
-A navegação lateral (sidebar) do CRM já aponta corretamente para `/crm` e suas subpáginas (`/crm/leads`, `/crm/contas`, etc.).
+Alterar a mensagem pré-preenchida enviada quando o visitante clica em um botão de WhatsApp no site público.
 
-No entanto, existe uma referência residual a `/app` no fluxo de autenticação com Google que precisa ser corrigida:
+## Mudanças
 
-- **`src/pages/Auth.tsx` (linha 37)** — O `redirectTo` do OAuth do Google ainda aponta para `/app`. Após login, o usuário cai em um redirect extra em vez de ir direto para `/crm`.
+**Mensagem geral** (botão flutuante, rodapé/cabeçalho e página de contato):
+- De: `Olá! Gostaria de mais informações.`
+- Para: `Olá, tudo bem? Quero falar com um corretor de imóveis.`
 
-### O que será feito
-1. Atualizar o `redirectTo` do Google OAuth em `src/pages/Auth.tsx` de `/app` para `/crm`.
-2. Verificar rapidamente se existem outras referências a `/app` em links de navegação, botões ou redirecionamentos que possam ter sido perdidos na migração anterior.
+**Mensagem da página do imóvel** (mantendo a referência ao código do imóvel):
+- De: `Olá! Gostaria de mais informações sobre o imóvel {codigo}`
+- Para: `Olá, tudo bem? Quero falar com um corretor de imóveis sobre o imóvel {codigo}.`
 
-### Resultado esperado
-- Login com Google redireciona diretamente para `/crm`
-- Nenhuma referência a `/app` permanece em links de navegação ou fluxos de autenticação
+## Arquivos a editar
+
+- `src/components/site/SiteLayout.tsx` (botão flutuante)
+- `src/pages/site/HomePage.tsx`
+- `src/pages/site/ContatoPage.tsx`
+- `src/pages/site/ImovelDetalhePage.tsx`
+
+Sem alterações em backend, banco de dados ou lógica — apenas o texto da mensagem.

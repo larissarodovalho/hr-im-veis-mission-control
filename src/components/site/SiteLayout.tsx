@@ -108,8 +108,8 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
 
       {/* Floating WhatsApp button */}
       <a
-        href={createWhatsAppUrl("Olá! Gostaria de mais informações.")}
-        onClick={(event) => openWhatsApp(event, "Olá! Gostaria de mais informações.")}
+        href={createWhatsAppUrl("Olá, tudo bem? Quero falar com um corretor de imóveis.")}
+        onClick={(event) => openWhatsApp(event, "Olá, tudo bem? Quero falar com um corretor de imóveis.")}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Falar no WhatsApp"

@@ -292,8 +292,8 @@ export default function ImovelDetalhePage() {
                 </motion.a>
 
                 <motion.a
-                  href={createWhatsAppUrl(`Olá! Gostaria de mais informações sobre o imóvel ${imovel.codigo}`)}
-                  onClick={(event) => openWhatsApp(event, `Olá! Gostaria de mais informações sobre o imóvel ${imovel.codigo}`)}
+                  href={createWhatsAppUrl(`Olá, tudo bem? Quero falar com um corretor de imóveis sobre o imóvel ${imovel.codigo}.`)}
+                  onClick={(event) => openWhatsApp(event, `Olá, tudo bem? Quero falar com um corretor de imóveis sobre o imóvel ${imovel.codigo}.`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.02 }}
