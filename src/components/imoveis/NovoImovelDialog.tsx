@@ -142,17 +142,20 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id;
 
-      // Upload das fotos no bucket "imoveis"
+      // Upload das fotos no bucket "imoveis" (com marca d'água)
       const urls: string[] = [];
-      for (const file of fotos) {
-        const path = `${userId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_")}`;
+      for (const original of fotos) {
+        const file = await applyWatermark(original);
+        const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+        const path = `${userId}/${Date.now()}-${safeName}`;
         const { error: upErr } = await supabase.storage.from("imoveis").upload(path, file, {
           cacheControl: "3600",
           upsert: false,
+          contentType: file.type,
         });
         if (upErr) {
           console.error(upErr);
-          toast.error(`Falha ao enviar foto: ${file.name}`);
+          toast.error(`Falha ao enviar foto: ${original.name}`);
           continue;
         }
         const { data: pub } = supabase.storage.from("imoveis").getPublicUrl(path);
