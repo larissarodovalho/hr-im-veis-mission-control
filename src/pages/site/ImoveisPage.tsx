@@ -13,7 +13,7 @@ import cobertura1 from "@/assets/imoveis/cobertura-1.jpg";
 import sobrado1 from "@/assets/imoveis/sobrado-1.jpg";
 import mansao1 from "@/assets/imoveis/mansao-1.jpg";
 import { useSiteImages } from "@/lib/siteSettings";
-import { createWhatsAppUrl } from "@/lib/whatsapp";
+import { createWhatsAppUrl, openWhatsApp } from "@/lib/whatsapp";
 
 const casaImages = [casaLuxo1, casaLuxo2, casaLuxo3, mansao1];
 const terrenoImages = [terreno1, terreno2];
@@ -472,6 +472,7 @@ export default function ImoveisPage() {
                       <div className="flex gap-2">
                         <motion.a
                           href={createWhatsAppUrl(`Olá! Tenho interesse no imóvel ${im.codigo} - ${im.nome}`)}
+                          onClick={(event) => openWhatsApp(event, `Olá! Tenho interesse no imóvel ${im.codigo} - ${im.nome}`)}
                           target="_blank"
                           rel="noopener noreferrer"
                           whileHover={{ scale: 1.01 }}
@@ -563,6 +564,7 @@ export default function ImoveisPage() {
 
             <motion.a
               href={createWhatsAppUrl("Olá! Gostaria de ajuda para encontrar um imóvel.")}
+              onClick={(event) => openWhatsApp(event, "Olá! Gostaria de ajuda para encontrar um imóvel.")}
               target="_blank"
               rel="noopener noreferrer"
               initial={{ opacity: 0, y: 20 }}
