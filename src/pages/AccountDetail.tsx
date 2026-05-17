@@ -40,17 +40,24 @@ export default function AccountDetail() {
   const [props, setProps] = useState<Propriedade[]>([]);
   const [editing, setEditing] = useState<any>(null);
   const [propEditing, setPropEditing] = useState<Partial<Propriedade> | null>(null);
+  const [corretores, setCorretores] = useState<{ user_id: string; nome: string | null }[]>([]);
 
   const load = async () => {
     if (!id) return;
-    const [{ data: a }, { data: p }] = await Promise.all([
+    const [{ data: a }, { data: p }, { data: c }] = await Promise.all([
       supabase.from("contas").select("*").eq("id", id).maybeSingle(),
       supabase.from("conta_propriedades").select("*").eq("conta_id", id).order("created_at", { ascending: false }),
+      supabase.from("profiles").select("user_id, nome").eq("ativo", true).order("nome"),
     ]);
     setAcc(a);
     setProps((p as Propriedade[]) || []);
+    setCorretores((c as any) || []);
   };
   useEffect(() => { load(); }, [id]);
+
+  const responsavelNome = acc?.responsavel_id
+    ? corretores.find(c => c.user_id === acc.responsavel_id)?.nome ?? null
+    : null;
 
   if (!acc) return <div className="p-4 sm:p-6 lg:p-8 text-muted-foreground">Carregando…</div>;
 
