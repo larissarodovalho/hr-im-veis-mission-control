@@ -174,6 +174,9 @@ export default function AccountDetail() {
           <p className="text-xs text-muted-foreground mt-1">
             Convertido em {format(new Date(acc.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
           </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Responsável: <span className="text-foreground font-medium">{responsavelNome || "—"}</span>
+          </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Select value={listaAtual} onValueChange={(v) => setLista(v as any)}>
