@@ -24,14 +24,29 @@ const FEATURED_KEY = "featured_imoveis";
 
 type ImagesRecord = Partial<Record<SiteImageKey, string>>;
 
+let imagesCache: ImagesRecord | null = null;
+let imagesPromise: Promise<ImagesRecord> | null = null;
+
 export async function fetchSiteImages(): Promise<ImagesRecord> {
-  const { data } = await supabase
-    .from(TABLE as any)
-    .select("value")
-    .eq("key", IMAGES_KEY)
-    .maybeSingle();
-  const value = (data as any)?.value;
-  return (value && typeof value === "object" ? value : {}) as ImagesRecord;
+  if (imagesCache) return imagesCache;
+  if (imagesPromise) return imagesPromise;
+  imagesPromise = (async () => {
+    const { data } = await supabase
+      .from(TABLE as any)
+      .select("value")
+      .eq("key", IMAGES_KEY)
+      .maybeSingle();
+    const value = (data as any)?.value;
+    const result = (value && typeof value === "object" ? value : {}) as ImagesRecord;
+    imagesCache = result;
+    return result;
+  })();
+  return imagesPromise;
+}
+
+export function invalidateSiteImagesCache() {
+  imagesCache = null;
+  imagesPromise = null;
 }
 
 export async function saveSiteImage(key: SiteImageKey, url: string | null) {
