@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Upload, X } from "lucide-react";
+import { applyWatermark } from "@/lib/watermark";
 
 interface Props {
   open: boolean;
