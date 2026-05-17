@@ -3,6 +3,7 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { MapPin, BedDouble, Bath, Car, Maximize2, ArrowLeft, ArrowUpRight, Home, Phone, MessageCircle } from "lucide-react";
 import { createWhatsAppUrl, openWhatsApp } from "@/lib/whatsapp";
+import { ScrollSection } from "@/components/site/MotionSections";
 const IMOVEIS_SITE: any[] = [];
 
 import casaLuxo1 from "@/assets/imoveis/casa-luxo-1.jpg";
@@ -31,28 +32,6 @@ function formatPrice(valor: number) {
 
 const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];
 const smoothEase = [0.25, 0.4, 0.25, 1] as [number, number, number, number];
-
-function ScrollSection({ children, className = "", index = 0 }: { children: React.ReactNode; className?: string; index?: number }) {
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-
-  const y = useTransform(scrollYProgress, [0, 0.15, 0.8, 1], [60, 0, 0, -30]);
-  const opacity = useTransform(scrollYProgress, [0, 0.1, 0.85, 1], [0, 1, 1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.15, 0.8, 1], [0.95, 1, 1, 0.97]);
-  const filter = useTransform(scrollYProgress, [0, 0.1, 0.85, 1], ["blur(4px)", "blur(0px)", "blur(0px)", "blur(2px)"]);
-
-  return (
-    <motion.section
-      ref={ref}
-      style={{ y, opacity, scale, filter, perspective: 1200, transformStyle: "preserve-3d", zIndex: index }}
-      className={`relative ${className}`}
-    >
-      <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-[#050505] to-transparent z-10 pointer-events-none" />
-      {children}
-      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#050505] to-transparent z-10 pointer-events-none" />
-    </motion.section>
-  );
-}
 
 export default function ImovelDetalhePage() {
   const { id } = useParams<{ id: string }>();
