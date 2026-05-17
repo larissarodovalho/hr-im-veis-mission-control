@@ -57,12 +57,19 @@ export default function AgendarPage() {
 
   async function fetchInfo(kindOverride?: Kind) {
     if (!token) return;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
     try {
-      const qs = new URLSearchParams({ token });
+      const qs = new URLSearchParams({ token, _t: String(Date.now()) });
       if (kindOverride) qs.set("kind", kindOverride);
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/booking-info?${qs.toString()}`;
       const res = await fetch(url, {
-        headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        headers: {
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          "cache-control": "no-cache",
+        },
+        cache: "no-store",
+        signal: controller.signal,
       });
       const text = await res.text();
       let data: InfoResponse = {};
@@ -77,7 +84,12 @@ export default function AgendarPage() {
       setInfo(data);
       if (data?.kind && !selectedKind) setSelectedKind(data.kind as Kind);
     } catch (e: any) {
-      setInfo({ error: e?.message || "Falha ao carregar" });
+      const msg = e?.name === "AbortError"
+        ? "A conexão demorou demais. Verifique sua internet e recarregue a página."
+        : (e?.message || "Falha ao carregar");
+      setInfo({ error: msg });
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 
