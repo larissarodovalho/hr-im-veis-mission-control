@@ -690,7 +690,13 @@ Deno.serve(async (req) => {
       reply = reply.replace(/em breve\.?$/i, "").trim();
 
       if (!reply) {
-        reply = `Perfeito! Te envio o link para você escolher o melhor dia e horário para ${KIND_LABELS[bookingKind]} com o Hans.`;
+        const BOOKING_INSTRUCTIONS: Record<string, string> = {
+          presencial: "Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para você vir até o nosso escritório conversar pessoalmente com o Hans.",
+          videochamada: "Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para sua videochamada com o Hans. No horário marcado você recebe o link da chamada.",
+          ligacao: "Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para o Hans te ligar.",
+          whatsapp: "Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para o Hans te chamar aqui no WhatsApp.",
+        };
+        reply = `Perfeito! ${BOOKING_INSTRUCTIONS[bookingKind] ?? "Clique no link abaixo e escolha o melhor dia e horário para sua reunião com o Hans."}`;
       }
       reply += `\n\n${link}`;
 
