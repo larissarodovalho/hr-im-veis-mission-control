@@ -531,6 +531,11 @@ export default function Accounts() {
                           ) : <span className="text-muted-foreground">—</span>;
                         })()}
                       </td>
+                      <td className="p-3">
+                        {a.interesse ? (
+                          <Badge variant="outline" className="bg-amber-500/15 text-amber-700 border-amber-500/30">{a.interesse}</Badge>
+                        ) : <span className="text-muted-foreground">—</span>}
+                      </td>
                       <td className="p-3">{owner === "—" ? <span className="text-muted-foreground">—</span> : owner}</td>
                       <td className="p-3">
                         <Badge className={status === "ativo" ? "bg-success/15 text-success border-success/30 border" : "bg-muted text-muted-foreground border"}>
