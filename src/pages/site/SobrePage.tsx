@@ -140,7 +140,7 @@ export default function SobrePage() {
         <div className="max-w-7xl mx-auto px-6 relative z-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <ParallaxImage
-              src={sectionCommunity}
+              src={img("section_community", sectionCommunity)}
               alt="HR Imóveis"
               className="rounded-2xl aspect-[3/4] lg:aspect-[4/5]"
             />
