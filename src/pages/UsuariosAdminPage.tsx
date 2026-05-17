@@ -49,14 +49,14 @@ export default function UsuariosAdminPage() {
   const [openCreate, setOpenCreate] = useState(false);
   const [form, setForm] = useState({
     nome: "", email: "", telefone: "", cargo: "",
-    role: "corretor" as AppRole, password: genPassword(),
+    role: "corretor" as UiRole, password: genPassword(),
   });
 
   const [resetTarget, setResetTarget] = useState<Row | null>(null);
   const [newPass, setNewPass] = useState("");
 
   const [editTarget, setEditTarget] = useState<Row | null>(null);
-  const [editForm, setEditForm] = useState({ nome: "", email: "", telefone: "", cargo: "", role: "corretor" as AppRole });
+  const [editForm, setEditForm] = useState({ nome: "", email: "", telefone: "", cargo: "", role: "corretor" as UiRole });
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -64,14 +64,19 @@ export default function UsuariosAdminPage() {
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("user_id, role"),
     ]);
-    const roleMap = new Map<string, AppRole>();
+    const rolesByUser = new Map<string, Set<AppRole>>();
     (roles ?? []).forEach((r: any) => {
-      // Priority: admin > gestor > corretor
-      const cur = roleMap.get(r.user_id);
-      const priority = (x: string) => (x === "admin" ? 3 : x === "gestor" ? 2 : 1);
-      if (!cur || priority(r.role) > priority(cur)) roleMap.set(r.user_id, r.role);
+      if (!rolesByUser.has(r.user_id)) rolesByUser.set(r.user_id, new Set());
+      rolesByUser.get(r.user_id)!.add(r.role);
     });
-    setRows(((profs ?? []) as any[]).map((p) => ({ ...p, role: roleMap.get(p.user_id) ?? "corretor" })));
+    const resolve = (set: Set<AppRole> | undefined): UiRole => {
+      if (!set) return "corretor";
+      if (set.has("admin")) return "admin";
+      if (set.has("gestor") && set.has("corretor")) return "gestor_corretor";
+      if (set.has("gestor")) return "gestor";
+      return "corretor";
+    };
+    setRows(((profs ?? []) as any[]).map((p) => ({ ...p, role: resolve(rolesByUser.get(p.user_id)) })));
     setLoading(false);
   }, []);
 
