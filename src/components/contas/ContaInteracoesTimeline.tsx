@@ -34,7 +34,7 @@ export default function ContaInteracoesTimeline({ contaId }: { contaId: string }
   const [items, setItems] = useState<Interacao[]>([]);
   const [authorMap, setAuthorMap] = useState<Record<string, string>>({});
   const [userId, setUserId] = useState<string | null>(null);
-  const [tipo, setTipo] = useState("Reunião");
+  const [tipo, setTipo] = useState("reuniao");
   const [descricao, setDescricao] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -103,7 +103,7 @@ export default function ContaInteracoesTimeline({ contaId }: { contaId: string }
             <SelectTrigger className="sm:w-[180px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               {TIPOS.map((t) => (
-                <SelectItem key={t.value} value={t.value}>{t.value}</SelectItem>
+                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -138,7 +138,7 @@ export default function ContaInteracoesTimeline({ contaId }: { contaId: string }
                 </span>
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="outline" className={meta.color}>{it.tipo}</Badge>
+                    <Badge variant="outline" className={meta.color}>{meta.label}</Badge>
                     <span className="text-xs text-muted-foreground">
                       {format(new Date(it.created_at), "dd MMM yyyy 'às' HH:mm", { locale: ptBR })}
                     </span>
