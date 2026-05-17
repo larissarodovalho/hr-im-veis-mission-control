@@ -103,6 +103,19 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       {/* Main */}
       <main className="flex-1">{children}</main>
 
+      {/* Floating WhatsApp button */}
+      <a
+        href="https://wa.me/5566999955881?text=Olá! Gostaria de mais informações."
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Falar no WhatsApp"
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-black/40 hover:scale-110 transition-transform"
+        style={{ backgroundColor: "#25D366" }}
+      >
+        <span className="absolute inset-0 rounded-full animate-ping opacity-30" style={{ backgroundColor: "#25D366" }} />
+        <MessageCircle className="h-7 w-7 text-white relative z-10" fill="white" strokeWidth={0} />
+      </a>
+
       {/* Footer — minimal Apple-style */}
       <footer className="border-t border-white/5">
         <div className="max-w-7xl mx-auto px-6 py-12">
