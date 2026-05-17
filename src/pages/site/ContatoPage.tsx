@@ -157,7 +157,7 @@ export default function ContatoPage() {
             14 anos de experiência no mercado imobiliário de Sinop, com atendimento exclusivo e personalizado.
           </p>
           <motion.a
-            href="https://wa.me/5566999955881?text=Olá! Gostaria de mais informações."
+            href={`https://wa.me/5566999955881?text=${encodeURIComponent("Olá! Gostaria de mais informações.")}`}
             target="_blank"
             rel="noopener noreferrer"
             whileHover={{ scale: 1.03 }}

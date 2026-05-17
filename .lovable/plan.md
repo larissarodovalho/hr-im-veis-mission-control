@@ -1,27 +1,21 @@
-## Atualizar contato do site para (66) 99995-5881
+## Corrigir links do WhatsApp que abrem com erro
 
-### 1. Substituir número antigo pelo novo
-Trocar todas as ocorrências no site público:
-- `(66) 99999-0000` → `(66) 99995-5881` (exibição)
-- `5566999990000` → `5566999955881` (links `wa.me/`)
+### Diagnóstico
+Os links `wa.me` contêm texto com acentos, espaços e pontuação **não codificados** (ex.: `?text=Olá! Gostaria de mais informações.`). O `wa.me` exige a query `text` URL-encoded; quando não está, ele pode mostrar erro de "número inválido" ou não abrir a conversa corretamente, principalmente no desktop.
 
-Arquivos afetados (somente site público):
-- `src/components/site/SiteLayout.tsx` (rodapé)
-- `src/pages/site/ContatoPage.tsx` (info + CTA WhatsApp)
-- `src/pages/site/HomePage.tsx` (CTA WhatsApp)
-- `src/pages/site/SobrePage.tsx` (CTA WhatsApp)
-- `src/pages/site/ImoveisPage.tsx` (CTAs WhatsApp)
-- `src/pages/site/ImovelDetalhePage.tsx` (CTAs WhatsApp)
+### Correção
+Codificar o parâmetro `text` em todos os links usando `encodeURIComponent(...)` nos arquivos:
+- `src/components/site/SiteLayout.tsx` (botão flutuante)
+- `src/pages/site/ContatoPage.tsx`
+- `src/pages/site/HomePage.tsx`
+- `src/pages/site/SobrePage.tsx`
+- `src/pages/site/ImoveisPage.tsx` (2 links)
+- `src/pages/site/ImovelDetalhePage.tsx` (3 links)
 
-### 2. Botão flutuante de WhatsApp
-Adicionar em `src/components/site/SiteLayout.tsx` um botão fixo no canto inferior direito, visível em todas as páginas do site:
-- Ícone do WhatsApp (lucide `MessageCircle` estilizado em verde do WhatsApp `#25D366`)
-- `position: fixed`, canto inferior-direito, com sombra suave e leve animação de pulse
-- Link para `https://wa.me/5566999955881?text=Olá! Gostaria de mais informações.`
-- `target="_blank"` + `rel="noopener noreferrer"`
-- `aria-label="Falar no WhatsApp"`
-- Z-index acima do conteúdo, mas abaixo do menu mobile aberto
+Padrão aplicado:
+```tsx
+href={`https://wa.me/5566999955881?text=${encodeURIComponent("Olá! ...")}`}
+```
 
 ### Fora do escopo
-- Telas do CRM/admin
-- Placeholder do componente `WhatsAppTab` (config interna)
+Mudança do número, layout, ou outros CTAs.
