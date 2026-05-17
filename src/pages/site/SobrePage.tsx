@@ -29,7 +29,7 @@ export default function SobrePage() {
   return (
     <div className="bg-[#050505]">
       {/* ─── Hero ─── */}
-      <section ref={heroRef} className="relative h-screen flex items-end overflow-hidden">
+      <section ref={heroRef} className="relative h-screen min-h-[100svh] flex items-end overflow-hidden">
         <motion.div className="absolute inset-0" style={{ scale: heroScale }}>
           <img src={img("section_community", sectionCommunity)} alt="HR Imóveis — Sobre nós" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/50 to-transparent" />
