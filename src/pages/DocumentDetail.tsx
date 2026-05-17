@@ -3,11 +3,16 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, Send, Ban, FileText, Clock } from "lucide-react";
+import { ArrowLeft, Download, Send, Ban, FileText, Clock, Trash2 } from "lucide-react";
 import DocumentStatusBadge from "@/components/DocumentStatusBadge";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useRole } from "@/hooks/useRole";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function DocumentDetail() {
   const { id } = useParams();
