@@ -65,7 +65,7 @@ export default function HomePage() {
   return (
     <div ref={pageRef} className="bg-[#050505]">
       {/* ─── Hero ─── */}
-      <section ref={heroRef} className="relative h-screen flex items-end overflow-hidden">
+      <section ref={heroRef} className="relative h-screen min-h-[100svh] flex items-end overflow-hidden">
         <motion.div className="absolute inset-0 bg-[#050505]" style={{ scale: heroScale }}>
           {imagesLoaded && (
             <img
@@ -129,7 +129,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1 }}
-            className="flex gap-4"
+            className="flex flex-wrap justify-center gap-3 sm:gap-4"
           >
             <Link
               to="/imoveis"
