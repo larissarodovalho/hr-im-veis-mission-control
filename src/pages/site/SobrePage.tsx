@@ -389,22 +389,16 @@ export default function SobrePage() {
             Entre em contato e descubra como podemos ajudar você a encontrar o imóvel ideal em Sinop.
           </motion.p>
 
-          <motion.a
+          <a
             href={createWhatsAppUrl("Olá! Gostaria de saber mais sobre a HR Imóveis.")}
             onClick={(event) => openWhatsApp(event, "Olá! Gostaria de saber mais sobre a HR Imóveis.")}
             target="_blank"
             rel="noopener noreferrer"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ margin: "-40px" }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            className="group inline-flex items-center gap-3 px-9 py-3.5 rounded-full bg-white text-black text-[11px] font-medium tracking-[0.15em] uppercase hover:bg-amber-50 transition-all duration-500"
+            className="group inline-flex items-center gap-3 px-9 py-3.5 rounded-full bg-white text-black text-[11px] font-medium tracking-[0.15em] uppercase hover:bg-amber-50 hover:scale-[1.03] active:scale-[0.97] transition-all duration-500"
           >
             Falar com a equipe
             <ArrowUpRight className="h-3.5 w-3.5 group-hover:translate-x-1 group-hover:-translate-y-0.5 transition-transform duration-300" />
-          </motion.a>
+          </a>
         </div>
       </ScrollSection>
 
