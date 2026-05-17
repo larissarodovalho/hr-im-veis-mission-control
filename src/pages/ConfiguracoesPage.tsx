@@ -143,9 +143,14 @@ export default function ConfiguracoesPage() {
       <Tabs defaultValue="empresa" className="pt-4">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="empresa"><Building2 className="h-4 w-4 mr-1" />Empresa</TabsTrigger>
+          <TabsTrigger value="site"><ImageIcon className="h-4 w-4 mr-1" />Site</TabsTrigger>
           <TabsTrigger value="notificacoes"><Bell className="h-4 w-4 mr-1" />Notificações</TabsTrigger>
           <TabsTrigger value="sistema"><Database className="h-4 w-4 mr-1" />Sistema</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="site">
+          <SiteSettingsTab />
+        </TabsContent>
 
         <TabsContent value="empresa">
           <Card>
