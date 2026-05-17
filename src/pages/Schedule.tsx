@@ -57,6 +57,7 @@ const TipoIcon = ({ tipo }: { tipo: Compromisso["tipo"] }) => {
 
 export default function Schedule() {
   const { user } = useAuth();
+  const { isAdmin } = useRole();
   const [reunioes, setReunioes] = useState<Compromisso[]>([]);
   const [bloqueios, setBloqueios] = useState<Bloqueio[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
