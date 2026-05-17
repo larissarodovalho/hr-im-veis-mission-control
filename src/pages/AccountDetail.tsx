@@ -16,6 +16,7 @@ import ContaAgendaQuickAdd from "@/components/contas/ContaAgendaQuickAdd";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { useRole } from "@/hooks/useRole";
 
 type Propriedade = {
   id: string;
