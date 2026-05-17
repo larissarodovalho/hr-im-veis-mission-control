@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ArrowLeft, Pencil, Building2, Phone, Save, FileSignature, Plus, Trash2, MapPin, Target } from "lucide-react";
 import EntityDocumentsTab from "@/components/EntityDocumentsTab";
+import ContaInteracoesTimeline from "@/components/contas/ContaInteracoesTimeline";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -249,6 +250,10 @@ export default function AccountDetail() {
           </div>
         )}
       </div>
+
+      <Card className="p-5">
+        <ContaInteracoesTimeline contaId={acc.id} />
+      </Card>
 
       {acc.endereco && (
         <Card className="p-5">
