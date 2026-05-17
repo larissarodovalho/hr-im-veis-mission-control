@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import hrLogo from "@/assets/logo-hr-branco.png";
 import { createWhatsAppUrl, openWhatsApp } from "@/lib/whatsapp";
+import ScrollToTop from "./ScrollToTop";
 
 const navLinks = [
   { label: "Início", to: "/site" },
@@ -27,6 +28,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="min-h-screen flex flex-col bg-[#0a0a0a] text-white">
+      <ScrollToTop />
       {/* Sticky Nav */}
       <motion.header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
