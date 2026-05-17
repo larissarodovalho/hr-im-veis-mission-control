@@ -197,7 +197,7 @@ export default function HomePage() {
 
       {/* ─── Full-width Parallax ─── */}
       <ScrollSection className="relative h-[75vh] sm:h-[85vh] -mt-16" index={2}>
-        <ParallaxImage src={sectionLiving} alt="Interior de luxo" className="absolute inset-0 h-full" />
+        <ParallaxImage src={img("section_living", sectionLiving)} alt="Interior de luxo" className="absolute inset-0 h-full" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-[#050505]/20" />
         <div className="relative z-10 flex items-center justify-center h-full max-w-5xl mx-auto px-6 text-center">
           <div>
