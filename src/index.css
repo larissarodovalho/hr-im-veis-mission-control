@@ -134,3 +134,8 @@
   .gold-gradient { background: var(--gradient-mono); }
   .kanban-column { @apply bg-muted/40 rounded-xl p-4 min-h-[300px]; }
 }
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+}
