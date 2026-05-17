@@ -1,25 +1,20 @@
-Vou corrigir o problema do link de agendamento da Sofia e deixar a página mais resistente a falhas.
+## Diagnóstico
 
-O que encontrei:
-- O link mais recente existe no banco e a função de disponibilidade responde corretamente.
-- Ao abrir o link real mais recente, a página carrega com horários normalmente.
-- O caso que aparece como “Link inválido” acontece quando o token da URL não existe, expira, é cortado/copied incorretamente, ou quando a função retorna erro e a página mostra a mensagem genérica.
+A página de agendamento está funcionando — desktop carrega normalmente. O motivo de "tela branca no celular" é que o link enviado pelo WhatsApp aponta para `www.hrimoveis.com` (site publicado), e a versão publicada ainda não tem as últimas correções da página `/agendar/:token` que fiz agora.
 
-Plano de correção:
-1. Validar a geração do link no `whatsapp-webhook`
-   - Garantir que a Sofia sempre envie o domínio publicado correto: `https://www.hrimoveis.com/agendar/{token}`.
-   - Ajustar a mensagem para colocar o link em uma linha separada, sem texto colado depois dele, reduzindo risco do WhatsApp cortar ou quebrar a URL.
+Mudanças no frontend (UI) só vão pro ar quando você clica em **Publish → Update** no canto superior direito. Mudanças em edge functions vão automáticas — por isso o link novo é gerado certinho, mas a página que recebe o link no celular ainda está com a versão antiga.
 
-2. Melhorar o diagnóstico na página `/agendar/:token`
-   - Separar claramente os estados: link inválido, link expirado, falha temporária para carregar agenda e sem horários disponíveis.
-   - Evitar “página em branco” caso a resposta da função venha vazia, HTML, erro de rede ou JSON inválido.
-   - Exibir uma mensagem útil pedindo para solicitar novo link à Sofia, sem deixar o lead perdido.
+## Plano
 
-3. Tornar a busca do agendamento mais robusta
-   - No frontend, checar `res.ok` antes de tentar usar os dados.
-   - Se a função retornar erro temporário, mostrar uma tela de erro amigável em vez de quebrar a renderização.
+1. **Republicar o app** — clicar em **Publish → Update** para subir a versão atualizada da página `/agendar` (com tratamento de erros que evita tela em branco).
 
-4. Verificar o fluxo após a alteração
-   - Testar o link recente da Larissa.
-   - Testar um token inválido para confirmar que aparece a mensagem correta.
-   - Confirmar que os horários aparecem quando o token é válido.
+2. **Reforço extra na página** (mexer no código):
+   - Adicionar um *error boundary* específico em `/agendar/:token` para garantir que qualquer crash de JS no celular mostre uma mensagem em vez de branco total.
+   - Forçar `no-cache` na requisição de slots, evitando que celular use uma resposta antiga ruim do cache.
+   - Adicionar uma checagem visual de "carregando demais" (timeout de 15s) → se passar disso, mostrar mensagem pedindo para recarregar ou pedir novo link.
+
+3. **Validar no celular real** depois do republish:
+   - Pedir pra Larissa (ou você) reabrir o link no celular.
+   - Se ainda branco, te peço um screenshot e os logs do navegador.
+
+Não vou mexer em nada de banco nem de função do WhatsApp — o link em si já está sendo gerado certo.

@@ -29,6 +29,7 @@ import Users from "@/pages/Users";
 import ConfiguracoesPage from "@/pages/ConfiguracoesPage";
 import NotFound from "@/pages/NotFound";
 import AgendarPage from "@/pages/AgendarPage";
+import AgendarErrorBoundary from "@/components/AgendarErrorBoundary";
 import UnsubscribePage from "@/pages/UnsubscribePage";
 import CapturaPage from "@/pages/CapturaPage";
 // Site público (mantido)
@@ -52,7 +53,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/esqueci-senha" element={<ForgotPassword />} />
             <Route path="/redefinir-senha" element={<ResetPassword />} />
-            <Route path="/agendar/:token" element={<AgendarPage />} />
+            <Route path="/agendar/:token" element={<AgendarErrorBoundary><AgendarPage /></AgendarErrorBoundary>} />
             <Route path="/unsubscribe" element={<UnsubscribePage />} />
             <Route path="/captura" element={<CapturaPage />} />
 
