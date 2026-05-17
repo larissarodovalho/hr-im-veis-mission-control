@@ -19,6 +19,18 @@ import { useWhatsAppPerConvUnread } from "@/hooks/useWhatsAppPerConvUnread";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+const AVATAR_PALETTE = [
+  "hsl(210 55% 45%)", "hsl(160 45% 40%)", "hsl(25 65% 50%)", "hsl(340 50% 50%)",
+  "hsl(265 40% 50%)", "hsl(190 50% 42%)", "hsl(45 60% 45%)", "hsl(0 50% 50%)",
+  "hsl(135 35% 42%)", "hsl(290 35% 48%)",
+];
+function colorFromName(name: string): string {
+  const s = (name || "").trim();
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return AVATAR_PALETTE[h % AVATAR_PALETTE.length];
+}
+
 type Conv = {
   id: string;
   phone: string;
@@ -283,7 +295,10 @@ export default function WhatsApp() {
                 className={"w-full text-left p-3 border-b hover:bg-muted/50 " + (active?.id === c.id ? "bg-muted" : "")}
               >
                 <div className="flex items-center gap-2">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-primary text-primary-foreground text-xs font-semibold">
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white text-xs font-semibold"
+                    style={{ backgroundColor: colorFromName(displayName) }}
+                  >
                     {initials(displayName)}
                   </div>
                   <div className="min-w-0 flex-1">
