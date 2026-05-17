@@ -12,7 +12,7 @@ function durationMin(kind: string): number {
 }
 
 function tipoLabel(kind: string): string {
-  return kind === "ligacao" ? "ligação" : kind === "videochamada" ? "videochamada" : "reunião presencial";
+  return kind === "ligacao" ? "ligação" : kind === "videochamada" ? "videochamada" : kind === "whatsapp" ? "contato por WhatsApp" : "reunião presencial";
 }
 
 Deno.serve(async (req) => {
@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const allowedKinds = ["videochamada", "presencial", "ligacao"];
+    const allowedKinds = ["videochamada", "presencial", "ligacao", "whatsapp"];
     if (kindReq && allowedKinds.includes(kindReq) && kindReq !== link.kind) {
       await supabase.from("booking_links").update({ kind: kindReq }).eq("id", link.id);
       link.kind = kindReq;

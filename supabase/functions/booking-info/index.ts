@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const allowedKinds = ["videochamada", "presencial", "ligacao"];
+    const allowedKinds = ["videochamada", "presencial", "ligacao", "whatsapp"];
     const effectiveKind = allowedKinds.includes(kindOverride) ? kindOverride : link.kind;
     const dur = durationMin(effectiveKind);
 
