@@ -173,7 +173,7 @@ export default function Leads() {
                 <Card key={l.id} className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <Link to={`/app/leads/${l.id}`} className="font-medium hover:underline block truncate">{l.nome}</Link>
+                      <Link to={`/crm/leads/${l.id}`} className="font-medium hover:underline block truncate">{l.nome}</Link>
                       {l.telefone && <div className="text-xs text-muted-foreground truncate">{l.telefone}</div>}
                     </div>
                     {canDelete && <DeleteLeadButton name={l.nome} onConfirm={() => remove(l.id, l.nome)} />}
@@ -207,7 +207,7 @@ export default function Leads() {
                   return (
                     <tr key={l.id} className="border-t hover:bg-muted/30">
                       <td className="p-3">
-                        <Link to={`/app/leads/${l.id}`} className="font-medium hover:underline">{l.nome}</Link>
+                        <Link to={`/crm/leads/${l.id}`} className="font-medium hover:underline">{l.nome}</Link>
                         {isUrgent(l) && <Badge className="ml-2 bg-destructive text-destructive-foreground border-destructive border text-[10px] animate-pulse">🔥 Imediato</Badge>}
                         {convertedIds.has(l.id) && <Badge className="ml-2 bg-success/15 text-success border-success/30 border text-[10px] gap-0.5"><Building2 className="h-2.5 w-2.5" /> Conta</Badge>}
                         <div className="text-xs text-muted-foreground">{l.telefone}</div>
@@ -263,7 +263,7 @@ function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged }: {
       <div className="flex items-start gap-2">
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-primary text-primary-foreground text-xs font-semibold flex-shrink-0">{initials(lead.nome)}</div>
         <div className="min-w-0 flex-1">
-          <Link to={`/app/leads/${lead.id}`} className="font-medium text-sm hover:underline block truncate" onPointerDown={e => e.stopPropagation()}>{lead.nome}</Link>
+          <Link to={`/crm/leads/${lead.id}`} className="font-medium text-sm hover:underline block truncate" onPointerDown={e => e.stopPropagation()}>{lead.nome}</Link>
           {lead.regiao && <div className="text-xs text-muted-foreground truncate">{lead.regiao}</div>}
         </div>
       </div>
@@ -522,7 +522,7 @@ function NewLeadDialog({ open, onOpenChange, onCreated, userId }: any) {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" onClick={() => { onOpenChange(false); reset(); navigate(`/app/leads/${d.id}`); }}>
+                  <Button size="sm" variant="outline" onClick={() => { onOpenChange(false); reset(); navigate(`/crm/leads/${d.id}`); }}>
                     Abrir existente
                   </Button>
                   <Button size="sm" onClick={() => updateExisting(d)}>

@@ -410,7 +410,7 @@ export default function Accounts() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Link to={`/app/contas/${a.id}`} className="font-medium hover:underline truncate">{a.nome}</Link>
+                      <Link to={`/crm/contas/${a.id}`} className="font-medium hover:underline truncate">{a.nome}</Link>
                       {a.is_partner && (
                         <Badge className="bg-accent/20 text-accent-foreground border-accent/40 border text-[10px]">
                           <Handshake className="h-3 w-3 mr-1" /> Parceiro
@@ -447,7 +447,7 @@ export default function Accounts() {
                   <div><span className="text-xs text-muted-foreground">Responsável: </span><span>{owner}</span></div>
                 </div>
                 <div className="flex gap-2 pt-1">
-                  <Link to={`/app/contas/${a.id}`} className="flex-1">
+                  <Link to={`/crm/contas/${a.id}`} className="flex-1">
                     <Button variant="outline" size="sm" className="w-full">Abrir <ArrowRight className="h-3.5 w-3.5 ml-1" /></Button>
                   </Link>
                   {canDelete && (
@@ -504,7 +504,7 @@ export default function Accounts() {
                     <tr key={a.id} className="border-t hover:bg-muted/30">
                       <td className="p-3">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <Link to={`/app/contas/${a.id}`} className="font-medium hover:underline">{a.nome}</Link>
+                          <Link to={`/crm/contas/${a.id}`} className="font-medium hover:underline">{a.nome}</Link>
                           {a.is_partner && (
                             <Badge className="bg-accent/20 text-accent-foreground border-accent/40 border text-[10px]">
                               <Handshake className="h-3 w-3 mr-1" /> Parceiro
@@ -539,7 +539,7 @@ export default function Accounts() {
                       </td>
                       <td className="p-3">
                         <div className="flex items-center gap-1">
-                          <Link to={`/app/contas/${a.id}`}><Button variant="ghost" size="icon" className="h-8 w-8"><ArrowRight className="h-4 w-4" /></Button></Link>
+                          <Link to={`/crm/contas/${a.id}`}><Button variant="ghost" size="icon" className="h-8 w-8"><ArrowRight className="h-4 w-4" /></Button></Link>
                           {canDelete && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>

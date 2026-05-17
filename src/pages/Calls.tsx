@@ -194,9 +194,9 @@ export default function Calls() {
                 <td className="p-3">{format(new Date(c.data), "Pp", { locale: ptBR })}</td>
                 <td className="p-3" onClick={(e) => e.stopPropagation()}>
                   {c.leads?.id ? (
-                    <Link to={`/app/leads/${c.lead_id}`} className="hover:underline font-medium">{c.leads.nome}</Link>
+                    <Link to={`/crm/leads/${c.lead_id}`} className="hover:underline font-medium">{c.leads.nome}</Link>
                   ) : c.conta?.id ? (
-                    <Link to={`/app/contas/${c.conta_id}`} className="hover:underline font-medium">{c.conta.nome}</Link>
+                    <Link to={`/crm/contas/${c.conta_id}`} className="hover:underline font-medium">{c.conta.nome}</Link>
                   ) : c.lead_id ? (
                     <span className="text-muted-foreground">Lead removido</span>
                   ) : (

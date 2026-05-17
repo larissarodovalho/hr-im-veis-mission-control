@@ -181,9 +181,9 @@ export default function Visits() {
                 <td className="p-3">{format(new Date(v.data_visita), "Pp", { locale: ptBR })}</td>
                 <td className="p-3" onClick={(e) => e.stopPropagation()}>
                   {v.leads?.id ? (
-                    <Link to={`/app/leads/${v.lead_id}`} className="hover:underline font-medium">{v.leads.nome}</Link>
+                    <Link to={`/crm/leads/${v.lead_id}`} className="hover:underline font-medium">{v.leads.nome}</Link>
                   ) : v.conta?.id ? (
-                    <Link to={`/app/contas/${v.conta_id}`} className="hover:underline font-medium">{v.conta.nome}</Link>
+                    <Link to={`/crm/contas/${v.conta_id}`} className="hover:underline font-medium">{v.conta.nome}</Link>
                   ) : "—"}
                 </td>
                 <td className="p-3 text-muted-foreground">{v.imoveis?.titulo || "—"}</td>

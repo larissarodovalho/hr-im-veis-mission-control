@@ -66,7 +66,7 @@ export function EventsCalendar({ events, title = "Calendário" }: EventsCalendar
                         <span className="text-muted-foreground font-normal">{format(ev.date, "HH:mm", { locale: ptBR })}</span>
                         {" — "}
                         {ev.lead_id ? (
-                          <Link to={`/app/leads/${ev.lead_id}`} className="text-primary underline-offset-2 hover:underline">
+                          <Link to={`/crm/leads/${ev.lead_id}`} className="text-primary underline-offset-2 hover:underline">
                             {ev.title}
                           </Link>
                         ) : (

@@ -98,7 +98,7 @@ export default function Documents() {
               <Card
                 key={d.id}
                 className="p-4 hover:shadow-md cursor-pointer transition"
-                onClick={() => navigate(`/app/documentos/${d.id}`)}
+                onClick={() => navigate(`/crm/documentos/${d.id}`)}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <h3 className="font-medium line-clamp-2">{d.name}</h3>
