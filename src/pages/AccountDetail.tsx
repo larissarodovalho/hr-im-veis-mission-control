@@ -231,7 +231,7 @@ export default function AccountDetail() {
                   </div>
                   <div className="flex gap-1">
                     <Button size="sm" variant="ghost" onClick={() => setPropEditing(p)}><Pencil className="h-4 w-4" /></Button>
-                    <Button size="sm" variant="ghost" onClick={() => deleteProp(p.id)}><Trash2 className="h-4 w-4" /></Button>
+                    {isAdmin && <Button size="sm" variant="ghost" onClick={() => deleteProp(p.id)}><Trash2 className="h-4 w-4" /></Button>}
                   </div>
                 </div>
                 {p.regiao && <p className="text-sm text-muted-foreground inline-flex items-center gap-1 mt-1"><MapPin className="h-3.5 w-3.5" /> {p.regiao}</p>}
