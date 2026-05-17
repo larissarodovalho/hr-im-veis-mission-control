@@ -92,7 +92,7 @@ export default function ContatoPage() {
       <ScrollSection className="max-w-6xl mx-auto px-6 mb-32">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <ParallaxImage
-            src={sectionLiving}
+            src={img("section_living", sectionLiving)}
             alt="Escritório HR Imóveis"
             className="rounded-3xl aspect-[4/5]"
           />
