@@ -14,15 +14,17 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { Phone, Plus } from "lucide-react";
+import { SearchableSelect } from "@/components/SearchableSelect";
 
 export default function Calls() {
   const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
+  const [contas, setContas] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
-  const [form, setForm] = useState({ lead_id: "none", data: "", duracao_seg: 0, resultado: "atendeu", notas: "" });
-  const [editForm, setEditForm] = useState({ data: "", duracao_seg: 0, resultado: "atendeu", notas: "" });
+  const [form, setForm] = useState({ lead_id: "none", conta_id: "none", data: "", duracao_seg: 0, resultado: "atendeu", notas: "" });
+  const [editForm, setEditForm] = useState({ lead_id: "none", conta_id: "none", data: "", duracao_seg: 0, resultado: "atendeu", notas: "" });
 
   const load = async () => {
     const { data: calls, error } = await supabase
@@ -35,16 +37,27 @@ export default function Calls() {
       return;
     }
     const leadIds = [...new Set((calls ?? []).map((c: any) => c.lead_id).filter(Boolean))];
+    const contaIds = [...new Set((calls ?? []).map((c: any) => c.conta_id).filter(Boolean))];
     let leadsById = new Map<string, any>();
+    let contasById = new Map<string, any>();
     if (leadIds.length) {
       const { data: ls } = await supabase.from("leads").select("id,nome").in("id", leadIds);
       leadsById = new Map((ls ?? []).map((l: any) => [l.id, l]));
     }
-    setItems((calls ?? []).map((c: any) => ({ ...c, leads: c.lead_id ? leadsById.get(c.lead_id) ?? null : null })));
+    if (contaIds.length) {
+      const { data: cs } = await supabase.from("contas").select("id,nome").in("id", contaIds);
+      contasById = new Map((cs ?? []).map((c: any) => [c.id, c]));
+    }
+    setItems((calls ?? []).map((c: any) => ({
+      ...c,
+      leads: c.lead_id ? leadsById.get(c.lead_id) ?? null : null,
+      conta: c.conta_id ? contasById.get(c.conta_id) ?? null : null,
+    })));
   };
   useEffect(() => {
     load();
     supabase.from("leads").select("id, nome").order("nome").then(({ data }) => setLeads(data ?? []));
+    supabase.from("contas").select("id, nome").order("nome").then(({ data }) => setContas(data ?? []));
   }, []);
 
   const add = async (e: React.FormEvent) => {
@@ -52,6 +65,7 @@ export default function Calls() {
     if (!form.data) return toast.error("Informe data");
     const { error } = await supabase.from("ligacoes").insert({
       lead_id: form.lead_id === "none" ? null : form.lead_id,
+      conta_id: form.conta_id === "none" ? null : form.conta_id,
       data: new Date(form.data).toISOString(),
       duracao_seg: Number(form.duracao_seg) || 0,
       resultado: form.resultado, notas: form.notas || null,
@@ -59,7 +73,7 @@ export default function Calls() {
     });
     if (error) return toast.error(error.message);
     toast.success("Ligação registrada");
-    setForm({ lead_id: "none", data: "", duracao_seg: 0, resultado: "atendeu", notas: "" });
+    setForm({ lead_id: "none", conta_id: "none", data: "", duracao_seg: 0, resultado: "atendeu", notas: "" });
     setOpen(false); load();
   };
 
@@ -68,6 +82,8 @@ export default function Calls() {
     const dt = new Date(c.data);
     const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     setEditForm({
+      lead_id: c.lead_id || "none",
+      conta_id: c.conta_id || "none",
       data: local,
       duracao_seg: c.duracao_seg || 0,
       resultado: c.resultado || "atendeu",
@@ -79,6 +95,8 @@ export default function Calls() {
     e.preventDefault();
     if (!editing) return;
     const { error } = await supabase.from("ligacoes").update({
+      lead_id: editForm.lead_id === "none" ? null : editForm.lead_id,
+      conta_id: editForm.conta_id === "none" ? null : editForm.conta_id,
       data: new Date(editForm.data).toISOString(),
       duracao_seg: Number(editForm.duracao_seg) || 0,
       resultado: editForm.resultado,
@@ -119,15 +137,27 @@ export default function Calls() {
           <DialogContent>
             <DialogHeader><DialogTitle>Nova ligação</DialogTitle></DialogHeader>
             <form onSubmit={add} className="space-y-3">
-              <div>
-                <Label>Lead</Label>
-                <Select value={form.lead_id} onValueChange={v => setForm({ ...form, lead_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Sem lead" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sem lead</SelectItem>
-                    {leads.map(l => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <Label>Lead</Label>
+                  <SearchableSelect
+                    value={form.lead_id}
+                    onChange={(v) => setForm({ ...form, lead_id: v })}
+                    options={leads}
+                    placeholder="Buscar lead..."
+                    emptyLabel="Sem lead"
+                  />
+                </div>
+                <div>
+                  <Label>Conta</Label>
+                  <SearchableSelect
+                    value={form.conta_id}
+                    onChange={(v) => setForm({ ...form, conta_id: v })}
+                    options={contas}
+                    placeholder="Buscar conta..."
+                    emptyLabel="Sem conta"
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Data e hora</Label><Input type="datetime-local" value={form.data} onChange={e => setForm({ ...form, data: e.target.value })} /></div>
@@ -157,12 +187,22 @@ export default function Calls() {
 
       <Card className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left"><tr><th className="p-3">Quando</th><th className="p-3">Lead</th><th className="p-3">Duração</th><th className="p-3">Resultado</th><th className="p-3 w-32">Ações</th></tr></thead>
+          <thead className="bg-muted/50 text-left"><tr><th className="p-3">Quando</th><th className="p-3">Vínculo</th><th className="p-3">Duração</th><th className="p-3">Resultado</th><th className="p-3 w-32">Ações</th></tr></thead>
           <tbody>
             {items.map(c => (
               <tr key={c.id} className="border-t hover:bg-muted/40 cursor-pointer" onClick={() => openEdit(c)}>
                 <td className="p-3">{format(new Date(c.data), "Pp", { locale: ptBR })}</td>
-                <td className="p-3" onClick={(e) => e.stopPropagation()}>{c.leads?.id ? <Link to={`/app/leads/${c.lead_id}`} className="hover:underline font-medium">{c.leads.nome}</Link> : (c.lead_id ? <span className="text-muted-foreground">Lead removido</span> : <span className="text-muted-foreground">Sem lead</span>)}</td>
+                <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                  {c.leads?.id ? (
+                    <Link to={`/app/leads/${c.lead_id}`} className="hover:underline font-medium">{c.leads.nome}</Link>
+                  ) : c.conta?.id ? (
+                    <Link to={`/app/contas/${c.conta_id}`} className="hover:underline font-medium">{c.conta.nome}</Link>
+                  ) : c.lead_id ? (
+                    <span className="text-muted-foreground">Lead removido</span>
+                  ) : (
+                    <span className="text-muted-foreground">Sem vínculo</span>
+                  )}
+                </td>
                 <td className="p-3 text-muted-foreground">{c.duracao_seg ? `${Math.floor(c.duracao_seg/60)}m ${c.duracao_seg%60}s` : "—"}</td>
                 <td className="p-3"><Badge variant="outline">{c.resultado || "—"}</Badge></td>
                 <td className="p-3" onClick={(e) => e.stopPropagation()}>
@@ -181,6 +221,28 @@ export default function Calls() {
         <DialogContent>
           <DialogHeader><DialogTitle>Editar ligação</DialogTitle></DialogHeader>
           <form onSubmit={saveEdit} className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <Label>Lead</Label>
+                <SearchableSelect
+                  value={editForm.lead_id}
+                  onChange={(v) => setEditForm({ ...editForm, lead_id: v })}
+                  options={leads}
+                  placeholder="Buscar lead..."
+                  emptyLabel="Sem lead"
+                />
+              </div>
+              <div>
+                <Label>Conta</Label>
+                <SearchableSelect
+                  value={editForm.conta_id}
+                  onChange={(v) => setEditForm({ ...editForm, conta_id: v })}
+                  options={contas}
+                  placeholder="Buscar conta..."
+                  emptyLabel="Sem conta"
+                />
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Data e hora</Label><Input type="datetime-local" value={editForm.data} onChange={e => setEditForm({ ...editForm, data: e.target.value })} /></div>
               <div><Label>Duração (s)</Label><Input type="number" value={editForm.duracao_seg} onChange={e => setEditForm({ ...editForm, duracao_seg: Number(e.target.value) })} /></div>
