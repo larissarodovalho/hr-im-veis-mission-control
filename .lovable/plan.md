@@ -1,33 +1,34 @@
-## Diagnóstico
-Verifiquei os logs: `send-transactional-email` **não foi chamado nem uma vez** e não há nenhum registro de envio. O `admin-create-user` tentou disparar via `admin.functions.invoke(...)`, mas o cliente Supabase service-role criado dentro de uma edge function não propaga corretamente o token nessa chamada — ela falha silenciosamente e o `try/catch` engole o erro.
+## Objetivo
+Personalizar o e-mail de boas-vindas (novo usuário do CRM) com a identidade e os dados de contato oficiais da HR Imóveis.
 
-## Correção
+## Dados que serão incluídos (extraídos do site institucional)
+- **Endereço:** Av. dos Ingás, 2075 — Jd. Maringá, Sinop/MT
+- **Telefone/WhatsApp:** (66) 99999-0000
+- **E-mail institucional:** contato@hrimoveis.com.br
+- **Site:** www.hrimoveis.com
+- **Horário:** Seg a Sex 08h–18h · Sáb 08h–12h
 
-Trocar a invocação interna por um **`fetch` direto** ao endpoint `/functions/v1/send-transactional-email`, autenticado com o `SUPABASE_SERVICE_ROLE_KEY` (padrão recomendado para chamadas server-to-server entre edge functions).
+## Mudanças no template
+Arquivo único: `supabase/functions/_shared/transactional-email-templates/user-welcome.tsx`
 
-Mudanças em `supabase/functions/admin-create-user/index.ts`:
-- Substituir `admin.functions.invoke("send-transactional-email", …)` por:
-  ```ts
-  await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${SERVICE_ROLE}`,
-      apikey: SERVICE_ROLE,
-    },
-    body: JSON.stringify({ templateName: "user-welcome", recipientEmail: email, idempotencyKey: `user-welcome-${newId}`, purpose: "transactional", templateData: { nome, email, senha: password, loginUrl } }),
-  });
-  ```
-- Logar `console.log` antes/depois com `status` da resposta para facilitar debug futuro.
-- Manter best-effort: se falhar, o usuário ainda é criado e o admin vê a senha na tela.
+1. **Cabeçalho de marca** — adicionar bloco no topo com nome "HR Imóveis" em destaque + subtítulo "Sinop — Mato Grosso", usando a paleta escura do site (preto/cinza/bege) já presente no template.
+2. **Saudação personalizada** — manter "Olá, {nome}!" e ajustar o texto para soar como uma mensagem da equipe ("Seja bem-vindo(a) ao time HR Imóveis. Criamos seu acesso ao nosso CRM…").
+3. **Credenciais** — caixa de credenciais com pequena melhoria visual (label em uppercase, espaçamento maior).
+4. **Botão CTA** — manter "Acessar o CRM" apontando para `loginUrl`.
+5. **Aviso de segurança** — manter, com texto mais claro sobre trocar a senha em Configurações → Perfil.
+6. **Assinatura institucional (novo)** — rodapé com:
+   - Linha "Equipe HR Imóveis"
+   - Endereço, telefone, e-mail, horário
+   - Link para o site
+   - Pequena separação visual (linha cinza)
+7. **Tipografia/cores** — manter `Montserrat`, preto `#2B2A29`, bege/cinza suaves já em uso para combinar com o site.
 
-Após editar, faço o redeploy do `admin-create-user`.
+Subject permanece: "Seu acesso ao CRM HR Imóveis".
 
-## Verificação
-Após o redeploy, ao cadastrar um novo usuário:
-1. Olho os logs de `admin-create-user` para confirmar que o fetch retornou 200.
-2. Olho `email_send_log` para ver o registro `pending → sent`.
-3. Caso `pending` fique parado, é problema do queue/DNS — aí investigo `process-email-queue` e status do domínio.
+## Deploy e verificação
+- Redeploy de `send-transactional-email` (carrega o template novo).
+- Reenvio do e-mail de teste para o Hans (`hans@gruporodovalho.com.br`) com a senha temporária atual já redefinida, para você ver o resultado na caixa.
 
-## Fora do escopo
-- Reenviar o e-mail para o Hans (já criado) — posso fazer manualmente depois com `curl_edge_functions` se quiser.
+## Fora de escopo
+- Não vou alterar o e-mail de notificação de lead nem templates de auth.
+- Não vou adicionar logo agora (não encontrei arquivo `logo.*` em `public/` ou `src/assets/`). Se quiser, depois é só me dizer qual usar e eu adiciono no topo do e-mail.
