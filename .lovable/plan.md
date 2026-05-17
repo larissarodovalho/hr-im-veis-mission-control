@@ -1,34 +1,47 @@
-## Objetivo
-Personalizar o e-mail de boas-vindas (novo usuário do CRM) com a identidade e os dados de contato oficiais da HR Imóveis.
+# Importação das 1.358 contas (HR Imóveis)
 
-## Dados que serão incluídos (extraídos do site institucional)
-- **Endereço:** Av. dos Ingás, 2075 — Jd. Maringá, Sinop/MT
-- **Telefone/WhatsApp:** (66) 99999-0000
-- **E-mail institucional:** contato@hrimoveis.com.br
-- **Site:** www.hrimoveis.com
-- **Horário:** Seg a Sex 08h–18h · Sáb 08h–12h
+## Resumo
+Importar a planilha `Novo_relatório_Contatos_e_contas-2026-05-17` direto na tabela `contas` via script, atribuindo todas ao Hans Rodovalho (representando HR Imóveis), pulando qualquer conta que já exista hoje em `contas` ou `leads`.
 
-## Mudanças no template
-Arquivo único: `supabase/functions/_shared/transactional-email-templates/user-welcome.tsx`
+## Mapeamento de campos
+| Planilha | Campo `contas` |
+|---|---|
+| Nome da conta (fallback: Primeiro + Sobrenome) | `nome` |
+| Celular (fallback: Telefone) | `telefone` (normalizado) |
+| Email | `email` (lowercase) |
+| Cidade + Estado (quando houver) | `endereco` |
+| Cargo (quando houver) | `observacoes` |
+| — | `tipo` = `PF` |
+| — | `etapa_funil` = `a_contatar` |
+| — | `status` = `ativo` |
+| — | `responsavel_id` = `6132fe03-…` (Hans) |
+| — | `created_by` = Hans |
+| — | `tags` = `['importado-2026-05', 'hr-imoveis']` + (sufixo do proprietário original: `dono:gabriel-souza`, `dono:hans-rodovalho`, `dono:rafael-filimberti`) para rastreabilidade e futura reatribuição |
 
-1. **Cabeçalho de marca** — adicionar bloco no topo com nome "HR Imóveis" em destaque + subtítulo "Sinop — Mato Grosso", usando a paleta escura do site (preto/cinza/bege) já presente no template.
-2. **Saudação personalizada** — manter "Olá, {nome}!" e ajustar o texto para soar como uma mensagem da equipe ("Seja bem-vindo(a) ao time HR Imóveis. Criamos seu acesso ao nosso CRM…").
-3. **Credenciais** — caixa de credenciais com pequena melhoria visual (label em uppercase, espaçamento maior).
-4. **Botão CTA** — manter "Acessar o CRM" apontando para `loginUrl`.
-5. **Aviso de segurança** — manter, com texto mais claro sobre trocar a senha em Configurações → Perfil.
-6. **Assinatura institucional (novo)** — rodapé com:
-   - Linha "Equipe HR Imóveis"
-   - Endereço, telefone, e-mail, horário
-   - Link para o site
-   - Pequena separação visual (linha cinza)
-7. **Tipografia/cores** — manter `Montserrat`, preto `#2B2A29`, bege/cinza suaves já em uso para combinar com o site.
+Campos descartados: País (sempre "United States" — lixo do export), Fax, CEP, Tratamento.
 
-Subject permanece: "Seu acesso ao CRM HR Imóveis".
+## Regras de dedupe (pular)
+Para cada linha, considero duplicata e **pulo** se bater com algum registro existente em `contas` ou `leads` por:
+- `email` (case-insensitive), ou
+- últimos 8 dígitos do `telefone`
 
-## Deploy e verificação
-- Redeploy de `send-transactional-email` (carrega o template novo).
-- Reenvio do e-mail de teste para o Hans (`hans@gruporodovalho.com.br`) com a senha temporária atual já redefinida, para você ver o resultado na caixa.
+Também dedupo dentro do próprio arquivo (não inserir duas vezes a mesma linha).
 
-## Fora de escopo
-- Não vou alterar o e-mail de notificação de lead nem templates de auth.
-- Não vou adicionar logo agora (não encontrei arquivo `logo.*` em `public/` ou `src/assets/`). Se quiser, depois é só me dizer qual usar e eu adiciono no topo do e-mail.
+## Processo
+1. **Pré-carregar índices** de `contas(email, telefone)` e `leads(email, telefone)` para dedupe rápido em memória.
+2. **Ler** a planilha (cabeçalho na linha 9, dados a partir da linha 10).
+3. **Transformar** cada linha aplicando o mapeamento acima e o dedupe.
+4. **Inserir** em lotes de 200 via `supabase--insert`.
+5. **Relatório final** com: total processado, inseridas, duplicadas puladas (com motivo), linhas inválidas (sem nome).
+
+## Rollback
+Se algo der errado, basta `DELETE FROM contas WHERE 'importado-2026-05' = ANY(tags)` — a tag isola o lote.
+
+## Pontos técnicos
+- Vou usar o tool `supabase--insert` em lotes; sem alterações de schema.
+- Nenhuma alteração em código da aplicação (frontend/edge functions intocados).
+- Reatribuir Gabriel/Rafael depois é trivial: filtrar pela tag `dono:gabriel-souza` / `dono:rafael-filimberti` e fazer update do `responsavel_id` quando os usuários forem criados.
+
+## Entregáveis
+- Contas importadas no CRM, visíveis em `/app/contas`.
+- Relatório (JSON/Markdown) com contagens e amostra das duplicatas puladas, salvo em `/mnt/documents/importacao-contas-2026-05.md`.
