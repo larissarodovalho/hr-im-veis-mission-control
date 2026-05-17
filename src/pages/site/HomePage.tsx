@@ -74,12 +74,41 @@ export default function HomePage() {
   const heroScale = useTransform(heroScroll, [0, 0.5], [1, 1.08]);
   const heroTextY = useTransform(heroScroll, [0, 0.5], [0, 100]);
 
+  const { img } = useSiteImages();
+  const [destaque, setDestaque] = useState<any[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const ids = await fetchFeaturedImoveis();
+      if (ids.length === 0) {
+        // Fallback: 3 most recent available
+        const { data } = await supabase
+          .from("imoveis")
+          .select("id, titulo, cidade, valor, fotos, tipo, status")
+          .eq("status", "disponivel")
+          .order("created_at", { ascending: false })
+          .limit(3);
+        setDestaque(data ?? []);
+        return;
+      }
+      const { data } = await supabase
+        .from("imoveis")
+        .select("id, titulo, cidade, valor, fotos, tipo, status")
+        .in("id", ids);
+      // preserve admin order
+      const ordered = ids
+        .map((id) => (data ?? []).find((d) => d.id === id))
+        .filter(Boolean) as any[];
+      setDestaque(ordered);
+    })();
+  }, []);
+
   return (
     <div ref={pageRef} className="bg-[#050505]">
       {/* ─── Hero ─── */}
       <section ref={heroRef} className="relative h-screen flex items-end overflow-hidden">
         <motion.div className="absolute inset-0" style={{ scale: heroScale }}>
-          <img src={heroBg} alt="Imóveis de alto padrão em Sinop" className="w-full h-full object-cover" />
+          <img src={img("hero_home", heroBg)} alt="Imóveis de alto padrão em Sinop" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/50 to-transparent" />
         </motion.div>
 
