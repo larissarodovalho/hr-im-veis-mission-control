@@ -278,7 +278,7 @@ export default function ImovelDetalhePage() {
                 </div>
 
                 <motion.a
-                  href={`https://wa.me/5566999955881?text=Olá! Tenho interesse no imóvel ${imovel.codigo} - ${imovel.nome}`}
+                  href={`https://wa.me/5566999955881?text=${encodeURIComponent(`Olá! Tenho interesse no imóvel ${imovel.codigo} - ${imovel.nome}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.02 }}
