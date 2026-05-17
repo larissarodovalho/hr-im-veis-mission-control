@@ -389,7 +389,7 @@ export default function SobrePage() {
           </motion.p>
 
           <motion.a
-            href="https://wa.me/5566999955881?text=Olá! Gostaria de saber mais sobre a HR Imóveis."
+            href={`https://wa.me/5566999955881?text=${encodeURIComponent("Olá! Gostaria de saber mais sobre a HR Imóveis.")}`}
             target="_blank"
             rel="noopener noreferrer"
             initial={{ opacity: 0, y: 20 }}
