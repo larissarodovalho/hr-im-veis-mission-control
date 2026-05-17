@@ -58,6 +58,7 @@ export async function saveSiteImage(key: SiteImageKey, url: string | null) {
     .from(TABLE as any)
     .upsert({ key: IMAGES_KEY, value: next as any }, { onConflict: "key" });
   if (error) throw error;
+  invalidateSiteImagesCache();
 }
 
 export async function fetchFeaturedImoveis(): Promise<string[]> {
