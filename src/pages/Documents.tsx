@@ -5,11 +5,17 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileSignature, Plus, Search } from "lucide-react";
+import { FileSignature, Plus, Search, Trash2 } from "lucide-react";
 import SendDocumentDialog from "@/components/SendDocumentDialog";
 import DocumentStatusBadge from "@/components/DocumentStatusBadge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useRole } from "@/hooks/useRole";
+import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type Doc = {
   id: string; name: string; status: string; created_at: string; sent_at: string | null;
