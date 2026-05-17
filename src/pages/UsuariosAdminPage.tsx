@@ -126,7 +126,7 @@ export default function UsuariosAdminPage() {
     } finally { setBusy(false); }
   }
 
-  async function handleRoleChange(r: Row, role: AppRole) {
+  async function handleRoleChange(r: Row, role: UiRole) {
     setBusy(true);
     try {
       await callAdmin({ action: "update_role", user_id: r.user_id, role });
