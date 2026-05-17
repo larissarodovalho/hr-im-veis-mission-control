@@ -210,6 +210,17 @@ export default function AgendarPage() {
     );
   }
 
+  // Resposta sem erro mas sem dados utilizáveis — evita tela em branco
+  if (!info || (!info.kind && !info.slots && !info.used)) {
+    return (
+      <Wrapper>
+        <Status icon={AlertCircle} title="Não foi possível abrir" tone="error">
+          Tivemos um problema para carregar sua agenda. Atualize a página em alguns segundos ou peça um novo link à Sofia no WhatsApp.
+        </Status>
+      </Wrapper>
+    );
+  }
+
   if (confirmed) {
     const Icon = kindMeta[confirmed.kind].icon;
     return (
