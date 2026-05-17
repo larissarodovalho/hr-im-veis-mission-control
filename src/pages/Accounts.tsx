@@ -128,7 +128,7 @@ export default function Accounts() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"todos" | Status>("todos");
-  const [interestFilter, setInterestFilter] = useState<"todos" | Interest>("todos");
+  const [interestFilter, setInterestFilter] = useState<string>("todos");
   const [typeFilter, setTypeFilter] = useState<"todas" | "cliente" | "parceiro">("todas");
   const [loading, setLoading] = useState(true);
   const [novaOpen, setNovaOpen] = useState(false);
@@ -330,11 +330,13 @@ export default function Accounts() {
             <SelectTrigger><SelectValue placeholder="Interesse" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os interesses</SelectItem>
-              <SelectItem value="compra">Comprar</SelectItem>
-              <SelectItem value="venda">Vender</SelectItem>
-              <SelectItem value="compra_arrendamento">Comprar e arrendar</SelectItem>
-              <SelectItem value="arrendamento">Arrendamento</SelectItem>
-              <SelectItem value="outro">Outro</SelectItem>
+              <SelectItem value="Comprar">Comprar</SelectItem>
+              <SelectItem value="Vender">Vender</SelectItem>
+              <SelectItem value="Alugar">Alugar</SelectItem>
+              <SelectItem value="Incorporar">Incorporar</SelectItem>
+              <SelectItem value="Investimento">Investimento</SelectItem>
+              <SelectItem value="Ocasião de oportunidade">Ocasião de oportunidade</SelectItem>
+              <SelectItem value="Permuta">Permuta</SelectItem>
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
