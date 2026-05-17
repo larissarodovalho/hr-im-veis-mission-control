@@ -4,6 +4,7 @@ import { Building2, Target, Heart, Shield, TrendingUp, ArrowUpRight } from "luci
 import sectionCommunity from "@/assets/section-community.jpg";
 import sectionLiving from "@/assets/section-living.jpg";
 import featureInterior from "@/assets/feature-interior.jpg";
+import { useSiteImages } from "@/lib/siteSettings";
 
 const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];
 const smoothEase = [0.25, 0.4, 0.25, 1] as [number, number, number, number];
