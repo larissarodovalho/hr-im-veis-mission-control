@@ -14,6 +14,7 @@ type Subscriber = {
   id: string;
   email: string;
   nome: string | null;
+  telefone: string | null;
   status: string;
   created_at: string;
 };
@@ -46,15 +47,19 @@ export default function Newsletter() {
     const q = query.trim().toLowerCase();
     if (!q) return items;
     return items.filter(
-      (i) => i.email.toLowerCase().includes(q) || (i.nome ?? "").toLowerCase().includes(q),
+      (i) =>
+        i.email.toLowerCase().includes(q) ||
+        (i.nome ?? "").toLowerCase().includes(q) ||
+        (i.telefone ?? "").toLowerCase().includes(q),
     );
   }, [items, query]);
 
   const exportCsv = () => {
-    const header = ["Nome", "Email", "Status", "Data de inscrição"];
+    const header = ["Nome", "Email", "Telefone", "Status", "Data de inscrição"];
     const rows = filtered.map((i) => [
       i.nome ?? "",
       i.email,
+      i.telefone ?? "",
       i.status,
       format(new Date(i.created_at), "dd/MM/yyyy HH:mm"),
     ]);
@@ -127,6 +132,7 @@ export default function Newsletter() {
             <TableRow>
               <TableHead>Nome</TableHead>
               <TableHead>E-mail</TableHead>
+              <TableHead>Telefone</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Inscrição</TableHead>
             </TableRow>
@@ -134,13 +140,13 @@ export default function Newsletter() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                   Carregando...
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                   Nenhum inscrito encontrado.
                 </TableCell>
               </TableRow>
@@ -149,6 +155,7 @@ export default function Newsletter() {
                 <TableRow key={i.id}>
                   <TableCell>{i.nome || "—"}</TableCell>
                   <TableCell className="font-mono text-sm">{i.email}</TableCell>
+                  <TableCell className="font-mono text-sm">{i.telefone || "—"}</TableCell>
                   <TableCell>
                     <Badge variant={i.status === "active" ? "default" : "secondary"}>
                       {i.status}
