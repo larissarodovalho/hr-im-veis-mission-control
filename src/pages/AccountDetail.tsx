@@ -57,8 +57,31 @@ export default function AccountDetail() {
   const totalValor = props.reduce((s, p) => s + (Number(p.valor_negocio) || 0), 0);
   const totalComissao = props.reduce((s, p) => s + (Number(p.valor_comissao) || 0), 0);
 
+  const listaAtual: "carteira" | "marketing" | "nenhuma" = (() => {
+    const tags = ((acc?.tags ?? []) as string[]).map((t) => t.toLowerCase());
+    if (tags.includes("carteira")) return "carteira";
+    if (tags.includes("marketing")) return "marketing";
+    return "nenhuma";
+  })();
+
+  const setLista = async (nova: "carteira" | "marketing" | "nenhuma") => {
+    const base = ((acc.tags ?? []) as string[]).filter(
+      (t) => t.toLowerCase() !== "carteira" && t.toLowerCase() !== "marketing"
+    );
+    const tags = nova === "nenhuma" ? base : [...base, nova];
+    const { error } = await supabase.from("contas").update({ tags }).eq("id", acc.id);
+    if (error) return toast.error(error.message);
+    toast.success(nova === "nenhuma" ? "Removida das listas" : `Movida para ${nova === "carteira" ? "Carteira" : "Marketing"}`);
+    load();
+  };
+
   const save = async () => {
     if (!editing.nome.trim()) return toast.error("Nome obrigatório");
+    const baseTags = ((acc.tags ?? []) as string[]).filter(
+      (t) => t.toLowerCase() !== "carteira" && t.toLowerCase() !== "marketing"
+    );
+    const novaLista = editing.lista as "carteira" | "marketing" | "nenhuma" | undefined;
+    const tags = !novaLista || novaLista === "nenhuma" ? baseTags : [...baseTags, novaLista];
     const { error } = await supabase.from("contas").update({
       nome: editing.nome.trim(),
       email: editing.email?.trim() || null,
@@ -67,6 +90,7 @@ export default function AccountDetail() {
       observacoes: editing.observacoes?.trim() || null,
       status: editing.status || "ativo",
       interesse: editing.interesse || null,
+      tags,
     }).eq("id", acc.id);
     if (error) return toast.error(error.message);
     toast.success("Conta atualizada");
