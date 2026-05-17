@@ -12,6 +12,7 @@ import terreno2 from "@/assets/imoveis/terreno-2.jpg";
 import cobertura1 from "@/assets/imoveis/cobertura-1.jpg";
 import sobrado1 from "@/assets/imoveis/sobrado-1.jpg";
 import mansao1 from "@/assets/imoveis/mansao-1.jpg";
+import { useSiteImages } from "@/lib/siteSettings";
 
 const casaImages = [casaLuxo1, casaLuxo2, casaLuxo3, mansao1];
 const terrenoImages = [terreno1, terreno2];
