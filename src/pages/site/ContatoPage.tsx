@@ -45,14 +45,22 @@ export default function ContatoPage() {
   const heroOpacity = useTransform(heroScroll, [0, 0.5], [1, 0]);
   const heroScale = useTransform(heroScroll, [0, 0.5], [1, 1.1]);
   const heroTextY = useTransform(heroScroll, [0, 0.5], [0, 80]);
-  const { img } = useSiteImages();
+  const { img, loaded: imagesLoaded } = useSiteImages();
 
   return (
     <div className="bg-black">
       {/* Hero — same pattern as HomePage */}
       <section ref={heroRef} className="relative h-[70vh] flex items-end overflow-hidden">
-        <motion.div className="absolute inset-0" style={{ scale: heroScale }}>
-          <img src={img("hero_contato", heroBg)} alt="Contato HR Imóveis" className="w-full h-full object-cover" />
+        <motion.div className="absolute inset-0 bg-black" style={{ scale: heroScale }}>
+          {imagesLoaded && (
+            <img
+              src={img("hero_contato", heroBg)}
+              alt="Contato HR Imóveis"
+              className="w-full h-full object-cover animate-in fade-in duration-500"
+              fetchPriority="high"
+              decoding="async"
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
         </motion.div>
 
