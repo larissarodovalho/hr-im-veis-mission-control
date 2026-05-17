@@ -26,6 +26,7 @@ const empty: Partial<ContatoDB> = {
 
 export default function ContatosTab() {
   const { contatos, loading, createContato, updateContato, deleteContato } = useContatos();
+  const { isAdmin } = useRole();
   const [search, setSearch] = useState("");
   const [filtroTipo, setFiltroTipo] = useState("Todos");
   const [open, setOpen] = useState(false);
