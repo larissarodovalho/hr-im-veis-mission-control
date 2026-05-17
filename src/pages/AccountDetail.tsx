@@ -308,6 +308,21 @@ export default function AccountDetail() {
                 </div>
               </div>
               <div>
+                <Label>Responsável</Label>
+                <Select
+                  value={editing.responsavel_id || "none"}
+                  onValueChange={v => setEditing({ ...editing, responsavel_id: v === "none" ? null : v })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem responsável</SelectItem>
+                    {corretores.map(c => (
+                      <SelectItem key={c.user_id} value={c.user_id}>{c.nome || "Sem nome"}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <Label>Lista</Label>
                 <Select value={editing.lista || "nenhuma"} onValueChange={v => setEditing({ ...editing, lista: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
