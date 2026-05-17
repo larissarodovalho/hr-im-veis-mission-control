@@ -1,10 +1,36 @@
 import { useParams, Link } from "react-router-dom";
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { MapPin, BedDouble, Bath, Car, Maximize2, ArrowLeft, ArrowUpRight, Home, Phone, MessageCircle } from "lucide-react";
 import { createWhatsAppUrl, openWhatsApp } from "@/lib/whatsapp";
 import { ScrollSection } from "@/components/site/MotionSections";
-const IMOVEIS_SITE: any[] = [];
+import { supabase } from "@/integrations/supabase/client";
+
+function mapImovelFromDb(row: any) {
+  const areaNum = row.area_util ?? row.area_total;
+  const area = areaNum != null ? `${Number(areaNum).toLocaleString("pt-BR")} m²` : "—";
+  return {
+    id: row.id,
+    codigo: `HR-${String(row.id).slice(0, 6).toUpperCase()}`,
+    nome: row.titulo,
+    tipo: row.tipo,
+    status: row.status,
+    valor: Number(row.valor ?? 0),
+    quartos: row.quartos ?? 0,
+    banheiros: row.banheiros ?? 0,
+    vagas: row.vagas ?? 0,
+    area,
+    descricao: row.descricao ?? "",
+    fotos: row.fotos ?? [],
+    imagem: row.fotos?.[0] ?? null,
+    endereco: {
+      bairro: row.bairro ?? "",
+      condominio: row.complemento ?? "",
+      cidade: row.cidade ?? "",
+      estado: row.estado ?? "",
+    },
+  };
+}
 
 import casaLuxo1 from "@/assets/imoveis/casa-luxo-1.jpg";
 import casaLuxo2 from "@/assets/imoveis/casa-luxo-2.jpg";
