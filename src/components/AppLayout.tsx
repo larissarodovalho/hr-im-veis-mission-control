@@ -67,7 +67,7 @@ export default function AppLayout() {
       <div className="flex items-center justify-center px-5 py-6 border-b border-sidebar-border bg-sidebar">
         <img src={logoWhite} alt="HR Imóveis" className="h-20 w-auto object-contain" />
       </div>
-      <nav className="flex-1 space-y-0.5 px-3 py-4 overflow-auto">
+      <nav className="flex-1 space-y-0.5 px-3 py-4 overflow-y-auto scrollbar-hide">
         {nav.map(({ to, icon: Icon, label, end }) => (
           <NavLink
             key={to}
