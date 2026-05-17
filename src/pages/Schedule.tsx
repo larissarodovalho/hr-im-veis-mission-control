@@ -90,15 +90,15 @@ export default function Schedule() {
       { data: vis, error: vErr },
     ] = await Promise.all([
       supabase.from("reunioes")
-        .select("id, agendada_para, status, local, link, notas, tipo, duracao_min, titulo, criado_por_ia, lead_id")
+        .select("id, agendada_para, status, local, link, notas, tipo, duracao_min, titulo, criado_por_ia, lead_id, conta_id")
         .order("agendada_para"),
       supabase.from("agenda_bloqueios" as any).select("*").order("inicio"),
       supabase.from("leads").select("id, nome").order("nome"),
       supabase.from("ligacoes")
-        .select("id, data, duracao_seg, resultado, notas, lead_id")
+        .select("id, data, duracao_seg, resultado, notas, lead_id, conta_id")
         .order("data"),
       supabase.from("visitas")
-        .select("id, data_visita, status, observacoes, lead_id, imovel_id")
+        .select("id, data_visita, status, observacoes, lead_id, imovel_id, conta_id")
         .order("data_visita"),
     ]);
     if (rErr) console.error("[Schedule] reunioes", rErr);
@@ -112,12 +112,24 @@ export default function Schedule() {
         ...((vis ?? []) as any[]).map((v) => v.lead_id).filter(Boolean),
       ]),
     ];
+    const contaIds = [
+      ...new Set([
+        ...((r ?? []) as any[]).map((m) => m.conta_id).filter(Boolean),
+        ...((ligs ?? []) as any[]).map((c) => c.conta_id).filter(Boolean),
+        ...((vis ?? []) as any[]).map((v) => v.conta_id).filter(Boolean),
+      ]),
+    ];
     const imovelIds = [...new Set(((vis ?? []) as any[]).map((v) => v.imovel_id).filter(Boolean))];
 
     let leadsById = new Map<string, any>();
     if (leadIds.length) {
       const { data: ls } = await supabase.from("leads").select("id, nome").in("id", leadIds);
       leadsById = new Map((ls ?? []).map((x: any) => [x.id, x]));
+    }
+    let contasById = new Map<string, any>();
+    if (contaIds.length) {
+      const { data: cs } = await supabase.from("contas").select("id, nome").in("id", contaIds);
+      contasById = new Map((cs ?? []).map((x: any) => [x.id, x]));
     }
     let imoveisById = new Map<string, any>();
     if (imovelIds.length) {
