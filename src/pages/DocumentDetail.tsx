@@ -20,6 +20,16 @@ export default function DocumentDetail() {
   const [doc, setDoc] = useState<any>(null);
   const [signers, setSigners] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
+  const { isAdmin } = useRole();
+
+  const deleteDoc = async () => {
+    setBusy(true);
+    const { error } = await (supabase.from("signed_documents" as any) as any).delete().eq("id", id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Documento excluído");
+    navigate("/crm/documentos");
+  };
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
