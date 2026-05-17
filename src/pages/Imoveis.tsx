@@ -4,13 +4,15 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Home as HomeIcon, Plus } from "lucide-react";
+import { Search, Home as HomeIcon, Plus, Pencil } from "lucide-react";
 import NovoImovelDialog from "@/components/imoveis/NovoImovelDialog";
+import EditarImovelDialog from "@/components/imoveis/EditarImovelDialog";
 
 export default function Imoveis() {
   const [items, setItems] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [openNew, setOpenNew] = useState(false);
+  const [editing, setEditing] = useState<any | null>(null);
 
   const load = () => {
     supabase.from("imoveis").select("*").order("created_at", { ascending: false }).then(({ data }) => setItems(data ?? []));
@@ -42,13 +44,24 @@ export default function Imoveis() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map(i => (
           <Card key={i.id} className="overflow-hidden">
-            {i.fotos?.[0] ? (
-              <img src={i.fotos[0]} alt={i.titulo} className="w-full h-44 object-cover" />
-            ) : (
-              <div className="w-full h-44 bg-muted flex items-center justify-center text-muted-foreground">
-                <HomeIcon className="h-10 w-10 opacity-30" />
-              </div>
-            )}
+            <div className="relative">
+              {i.fotos?.[0] ? (
+                <img src={i.fotos[0]} alt={i.titulo} className="w-full h-44 object-cover" />
+              ) : (
+                <div className="w-full h-44 bg-muted flex items-center justify-center text-muted-foreground">
+                  <HomeIcon className="h-10 w-10 opacity-30" />
+                </div>
+              )}
+              <Button
+                size="icon"
+                variant="secondary"
+                className="absolute top-2 right-2 h-8 w-8"
+                onClick={() => setEditing(i)}
+                title="Editar imóvel"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </div>
             <div className="p-4 space-y-2">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-semibold text-sm leading-tight">{i.titulo}</h3>
@@ -59,6 +72,9 @@ export default function Imoveis() {
                 <Badge variant="secondary" className="text-[10px]">{i.finalidade} · {i.tipo}</Badge>
                 <span className="font-semibold text-primary">{fmt(i.valor)}</span>
               </div>
+              <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => setEditing(i)}>
+                <Pencil className="h-3.5 w-3.5 mr-1.5" /> Editar
+              </Button>
             </div>
           </Card>
         ))}
@@ -70,6 +86,12 @@ export default function Imoveis() {
       </div>
 
       <NovoImovelDialog open={openNew} onOpenChange={setOpenNew} onCreated={load} />
+      <EditarImovelDialog
+        open={!!editing}
+        onOpenChange={(v) => { if (!v) setEditing(null); }}
+        imovel={editing}
+        onSaved={load}
+      />
     </div>
   );
 }
