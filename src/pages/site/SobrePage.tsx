@@ -103,7 +103,7 @@ export default function SobrePage() {
       </section>
 
       {/* ─── Nossa História ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={1}>
+      <ScrollSection className="py-10 sm:py-14 md:-mt-12" index={1}>
         <div className="max-w-7xl mx-auto px-6 relative z-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <ParallaxImage
@@ -164,7 +164,7 @@ export default function SobrePage() {
       </ScrollSection>
 
       {/* ─── Quote Divider ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={2}>
+      <ScrollSection className="py-10 sm:py-14 md:-mt-12" index={2}>
         <div className="relative z-20">
           <div className="relative h-[50vh] overflow-hidden rounded-none">
             <ParallaxImage
@@ -201,7 +201,7 @@ export default function SobrePage() {
       </ScrollSection>
 
       {/* ─── Valores ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={3}>
+      <ScrollSection className="py-10 sm:py-14 md:-mt-12" index={3}>
         <div className="max-w-6xl mx-auto px-6 relative z-20">
           <div className="text-center mb-14">
             <motion.div
@@ -258,7 +258,7 @@ export default function SobrePage() {
       </ScrollSection>
 
       {/* ─── Missão ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={4}>
+      <ScrollSection className="py-10 sm:py-14 md:-mt-12" index={4}>
         <div className="max-w-7xl mx-auto px-6 relative z-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -312,7 +312,7 @@ export default function SobrePage() {
       </ScrollSection>
 
       {/* ─── CTA Final ─── */}
-      <ScrollSection className="py-10 sm:py-14 -mt-12" index={5}>
+      <ScrollSection className="py-10 sm:py-14 md:-mt-12" index={5}>
         <div className="max-w-7xl mx-auto px-6 relative z-20 text-center">
           <motion.div
             initial={{ opacity: 0, width: 0 }}
