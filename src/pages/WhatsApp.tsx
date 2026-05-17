@@ -283,7 +283,10 @@ export default function WhatsApp() {
                 className={"w-full text-left p-3 border-b hover:bg-muted/50 " + (active?.id === c.id ? "bg-muted" : "")}
               >
                 <div className="flex items-center gap-2">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-primary text-primary-foreground text-xs font-semibold">
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white text-xs font-semibold"
+                    style={{ backgroundColor: colorFromName(displayName) }}
+                  >
                     {initials(displayName)}
                   </div>
                   <div className="min-w-0 flex-1">
