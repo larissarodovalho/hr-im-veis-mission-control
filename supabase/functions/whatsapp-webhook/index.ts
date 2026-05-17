@@ -684,11 +684,13 @@ Deno.serve(async (req) => {
         kind: bookingKind,
       });
 
-      const baseUrl = Deno.env.get("PUBLIC_APP_URL") || "https://www.hrimoveis.com";
+      const baseUrl = (Deno.env.get("PUBLIC_APP_URL") || "https://www.hrimoveis.com").trim();
       const link = `${baseUrl.replace(/\/$/, "")}/agendar/${token}`;
 
       reply = sanitizeReply(reply);
       reply = reply.replace(/em breve\.?$/i, "").trim();
+      // Remove qualquer URL que o modelo tenha colocado por engano — o sistema anexa o link oficial
+      reply = reply.replace(/https?:\/\/\S+/gi, "").trim();
 
       if (!reply) {
         const BOOKING_INSTRUCTIONS: Record<string, string> = {
@@ -699,7 +701,8 @@ Deno.serve(async (req) => {
         };
         reply = `Perfeito! ${BOOKING_INSTRUCTIONS[bookingKind] ?? "Clique no link abaixo e escolha o melhor dia e horário para sua reunião com o Hans."}`;
       }
-      reply += `\n\n${link}`;
+      // Link sempre em linha separada e sem nada após, para o WhatsApp gerar preview corretamente
+      reply = `${reply.trim()}\n\n${link}`;
 
       if (leadUuid) {
         const note = `📞 Lead solicitou: ${KIND_LABELS[bookingKind]} — link enviado`;
