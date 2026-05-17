@@ -1,32 +1,21 @@
-## Problema
-O relatório de funil de contas (`src/components/reports/FunilContasReport.tsx`) faz `supabase.from("contas").select(...)` sem paginação, e o Supabase corta em **1000 linhas por padrão**. Por isso só ~1000 das 1350+ contas aparecem.
+## Diagnóstico
+**Acesso a dados (já está OK):** As policies de RLS já isolam corretor por `responsavel_id`/`corretor_id`/`created_by` em `contas`, `leads`, `contatos`, `interacoes`, `ligacoes`, `reunioes`, `propostas`. Ou seja, mesmo se um corretor abrir qualquer tela, o banco só devolve os registros dele. Nada a mudar no banco.
+
+**Acesso às abas (precisa corrigir):** Hoje o menu lateral esconde "Relatórios / Newsletter / Usuários / Configurações" para corretor (via `isAdmin || isGestor`), **mas as rotas não estão protegidas**. Um corretor que digite `/crm/relatorios` na URL consegue abrir a página.
 
 ## Correção
-Buscar **todas** as contas em páginas de 1000 usando `.range(from, to)` num loop até esgotar.
+Proteger as 4 rotas com o `StaffRoute` já existente (que redireciona corretor para `/crm`):
 
-### Arquivo
-`src/components/reports/FunilContasReport.tsx` — no `useEffect` inicial:
+Em `src/App.tsx`, dentro do bloco do CRM (linhas ~89-110), envolver:
+- `<Route path="relatorios" element={<StaffRoute><Reports /></StaffRoute>} />`
+- `<Route path="newsletter" element={<StaffRoute><Newsletter /></StaffRoute>} />`
+- `<Route path="usuarios" element={<StaffRoute><Users /></StaffRoute>} />`
+- `<Route path="configuracoes" element={<StaffRoute><ConfiguracoesPage /></StaffRoute>} />`
 
-- Substituir a chamada única por um loop tipo:
-  ```ts
-  const PAGE = 1000;
-  let all: Conta[] = [];
-  for (let from = 0; ; from += PAGE) {
-    const { data, error } = await supabase
-      .from("contas")
-      .select("id, etapa_funil, tags, responsavel_id")
-      .range(from, from + PAGE - 1);
-    if (error) break;
-    all = all.concat((data ?? []) as Conta[]);
-    if (!data || data.length < PAGE) break;
-  }
-  setContas(all);
-  ```
-- Manter `profiles` como está (são poucos).
+Adicionar `import StaffRoute from "@/components/StaffRoute";` no topo.
 
-## Verificar outros pontos com o mesmo bug
-Rodar um `rg` por `.from("contas").select` em todo o projeto para listar onde mais isso pode estar acontecendo (Kanban de contas, Accounts, Dashboard). Se algum desses também depender de carregar a lista inteira para somar/contar, aplicar a mesma paginação. Caso contrário, deixar como está e só mencionar no fim.
+## Observação
+A nav lateral já está correta para corretor (não mostra essas 4 abas). Só falta a proteção de rota como cinto-de-segurança.
 
 ## Escopo
-- Apenas leitura, sem mudar banco.
-- Sem alterar a UI/cálculos — só garantir que todos os registros chegam ao cliente.
+- Só `src/App.tsx`. Nenhuma mudança em banco, RLS ou outras telas.
