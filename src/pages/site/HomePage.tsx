@@ -402,6 +402,7 @@ export default function HomePage() {
                     </Link>
                     <a
                       href={createWhatsAppUrl("Olá! Gostaria de mais informações.")}
+                      onClick={(event) => openWhatsApp(event, "Olá! Gostaria de mais informações.")}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full border border-white/[0.08] text-white/60 text-[11px] font-light tracking-[0.12em] uppercase hover:bg-white/[0.04] hover:border-white/[0.15] transition-all duration-500"
