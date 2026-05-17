@@ -149,6 +149,16 @@ export default function Meetings() {
                   </SelectContent>
                 </Select>
               </div>
+              <div>
+                <Label>Conta</Label>
+                <Select value={form.conta_id} onValueChange={v => setForm({ ...form, conta_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Sem conta vinculada" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem conta vinculada</SelectItem>
+                    {contas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <div><Label>Data e hora</Label><Input type="datetime-local" value={form.agendada_para} onChange={e => setForm({ ...form, agendada_para: e.target.value })} /></div>
               <div><Label>Local</Label><Input value={form.local} onChange={e => setForm({ ...form, local: e.target.value })} /></div>
               <div><Label>Link</Label><Input value={form.link} onChange={e => setForm({ ...form, link: e.target.value })} /></div>
