@@ -9,12 +9,84 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { CalendarCheck, Plus } from "lucide-react";
+import { CalendarCheck, Plus, Check, ChevronsUpDown } from "lucide-react";
 import { EventsCalendar } from "@/components/EventsCalendar";
+
+type Option = { id: string; nome: string };
+
+function SearchableSelect({
+  value,
+  onChange,
+  options,
+  placeholder,
+  emptyLabel,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: Option[];
+  placeholder: string;
+  emptyLabel: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((o) => o.id === value);
+  const label = value === "none" || !value ? emptyLabel : selected?.nome ?? emptyLabel;
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between font-normal"
+        >
+          <span className={cn("truncate", (value === "none" || !value) && "text-muted-foreground")}>{label}</span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command>
+          <CommandInput placeholder={placeholder} />
+          <CommandList>
+            <CommandEmpty>Nenhum resultado.</CommandEmpty>
+            <CommandGroup>
+              <CommandItem
+                value={emptyLabel}
+                onSelect={() => {
+                  onChange("none");
+                  setOpen(false);
+                }}
+              >
+                <Check className={cn("mr-2 h-4 w-4", value === "none" ? "opacity-100" : "opacity-0")} />
+                {emptyLabel}
+              </CommandItem>
+              {options.map((o) => (
+                <CommandItem
+                  key={o.id}
+                  value={o.nome}
+                  onSelect={() => {
+                    onChange(o.id);
+                    setOpen(false);
+                  }}
+                >
+                  <Check className={cn("mr-2 h-4 w-4", value === o.id ? "opacity-100" : "opacity-0")} />
+                  {o.nome}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 export default function Meetings() {
   const { user } = useAuth();
@@ -141,23 +213,23 @@ export default function Meetings() {
             <form onSubmit={add} className="space-y-3">
               <div>
                 <Label>Lead</Label>
-                <Select value={form.lead_id} onValueChange={v => setForm({ ...form, lead_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Sem lead vinculado" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sem lead vinculado</SelectItem>
-                    {leads.map(l => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  value={form.lead_id}
+                  onChange={(v) => setForm({ ...form, lead_id: v })}
+                  options={leads}
+                  placeholder="Buscar lead..."
+                  emptyLabel="Sem lead vinculado"
+                />
               </div>
               <div>
                 <Label>Conta</Label>
-                <Select value={form.conta_id} onValueChange={v => setForm({ ...form, conta_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Sem conta vinculada" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sem conta vinculada</SelectItem>
-                    {contas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  value={form.conta_id}
+                  onChange={(v) => setForm({ ...form, conta_id: v })}
+                  options={contas}
+                  placeholder="Buscar conta..."
+                  emptyLabel="Sem conta vinculada"
+                />
               </div>
               <div><Label>Data e hora</Label><Input type="datetime-local" value={form.agendada_para} onChange={e => setForm({ ...form, agendada_para: e.target.value })} /></div>
               <div><Label>Local</Label><Input value={form.local} onChange={e => setForm({ ...form, local: e.target.value })} /></div>
@@ -243,23 +315,23 @@ export default function Meetings() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Lead</Label>
-                <Select value={editForm.lead_id} onValueChange={v => setEditForm({ ...editForm, lead_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Sem lead" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sem lead vinculado</SelectItem>
-                    {leads.map(l => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  value={editForm.lead_id}
+                  onChange={(v) => setEditForm({ ...editForm, lead_id: v })}
+                  options={leads}
+                  placeholder="Buscar lead..."
+                  emptyLabel="Sem lead vinculado"
+                />
               </div>
               <div>
                 <Label>Conta</Label>
-                <Select value={editForm.conta_id} onValueChange={v => setEditForm({ ...editForm, conta_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Sem conta" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sem conta vinculada</SelectItem>
-                    {contas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  value={editForm.conta_id}
+                  onChange={(v) => setEditForm({ ...editForm, conta_id: v })}
+                  options={contas}
+                  placeholder="Buscar conta..."
+                  emptyLabel="Sem conta vinculada"
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
