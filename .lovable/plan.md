@@ -1,12 +1,11 @@
-### Exibir Interesse na lista e no detalhe da conta
+## Objetivo
+Remover o filtro **Aptidão** ("Todas as aptidões") da barra de filtros da página de Contas.
 
-#### 1. Lista de contas — `src/pages/Accounts.tsx`
-- Adicionar nova coluna **Interesse** na tabela desktop (entre "Qualificação" e "Responsável"), com `<Badge variant="outline">` em tom âmbar/accent exibindo `a.interesse`, ou "—" quando vazio.
-- Adicionar linha "Interesse" no card mobile, com o mesmo badge.
-- Atualizar `<thead>` para incluir a nova coluna e ajustar `colSpan` das linhas de loading/empty de 8 para 9.
+## Mudanças (`src/pages/Accounts.tsx`)
+1. Remover o `<Select>` de aptidão (linhas ~342–352) do grid de filtros.
+2. Remover o estado `aptitudeFilter` e o tipo `Aptitude` se não usado em outro lugar (manter `APT_LABEL`/`APT_BADGE` se ainda usados em exibição de propriedades).
+3. Remover a condição `aptitudeFilter !== "todas"` da função `filtered`.
+4. Ajustar o grid de `lg:grid-cols-5` para `lg:grid-cols-4`.
 
-#### 2. Detalhe da conta — `src/pages/AccountDetail.tsx`
-- Substituir o badge atual `Interesse: {acc.interesse}` por um badge maior, destacado, com cor própria (tom âmbar/accent) e ícone, exibido na linha de status logo abaixo do nome.
-
-#### Fora de escopo
-- Filtros, banco de dados e exportação permanecem inalterados.
+## Fora de escopo
+Banco de dados, abas Todos/Carteira/Marketing e demais filtros permanecem inalterados.

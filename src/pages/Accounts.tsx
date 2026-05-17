@@ -129,7 +129,6 @@ export default function Accounts() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"todos" | Status>("todos");
   const [interestFilter, setInterestFilter] = useState<"todos" | Interest>("todos");
-  const [aptitudeFilter, setAptitudeFilter] = useState<"todas" | Aptitude>("todas");
   const [typeFilter, setTypeFilter] = useState<"todas" | "cliente" | "parceiro">("todas");
   const [loading, setLoading] = useState(true);
   const [novaOpen, setNovaOpen] = useState(false);
@@ -202,7 +201,6 @@ export default function Accounts() {
     if (typeFilter === "cliente" && a.is_partner) return false;
     if (typeFilter === "parceiro" && !a.is_partner) return false;
     const accProps = propsByAccount[a.id] ?? [];
-    if (aptitudeFilter !== "todas" && !accProps.some((p) => p.aptidao === aptitudeFilter)) return false;
     if (!search) return true;
     const s = search.toLowerCase();
     const propMatch = accProps.some(
@@ -315,7 +313,7 @@ export default function Accounts() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
           <div className="relative lg:col-span-1 sm:col-span-2 lg:col-start-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Buscar nome, fazenda, região…" className="pl-8 w-full" value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -336,17 +334,6 @@ export default function Accounts() {
               <SelectItem value="venda">Vender</SelectItem>
               <SelectItem value="compra_arrendamento">Comprar e arrendar</SelectItem>
               <SelectItem value="arrendamento">Arrendamento</SelectItem>
-              <SelectItem value="outro">Outro</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={aptitudeFilter} onValueChange={(v: any) => setAptitudeFilter(v)}>
-            <SelectTrigger><SelectValue placeholder="Aptidão" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas as aptidões</SelectItem>
-              <SelectItem value="agricultura">Agricultura</SelectItem>
-              <SelectItem value="pecuaria">Pecuária</SelectItem>
-              <SelectItem value="arrendamento">Arrendamento</SelectItem>
-              <SelectItem value="misto">Misto</SelectItem>
               <SelectItem value="outro">Outro</SelectItem>
             </SelectContent>
           </Select>
