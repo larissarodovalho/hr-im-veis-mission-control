@@ -304,7 +304,7 @@ export default function Meetings() {
 
       <EventsCalendar
         title="Calendário de reuniões"
-        events={items.map(m => ({ id: m.id, date: new Date(m.agendada_para), title: m.leads?.nome || m.titulo || "Sem lead", lead_id: m.lead_id, status: m.status, description: m.local || m.notas }))}
+        events={items.map(m => ({ id: m.id, date: new Date(m.agendada_para), title: m.leads?.nome || m.conta?.nome || m.titulo || "Sem lead", lead_id: m.lead_id, status: m.status, description: m.local || m.notas }))}
       />
     </div>
   );
