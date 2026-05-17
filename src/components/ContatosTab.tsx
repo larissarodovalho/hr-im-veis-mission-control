@@ -15,6 +15,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Plus, Search, Phone, Mail, Pencil, Trash2, Loader2, User } from "lucide-react";
+import { useRole } from "@/hooks/useRole";
 
 const TIPOS = ["Cliente", "Comprador", "Vendedor", "Parceiro", "Investidor", "Outro"];
 
