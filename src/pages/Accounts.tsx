@@ -437,7 +437,19 @@ export default function Accounts() {
                   <div><span className="text-xs text-muted-foreground">Telefone: </span><span>{a.telefone || "—"}</span></div>
                   <div className="truncate"><span className="text-xs text-muted-foreground">E-mail: </span><span>{a.email || "—"}</span></div>
                   <div><span className="text-xs text-muted-foreground">CPF/CNPJ: </span><span>{formatDoc(a.documento, a.tipo)}</span></div>
-                  <div><span className="text-xs text-muted-foreground">Proprietário: </span><span>{owner}</span></div>
+                  <div>
+                    <span className="text-xs text-muted-foreground">Qualificação: </span>
+                    {(() => {
+                      const tags = (a.tags ?? []).map((t) => t.toLowerCase());
+                      const q = tags.includes("carteira") ? "carteira" : tags.includes("marketing") ? "marketing" : null;
+                      return q ? (
+                        <Badge variant="outline" className={q === "carteira" ? "bg-blue-500/15 text-blue-700 border-blue-500/30" : "bg-pink-500/15 text-pink-700 border-pink-500/30"}>
+                          {q === "carteira" ? "Carteira" : "Marketing"}
+                        </Badge>
+                      ) : <span className="text-muted-foreground">—</span>;
+                    })()}
+                  </div>
+                  <div><span className="text-xs text-muted-foreground">Responsável: </span><span>{owner}</span></div>
                 </div>
                 <div className="flex gap-2 pt-1">
                   <Link to={`/app/contas/${a.id}`} className="flex-1">
@@ -477,16 +489,17 @@ export default function Accounts() {
                 <th className="p-3">Telefone</th>
                 <th className="p-3">E-mail</th>
                 <th className="p-3">CPF/CNPJ</th>
-                <th className="p-3">Proprietário</th>
+                <th className="p-3">Qualificação</th>
+                <th className="p-3">Responsável</th>
                 <th className="p-3">Status</th>
                 <th className="p-3 w-24"></th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Carregando…</td></tr>
+                <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Carregando…</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={7} className="p-10 text-center text-muted-foreground">{accounts.length === 0 ? "Nenhuma conta ainda. Converta um lead para criar a primeira conta." : "Nenhuma conta corresponde aos filtros."}</td></tr>
+                <tr><td colSpan={8} className="p-10 text-center text-muted-foreground">{accounts.length === 0 ? "Nenhuma conta ainda. Converta um lead para criar a primeira conta." : "Nenhuma conta corresponde aos filtros."}</td></tr>
               ) : (
                 filtered.map((a) => {
                   const status = (a.status ?? "ativo") as Status;
@@ -506,6 +519,17 @@ export default function Accounts() {
                       <td className="p-3 whitespace-nowrap">{a.telefone || <span className="text-muted-foreground">—</span>}</td>
                       <td className="p-3">{a.email || <span className="text-muted-foreground">—</span>}</td>
                       <td className="p-3 whitespace-nowrap">{a.documento ? formatDoc(a.documento, a.tipo) : <span className="text-muted-foreground">—</span>}</td>
+                      <td className="p-3">
+                        {(() => {
+                          const tags = (a.tags ?? []).map((t) => t.toLowerCase());
+                          const q = tags.includes("carteira") ? "carteira" : tags.includes("marketing") ? "marketing" : null;
+                          return q ? (
+                            <Badge variant="outline" className={q === "carteira" ? "bg-blue-500/15 text-blue-700 border-blue-500/30" : "bg-pink-500/15 text-pink-700 border-pink-500/30"}>
+                              {q === "carteira" ? "Carteira" : "Marketing"}
+                            </Badge>
+                          ) : <span className="text-muted-foreground">—</span>;
+                        })()}
+                      </td>
                       <td className="p-3">{owner === "—" ? <span className="text-muted-foreground">—</span> : owner}</td>
                       <td className="p-3">
                         <Badge className={status === "ativo" ? "bg-success/15 text-success border-success/30 border" : "bg-muted text-muted-foreground border"}>

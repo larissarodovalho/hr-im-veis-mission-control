@@ -1,34 +1,24 @@
-## Objetivo
+## Resumo
+Na tabela da subaba **"Todos"** (/app/contas?lista=todos), adicionar uma coluna fixa exibindo a qualificação de cada contato (Carteira ou Marketing, derivado das tags), e renomear a coluna "Proprietário" para "Responsável".
 
-Classificar todas as **1.355 contas** da base como **Carteira**, para começar a qualificação e nutrição pela aba Carteira em `/app/contas`.
+## Alterações
 
-## Situação atual
+### 1. Tabela desktop (`Accounts.tsx`)
+- Inserir nova coluna de cabeçalho **"Qualificação"** entre "CPF/CNPJ" e o que será renomeado para "Responsável".
+- Inserir célula correspondente em cada linha com um `Badge` azul para "Carteira" ou rosa para "Marketing" (ou "—" se nenhuma). Usar a mesma lógica de cores já existente no `AccountDetail.tsx`.
+- Renomear o cabeçalho **"Proprietário"** para **"Responsável"**.
+- Renomear o label "Proprietário" nos cards mobile também para manter consistência.
+- Ajustar `colSpan` das mensagens de estado (loading / vazio) de 7 para 8.
 
-- Total: **1.355** contas
-- Já marcadas como `carteira`: **0**
-- Marcadas como `marketing`: **0**
+### 2. Cards mobile (`Accounts.tsx`)
+- Adicionar linha exibindo a qualificação no card de cada conta.
 
-## Operação
+## O que não muda
+- Nenhuma alteração nas subabas "Carteira" e "Marketing".
+- Nenhuma alteração no backend, na exportação (ainda será usado "Proprietário" no Excel por enquanto, para não quebrar o formato) e nem nos dados existentes.
 
-Atualização em massa na tabela `contas`, adicionando `"carteira"` ao array `tags` de toda conta que ainda não tenha essa tag. Demais tags (ex.: `importado-2026-05`, `hr-imoveis`, `dono:...`) são preservadas.
-
-```sql
-UPDATE public.contas
-SET tags = array_append(COALESCE(tags, ARRAY[]::text[]), 'carteira')
-WHERE NOT ('carteira' = ANY(COALESCE(tags, ARRAY[]::text[])));
-```
-
-Como nenhuma conta está em `marketing`, não há conflito a resolver.
-
-## Resultado esperado
-
-- 1.355 contas com tag `carteira`
-- Visíveis na aba **Carteira** de `/app/contas`
-- Nenhuma alteração de schema, RLS ou outras tabelas
-
-## Reversão (se precisar)
-
-```sql
-UPDATE public.contas
-SET tags = array_remove(tags, 'carteira');
-```
+## Cenários de validação
+- Contato com tag `carteira` exibe badge azul "Carteira".
+- Contato com tag `marketing` exibe badge rosa "Marketing".
+- Contato sem nenhuma das duas tags exibe "—".
+- O texto do cabeçalho e do card mobile diz "Responsável", não "Proprietário".
