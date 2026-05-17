@@ -140,13 +140,13 @@ export default function Newsletter() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                   Carregando...
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                   Nenhum inscrito encontrado.
                 </TableCell>
               </TableRow>
@@ -155,6 +155,7 @@ export default function Newsletter() {
                 <TableRow key={i.id}>
                   <TableCell>{i.nome || "—"}</TableCell>
                   <TableCell className="font-mono text-sm">{i.email}</TableCell>
+                  <TableCell className="font-mono text-sm">{i.telefone || "—"}</TableCell>
                   <TableCell>
                     <Badge variant={i.status === "active" ? "default" : "secondary"}>
                       {i.status}
