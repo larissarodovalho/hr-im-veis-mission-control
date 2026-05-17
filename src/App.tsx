@@ -25,7 +25,7 @@ import Schedule from "@/pages/Schedule";
 import Documents from "@/pages/Documents";
 import DocumentDetail from "@/pages/DocumentDetail";
 import Reports from "@/pages/Reports";
-import Users from "@/pages/Users";
+import Users from "@/pages/UsuariosAdminPage";
 import ConfiguracoesPage from "@/pages/ConfiguracoesPage";
 import NotFound from "@/pages/NotFound";
 import AgendarPage from "@/pages/AgendarPage";
