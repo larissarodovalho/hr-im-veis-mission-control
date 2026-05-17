@@ -108,10 +108,11 @@ export default function Documents() {
           {filtered.map((d) => {
             const total = d.document_signers?.length || 0;
             const signed = d.document_signers?.filter((s) => s.status === "signed").length || 0;
+            const isFinal = ["canceled", "expired", "refused"].includes(d.status);
             return (
               <Card
                 key={d.id}
-                className="p-4 hover:shadow-md cursor-pointer transition"
+                className="p-4 hover:shadow-md cursor-pointer transition relative"
                 onClick={() => navigate(`/crm/documentos/${d.id}`)}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
@@ -126,6 +127,31 @@ export default function Documents() {
                       : `Criado ${format(new Date(d.created_at), "dd/MM/yyyy", { locale: ptBR })}`}
                   </p>
                 </div>
+                {isAdmin && isFinal && (
+                  <div className="mt-3 pt-3 border-t flex justify-end" onClick={(e) => e.stopPropagation()}>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4 mr-1" /> Excluir
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir documento?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta ação é irreversível. O documento "{d.name}" e toda sua trilha de auditoria serão removidos permanentemente.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(d.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Excluir definitivamente
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
               </Card>
             );
           })}
