@@ -551,9 +551,11 @@ export default function Schedule() {
                       {format(b.inicio, "Pp", { locale: ptBR })} → {format(b.fim, "Pp", { locale: ptBR })}
                     </div>
                   </div>
-                  <Button size="icon" variant="ghost" onClick={() => removerBloqueio(b.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {isAdmin && (
+                    <Button size="icon" variant="ghost" onClick={() => removerBloqueio(b.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               ))}
             </TabsContent>
