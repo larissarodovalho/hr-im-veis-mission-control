@@ -163,8 +163,9 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             </div>
           </div>
 
-          <div className="border-t border-white/5 mt-8 pt-6 text-center text-[10px] text-white/50">
-            © {new Date().getFullYear()} HR Imóveis. Todos os direitos reservados.
+          <div className="border-t border-white/5 mt-8 pt-6 text-center text-[10px] text-white/50 space-y-1">
+            <p>© {new Date().getFullYear()} HR Imóveis. Todos os direitos reservados.</p>
+            <p>CRECI Jurídico 18.050</p>
           </div>
         </div>
       </footer>
