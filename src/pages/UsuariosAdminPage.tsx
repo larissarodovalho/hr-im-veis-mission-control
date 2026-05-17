@@ -268,12 +268,13 @@ export default function UsuariosAdminPage() {
                     <TableCell className="text-sm text-muted-foreground">{r.email}</TableCell>
                     <TableCell className="text-sm">{r.cargo ?? "—"}</TableCell>
                     <TableCell>
-                      <Select value={r.role} onValueChange={(v) => handleRoleChange(r, v as AppRole)} disabled={busy || r.user_id === user?.id}>
-                        <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+                      <Select value={r.role} onValueChange={(v) => handleRoleChange(r, v as UiRole)} disabled={busy || r.user_id === user?.id}>
+                        <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="admin">Admin</SelectItem>
                           <SelectItem value="gestor">Gestor</SelectItem>
                           <SelectItem value="corretor">Corretor</SelectItem>
+                          <SelectItem value="gestor_corretor">Gestor + Corretor</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
