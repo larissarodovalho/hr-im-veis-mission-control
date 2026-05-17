@@ -391,12 +391,8 @@ export default function Accounts() {
           </Card>
         ) : (
           filtered.map((a) => {
-            const accProps = propsByAccount[a.id] ?? [];
-            const ops = Array.from(new Set(accProps.map((p) => p.operacao).filter(Boolean))) as Operation[];
-            const apts = Array.from(new Set(accProps.map((p) => p.aptidao).filter(Boolean))) as Aptitude[];
-            const totalVal = accProps.reduce((s, p) => s + (p.valor_negocio ?? 0), 0);
-            const totalCom = accProps.reduce((s, p) => s + (p.valor_comissao ?? 0), 0);
             const status = (a.status ?? "ativo") as Status;
+            const owner = a.responsavel_id ? (ownerMap[a.responsavel_id] ?? "—") : "—";
             return (
               <Card key={a.id} className="p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
@@ -409,26 +405,16 @@ export default function Accounts() {
                         </Badge>
                       )}
                     </div>
-                    <div className="text-xs text-muted-foreground truncate mt-0.5">{a.telefone || a.email || "—"}</div>
                   </div>
                   <Badge className={status === "ativo" ? "bg-success/15 text-success border-success/30 border shrink-0" : "bg-muted text-muted-foreground border shrink-0"}>
                     {status === "ativo" ? "Ativo" : "Inativo"}
                   </Badge>
                 </div>
-                {a.interesse && (
-                  <div className="text-xs"><span className="text-muted-foreground">Interesse: </span><span className="font-medium">{INTEREST_LABEL[a.interesse]}</span></div>
-                )}
-                {(ops.length > 0 || apts.length > 0) && (
-                  <div className="flex flex-wrap gap-1">
-                    {ops.map((o) => <Badge key={"o" + o} className={OP_BADGE[o] + " border text-[10px]"}>{OP_LABEL[o]}</Badge>)}
-                    {apts.map((ap) => <Badge key={"a" + ap} className={APT_BADGE[ap] + " border text-[10px]"}>{APT_LABEL[ap]}</Badge>)}
-                  </div>
-                )}
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div><div className="text-xs text-muted-foreground">Propriedades</div><div className="font-medium">{accProps.length}</div></div>
-                  <div><div className="text-xs text-muted-foreground">Convertido</div><div className="text-xs">{format(new Date(a.created_at), "dd/MM/yyyy", { locale: ptBR })}</div></div>
-                  <div><div className="text-xs text-muted-foreground">Valor total</div><div className="font-medium">{fmt(totalVal || null)}</div></div>
-                  <div><div className="text-xs text-muted-foreground">Comissão</div><div>{fmt(totalCom || null)}</div></div>
+                <div className="grid grid-cols-1 gap-2 text-sm">
+                  <div><span className="text-xs text-muted-foreground">Telefone: </span><span>{a.telefone || "—"}</span></div>
+                  <div className="truncate"><span className="text-xs text-muted-foreground">E-mail: </span><span>{a.email || "—"}</span></div>
+                  <div><span className="text-xs text-muted-foreground">CPF/CNPJ: </span><span>{formatDoc(a.documento, a.tipo)}</span></div>
+                  <div><span className="text-xs text-muted-foreground">Proprietário: </span><span>{owner}</span></div>
                 </div>
                 <div className="flex gap-2 pt-1">
                   <Link to={`/app/contas/${a.id}`} className="flex-1">
@@ -442,7 +428,7 @@ export default function Accounts() {
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Excluir conta?</AlertDialogTitle>
-                          <AlertDialogDescription>Tem certeza que deseja excluir <strong>{a.nome}</strong>? Todas as propriedades vinculadas também serão removidas. Esta ação não pode ser desfeita.</AlertDialogDescription>
+                          <AlertDialogDescription>Tem certeza que deseja excluir <strong>{a.nome}</strong>? Esta ação não pode ser desfeita.</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancelar</AlertDialogCancel>
