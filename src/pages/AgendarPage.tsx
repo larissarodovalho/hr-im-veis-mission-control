@@ -254,7 +254,7 @@ export default function AgendarPage() {
 
   const kind = (selectedKind || info?.kind) as Kind | undefined;
   const Icon = kind ? kindMeta[kind].icon : Phone;
-  const kindOptions: Kind[] = ["presencial", "videochamada", "ligacao", "whatsapp"];
+  const kindOptions: Kind[] = ["presencial", "videochamada", "ligacao"];
 
   return (
     <Wrapper>
