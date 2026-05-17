@@ -165,18 +165,16 @@ export default function ContatoPage() {
           <p className="text-base text-white/50 font-light mb-10 max-w-sm mx-auto leading-relaxed">
             14 anos de experiência no mercado imobiliário de Sinop, com atendimento exclusivo e personalizado.
           </p>
-          <motion.a
+          <a
             href={createWhatsAppUrl("Olá, tudo bem? Quero falar com um corretor de imóveis.")}
             onClick={(event) => openWhatsApp(event, "Olá, tudo bem? Quero falar com um corretor de imóveis.")}
             target="_blank"
             rel="noopener noreferrer"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            className="inline-flex items-center gap-2 px-10 py-3.5 rounded-full text-sm font-medium bg-white text-black hover:bg-white/90 transition-all"
+            className="inline-flex items-center gap-2 px-10 py-3.5 rounded-full text-sm font-medium bg-white text-black hover:bg-white/90 hover:scale-[1.03] active:scale-[0.97] transition-all"
           >
             Falar com a equipe
             <ArrowUpRight className="h-4 w-4" />
-          </motion.a>
+          </a>
         </div>
       </ScrollSection>
     </div>
