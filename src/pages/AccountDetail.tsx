@@ -97,6 +97,7 @@ export default function AccountDetail() {
       observacoes: editing.observacoes?.trim() || null,
       status: editing.status || "ativo",
       interesse: editing.interesse || null,
+      responsavel_id: editing.responsavel_id || null,
       tags,
     }).eq("id", acc.id);
     if (error) return toast.error(error.message);
