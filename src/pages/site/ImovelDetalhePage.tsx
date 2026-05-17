@@ -2,6 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { MapPin, BedDouble, Bath, Car, Maximize2, ArrowLeft, ArrowUpRight, Home, Phone, MessageCircle } from "lucide-react";
+import { createWhatsAppUrl, openWhatsApp } from "@/lib/whatsapp";
 const IMOVEIS_SITE: any[] = [];
 
 import casaLuxo1 from "@/assets/imoveis/casa-luxo-1.jpg";
@@ -278,7 +279,8 @@ export default function ImovelDetalhePage() {
                 </div>
 
                 <motion.a
-                  href={`https://wa.me/5566999955881?text=${encodeURIComponent(`Olá! Tenho interesse no imóvel ${imovel.codigo} - ${imovel.nome}`)}`}
+                  href={createWhatsAppUrl(`Olá! Tenho interesse no imóvel ${imovel.codigo} - ${imovel.nome}`)}
+                  onClick={(event) => openWhatsApp(event, `Olá! Tenho interesse no imóvel ${imovel.codigo} - ${imovel.nome}`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.02 }}
@@ -290,7 +292,8 @@ export default function ImovelDetalhePage() {
                 </motion.a>
 
                 <motion.a
-                  href={`https://wa.me/5566999955881?text=${encodeURIComponent(`Olá! Gostaria de mais informações sobre o imóvel ${imovel.codigo}`)}`}
+                  href={createWhatsAppUrl(`Olá! Gostaria de mais informações sobre o imóvel ${imovel.codigo}`)}
+                  onClick={(event) => openWhatsApp(event, `Olá! Gostaria de mais informações sobre o imóvel ${imovel.codigo}`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.02 }}
@@ -386,7 +389,8 @@ export default function ImovelDetalhePage() {
           </motion.p>
 
           <motion.a
-            href={`https://wa.me/5566999955881?text=${encodeURIComponent(`Olá! Gostaria de agendar uma visita ao imóvel ${imovel.codigo} - ${imovel.nome}`)}`}
+            href={createWhatsAppUrl(`Olá! Gostaria de agendar uma visita ao imóvel ${imovel.codigo} - ${imovel.nome}`)}
+            onClick={(event) => openWhatsApp(event, `Olá! Gostaria de agendar uma visita ao imóvel ${imovel.codigo} - ${imovel.nome}`)}
             target="_blank"
             rel="noopener noreferrer"
             initial={{ opacity: 0, y: 20 }}
