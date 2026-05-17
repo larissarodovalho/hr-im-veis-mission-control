@@ -331,7 +331,7 @@ export default function SobrePage() {
                 transition={{ duration: 0.6, delay: 0.2, ease: smoothEase }}
                 className="text-base text-white/60 font-light leading-[1.9]"
               >
-                Nossa missão é proporcionar a melhor experiência na compra, venda e locação de imóveis de alto padrão
+                Nossa missão é proporcionar a melhor experiência na compra e venda de imóveis de alto padrão
                 em Sinop e região. Acreditamos que encontrar o imóvel ideal vai além de metros quadrados,
                 é sobre encontrar um lugar que transforme a vida das pessoas.
               </motion.p>
