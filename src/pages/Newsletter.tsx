@@ -14,6 +14,7 @@ type Subscriber = {
   id: string;
   email: string;
   nome: string | null;
+  telefone: string | null;
   status: string;
   created_at: string;
 };
@@ -46,15 +47,19 @@ export default function Newsletter() {
     const q = query.trim().toLowerCase();
     if (!q) return items;
     return items.filter(
-      (i) => i.email.toLowerCase().includes(q) || (i.nome ?? "").toLowerCase().includes(q),
+      (i) =>
+        i.email.toLowerCase().includes(q) ||
+        (i.nome ?? "").toLowerCase().includes(q) ||
+        (i.telefone ?? "").toLowerCase().includes(q),
     );
   }, [items, query]);
 
   const exportCsv = () => {
-    const header = ["Nome", "Email", "Status", "Data de inscrição"];
+    const header = ["Nome", "Email", "Telefone", "Status", "Data de inscrição"];
     const rows = filtered.map((i) => [
       i.nome ?? "",
       i.email,
+      i.telefone ?? "",
       i.status,
       format(new Date(i.created_at), "dd/MM/yyyy HH:mm"),
     ]);
@@ -127,6 +132,7 @@ export default function Newsletter() {
             <TableRow>
               <TableHead>Nome</TableHead>
               <TableHead>E-mail</TableHead>
+              <TableHead>Telefone</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Inscrição</TableHead>
             </TableRow>
