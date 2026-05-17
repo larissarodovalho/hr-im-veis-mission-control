@@ -71,7 +71,7 @@ const App = () => (
             {/* Redirects das URLs antigas do site */}
             <Route path="/site" element={<Navigate to="/" replace />} />
             <Route path="/site/imoveis" element={<Navigate to="/imoveis" replace />} />
-            <Route path="/site/imovel/:id" element={<Navigate to="/imovel/:id" replace />} />
+            <Route path="/site/imovel/:id" element={<RedirectImovel />} />
             <Route path="/site/sobre" element={<Navigate to="/sobre" replace />} />
             <Route path="/site/contato" element={<Navigate to="/contato" replace />} />
 
