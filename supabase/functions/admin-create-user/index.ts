@@ -65,6 +65,24 @@ Deno.serve(async (req) => {
         await admin.from("user_roles").delete().eq("user_id", newId);
         await admin.from("user_roles").insert({ user_id: newId, role: finalRole });
       }
+
+      // Envia e-mail de boas-vindas com senha temporária (best-effort)
+      const origin = req.headers.get("origin") ?? "https://www.hrimoveis.com";
+      const loginUrl = `${origin.replace(/\/$/, "")}/app`;
+      try {
+        await admin.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "user-welcome",
+            recipientEmail: email,
+            idempotencyKey: `user-welcome-${newId}`,
+            purpose: "transactional",
+            templateData: { nome, email, senha: password, loginUrl },
+          },
+        });
+      } catch (mailErr) {
+        console.error("Falha ao enviar e-mail de boas-vindas:", mailErr);
+      }
+
       return json({ ok: true, user_id: newId });
     }
 
