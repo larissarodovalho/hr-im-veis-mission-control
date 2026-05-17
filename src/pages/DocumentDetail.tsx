@@ -154,6 +154,29 @@ export default function DocumentDetail() {
                 <Ban className="h-4 w-4 mr-1" /> Cancelar
               </Button>
             )}
+            {isAdmin && isFinal && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" disabled={busy}>
+                    <Trash2 className="h-4 w-4 mr-1" /> Excluir
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir documento definitivamente?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação é irreversível. O documento "{doc.name}", signatários e trilha de auditoria serão removidos permanentemente.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={deleteDoc} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Excluir definitivamente
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </div>
         {doc.message && (
