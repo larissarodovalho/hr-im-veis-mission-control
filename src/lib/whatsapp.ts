@@ -5,3 +5,10 @@ export function createWhatsAppUrl(message?: string) {
   if (!message) return base;
   return `${base}?text=${encodeURIComponent(message)}`;
 }
+
+type WhatsAppClickEvent = { preventDefault: () => void };
+
+export function openWhatsApp(event?: WhatsAppClickEvent, message?: string) {
+  event?.preventDefault();
+  window.open(createWhatsAppUrl(message), "_blank", "noopener,noreferrer");
+}
