@@ -67,7 +67,6 @@ export default function AgendarPage() {
       const res = await fetch(url, {
         headers: {
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          "cache-control": "no-cache",
         },
         cache: "no-store",
         signal: controller.signal,
