@@ -46,6 +46,9 @@ export default function UsuariosAdminPage() {
   const [resetTarget, setResetTarget] = useState<Row | null>(null);
   const [newPass, setNewPass] = useState("");
 
+  const [editTarget, setEditTarget] = useState<Row | null>(null);
+  const [editForm, setEditForm] = useState({ nome: "", email: "", telefone: "", cargo: "", role: "corretor" as AppRole });
+
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     const [{ data: profs }, { data: roles }] = await Promise.all([
