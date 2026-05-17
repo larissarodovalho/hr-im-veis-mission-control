@@ -557,14 +557,42 @@ Deno.serve(async (req) => {
 
     // Cascata + loop de tool calls
     let result: { text: string; toolCalls: ToolCall[]; raw?: any } = { text: "", toolCalls: [] };
-    let bookingKind: string | null = null;
-    let immediateKind: string | null = null;
+    let bookingKind: string | null = forcedBookingKind;
+    let immediateKind: string | null = forcedImmediateKind;
     let bookingBlocked = false;
 
     const MODELS = ["openai/gpt-5-mini", "google/gemini-2.5-pro", "google/gemini-2.5-flash"];
     let workingMessages = [...aiMessages];
 
-    for (let round = 0; round < 2; round++) {
+    // Se atalho determinístico disparou, pula o LLM completamente
+    const skipLLM = !!(forcedBookingKind || forcedImmediateKind);
+    if (skipLLM && leadUuid) {
+      // Garante nome + interesse salvos (em caso de falha anterior do update_lead_info)
+      const update: any = { ultima_interacao: new Date().toISOString() };
+      if (!hasName && pushName && !pushName.startsWith("WhatsApp ")) update.nome = pushName;
+      if (!hasInterest) {
+        const inboundTexts = (history ?? []).filter(h => h.direction === "inbound").map(h => (h.content || "").toLowerCase()).join(" | ");
+        let interest: string | null = null;
+        if (/vender|venda/.test(inboundTexts)) interest = "venda";
+        else if (/comprar|compra/.test(inboundTexts)) interest = "compra";
+        else if (/alug/.test(inboundTexts)) interest = "aluguel";
+        else if (/incorpor/.test(inboundTexts)) interest = "incorporacao";
+        else if (/investiment|ocasi/.test(inboundTexts)) interest = "investimento_ocasiao";
+        if (interest) {
+          const { data: cur } = await supabase.from("leads").select("observacoes").eq("id", leadUuid).maybeSingle();
+          const note = `Intenção: ${interest}`;
+          update.observacoes = cur?.observacoes
+            ? (/Intenção:/i.test(cur.observacoes) ? cur.observacoes.replace(/Intenção:.*/i, note) : `${cur.observacoes}\n${note}`)
+            : note;
+          update.etapa_funil = "Em Contato";
+        }
+      }
+      if (Object.keys(update).length > 1) {
+        await supabase.from("leads").update(update).eq("id", leadUuid);
+      }
+    }
+
+    for (let round = 0; round < 2 && !skipLLM; round++) {
       result = { text: "", toolCalls: [] };
       try {
         for (const model of MODELS) {
