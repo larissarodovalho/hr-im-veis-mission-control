@@ -1,18 +1,14 @@
 ## Objetivo
-Exibir o **interesse** do contato dentro do card do Kanban (subabas Carteira e Marketing).
+Adicionar uma nova coluna **Visita** ao Kanban do funil de contas (usado em Carteira e Marketing).
 
-## Mudança (`src/components/contas/ContasKanban.tsx`)
-No `ContaCard`, após a linha de telefone/email, renderizar uma `Badge` âmbar (mesmo estilo usado na lista e em `AccountDetail`) com o valor de `a.interesse` quando existir:
+## Mudança (`src/lib/contasFunil.ts`)
+Adicionar `"visita"` ao tipo `EtapaFunil` e ao array `ETAPAS`, posicionada entre **Reunião** e **Fechado** (ordem natural do funil):
 
-```tsx
-{a.interesse && (
-  <Badge variant="outline" className="bg-amber-500/15 text-amber-700 border-amber-500/30 text-[10px]">
-    <Target className="h-3 w-3 mr-1" /> {a.interesse}
-  </Badge>
-)}
+```ts
+{ id: "visita", label: "Visita", color: "bg-teal-500/15 text-teal-700 border-teal-500/30" }
 ```
 
-Importar `Target` de `lucide-react`.
+A coluna é renderizada automaticamente pelo `ContasKanban` (que itera `ETAPAS`), e o drag-and-drop já aceita qualquer `EtapaFunil`. Contas existentes continuam nas suas etapas atuais; a nova coluna aparece vazia até alguém mover um card para ela.
 
 ## Fora de escopo
-Banco, filtros e demais visualizações.
+Banco (a coluna `etapa_funil` é `text` livre, sem constraint), filtros e demais visualizações.
