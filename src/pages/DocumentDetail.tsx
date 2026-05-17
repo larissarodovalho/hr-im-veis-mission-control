@@ -3,11 +3,16 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, Send, Ban, FileText, Clock } from "lucide-react";
+import { ArrowLeft, Download, Send, Ban, FileText, Clock, Trash2 } from "lucide-react";
 import DocumentStatusBadge from "@/components/DocumentStatusBadge";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useRole } from "@/hooks/useRole";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function DocumentDetail() {
   const { id } = useParams();
@@ -15,6 +20,16 @@ export default function DocumentDetail() {
   const [doc, setDoc] = useState<any>(null);
   const [signers, setSigners] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
+  const { isAdmin } = useRole();
+
+  const deleteDoc = async () => {
+    setBusy(true);
+    const { error } = await (supabase.from("signed_documents" as any) as any).delete().eq("id", id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Documento excluído");
+    navigate("/crm/documentos");
+  };
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
@@ -138,6 +153,29 @@ export default function DocumentDetail() {
               <Button variant="destructive" size="sm" onClick={cancelDoc} disabled={busy}>
                 <Ban className="h-4 w-4 mr-1" /> Cancelar
               </Button>
+            )}
+            {isAdmin && isFinal && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" disabled={busy}>
+                    <Trash2 className="h-4 w-4 mr-1" /> Excluir
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir documento definitivamente?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação é irreversível. O documento "{doc.name}", signatários e trilha de auditoria serão removidos permanentemente.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={deleteDoc} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Excluir definitivamente
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
         </div>

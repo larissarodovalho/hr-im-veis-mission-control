@@ -5,11 +5,17 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileSignature, Plus, Search } from "lucide-react";
+import { FileSignature, Plus, Search, Trash2 } from "lucide-react";
 import SendDocumentDialog from "@/components/SendDocumentDialog";
 import DocumentStatusBadge from "@/components/DocumentStatusBadge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useRole } from "@/hooks/useRole";
+import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type Doc = {
   id: string; name: string; status: string; created_at: string; sent_at: string | null;
@@ -24,6 +30,14 @@ export default function Documents() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [openSend, setOpenSend] = useState(false);
+  const { isAdmin } = useRole();
+
+  const handleDelete = async (id: string) => {
+    const { error } = await (supabase.from("signed_documents" as any) as any).delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Documento excluído");
+    load();
+  };
 
   const load = async () => {
     setLoading(true);
@@ -94,10 +108,11 @@ export default function Documents() {
           {filtered.map((d) => {
             const total = d.document_signers?.length || 0;
             const signed = d.document_signers?.filter((s) => s.status === "signed").length || 0;
+            const isFinal = ["canceled", "expired", "refused"].includes(d.status);
             return (
               <Card
                 key={d.id}
-                className="p-4 hover:shadow-md cursor-pointer transition"
+                className="p-4 hover:shadow-md cursor-pointer transition relative"
                 onClick={() => navigate(`/crm/documentos/${d.id}`)}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
@@ -112,6 +127,31 @@ export default function Documents() {
                       : `Criado ${format(new Date(d.created_at), "dd/MM/yyyy", { locale: ptBR })}`}
                   </p>
                 </div>
+                {isAdmin && isFinal && (
+                  <div className="mt-3 pt-3 border-t flex justify-end" onClick={(e) => e.stopPropagation()}>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4 mr-1" /> Excluir
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir documento?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta ação é irreversível. O documento "{d.name}" e toda sua trilha de auditoria serão removidos permanentemente.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(d.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Excluir definitivamente
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
               </Card>
             );
           })}
