@@ -1,17 +1,13 @@
-Causa: a coluna `interacoes.tipo` tem CHECK constraint que só aceita `ligacao`, `mensagem`, `visita`, `reuniao`, `email`, `nota`. Meu componente está inserindo "Reunião", "Ligação", etc. (com acento e maiúscula), por isso o insert falha.
+Adicionar nova etapa "Contato estabelecido" ao funil do Kanban (Carteira e Marketing).
 
-Correção em `src/components/contas/ContaInteracoesTimeline.tsx`:
+Alteração única em `src/lib/contasFunil.ts`:
 
-- Alterar o array `TIPOS` para usar `{ value, label, icon, color }` com `value` correspondendo ao slug aceito pelo banco e `label` para exibição:
-  - `reuniao` → "Reunião"
-  - `ligacao` → "Ligação"
-  - `mensagem` → "WhatsApp / Mensagem"
-  - `email` → "Email"
-  - `visita` → "Visita"
-  - `nota` → "Nota / Interesse"
-- `useState` inicial: `"reuniao"` em vez de `"Reunião"`.
-- `<SelectItem value={t.value}>{t.label}</SelectItem>`.
-- Badge da timeline: usar `meta.label` em vez de `it.tipo` cru.
-- `tipoMeta` lookup permanece por `value`.
+- Adicionar `"contato_estabelecido"` ao tipo `EtapaFunil`.
+- Inserir no array `ETAPAS` logo após `contatado` e antes de `sem_retorno`:
+  ```
+  { id: "contato_estabelecido", label: "Contato estabelecido", color: "bg-cyan-500/15 text-cyan-700 border-cyan-500/30" }
+  ```
 
-Nenhuma alteração no banco — somente código frontend.
+Ordem final: A contatar → Contatado → Contato estabelecido → Sem retorno → Reunião → Visita → Proposta → Fechado → Perdido.
+
+O Kanban (`ContasKanban.tsx`) e o banco aceitam `etapa_funil` como texto livre, então nenhuma migração nem alteração no componente é necessária — a coluna aparece automaticamente.
