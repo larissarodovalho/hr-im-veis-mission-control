@@ -1,47 +1,53 @@
 ## Objetivo
 
-Adicionar uma quarta opção de papel na aba **Usuários**: **"Gestor + Corretor"** — usuário com permissões de gestor (vê tudo, acessa Relatórios/Newsletter/Usuários/Configurações) e que também aparece como corretor responsável em leads, contas e imóveis.
+Restringir **todas as exclusões** do sistema apenas ao papel `admin`. Hoje o `gestor` também consegue excluir em quase todas as tabelas — isso será removido.
 
-Sem migração de banco. Usa o enum `app_role` atual e a tabela `user_roles` (que já permite múltiplas linhas por usuário via `unique(user_id, role)`).
+Corretor e gestor continuam podendo criar e editar normalmente; apenas a ação de excluir (DELETE) passa a ser exclusiva do admin.
 
-## Como funciona
+## Mudanças no banco (RLS)
 
-Internamente o usuário fica com **duas linhas** em `user_roles`: uma `gestor` + uma `corretor`. O front exibe esse caso como um único valor "Gestor + Corretor" no dropdown.
+Substituir as policies de DELETE nas tabelas abaixo, trocando `has_role(uid,'admin') OR has_role(uid,'gestor')` (e variações com autor/owner) por **apenas** `has_role(auth.uid(), 'admin')`:
 
-Comportamento resultante:
-- RLS de gestor → vê todos os dados da empresa (já existe via `has_role(uid, 'gestor')`)
-- RLS de corretor → aparece como responsável próprio quando atribuído em `leads.corretor_id`, `contas.responsavel_id`, etc.
-- Rotas admin/gestor (`StaffRoute`) → libera (porque tem `gestor`)
-- `isAdmin` / `isGestor` no AuthContext → `isGestor=true`, `isAdmin=false`
+- `agenda_bloqueios`
+- `agentes`
+- `campanhas_metrics_daily`
+- `campanhas_trafego`
+- `conta_propriedades`
+- `contas`
+- `contatos`
+- `conteudo_posts`
+- `document_events`, `document_signers`, `signed_documents` (hoje usam `is_admin()` que inclui gestor — trocar para `has_role(uid,'admin')`)
+- `imoveis`
+- `interacoes`
+- `leads`
+- `ligacoes`
+- `notas`
+- `propostas`
+- `reunioes`
 
-## Mudanças
+A função `public.is_admin()` será mantida intacta (é usada em SELECT/UPDATE de várias policies; mexer nela teria efeito colateral). As policies de DELETE deixam de chamá-la e passam a usar `has_role` diretamente.
 
-### 1. Edge function `supabase/functions/admin-create-user/index.ts`
+Tabelas que já são admin-only ou irrelevantes (`activity_log` sem DELETE, `email_*` só service_role, `profiles`/`lead_historico`/`newsletter_subscribers` sem DELETE) ficam como estão.
 
-Aceitar `role: "gestor_corretor"` (valor virtual, apenas no payload do front) nas 3 ações que mexem em roles:
+## Mudanças no frontend
 
-- `create`, `update_role`, `update_profile`:
-  - Validar role aceitando o novo valor virtual.
-  - Quando `role === "gestor_corretor"`: após `delete` das roles atuais, inserir **duas linhas** (`gestor` e `corretor`) em vez de uma.
-  - Demais roles: comportamento atual inalterado.
+Esconder/desabilitar botões de excluir para quem não é admin, evitando que o usuário clique e tome erro de RLS:
 
-### 2. `src/pages/UsuariosAdminPage.tsx`
+- `UsuariosAdminPage` — já é admin-only (página inteira), sem mudança.
+- Telas/componentes que oferecem exclusão e hoje aparecem para gestor: ocultar o botão quando `!isAdmin`. Lista preliminar a confirmar durante a implementação:
+  - `Leads` / `LeadDetail`
+  - `Accounts` / `AccountDetail` (incluindo `ContaInteracoesTimeline`, `ContaAgendaQuickAdd`)
+  - `Imoveis`
+  - `Documents` / `DocumentDetail`
+  - `Calls`, `Meetings`, `Visits`, `Schedule`, `AgendarPage`
+  - `Conteudo`, `TrafegoPago`, `RedesSociais`, `Marketing`
+  - `Newsletter`
+  - Componentes de timeline/notas
 
-- Adicionar tipo local `UiRole = AppRole | "gestor_corretor"`. Estado do form e da row passa a usar `UiRole`.
-- Em `fetchUsers`, trocar lógica de prioridade: agrupar **todas** as roles por `user_id` num `Set`. Se contém `gestor` **e** `corretor` (e não `admin`) → exibir como `"gestor_corretor"`. Senão, manter prioridade admin > gestor > corretor.
-- Em todos os 3 `<Select>` de papel (criação, edição, linha da tabela), adicionar `<SelectItem value="gestor_corretor">Gestor + Corretor</SelectItem>`.
-- Largura do select da tabela: aumentar `w-32` para `w-44` para caber o novo rótulo.
-- `callAdmin` continua igual — só repassa a string.
+Padrão: `{isAdmin && <Button …>Excluir</Button>}` usando `useAuth()` / `useRole()`.
 
-### 3. Sem alterações em
+## Fora de escopo
 
-- Schema do banco / enum `app_role`
-- RLS policies
-- `AuthContext` / `StaffRoute` / `useRole` (já funcionam corretamente quando o usuário tem ambas as roles: `isGestor` retorna true porque inclui `gestor`)
-- Demais telas
-
-## Validações
-
-- Após salvar, `fetchUsers` deve reler e exibir "Gestor + Corretor" para o usuário alvo.
-- Trocar de "Gestor + Corretor" para qualquer outro papel limpa as duas linhas e insere a nova (já feito pelo `delete` + `insert` existente).
-- Auto-proteção: ao editar o próprio usuário admin, o select continua desabilitado (lógica atual mantida).
+- Não cria novos papéis nem altera o enum `app_role`.
+- Não muda lógica de SELECT/UPDATE: gestor continua vendo tudo e editando.
+- Não toca em edge functions (admin-create-user já valida admin internamente).
