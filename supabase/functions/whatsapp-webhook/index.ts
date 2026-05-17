@@ -518,10 +518,27 @@ Deno.serve(async (req) => {
       h.direction === "outbound" && /comprar.*vender.*alugar|tipo de interesse/i.test(h.content || "")
     ) && (history ?? []).filter(h => h.direction === "inbound").length >= 2;
 
+    // Detecta pedido de reenvio do link
+    const isAskingLinkAgain = /(manda|envia|reenvi|mandar?|enviar?)[^a-z]{0,20}(link|agendamento)|perdi[^a-z]{0,10}(link|agendamento)|n[ãa]o[^a-z]{0,5}recebi[^a-z]{0,20}(link|agendamento)|qual[^a-z]{0,5}(era|foi|é)[^a-z]{0,5}link|link[^a-z]{0,15}(de novo|outra vez|novamente)/i.test(content || "");
+
     const canTriggerHandoff =
       (hasName || conversationCoveredName) &&
       (hasInterest || conversationCoveredInterest) &&
-      !alreadyNotified && !alreadyBooked;
+      !alreadyNotified &&
+      (!alreadyBooked || isAskingLinkAgain);
+
+    // Recupera o último kind agendado pra reaproveitar no reenvio
+    let lastBookingKind: string | null = null;
+    if (isAskingLinkAgain && alreadyBooked) {
+      const { data: lastBk } = await supabase
+        .from("booking_links")
+        .select("kind")
+        .eq("conversation_id", conv.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      lastBookingKind = lastBk?.kind ?? null;
+    }
 
     // ATALHO DETERMINÍSTICO: depois que Sofia ofereceu o handoff (Passo 3),
     // qualquer resposta combinando com um dos 4 formatos vira link/contato direto,
@@ -531,7 +548,22 @@ Deno.serve(async (req) => {
     const userLower = (content || "").toLowerCase();
     let forcedBookingKind: string | null = null;
     let forcedImmediateKind: string | null = null;
-    if (askedForFormat && canTriggerHandoff) {
+    let isResend = false;
+
+    if (isAskingLinkAgain && canTriggerHandoff) {
+      // Tenta detectar kind na mensagem; senão, reusa o último; senão, deixa LLM perguntar
+      let kind: string | null = null;
+      if (/presenc|pessoal|escrit[óo]rio/.test(userLower)) kind = "presencial";
+      else if (/v[íi]deo|videocham/.test(userLower)) kind = "videochamada";
+      else if (/ligaç|ligar|telefon/.test(userLower)) kind = "ligacao";
+      else if (/whats|zap/.test(userLower)) kind = "whatsapp";
+      if (!kind) kind = lastBookingKind;
+      if (kind) {
+        forcedBookingKind = kind;
+        isResend = true;
+        console.log("[whatsapp-webhook] reenvio de link", { kind, lastBookingKind });
+      }
+    } else if (askedForFormat && canTriggerHandoff) {
       let kind: string | null = null;
       if (/presenc|pessoal|escrit[óo]rio|reuni[ãa]o/.test(userLower)) kind = "presencial";
       else if (/v[íi]deo|videocham|chamada de v/.test(userLower)) kind = "videochamada";
@@ -759,7 +791,10 @@ Deno.serve(async (req) => {
       // Remove qualquer URL que o modelo tenha colocado por engano — o sistema anexa o link oficial
       reply = reply.replace(/https?:\/\/\S+/gi, "").trim();
 
-      if (!reply) {
+      if (isResend) {
+        // Reenvio: mensagem curta, sem repetir explicação longa
+        reply = `Claro${firstName ? `, ${firstName}` : ""}! Aqui está o link de novo:`;
+      } else if (!reply) {
         const BOOKING_INSTRUCTIONS: Record<string, string> = {
           presencial: "Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para você vir até o nosso escritório conversar pessoalmente com o Hans.",
           videochamada: "Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para sua videochamada com o Hans. No horário marcado você recebe o link da chamada.",
