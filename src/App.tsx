@@ -49,7 +49,6 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/esqueci-senha" element={<ForgotPassword />} />
             <Route path="/redefinir-senha" element={<ResetPassword />} />
@@ -57,16 +56,26 @@ const App = () => (
             <Route path="/unsubscribe" element={<UnsubscribePage />} />
             <Route path="/captura" element={<CapturaPage />} />
 
-            {/* Site público preservado */}
-            <Route path="/site" element={<SiteLayout><HomePage /></SiteLayout>} />
-            <Route path="/site/imoveis" element={<SiteLayout><ImoveisPage /></SiteLayout>} />
-            <Route path="/site/imovel/:id" element={<SiteLayout><ImovelDetalhePage /></SiteLayout>} />
-            <Route path="/site/sobre" element={<SiteLayout><SobrePage /></SiteLayout>} />
-            <Route path="/site/contato" element={<SiteLayout><ContatoPage /></SiteLayout>} />
+            {/* Site público na raiz */}
+            <Route path="/" element={<SiteLayout><HomePage /></SiteLayout>} />
+            <Route path="/imoveis" element={<SiteLayout><ImoveisPage /></SiteLayout>} />
+            <Route path="/imovel/:id" element={<SiteLayout><ImovelDetalhePage /></SiteLayout>} />
+            <Route path="/sobre" element={<SiteLayout><SobrePage /></SiteLayout>} />
+            <Route path="/contato" element={<SiteLayout><ContatoPage /></SiteLayout>} />
 
-            {/* CRM (clone Brazil Lands) */}
+            {/* Redirects das URLs antigas do site */}
+            <Route path="/site" element={<Navigate to="/" replace />} />
+            <Route path="/site/imoveis" element={<Navigate to="/imoveis" replace />} />
+            <Route path="/site/imovel/:id" element={<Navigate to="/imovel/:id" replace />} />
+            <Route path="/site/sobre" element={<Navigate to="/sobre" replace />} />
+            <Route path="/site/contato" element={<Navigate to="/contato" replace />} />
+
+            {/* Landing interno (opcional) */}
+            <Route path="/landing" element={<Landing />} />
+
+            {/* CRM */}
             <Route
-              path="/app"
+              path="/crm"
               element={
                 <ProtectedRoute>
                   <AppLayout />
@@ -90,6 +99,9 @@ const App = () => (
               <Route path="usuarios" element={<Users />} />
               <Route path="configuracoes" element={<ConfiguracoesPage />} />
             </Route>
+
+            {/* Redirect das URLs antigas do CRM */}
+            <Route path="/app/*" element={<Navigate to="/crm" replace />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
