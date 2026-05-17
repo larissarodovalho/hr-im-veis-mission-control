@@ -57,11 +57,20 @@ export default function FunilContasReport() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [{ data: c }, { data: p }] = await Promise.all([
-        supabase.from("contas").select("id, etapa_funil, tags, responsavel_id"),
-        supabase.from("profiles").select("user_id, nome"),
-      ]);
-      setContas((c ?? []) as Conta[]);
+      const PAGE = 1000;
+      const all: Conta[] = [];
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await supabase
+          .from("contas")
+          .select("id, etapa_funil, tags, responsavel_id")
+          .range(from, from + PAGE - 1);
+        if (error) break;
+        const rows = (data ?? []) as Conta[];
+        all.push(...rows);
+        if (rows.length < PAGE) break;
+      }
+      const { data: p } = await supabase.from("profiles").select("user_id, nome");
+      setContas(all);
       setProfiles((p ?? []) as Profile[]);
       setLoading(false);
     })();
