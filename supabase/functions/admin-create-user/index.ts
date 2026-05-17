@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
     if (action === "update_profile") {
       const { user_id, nome, email, telefone, cargo, role } = body as {
         user_id?: string; nome?: string; email?: string;
-        telefone?: string; cargo?: string; role?: Role;
+        telefone?: string; cargo?: string; role?: UiRole;
       };
       if (!user_id) return json({ error: "user_id obrigatório" }, 400);
 
@@ -147,13 +147,12 @@ Deno.serve(async (req) => {
         if (pErr) return json({ error: pErr.message }, 400);
       }
 
-      if (role && ["admin", "gestor", "corretor"].includes(role)) {
+      if (role && VALID_UI_ROLES.includes(role)) {
         if (user_id === callerId && role !== "admin") {
           return json({ error: "Você não pode remover seu próprio papel de admin" }, 400);
         }
-        await admin.from("user_roles").delete().eq("user_id", user_id);
-        const { error: rErr } = await admin.from("user_roles").insert({ user_id, role });
-        if (rErr) return json({ error: rErr.message }, 400);
+        try { await applyRoles(admin, user_id, role); }
+        catch (e) { return json({ error: (e as Error).message }, 400); }
       }
 
       return json({ ok: true });
