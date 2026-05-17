@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
-const imoveis: any[] = [];
 import { ArrowRight, MapPin, ArrowUpRight, MessageCircle, Building2 } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import hrLogo from "@/assets/logo-hr-branco.png";
@@ -13,9 +12,9 @@ import property1 from "@/assets/property-1.jpg";
 import property2 from "@/assets/property-2.jpg";
 import property3 from "@/assets/property-3.jpg";
 import featureInterior from "@/assets/feature-interior.jpg";
+import { useSiteImages, fetchFeaturedImoveis } from "@/lib/siteSettings";
 
 const propertyImages = [property1, property2, property3];
-const destaque = imoveis.filter((i) => i.status === "Disponível").slice(0, 3);
 
 function formatPrice(valor: number) {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
