@@ -214,7 +214,7 @@ export default function ImoveisPage() {
                       className={`relative px-5 py-2.5 rounded-full text-xs font-medium transition-all duration-400 ${
                         tipoSelecionado === tipo
                           ? "text-white"
-                          : "text-white/35 hover:text-white/60"
+                          : "text-white/60 hover:text-white/60"
                       }`}
                     >
                       {tipoSelecionado === tipo && (
@@ -233,13 +233,13 @@ export default function ImoveisPage() {
 
                 {/* Search */}
                 <div className="relative flex-1 max-w-sm hidden sm:block">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
                   <input
                     type="text"
                     placeholder="Buscar condomínio ou bairro"
                     value={busca}
                     onChange={(e) => setBusca(e.target.value)}
-                    className="w-full bg-transparent border-b border-white/[0.08] pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-white/25 transition-all duration-300"
+                    className="w-full bg-transparent border-b border-white/[0.08] pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/25 transition-all duration-300"
                   />
                 </div>
 
@@ -254,7 +254,7 @@ export default function ImoveisPage() {
                     className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-medium transition-all duration-300 border ${
                       faixaSelecionada !== "Todos"
                         ? "bg-white/10 border-white/15 text-white"
-                        : "bg-transparent border-white/[0.08] text-white/35 hover:text-white/60 hover:border-white/15"
+                        : "bg-transparent border-white/[0.08] text-white/60 hover:text-white/60 hover:border-white/15"
                     }`}
                   >
                     <span>{faixaSelecionada === "Todos" ? "Valor" : faixaSelecionada}</span>
@@ -262,7 +262,7 @@ export default function ImoveisPage() {
                       width="10" height="10" viewBox="0 0 10 10" fill="none"
                       animate={{ rotate: valorDropdownOpen ? 180 : 0 }}
                       transition={{ duration: 0.25 }}
-                      className="text-white/30"
+                      className="text-white/60"
                     >
                       <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                     </motion.svg>
@@ -287,7 +287,7 @@ export default function ImoveisPage() {
                             className={`w-full text-left px-4 py-2.5 text-xs font-medium transition-all duration-200 flex items-center justify-between ${
                               faixaSelecionada === faixa.label
                                 ? "bg-white/[0.08] text-white"
-                                : "text-white/35 hover:bg-white/[0.04] hover:text-white/70"
+                                : "text-white/60 hover:bg-white/[0.04] hover:text-white/70"
                             }`}
                           >
                             <span>{faixa.label}</span>
@@ -313,7 +313,7 @@ export default function ImoveisPage() {
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
                       onClick={() => { setTipoSelecionado("Todos"); setBusca(""); setFaixaSelecionada("Todos"); }}
-                      className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.1] transition-all"
+                      className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white/60 hover:text-white/60 hover:bg-white/[0.1] transition-all"
                     >
                       <X className="h-3.5 w-3.5" />
                     </motion.button>
@@ -324,13 +324,13 @@ export default function ImoveisPage() {
               {/* Mobile search */}
               <div className="sm:hidden">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
                   <input
                     type="text"
                     placeholder="Buscar condomínio ou bairro"
                     value={busca}
                     onChange={(e) => setBusca(e.target.value)}
-                    className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-white/15 transition-all"
+                    className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/15 transition-all"
                   />
                 </div>
               </div>
@@ -429,7 +429,7 @@ export default function ImoveisPage() {
                         </span>
                       </div>
 
-                      <p className="text-[11px] text-white/20 leading-relaxed line-clamp-2 mb-5 font-light">
+                      <p className="text-[11px] text-white/50 leading-relaxed line-clamp-2 mb-5 font-light">
                         {im.descricao}
                       </p>
 
@@ -438,19 +438,19 @@ export default function ImoveisPage() {
                         {im.tipo !== "Terreno" ? (
                           <>
                             {im.quartos > 0 && (
-                              <div className="flex items-center gap-1.5 pr-3 text-white/30">
+                              <div className="flex items-center gap-1.5 pr-3 text-white/60">
                                 <BedDouble className="h-3.5 w-3.5" />
                                 <span className="text-[11px] font-light">{im.quartos} quartos</span>
                               </div>
                             )}
                             {im.banheiros > 0 && (
-                              <div className="flex items-center gap-1.5 px-3 border-l border-white/[0.06] text-white/30">
+                              <div className="flex items-center gap-1.5 px-3 border-l border-white/[0.06] text-white/60">
                                 <Bath className="h-3.5 w-3.5" />
                                 <span className="text-[11px] font-light">{im.banheiros}</span>
                               </div>
                             )}
                             {im.vagas > 0 && (
-                              <div className="flex items-center gap-1.5 px-3 border-l border-white/[0.06] text-white/30">
+                              <div className="flex items-center gap-1.5 px-3 border-l border-white/[0.06] text-white/60">
                                 <Car className="h-3.5 w-3.5" />
                                 <span className="text-[11px] font-light">{im.vagas}</span>
                               </div>
@@ -460,7 +460,7 @@ export default function ImoveisPage() {
                             </div>
                           </>
                         ) : (
-                          <div className="flex items-center gap-1.5 text-white/30">
+                          <div className="flex items-center gap-1.5 text-white/60">
                             <Maximize2 className="h-3.5 w-3.5" />
                             <span className="text-[11px] font-light">Área total: {im.area}</span>
                           </div>
@@ -502,7 +502,7 @@ export default function ImoveisPage() {
                 animate={{ opacity: 1 }}
                 className="text-center py-24"
               >
-                <p className="text-white/20 text-sm font-light">Nenhum imóvel encontrado com os filtros aplicados.</p>
+                <p className="text-white/50 text-sm font-light">Nenhum imóvel encontrado com os filtros aplicados.</p>
                 <button
                   onClick={() => { setTipoSelecionado("Todos"); setBusca(""); setFaixaSelecionada("Todos"); }}
                   className="mt-4 px-5 py-2 rounded-xl text-xs text-white/40 hover:text-white/70 border border-white/10 hover:border-white/20 transition-all"
@@ -555,7 +555,7 @@ export default function ImoveisPage() {
               whileInView={{ opacity: 1 }}
               viewport={{ margin: "-40px" }}
               transition={{ duration: 0.8, delay: 0.3 }}
-              className="text-sm text-white/30 font-light mb-10 max-w-md mx-auto leading-[1.8]"
+              className="text-sm text-white/60 font-light mb-10 max-w-md mx-auto leading-[1.8]"
             >
               Nossa equipe encontra o imóvel ideal para você. Conte-nos o que busca.
             </motion.p>

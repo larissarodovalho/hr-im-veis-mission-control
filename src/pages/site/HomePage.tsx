@@ -153,7 +153,7 @@ export default function HomePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.8 }}
-            className="text-sm sm:text-base text-white/30 max-w-lg mb-12 font-light leading-[1.8] tracking-wide"
+            className="text-sm sm:text-base text-white/60 max-w-lg mb-12 font-light leading-[1.8] tracking-wide"
           >
             Casas, terrenos e apartamentos de alto padrão nos melhores condomínios fechados.
           </motion.p>
@@ -173,7 +173,7 @@ export default function HomePage() {
             </Link>
             <Link
               to="/site/contato"
-              className="inline-flex items-center gap-2 px-9 py-3.5 rounded-full border border-white/[0.08] text-white/30 text-[11px] font-light tracking-[0.15em] uppercase hover:bg-white/[0.04] hover:border-white/[0.15] hover:text-white/50 transition-all duration-500"
+              className="inline-flex items-center gap-2 px-9 py-3.5 rounded-full border border-white/[0.08] text-white/60 text-[11px] font-light tracking-[0.15em] uppercase hover:bg-white/[0.04] hover:border-white/[0.15] hover:text-white/50 transition-all duration-500"
             >
               Contato
             </Link>
@@ -238,7 +238,7 @@ export default function HomePage() {
                 <h3 className="font-medium text-base sm:text-lg mb-3 tracking-wide text-white/85 group-hover:text-white transition-colors duration-700">
                   {item.title}
                 </h3>
-                <p className="text-sm text-white/35 leading-[1.7] font-light group-hover:text-white/50 transition-colors duration-700">
+                <p className="text-sm text-white/60 leading-[1.7] font-light group-hover:text-white/75 transition-colors duration-700">
                   {item.desc}
                 </p>
               </motion.div>
@@ -286,7 +286,7 @@ export default function HomePage() {
             >
               <Link
                 to="/site/imoveis"
-                className="hidden sm:inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-white/30 hover:text-white/50 transition-colors duration-500 font-light"
+                className="hidden sm:inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-white/60 hover:text-white/50 transition-colors duration-500 font-light"
               >
                 Ver todos <ArrowRight className="h-3 w-3" />
               </Link>
@@ -319,7 +319,7 @@ export default function HomePage() {
                   <div className="p-8 sm:p-10">
                     <div className="flex items-center justify-between mb-5">
                       <span className="text-[10px] uppercase tracking-[0.4em] text-white/25 font-light">{imovel.tipo}</span>
-                      <ArrowUpRight className="h-3.5 w-3.5 text-white/20 group-hover:text-amber-300/50 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-500" />
+                      <ArrowUpRight className="h-3.5 w-3.5 text-white/50 group-hover:text-amber-300/50 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-500" />
                     </div>
                     <h3 className="font-light text-base mb-3 tracking-wide text-white/80 group-hover:text-white/95 transition-colors duration-500">
                       {imovel.titulo}
@@ -345,7 +345,7 @@ export default function HomePage() {
           >
             <Link
               to="/site/imoveis"
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full border border-white/[0.08] text-white/30 text-[11px] font-light tracking-[0.15em] uppercase hover:bg-white/[0.04] transition-all duration-500"
+              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full border border-white/[0.08] text-white/60 text-[11px] font-light tracking-[0.15em] uppercase hover:bg-white/[0.04] transition-all duration-500"
             >
               Ver todos <ArrowRight className="h-3.5 w-3.5" />
             </Link>
@@ -384,11 +384,11 @@ export default function HomePage() {
                 <img src={img("section_community", sectionCommunity)} alt="Comprar imóvel" className="absolute inset-0 w-full h-full object-cover opacity-15 group-hover:opacity-25 transition-opacity duration-1000" loading="lazy" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/85 to-[#050505]/60" />
                 <div className="relative p-12 sm:p-20 text-center flex flex-col items-center">
-                  <MessageCircle className="h-7 w-7 text-white/20 mb-8" />
+                  <MessageCircle className="h-7 w-7 text-white/50 mb-8" />
                   <h3 className="text-2xl sm:text-3xl font-extralight tracking-wide mb-5">
                     Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 font-light">comprar</span> um imóvel?
                   </h3>
-                  <p className="text-sm text-white/30 font-light leading-[1.8] max-w-sm mb-10">
+                  <p className="text-sm text-white/60 font-light leading-[1.8] max-w-sm mb-10">
                     Nossa equipe de consultores vai te ajudar a encontrar o imóvel perfeito para você e sua família.
                   </p>
                   <div className="flex flex-wrap justify-center gap-3">
@@ -403,7 +403,7 @@ export default function HomePage() {
                       href="https://wa.me/5566999990000"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full border border-white/[0.08] text-white/30 text-[11px] font-light tracking-[0.12em] uppercase hover:bg-white/[0.04] hover:border-white/[0.15] transition-all duration-500"
+                      className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full border border-white/[0.08] text-white/60 text-[11px] font-light tracking-[0.12em] uppercase hover:bg-white/[0.04] hover:border-white/[0.15] transition-all duration-500"
                     >
                       WhatsApp
                     </a>
@@ -422,16 +422,16 @@ export default function HomePage() {
                 <img src={img("feature_interior", featureInterior)} alt="Vender imóvel" className="absolute inset-0 w-full h-full object-cover opacity-15 group-hover:opacity-25 transition-opacity duration-1000" loading="lazy" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/85 to-[#050505]/60" />
                 <div className="relative p-12 sm:p-20 text-center flex flex-col items-center">
-                  <Building2 className="h-7 w-7 text-white/20 mb-8" />
+                  <Building2 className="h-7 w-7 text-white/50 mb-8" />
                   <h3 className="text-2xl sm:text-3xl font-extralight tracking-wide mb-5">
                     Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 font-light">vender</span> seu imóvel?
                   </h3>
-                  <p className="text-sm text-white/30 font-light leading-[1.8] max-w-sm mb-10">
+                  <p className="text-sm text-white/60 font-light leading-[1.8] max-w-sm mb-10">
                     Avaliamos e anunciamos seu imóvel com exclusividade. Alcance compradores qualificados com a HR Imóveis.
                   </p>
                   <Link
                     to="/site/contato"
-                    className="group/btn inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full border border-white/[0.08] text-white/30 text-[11px] font-light tracking-[0.12em] uppercase hover:border-white/[0.15] hover:text-white/50 hover:bg-white/[0.04] transition-all duration-500"
+                    className="group/btn inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full border border-white/[0.08] text-white/60 text-[11px] font-light tracking-[0.12em] uppercase hover:border-white/[0.15] hover:text-white/50 hover:bg-white/[0.04] transition-all duration-500"
                   >
                     Quero Vender meu Imóvel
                     <ArrowRight className="h-3.5 w-3.5 group-hover/btn:translate-x-1 transition-transform duration-300" />
@@ -514,7 +514,7 @@ function NewsletterSection() {
           whileInView={{ opacity: 1 }}
           viewport={{ margin: "-40px" }}
           transition={{ duration: 0.7, delay: 0.2 }}
-          className="text-sm text-white/30 font-light max-w-md mx-auto mb-12 leading-[1.8]"
+          className="text-sm text-white/60 font-light max-w-md mx-auto mb-12 leading-[1.8]"
         >
           Receba informações exclusivas sobre novos imóveis, tendências do mercado e novidades da região de Sinop.
         </motion.p>
@@ -532,7 +532,7 @@ function NewsletterSection() {
             placeholder="Seu melhor e-mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="flex-1 px-6 py-3.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-sm text-white placeholder:text-white/25 font-light tracking-wide focus:outline-none focus:border-white/[0.15] transition-all duration-500"
+            className="flex-1 px-6 py-3.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-sm text-white placeholder:text-white/45 font-light tracking-wide focus:outline-none focus:border-white/[0.15] transition-all duration-500"
           />
           <button
             type="submit"
@@ -547,7 +547,7 @@ function NewsletterSection() {
           whileInView={{ opacity: 1 }}
           viewport={{ margin: "-40px" }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="text-[10px] text-white/20 mt-5 font-light tracking-[0.2em]"
+          className="text-[10px] text-white/50 mt-5 font-light tracking-[0.2em]"
         >
           Sem spam. Cancele quando quiser.
         </motion.p>

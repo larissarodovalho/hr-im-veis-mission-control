@@ -1,15 +1,41 @@
-## Remover a seção "Cada detalhe pensado..." da home do site
+## Objetivo
 
-Remover o bloco parallax full-width que mostra a frase *"Cada detalhe pensado para quem valoriza sofisticação e qualidade de vida"* na página `/site`.
+Melhorar a legibilidade dos textos pequenos em todas as páginas do site público (`/site/*`), sem alterar a hierarquia visual nem o layout.
 
-### Mudança
+## Diagnóstico
 
-- **Arquivo:** `src/pages/site/HomePage.tsx`
-- **Linhas ~198–226:** apagar todo o `<ScrollSection>` "Full-width Parallax" (a seção inteira, incluindo a imagem de fundo `section_living`, o overlay e o título).
-- Ajustar o `index` das seções seguintes se necessário (a próxima seção "Diferenciais" passa de `index={3}` para `index={2}` para manter a sequência das animações de scroll).
-- A imagem `section_living` continua disponível no painel de configurações (não vou removê-la das configurações, só deixa de ser usada nessa seção específica da home).
+Os textos pequenos têm dois problemas combinados:
+1. **Tamanho**: muito uso de `text-xs` (12px) e `text-sm` (14px).
+2. **Opacidade muito baixa**: `text-white/20`, `text-white/30`, `text-white/35` sobre fundo escuro — o contraste fica abaixo do recomendado e os textos quase somem.
 
-### Fora do escopo
+O segundo ponto é, na prática, o que mais impacta a leitura.
 
-- Manter intactas as demais seções (hero, diferenciais, imóveis em destaque, etc.).
-- Não mexer em `SobrePage` nem em outras páginas que ainda usam `section_living`.
+## Mudanças propostas
+
+Aplicar em todos os arquivos de `src/pages/site/*` e `src/components/site/SiteLayout.tsx`:
+
+### 1. Tamanho (aumento sutil de um passo)
+- Parágrafos descritivos: `text-sm` → `text-base`
+- Textos auxiliares pequenos (cards, listas, rodapé): `text-xs` → `text-sm`
+- Exceções mantidas em `text-xs`: rótulos com `uppercase tracking-[0.x em]` (eyebrows/labels estilizados), pois aumentar quebraria o efeito tipográfico.
+
+### 2. Opacidade (aumento de contraste)
+- `text-white/20` → `text-white/50`
+- `text-white/30` → `text-white/60`
+- `text-white/35` → `text-white/60`
+- `text-white/40` → `text-white/65` (apenas em corpo de texto, não em eyebrows decorativos)
+- Estados `group-hover:text-white/35` e similares ajustados proporcionalmente.
+
+### 3. Escopo dos arquivos
+- `src/pages/site/HomePage.tsx`
+- `src/pages/site/SobrePage.tsx`
+- `src/pages/site/ImoveisPage.tsx`
+- `src/pages/site/ImovelDetalhePage.tsx`
+- `src/pages/site/ContatoPage.tsx`
+- `src/components/site/SiteLayout.tsx` (rodapé e navegação mobile)
+
+## Fora do escopo
+
+- CRM e telas administrativas — só o site público.
+- Não muda fontes, cores de marca, espaçamentos, nem estrutura de seções.
+- Eyebrows decorativos (`uppercase tracking-wider`) mantêm `text-xs` para preservar o estilo editorial.

@@ -111,7 +111,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               <div className="flex items-center gap-2.5 mb-4">
               <img src={hrLogo} alt="HR Imóveis" className="h-10 w-auto object-contain" />
               </div>
-              <p className="text-xs text-white/30 leading-relaxed max-w-sm">
+              <p className="text-xs text-white/60 leading-relaxed max-w-sm">
                 Referência no mercado imobiliário de Sinop-MT. Imóveis de alto padrão com atendimento personalizado.
               </p>
             </div>
@@ -121,7 +121,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               <ul className="space-y-2">
                 {navLinks.map((link) => (
                   <li key={link.to}>
-                    <Link to={link.to} className="text-xs text-white/30 hover:text-white/60 transition-colors">
+                    <Link to={link.to} className="text-xs text-white/60 hover:text-white/60 transition-colors">
                       {link.label}
                     </Link>
                   </li>
@@ -131,22 +131,22 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
 
             <div>
               <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-4">Contato</h4>
-              <ul className="space-y-2 text-xs text-white/30">
+              <ul className="space-y-2 text-xs text-white/60">
                 <li className="flex items-center gap-2"><Phone className="h-3 w-3" /> (66) 99999-0000</li>
                 <li className="flex items-center gap-2"><Mail className="h-3 w-3" /> contato@hrimoveis.com.br</li>
               </ul>
               <div className="flex gap-2 mt-4">
-                <a href="#" className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors text-white/30 hover:text-white/60">
+                <a href="#" className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors text-white/60 hover:text-white/60">
                   <Instagram className="h-3.5 w-3.5" />
                 </a>
-                <a href="#" className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors text-white/30 hover:text-white/60">
+                <a href="#" className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors text-white/60 hover:text-white/60">
                   <Facebook className="h-3.5 w-3.5" />
                 </a>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-white/5 mt-8 pt-6 text-center text-[10px] text-white/20">
+          <div className="border-t border-white/5 mt-8 pt-6 text-center text-[10px] text-white/50">
             © {new Date().getFullYear()} HR Imóveis. Todos os direitos reservados.
           </div>
         </div>

@@ -63,7 +63,7 @@ export default function ContatoPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.3 }}
-            className="text-[11px] uppercase tracking-[0.4em] text-white/30 font-light mb-6"
+            className="text-[11px] uppercase tracking-[0.4em] text-white/60 font-light mb-6"
           >
             Sinop — Mato Grosso
           </motion.p>
@@ -81,7 +81,7 @@ export default function ContatoPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.8 }}
-            className="text-base md:text-lg text-white/30 font-light max-w-md leading-relaxed"
+            className="text-base md:text-lg text-white/60 font-light max-w-md leading-relaxed"
           >
             Estamos prontos para atender você com atendimento personalizado e exclusivo.
           </motion.p>
@@ -98,7 +98,7 @@ export default function ContatoPage() {
           />
           <div>
             <motion.p
-              className="text-[11px] uppercase tracking-[0.4em] text-white/20 font-light mb-6"
+              className="text-[11px] uppercase tracking-[0.4em] text-white/50 font-light mb-6"
             >
               Informações
             </motion.p>
@@ -107,10 +107,10 @@ export default function ContatoPage() {
                 <div key={info.label} className="group">
                   <div className="flex items-start gap-5">
                     <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0 group-hover:bg-white/[0.08] transition-colors duration-500">
-                      <info.icon className="h-4 w-4 text-white/25 group-hover:text-white/50 transition-colors duration-500" />
+                      <info.icon className="h-4 w-4 text-white/25 group-hover:text-white/75 transition-colors duration-500" />
                     </div>
                     <div>
-                      <span className="text-[10px] uppercase tracking-[0.2em] text-white/20 block mb-1.5">{info.label}</span>
+                      <span className="text-[10px] uppercase tracking-[0.2em] text-white/50 block mb-1.5">{info.label}</span>
                       <p className="text-base text-white/60 font-light whitespace-pre-line leading-relaxed">{info.value}</p>
                     </div>
                   </div>
@@ -124,7 +124,7 @@ export default function ContatoPage() {
       {/* Map */}
       <ScrollSection className="max-w-6xl mx-auto px-6 mb-32">
         <div className="text-center mb-10">
-          <p className="text-[11px] uppercase tracking-[0.4em] text-white/20 font-light mb-4">Localização</p>
+          <p className="text-[11px] uppercase tracking-[0.4em] text-white/50 font-light mb-4">Localização</p>
           <h2 className="text-3xl md:text-4xl font-extralight text-white/90 tracking-tight">
             Av. dos Ingás, 2075
           </h2>
@@ -151,9 +151,9 @@ export default function ContatoPage() {
           <h3 className="text-3xl md:text-5xl font-extralight text-white/90 tracking-tight mb-4 leading-[1.05]">
             Encontre o imóvel
             <br />
-            <span className="text-white/30">dos seus sonhos</span>
+            <span className="text-white/60">dos seus sonhos</span>
           </h3>
-          <p className="text-sm text-white/20 font-light mb-10 max-w-sm mx-auto leading-relaxed">
+          <p className="text-sm text-white/50 font-light mb-10 max-w-sm mx-auto leading-relaxed">
             14 anos de experiência no mercado imobiliário de Sinop, com atendimento exclusivo e personalizado.
           </p>
           <motion.a

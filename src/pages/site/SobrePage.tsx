@@ -92,7 +92,7 @@ export default function SobrePage() {
             transition={{ duration: 1, delay: 0.3, ease }}
             className="mb-8"
           >
-            <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-white/[0.08] bg-white/[0.03] text-[11px] text-white/30 tracking-[0.3em] uppercase">
+            <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-white/[0.08] bg-white/[0.03] text-[11px] text-white/60 tracking-[0.3em] uppercase">
               <Building2 className="h-3 w-3" />
               Desde 2012
             </span>
@@ -114,7 +114,7 @@ export default function SobrePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.8 }}
-            className="text-sm sm:text-base text-white/30 max-w-lg mb-12 font-light leading-[1.8] tracking-wide"
+            className="text-sm sm:text-base text-white/60 max-w-lg mb-12 font-light leading-[1.8] tracking-wide"
           >
             Uma experiência imobiliária diferente em Sinop. Atendimento humanizado e conhecimento profundo do mercado local.
           </motion.p>
@@ -185,7 +185,7 @@ export default function SobrePage() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.1, duration: 0.6, ease: smoothEase }}
-                    className="text-sm text-white/30 font-light leading-[1.9]"
+                    className="text-sm text-white/60 font-light leading-[1.9]"
                   >
                     {text}
                   </motion.p>
@@ -281,7 +281,7 @@ export default function SobrePage() {
                 <h4 className="text-sm font-medium text-white/60 mb-3 tracking-wide group-hover:text-white/80 transition-colors duration-500">
                   {valor.title}
                 </h4>
-                <p className="text-xs text-white/20 leading-relaxed font-light group-hover:text-white/35 transition-colors duration-700">
+                <p className="text-xs text-white/50 leading-relaxed font-light group-hover:text-white/60 transition-colors duration-700">
                   {valor.desc}
                 </p>
               </motion.div>
@@ -328,7 +328,7 @@ export default function SobrePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: 0.2, ease: smoothEase }}
-                className="text-sm text-white/30 font-light leading-[1.9]"
+                className="text-sm text-white/60 font-light leading-[1.9]"
               >
                 Nossa missão é proporcionar a melhor experiência na compra, venda e locação de imóveis de alto padrão
                 em Sinop e região. Acreditamos que encontrar o imóvel ideal vai além de metros quadrados,
@@ -383,7 +383,7 @@ export default function SobrePage() {
             whileInView={{ opacity: 1 }}
             viewport={{ margin: "-40px" }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="text-sm text-white/30 font-light mb-10 max-w-md mx-auto leading-[1.8]"
+            className="text-sm text-white/60 font-light mb-10 max-w-md mx-auto leading-[1.8]"
           >
             Entre em contato e descubra como podemos ajudar você a encontrar o imóvel ideal em Sinop.
           </motion.p>
