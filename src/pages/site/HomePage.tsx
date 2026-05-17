@@ -338,8 +338,8 @@ export default function HomePage() {
                 >
                   <div className="aspect-[4/3] overflow-hidden">
                     <motion.img
-                      src={propertyImages[i] || property1}
-                      alt={imovel.nome}
+                      src={imovel.fotos?.[0] || propertyImages[i] || property1}
+                      alt={imovel.titulo}
                       whileHover={{ scale: 1.04 }}
                       transition={{ duration: 0.8, ease: smoothEase }}
                       className="w-full h-full object-cover"
@@ -352,13 +352,13 @@ export default function HomePage() {
                       <ArrowUpRight className="h-3.5 w-3.5 text-white/20 group-hover:text-amber-300/50 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-500" />
                     </div>
                     <h3 className="font-light text-base mb-3 tracking-wide text-white/80 group-hover:text-white/95 transition-colors duration-500">
-                      {imovel.nome}
+                      {imovel.titulo}
                     </h3>
                     <p className="flex items-center gap-1.5 text-[11px] text-white/25 mb-6 font-light tracking-[0.15em]">
-                      <MapPin className="h-2.5 w-2.5" /> Sinop, MT
+                      <MapPin className="h-2.5 w-2.5" /> {imovel.cidade || "Sinop, MT"}
                     </p>
                     <p className="text-xl font-extralight text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 tracking-wide">
-                      {formatPrice(imovel.valor)}
+                      {formatPrice(imovel.valor || 0)}
                     </p>
                   </div>
                 </Link>
