@@ -30,6 +30,14 @@ export default function Documents() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [openSend, setOpenSend] = useState(false);
+  const { isAdmin } = useRole();
+
+  const handleDelete = async (id: string) => {
+    const { error } = await (supabase.from("signed_documents" as any) as any).delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Documento excluído");
+    load();
+  };
 
   const load = async () => {
     setLoading(true);
