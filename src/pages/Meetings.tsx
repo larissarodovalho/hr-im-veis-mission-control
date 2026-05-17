@@ -295,7 +295,7 @@ export default function Meetings() {
             <div><Label>Link</Label><Input value={editForm.link} onChange={e => setEditForm({ ...editForm, link: e.target.value })} /></div>
             <div><Label>Notas</Label><Textarea value={editForm.notas} onChange={e => setEditForm({ ...editForm, notas: e.target.value })} /></div>
             <DialogFooter className="flex-row justify-between sm:justify-between">
-              <Button type="button" variant="destructive" onClick={remove}>Excluir</Button>
+              {isAdmin ? <Button type="button" variant="destructive" onClick={remove}>Excluir</Button> : <span />}
               <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
                 <Button type="submit">Salvar</Button>
