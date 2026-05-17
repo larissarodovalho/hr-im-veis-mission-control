@@ -4,7 +4,7 @@ import { MapPin, Phone, Mail, Clock, ArrowUpRight } from "lucide-react";
 import heroBg from "@/assets/hero-dark.jpg";
 import sectionLiving from "@/assets/section-living.jpg";
 import { useSiteImages } from "@/lib/siteSettings";
-import { createWhatsAppUrl } from "@/lib/whatsapp";
+import { createWhatsAppUrl, openWhatsApp } from "@/lib/whatsapp";
 
 function ScrollSection({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   const ref = useRef(null);
@@ -159,6 +159,7 @@ export default function ContatoPage() {
           </p>
           <motion.a
             href={createWhatsAppUrl("Olá! Gostaria de mais informações.")}
+            onClick={(event) => openWhatsApp(event, "Olá! Gostaria de mais informações.")}
             target="_blank"
             rel="noopener noreferrer"
             whileHover={{ scale: 1.03 }}

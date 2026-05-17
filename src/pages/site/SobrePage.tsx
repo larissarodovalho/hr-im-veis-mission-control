@@ -5,7 +5,7 @@ import sectionCommunity from "@/assets/section-community.jpg";
 import sectionLiving from "@/assets/section-living.jpg";
 import featureInterior from "@/assets/feature-interior.jpg";
 import { useSiteImages } from "@/lib/siteSettings";
-import { createWhatsAppUrl } from "@/lib/whatsapp";
+import { createWhatsAppUrl, openWhatsApp } from "@/lib/whatsapp";
 
 const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];
 const smoothEase = [0.25, 0.4, 0.25, 1] as [number, number, number, number];
@@ -391,6 +391,7 @@ export default function SobrePage() {
 
           <motion.a
             href={createWhatsAppUrl("Olá! Gostaria de saber mais sobre a HR Imóveis.")}
+            onClick={(event) => openWhatsApp(event, "Olá! Gostaria de saber mais sobre a HR Imóveis.")}
             target="_blank"
             rel="noopener noreferrer"
             initial={{ opacity: 0, y: 20 }}
