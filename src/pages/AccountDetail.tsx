@@ -57,8 +57,31 @@ export default function AccountDetail() {
   const totalValor = props.reduce((s, p) => s + (Number(p.valor_negocio) || 0), 0);
   const totalComissao = props.reduce((s, p) => s + (Number(p.valor_comissao) || 0), 0);
 
+  const listaAtual: "carteira" | "marketing" | "nenhuma" = (() => {
+    const tags = ((acc?.tags ?? []) as string[]).map((t) => t.toLowerCase());
+    if (tags.includes("carteira")) return "carteira";
+    if (tags.includes("marketing")) return "marketing";
+    return "nenhuma";
+  })();
+
+  const setLista = async (nova: "carteira" | "marketing" | "nenhuma") => {
+    const base = ((acc.tags ?? []) as string[]).filter(
+      (t) => t.toLowerCase() !== "carteira" && t.toLowerCase() !== "marketing"
+    );
+    const tags = nova === "nenhuma" ? base : [...base, nova];
+    const { error } = await supabase.from("contas").update({ tags }).eq("id", acc.id);
+    if (error) return toast.error(error.message);
+    toast.success(nova === "nenhuma" ? "Removida das listas" : `Movida para ${nova === "carteira" ? "Carteira" : "Marketing"}`);
+    load();
+  };
+
   const save = async () => {
     if (!editing.nome.trim()) return toast.error("Nome obrigatório");
+    const baseTags = ((acc.tags ?? []) as string[]).filter(
+      (t) => t.toLowerCase() !== "carteira" && t.toLowerCase() !== "marketing"
+    );
+    const novaLista = editing.lista as "carteira" | "marketing" | "nenhuma" | undefined;
+    const tags = !novaLista || novaLista === "nenhuma" ? baseTags : [...baseTags, novaLista];
     const { error } = await supabase.from("contas").update({
       nome: editing.nome.trim(),
       email: editing.email?.trim() || null,
@@ -67,6 +90,7 @@ export default function AccountDetail() {
       observacoes: editing.observacoes?.trim() || null,
       status: editing.status || "ativo",
       interesse: editing.interesse || null,
+      tags,
     }).eq("id", acc.id);
     if (error) return toast.error(error.message);
     toast.success("Conta atualizada");
@@ -128,13 +152,28 @@ export default function AccountDetail() {
             {acc.telefone && <span className="inline-flex items-center gap-1"><Phone className="h-3.5 w-3.5" /> {acc.telefone}</span>}
             <Badge variant="outline" className={statusBadge}>{acc.status === "ativo" ? "Ativo" : (acc.status || "Inativo")}</Badge>
             {acc.interesse && <Badge variant="outline">Interesse: {acc.interesse}</Badge>}
+            {listaAtual !== "nenhuma" && (
+              <Badge variant="outline" className={listaAtual === "carteira" ? "bg-blue-500/15 text-blue-700 border-blue-500/30" : "bg-pink-500/15 text-pink-700 border-pink-500/30"}>
+                {listaAtual === "carteira" ? "Carteira" : "Marketing"}
+              </Badge>
+            )}
             {acc.lead_id_origem && <Link to={`/app/leads/${acc.lead_id_origem}`} className="text-primary hover:underline">Ver lead original</Link>}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             Convertido em {format(new Date(acc.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
           </p>
         </div>
-        <Button variant="outline" onClick={() => setEditing({ ...acc })}><Pencil className="h-4 w-4 mr-1" /> Editar dados</Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Select value={listaAtual} onValueChange={(v) => setLista(v as any)}>
+            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="nenhuma">Sem lista</SelectItem>
+              <SelectItem value="carteira">Carteira</SelectItem>
+              <SelectItem value="marketing">Marketing</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" onClick={() => setEditing({ ...acc, lista: listaAtual })}><Pencil className="h-4 w-4 mr-1" /> Editar dados</Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -249,6 +288,17 @@ export default function AccountDetail() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              <div>
+                <Label>Lista</Label>
+                <Select value={editing.lista || "nenhuma"} onValueChange={v => setEditing({ ...editing, lista: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nenhuma">Sem lista</SelectItem>
+                    <SelectItem value="carteira">Carteira</SelectItem>
+                    <SelectItem value="marketing">Marketing</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div><Label>Endereço</Label><Input value={editing.endereco ?? ""} onChange={e => setEditing({ ...editing, endereco: e.target.value })} /></div>
               <div><Label>Observações</Label><Textarea rows={3} value={editing.observacoes ?? ""} onChange={e => setEditing({ ...editing, observacoes: e.target.value })} /></div>
