@@ -1,16 +1,19 @@
-## Objetivo
-Remover a barra de rolagem visível na coluna lateral esquerda do CRM, mantendo a rolagem funcional (apenas o visual fica limpo/minimalista).
+## Contexto
+A API oficial do WhatsApp não entrega a foto real do contato. A lista hoje já mostra um círculo com iniciais, mas todos usam a mesma cor (`bg-gradient-primary`), ficando difícil distinguir contatos visualmente.
 
 ## Alteração
-Em `src/components/AppLayout.tsx`, no `<nav>` da `SidebarContent` (linha ~78), trocar a classe `overflow-auto` por `overflow-y-auto scrollbar-hide` para esconder a scrollbar mantendo o scroll por gesto/roda.
+Trocar o avatar de cor única por **avatar com iniciais e cor gerada a partir do nome** — cada contato fica com uma cor consistente própria, mantendo a paleta do site.
 
-## Suporte da utilitária `scrollbar-hide`
-Verificar se já existe um utilitário equivalente no projeto. Caso não exista, adicionar em `src/index.css` dentro de `@layer utilities`:
+### Arquivos
+1. **`src/pages/WhatsApp.tsx`** (linha ~286 — lista de conversas, e no header da conversa ativa se existir avatar lá)
+   - Substituir `bg-gradient-primary text-primary-foreground` por estilo inline `backgroundColor` derivado do `displayName`.
+   - Manter tamanho (`h-9 w-9`), forma redonda e iniciais via `initials()`.
 
-```css
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-```
+2. **Helper novo** (inline no arquivo ou em `src/lib/utils.ts`):
+   - `colorFromName(name: string)` → hash simples do nome → seleciona um HSL de uma paleta curada de ~10 tons (sóbrios, condizentes com o tema do CRM, sem neon).
+   - Texto sempre branco (`text-white`) para contraste garantido.
 
 ## Escopo
-Apenas a sidebar do CRM (`AppLayout.tsx`). Não mexe no site público, nem em outras áreas com rolagem.
+- Só visual, sem mudanças de banco nem de webhook.
+- Aplicar também no header da conversa ativa se houver um avatar lá, para consistência (verificar linhas ~310+).
+- Não mexer em outras telas (Leads, Contas) — só WhatsApp.
