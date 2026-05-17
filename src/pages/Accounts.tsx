@@ -450,29 +450,24 @@ export default function Accounts() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left">
               <tr>
-                <th className="p-3">Cliente</th>
-                <th className="p-3">Interesse</th>
-                <th className="p-3">Operação / Aptidão</th>
-                <th className="p-3">Propriedades</th>
-                <th className="p-3 text-right">Valor total</th>
-                <th className="p-3 text-right">Comissão</th>
+                <th className="p-3">Nome</th>
+                <th className="p-3">Telefone</th>
+                <th className="p-3">E-mail</th>
+                <th className="p-3">CPF/CNPJ</th>
+                <th className="p-3">Proprietário</th>
                 <th className="p-3">Status</th>
                 <th className="p-3 w-24"></th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Carregando…</td></tr>
+                <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Carregando…</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={8} className="p-10 text-center text-muted-foreground">{accounts.length === 0 ? "Nenhuma conta ainda. Converta um lead para criar a primeira conta." : "Nenhuma conta corresponde aos filtros."}</td></tr>
+                <tr><td colSpan={7} className="p-10 text-center text-muted-foreground">{accounts.length === 0 ? "Nenhuma conta ainda. Converta um lead para criar a primeira conta." : "Nenhuma conta corresponde aos filtros."}</td></tr>
               ) : (
                 filtered.map((a) => {
-                  const accProps = propsByAccount[a.id] ?? [];
-                  const ops = Array.from(new Set(accProps.map((p) => p.operacao).filter(Boolean))) as Operation[];
-                  const apts = Array.from(new Set(accProps.map((p) => p.aptidao).filter(Boolean))) as Aptitude[];
-                  const totalVal = accProps.reduce((s, p) => s + (p.valor_negocio ?? 0), 0);
-                  const totalCom = accProps.reduce((s, p) => s + (p.valor_comissao ?? 0), 0);
                   const status = (a.status ?? "ativo") as Status;
+                  const owner = a.responsavel_id ? (ownerMap[a.responsavel_id] ?? "—") : "—";
                   return (
                     <tr key={a.id} className="border-t hover:bg-muted/30">
                       <td className="p-3">
@@ -484,27 +479,11 @@ export default function Accounts() {
                             </Badge>
                           )}
                         </div>
-                        <div className="text-xs text-muted-foreground">{a.telefone || a.email || "—"}</div>
                       </td>
-                      <td className="p-3">
-                        {a.interesse ? <Badge variant="outline" className="text-[10px]">{INTEREST_LABEL[a.interesse]}</Badge> : <span className="text-muted-foreground">—</span>}
-                      </td>
-                      <td className="p-3">
-                        {ops.length === 0 && apts.length === 0 ? <span className="text-muted-foreground">—</span> : (
-                          <div className="flex flex-wrap gap-1">
-                            {ops.map((o) => <Badge key={"o" + o} className={OP_BADGE[o] + " border text-[10px]"}>{OP_LABEL[o]}</Badge>)}
-                            {apts.map((ap) => <Badge key={"a" + ap} className={APT_BADGE[ap] + " border text-[10px]"}>{APT_LABEL[ap]}</Badge>)}
-                          </div>
-                        )}
-                      </td>
-                      <td className="p-3">
-                        <div className="font-medium">{accProps.length}</div>
-                        {accProps.length > 0 && (
-                          <div className="text-xs text-muted-foreground truncate max-w-[200px]">{accProps.map((p) => p.nome_fazenda || "Sem nome").join(", ")}</div>
-                        )}
-                      </td>
-                      <td className="p-3 text-right font-medium">{fmt(totalVal || null)}</td>
-                      <td className="p-3 text-right">{fmt(totalCom || null)}</td>
+                      <td className="p-3 whitespace-nowrap">{a.telefone || <span className="text-muted-foreground">—</span>}</td>
+                      <td className="p-3">{a.email || <span className="text-muted-foreground">—</span>}</td>
+                      <td className="p-3 whitespace-nowrap">{a.documento ? formatDoc(a.documento, a.tipo) : <span className="text-muted-foreground">—</span>}</td>
+                      <td className="p-3">{owner === "—" ? <span className="text-muted-foreground">—</span> : owner}</td>
                       <td className="p-3">
                         <Badge className={status === "ativo" ? "bg-success/15 text-success border-success/30 border" : "bg-muted text-muted-foreground border"}>
                           {status === "ativo" ? "Ativo" : "Inativo"}
@@ -521,7 +500,7 @@ export default function Accounts() {
                               <AlertDialogContent>
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>Excluir conta?</AlertDialogTitle>
-                                  <AlertDialogDescription>Tem certeza que deseja excluir <strong>{a.nome}</strong>? Todas as propriedades vinculadas também serão removidas. Esta ação não pode ser desfeita.</AlertDialogDescription>
+                                  <AlertDialogDescription>Tem certeza que deseja excluir <strong>{a.nome}</strong>? Esta ação não pode ser desfeita.</AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
