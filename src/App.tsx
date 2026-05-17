@@ -10,6 +10,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import StaffRoute from "@/components/StaffRoute";
 import AppLayout from "@/components/AppLayout";
 import SiteLayout from "@/components/site/SiteLayout";
 import Landing from "@/pages/Landing";
