@@ -7,6 +7,7 @@ import { Download, FileSpreadsheet, BarChart3, Shield } from "lucide-react";
 import Papa from "papaparse";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
+import FunilContasReport from "@/components/reports/FunilContasReport";
 
 export default function Reports() {
   const { isAdmin, isGestor, loading: roleLoading } = useRole();
@@ -66,6 +67,8 @@ export default function Reports() {
         <h1 className="font-display text-3xl font-semibold">Relatórios</h1>
         <p className="text-sm text-muted-foreground mt-1">Performance da equipe.</p>
       </div>
+
+      <FunilContasReport />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-6">

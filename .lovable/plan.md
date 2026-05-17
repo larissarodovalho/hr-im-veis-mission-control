@@ -1,26 +1,39 @@
 ## Objetivo
-Nas abas **Ligações** e **Visitas** (modo "Registrar manualmente"), permitir selecionar o vínculo digitando o nome — tanto **Lead** quanto **Conta** — como já fizemos na aba Reuniões.
+Adicionar à página **Relatórios** (`/app/relatorios`) uma seção "Funil de Contas" que mostra, em números e gráfico, como anda a carteira de cada lista (**Carteira** e **Marketing**), com quantidade de contas em cada etapa do kanban e taxas de conversão entre etapas.
 
-## 1. Componente compartilhado
-Extrair o `SearchableSelect` que hoje vive dentro de `src/pages/Meetings.tsx` para um arquivo reutilizável: `src/components/SearchableSelect.tsx` (input com filtro por nome, opção "Sem vínculo", ícones check/chevron). Atualizar `Meetings.tsx` para importar deste novo arquivo (sem mudar comportamento).
+## 1. Novo componente `src/components/reports/FunilContasReport.tsx`
+- Carrega `contas` (`id, etapa_funil, tags, responsavel_id, valor_negocio?`) — uma única query.
+- Carrega `profiles` para o filtro "Corretor" (opcional, "Todos").
+- Estado local:
+  - `lista`: `"carteira" | "marketing" | "todas"` (Tabs no topo).
+  - `corretor`: `user_id | "todos"` (Select).
+- Filtra contas pela tag selecionada (mesma lógica de `Accounts.tsx`) e pelo responsável.
 
-## 2. `src/pages/Calls.tsx`
-- Carregar `contas` em paralelo no `useEffect` (`select("id, nome").order("nome")`).
-- Adicionar `conta_id` ao state `form` e `editForm`.
-- Substituir o `<Select>` de Lead no diálogo "Nova ligação" por dois `<SearchableSelect>`: **Lead** e **Conta** (cada um com "Sem vínculo").
-- Incluir `conta_id` no `insert` e no `update` de `ligacoes`.
-- No `openEdit`, popular `conta_id` a partir da ligação.
-- No `load()`, também resolver `contasById` (igual ao que já é feito com leads) e adicionar `c.conta` ao item.
-- Na tabela, coluna "Lead" passa a mostrar conta (link para `/app/contas/:id`) quando não houver lead.
+### Métricas calculadas
+Para a lista filtrada, usando a ordem de `ETAPAS` de `src/lib/contasFunil.ts`:
+- **Cards de topo** (4):
+  - Total de contas
+  - Ativos no funil (`total − fechado − perdido`)
+  - Fechados
+  - Perdidos
+  - Taxa de conversão geral: `fechados / (fechados + perdidos)`
+- **Tabela / lista por etapa**: para cada etapa em ordem, mostrar nome, quantidade, % do total, e — para etapas de funil ativo — taxa de avanço para a próxima etapa "fluxo" (`contas naquela etapa ou posteriores no fluxo / contas na etapa atual ou posteriores`). Fluxo considerado: `a_contatar → contatado → contato_estabelecido → reuniao → visita → proposta → fechado`. `sem_retorno` e `perdido` são exibidos à parte.
 
-## 3. `src/pages/Visits.tsx`
-- Carregar `contas` em paralelo no `useEffect`.
-- Adicionar `conta_id` a `form` e `editForm`.
-- Substituir o `<Select>` de Lead no diálogo "Nova visita" por `<SearchableSelect>` de **Lead** e adicionar `<SearchableSelect>` de **Conta**.
-- Validação: exigir lead **ou** conta (não mais "Selecione um lead").
-- Incluir `conta_id` no `insert` e `update` de `visitas`.
-- No `load()`, ajustar o select para também trazer `contas(id,nome)` (via segunda query com `in`, no mesmo padrão de Calls) e mostrar nome da conta na coluna/calendário como fallback do lead.
-- No edit dialog, expor `<SearchableSelect>` de Lead e Conta também.
+### Gráficos (recharts)
+- **Funil/Barra horizontal** (`BarChart` com `layout="vertical"`): uma barra por etapa do fluxo, com valor de quantidade; cores semânticas (usar cores já mapeadas em `ETAPAS`, mas convertidas para hsl tokens do tema — para evitar atrito uso `hsl(var(--primary))` com opacidade decrescente, e cores específicas para `fechado` (success) e `perdido` (destructive)).
+- **PieChart** mostrando proporção: Em andamento / Fechado / Perdido / Sem retorno.
 
-## 4. Sem mudanças de schema
-As tabelas `ligacoes` e `visitas` já têm `conta_id` (visitas recebeu a coluna na alteração anterior). RLS atuais cobrem os inserts.
+### Comparação Carteira × Marketing
+Quando a aba selecionada for "Todas", exibir adicionalmente uma seção com **BarChart agrupado** comparando contagem por etapa entre Carteira e Marketing lado a lado.
+
+## 2. Integração em `src/pages/Reports.tsx`
+- Renderizar `<FunilContasReport />` logo abaixo do cabeçalho, antes dos cartões de "Exportar leads / Performance".
+- Mantém as restrições de role existentes (admin/gestor).
+
+## 3. Sem mudanças de schema
+Tudo derivado das tabelas atuais (`contas`, `profiles`). Sem migrações.
+
+## Observações de UX
+- Toggle em Tabs no topo (Carteira | Marketing | Todas), com a mesma estética usada em `Accounts.tsx`.
+- Filtro de corretor à direita.
+- Todos os números clicáveis levam ao kanban filtrado (link `/app/contas?lista={lista}` — sem filtro por etapa por enquanto, para evitar alterar a página de contas).
