@@ -1,21 +1,18 @@
-## Plano
+## Plano para corrigir o erro “A conexão com wa.me foi recusada”
 
-O problema agora não é mais o número do WhatsApp: é a forma como o link externo é aberto dentro do ambiente de preview/navegador. Vou trocar a abordagem para uma compatível com bloqueadores de iframe/pop-up.
+1. **Remover a navegação forçada dentro do iframe**
+   - O erro acontece porque o código atual tenta abrir `wa.me` usando `_top`, fazendo o preview tentar carregar o WhatsApp dentro da própria janela/iframe.
+   - `wa.me` recusa carregamento em iframe, então a correção é não usar `_top` nem `window.top.location`.
 
-## Ajustes propostos
+2. **Voltar para link externo nativo em nova aba**
+   - Manter os anchors com `href`, `target="_blank"` e `rel="noopener noreferrer"`.
+   - Ajustar `openWhatsApp` para abrir apenas com `_blank` quando necessário, sem `preventDefault` em casos onde o navegador pode cuidar do clique nativamente.
 
-1. **Alterar o helper de WhatsApp**
-   - Gerar links no formato `https://wa.me/5566999955881?text=...`, que é mais direto e menos propenso ao erro `api.whatsapp.com está bloqueado`.
-   - Manter o texto da mensagem corretamente codificado via `URLSearchParams`/encoding.
+3. **Simplificar o helper de WhatsApp**
+   - Manter `createWhatsAppUrl()` gerando `https://wa.me/5566999955881?text=...`.
+   - Fazer `openWhatsApp()` ser compatível com cliques reais do usuário e com fallback seguro, sem tentar carregar o WhatsApp no preview.
 
-2. **Remover o `window.open` programático**
-   - Usar comportamento nativo de link com `target="_blank"` e `rel="noopener noreferrer"`.
-   - Isso evita que o navegador trate o clique como pop-up bloqueável ou tente abrir dentro do preview.
-
-3. **Aplicar em todos os botões do site**
-   - Botão flutuante de WhatsApp.
-   - Botões “Falar com a equipe”, “Falar com consultor”, “Solicitar visita”, “Pedir informações” e CTA da página inicial.
-
-4. **Validar depois da implementação**
-   - Conferir que não sobrou nenhum link antigo para `api.whatsapp.com`.
-   - Confirmar que os links gerados apontam para o número `5566999955881` e abrem em nova aba.
+4. **Validar após aplicar**
+   - Procurar por qualquer uso restante de `_top`, `window.top.location`, `api.whatsapp.com` ou interceptação problemática.
+   - Rodar checagem TypeScript/build para confirmar que não há erros de export/import.
+   - Confirmar que os botões continuam apontando para o número `5566999955881` em nova aba.
