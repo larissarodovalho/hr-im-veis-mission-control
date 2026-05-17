@@ -31,6 +31,9 @@ type Account = {
   nome: string;
   email: string | null;
   telefone: string | null;
+  documento: string | null;
+  tipo: "PF" | "PJ" | null;
+  responsavel_id: string | null;
   status: Status | null;
   observacoes: string | null;
   created_at: string;
@@ -38,6 +41,14 @@ type Account = {
   is_partner: boolean | null;
   tags: string[] | null;
   etapa_funil: string | null;
+};
+
+const formatDoc = (doc: string | null, tipo: string | null) => {
+  if (!doc) return "—";
+  const d = doc.replace(/\D/g, "");
+  if (d.length === 11) return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  if (d.length === 14) return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+  return doc;
 };
 
 type Property = {
