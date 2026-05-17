@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
+import { ptBR } from "date-fns/locale";
 import { Loader2, CheckCircle2, AlertCircle, Phone, Video, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -309,6 +310,7 @@ export default function AgendarPage() {
             <div className="rounded-xl border border-white/10 bg-black/40 p-2">
               <Calendar
                 mode="single"
+                locale={ptBR}
                 selected={selectedDay}
                 onSelect={(d) => { setSelectedDay(d); setSelectedSlot(null); }}
                 disabled={(date) => {
