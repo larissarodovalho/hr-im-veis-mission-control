@@ -132,7 +132,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             <div>
               <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-4">Contato</h4>
               <ul className="space-y-2 text-sm text-white/60">
-                <li className="flex items-center gap-2"><Phone className="h-3 w-3" /> (66) 99999-0000</li>
+                <li className="flex items-center gap-2"><Phone className="h-3 w-3" /> (66) 99995-5881</li>
                 <li className="flex items-center gap-2"><Mail className="h-3 w-3" /> contato@hrimoveis.com.br</li>
               </ul>
               <div className="flex gap-2 mt-4">
