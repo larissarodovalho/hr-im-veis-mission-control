@@ -791,7 +791,10 @@ Deno.serve(async (req) => {
       // Remove qualquer URL que o modelo tenha colocado por engano — o sistema anexa o link oficial
       reply = reply.replace(/https?:\/\/\S+/gi, "").trim();
 
-      if (!reply) {
+      if (isResend) {
+        // Reenvio: mensagem curta, sem repetir explicação longa
+        reply = `Claro${firstName ? `, ${firstName}` : ""}! Aqui está o link de novo:`;
+      } else if (!reply) {
         const BOOKING_INSTRUCTIONS: Record<string, string> = {
           presencial: "Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para você vir até o nosso escritório conversar pessoalmente com o Hans.",
           videochamada: "Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para sua videochamada com o Hans. No horário marcado você recebe o link da chamada.",
