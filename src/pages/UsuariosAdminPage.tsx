@@ -146,6 +146,28 @@ export default function UsuariosAdminPage() {
     finally { setBusy(false); }
   }
 
+  function openEdit(r: Row) {
+    setEditTarget(r);
+    setEditForm({
+      nome: r.nome ?? "", email: r.email ?? "",
+      telefone: r.telefone ?? "", cargo: r.cargo ?? "", role: r.role,
+    });
+  }
+
+  async function handleEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editTarget) return;
+    if (!editForm.nome.trim() || !editForm.email.trim()) return toast.error("Nome e email obrigatórios");
+    setBusy(true);
+    try {
+      await callAdmin({ action: "update_profile", user_id: editTarget.user_id, ...editForm });
+      toast.success("Usuário atualizado");
+      setEditTarget(null);
+      fetchUsers();
+    } catch (err: any) { toast.error(err.message); }
+    finally { setBusy(false); }
+  }
+
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
