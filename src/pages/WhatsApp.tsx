@@ -19,6 +19,18 @@ import { useWhatsAppPerConvUnread } from "@/hooks/useWhatsAppPerConvUnread";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+const AVATAR_PALETTE = [
+  "hsl(210 55% 45%)", "hsl(160 45% 40%)", "hsl(25 65% 50%)", "hsl(340 50% 50%)",
+  "hsl(265 40% 50%)", "hsl(190 50% 42%)", "hsl(45 60% 45%)", "hsl(0 50% 50%)",
+  "hsl(135 35% 42%)", "hsl(290 35% 48%)",
+];
+function colorFromName(name: string): string {
+  const s = (name || "").trim();
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return AVATAR_PALETTE[h % AVATAR_PALETTE.length];
+}
+
 type Conv = {
   id: string;
   phone: string;
