@@ -310,6 +310,7 @@ export default function AgendarPage() {
             <div className="rounded-xl border border-white/10 bg-black/40 p-2">
               <Calendar
                 mode="single"
+                locale={ptBR}
                 selected={selectedDay}
                 onSelect={(d) => { setSelectedDay(d); setSelectedSlot(null); }}
                 disabled={(date) => {
