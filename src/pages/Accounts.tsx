@@ -203,45 +203,19 @@ export default function Accounts() {
   );
 
   const buildExportRows = () => {
-    const rows: any[] = [];
-    filtered.forEach((a) => {
-      const accProps = propsByAccount[a.id] ?? [];
+    return filtered.map((a) => {
       const status = (a.status ?? "ativo") as Status;
-      const baseRow = {
-        Cliente: a.nome,
-        Tipo: a.is_partner ? "Parceiro" : "Cliente",
-        Interesse: a.interesse ? INTEREST_LABEL[a.interesse] : "",
+      return {
+        Nome: a.nome,
         Telefone: a.telefone ?? "",
         Email: a.email ?? "",
+        "CPF/CNPJ": a.documento ? formatDoc(a.documento, a.tipo) : "",
+        Proprietário: a.responsavel_id ? (ownerMap[a.responsavel_id] ?? "") : "",
+        Tipo: a.is_partner ? "Parceiro" : "Cliente",
+        Status: status === "ativo" ? "Ativo" : "Inativo",
+        "Criado em": format(new Date(a.created_at), "dd/MM/yyyy", { locale: ptBR }),
       };
-      if (accProps.length === 0) {
-        rows.push({
-          ...baseRow,
-          Operação: "", Aptidão: "", Fazenda: "", Região: "",
-          "Tamanho (ha)": "", "Valor do negócio (R$)": "", "Comissão (R$)": "",
-          Status: status === "ativo" ? "Ativo" : "Inativo",
-          "Convertido em": format(new Date(a.created_at), "dd/MM/yyyy", { locale: ptBR }),
-          Observações: a.observacoes ?? "",
-        });
-      } else {
-        accProps.forEach((p) => {
-          rows.push({
-            ...baseRow,
-            Operação: p.operacao ? OP_LABEL[p.operacao] : "",
-            Aptidão: p.aptidao ? APT_LABEL[p.aptidao] : "",
-            Fazenda: p.nome_fazenda ?? "",
-            Região: p.regiao ?? "",
-            "Tamanho (ha)": p.tamanho_ha ?? "",
-            "Valor do negócio (R$)": p.valor_negocio ?? "",
-            "Comissão (R$)": p.valor_comissao ?? "",
-            Status: status === "ativo" ? "Ativo" : "Inativo",
-            "Convertido em": format(new Date(a.created_at), "dd/MM/yyyy", { locale: ptBR }),
-            Observações: p.observacoes ?? a.observacoes ?? "",
-          });
-        });
-      }
     });
-    return rows;
   };
 
   const exportXlsx = () => {
