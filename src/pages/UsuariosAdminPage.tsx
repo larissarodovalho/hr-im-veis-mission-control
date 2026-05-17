@@ -345,7 +345,7 @@ export default function UsuariosAdminPage() {
                 <Label>Papel *</Label>
                 <Select
                   value={editForm.role}
-                  onValueChange={(v) => setEditForm({ ...editForm, role: v as AppRole })}
+                  onValueChange={(v) => setEditForm({ ...editForm, role: v as UiRole })}
                   disabled={editTarget?.user_id === user?.id}
                 >
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -353,6 +353,7 @@ export default function UsuariosAdminPage() {
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="gestor">Gestor</SelectItem>
                     <SelectItem value="corretor">Corretor</SelectItem>
+                    <SelectItem value="gestor_corretor">Gestor + Corretor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
