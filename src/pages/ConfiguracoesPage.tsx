@@ -365,14 +365,14 @@ function BackupRecuperacao() {
               Leads, contas, documentos, reuniões e interações apagados ficam aqui.
               Restauração com 1 clique.
             </p>
-            <Link to="/app/lixeira" className="text-xs text-primary hover:underline">Abrir Lixeira →</Link>
+            <Link to="/crm/lixeira" className="text-xs text-primary hover:underline">Abrir Lixeira →</Link>
           </div>
           <div className="rounded-lg border p-3 space-y-1">
             <p className="font-medium flex items-center gap-2"><History className="h-4 w-4" /> Auditoria (histórico completo)</p>
             <p className="text-xs text-muted-foreground">
               Veja quem criou, alterou ou apagou cada registro, com valores antes/depois.
             </p>
-            <Link to="/app/auditoria" className="text-xs text-primary hover:underline">Abrir Auditoria →</Link>
+            <Link to="/crm/auditoria" className="text-xs text-primary hover:underline">Abrir Auditoria →</Link>
           </div>
         </div>
         <div className="rounded-lg border p-3 space-y-1">

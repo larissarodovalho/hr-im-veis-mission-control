@@ -149,7 +149,7 @@ export default function AccountDetail() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      <Link to="/app/contas" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+      <Link to="/crm/contas" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
       </Link>
 
@@ -171,7 +171,7 @@ export default function AccountDetail() {
                 {listaAtual === "carteira" ? "Carteira" : "Marketing"}
               </Badge>
             )}
-            {acc.lead_id_origem && <Link to={`/app/leads/${acc.lead_id_origem}`} className="text-primary hover:underline">Ver lead original</Link>}
+            {acc.lead_id_origem && <Link to={`/crm/leads/${acc.lead_id_origem}`} className="text-primary hover:underline">Ver lead original</Link>}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             Convertido em {format(new Date(acc.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}

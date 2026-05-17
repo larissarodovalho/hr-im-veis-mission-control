@@ -52,7 +52,7 @@ function ContaCard({ a, total, responsavelNome }: { a: Account; total: number; r
     >
       <div className="flex items-start justify-between gap-2">
         <Link
-          to={`/app/contas/${a.id}`}
+          to={`/crm/contas/${a.id}`}
           onClick={(e) => e.stopPropagation()}
           onPointerDown={(e) => e.stopPropagation()}
           className="font-medium text-sm hover:underline truncate flex-1"

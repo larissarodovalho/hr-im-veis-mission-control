@@ -178,7 +178,7 @@ export default function FunilContasReport() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <Kpi label="Total" value={total} link={`/app/contas?lista=${listaQuery}`} />
+        <Kpi label="Total" value={total} link={`/crm/contas?lista=${listaQuery}`} />
         <Kpi label="Em andamento" value={ativos} />
         <Kpi label="Sem retorno" value={semRetorno} />
         <Kpi label="Fechados" value={fechados} tone="success" />
@@ -302,7 +302,7 @@ export default function FunilContasReport() {
           </table>
         </div>
         <div className="mt-3 text-right">
-          <Link to={`/app/contas?lista=${listaQuery}`} className="text-xs text-primary hover:underline">
+          <Link to={`/crm/contas?lista=${listaQuery}`} className="text-xs text-primary hover:underline">
             Abrir kanban de Contas →
           </Link>
         </div>

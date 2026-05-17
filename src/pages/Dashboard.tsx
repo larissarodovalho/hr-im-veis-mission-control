@@ -108,7 +108,7 @@ export default function Dashboard() {
             {overdue.slice(0, 8).map(l => {
               const d = daysSince(l.ultima_interacao ?? l.created_at);
               return (
-                <Link key={l.id} to={`/app/leads/${l.id}`} className="flex items-center justify-between rounded-lg bg-card p-3 hover:shadow-soft transition">
+                <Link key={l.id} to={`/crm/leads/${l.id}`} className="flex items-center justify-between rounded-lg bg-card p-3 hover:shadow-soft transition">
                   <div>
                     <div className="font-medium">{l.nome}</div>
                     <div className="text-xs text-muted-foreground">{SOURCES[l.origem]?.label || l.origem}</div>

@@ -262,7 +262,7 @@ export default function WhatsApp() {
                 </p>
               </div>
               <Button variant="outline" size="sm" asChild>
-                <Link to="/app/configuracoes">
+                <Link to="/crm/configuracoes">
                   <Settings className="h-3.5 w-3.5 mr-1" /> Abrir configurações
                 </Link>
               </Button>

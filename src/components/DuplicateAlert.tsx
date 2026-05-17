@@ -21,7 +21,7 @@ export default function DuplicateAlert({ matches, onIgnore, onCancel, showAction
       <ul className="space-y-1 text-sm">
         {matches.map((m) => {
           const Icon = m.table === "leads" ? User : Building2;
-          const path = m.table === "leads" ? `/app/leads/${m.id}` : `/app/contas/${m.id}`;
+          const path = m.table === "leads" ? `/crm/leads/${m.id}` : `/crm/contas/${m.id}`;
           const by = m.matchedBy
             .map((b) => (b === "email" ? "e-mail" : b === "telefone" ? "telefone" : "documento"))
             .join(" + ");

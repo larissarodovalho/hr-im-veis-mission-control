@@ -120,8 +120,8 @@ export default function DocumentDetail() {
               Criado em {format(new Date(doc.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
               {doc.deadline_at && ` · Prazo: ${format(new Date(doc.deadline_at), "dd/MM/yyyy", { locale: ptBR })}`}
             </p>
-            {doc.lead_id && <Link to={`/app/leads/${doc.lead_id}`} className="text-xs text-primary hover:underline">→ Ver lead vinculado</Link>}
-            {doc.conta_id && <Link to={`/app/contas/${doc.conta_id}`} className="text-xs text-primary hover:underline ml-2">→ Ver conta vinculada</Link>}
+            {doc.lead_id && <Link to={`/crm/leads/${doc.lead_id}`} className="text-xs text-primary hover:underline">→ Ver lead vinculado</Link>}
+            {doc.conta_id && <Link to={`/crm/contas/${doc.conta_id}`} className="text-xs text-primary hover:underline ml-2">→ Ver conta vinculada</Link>}
           </div>
           <div className="flex flex-wrap gap-2">
             {doc.file_url && (

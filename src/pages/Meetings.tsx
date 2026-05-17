@@ -187,7 +187,7 @@ export default function Meetings() {
               return (
               <tr key={m.id} className="border-t hover:bg-muted/40 cursor-pointer" onClick={() => openEdit(m)}>
                 <td className="p-3 whitespace-nowrap">{format(new Date(m.agendada_para), "Pp", { locale: ptBR })}</td>
-                <td className="p-3" onClick={(e) => e.stopPropagation()}>{m.leads?.id ? <Link to={`/app/leads/${m.lead_id}`} className="font-medium text-primary underline-offset-2 hover:underline">{m.leads.nome}</Link> : m.conta?.id ? <Link to={`/app/contas/${m.conta_id}`} className="font-medium text-primary underline-offset-2 hover:underline">{m.conta.nome}</Link> : (m.titulo || "Sem lead")}</td>
+                <td className="p-3" onClick={(e) => e.stopPropagation()}>{m.leads?.id ? <Link to={`/crm/leads/${m.lead_id}`} className="font-medium text-primary underline-offset-2 hover:underline">{m.leads.nome}</Link> : m.conta?.id ? <Link to={`/crm/contas/${m.conta_id}`} className="font-medium text-primary underline-offset-2 hover:underline">{m.conta.nome}</Link> : (m.titulo || "Sem lead")}</td>
                 <td className="p-3">
                   <div className="flex flex-col gap-1">
                     <Badge variant="secondary" className="w-fit">{t.emoji} {t.label}</Badge>
@@ -232,7 +232,7 @@ export default function Meetings() {
             <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm flex items-center justify-between gap-2">
               <span className="text-muted-foreground">Lead:</span>
               <Link
-                to={`/app/leads/${editing.lead_id}`}
+                to={`/crm/leads/${editing.lead_id}`}
                 className="font-medium text-primary underline-offset-2 hover:underline truncate"
                 onClick={() => setEditing(null)}
               >

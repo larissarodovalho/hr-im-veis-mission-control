@@ -59,7 +59,7 @@ export default function EntityDocumentsTab({ leadId, contaId, defaultSigner }: P
             const signed = d.document_signers?.filter((s: any) => s.status === "signed").length || 0;
             return (
               <Card key={d.id} className="p-3 flex items-center justify-between gap-2 cursor-pointer hover:shadow-md transition"
-                onClick={() => navigate(`/app/documentos/${d.id}`)}>
+                onClick={() => navigate(`/crm/documentos/${d.id}`)}>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium truncate">{d.name}</span>
