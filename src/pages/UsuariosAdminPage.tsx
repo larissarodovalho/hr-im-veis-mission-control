@@ -300,6 +300,54 @@ export default function UsuariosAdminPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!editTarget} onOpenChange={(o) => !o && setEditTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar usuário</DialogTitle>
+            <DialogDescription>Atualize dados e papel de {editTarget?.email}</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEdit} className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5 col-span-2">
+                <Label>Nome completo *</Label>
+                <Input value={editForm.nome} onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })} required />
+              </div>
+              <div className="space-y-1.5 col-span-2">
+                <Label>Email *</Label>
+                <Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} required />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Telefone</Label>
+                <Input value={editForm.telefone} onChange={(e) => setEditForm({ ...editForm, telefone: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Cargo</Label>
+                <Input value={editForm.cargo} onChange={(e) => setEditForm({ ...editForm, cargo: e.target.value })} />
+              </div>
+              <div className="space-y-1.5 col-span-2">
+                <Label>Papel *</Label>
+                <Select
+                  value={editForm.role}
+                  onValueChange={(v) => setEditForm({ ...editForm, role: v as AppRole })}
+                  disabled={editTarget?.user_id === user?.id}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="gestor">Gestor</SelectItem>
+                    <SelectItem value="corretor">Corretor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditTarget(null)}>Cancelar</Button>
+              <Button type="submit" disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
