@@ -10,5 +10,10 @@ type WhatsAppClickEvent = { preventDefault: () => void };
 
 export function openWhatsApp(event?: WhatsAppClickEvent, message?: string) {
   event?.preventDefault();
-  window.open(createWhatsAppUrl(message), "_blank", "noopener,noreferrer");
+  const url = createWhatsAppUrl(message);
+  const popup = window.open(url, "_blank", "noopener,noreferrer");
+
+  if (!popup) {
+    window.location.href = url;
+  }
 }
