@@ -263,13 +263,6 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
     }
   };
 
-  const Field = ({ label, value, onChange, type = "text", placeholder, className = "" }: any) => (
-    <div className={className}>
-      <Label>{label}</Label>
-      <Input type={type} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} />
-    </div>
-  );
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
