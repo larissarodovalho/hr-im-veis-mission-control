@@ -29,6 +29,7 @@ import Calls from "@/pages/Calls";
 import Visits from "@/pages/Visits";
 import Schedule from "@/pages/Schedule";
 import Documents from "@/pages/Documents";
+import Contratos from "@/pages/Contratos";
 import DocumentDetail from "@/pages/DocumentDetail";
 import Reports from "@/pages/Reports";
 import Users from "@/pages/UsuariosAdminPage";
@@ -102,6 +103,7 @@ const App = () => (
               <Route path="agenda" element={<Schedule />} />
               <Route path="documentos" element={<Documents />} />
               <Route path="documentos/:id" element={<DocumentDetail />} />
+              <Route path="contratos" element={<Contratos />} />
               <Route path="relatorios" element={<StaffRoute><Reports /></StaffRoute>} />
               <Route path="usuarios" element={<StaffRoute><Users /></StaffRoute>} />
               <Route path="configuracoes" element={<StaffRoute><ConfiguracoesPage /></StaffRoute>} />
