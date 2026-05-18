@@ -24,7 +24,7 @@ interface Props {
 const empty = {
   titulo: "", descricao: "", tipo: "Casa", finalidade: "Venda", status: "Disponível",
   valor: "", valor_condominio: "", valor_iptu: "",
-  area_total: "", area_util: "",
+  area_total: "", area_construida: "", area_util: "",
   quartos: "", suites: "", banheiros: "", vagas: "",
   cep: "", endereco: "", numero: "", complemento: "", bairro: "", cidade: "", estado: "",
   destaque: false,
