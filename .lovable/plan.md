@@ -1,79 +1,64 @@
-## Plano — Aba "Contratos" no CRM
+## Plano — Aplicar template oficial do contrato
 
-Adicionar uma nova aba **Contratos** ao CRM para gerar contratos de **Autorização de Venda com Exclusividade** a partir de um modelo padrão, preenchendo automaticamente dados do cliente, do imóvel e o valor. O contrato gerado pode ser enviado para assinatura digital (reutilizando o fluxo ClickSign já existente).
+Vou substituir o template provisório no banco pelo texto oficial completo e ampliar o formulário de "Novo contrato" para cobrir todos os campos que o contrato exige.
 
-### 1. Banco de dados
+### 1. Template no banco (`contrato_templates`)
 
-Nova tabela `contratos`:
-- `tipo` (padrão `autorizacao_venda_exclusividade`)
-- `lead_id` / `conta_id` (cliente)
-- `imovel_id`
-- `valor` (valor autorizado de venda)
-- `prazo_dias` (vigência da exclusividade, ex.: 180)
-- `data_inicio`, `data_fim`
-- `comissao_percentual`
-- `observacoes`
-- `status`: `rascunho` | `gerado` | `enviado_assinatura` | `assinado` | `cancelado` | `expirado`
-- `pdf_url` (PDF gerado/anexado no bucket existente)
-- `signed_document_id` (FK lógica para `signed_documents` quando enviado p/ ClickSign)
-- `corretor_id`, `created_by`, `created_at`, `updated_at`
+Atualizar o registro ativo `autorizacao_venda_exclusividade` com o texto oficial, renderizado dinamicamente:
 
-RLS:
-- Admin/Gestor: tudo
-- Corretor: vê/edita apenas onde `corretor_id = auth.uid()` ou `created_by = auth.uid()`
-- Só admin pode deletar
+- **PF vs PJ**: o template inclui dois blocos no qualificação do CONTRATANTE. Em vez de manter os dois no PDF, o sistema seleciona o bloco correto via `{{#if pessoa_juridica}}…{{else}}…{{/if}}` (renderizador simples no `src/lib/contratos.ts`).
+- **Segundo contratante (cônjuge/sócio)**: bloco opcional `{{#if contratante2_nome}}…{{/if}}`.
+- Dados fixos da CONTRATADA (HR Corretor de Imóveis LTDA, Hans, CRECI etc.) ficam embutidos no texto — não viram campo no formulário.
+- Comissão padrão **5%** e prazo padrão **12 meses** já configurados.
 
-Tabela `contrato_templates` (opcional, simples):
-- `nome`, `conteudo` (HTML/markdown com placeholders `{{cliente_nome}}`, `{{imovel_endereco}}`, `{{valor}}`, etc.), `ativo`
-- Admin gerencia; staff lê
-- Já semeado com o template padrão de Autorização de Venda com Exclusividade
+### 2. Novos campos no formulário (`NovoContratoDialog`)
 
-### 2. Navegação
+Organizado em seções (accordion/abas) para não sobrecarregar:
 
-- Adicionar item **Contratos** em `CRM_SUBTABS` (`src/components/AppSidebar.tsx`), ícone `FileSignature`
-- Rota `/crm/contratos` em `src/App.tsx` apontando para `ContratosPage`
-- Liberar para corretor (incluir `"contratos"` em `CORRETOR_ALLOWED_CRM`)
+**Tipo do contratante**
+- Pessoa Física / Pessoa Jurídica (radio)
 
-### 3. Telas (frontend)
+**Contratante (PF)**
+- Nome, nascimento, estado civil, profissão, RG, CPF, e-mail, telefone
+- Endereço (logradouro, número, bairro, cidade, estado, CEP)
+- Segundo contratante (cônjuge) — toggle "Adicionar segundo contratante" expõe os mesmos campos
 
-**`src/pages/Contratos.tsx`** — lista
-- Filtros: status, corretor (admin/gestor), busca por cliente/imóvel
-- Tabela: cliente, imóvel, valor, status (badge), data, ações (ver, editar, enviar p/ assinatura, baixar PDF, cancelar)
-- Botão "Novo contrato"
+**Contratante (PJ)**
+- Razão social, CNPJ, endereço da sede (logradouro, nº, bairro, cidade, estado, CEP)
+- Sócio representante: nome, nascimento, estado civil, profissão, RG, CPF, e-mail, telefone, endereço residencial
 
-**`src/components/contratos/NovoContratoDialog.tsx`**
-- Seleciona Lead/Conta (cliente)
-- Seleciona Imóvel (busca em `imoveis`)
-- Valor, prazo, comissão, observações — pré-preenchidos a partir do imóvel/lead quando possível
-- Botão "Gerar contrato" → cria registro `rascunho` + gera PDF a partir do template
-- Botão "Gerar e enviar para assinatura" → cria + abre `SendDocumentDialog` existente
+**Imóvel** (já existente, ampliado)
+- Seleção do imóvel cadastrado **e** campos editáveis derivados: endereço completo, lote, quadra, área total, área construída, matrícula, benfeitorias
+- Pré-preenchimento a partir do imóvel selecionado; campos editáveis caso a base não tenha o dado
 
-**`src/pages/ContratoDetalhe.tsx`** (opcional, ou drawer)
-- Visualiza dados, PDF, signatários, histórico, ações de status
+**Negócio**
+- Valor de venda (R$) e valor por extenso (gerado automaticamente; editável)
+- Forma/condição de pagamento da comissão (texto livre — vai no Parágrafo terceiro da Cláusula Quarta)
+- Comissão (%) — padrão 5
+- Prazo de exclusividade em **meses** (não mais em dias) — padrão 12
+- Prazo da proteção pós-contratual em meses (Cláusula Sexta) — padrão 12
+- Cidade/UF da assinatura e data — padrão Sinop/MT + hoje
+- Observações
 
-### 4. Geração do PDF
+### 3. Ajustes técnicos
 
-- Renderizar o template substituindo placeholders no cliente
-- Gerar PDF via `jspdf` + `html2canvas` (ou `pdfmake`) — sem nova dependência pesada se já existir
-- Upload no bucket `signed-documents` (privado) e salvar `pdf_url`
+- `src/lib/contratos.ts`: adicionar mini-engine para `{{#if x}}…{{/if}}` (substitui o `renderTemplate` atual mantendo `{{var}}`); helper `valorPorExtenso(n)` em pt-BR (sem dependência nova, função local).
+- `src/components/contratos/NovoContratoDialog.tsx`: expandir formulário em seções e enviar o conjunto completo de variáveis para o renderizador.
+- `src/pages/Contratos.tsx`: na coluna "Cliente" e no envio para assinatura, usar `cliente_nome` (= razão social para PJ, ou nome do contratante 1 para PF), já compatível.
+- **Banco**: nenhuma alteração de schema necessária — a tabela `contratos` já tem `conteudo_renderizado` (texto final), `observacoes` e demais campos. Os campos detalhados de PF/PJ são gravados como JSON em `observacoes`? Não: melhor adicionar **uma coluna `dados_partes jsonb`** em `contratos` para guardar todos os dados das partes (sem inflar o schema com 30 colunas), permitindo reabrir e reimprimir o contrato depois.
 
-### 5. Integração com assinatura
+### 4. PDF
 
-- Reutilizar `SendDocumentDialog` e edge functions `clicksign-*`
-- Ao enviar: criar `signed_documents` referenciando o PDF do contrato, salvar `signed_document_id` no contrato e mudar status para `enviado_assinatura`
-- Webhook ClickSign já existente atualiza `signed_documents`; um pequeno trigger/handler sincroniza status no `contratos` quando o documento vinculado for assinado/cancelado
+- Mantém `jsPDF` já instalado.
+- Título: "CONTRATO DE INTERMEDIAÇÃO IMOBILIÁRIA COM CLÁUSULA DE EXCLUSIVIDADE" (atualizado).
+- Bloco final de assinaturas (CONTRATANTE / CONTRATADA / TESTEMUNHAS) já vem no texto do template.
 
-### 6. Template padrão
+### 5. Migrations necessárias
 
-Cadastrar via migration o conteúdo padrão do contrato de Autorização de Venda com Exclusividade com placeholders:
-`{{cliente_nome}}`, `{{cliente_documento}}`, `{{cliente_endereco}}`, `{{imovel_endereco}}`, `{{imovel_codigo}}`, `{{imovel_area}}`, `{{valor}}`, `{{valor_extenso}}`, `{{comissao_percentual}}`, `{{prazo_dias}}`, `{{data_inicio}}`, `{{data_fim}}`, `{{corretor_nome}}`, `{{cidade_data}}`.
+1. `ALTER TABLE contratos ADD COLUMN dados_partes jsonb`.
+2. `UPDATE contrato_templates SET conteudo = <texto oficial completo com placeholders e blocos condicionais> WHERE tipo = 'autorizacao_venda_exclusividade' AND ativo = true`.
 
-Admin pode editar depois em **Configurações → Templates de contrato** (fora deste escopo inicial, mas a tabela já fica pronta).
+### Fora de escopo deste passo
 
----
-
-### Confirmações antes de implementar
-
-1. **Template padrão**: você tem o texto oficial do contrato de Autorização de Venda com Exclusividade para eu usar? Se não, eu monto um modelo genérico e você ajusta depois pelo admin.
-2. **Comissão padrão** e **prazo padrão** (em dias)? Ex.: 6% e 180 dias.
-3. **Cliente**: vincular a **Leads**, **Contas** ou aos dois? (sugiro os dois — o que vier preenchido vira o cliente do contrato)
+- Editor visual de template no admin (a tabela já existe; UI fica para depois).
+- Coleta de assinatura das testemunhas dentro do ClickSign (hoje só CONTRATANTE e CONTRATADA são signatários padrão).
