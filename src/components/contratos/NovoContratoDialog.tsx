@@ -230,11 +230,36 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
 
     setLoading(true);
     try {
-      const imovel = imoveis.find((x) => x.id === imovelId)?.extra;
-      const imovelEnderecoCadastrado = imovel ? [imovel?.endereco, imovel?.numero, imovel?.complemento, imovel?.bairro,
-        imovel?.cidade && imovel?.estado ? `${imovel.cidade}/${imovel.estado}` : (imovel?.cidade || imovel?.estado),
-        imovel?.cep ? `CEP ${imovel.cep}` : ""].filter(Boolean).join(", ") : "";
-      const imovelEndereco = imovelEnderecoCadastrado || f.imovel_descricao_manual || "";
+      // Monta a descrição de cada imóvel + variáveis de conjugação singular/plural
+      const enderecoDoImovel = (cad: any) => cad ? [cad?.endereco, cad?.numero, cad?.complemento, cad?.bairro,
+        cad?.cidade && cad?.estado ? `${cad.cidade}/${cad.estado}` : (cad?.cidade || cad?.estado),
+        cad?.cep ? `CEP ${cad.cep}` : ""].filter(Boolean).join(", ") : "";
+
+      const imoveisDescritos = imoveisList.map((it) => {
+        const cad = it.id ? imoveis.find((x) => x.id === it.id)?.extra : null;
+        const endereco = enderecoDoImovel(cad) || it.descricao_manual || "—";
+        return {
+          endereco,
+          lote: it.lote || "—",
+          quadra: it.quadra || "—",
+          area_total: it.area_total ? `${it.area_total} m²` : "—",
+          area_construida: it.area_construida ? `${it.area_construida} m²` : "—",
+          matricula: it.matricula || "—",
+          benfeitorias: it.benfeitorias || "—",
+        };
+      });
+
+      const nImoveis = imoveisDescritos.length;
+      const sp = (s: string, p: string) => (nImoveis > 1 ? p : s);
+
+      const imoveisBloco = imoveisDescritos.map((im, idx) => {
+        const titulo = nImoveis > 1 ? `Imóvel ${idx + 1}:\n` : "";
+        return (
+          `${titulo}Endereço completo: ${im.endereco}\n` +
+          `Lote: ${im.lote}    Quadra: ${im.quadra}    Área Total: ${im.area_total}    Área Construída: ${im.area_construida}    Matrícula nº ${im.matricula}\n` +
+          `Benfeitorias: ${im.benfeitorias}`
+        );
+      }).join("\n\n");
 
       const { data: perfil } = await supabase.from("profiles").select("nome").eq("user_id", user.id).maybeSingle();
 
@@ -254,13 +279,20 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
         c2_telefone: f.add_c2 ? f.c2_telefone : "",
         c1_nascimento: formatDateBR(f.c1_nascimento),
         socio_nascimento: formatDateBR(f.socio_nascimento),
-        imovel_endereco: imovelEndereco,
-        imovel_lote: f.imovel_lote || "—",
-        imovel_quadra: f.imovel_quadra || "—",
-        imovel_area_total: f.imovel_area_total ? `${f.imovel_area_total} m²` : "—",
-        imovel_area_construida: f.imovel_area_construida ? `${f.imovel_area_construida} m²` : "—",
-        imovel_matricula: f.imovel_matricula || "—",
-        imovel_benfeitorias: f.imovel_benfeitorias || "—",
+        // Bloco com a descrição de todos os imóveis
+        imoveis_bloco: imoveisBloco,
+        // Conjugações singular/plural
+        imovel_palavra: sp("imóvel", "imóveis"),
+        do_imovel: sp("do imóvel", "dos imóveis"),
+        o_imovel: sp("o imóvel", "os imóveis"),
+        ao_imovel: sp("ao imóvel", "aos imóveis"),
+        o_qual: sp("o qual", "os quais"),
+        descrito_abaixo: sp("descrito abaixo", "descritos abaixo"),
+        livre_desembaracado: sp("livre e desembaraçado", "livres e desembaraçados"),
+        seja_vendido: sp("seja vendido", "sejam vendidos"),
+        prometido_venda: sp("prometido à venda", "prometidos à venda"),
+        cedido: sp("cedido", "cedidos"),
+        negociado: sp("negociado", "negociados"),
         valor: formatCurrency(valorNum),
         valor_numero: valorNum.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
         valor_extenso: valorPorExtenso(valorNum),
