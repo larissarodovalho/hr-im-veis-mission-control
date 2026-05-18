@@ -250,7 +250,7 @@ export default function ContratosTab() {
       {sendCtx && (
         <SendDocumentDialog
           open={!!sendCtx}
-          onOpenChange={(v) => !v && setSendCtx(null)}
+          onOpenChange={(v) => { if (!v) { setSendCtx(null); setSendFile(null); } }}
           leadId={sendCtx.lead_id}
           contaId={sendCtx.conta_id}
           defaultSigner={{
@@ -258,7 +258,9 @@ export default function ContratosTab() {
             email: sendCtx.cliente_email || "",
             cpf: sendCtx.cliente_documento || "",
           }}
-          onCreated={() => { setSendCtx(null); load(); }}
+          defaultName={sendCtx.cliente_nome ? `Contrato — ${sendCtx.cliente_nome}` : "Contrato de intermediação"}
+          defaultFile={sendFile}
+          onCreated={() => { setSendCtx(null); setSendFile(null); load(); }}
         />
       )}
     </div>
