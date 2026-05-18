@@ -21,6 +21,7 @@ function mapImovelFromDb(row: any) {
     vagas: row.vagas ?? 0,
     area,
     descricao: row.descricao ?? "",
+    caracteristicas: Array.isArray(row.caracteristicas) ? row.caracteristicas : [],
     fotos: row.fotos ?? [],
     imagem: row.fotos?.[0] ?? null,
     endereco: {
