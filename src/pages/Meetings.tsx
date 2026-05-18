@@ -71,13 +71,14 @@ export default function Meetings() {
     const { error } = await supabase.from("reunioes").insert({
       lead_id: form.lead_id === "none" ? null : form.lead_id,
       conta_id: form.conta_id === "none" ? null : form.conta_id,
+      imovel_id: form.imovel_id === "none" ? null : form.imovel_id,
       agendada_para: new Date(form.agendada_para).toISOString(),
       local: form.local || null, link: form.link || null, notas: form.notas || null,
       created_by: user?.id, corretor_id: user?.id,
     });
     if (error) return toast.error(error.message);
     toast.success("Reunião adicionada");
-    setForm({ lead_id: "none", conta_id: "none", agendada_para: "", local: "", link: "", notas: "" });
+    setForm({ lead_id: "none", conta_id: "none", imovel_id: "none", agendada_para: "", local: "", link: "", notas: "" });
     setOpen(false);
     load();
   };
