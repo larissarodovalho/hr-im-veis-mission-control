@@ -17,11 +17,13 @@ interface Props {
   leadId?: string | null;
   contaId?: string | null;
   defaultSigner?: { name?: string; email?: string; cpf?: string };
+  defaultName?: string;
+  defaultFile?: { blob: Blob; filename: string } | null;
   onCreated?: () => void;
 }
 
-export default function SendDocumentDialog({ open, onOpenChange, leadId, contaId, defaultSigner, onCreated }: Props) {
-  const [name, setName] = useState("");
+export default function SendDocumentDialog({ open, onOpenChange, leadId, contaId, defaultSigner, defaultName, defaultFile, onCreated }: Props) {
+  const [name, setName] = useState(defaultName || "");
   const [file, setFile] = useState<File | null>(null);
   const [message, setMessage] = useState("");
   const [deadline, setDeadline] = useState("");
