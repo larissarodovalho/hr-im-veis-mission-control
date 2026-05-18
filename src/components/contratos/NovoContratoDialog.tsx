@@ -58,7 +58,7 @@ const empty = {
   // sócio representante (PJ)
   socio_nome: "", socio_sexo: "M", socio_nascimento: "", socio_estado_civil: "", socio_profissao: "",
   socio_rg: "", socio_cpf: "", socio_email: "", socio_telefone: "", socio_endereco: "",
-  // imóvel
+  // imóvel (campos legados — preservados para compat na edição; descontinuados na UI)
   imovel_lote: "", imovel_quadra: "", imovel_area_total: "", imovel_area_construida: "",
   imovel_matricula: "", imovel_benfeitorias: "",
   imovel_descricao_manual: "",
@@ -83,6 +83,23 @@ const gen = (sexo: string) => {
   };
 };
 
+// Imóvel — entrada da lista
+type ImovelEntry = {
+  id: string | null;
+  descricao_manual: string;
+  lote: string;
+  quadra: string;
+  area_total: string;
+  area_construida: string;
+  matricula: string;
+  benfeitorias: string;
+};
+
+const emptyImovel = (): ImovelEntry => ({
+  id: null, descricao_manual: "", lote: "", quadra: "",
+  area_total: "", area_construida: "", matricula: "", benfeitorias: "",
+});
+
 export default function NovoContratoDialog({ open, onOpenChange, onCreated, editing }: Props) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -95,21 +112,42 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
   const [clienteOrigem, setClienteOrigem] = useState<"lead" | "conta" | "manual">("manual");
   const [leadId, setLeadId] = useState<string>("");
   const [contaId, setContaId] = useState<string>("");
-  const [imovelId, setImovelId] = useState<string>("");
+  const [imoveisList, setImoveisList] = useState<ImovelEntry[]>([emptyImovel()]);
 
   const [f, setF] = useState({ ...empty });
   const set = (patch: Partial<typeof empty>) => setF((s) => ({ ...s, ...patch }));
 
+  const updateImovel = (idx: number, patch: Partial<ImovelEntry>) =>
+    setImoveisList((list) => list.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
+  const addImovel = () => setImoveisList((list) => [...list, emptyImovel()]);
+  const removeImovel = (idx: number) =>
+    setImoveisList((list) => (list.length <= 1 ? list : list.filter((_, i) => i !== idx)));
+
   useEffect(() => {
     if (!open) return;
     if (editing) {
-      setF({ ...empty, ...(editing.dados_partes || {}) });
+      const dp = editing.dados_partes || {};
+      setF({ ...empty, ...dp });
       setLeadId(editing.lead_id || "");
       setContaId(editing.conta_id || "");
-      setImovelId(editing.imovel_id || "");
+      // Carrega lista de imóveis: novo formato (dp.imoveis) ou fallback legado
+      if (Array.isArray(dp.imoveis) && dp.imoveis.length) {
+        setImoveisList(dp.imoveis.map((i: any) => ({ ...emptyImovel(), ...i })));
+      } else {
+        setImoveisList([{
+          id: editing.imovel_id || null,
+          descricao_manual: dp.imovel_descricao_manual || "",
+          lote: dp.imovel_lote || "",
+          quadra: dp.imovel_quadra || "",
+          area_total: dp.imovel_area_total || "",
+          area_construida: dp.imovel_area_construida || "",
+          matricula: dp.imovel_matricula || "",
+          benfeitorias: dp.imovel_benfeitorias || "",
+        }]);
+      }
       setClienteOrigem(editing.lead_id ? "lead" : editing.conta_id ? "conta" : "manual");
     } else {
-      setF({ ...empty }); setLeadId(""); setContaId(""); setImovelId(""); setClienteOrigem("manual");
+      setF({ ...empty }); setLeadId(""); setContaId(""); setImoveisList([emptyImovel()]); setClienteOrigem("manual");
     }
     (async () => {
       const [tpl, ld, ct, im] = await Promise.all([
@@ -151,17 +189,29 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
     }
   }, [clienteOrigem, leadId, contaId, leads, contas]);
 
-  // Pré-preenche imóvel
+  // Pré-preenche dados de cada imóvel a partir do cadastro selecionado
   useEffect(() => {
-    if (!imovelId) return;
-    const i = imoveis.find((x) => x.id === imovelId)?.extra;
-    if (!i) return;
-    set({
-      imovel_area_total: i.area_total ? String(i.area_total) : "",
-      imovel_area_construida: i.area_construida ? String(i.area_construida) : "",
-      valor: !f.valor && i.valor ? String(i.valor) : f.valor,
+    setImoveisList((list) => list.map((it) => {
+      if (!it.id) return it;
+      const cad = imoveis.find((x) => x.id === it.id)?.extra;
+      if (!cad) return it;
+      return {
+        ...it,
+        area_total: it.area_total || (cad.area_total ? String(cad.area_total) : ""),
+        area_construida: it.area_construida || (cad.area_construida ? String(cad.area_construida) : ""),
+      };
+    }));
+    // Se valor ainda vazio, herda do primeiro imóvel cadastrado
+    setF((s) => {
+      if (s.valor) return s;
+      const firstWithId = imoveisList.find((x) => x.id);
+      if (!firstWithId) return s;
+      const cad = imoveis.find((x) => x.id === firstWithId.id)?.extra;
+      if (cad?.valor) return { ...s, valor: String(cad.valor) };
+      return s;
     });
-  }, [imovelId, imoveis]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imoveis, imoveisList.map((i) => i.id).join("|")]);
 
   const dataFimDate = useMemo(() => {
     const d = new Date(); d.setMonth(d.getMonth() + Number(f.prazo_meses || 0)); return d;
@@ -180,11 +230,36 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
 
     setLoading(true);
     try {
-      const imovel = imoveis.find((x) => x.id === imovelId)?.extra;
-      const imovelEnderecoCadastrado = imovel ? [imovel?.endereco, imovel?.numero, imovel?.complemento, imovel?.bairro,
-        imovel?.cidade && imovel?.estado ? `${imovel.cidade}/${imovel.estado}` : (imovel?.cidade || imovel?.estado),
-        imovel?.cep ? `CEP ${imovel.cep}` : ""].filter(Boolean).join(", ") : "";
-      const imovelEndereco = imovelEnderecoCadastrado || f.imovel_descricao_manual || "";
+      // Monta a descrição de cada imóvel + variáveis de conjugação singular/plural
+      const enderecoDoImovel = (cad: any) => cad ? [cad?.endereco, cad?.numero, cad?.complemento, cad?.bairro,
+        cad?.cidade && cad?.estado ? `${cad.cidade}/${cad.estado}` : (cad?.cidade || cad?.estado),
+        cad?.cep ? `CEP ${cad.cep}` : ""].filter(Boolean).join(", ") : "";
+
+      const imoveisDescritos = imoveisList.map((it) => {
+        const cad = it.id ? imoveis.find((x) => x.id === it.id)?.extra : null;
+        const endereco = enderecoDoImovel(cad) || it.descricao_manual || "—";
+        return {
+          endereco,
+          lote: it.lote || "—",
+          quadra: it.quadra || "—",
+          area_total: it.area_total ? `${it.area_total} m²` : "—",
+          area_construida: it.area_construida ? `${it.area_construida} m²` : "—",
+          matricula: it.matricula || "—",
+          benfeitorias: it.benfeitorias || "—",
+        };
+      });
+
+      const nImoveis = imoveisDescritos.length;
+      const sp = (s: string, p: string) => (nImoveis > 1 ? p : s);
+
+      const imoveisBloco = imoveisDescritos.map((im, idx) => {
+        const titulo = nImoveis > 1 ? `Imóvel ${idx + 1}:\n` : "";
+        return (
+          `${titulo}Endereço completo: ${im.endereco}\n` +
+          `Lote: ${im.lote}    Quadra: ${im.quadra}    Área Total: ${im.area_total}    Área Construída: ${im.area_construida}    Matrícula nº ${im.matricula}\n` +
+          `Benfeitorias: ${im.benfeitorias}`
+        );
+      }).join("\n\n");
 
       const { data: perfil } = await supabase.from("profiles").select("nome").eq("user_id", user.id).maybeSingle();
 
@@ -204,13 +279,20 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
         c2_telefone: f.add_c2 ? f.c2_telefone : "",
         c1_nascimento: formatDateBR(f.c1_nascimento),
         socio_nascimento: formatDateBR(f.socio_nascimento),
-        imovel_endereco: imovelEndereco,
-        imovel_lote: f.imovel_lote || "—",
-        imovel_quadra: f.imovel_quadra || "—",
-        imovel_area_total: f.imovel_area_total ? `${f.imovel_area_total} m²` : "—",
-        imovel_area_construida: f.imovel_area_construida ? `${f.imovel_area_construida} m²` : "—",
-        imovel_matricula: f.imovel_matricula || "—",
-        imovel_benfeitorias: f.imovel_benfeitorias || "—",
+        // Bloco com a descrição de todos os imóveis
+        imoveis_bloco: imoveisBloco,
+        // Conjugações singular/plural
+        imovel_palavra: sp("imóvel", "imóveis"),
+        do_imovel: sp("do imóvel", "dos imóveis"),
+        o_imovel: sp("o imóvel", "os imóveis"),
+        ao_imovel: sp("ao imóvel", "aos imóveis"),
+        o_qual: sp("o qual", "os quais"),
+        descrito_abaixo: sp("descrito abaixo", "descritos abaixo"),
+        livre_desembaracado: sp("livre e desembaraçado", "livres e desembaraçados"),
+        seja_vendido: sp("seja vendido", "sejam vendidos"),
+        prometido_venda: sp("prometido à venda", "prometidos à venda"),
+        cedido: sp("cedido", "cedidos"),
+        negociado: sp("negociado", "negociados"),
         valor: formatCurrency(valorNum),
         valor_numero: valorNum.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
         valor_extenso: valorPorExtenso(valorNum),
@@ -285,7 +367,7 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
         template_id: template.id,
         lead_id: clienteOrigem === "lead" ? leadId || null : null,
         conta_id: clienteOrigem === "conta" ? contaId || null : null,
-        imovel_id: imovelId || null,
+        imovel_id: imoveisList.find((x) => x.id)?.id || null,
         cliente_nome: clienteNome,
         cliente_documento: clienteCpfCnpj || null,
         cliente_email: clienteEmail || null,
@@ -301,7 +383,7 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
         status: acao === "gerar" ? "gerado" : "rascunho",
         corretor_id: user.id,
         created_by: user.id,
-        dados_partes: f,
+        dados_partes: { ...f, imoveis: imoveisList },
       };
 
       let error: any = null;
@@ -490,42 +572,64 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
               </AccordionContent>
             </AccordionItem>
 
-            {/* IMÓVEL */}
+            {/* IMÓVEL(IS) */}
             <AccordionItem value="imovel">
-              <AccordionTrigger>Imóvel</AccordionTrigger>
-              <AccordionContent className="space-y-3 pt-2">
-                <div>
-                  <Label>Imóvel cadastrado</Label>
-                  <Select value={imovelId || "__none__"} onValueChange={(v) => setImovelId(v === "__none__" ? "" : v)}>
-                    <SelectTrigger><SelectValue placeholder="Selecione o imóvel (opcional)..." /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">— Nenhum (preencher manualmente) —</SelectItem>
-                      {imoveis.map((i) => <SelectItem key={i.id} value={i.id}>{i.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {!imovelId && (
-                  <div>
-                    <Label>Descrição manual do imóvel</Label>
-                    <Textarea
-                      rows={3}
-                      placeholder="Endereço completo, características e identificação do imóvel..."
-                      value={f.imovel_descricao_manual}
-                      onChange={(e) => set({ imovel_descricao_manual: e.target.value })}
-                    />
+              <AccordionTrigger>
+                Imóvel{imoveisList.length > 1 ? `is (${imoveisList.length})` : ""}
+              </AccordionTrigger>
+              <AccordionContent className="space-y-4 pt-2">
+                {imoveisList.map((it, idx) => (
+                  <div key={idx} className="border rounded-md p-3 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        {imoveisList.length > 1 ? `Imóvel ${idx + 1}` : "Imóvel"}
+                      </p>
+                      {imoveisList.length > 1 && (
+                        <Button type="button" variant="ghost" size="sm" onClick={() => removeImovel(idx)}>
+                          Remover
+                        </Button>
+                      )}
+                    </div>
+                    <div>
+                      <Label>Imóvel cadastrado</Label>
+                      <Select
+                        value={it.id || "__none__"}
+                        onValueChange={(v) => updateImovel(idx, { id: v === "__none__" ? null : v })}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Selecione o imóvel (opcional)..." /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">— Nenhum (preencher manualmente) —</SelectItem>
+                          {imoveis.map((i) => <SelectItem key={i.id} value={i.id}>{i.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {!it.id && (
+                      <div>
+                        <Label>Descrição manual do imóvel</Label>
+                        <Textarea
+                          rows={3}
+                          placeholder="Endereço completo, características e identificação do imóvel..."
+                          value={it.descricao_manual}
+                          onChange={(e) => updateImovel(idx, { descricao_manual: e.target.value })}
+                        />
+                      </div>
+                    )}
+                    <div className="grid grid-cols-4 gap-3">
+                      <Field label="Lote" value={it.lote} onChange={(v: string) => updateImovel(idx, { lote: v })} />
+                      <Field label="Quadra" value={it.quadra} onChange={(v: string) => updateImovel(idx, { quadra: v })} />
+                      <Field label="Área total (m²)" type="number" value={it.area_total} onChange={(v: string) => updateImovel(idx, { area_total: v })} />
+                      <Field label="Área construída (m²)" type="number" value={it.area_construida} onChange={(v: string) => updateImovel(idx, { area_construida: v })} />
+                      <Field className="col-span-2" label="Matrícula nº" value={it.matricula} onChange={(v: string) => updateImovel(idx, { matricula: v })} />
+                      <div className="col-span-4">
+                        <Label>Benfeitorias</Label>
+                        <Textarea rows={2} value={it.benfeitorias} onChange={(e) => updateImovel(idx, { benfeitorias: e.target.value })} />
+                      </div>
+                    </div>
                   </div>
-                )}
-                <div className="grid grid-cols-4 gap-3">
-                  <Field label="Lote" value={f.imovel_lote} onChange={(v: string) => set({ imovel_lote: v })} />
-                  <Field label="Quadra" value={f.imovel_quadra} onChange={(v: string) => set({ imovel_quadra: v })} />
-                  <Field label="Área total (m²)" type="number" value={f.imovel_area_total} onChange={(v: string) => set({ imovel_area_total: v })} />
-                  <Field label="Área construída (m²)" type="number" value={f.imovel_area_construida} onChange={(v: string) => set({ imovel_area_construida: v })} />
-                  <Field className="col-span-2" label="Matrícula nº" value={f.imovel_matricula} onChange={(v: string) => set({ imovel_matricula: v })} />
-                  <div className="col-span-4">
-                    <Label>Benfeitorias</Label>
-                    <Textarea rows={2} value={f.imovel_benfeitorias} onChange={(e) => set({ imovel_benfeitorias: e.target.value })} />
-                  </div>
-                </div>
+                ))}
+                <Button type="button" variant="outline" size="sm" onClick={addImovel}>
+                  + Adicionar outro imóvel
+                </Button>
               </AccordionContent>
             </AccordionItem>
 
