@@ -1,29 +1,43 @@
 ## Objetivo
 
-Na aba **Contas → cadastro do cliente**, na seção "Agendar", exibir a movimentação dos agendamentos (reuniões, ligações e visitas) já feitos para aquela conta. Os dados continuam vindo das mesmas tabelas usadas nas abas globais de Reuniões / Ligações / Visitas, então qualquer mudança aparece automaticamente em todos os lugares.
+Permitir criar **tarefas com prazo no futuro** dentro do cadastro da conta (cliente) e ter uma **aba lateral "Tarefas"** no CRM listando todas as tarefas pendentes de todo o sistema.
 
-## O que será feito
+A tabela `tarefas` já existe (com `titulo`, `descricao`, `prazo`, `prioridade`, `status`, `responsavel_id`, `lead_id`, `created_by`). Falta só conectar a contas e construir a UI.
 
-1. **Novo componente** `src/components/contas/ContaAgendamentosList.tsx`
-   - Recebe `contaId`.
-   - Faz `select` em paralelo de:
-     - `reunioes` (filtrado por `conta_id`) — campos: agendada_para, duracao_min, tipo, local, link, status, notas.
-     - `ligacoes` (filtrado por `conta_id`) — campos: data, duracao_seg, resultado, notas.
-     - `visitas` (filtrado por `conta_id`) — campos: data_visita, status, observacoes, imovel_id.
-   - Une os três num único timeline ordenado por data desc, com badge do tipo (Reunião / Ligação / Visita), data formatada (`dd MMM yyyy 'às' HH:mm`), status, e linha com observações.
-   - Cada item tem link "Abrir" para a aba correspondente (`/crm/reunioes`, `/crm/ligacoes`, `/crm/visitas`) — opcional, leva à lista geral.
-   - Assina realtime nas três tabelas filtradas por `conta_id=eq.{id}` para atualizar quando criar/editar em qualquer lugar.
-   - Estado vazio amigável.
+## 1. Banco (migration)
 
-2. **`src/components/contas/ContaAgendaQuickAdd.tsx`**
-   - Sem mudanças de lógica. Apenas garantir que `onCreated` continue disparando refresh (já dispara).
+- Adicionar coluna `conta_id uuid` em `public.tarefas` com FK → `contas(id) ON DELETE SET NULL` e índice.
+- RLS atual já cobre (`responsavel_id`/`created_by`/admin/gestor) — sem mudança de política.
 
-3. **`src/pages/AccountDetail.tsx`**
-   - Logo abaixo do `<ContaAgendaQuickAdd />`, renderizar o novo `<ContaAgendamentosList contaId={acc.id} />` dentro de um `Card`.
-   - Passar a mesma função `load` via `onCreated` continua funcionando; o componente também ouve realtime, então não depende do refresh do pai.
+## 2. Componente novo `src/components/contas/ContaTarefas.tsx`
 
-## Não muda
+- Recebe `contaId` e `responsavelId`.
+- Header "Tarefas" + botão "Nova tarefa".
+- Dialog de criação: `titulo*`, `prazo` (datetime-local, padrão amanhã 09:00), `prioridade` (Baixa/Média/Alta), `responsavel` (select de profiles ativos, padrão responsavel da conta ou user atual), `descrição`.
+- Lista de tarefas dessa conta (`conta_id=eq.{id}`), ordenada por `prazo` asc, divididas em **Pendentes** (status ≠ "Concluída") e **Concluídas** (recolhíveis).
+- Cada item: checkbox para marcar como concluída (`status='Concluída'`), badge de prioridade, prazo formatado com destaque vermelho se atrasada, nome do responsável, botão excluir (admin ou autor).
+- Realtime: `postgres_changes` em `tarefas` filtrado por `conta_id`.
 
-- Schema do banco, RLS, edge functions.
-- Páginas globais de Reuniões / Ligações / Visitas.
-- Componente `ContaInteracoesTimeline` (histórico de interações livres permanece separado — esse é o log manual; o novo bloco é a agenda real).
+## 3. `src/pages/AccountDetail.tsx`
+
+- Importar `ContaTarefas` e renderizar em um `<Card>` logo abaixo do bloco "Agendamentos" (antes de "Propriedades / Negócios").
+
+## 4. Página global `src/pages/Tasks.tsx` (aba lateral "Tarefas")
+
+- Rota nova: `/crm/tarefas` (em `src/App.tsx` dentro do bloco CRM).
+- Lista todas as tarefas visíveis ao usuário (admin/gestor vê todas; corretor vê as próprias via RLS).
+- Filtros no topo: status (Pendentes/Concluídas/Todas — padrão Pendentes), prazo (Hoje/Esta semana/Atrasadas/Futuras/Todas — padrão Futuras+Atrasadas), busca por título, responsável (admin/gestor).
+- Agrupamento por dia (Atrasadas / Hoje / Amanhã / Esta semana / Mais tarde / Sem prazo).
+- Cada linha: título, prioridade, prazo, link para a conta (se `conta_id`) ou lead (se `lead_id`), responsável, ação concluir/reabrir/excluir.
+- Botão "Nova tarefa" (sem conta vinculada) reutilizando o mesmo dialog de criação.
+
+## 5. Sidebar / navegação
+
+- `src/components/AppSidebar.tsx`: o item "Tarefas" já existe sob CRM mas usa `?tab=tarefas`. Trocar para `NavLink` real apontando para `/crm/tarefas` (alinhado ao padrão das outras subtabs como `/crm/visitas`).
+- Verificar/ajustar `CORRETOR_ALLOWED_CRM` para incluir `tarefas` (corretor precisa ver as próprias).
+
+## Fora de escopo
+
+- Notificações por email/whatsapp do prazo.
+- Recorrência de tarefas.
+- Integração com calendário externo.
