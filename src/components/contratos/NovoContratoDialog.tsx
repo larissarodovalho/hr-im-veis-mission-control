@@ -58,7 +58,7 @@ const empty = {
   // sócio representante (PJ)
   socio_nome: "", socio_sexo: "M", socio_nascimento: "", socio_estado_civil: "", socio_profissao: "",
   socio_rg: "", socio_cpf: "", socio_email: "", socio_telefone: "", socio_endereco: "",
-  // imóvel
+  // imóvel (campos legados — preservados para compat na edição; descontinuados na UI)
   imovel_lote: "", imovel_quadra: "", imovel_area_total: "", imovel_area_construida: "",
   imovel_matricula: "", imovel_benfeitorias: "",
   imovel_descricao_manual: "",
