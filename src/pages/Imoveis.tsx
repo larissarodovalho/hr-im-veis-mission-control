@@ -1,18 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText } from "lucide-react";
+import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import NovoImovelDialog from "@/components/imoveis/NovoImovelDialog";
 import EditarImovelDialog from "@/components/imoveis/EditarImovelDialog";
+import NovaPropostaDialog from "@/components/imoveis/NovaPropostaDialog";
 
 type Imovel = any;
 type Proposta = any;
 type Lead = any;
+
+const statusLower = (s?: string) => (s || "").toLowerCase();
+const isEmAnalise = (p: Proposta) => ["em análise", "em analise"].includes(statusLower(p.status));
+const isAceita = (p: Proposta) => statusLower(p.status) === "aceita";
 
 export default function Imoveis() {
   const [items, setItems] = useState<Imovel[]>([]);
@@ -21,6 +27,7 @@ export default function Imoveis() {
   const [search, setSearch] = useState("");
   const [openNew, setOpenNew] = useState(false);
   const [editing, setEditing] = useState<Imovel | null>(null);
+  const [propostaFor, setPropostaFor] = useState<Imovel | null>(null);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [contas, setContas] = useState<Record<string, string>>({});
   const [tab, setTab] = useState("disponiveis");
@@ -52,7 +59,7 @@ export default function Imoveis() {
     });
   }, []);
 
-  const fmt = (n: number | null) => n == null ? "—" : n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+  const fmt = (n: number | null | undefined) => n == null ? "—" : Number(n).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
   const matchesSearch = (i: Imovel) =>
     !search ||
@@ -60,7 +67,6 @@ export default function Imoveis() {
     i.cidade?.toLowerCase().includes(search.toLowerCase()) ||
     i.codigo?.toLowerCase().includes(search.toLowerCase());
 
-  // Build per-imovel proposta info
   const propostasByImovel = useMemo(() => {
     const m: Record<string, Proposta[]> = {};
     propostas.forEach(p => {
@@ -70,58 +76,87 @@ export default function Imoveis() {
     return m;
   }, [propostas]);
 
-  const isVendido = (i: Imovel) => (i.status || "").toLowerCase() === "vendido";
+  const isVendido = (i: Imovel) => statusLower(i.status) === "vendido";
 
-  const disponiveis = items.filter(i => !isVendido(i) && matchesSearch(i));
-  const emProposta = items.filter(i => {
-    if (isVendido(i)) return false;
+  // Classificação por estágio
+  const stage = (i: Imovel): "vendido" | "fechamento" | "proposta" | "disponivel" => {
+    if (isVendido(i)) return "vendido";
     const ps = propostasByImovel[i.id] || [];
-    return ps.some(p => ["em análise", "em analise", "aceita"].includes((p.status || "").toLowerCase()));
-  }).filter(matchesSearch);
-  const vendidos = items.filter(i => isVendido(i) && matchesSearch(i));
+    if (ps.some(isAceita)) return "fechamento";
+    if (ps.some(isEmAnalise)) return "proposta";
+    return "disponivel";
+  };
 
-  const marcarVendido = async (imovel: Imovel, proposta: Proposta) => {
-    if (!confirm(`Marcar "${imovel.titulo}" como vendido para ${leads[proposta.lead_id]?.nome || "este lead"}?`)) return;
-    const { error: e1 } = await supabase.from("propostas").update({ status: "Aceita" }).eq("id", proposta.id);
-    const { error: e2 } = await supabase.from("imoveis").update({ status: "Vendido" }).eq("id", imovel.id);
-    // Recusar outras propostas do mesmo imóvel
-    const outros = (propostasByImovel[imovel.id] || []).filter(p => p.id !== proposta.id);
-    if (outros.length) {
-      await supabase.from("propostas").update({ status: "Recusada" }).in("id", outros.map(p => p.id));
-    }
+  const disponiveis = items.filter(i => stage(i) === "disponivel" && matchesSearch(i));
+  const emProposta  = items.filter(i => stage(i) === "proposta"   && matchesSearch(i));
+  const emFechamento = items.filter(i => stage(i) === "fechamento" && matchesSearch(i));
+  const vendidos    = items.filter(i => stage(i) === "vendido"    && matchesSearch(i));
+
+  // ---------- Ações ----------
+  const aceitarProposta = async (imovel: Imovel, proposta: Proposta) => {
+    if (!confirm(`Aceitar a proposta de ${leads[proposta.lead_id]?.nome || "este lead"} por ${fmt(proposta.valor)}? As demais propostas deste imóvel serão recusadas.`)) return;
+    await supabase.from("propostas").update({ status: "Aceita" }).eq("id", proposta.id);
+    const outras = (propostasByImovel[imovel.id] || []).filter(p => p.id !== proposta.id && isEmAnalise(p));
+    if (outras.length) await supabase.from("propostas").update({ status: "Recusada" }).in("id", outras.map(p => p.id));
+    toast.success("Proposta aceita — imóvel em fechamento");
+    load();
+  };
+
+  const recusarProposta = async (proposta: Proposta) => {
+    if (!confirm("Recusar esta proposta?")) return;
+    await supabase.from("propostas").update({ status: "Recusada" }).eq("id", proposta.id);
+    toast.success("Proposta recusada");
+    load();
+  };
+
+  const cancelarFechamento = async (proposta: Proposta) => {
+    if (!confirm("Voltar este imóvel para 'Em Proposta'?")) return;
+    await supabase.from("propostas").update({ status: "Em análise" }).eq("id", proposta.id);
+    toast.success("Fechamento cancelado");
+    load();
+  };
+
+  const confirmarVenda = async (imovel: Imovel, proposta: Proposta) => {
+    if (!confirm(`Confirmar venda de "${imovel.titulo}" para ${leads[proposta.lead_id]?.nome || "—"}?`)) return;
+    await supabase.from("imoveis").update({ status: "Vendido" }).eq("id", imovel.id);
     await supabase.from("activity_log").insert({
       tipo: "venda",
       descricao: `Imóvel "${imovel.titulo}" vendido para ${leads[proposta.lead_id]?.nome || "—"} por ${fmt(proposta.valor)}`,
       metadata: { imovel_id: imovel.id, proposta_id: proposta.id, lead_id: proposta.lead_id },
     });
-    if (e1 || e2) toast.error("Erro ao marcar como vendido");
-    else toast.success("Venda registrada");
+    toast.success("Venda confirmada 🎉");
     load();
   };
 
-  const renderCardDisponivel = (i: Imovel) => (
-    <Card key={i.id} className="overflow-hidden">
-      <div className="relative">
-        {i.fotos?.[0] ? (
-          <img src={i.fotos[0]} alt={i.titulo} className="w-full h-44 object-cover" />
-        ) : (
-          <div className="w-full h-44 bg-muted flex items-center justify-center text-muted-foreground">
-            <HomeIcon className="h-10 w-10 opacity-30" />
-          </div>
-        )}
-        <Button size="icon" variant="secondary" className="absolute top-2 right-2 h-8 w-8" onClick={() => setEditing(i)} title="Editar imóvel">
-          <Pencil className="h-4 w-4" />
-        </Button>
-      </div>
-      <div className="p-4 space-y-2">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h3 className="font-semibold text-sm leading-tight truncate">{i.titulo}</h3>
-            {i.codigo && <span className="text-[10px] font-mono text-muted-foreground">{i.codigo}</span>}
-          </div>
-          <Badge variant="outline" className="text-[10px] shrink-0">{i.status}</Badge>
+  // ---------- Cards ----------
+  const Header = ({ i, badge }: { i: Imovel; badge?: React.ReactNode }) => (
+    <div className="relative">
+      {i.fotos?.[0] ? (
+        <img src={i.fotos[0]} alt={i.titulo} className="w-full h-36 object-cover" />
+      ) : (
+        <div className="w-full h-36 bg-muted flex items-center justify-center text-muted-foreground">
+          <HomeIcon className="h-10 w-10 opacity-30" />
         </div>
-        <div className="text-xs text-muted-foreground">{i.cidade}{i.estado && ` · ${i.estado}`}</div>
+      )}
+      {badge}
+      <Button size="icon" variant="secondary" className="absolute top-2 right-2 h-8 w-8" onClick={() => setEditing(i)} title="Editar imóvel">
+        <Pencil className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+
+  const Title = ({ i }: { i: Imovel }) => (
+    <div>
+      <h3 className="font-semibold text-sm leading-tight truncate">{i.titulo}</h3>
+      <div className="text-[11px] text-muted-foreground">{i.cidade}{i.estado && ` · ${i.estado}`} {i.codigo && `· ${i.codigo}`}</div>
+    </div>
+  );
+
+  const renderDisponivel = (i: Imovel) => (
+    <Card key={i.id} className="overflow-hidden">
+      <Header i={i} badge={<Badge className="absolute top-2 left-2 text-[10px]" variant="outline">{i.status}</Badge>} />
+      <div className="p-4 space-y-2">
+        <Title i={i} />
         <div className="text-[11px] text-muted-foreground space-y-0.5">
           <div>Corretor: <span className="text-foreground">{profiles[i.corretor_id] || "—"}</span></div>
           <div>Proprietário: <span className="text-foreground">{contas[i.proprietario_id] || "—"}</span></div>
@@ -130,81 +165,106 @@ export default function Imoveis() {
           <Badge variant="secondary" className="text-[10px]">{i.finalidade} · {i.tipo}</Badge>
           <span className="font-semibold text-primary">{fmt(i.valor)}</span>
         </div>
-        <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => setEditing(i)}>
-          <Pencil className="h-3.5 w-3.5 mr-1.5" /> Editar
+        <Button size="sm" className="w-full mt-2" onClick={() => setPropostaFor(i)}>
+          <Handshake className="h-3.5 w-3.5 mr-1.5" /> Iniciar proposta
         </Button>
       </div>
     </Card>
   );
 
-  const renderCardProposta = (i: Imovel) => {
-    const ps = (propostasByImovel[i.id] || []).filter(p => ["em análise", "em analise", "aceita"].includes((p.status || "").toLowerCase()));
-    const principal = ps[0];
-    const lead = principal ? leads[principal.lead_id] : null;
+  const renderEmProposta = (i: Imovel) => {
+    const ps = (propostasByImovel[i.id] || []).filter(isEmAnalise);
     return (
       <Card key={i.id} className="overflow-hidden">
-        <div className="relative">
-          {i.fotos?.[0] ? (
-            <img src={i.fotos[0]} alt={i.titulo} className="w-full h-36 object-cover" />
-          ) : (
-            <div className="w-full h-36 bg-muted flex items-center justify-center text-muted-foreground">
-              <HomeIcon className="h-10 w-10 opacity-30" />
-            </div>
-          )}
+        <Header i={i} badge={
           <Badge className="absolute top-2 left-2 bg-amber-500/90 text-white border-0 text-[10px]">
             <FileText className="h-3 w-3 mr-1" /> {ps.length} proposta{ps.length > 1 ? "s" : ""}
           </Badge>
-        </div>
+        } />
         <div className="p-4 space-y-2">
-          <div>
-            <h3 className="font-semibold text-sm leading-tight truncate">{i.titulo}</h3>
-            <div className="text-[11px] text-muted-foreground">{i.cidade}{i.estado && ` · ${i.estado}`} {i.codigo && `· ${i.codigo}`}</div>
+          <Title i={i} />
+          <div className="space-y-2 max-h-56 overflow-auto">
+            {ps.map(p => {
+              const lead = leads[p.lead_id];
+              return (
+                <div key={p.id} className="rounded-md border bg-muted/30 p-2 space-y-1 text-[11px]">
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium text-foreground truncate">{lead?.nome || "Lead —"}</div>
+                    <span className="font-semibold text-primary">{fmt(p.valor)}</span>
+                  </div>
+                  {lead?.telefone && <div className="text-muted-foreground">{lead.telefone}</div>}
+                  {p.condicoes && <div className="text-muted-foreground italic">{p.condicoes}</div>}
+                  <div className="flex gap-1.5 pt-1">
+                    <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => recusarProposta(p)}>
+                      <XCircle className="h-3 w-3 mr-1" /> Recusar
+                    </Button>
+                    <Button size="sm" className="h-7 px-2 text-[11px] flex-1" onClick={() => aceitarProposta(i, p)}>
+                      <CheckCircle2 className="h-3 w-3 mr-1" /> Aceitar
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <div className="rounded-md border bg-muted/30 p-2 space-y-1 text-[11px]">
-            <div className="font-medium text-foreground">{lead?.nome || "Lead não informado"}</div>
-            {lead?.telefone && <div className="text-muted-foreground">{lead.telefone}</div>}
-            <div className="flex items-center justify-between pt-1">
-              <Badge variant="outline" className="text-[10px]">{principal?.status || "—"}</Badge>
-              <span className="font-semibold text-primary">{fmt(principal?.valor)}</span>
-            </div>
-          </div>
-          <div className="text-[11px] text-muted-foreground">Corretor: <span className="text-foreground">{profiles[principal?.corretor_id || i.corretor_id] || "—"}</span></div>
-          <div className="flex gap-2 pt-1">
-            <Button size="sm" variant="outline" className="flex-1" onClick={() => setEditing(i)}>
-              <Pencil className="h-3.5 w-3.5 mr-1.5" /> Imóvel
-            </Button>
-            <Button size="sm" className="flex-1" onClick={() => principal && marcarVendido(i, principal)}>
-              <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" /> Vendido
-            </Button>
-          </div>
+          <Button size="sm" variant="outline" className="w-full" onClick={() => setPropostaFor(i)}>
+            <Plus className="h-3.5 w-3.5 mr-1.5" /> Nova proposta
+          </Button>
         </div>
       </Card>
     );
   };
 
-  const renderCardVendido = (i: Imovel) => {
-    const ps = propostasByImovel[i.id] || [];
-    const aceita = ps.find(p => (p.status || "").toLowerCase() === "aceita") || ps[0];
+  const renderEmFechamento = (i: Imovel) => {
+    const aceita = (propostasByImovel[i.id] || []).find(isAceita);
     const lead = aceita ? leads[aceita.lead_id] : null;
     return (
-      <Card key={i.id} className="overflow-hidden border-emerald-500/30">
-        <div className="relative">
-          {i.fotos?.[0] ? (
-            <img src={i.fotos[0]} alt={i.titulo} className="w-full h-36 object-cover" />
-          ) : (
-            <div className="w-full h-36 bg-muted flex items-center justify-center text-muted-foreground">
-              <HomeIcon className="h-10 w-10 opacity-30" />
+      <Card key={i.id} className="overflow-hidden border-amber-500/40">
+        <Header i={i} badge={
+          <Badge className="absolute top-2 left-2 bg-amber-600 text-white border-0 text-[10px]">
+            <FileSignature className="h-3 w-3 mr-1" /> Em fechamento
+          </Badge>
+        } />
+        <div className="p-4 space-y-2">
+          <Title i={i} />
+          <div className="rounded-md border bg-amber-500/5 p-2 space-y-1 text-[11px]">
+            <div className="text-muted-foreground">Comprador</div>
+            <div className="font-medium text-foreground">{lead?.nome || "—"}</div>
+            {lead?.telefone && <div className="text-muted-foreground">{lead.telefone}</div>}
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-muted-foreground">Valor acordado</span>
+              <span className="font-semibold text-primary">{fmt(aceita?.valor)}</span>
             </div>
-          )}
+          </div>
+          <div className="text-[11px] text-muted-foreground">Corretor: <span className="text-foreground">{profiles[aceita?.corretor_id || i.corretor_id] || "—"}</span></div>
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <Button size="sm" variant="outline" asChild>
+              <Link to="/crm/contratos"><FileSignature className="h-3.5 w-3.5 mr-1.5" /> Contrato</Link>
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => aceita && cancelarFechamento(aceita)}>
+              <Undo2 className="h-3.5 w-3.5 mr-1.5" /> Cancelar
+            </Button>
+          </div>
+          <Button size="sm" className="w-full bg-emerald-600 hover:bg-emerald-700" onClick={() => aceita && confirmarVenda(i, aceita)}>
+            <Trophy className="h-3.5 w-3.5 mr-1.5" /> Confirmar venda
+          </Button>
+        </div>
+      </Card>
+    );
+  };
+
+  const renderVendido = (i: Imovel) => {
+    const ps = propostasByImovel[i.id] || [];
+    const aceita = ps.find(isAceita) || ps[0];
+    const lead = aceita ? leads[aceita.lead_id] : null;
+    return (
+      <Card key={i.id} className="overflow-hidden border-emerald-500/40">
+        <Header i={i} badge={
           <Badge className="absolute top-2 left-2 bg-emerald-600 text-white border-0 text-[10px]">
             <Trophy className="h-3 w-3 mr-1" /> Vendido
           </Badge>
-        </div>
+        } />
         <div className="p-4 space-y-2">
-          <div>
-            <h3 className="font-semibold text-sm leading-tight truncate">{i.titulo}</h3>
-            <div className="text-[11px] text-muted-foreground">{i.cidade}{i.estado && ` · ${i.estado}`} {i.codigo && `· ${i.codigo}`}</div>
-          </div>
+          <Title i={i} />
           <div className="rounded-md border bg-emerald-500/5 p-2 space-y-1 text-[11px]">
             <div className="text-muted-foreground">Comprador</div>
             <div className="font-medium text-foreground">{lead?.nome || "—"}</div>
@@ -215,9 +275,6 @@ export default function Imoveis() {
             </div>
           </div>
           <div className="text-[11px] text-muted-foreground">Corretor: <span className="text-foreground">{profiles[aceita?.corretor_id || i.corretor_id] || "—"}</span></div>
-          <Button variant="outline" size="sm" className="w-full mt-1" onClick={() => setEditing(i)}>
-            <Pencil className="h-3.5 w-3.5 mr-1.5" /> Editar imóvel
-          </Button>
         </div>
       </Card>
     );
@@ -227,14 +284,14 @@ export default function Imoveis() {
     <Card className="p-10 text-center text-muted-foreground col-span-full">{msg}</Card>
   );
 
-  const counts = { d: disponiveis.length, p: emProposta.length, v: vendidos.length };
+  const counts = { d: disponiveis.length, p: emProposta.length, f: emFechamento.length, v: vendidos.length };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <header className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="font-display text-3xl font-semibold flex items-center gap-2"><HomeIcon className="h-7 w-7 text-primary" /> Imóveis</h1>
-          <p className="text-muted-foreground mt-1">{counts.d} disponíveis · {counts.p} em proposta · {counts.v} vendidos</p>
+          <p className="text-muted-foreground mt-1">{counts.d} disponíveis · {counts.p} em proposta · {counts.f} em fechamento · {counts.v} vendidos</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -251,26 +308,34 @@ export default function Imoveis() {
         <TabsList>
           <TabsTrigger value="disponiveis">Disponíveis <Badge variant="secondary" className="ml-2 text-[10px]">{counts.d}</Badge></TabsTrigger>
           <TabsTrigger value="proposta">Em Proposta <Badge variant="secondary" className="ml-2 text-[10px]">{counts.p}</Badge></TabsTrigger>
+          <TabsTrigger value="fechamento">Em Fechamento <Badge variant="secondary" className="ml-2 text-[10px]">{counts.f}</Badge></TabsTrigger>
           <TabsTrigger value="vendidos">Vendidos <Badge variant="secondary" className="ml-2 text-[10px]">{counts.v}</Badge></TabsTrigger>
         </TabsList>
 
         <TabsContent value="disponiveis" className="mt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {disponiveis.map(renderCardDisponivel)}
+            {disponiveis.map(renderDisponivel)}
             {disponiveis.length === 0 && emptyState("Nenhum imóvel disponível. Clique em Cadastrar imóvel para começar.")}
           </div>
         </TabsContent>
 
         <TabsContent value="proposta" className="mt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {emProposta.map(renderCardProposta)}
-            {emProposta.length === 0 && emptyState("Nenhum imóvel com proposta em aberto.")}
+            {emProposta.map(renderEmProposta)}
+            {emProposta.length === 0 && emptyState("Nenhuma proposta em aberto. Inicie uma proposta a partir de um imóvel disponível.")}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="fechamento" className="mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {emFechamento.map(renderEmFechamento)}
+            {emFechamento.length === 0 && emptyState("Nenhum imóvel em fechamento. Aceite uma proposta para chegar até aqui.")}
           </div>
         </TabsContent>
 
         <TabsContent value="vendidos" className="mt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {vendidos.map(renderCardVendido)}
+            {vendidos.map(renderVendido)}
             {vendidos.length === 0 && emptyState("Nenhuma venda registrada ainda.")}
           </div>
         </TabsContent>
@@ -282,6 +347,12 @@ export default function Imoveis() {
         onOpenChange={(v) => { if (!v) setEditing(null); }}
         imovel={editing}
         onSaved={load}
+      />
+      <NovaPropostaDialog
+        open={!!propostaFor}
+        onOpenChange={(v) => { if (!v) setPropostaFor(null); }}
+        imovel={propostaFor}
+        onCreated={load}
       />
     </div>
   );
