@@ -1,4 +1,27 @@
 import jsPDF from "jspdf";
+import letterheadHeader from "@/assets/contratos/letterhead-header.png";
+import letterheadFooter from "@/assets/contratos/letterhead-footer.png";
+
+// Cache de DataURLs do papel timbrado
+const imageCache: Record<string, { dataUrl: string; w: number; h: number }> = {};
+
+async function loadImage(src: string) {
+  if (imageCache[src]) return imageCache[src];
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const el = new Image();
+    el.crossOrigin = "anonymous";
+    el.onload = () => resolve(el);
+    el.onerror = reject;
+    el.src = src;
+  });
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  canvas.getContext("2d")!.drawImage(img, 0, 0);
+  const dataUrl = canvas.toDataURL("image/png");
+  imageCache[src] = { dataUrl, w: img.naturalWidth, h: img.naturalHeight };
+  return imageCache[src];
+}
 
 export type ContratoVars = Record<string, string | number | boolean | null | undefined>;
 
