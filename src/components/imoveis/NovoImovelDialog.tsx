@@ -94,6 +94,7 @@ const empty = {
   valor_condominio: "",
   valor_iptu: "",
   area_total: "",
+  area_construida: "",
   area_util: "",
   quartos: "",
   suites: "",
@@ -186,6 +187,7 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
         valor_condominio: num(form.valor_condominio),
         valor_iptu: num(form.valor_iptu),
         area_total: num(form.area_total),
+        area_construida: num(form.area_construida),
         area_util: num(form.area_util),
         quartos: int(form.quartos) ?? 0,
         suites: int(form.suites) ?? 0,
@@ -304,11 +306,17 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
               {isTerreno ? "Áreas" : "Áreas e cômodos"}
             </h3>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               <div>
                 <Label>Área total (m²)</Label>
                 <Input type="number" inputMode="decimal" value={form.area_total} onChange={(e) => upd("area_total", e.target.value)} />
               </div>
+              {!isTerreno && (
+                <div>
+                  <Label>Área construída (m²)</Label>
+                  <Input type="number" inputMode="decimal" value={form.area_construida} onChange={(e) => upd("area_construida", e.target.value)} />
+                </div>
+              )}
               {!isTerreno && (
                 <div>
                   <Label>Área útil (m²)</Label>

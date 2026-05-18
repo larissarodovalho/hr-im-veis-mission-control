@@ -1,37 +1,21 @@
-## Mudanças
+## Adicionar "Área construída" em Áreas e Cômodos
 
-### Banco (`imoveis`)
+Hoje existem dois campos de área: **Área total** e **Área útil**. A solicitação é incluir também **Área construída**, mantendo "Área total" e adicionando o novo campo ao lado.
 
-- Adicionar coluna `codigo TEXT UNIQUE` (formato `HR-0001`).
-- Adicionar coluna `proprietario_id UUID` referenciando uma conta em `contas`.
-- Sequência `imoveis_codigo_seq` + trigger `BEFORE INSERT` que preenche `codigo = 'HR-' || lpad(nextval(...)::text, 4, '0')` quando vier nulo.
-- Backfill: gera código para os imóveis já cadastrados.
-- RLS já cobre `UPDATE` para admin/gestor/corretor responsável, sem mudança.
+### Banco de dados
+- Migração na tabela `imoveis`: adicionar coluna `area_construida numeric` (nullable).
 
-### Cadastro de imóvel (`NovoImovelDialog`)
+### Cadastro/edição do imóvel
+- **`NovoImovelDialog.tsx`** e **`EditarImovelDialog.tsx`**: na seção "Áreas e cômodos", incluir o input "Área construída (m²)" junto com "Área total" e "Área útil". Incluir no estado inicial, no carregamento do imóvel (edição) e no payload de insert/update.
 
-Nova seção "Responsável e proprietário" com:
-- **Corretor responsável** — `Select` populado com `profiles` (usuários ativos). Default: usuário logado.
-- **Proprietário** — `SearchableSelect` que lista contas (`contas.nome` + documento). Ao lado, botão "Nova conta" abre `NovaContaDialog` já existente; ao salvar, a conta criada é automaticamente vinculada.
-- No `insert` da tabela `imoveis`: passar `corretor_id` escolhido e `proprietario_id`. Não enviar `codigo` (trigger gera).
-- Após salvar, exibir toast com o código gerado (refetch breve).
-
-### Edição (`EditarImovelDialog`)
-
-- Mesma seção: editar corretor responsável e proprietário (com opção "Nova conta").
-- Exibir o `codigo` (somente leitura) no topo do diálogo.
-
-### Listagem CRM (`Imoveis.tsx`)
-
-- Mostrar `codigo` como badge no card.
-- Mostrar nome do corretor responsável e do proprietário em linha discreta.
+### Listagem CRM
+- **`Imoveis.tsx`**: quando houver `area_construida`, exibir junto das outras métricas de área no card.
 
 ### Site público
+- **`ImoveisPage.tsx`** e **`ImovelDetalhePage.tsx`**: na exibição de área priorizar `area_util ?? area_construida ?? area_total`. Na página de detalhe, mostrar os três valores quando preenchidos.
 
-- `ImoveisPage` e `ImovelDetalhePage` passam a usar `row.codigo` quando existir (fallback para o `HR-<id>` atual).
+### Fora de escopo
+- Renomear/migrar dados das colunas existentes (`area_util`, `area_total`) — permanecem como estão.
+- Filtro por área construída na busca pública.
 
-## Fora de escopo
-
-- Histórico de troca de responsável/proprietário.
-- Múltiplos proprietários por imóvel.
-- Comissionamento/contratos atrelados ao proprietário.
+Confirma para eu implementar?

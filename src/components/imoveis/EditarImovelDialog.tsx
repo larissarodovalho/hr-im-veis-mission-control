@@ -24,7 +24,7 @@ interface Props {
 const empty = {
   titulo: "", descricao: "", tipo: "Casa", finalidade: "Venda", status: "Disponível",
   valor: "", valor_condominio: "", valor_iptu: "",
-  area_total: "", area_util: "",
+  area_total: "", area_construida: "", area_util: "",
   quartos: "", suites: "", banheiros: "", vagas: "",
   cep: "", endereco: "", numero: "", complemento: "", bairro: "", cidade: "", estado: "",
   destaque: false,
@@ -54,7 +54,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
       titulo: s(imovel.titulo), descricao: s(imovel.descricao),
       tipo: imovel.tipo || "Casa", finalidade: imovel.finalidade || "Venda", status: imovel.status || "Disponível",
       valor: s(imovel.valor), valor_condominio: s(imovel.valor_condominio), valor_iptu: s(imovel.valor_iptu),
-      area_total: s(imovel.area_total), area_util: s(imovel.area_util),
+      area_total: s(imovel.area_total), area_construida: s(imovel.area_construida), area_util: s(imovel.area_util),
       quartos: s(imovel.quartos), suites: s(imovel.suites), banheiros: s(imovel.banheiros), vagas: s(imovel.vagas),
       cep: s(imovel.cep), endereco: s(imovel.endereco), numero: s(imovel.numero),
       complemento: s(imovel.complemento), bairro: s(imovel.bairro), cidade: s(imovel.cidade), estado: s(imovel.estado),
@@ -130,6 +130,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
         valor_condominio: num(form.valor_condominio),
         valor_iptu: num(form.valor_iptu),
         area_total: num(form.area_total),
+        area_construida: num(form.area_construida),
         area_util: num(form.area_util),
         quartos: int(form.quartos) ?? 0,
         suites: int(form.suites) ?? 0,
@@ -235,8 +236,9 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
               {isTerreno ? "Áreas" : "Áreas e cômodos"}
             </h3>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               <div><Label>Área total (m²)</Label><Input type="number" inputMode="decimal" value={form.area_total} onChange={(e) => upd("area_total", e.target.value)} /></div>
+              {!isTerreno && <div><Label>Área construída (m²)</Label><Input type="number" inputMode="decimal" value={form.area_construida} onChange={(e) => upd("area_construida", e.target.value)} /></div>}
               {!isTerreno && <div><Label>Área útil (m²)</Label><Input type="number" inputMode="decimal" value={form.area_util} onChange={(e) => upd("area_util", e.target.value)} /></div>}
               <div><Label>Vagas garagem</Label><Input type="number" value={form.vagas} onChange={(e) => upd("vagas", e.target.value)} /></div>
             </div>
