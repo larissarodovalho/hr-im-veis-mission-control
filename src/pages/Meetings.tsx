@@ -280,7 +280,16 @@ export default function Meetings() {
                   placeholder="Buscar conta..."
                   emptyLabel="Sem conta vinculada"
                 />
-              </div>
+            </div>
+            <div>
+              <Label>Imóvel visitado</Label>
+              <SearchableSelect
+                value={editForm.imovel_id}
+                onChange={(v) => setEditForm({ ...editForm, imovel_id: v })}
+                options={imoveis}
+                placeholder="Buscar imóvel..."
+                emptyLabel="Sem imóvel vinculado"
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
