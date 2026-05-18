@@ -486,6 +486,21 @@ export default function ImoveisPage() {
                         )}
                       </div>
 
+                      {Array.isArray(im.caracteristicas) && im.caracteristicas.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mb-5">
+                          {im.caracteristicas.slice(0, 3).map((c: string) => (
+                            <span key={c} className="text-[10px] font-light text-white/60 border border-white/10 rounded-full px-2 py-0.5 bg-white/[0.02]">
+                              {c}
+                            </span>
+                          ))}
+                          {im.caracteristicas.length > 3 && (
+                            <span className="text-[10px] font-light text-white/40 px-1 py-0.5">
+                              +{im.caracteristicas.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
                       {/* CTAs */}
                       <div className="flex gap-2">
                         <motion.a
