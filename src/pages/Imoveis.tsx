@@ -13,15 +13,29 @@ export default function Imoveis() {
   const [search, setSearch] = useState("");
   const [openNew, setOpenNew] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
+  const [profiles, setProfiles] = useState<Record<string, string>>({});
+  const [contas, setContas] = useState<Record<string, string>>({});
 
   const load = () => {
     supabase.from("imoveis").select("*").order("created_at", { ascending: false }).then(({ data }) => setItems(data ?? []));
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    supabase.from("profiles").select("user_id,nome").then(({ data }) => {
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((p: any) => { if (p.user_id) map[p.user_id] = p.nome || "Sem nome"; });
+      setProfiles(map);
+    });
+    supabase.from("contas").select("id,nome").then(({ data }) => {
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((c: any) => { map[c.id] = c.nome; });
+      setContas(map);
+    });
+  }, []);
 
   const fmt = (n: number | null) => n == null ? "—" : n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
-  const filtered = items.filter(i => !search || i.titulo?.toLowerCase().includes(search.toLowerCase()) || i.cidade?.toLowerCase().includes(search.toLowerCase()));
+  const filtered = items.filter(i => !search || i.titulo?.toLowerCase().includes(search.toLowerCase()) || i.cidade?.toLowerCase().includes(search.toLowerCase()) || i.codigo?.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
@@ -64,10 +78,19 @@ export default function Imoveis() {
             </div>
             <div className="p-4 space-y-2">
               <div className="flex items-start justify-between gap-2">
-                <h3 className="font-semibold text-sm leading-tight">{i.titulo}</h3>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-sm leading-tight truncate">{i.titulo}</h3>
+                  {i.codigo && (
+                    <span className="text-[10px] font-mono text-muted-foreground">{i.codigo}</span>
+                  )}
+                </div>
                 <Badge variant="outline" className="text-[10px] shrink-0">{i.status}</Badge>
               </div>
               <div className="text-xs text-muted-foreground">{i.cidade}{i.estado && ` · ${i.estado}`}</div>
+              <div className="text-[11px] text-muted-foreground space-y-0.5">
+                <div>Corretor: <span className="text-foreground">{profiles[i.corretor_id] || "—"}</span></div>
+                <div>Proprietário: <span className="text-foreground">{contas[i.proprietario_id] || "—"}</span></div>
+              </div>
               <div className="flex items-center justify-between pt-1">
                 <Badge variant="secondary" className="text-[10px]">{i.finalidade} · {i.tipo}</Badge>
                 <span className="font-semibold text-primary">{fmt(i.valor)}</span>
