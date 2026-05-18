@@ -198,10 +198,10 @@ export default function ImovelDetalhePage() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="flex items-center gap-1.5 text-white/25 mb-8"
+            className="flex items-center gap-1.5 text-white/50 mb-8"
           >
-            <MapPin className="h-3 w-3" />
-            <span className="text-sm font-light">{enderecoCompleto}</span>
+            <MapPin className="h-4 w-4" />
+            <span className="text-base font-normal">{enderecoCompleto}</span>
           </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -215,7 +215,7 @@ export default function ImovelDetalhePage() {
                 transition={{ duration: 1, ease }}
                 className="h-[1px] bg-gradient-to-r from-amber-300/40 to-transparent mb-4"
               />
-              <p className="text-[10px] uppercase tracking-[0.4em] text-white/50 font-light mb-2">Valor</p>
+              <p className="text-xs uppercase tracking-[0.4em] text-white/60 font-normal mb-2">Valor</p>
               <motion.h2
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -239,9 +239,9 @@ export default function ImovelDetalhePage() {
                     transition={{ delay: i * 0.08, duration: 0.5, ease }}
                     className="flex flex-col items-center gap-2 py-6 bg-[#050505] hover:bg-white/[0.02] transition-all duration-500"
                   >
-                    <spec.icon className="h-4 w-4 text-amber-300/40" />
-                    <span className="text-xl font-extralight text-white/80">{spec.value}</span>
-                    <span className="text-[9px] uppercase tracking-[0.3em] text-white/50">{spec.label}</span>
+                    <spec.icon className="h-5 w-5 text-amber-300/50" />
+                    <span className="text-2xl font-light text-white/90">{spec.value}</span>
+                    <span className="text-xs uppercase tracking-[0.3em] text-white/60">{spec.label}</span>
                   </motion.div>
                 ))}
               </div>
@@ -250,14 +250,14 @@ export default function ImovelDetalhePage() {
               <div className="mb-8">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-1 h-3 bg-gradient-to-b from-amber-300/40 to-transparent rounded-full" />
-                  <p className="text-[10px] uppercase tracking-[0.4em] text-white/50 font-light">Sobre o imóvel</p>
+                  <p className="text-xs uppercase tracking-[0.4em] text-white/60 font-normal">Sobre o imóvel</p>
                 </div>
                 <motion.p
                   initial={{ opacity: 0, y: 15 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ margin: "-40px" }}
                   transition={{ duration: 0.6, ease: smoothEase }}
-                  className="text-base text-white/60 leading-[1.9] font-light"
+                  className="text-lg text-white/70 leading-[1.8] font-normal"
                 >
                   {imovel.descricao}
                 </motion.p>
@@ -268,7 +268,7 @@ export default function ImovelDetalhePage() {
                 <div className="mb-8">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-1 h-3 bg-gradient-to-b from-amber-300/40 to-transparent rounded-full" />
-                    <p className="text-[10px] uppercase tracking-[0.4em] text-white/50 font-light">Características</p>
+                    <p className="text-xs uppercase tracking-[0.4em] text-white/60 font-normal">Características</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {imovel.caracteristicas.map((c: string, i: number) => (
@@ -278,7 +278,7 @@ export default function ImovelDetalhePage() {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: i * 0.03, duration: 0.4, ease }}
-                        className="text-xs font-light text-white/70 border border-white/15 rounded-full px-3 py-1.5 bg-white/[0.02]"
+                        className="text-sm font-normal text-white/80 border border-white/15 rounded-full px-3 py-1.5 bg-white/[0.03]"
                       >
                         {c}
                       </motion.span>
@@ -291,7 +291,7 @@ export default function ImovelDetalhePage() {
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-1 h-3 bg-gradient-to-b from-amber-300/40 to-transparent rounded-full" />
-                  <p className="text-[10px] uppercase tracking-[0.4em] text-white/50 font-light">Localização</p>
+                  <p className="text-xs uppercase tracking-[0.4em] text-white/60 font-normal">Localização</p>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {[
@@ -306,8 +306,8 @@ export default function ImovelDetalhePage() {
                       viewport={{ once: true }}
                       transition={{ delay: i * 0.08, duration: 0.5, ease }}
                     >
-                      <span className="text-[9px] uppercase tracking-[0.3em] text-white/15 block mb-1">{item.label}</span>
-                      <p className="text-base font-light text-white/50">{item.value}</p>
+                      <span className="text-xs uppercase tracking-[0.3em] text-white/30 block mb-1">{item.label}</span>
+                      <p className="text-lg font-normal text-white/70">{item.value}</p>
                     </motion.div>
                   ))}
                 </div>
@@ -370,7 +370,7 @@ export default function ImovelDetalhePage() {
               >
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-1 h-3 bg-gradient-to-b from-amber-300/40 to-transparent rounded-full" />
-                  <h3 className="text-[10px] font-medium text-white/60 uppercase tracking-[0.3em]">Detalhes</h3>
+                  <h3 className="text-xs font-medium text-white/60 uppercase tracking-[0.3em]">Detalhes</h3>
                 </div>
                 {[
                   { label: "Código", value: imovel.codigo },
@@ -390,8 +390,8 @@ export default function ImovelDetalhePage() {
                     transition={{ delay: i * 0.04, duration: 0.3 }}
                     className="flex items-center justify-between py-2.5 border-b border-white/[0.04] last:border-0"
                   >
-                    <span className="text-[10px] text-white/50 font-light">{item.label}</span>
-                    <span className="text-[10px] text-white/50 font-medium">{item.value}</span>
+                    <span className="text-xs text-white/50 font-normal">{item.label}</span>
+                    <span className="text-xs text-white/70 font-medium">{item.value}</span>
                   </motion.div>
                 ))}
               </motion.div>
