@@ -177,27 +177,57 @@ export function valorPorExtenso(valor: number): string {
 }
 
 // ---------- PDF ----------
-export function generatePdfBlob(title: string, content: string): Blob {
+export async function generatePdfBlob(title: string, content: string): Promise<Blob> {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const margin = 56;
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const maxW = pageW - margin * 2;
 
+  // Carrega o papel timbrado (header + footer). Em caso de falha, segue sem.
+  let header: { dataUrl: string; w: number; h: number } | null = null;
+  let footer: { dataUrl: string; w: number; h: number } | null = null;
+  try {
+    [header, footer] = await Promise.all([
+      loadImage(letterheadHeader),
+      loadImage(letterheadFooter),
+    ]);
+  } catch (e) {
+    console.warn("[contratos] falha ao carregar papel timbrado:", e);
+  }
+
+  const headerH = header ? (header.h * pageW) / header.w : 0;
+  const footerH = footer ? (footer.h * pageW) / footer.w : 0;
+  const topPad = 16;
+  const bottomPad = 12;
+  const contentTop = headerH + topPad;
+  const contentBottom = pageH - footerH - bottomPad;
+
+  const drawLetterhead = () => {
+    if (header) doc.addImage(header.dataUrl, "PNG", 0, 0, pageW, headerH);
+    if (footer) doc.addImage(footer.dataUrl, "PNG", 0, pageH - footerH, pageW, footerH);
+  };
+
+  drawLetterhead();
+
   doc.setFont("times", "bold");
   doc.setFontSize(13);
   const titleLines = doc.splitTextToSize(title, maxW);
-  doc.text(titleLines, pageW / 2, margin, { align: "center" });
+  doc.text(titleLines, pageW / 2, contentTop + 4, { align: "center" });
 
   doc.setFont("times", "normal");
   doc.setFontSize(11);
-  let y = margin + titleLines.length * 16 + 16;
+  let y = contentTop + titleLines.length * 16 + 20;
 
   const paragraphs = content.split(/\n/);
   for (const para of paragraphs) {
     const lines = doc.splitTextToSize(para.length ? para : " ", maxW);
     for (const line of lines) {
-      if (y > pageH - margin) { doc.addPage(); y = margin; }
+      if (y > contentBottom) {
+        doc.addPage();
+        drawLetterhead();
+        y = contentTop;
+      }
       doc.text(line, margin, y);
       y += 16;
     }
