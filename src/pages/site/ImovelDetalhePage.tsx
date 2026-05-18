@@ -11,7 +11,7 @@ function mapImovelFromDb(row: any) {
   const area = areaNum != null ? `${Number(areaNum).toLocaleString("pt-BR")} m²` : "—";
   return {
     id: row.id,
-    codigo: `HR-${String(row.id).slice(0, 6).toUpperCase()}`,
+    codigo: row.codigo || `HR-${String(row.id).slice(0, 6).toUpperCase()}`,
     nome: row.titulo,
     tipo: row.tipo,
     status: row.status,
