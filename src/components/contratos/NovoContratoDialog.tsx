@@ -60,6 +60,7 @@ const empty = {
   // imóvel
   imovel_lote: "", imovel_quadra: "", imovel_area_total: "", imovel_area_construida: "",
   imovel_matricula: "", imovel_benfeitorias: "",
+  imovel_descricao_manual: "",
   // negócio
   valor: "", forma_pagamento: "",
   comissao_percentual: "5",
@@ -148,7 +149,6 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
   const submit = async (acao: "rascunho" | "gerar") => {
     if (!template) return toast.error("Template não carregado");
     if (!user) return toast.error("Sessão expirada");
-    if (!imovelId) return toast.error("Selecione o imóvel");
     if (!f.valor) return toast.error("Informe o valor de venda");
     if (f.pessoa_juridica) {
       if (!f.pj_razao_social || !f.pj_cnpj) return toast.error("Preencha razão social e CNPJ");
@@ -160,9 +160,10 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
     setLoading(true);
     try {
       const imovel = imoveis.find((x) => x.id === imovelId)?.extra;
-      const imovelEndereco = [imovel?.endereco, imovel?.numero, imovel?.complemento, imovel?.bairro,
+      const imovelEnderecoCadastrado = imovel ? [imovel?.endereco, imovel?.numero, imovel?.complemento, imovel?.bairro,
         imovel?.cidade && imovel?.estado ? `${imovel.cidade}/${imovel.estado}` : (imovel?.cidade || imovel?.estado),
-        imovel?.cep ? `CEP ${imovel.cep}` : ""].filter(Boolean).join(", ");
+        imovel?.cep ? `CEP ${imovel.cep}` : ""].filter(Boolean).join(", ") : "";
+      const imovelEndereco = imovelEnderecoCadastrado || f.imovel_descricao_manual || "";
 
       const { data: perfil } = await supabase.from("profiles").select("nome").eq("user_id", user.id).maybeSingle();
 
@@ -230,7 +231,7 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
         template_id: template.id,
         lead_id: clienteOrigem === "lead" ? leadId || null : null,
         conta_id: clienteOrigem === "conta" ? contaId || null : null,
-        imovel_id: imovelId,
+        imovel_id: imovelId || null,
         cliente_nome: clienteNome,
         cliente_documento: clienteCpfCnpj || null,
         cliente_email: clienteEmail || null,
@@ -399,14 +400,26 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
               <AccordionTrigger>Imóvel</AccordionTrigger>
               <AccordionContent className="space-y-3 pt-2">
                 <div>
-                  <Label>Imóvel cadastrado *</Label>
-                  <Select value={imovelId} onValueChange={setImovelId}>
-                    <SelectTrigger><SelectValue placeholder="Selecione o imóvel..." /></SelectTrigger>
+                  <Label>Imóvel cadastrado</Label>
+                  <Select value={imovelId || "__none__"} onValueChange={(v) => setImovelId(v === "__none__" ? "" : v)}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o imóvel (opcional)..." /></SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="__none__">— Nenhum (preencher manualmente) —</SelectItem>
                       {imoveis.map((i) => <SelectItem key={i.id} value={i.id}>{i.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
+                {!imovelId && (
+                  <div>
+                    <Label>Descrição manual do imóvel</Label>
+                    <Textarea
+                      rows={3}
+                      placeholder="Endereço completo, características e identificação do imóvel..."
+                      value={f.imovel_descricao_manual}
+                      onChange={(e) => set({ imovel_descricao_manual: e.target.value })}
+                    />
+                  </div>
+                )}
                 <div className="grid grid-cols-4 gap-3">
                   <Field label="Lote" value={f.imovel_lote} onChange={(v: string) => set({ imovel_lote: v })} />
                   <Field label="Quadra" value={f.imovel_quadra} onChange={(v: string) => set({ imovel_quadra: v })} />
