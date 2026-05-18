@@ -13,6 +13,7 @@ import { ArrowLeft, Pencil, Building2, Phone, Save, FileSignature, Plus, Trash2,
 import EntityDocumentsTab from "@/components/EntityDocumentsTab";
 import ContaInteracoesTimeline from "@/components/contas/ContaInteracoesTimeline";
 import ContaAgendaQuickAdd from "@/components/contas/ContaAgendaQuickAdd";
+import ContaAgendamentosList from "@/components/contas/ContaAgendamentosList";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -210,6 +211,10 @@ export default function AccountDetail() {
       </div>
 
       <ContaAgendaQuickAdd contaId={acc.id} responsavelId={acc.responsavel_id} onCreated={load} />
+
+      <Card className="p-5">
+        <ContaAgendamentosList contaId={acc.id} />
+      </Card>
 
       <div>
         <div className="flex items-center justify-between mb-3">
