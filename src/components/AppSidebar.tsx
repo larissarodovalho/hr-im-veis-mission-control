@@ -68,7 +68,8 @@ const ALL_ITEMS = [
   { title: "Saúde do Sistema", url: "/saude", icon: Activity, restricted: true },
 ];
 
-const CORRETOR_ALLOWED_CRM = new Set(["leads", "contatos", "whatsapp"]);
+const CORRETOR_ALLOWED_CRM = new Set(["leads", "contatos", "whatsapp", "tarefas"]);
+const CRM_SUBTAB_ROUTES: Record<string, string> = { tarefas: "/crm/tarefas" };
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -130,11 +131,12 @@ export function AppSidebar() {
                     {item.url === "/crm" && isCRM && !collapsed && (
                       <div className="ml-4 mt-1 mb-2 space-y-0.5 border-l-2 border-sidebar-accent pl-3">
                         {visibleCrmSubtabs.map((sub) => {
-                          const isSubActive = activeTab === sub.value;
+                          const route = CRM_SUBTAB_ROUTES[sub.value];
+                          const isSubActive = route ? location.pathname === route : activeTab === sub.value;
                           return (
                             <button
                               key={sub.value}
-                              onClick={() => navigate(`/crm?tab=${sub.value}`)}
+                              onClick={() => navigate(route ?? `/crm?tab=${sub.value}`)}
                               className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-all duration-150 ${
                                 isSubActive
                                   ? "bg-sidebar-accent text-sidebar-primary font-medium"

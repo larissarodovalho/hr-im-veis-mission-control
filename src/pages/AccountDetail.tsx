@@ -14,6 +14,7 @@ import EntityDocumentsTab from "@/components/EntityDocumentsTab";
 import ContaInteracoesTimeline from "@/components/contas/ContaInteracoesTimeline";
 import ContaAgendaQuickAdd from "@/components/contas/ContaAgendaQuickAdd";
 import ContaAgendamentosList from "@/components/contas/ContaAgendamentosList";
+import ContaTarefas from "@/components/contas/ContaTarefas";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -214,6 +215,10 @@ export default function AccountDetail() {
 
       <Card className="p-5">
         <ContaAgendamentosList contaId={acc.id} />
+      </Card>
+
+      <Card className="p-5">
+        <ContaTarefas contaId={acc.id} responsavelId={acc.responsavel_id} />
       </Card>
 
       <div>

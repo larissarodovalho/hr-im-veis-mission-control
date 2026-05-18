@@ -1623,6 +1623,7 @@ export type Database = {
       }
       tarefas: {
         Row: {
+          conta_id: string | null
           created_at: string
           created_by: string | null
           descricao: string | null
@@ -1636,6 +1637,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          conta_id?: string | null
           created_at?: string
           created_by?: string | null
           descricao?: string | null
@@ -1649,6 +1651,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          conta_id?: string | null
           created_at?: string
           created_by?: string | null
           descricao?: string | null
@@ -1662,6 +1665,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tarefas_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tarefas_lead_id_fkey"
             columns: ["lead_id"]
