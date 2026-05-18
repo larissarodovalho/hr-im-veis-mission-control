@@ -169,6 +169,16 @@ export default function Meetings() {
                   emptyLabel="Sem conta vinculada"
                 />
               </div>
+              <div>
+                <Label>Imóvel visitado</Label>
+                <SearchableSelect
+                  value={form.imovel_id}
+                  onChange={(v) => setForm({ ...form, imovel_id: v })}
+                  options={imoveis}
+                  placeholder="Buscar imóvel..."
+                  emptyLabel="Sem imóvel vinculado"
+                />
+              </div>
               <div><Label>Data e hora</Label><Input type="datetime-local" value={form.agendada_para} onChange={e => setForm({ ...form, agendada_para: e.target.value })} /></div>
               <div><Label>Local</Label><Input value={form.local} onChange={e => setForm({ ...form, local: e.target.value })} /></div>
               <div><Label>Link</Label><Input value={form.link} onChange={e => setForm({ ...form, link: e.target.value })} /></div>
