@@ -1,35 +1,37 @@
-## Problemas
+## Mudanças
 
-1. **Não dá para editar** um imóvel cadastrado no CRM (não existe diálogo de edição nem ação de editar nos cards de `/crm/imoveis`).
-2. **O imóvel não aparece no site público** (`/imoveis` e `/imovel/:id`) porque essas páginas usam um array fixo vazio (`IMOVEIS_SITE: any[] = []`) e nunca consultam a tabela `imoveis` do banco.
+### Banco (`imoveis`)
 
-## O que será feito
+- Adicionar coluna `codigo TEXT UNIQUE` (formato `HR-0001`).
+- Adicionar coluna `proprietario_id UUID` referenciando uma conta em `contas`.
+- Sequência `imoveis_codigo_seq` + trigger `BEFORE INSERT` que preenche `codigo = 'HR-' || lpad(nextval(...)::text, 4, '0')` quando vier nulo.
+- Backfill: gera código para os imóveis já cadastrados.
+- RLS já cobre `UPDATE` para admin/gestor/corretor responsável, sem mudança.
 
-### 1. Editar imóvel no CRM (`/crm/imoveis`)
+### Cadastro de imóvel (`NovoImovelDialog`)
 
-- Criar `src/components/imoveis/EditarImovelDialog.tsx` reaproveitando os campos do `NovoImovelDialog` (título, tipo, finalidade, status, valores, áreas, cômodos, endereço, características, destaque).
-- Pré-carrega os dados do imóvel selecionado e salva via `update` na tabela `imoveis`.
-- Gestão de fotos no edit:
-  - Lista as fotos atuais com botão de remover (apaga a URL do array e o arquivo do bucket `imoveis`).
-  - Permite adicionar novas fotos (passam pela mesma `applyWatermark` antes do upload).
-  - Permite reordenar arrastando, opcional — manteremos só remover/adicionar para simplicidade.
-- No `Imoveis.tsx`: cada card ganha um botão "Editar" (ícone lápis) que abre o diálogo. Após salvar, recarrega a lista.
+Nova seção "Responsável e proprietário" com:
+- **Corretor responsável** — `Select` populado com `profiles` (usuários ativos). Default: usuário logado.
+- **Proprietário** — `SearchableSelect` que lista contas (`contas.nome` + documento). Ao lado, botão "Nova conta" abre `NovaContaDialog` já existente; ao salvar, a conta criada é automaticamente vinculada.
+- No `insert` da tabela `imoveis`: passar `corretor_id` escolhido e `proprietario_id`. Não enviar `codigo` (trigger gera).
+- Após salvar, exibir toast com o código gerado (refetch breve).
 
-### 2. Mostrar imóveis do CRM no site público
+### Edição (`EditarImovelDialog`)
 
-- `src/pages/site/ImoveisPage.tsx`: substituir o array fixo por um `useEffect` que faz `supabase.from("imoveis").select("*").eq("status","Disponível").order("created_at",{ascending:false})` e mapeia cada registro para o formato esperado pelo card:
-  - `id`, `nome` ← `titulo`
-  - `codigo` ← curto baseado no id (ex: `HR-` + primeiros 6 chars)
-  - `endereco` ← `{ bairro, condominio: complemento||"", cidade, estado }`
-  - `valor`, `tipo`, `quartos`, `banheiros`, `vagas`, `status`, `descricao`
-  - `area` ← `area_util || area_total` formatado em m²
-  - `imagem` ← primeira URL de `fotos` (fallback para a imagem mock atual quando vazio)
-- Trocar `getImageForImovel(im.id, im.tipo)` por `im.imagem || fallbackMock(im.tipo)`.
-- `src/pages/site/ImovelDetalhePage.tsx`: mesma migração — busca pelo `id` no banco, monta galeria a partir de `fotos[]` (com fallback). Mantém o layout atual.
-- A RLS pública já permite `SELECT` em imóveis com `status = 'Disponível'`, então não precisa de migração.
+- Mesma seção: editar corretor responsável e proprietário (com opção "Nova conta").
+- Exibir o `codigo` (somente leitura) no topo do diálogo.
+
+### Listagem CRM (`Imoveis.tsx`)
+
+- Mostrar `codigo` como badge no card.
+- Mostrar nome do corretor responsável e do proprietário em linha discreta.
+
+### Site público
+
+- `ImoveisPage` e `ImovelDetalhePage` passam a usar `row.codigo` quando existir (fallback para o `HR-<id>` atual).
 
 ## Fora de escopo
 
-- Reordenação de fotos por drag-and-drop.
-- Reaplicar marca d'água em fotos antigas.
-- Filtros novos no site.
+- Histórico de troca de responsável/proprietário.
+- Múltiplos proprietários por imóvel.
+- Comissionamento/contratos atrelados ao proprietário.
