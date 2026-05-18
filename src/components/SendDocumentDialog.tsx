@@ -32,6 +32,17 @@ export default function SendDocumentDialog({ open, onOpenChange, leadId, contaId
   ]);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!open) return;
+    if (defaultName) setName(defaultName);
+    if (defaultFile?.blob) {
+      const f = new File([defaultFile.blob], defaultFile.filename || "contrato.pdf", { type: "application/pdf" });
+      setFile(f);
+    }
+    setSigners([{ name: defaultSigner?.name || "", email: defaultSigner?.email || "", cpf: defaultSigner?.cpf || "", role: "parte" }]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   const reset = () => {
     setName(""); setFile(null); setMessage(""); setDeadline("");
     setSigners([{ name: defaultSigner?.name || "", email: defaultSigner?.email || "", cpf: defaultSigner?.cpf || "", role: "parte" }]);
