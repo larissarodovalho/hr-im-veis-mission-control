@@ -35,6 +35,7 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onCreated?: () => void;
+  editing?: any | null;
 }
 
 type Item = { id: string; label: string; extra?: any };
