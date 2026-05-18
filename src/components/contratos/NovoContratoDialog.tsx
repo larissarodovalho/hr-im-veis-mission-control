@@ -304,10 +304,21 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
         dados_partes: f,
       };
 
-      const { error } = await (supabase.from("contratos" as any) as any).insert(insert);
+      let error: any = null;
+      if (editing?.id) {
+        const upd = { ...insert };
+        delete upd.created_by;
+        // mantém pdf_url antigo se não regerou
+        if (acao !== "gerar") delete upd.pdf_url;
+        const r = await (supabase.from("contratos" as any) as any).update(upd).eq("id", editing.id);
+        error = r.error;
+      } else {
+        const r = await (supabase.from("contratos" as any) as any).insert(insert);
+        error = r.error;
+      }
       if (error) throw error;
 
-      toast.success(acao === "gerar" ? "Contrato gerado" : "Rascunho salvo");
+      toast.success(editing ? "Contrato atualizado" : (acao === "gerar" ? "Contrato gerado" : "Rascunho salvo"));
       onOpenChange(false);
       onCreated?.();
     } catch (e: any) {
