@@ -113,6 +113,7 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
   const [clienteOrigem, setClienteOrigem] = useState<"lead" | "conta" | "manual">("manual");
   const [leadId, setLeadId] = useState<string>("");
   const [contaId, setContaId] = useState<string>("");
+  const [salvarConta, setSalvarConta] = useState<boolean>(true);
   const [imoveisList, setImoveisList] = useState<ImovelEntry[]>([emptyImovel()]);
 
   const [f, setF] = useState({ ...empty });
@@ -363,11 +364,38 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
       const dataInicio = new Date().toISOString().slice(0, 10);
       const dataFim = dataFimDate.toISOString().slice(0, 10);
 
+      // Auto-salvar como Conta do CRM (apenas para contato manual em criação)
+      let novaContaId: string | null = null;
+      if (!editing && clienteOrigem === "manual" && salvarConta && clienteNome) {
+        const enderecoStr = f.pessoa_juridica
+          ? [f.pj_logradouro, f.pj_numero, f.pj_bairro, f.pj_cidade, f.pj_estado, f.pj_cep].filter(Boolean).join(", ")
+          : [f.end_logradouro, f.end_numero, f.end_bairro, f.end_cidade, f.end_estado, f.end_cep].filter(Boolean).join(", ");
+        const { data: novaConta, error: contaErr } = await (supabase.from("contas") as any)
+          .insert({
+            nome: clienteNome,
+            tipo: f.pessoa_juridica ? "PJ" : "PF",
+            documento: clienteCpfCnpj || null,
+            email: clienteEmail || null,
+            telefone: clienteTelefone || null,
+            endereco: enderecoStr || null,
+            created_by: user.id,
+            responsavel_id: user.id,
+          })
+          .select("id")
+          .single();
+        if (contaErr) {
+          console.warn("[contratos] falha ao salvar conta:", contaErr);
+          toast.warning("Contrato salvo, mas não foi possível cadastrar a conta automaticamente.");
+        } else {
+          novaContaId = novaConta?.id || null;
+        }
+      }
+
       const insert: any = {
         tipo: "autorizacao_venda_exclusividade",
         template_id: template.id,
         lead_id: clienteOrigem === "lead" ? leadId || null : null,
-        conta_id: clienteOrigem === "conta" ? contaId || null : null,
+        conta_id: clienteOrigem === "conta" ? contaId || null : novaContaId,
         imovel_id: imoveisList.find((x) => x.id)?.id || null,
         cliente_nome: clienteNome,
         cliente_documento: clienteCpfCnpj || null,
@@ -460,6 +488,14 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
               </div>
             )}
           </div>
+
+          {!editing && clienteOrigem === "manual" && (
+            <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+              <Switch checked={salvarConta} onCheckedChange={setSalvarConta} />
+              <span>Cadastrar automaticamente este cliente nas Contas do CRM</span>
+            </label>
+          )}
+
 
           <Accordion type="multiple" defaultValue={["contratante", "imovel", "negocio"]} className="w-full">
             {/* CONTRATANTE */}
