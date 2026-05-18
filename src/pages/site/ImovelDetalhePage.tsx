@@ -7,7 +7,7 @@ import { ScrollSection } from "@/components/site/MotionSections";
 import { supabase } from "@/integrations/supabase/client";
 
 function mapImovelFromDb(row: any) {
-  const areaNum = row.area_util ?? row.area_total;
+  const areaNum = row.area_util ?? row.area_construida ?? row.area_total;
   const area = areaNum != null ? `${Number(areaNum).toLocaleString("pt-BR")} m²` : "—";
   return {
     id: row.id,
