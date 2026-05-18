@@ -91,6 +91,7 @@ export default function Meetings() {
       tipo: m.tipo || "presencial",
       lead_id: m.lead_id || "none",
       conta_id: m.conta_id || "none",
+      imovel_id: m.imovel_id || "none",
       agendada_para: local,
       local: m.local || "",
       link: m.link || "",
