@@ -1,81 +1,58 @@
 ## Objetivo
 
-Eliminar do template os termos com parênteses de número (`imóvel(is)`, `do(s)`, `descrito(s)`, `seja(m) vendido(s)`, `prometido(s)`, etc.) e fazê-los conjugar **singular/plural** automaticamente conforme a quantidade de imóveis vinculados ao contrato.
+Remover completamente a informação de **data de nascimento** da "autorização de venda com exclusividade", tanto do template gerado quanto do formulário de preenchimento.
 
-## Estratégia
+---
 
-Espelhar a abordagem usada para gênero: adicionar variáveis pré-conjugadas no `submit` e atualizar o template no banco para usá-las.
+## Alterações
 
-### 1. Suportar 1+ imóveis no formulário
+### 1. Template do banco (`contrato_templates`)
 
-Hoje `NovoContratoDialog.tsx` aceita só **um** imóvel (`imovelId` + campos de descrição únicos: lote, quadra, área, matrícula, benfeitorias).
+Atualizar o conteúdo do template ativo removendo:
+- `{{c1_nascido}} no dia {{c1_nascimento}}, ` da qualificação do contratante PF
+- `{{c2_nascido}} no dia {{c2_nascimento}}, ` da qualificação do segundo contratante PF
+- `{{socio_nascido}} no dia {{socio_nascimento}}, ` da qualificação do sócio representante PJ
 
-Mudanças:
-
-- Trocar `imovelId: string` por `imovelIds: string[]` (multi-seleção via lista com checkbox/SearchableSelect múltiplo).
-- Os campos de detalhe (lote/quadra/área/matrícula/benfeitorias) passam a ser **um bloco por imóvel selecionado** (ou só endereço quando vier do cadastro). Para manter a UI simples, na v1: para cada imóvel selecionado, mostrar um cartão com os mesmos campos atuais; "Descrição manual" continua disponível como item adicional avulso.
-- Persistência: `contratos.imovel_id` continua existindo (recebe o **primeiro** imóvel para compatibilidade da listagem/relacionamentos). A lista completa vai dentro de `dados_partes.imoveis` (array) para edição posterior.
-
-### 2. Variáveis derivadas (`submit`)
-
-Calcular `n = imoveis.length` e expor um helper `num(s, pl)` que retorna `s` se `n === 1` ou `pl` se `n > 1`. Variáveis novas:
-
-| chave                  | singular            | plural               |
-| ---------------------- | ------------------- | -------------------- |
-| `imovel_palavra`       | imóvel              | imóveis              |
-| `do_imovel`            | do imóvel           | dos imóveis          |
-| `o_imovel`             | o imóvel            | os imóveis           |
-| `o_qual`               | o qual              | os quais             |
-| `descrito_abaixo`      | descrito abaixo     | descritos abaixo     |
-| `livre_desembaracado`  | livre e desembaraçado | livres e desembaraçados |
-| `seja_vendido`         | seja vendido        | sejam vendidos       |
-| `prometido_venda`      | prometido à venda   | prometidos à venda   |
-| `cedido`               | cedido              | cedidos              |
-| `negociado`            | negociado           | negociados           |
-| `imoveis_bloco`        | (HTML/texto com a descrição do único imóvel) | (lista numerada dos imóveis com endereço, lote, quadra, área, matrícula, benfeitorias) |
-
-A `imoveis_bloco` substitui o trecho atual fixo:
-
+**Antes:**
 ```
-Endereço completo: {{imovel_endereco}}
-Lote: ...    Quadra: ...    Área Total: ...
-Benfeitorias: ...
+{{c1_nome}}, {{c1_nacionalidade}}, {{c1_nascido}} no dia {{c1_nascimento}}, {{c1_estado_civil}}, ...
 ```
 
-Gerada no submit como string multi-linha; quando 2+ imóveis, prefixada por "Imóvel 1:", "Imóvel 2:", etc.
+**Depois:**
+```
+{{c1_nome}}, {{c1_nacionalidade}}, {{c1_estado_civil}}, ...
+```
 
-### 3. Atualizar template no banco (migração SQL)
+### 2. Formulário (`NovoContratoDialog.tsx`)
 
-Substituir no `conteudo` do template ativo:
+Remover os 3 campos de "Data de nascimento" do accordion "Dados do contratante":
+- Campo `c1_nascimento` (contratante 1, PF)
+- Campo `c2_nascimento` (segundo contratante, PF)
+- Campo `socio_nascimento` (sócio representante, PJ)
 
-- `do(s) imóvel(is)` → `{{do_imovel}}`
-- `o(s) imóvel(is)` → `{{o_imovel}}`
-- `descrito(s) abaixo` → `{{descrito_abaixo}}`
-- `o(s) qual(is)` → `{{o_qual}}`
-- `livre(s) e desembaraçado(s)` → `{{livre_desembaracado}}`
-- `seja(m) vendido(s)` → `{{seja_vendido}}`
-- `prometido(s) à venda` → `{{prometido_venda}}`
-- `cedido(s)` → `{{cedido}}`
-- `negociado(s)` → `{{negociado}}`
-- Bloco de descrição do imóvel → `{{imoveis_bloco}}`
-- Quaisquer outras ocorrências de `(s)`/`(is)`/`(m)` que aparecerem na varredura — listadas no comentário da migração.
+### 3. Estado inicial
 
-### 4. Edição
+Remover `c1_nascimento`, `c2_nascimento` e `socio_nascimento` do objeto `empty` de estado inicial.
 
-`ContratosTab.tsx` já carrega `dados_partes`. O dialog de edição lê `dados_partes.imoveis` (array) — se não existir (contratos antigos), faz fallback para `imovel_id` único.
+### 4. Variáveis de renderização (`submit`)
+
+Remover as linhas que formatam e injetam:
+- `c1_nascimento`
+- `c2_nascimento`
+- `socio_nascimento`
+
+As variáveis de gênero (`{{c1_nascido}}`, `{{c2_nascido}}`, `{{socio_nascido}}`) também serão removidas do template, portanto deixam de ser necessárias (embora possam ser mantidas no código sem uso, para evitar quebra caso o template seja usado em outro contexto; a remoção do texto no template é suficiente).
+
+---
 
 ## Sem alterações
 
-- Schema da tabela `contratos` (continua com `imovel_id` single; o array vive em `dados_partes`).
-- Backend / edge functions / fluxo Clicksign.
-- Geração de PDF / papel timbrado.
+- Schema da tabela `contratos` e `dados_partes` (campos podem continuar existindo em registros antigos).
+- Outros templates de contrato (se houver).
+- Variáveis de gênero `gen()` permanecem funcionando para nacionalidade, portador, inscrito, domiciliado.
 
 ## Validação
 
-- Contrato com **1 imóvel**: texto sai "do imóvel… o qual… descrito abaixo… seja vendido…", bloco com endereço/lote/etc. sem numeração.
-- Contrato com **2+ imóveis**: "dos imóveis… os quais… descritos abaixo… sejam vendidos…", bloco listando "Imóvel 1: …", "Imóvel 2: …".
-- Contrato antigo (com `imovel_id` único, sem `dados_partes.imoveis`) abre em edição sem perder dados.
-
-## Ponto a confirmar
-
-1. **Multi-seleção** é o esperado? Ou prefere que o contrato continue sendo **sempre um imóvel** e o template apenas use as formas no singular (descartando o plural)? A v1 acima assume multi; se for só singular, removo a UI múltipla e a migração troca tudo direto pelas formas no singular.
+- Criar novo contrato → campo "Data de nascimento" não aparece mais no formulário.
+- Gerar PDF → o trecho de qualificação não contém mais "nascido no dia X".
+- Editar contrato antigo → funciona normalmente (campos antigos ficam vazios, o template já foi atualizado).
