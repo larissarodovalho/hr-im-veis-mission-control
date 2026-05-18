@@ -45,11 +45,11 @@ const empty = {
   // tipo
   pessoa_juridica: false,
   // PF — contratante 1
-  c1_nome: "", c1_sexo: "M", c1_nascimento: "", c1_estado_civil: "", c1_profissao: "",
+  c1_nome: "", c1_sexo: "M", c1_estado_civil: "", c1_profissao: "",
   c1_rg: "", c1_cpf: "", c1_email: "", c1_telefone: "",
   // contratante 2 opcional
   add_c2: false,
-  c2_nome: "", c2_sexo: "M", c2_nascimento: "", c2_estado_civil: "", c2_profissao: "",
+  c2_nome: "", c2_sexo: "M", c2_estado_civil: "", c2_profissao: "",
   c2_rg: "", c2_cpf: "", c2_email: "", c2_telefone: "",
   // endereço residencial (PF)
   end_logradouro: "", end_numero: "", end_bairro: "", end_cidade: "", end_estado: "", end_cep: "",
@@ -57,7 +57,7 @@ const empty = {
   pj_razao_social: "", pj_cnpj: "",
   pj_logradouro: "", pj_numero: "", pj_bairro: "", pj_cidade: "", pj_estado: "", pj_cep: "",
   // sócio representante (PJ)
-  socio_nome: "", socio_sexo: "M", socio_nascimento: "", socio_estado_civil: "", socio_profissao: "",
+  socio_nome: "", socio_sexo: "M", socio_estado_civil: "", socio_profissao: "",
   socio_rg: "", socio_cpf: "", socio_email: "", socio_telefone: "", socio_endereco: "",
   // imóvel (campos legados — preservados para compat na edição; descontinuados na UI)
   imovel_lote: "", imovel_quadra: "", imovel_area_total: "", imovel_area_construida: "",
@@ -272,15 +272,12 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
       const vars: Record<string, any> = {
         ...f,
         c2_nome: f.add_c2 ? f.c2_nome : "",
-        c2_nascimento: f.add_c2 ? formatDateBR(f.c2_nascimento) : "",
         c2_estado_civil: f.add_c2 ? f.c2_estado_civil : "",
         c2_profissao: f.add_c2 ? f.c2_profissao : "",
         c2_rg: f.add_c2 ? f.c2_rg : "",
         c2_cpf: f.add_c2 ? f.c2_cpf : "",
         c2_email: f.add_c2 ? f.c2_email : "",
         c2_telefone: f.add_c2 ? f.c2_telefone : "",
-        c1_nascimento: formatDateBR(f.c1_nascimento),
-        socio_nascimento: formatDateBR(f.socio_nascimento),
         // Bloco com a descrição de todos os imóveis
         imoveis_bloco: imoveisBloco,
         // Conjugações singular/plural
@@ -531,8 +528,8 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
                           </SelectContent>
                         </Select>
                       </div>
-                      <Field label="Data de nascimento" placeholder="DD/MM/AAAA" value={f.socio_nascimento} onChange={(v: string) => set({ socio_nascimento: maskDate(v) })} />
                       <Field label="RG" value={f.socio_rg} onChange={(v: string) => set({ socio_rg: v })} />
+
                       <Field label="Estado civil" value={f.socio_estado_civil} onChange={(v: string) => set({ socio_estado_civil: v })} />
                       <Field label="Profissão" value={f.socio_profissao} onChange={(v: string) => set({ socio_profissao: v })} />
                       <Field label="E-mail" value={f.socio_email} onChange={(v: string) => set({ socio_email: v })} />
@@ -556,8 +553,8 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
                           </SelectContent>
                         </Select>
                       </div>
-                      <Field label="Data de nascimento" placeholder="DD/MM/AAAA" value={f.c1_nascimento} onChange={(v: string) => set({ c1_nascimento: maskDate(v) })} />
                       <Field label="RG" value={f.c1_rg} onChange={(v: string) => set({ c1_rg: v })} />
+
                       <Field label="Estado civil" value={f.c1_estado_civil} onChange={(v: string) => set({ c1_estado_civil: v })} />
                       <Field label="Profissão" value={f.c1_profissao} onChange={(v: string) => set({ c1_profissao: v })} />
                       <Field label="E-mail" value={f.c1_email} onChange={(v: string) => set({ c1_email: v })} />
@@ -582,8 +579,9 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
                             </SelectContent>
                           </Select>
                         </div>
-                        <Field label="Data de nascimento" placeholder="DD/MM/AAAA" value={f.c2_nascimento} onChange={(v: string) => set({ c2_nascimento: maskDate(v) })} />
                         <Field label="RG" value={f.c2_rg} onChange={(v: string) => set({ c2_rg: v })} />
+                        <div />
+
                         <Field label="Estado civil" value={f.c2_estado_civil} onChange={(v: string) => set({ c2_estado_civil: v })} />
                         <Field label="Profissão" value={f.c2_profissao} onChange={(v: string) => set({ c2_profissao: v })} />
                         <Field label="E-mail" value={f.c2_email} onChange={(v: string) => set({ c2_email: v })} />
