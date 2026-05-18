@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Upload, X, Trash2 } from "lucide-react";
 import { applyWatermark } from "@/lib/watermark";
+import ResponsavelProprietarioSection from "./ResponsavelProprietarioSection";
 import { TIPOS_IMOVEL, FINALIDADES, STATUS_OPTIONS, CARACTERISTICAS } from "./NovoImovelDialog";
 
 interface Props {
@@ -44,6 +45,8 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
   const [novasFotos, setNovasFotos] = useState<File[]>([]);
   const [removerPaths, setRemoverPaths] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [corretorId, setCorretorId] = useState<string>("");
+  const [proprietarioId, setProprietarioId] = useState<string>("");
 
   useEffect(() => {
     if (!imovel) return;
@@ -61,6 +64,8 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
     setFotosExistentes(Array.isArray(imovel.fotos) ? imovel.fotos : []);
     setNovasFotos([]);
     setRemoverPaths([]);
+    setCorretorId(imovel.corretor_id || "");
+    setProprietarioId(imovel.proprietario_id || "");
   }, [imovel]);
 
   const upd = (k: keyof typeof empty, v: any) => setForm((p) => ({ ...p, [k]: v }));
@@ -140,6 +145,8 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
         destaque: form.destaque,
         caracteristicas: caracs,
         fotos: [...fotosExistentes, ...novasUrls],
+        corretor_id: corretorId || null,
+        proprietario_id: proprietarioId || null,
       }).eq("id", imovel.id);
 
       if (error) throw error;
@@ -157,7 +164,14 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Editar imóvel</DialogTitle>
+          <DialogTitle className="flex items-center gap-3">
+            Editar imóvel
+            {imovel?.codigo && (
+              <span className="text-xs font-mono bg-muted text-muted-foreground px-2 py-0.5 rounded">
+                {imovel.codigo}
+              </span>
+            )}
+          </DialogTitle>
           <DialogDescription>Atualize as informações e fotos do imóvel.</DialogDescription>
         </DialogHeader>
 
@@ -200,6 +214,13 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
               <Label htmlFor="edit-destaque" className="cursor-pointer">Imóvel em destaque</Label>
             </div>
           </section>
+
+          <ResponsavelProprietarioSection
+            corretorId={corretorId}
+            onCorretorChange={setCorretorId}
+            proprietarioId={proprietarioId}
+            onProprietarioChange={setProprietarioId}
+          />
 
           <section className="space-y-3">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Valores</h3>

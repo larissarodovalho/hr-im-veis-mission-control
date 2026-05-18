@@ -13,7 +13,7 @@ import DuplicateAlert from "@/components/DuplicateAlert";
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onCreated: () => void;
+  onCreated: (newId?: string) => void;
   defaultTags?: string[];
 }
 
@@ -64,7 +64,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
     }
     setSaving(true);
     const { data: auth } = await supabase.auth.getUser();
-    const { error } = await supabase.from("contas").insert({
+    const { data: inserted, error } = await supabase.from("contas").insert({
       nome: form.nome.trim(),
       tipo: form.tipo,
       documento: form.documento || null,
@@ -75,7 +75,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
       tags: defaultTags && defaultTags.length ? defaultTags : null,
       created_by: auth.user?.id,
       responsavel_id: auth.user?.id,
-    });
+    }).select("id").single();
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Conta criada");
@@ -83,7 +83,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
     setDuplicates([]);
     setForceCreate(false);
     onOpenChange(false);
-    onCreated();
+    onCreated(inserted?.id);
   };
 
   return (

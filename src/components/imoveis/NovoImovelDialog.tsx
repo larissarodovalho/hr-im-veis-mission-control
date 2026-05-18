@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Upload, X } from "lucide-react";
 import { applyWatermark } from "@/lib/watermark";
+import ResponsavelProprietarioSection from "./ResponsavelProprietarioSection";
 
 interface Props {
   open: boolean;
@@ -113,6 +114,15 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
   const [caracs, setCaracs] = useState<string[]>([]);
   const [fotos, setFotos] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
+  const [corretorId, setCorretorId] = useState<string>("");
+  const [proprietarioId, setProprietarioId] = useState<string>("");
+
+  useEffect(() => {
+    if (!open) return;
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.id && !corretorId) setCorretorId(data.user.id);
+    });
+  }, [open]);
 
   const upd = (k: keyof typeof empty, v: any) => setForm((p) => ({ ...p, [k]: v }));
 
@@ -130,6 +140,7 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
     setForm({ ...empty });
     setCaracs([]);
     setFotos([]);
+    setProprietarioId("");
   };
 
   const isTerreno = ["Terreno", "Lote em condomínio", "Chácara", "Sítio", "Fazenda"].includes(form.tipo);
@@ -191,7 +202,8 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
         caracteristicas: caracs,
         fotos: urls,
         created_by: userId,
-        corretor_id: userId,
+        corretor_id: corretorId || userId,
+        proprietario_id: proprietarioId || null,
       });
 
       if (error) throw error;
@@ -260,6 +272,13 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
               <Label htmlFor="destaque" className="cursor-pointer">Imóvel em destaque</Label>
             </div>
           </section>
+
+          <ResponsavelProprietarioSection
+            corretorId={corretorId}
+            onCorretorChange={setCorretorId}
+            proprietarioId={proprietarioId}
+            onProprietarioChange={setProprietarioId}
+          />
 
           {/* Valores */}
           <section className="space-y-3">

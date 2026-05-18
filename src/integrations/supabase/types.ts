@@ -757,6 +757,7 @@ export type Database = {
           caracteristicas: string[] | null
           cep: string | null
           cidade: string | null
+          codigo: string | null
           complemento: string | null
           corretor_id: string | null
           created_at: string
@@ -769,6 +770,7 @@ export type Database = {
           fotos: string[] | null
           id: string
           numero: string | null
+          proprietario_id: string | null
           quartos: number | null
           status: string
           suites: number | null
@@ -788,6 +790,7 @@ export type Database = {
           caracteristicas?: string[] | null
           cep?: string | null
           cidade?: string | null
+          codigo?: string | null
           complemento?: string | null
           corretor_id?: string | null
           created_at?: string
@@ -800,6 +803,7 @@ export type Database = {
           fotos?: string[] | null
           id?: string
           numero?: string | null
+          proprietario_id?: string | null
           quartos?: number | null
           status?: string
           suites?: number | null
@@ -819,6 +823,7 @@ export type Database = {
           caracteristicas?: string[] | null
           cep?: string | null
           cidade?: string | null
+          codigo?: string | null
           complemento?: string | null
           corretor_id?: string | null
           created_at?: string
@@ -831,6 +836,7 @@ export type Database = {
           fotos?: string[] | null
           id?: string
           numero?: string | null
+          proprietario_id?: string | null
           quartos?: number | null
           status?: string
           suites?: number | null
