@@ -149,7 +149,6 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
   const submit = async (acao: "rascunho" | "gerar") => {
     if (!template) return toast.error("Template não carregado");
     if (!user) return toast.error("Sessão expirada");
-    if (!imovelId) return toast.error("Selecione o imóvel");
     if (!f.valor) return toast.error("Informe o valor de venda");
     if (f.pessoa_juridica) {
       if (!f.pj_razao_social || !f.pj_cnpj) return toast.error("Preencha razão social e CNPJ");
