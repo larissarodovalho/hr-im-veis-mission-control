@@ -189,17 +189,29 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
     }
   }, [clienteOrigem, leadId, contaId, leads, contas]);
 
-  // Pré-preenche imóvel
+  // Pré-preenche dados de cada imóvel a partir do cadastro selecionado
   useEffect(() => {
-    if (!imovelId) return;
-    const i = imoveis.find((x) => x.id === imovelId)?.extra;
-    if (!i) return;
-    set({
-      imovel_area_total: i.area_total ? String(i.area_total) : "",
-      imovel_area_construida: i.area_construida ? String(i.area_construida) : "",
-      valor: !f.valor && i.valor ? String(i.valor) : f.valor,
+    setImoveisList((list) => list.map((it) => {
+      if (!it.id) return it;
+      const cad = imoveis.find((x) => x.id === it.id)?.extra;
+      if (!cad) return it;
+      return {
+        ...it,
+        area_total: it.area_total || (cad.area_total ? String(cad.area_total) : ""),
+        area_construida: it.area_construida || (cad.area_construida ? String(cad.area_construida) : ""),
+      };
+    }));
+    // Se valor ainda vazio, herda do primeiro imóvel cadastrado
+    setF((s) => {
+      if (s.valor) return s;
+      const firstWithId = imoveisList.find((x) => x.id);
+      if (!firstWithId) return s;
+      const cad = imoveis.find((x) => x.id === firstWithId.id)?.extra;
+      if (cad?.valor) return { ...s, valor: String(cad.valor) };
+      return s;
     });
-  }, [imovelId, imoveis]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imoveis, imoveisList.map((i) => i.id).join("|")]);
 
   const dataFimDate = useMemo(() => {
     const d = new Date(); d.setMonth(d.getMonth() + Number(f.prazo_meses || 0)); return d;
