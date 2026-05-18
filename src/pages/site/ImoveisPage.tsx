@@ -439,19 +439,19 @@ export default function ImoveisPage() {
                     {/* Content */}
                     <div className="p-5 sm:p-6">
                       <motion.h3
-                        className="text-[15px] font-medium leading-snug text-white/80 group-hover:text-white transition-colors duration-500 mb-2"
+                        className="text-lg font-medium leading-snug text-white/90 group-hover:text-white transition-colors duration-500 mb-2"
                       >
                         {im.nome}
                       </motion.h3>
 
-                      <div className="flex items-center gap-1.5 text-white/25 mb-3">
-                        <MapPin className="h-3 w-3 shrink-0" />
-                        <span className="text-[11px] truncate font-light">
+                      <div className="flex items-center gap-1.5 text-white/40 mb-3">
+                        <MapPin className="h-3.5 w-3.5 shrink-0" />
+                        <span className="text-sm truncate font-normal">
                           {im.endereco.bairro}{im.endereco.condominio ? ` · ${im.endereco.condominio}` : ""} — {im.endereco.cidade}
                         </span>
                       </div>
 
-                      <p className="text-[11px] text-white/50 leading-relaxed line-clamp-2 mb-5 font-light">
+                      <p className="text-sm text-white/60 leading-relaxed line-clamp-2 mb-5 font-normal">
                         {im.descricao}
                       </p>
 
