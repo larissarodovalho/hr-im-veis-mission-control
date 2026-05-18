@@ -1338,6 +1338,7 @@ export type Database = {
           criado_por_ia: boolean
           duracao_min: number
           id: string
+          imovel_id: string | null
           lead_id: string | null
           link: string | null
           local: string | null
@@ -1356,6 +1357,7 @@ export type Database = {
           criado_por_ia?: boolean
           duracao_min?: number
           id?: string
+          imovel_id?: string | null
           lead_id?: string | null
           link?: string | null
           local?: string | null
@@ -1374,6 +1376,7 @@ export type Database = {
           criado_por_ia?: boolean
           duracao_min?: number
           id?: string
+          imovel_id?: string | null
           lead_id?: string | null
           link?: string | null
           local?: string | null
