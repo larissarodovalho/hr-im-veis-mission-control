@@ -198,10 +198,10 @@ export default function ImovelDetalhePage() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="flex items-center gap-1.5 text-white/25 mb-8"
+            className="flex items-center gap-1.5 text-white/50 mb-8"
           >
-            <MapPin className="h-3 w-3" />
-            <span className="text-sm font-light">{enderecoCompleto}</span>
+            <MapPin className="h-4 w-4" />
+            <span className="text-base font-normal">{enderecoCompleto}</span>
           </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
