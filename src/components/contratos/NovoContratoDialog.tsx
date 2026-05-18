@@ -83,6 +83,23 @@ const gen = (sexo: string) => {
   };
 };
 
+// Imóvel — entrada da lista
+type ImovelEntry = {
+  id: string | null;
+  descricao_manual: string;
+  lote: string;
+  quadra: string;
+  area_total: string;
+  area_construida: string;
+  matricula: string;
+  benfeitorias: string;
+};
+
+const emptyImovel = (): ImovelEntry => ({
+  id: null, descricao_manual: "", lote: "", quadra: "",
+  area_total: "", area_construida: "", matricula: "", benfeitorias: "",
+});
+
 export default function NovoContratoDialog({ open, onOpenChange, onCreated, editing }: Props) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
