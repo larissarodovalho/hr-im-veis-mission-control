@@ -145,6 +145,8 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
         destaque: form.destaque,
         caracteristicas: caracs,
         fotos: [...fotosExistentes, ...novasUrls],
+        corretor_id: corretorId || null,
+        proprietario_id: proprietarioId || null,
       }).eq("id", imovel.id);
 
       if (error) throw error;
@@ -162,7 +164,14 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Editar imóvel</DialogTitle>
+          <DialogTitle className="flex items-center gap-3">
+            Editar imóvel
+            {imovel?.codigo && (
+              <span className="text-xs font-mono bg-muted text-muted-foreground px-2 py-0.5 rounded">
+                {imovel.codigo}
+              </span>
+            )}
+          </DialogTitle>
           <DialogDescription>Atualize as informações e fotos do imóvel.</DialogDescription>
         </DialogHeader>
 
