@@ -54,7 +54,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
       titulo: s(imovel.titulo), descricao: s(imovel.descricao),
       tipo: imovel.tipo || "Casa", finalidade: imovel.finalidade || "Venda", status: imovel.status || "Disponível",
       valor: s(imovel.valor), valor_condominio: s(imovel.valor_condominio), valor_iptu: s(imovel.valor_iptu),
-      area_total: s(imovel.area_total), area_util: s(imovel.area_util),
+      area_total: s(imovel.area_total), area_construida: s(imovel.area_construida), area_util: s(imovel.area_util),
       quartos: s(imovel.quartos), suites: s(imovel.suites), banheiros: s(imovel.banheiros), vagas: s(imovel.vagas),
       cep: s(imovel.cep), endereco: s(imovel.endereco), numero: s(imovel.numero),
       complemento: s(imovel.complemento), bairro: s(imovel.bairro), cidade: s(imovel.cidade), estado: s(imovel.estado),
