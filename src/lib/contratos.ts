@@ -176,6 +176,17 @@ export function valorPorExtenso(valor: number): string {
   return `${reaisStr} e ${centavosStr}`;
 }
 
+async function loadFontBase64(path: string): Promise<string> {
+  const res = await fetch(path);
+  const buf = await res.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
 // ---------- PDF ----------
 export async function generatePdfBlob(title: string, content: string): Promise<Blob> {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
@@ -183,6 +194,20 @@ export async function generatePdfBlob(title: string, content: string): Promise<B
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const maxW = pageW - margin * 2;
+
+  // Carrega e registra fonte Montserrat
+  try {
+    const [regularBase64, boldBase64] = await Promise.all([
+      loadFontBase64("/fonts/Montserrat-Regular.ttf"),
+      loadFontBase64("/fonts/Montserrat-Bold.ttf"),
+    ]);
+    doc.addFileToVFS("Montserrat-Regular.ttf", regularBase64);
+    doc.addFont("Montserrat-Regular.ttf", "Montserrat", "normal");
+    doc.addFileToVFS("Montserrat-Bold.ttf", boldBase64);
+    doc.addFont("Montserrat-Bold.ttf", "Montserrat", "bold");
+  } catch (e) {
+    console.warn("[contratos] falha ao carregar Montserrat, usando fonte padrão:", e);
+  }
 
   // Carrega o papel timbrado (header + footer). Em caso de falha, segue sem.
   let header: { dataUrl: string; w: number; h: number } | null = null;
@@ -210,12 +235,12 @@ export async function generatePdfBlob(title: string, content: string): Promise<B
 
   drawLetterhead();
 
-  doc.setFont("times", "bold");
+  doc.setFont("Montserrat", "bold");
   doc.setFontSize(13);
   const titleLines = doc.splitTextToSize(title, maxW);
   doc.text(titleLines, pageW / 2, contentTop + 4, { align: "center" });
 
-  doc.setFont("times", "normal");
+  doc.setFont("Montserrat", "normal");
   doc.setFontSize(11);
   let y = contentTop + titleLines.length * 16 + 20;
 
