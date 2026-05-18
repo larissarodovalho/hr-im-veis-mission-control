@@ -112,21 +112,42 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
   const [clienteOrigem, setClienteOrigem] = useState<"lead" | "conta" | "manual">("manual");
   const [leadId, setLeadId] = useState<string>("");
   const [contaId, setContaId] = useState<string>("");
-  const [imovelId, setImovelId] = useState<string>("");
+  const [imoveisList, setImoveisList] = useState<ImovelEntry[]>([emptyImovel()]);
 
   const [f, setF] = useState({ ...empty });
   const set = (patch: Partial<typeof empty>) => setF((s) => ({ ...s, ...patch }));
 
+  const updateImovel = (idx: number, patch: Partial<ImovelEntry>) =>
+    setImoveisList((list) => list.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
+  const addImovel = () => setImoveisList((list) => [...list, emptyImovel()]);
+  const removeImovel = (idx: number) =>
+    setImoveisList((list) => (list.length <= 1 ? list : list.filter((_, i) => i !== idx)));
+
   useEffect(() => {
     if (!open) return;
     if (editing) {
-      setF({ ...empty, ...(editing.dados_partes || {}) });
+      const dp = editing.dados_partes || {};
+      setF({ ...empty, ...dp });
       setLeadId(editing.lead_id || "");
       setContaId(editing.conta_id || "");
-      setImovelId(editing.imovel_id || "");
+      // Carrega lista de imóveis: novo formato (dp.imoveis) ou fallback legado
+      if (Array.isArray(dp.imoveis) && dp.imoveis.length) {
+        setImoveisList(dp.imoveis.map((i: any) => ({ ...emptyImovel(), ...i })));
+      } else {
+        setImoveisList([{
+          id: editing.imovel_id || null,
+          descricao_manual: dp.imovel_descricao_manual || "",
+          lote: dp.imovel_lote || "",
+          quadra: dp.imovel_quadra || "",
+          area_total: dp.imovel_area_total || "",
+          area_construida: dp.imovel_area_construida || "",
+          matricula: dp.imovel_matricula || "",
+          benfeitorias: dp.imovel_benfeitorias || "",
+        }]);
+      }
       setClienteOrigem(editing.lead_id ? "lead" : editing.conta_id ? "conta" : "manual");
     } else {
-      setF({ ...empty }); setLeadId(""); setContaId(""); setImovelId(""); setClienteOrigem("manual");
+      setF({ ...empty }); setLeadId(""); setContaId(""); setImoveisList([emptyImovel()]); setClienteOrigem("manual");
     }
     (async () => {
       const [tpl, ld, ct, im] = await Promise.all([
