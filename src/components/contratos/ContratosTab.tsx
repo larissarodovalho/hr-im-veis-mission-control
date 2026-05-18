@@ -209,6 +209,13 @@ export default function ContratosTab() {
 
       <NovoContratoDialog open={openNew} onOpenChange={setOpenNew} onCreated={load} />
 
+      <NovoContratoDialog
+        open={!!editCtx}
+        onOpenChange={(v) => !v && setEditCtx(null)}
+        editing={editCtx}
+        onCreated={() => { setEditCtx(null); load(); }}
+      />
+
       {sendCtx && (
         <SendDocumentDialog
           open={!!sendCtx}
