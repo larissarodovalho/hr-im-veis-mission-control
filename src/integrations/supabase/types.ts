@@ -750,6 +750,7 @@ export type Database = {
       }
       imoveis: {
         Row: {
+          area_construida: number | null
           area_total: number | null
           area_util: number | null
           bairro: string | null
@@ -783,6 +784,7 @@ export type Database = {
           valor_iptu: number | null
         }
         Insert: {
+          area_construida?: number | null
           area_total?: number | null
           area_util?: number | null
           bairro?: string | null
@@ -816,6 +818,7 @@ export type Database = {
           valor_iptu?: number | null
         }
         Update: {
+          area_construida?: number | null
           area_total?: number | null
           area_util?: number | null
           bairro?: string | null
