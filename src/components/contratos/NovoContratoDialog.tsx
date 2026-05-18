@@ -400,14 +400,26 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
               <AccordionTrigger>Imóvel</AccordionTrigger>
               <AccordionContent className="space-y-3 pt-2">
                 <div>
-                  <Label>Imóvel cadastrado *</Label>
-                  <Select value={imovelId} onValueChange={setImovelId}>
-                    <SelectTrigger><SelectValue placeholder="Selecione o imóvel..." /></SelectTrigger>
+                  <Label>Imóvel cadastrado</Label>
+                  <Select value={imovelId || "__none__"} onValueChange={(v) => setImovelId(v === "__none__" ? "" : v)}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o imóvel (opcional)..." /></SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="__none__">— Nenhum (preencher manualmente) —</SelectItem>
                       {imoveis.map((i) => <SelectItem key={i.id} value={i.id}>{i.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
+                {!imovelId && (
+                  <div>
+                    <Label>Descrição manual do imóvel</Label>
+                    <Textarea
+                      rows={3}
+                      placeholder="Endereço completo, características e identificação do imóvel..."
+                      value={f.imovel_descricao_manual}
+                      onChange={(e) => set({ imovel_descricao_manual: e.target.value })}
+                    />
+                  </div>
+                )}
                 <div className="grid grid-cols-4 gap-3">
                   <Field label="Lote" value={f.imovel_lote} onChange={(v: string) => set({ imovel_lote: v })} />
                   <Field label="Quadra" value={f.imovel_quadra} onChange={(v: string) => set({ imovel_quadra: v })} />
