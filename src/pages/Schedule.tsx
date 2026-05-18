@@ -61,6 +61,7 @@ export default function Schedule() {
   const [reunioes, setReunioes] = useState<Compromisso[]>([]);
   const [bloqueios, setBloqueios] = useState<Bloqueio[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
+  const [imoveisList, setImoveisList] = useState<any[]>([]);
   const [selected, setSelected] = useState<Date | undefined>(new Date());
   const [openNovo, setOpenNovo] = useState(false);
   const [openBloqueio, setOpenBloqueio] = useState(false);
@@ -71,6 +72,7 @@ export default function Schedule() {
     agendada_para: "",
     duracao_min: 60,
     lead_id: "none",
+    imovel_id: "none",
     local: "",
     link: "",
     notas: "",
