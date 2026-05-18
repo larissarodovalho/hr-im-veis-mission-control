@@ -43,11 +43,11 @@ const empty = {
   // tipo
   pessoa_juridica: false,
   // PF — contratante 1
-  c1_nome: "", c1_nascimento: "", c1_estado_civil: "", c1_profissao: "",
+  c1_nome: "", c1_sexo: "M", c1_nascimento: "", c1_estado_civil: "", c1_profissao: "",
   c1_rg: "", c1_cpf: "", c1_email: "", c1_telefone: "",
   // contratante 2 opcional
   add_c2: false,
-  c2_nome: "", c2_nascimento: "", c2_estado_civil: "", c2_profissao: "",
+  c2_nome: "", c2_sexo: "M", c2_nascimento: "", c2_estado_civil: "", c2_profissao: "",
   c2_rg: "", c2_cpf: "", c2_email: "", c2_telefone: "",
   // endereço residencial (PF)
   end_logradouro: "", end_numero: "", end_bairro: "", end_cidade: "", end_estado: "", end_cep: "",
@@ -55,7 +55,7 @@ const empty = {
   pj_razao_social: "", pj_cnpj: "",
   pj_logradouro: "", pj_numero: "", pj_bairro: "", pj_cidade: "", pj_estado: "", pj_cep: "",
   // sócio representante (PJ)
-  socio_nome: "", socio_nascimento: "", socio_estado_civil: "", socio_profissao: "",
+  socio_nome: "", socio_sexo: "M", socio_nascimento: "", socio_estado_civil: "", socio_profissao: "",
   socio_rg: "", socio_cpf: "", socio_email: "", socio_telefone: "", socio_endereco: "",
   // imóvel
   imovel_lote: "", imovel_quadra: "", imovel_area_total: "", imovel_area_construida: "",
@@ -68,6 +68,18 @@ const empty = {
   protecao_meses: "12",
   cidade_assinatura: "Sinop/MT",
   observacoes: "",
+};
+
+// Conjugação por gênero (M/F)
+const gen = (sexo: string) => {
+  const F = sexo === "F";
+  return {
+    nacionalidade: F ? "brasileira" : "brasileiro",
+    nascido: F ? "nascida" : "nascido",
+    portador: F ? "portadora" : "portador",
+    inscrito: F ? "inscrita" : "inscrito",
+    domiciliado: F ? "domiciliada" : "domiciliado",
+  };
 };
 
 export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Props) {
@@ -205,6 +217,39 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
         corretor_nome: perfil?.nome || "",
       };
 
+      // Conjugações por gênero
+      const g1 = gen(f.c1_sexo);
+      const g2 = gen(f.c2_sexo);
+      const gs = gen(f.socio_sexo);
+      vars.c1_nacionalidade = g1.nacionalidade;
+      vars.c1_nascido = g1.nascido;
+      vars.c1_portador = g1.portador;
+      vars.c1_inscrito = g1.inscrito;
+      vars.c1_domiciliado = g1.domiciliado;
+      vars.c2_nacionalidade = g2.nacionalidade;
+      vars.c2_nascido = g2.nascido;
+      vars.c2_portador = g2.portador;
+      vars.c2_inscrito = g2.inscrito;
+      vars.c2_domiciliado = g2.domiciliado;
+      vars.socio_nacionalidade = gs.nacionalidade;
+      vars.socio_nascido = gs.nascido;
+      vars.socio_portador = gs.portador;
+      vars.socio_inscrito = gs.inscrito;
+      vars.socio_domiciliado = gs.domiciliado;
+
+      // Cláusula final "residente/domiciliado" (pluralização e gênero)
+      const hasC2 = f.add_c2 && !!f.c2_nome;
+      if (hasC2) {
+        const ambasF = f.c1_sexo === "F" && f.c2_sexo === "F";
+        vars.residentes_prefixo = ambasF ? "ambas " : "ambos ";
+        vars.residente_palavra = "residentes";
+        vars.domiciliado_palavra = ambasF ? "domiciliadas" : "domiciliados";
+      } else {
+        vars.residentes_prefixo = "";
+        vars.residente_palavra = "residente";
+        vars.domiciliado_palavra = g1.domiciliado;
+      }
+
       const conteudo = renderTemplate(template.conteudo, vars);
 
       let pdfUrl: string | null = null;
@@ -341,6 +386,16 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
                     <div className="grid grid-cols-2 gap-3">
                       <Field label="Nome completo *" value={f.socio_nome} onChange={(v: string) => set({ socio_nome: v })} />
                       <Field label="CPF *" value={f.socio_cpf} onChange={(v: string) => set({ socio_cpf: v })} />
+                      <div>
+                        <Label>Sexo</Label>
+                        <Select value={f.socio_sexo} onValueChange={(v) => set({ socio_sexo: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="M">Masculino</SelectItem>
+                            <SelectItem value="F">Feminino</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <Field label="Data de nascimento" placeholder="DD/MM/AAAA" value={f.socio_nascimento} onChange={(v: string) => set({ socio_nascimento: maskDate(v) })} />
                       <Field label="RG" value={f.socio_rg} onChange={(v: string) => set({ socio_rg: v })} />
                       <Field label="Estado civil" value={f.socio_estado_civil} onChange={(v: string) => set({ socio_estado_civil: v })} />
@@ -356,6 +411,16 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
                     <div className="grid grid-cols-2 gap-3">
                       <Field label="Nome completo *" value={f.c1_nome} onChange={(v: string) => set({ c1_nome: v })} />
                       <Field label="CPF *" value={f.c1_cpf} onChange={(v: string) => set({ c1_cpf: v })} />
+                      <div>
+                        <Label>Sexo</Label>
+                        <Select value={f.c1_sexo} onValueChange={(v) => set({ c1_sexo: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="M">Masculino</SelectItem>
+                            <SelectItem value="F">Feminino</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <Field label="Data de nascimento" placeholder="DD/MM/AAAA" value={f.c1_nascimento} onChange={(v: string) => set({ c1_nascimento: maskDate(v) })} />
                       <Field label="RG" value={f.c1_rg} onChange={(v: string) => set({ c1_rg: v })} />
                       <Field label="Estado civil" value={f.c1_estado_civil} onChange={(v: string) => set({ c1_estado_civil: v })} />
@@ -372,6 +437,16 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
                       <div className="grid grid-cols-2 gap-3 border-l-2 pl-3">
                         <Field label="Nome completo" value={f.c2_nome} onChange={(v: string) => set({ c2_nome: v })} />
                         <Field label="CPF" value={f.c2_cpf} onChange={(v: string) => set({ c2_cpf: v })} />
+                        <div>
+                          <Label>Sexo</Label>
+                          <Select value={f.c2_sexo} onValueChange={(v) => set({ c2_sexo: v })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="M">Masculino</SelectItem>
+                              <SelectItem value="F">Feminino</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                         <Field label="Data de nascimento" placeholder="DD/MM/AAAA" value={f.c2_nascimento} onChange={(v: string) => set({ c2_nascimento: maskDate(v) })} />
                         <Field label="RG" value={f.c2_rg} onChange={(v: string) => set({ c2_rg: v })} />
                         <Field label="Estado civil" value={f.c2_estado_civil} onChange={(v: string) => set({ c2_estado_civil: v })} />
