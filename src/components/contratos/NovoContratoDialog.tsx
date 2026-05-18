@@ -217,6 +217,39 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
         corretor_nome: perfil?.nome || "",
       };
 
+      // Conjugações por gênero
+      const g1 = gen(f.c1_sexo);
+      const g2 = gen(f.c2_sexo);
+      const gs = gen(f.socio_sexo);
+      vars.c1_nacionalidade = g1.nacionalidade;
+      vars.c1_nascido = g1.nascido;
+      vars.c1_portador = g1.portador;
+      vars.c1_inscrito = g1.inscrito;
+      vars.c1_domiciliado = g1.domiciliado;
+      vars.c2_nacionalidade = g2.nacionalidade;
+      vars.c2_nascido = g2.nascido;
+      vars.c2_portador = g2.portador;
+      vars.c2_inscrito = g2.inscrito;
+      vars.c2_domiciliado = g2.domiciliado;
+      vars.socio_nacionalidade = gs.nacionalidade;
+      vars.socio_nascido = gs.nascido;
+      vars.socio_portador = gs.portador;
+      vars.socio_inscrito = gs.inscrito;
+      vars.socio_domiciliado = gs.domiciliado;
+
+      // Cláusula final "residente/domiciliado" (pluralização e gênero)
+      const hasC2 = f.add_c2 && !!f.c2_nome;
+      if (hasC2) {
+        const ambasF = f.c1_sexo === "F" && f.c2_sexo === "F";
+        vars.residentes_prefixo = ambasF ? "ambas " : "ambos ";
+        vars.residente_palavra = "residentes";
+        vars.domiciliado_palavra = ambasF ? "domiciliadas" : "domiciliados";
+      } else {
+        vars.residentes_prefixo = "";
+        vars.residente_palavra = "residente";
+        vars.domiciliado_palavra = g1.domiciliado;
+      }
+
       const conteudo = renderTemplate(template.conteudo, vars);
 
       let pdfUrl: string | null = null;
