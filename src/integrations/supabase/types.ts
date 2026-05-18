@@ -1269,6 +1269,8 @@ export type Database = {
           created_at: string
           created_by: string | null
           data_envio: string | null
+          documento_nome: string | null
+          documento_url: string | null
           id: string
           imovel_id: string | null
           lead_id: string | null
@@ -1283,6 +1285,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_envio?: string | null
+          documento_nome?: string | null
+          documento_url?: string | null
           id?: string
           imovel_id?: string | null
           lead_id?: string | null
@@ -1297,6 +1301,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_envio?: string | null
+          documento_nome?: string | null
+          documento_url?: string | null
           id?: string
           imovel_id?: string | null
           lead_id?: string | null

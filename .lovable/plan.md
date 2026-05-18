@@ -1,46 +1,27 @@
-## Funil completo do imóvel: Disponível → Em Proposta → Em Fechamento → Vendido
+## Anexar PDF da proposta assinada
 
-Hoje o botão "Marcar como vendido" só aparece se já existir uma proposta no banco — mas **não existe nenhuma tela para criar a proposta**. Por isso parece que falta o passo a passo. Vamos resolver criando o fluxo inteiro dentro da aba **Imóveis**, com ações claras em cada estágio.
+Ao iniciar uma proposta no imóvel, o corretor poderá anexar (obrigatoriamente) o PDF da proposta já assinada pelo cliente. O arquivo fica armazenado no backend e pode ser baixado depois.
 
-### Novas abas (4 estágios)
+### Banco
+- Nova coluna em `propostas`:
+  - `documento_url text` — URL pública do PDF assinado
+  - `documento_nome text` — nome original do arquivo (para exibição)
+- Novo bucket de Storage **`propostas`** (privado), com policies:
+  - INSERT/SELECT autenticados (staff)
+  - Service role full access
 
-```text
-[ Disponíveis ]  [ Em Proposta ]  [ Em Fechamento ]  [ Vendidos ]
-```
+### UI
+- `src/components/imoveis/NovaPropostaDialog.tsx`:
+  - Novo campo **"Proposta assinada (PDF)"** com `<input type="file" accept="application/pdf">`
+  - Validação: obrigatório, máx 20 MB, apenas PDF
+  - Ao salvar: faz upload para `propostas/{imovel_id}/{timestamp}-{nome}.pdf`, gera signed URL de longa duração (ou public URL via `getPublicUrl` se o bucket for público) e salva em `documento_url`
+- `src/pages/Imoveis.tsx`:
+  - Nos cards das abas **Em Proposta** e **Em Fechamento**, mostrar botão **"Ver PDF assinado"** que abre `documento_url` em nova aba
+  - Aba **Vendidos**: também mostrar o link do PDF da proposta aceita
 
-| Estágio | Condição no banco | Como o imóvel entra aqui |
-|---|---|---|
-| **Disponível** | `imoveis.status = 'Disponível'` e sem proposta em aberto | Cadastro normal do imóvel |
-| **Em Proposta** | existe `propostas` com status `Em análise` para este imóvel | Botão **"Iniciar proposta"** no card do imóvel disponível |
-| **Em Fechamento** | proposta `Aceita`, imóvel ainda não `Vendido` | Botão **"Aceitar proposta"** dentro da aba Em Proposta |
-| **Vendido** | `imoveis.status = 'Vendido'` | Botão **"Confirmar venda"** dentro da aba Em Fechamento |
-
-### Passo a passo do corretor
-
-1. **Cadastrar imóvel** → aparece em *Disponíveis*.
-2. Quando um lead/contato faz uma oferta, no card do imóvel clica em **"Iniciar proposta"**:
-   - Abre diálogo escolhendo **Lead** (busca em `leads`), **Valor proposto**, **Condições**, **Observações**.
-   - Cria registro em `propostas` (status `Em análise`) vinculando `imovel_id`, `lead_id`, `corretor_id`, `valor`.
-   - Imóvel passa para a aba **Em Proposta**.
-3. Na aba **Em Proposta**, o card mostra lead + valor. Ações:
-   - **Aceitar proposta** → `propostas.status = 'Aceita'`, demais propostas do imóvel viram `Recusada`. Imóvel vai para **Em Fechamento**.
-   - **Recusar** → `propostas.status = 'Recusada'`. Se não sobrar nenhuma em análise, volta para *Disponíveis*.
-   - **Nova proposta** (outro lead, mesma negociação concorrente).
-4. Na aba **Em Fechamento**, card mostra comprador + valor acordado + atalho para **gerar contrato** (já existe `contratos` no sistema). Ações:
-   - **Confirmar venda** → `imoveis.status = 'Vendido'`, registra `activity_log` (`tipo='venda'`), imóvel vai para **Vendidos**.
-   - **Cancelar fechamento** → volta a proposta para `Em análise`.
-5. **Vendidos** mostra histórico com comprador, valor final, corretor e data.
-
-### Vínculo (contato + imóvel + proposta + venda)
-
-Tudo já apoiado na tabela `propostas (lead_id, imovel_id, corretor_id, valor, status)`. Nenhuma mudança de schema — só usamos os valores `Em análise`, `Aceita`, `Recusada` em `propostas.status` e `Disponível` / `Vendido` em `imoveis.status`.
-
-### Arquivos a tocar
-
-- `src/pages/Imoveis.tsx` — passar de 3 para 4 abas; derivar lista "Em Fechamento"; adicionar botões de ação por estágio.
-- `src/components/imoveis/NovaPropostaDialog.tsx` *(novo)* — formulário com seleção de lead (Combobox buscando em `leads`), valor, condições, observações; faz `insert` em `propostas`.
-- Reaproveitar o card existente, adicionando um rodapé de ações específico por estágio.
+### Decisão de bucket
+Bucket **privado** + signed URL de 1 ano na hora de exibir (mais seguro, já que é documento assinado pelo cliente). Sem alteração de RLS além das policies do próprio bucket.
 
 ### Fora do escopo
-- Geração de contrato propriamente dita (continua em /contratos, apenas linkamos).
-- Pipeline/Kanban arrastável — manteremos abas + botões explícitos.
+- Assinatura eletrônica dentro do sistema (já existe fluxo separado em /contratos com Clicksign).
+- Substituição/versionamento do PDF — por ora, uma única versão por proposta.
