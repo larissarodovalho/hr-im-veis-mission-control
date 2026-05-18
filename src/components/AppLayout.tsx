@@ -17,6 +17,7 @@ import {
   Home,
   FileSignature,
   Mail,
+  ListTodo,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
@@ -38,6 +39,7 @@ const baseNav: NavItem[] = [
   { to: "/crm/ligacoes", icon: Phone, label: "Ligações" },
   { to: "/crm/visitas", icon: MapPin, label: "Visitas" },
   { to: "/crm/agenda", icon: CalendarRange, label: "Agenda" },
+  { to: "/crm/tarefas", icon: ListTodo, label: "Tarefas" },
   { to: "/crm/documentos", icon: FileSignature, label: "Documentos" },
   { to: "/crm/contratos", icon: FileSignature, label: "Contratos" },
 ];
