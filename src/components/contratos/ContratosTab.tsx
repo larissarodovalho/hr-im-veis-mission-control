@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { FileSignature, Plus, Search, Download, Send, Trash2 } from "lucide-react";
+import { FileSignature, Plus, Search, Download, Send, Trash2, Pencil } from "lucide-react";
 import NovoContratoDialog from "@/components/contratos/NovoContratoDialog";
 import SendDocumentDialog from "@/components/SendDocumentDialog";
 import { CONTRATO_STATUS, formatCurrency, generatePdfBlob } from "@/lib/contratos";
