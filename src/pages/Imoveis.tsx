@@ -292,6 +292,11 @@ export default function Imoveis() {
             </div>
           </div>
           <div className="text-[11px] text-muted-foreground">Corretor: <span className="text-foreground">{profiles[aceita?.corretor_id || i.corretor_id] || "—"}</span></div>
+          {aceita?.documento_url && (
+            <Button size="sm" variant="outline" className="w-full" onClick={() => verDocumento(aceita)}>
+              <FileDown className="h-3.5 w-3.5 mr-1.5" /> Ver PDF assinado
+            </Button>
+          )}
         </div>
       </Card>
     );
