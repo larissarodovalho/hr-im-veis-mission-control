@@ -1,42 +1,60 @@
-## Problema
+## Objetivo
 
-Após clicar em "Baixar/Ver PDF" o link assinado não abre. Causas prováveis:
+Remover os parênteses de gênero (`brasileiro(a)`, `nascido(a)`, `portador(a)`, `inscrito(a)`, `domiciliado(a)`) e conjugar automaticamente em masculino/feminino conforme o sexo da pessoa.
 
-1. **Signed URL expira em 60s** — em `ContratosTab.handleDownload`, `createSignedUrl(path, 60)`. Se houver qualquer atraso (popup blocker, segunda aba), o token expira (o link que você colou tinha `exp - iat = 60s`).
-2. **`window.open` em nova aba** pode ser bloqueado pelo navegador e/ou abre uma aba que apenas tenta carregar o PDF inline — alguns navegadores bloqueiam o domínio assinado.
-3. Não há fallback para forçar download quando a aba não consegue renderizar.
+## Mudanças
 
-## Solução
+### 1. Formulário (`src/components/contratos/NovoContratoDialog.tsx`)
 
-Ajustar **`src/components/contratos/ContratosTab.tsx`** → função `handleDownload`:
+- Adicionar campo **Sexo** (Masculino/Feminino) para cada pessoa:
+  - `c1_sexo` (contratante PF)
+  - `c2_sexo` (segundo contratante, quando ativado)
+  - `socio_sexo` (sócio representante PJ)
+- Default: `M`.
 
-1. Aumentar `createSignedUrl(path, 3600)` (1h).
-2. Em vez de `window.open(signedUrl)`, **baixar o arquivo via `fetch`**, gerar um `Blob URL` local e abrir / forçar download por `<a download>`. Isso evita o bloqueio de popup e funciona mesmo se o navegador não renderizar o PDF inline.
-3. Mostrar `toast.error` claro caso o `fetch` falhe (ex.: arquivo realmente não existe no storage).
-4. Para o caminho on-the-fly (sem `pdf_url`), manter `generatePdfBlob` mas usar a mesma estratégia de `<a>` ao invés de `window.open` puro.
+### 2. Geração das variáveis (`submit`)
 
-### Pseudocódigo do novo `handleDownload`
+Computar, para cada parte, os 5 termos conjugados e passá-los como variáveis no `renderTemplate`:
 
-```text
-if c.pdf_url:
-  url = createSignedUrl(c.pdf_url, 3600)
-  blob = await fetch(url).then(r => r.blob())
-else:
-  blob = generatePdfBlob(...)
+| chave              | M               | F                |
+| ------------------ | --------------- | ---------------- |
+| `*_nacionalidade`  | brasileiro      | brasileira       |
+| `*_nascido`        | nascido         | nascida          |
+| `*_portador`       | portador        | portadora        |
+| `*_inscrito`       | inscrito        | inscrita         |
+| `*_domiciliado`    | domiciliado     | domiciliada      |
 
-objUrl = URL.createObjectURL(blob)
-a = document.createElement("a")
-a.href = objUrl
-a.target = "_blank"
-a.rel = "noopener"
-a.download = `contrato-${cliente_nome}-${id}.pdf`
-a.click()
-setTimeout(() => URL.revokeObjectURL(objUrl), 60000)
+Prefixos: `c1_`, `c2_`, `socio_`.
+
+Para o trecho "ambos residentes e domiciliados" (quando há `c2_nome`), gerar dinamicamente conforme combinação de sexos:
+- ambos M ou misto → "ambos residentes e domiciliados"
+- ambas F → "ambas residentes e domiciliadas"
+Expor como `dupla_residentes` e `dupla_domiciliados` (e ajustar o template para usar essas variáveis em vez do `{{#if c2_nome}}s{{/if}}`).
+
+### 3. Atualizar o template no banco (migração SQL)
+
+Atualizar `contrato_templates.conteudo` do template ativo `autorizacao_venda_exclusividade`, substituindo os termos `brasileiro(a)`, `nascido(a)`, `portador(a)`, `inscrito(a)`, `domiciliado(a)` pelos novos placeholders correspondentes — por contratante (`c1_*`, `c2_*`, `socio_*`).
+
+Trecho final esperado (PF, contratante 1):
 ```
+{{c1_nome}}, {{c1_nacionalidade}}, {{c1_nascido}} no dia {{c1_nascimento}}, {{c1_estado_civil}}, {{c1_profissao}}, {{c1_portador}} da cédula de identidade RG nº {{c1_rg}} e {{c1_inscrito}} no CPF sob o nº {{c1_cpf}} ...
+```
+Análogo para `c2_*` e `socio_*`.
+
+E o bloco final:
+```
+{{dupla_residentes}} e {{dupla_domiciliados}} na {{end_logradouro}} ...
+```
+(quando solteiro: `residente` / `domiciliado(a)` → `{{c1_residente}}` / `{{c1_domiciliado}}`)
+
+## Sem alterações
+
+- Banco: não há mudança de schema, apenas update no conteúdo do template.
+- Backend/edge functions: nenhuma alteração.
 
 ## Validação
 
-- Criar/abrir contrato existente → o PDF abre em nova aba **ou** baixa direto, sem token expirando.
-- Para contratos sem `pdf_url` (apenas rascunho), continua gerando on-the-fly.
-
-Nenhuma alteração de banco/edge function necessária — apenas frontend.
+- Criar contrato PF com sexo F → texto sai "brasileira, nascida, portadora, inscrita, domiciliada".
+- Com sexo M → "brasileiro, nascido, portador, inscrito, domiciliado".
+- Adicionar 2º contratante → conjugação "ambos/ambas" correta conforme os dois sexos.
+- PJ → sócio representante conjuga conforme `socio_sexo`.
