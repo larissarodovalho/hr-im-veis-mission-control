@@ -61,12 +61,25 @@ const smoothEase = [0.25, 0.4, 0.25, 1] as [number, number, number, number];
 
 export default function ImovelDetalhePage() {
   const { id } = useParams<{ id: string }>();
-  const imovel = IMOVEIS_SITE.find((im) => im.id === id);
+  const [imovel, setImovel] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
   const heroRef = useRef(null);
   const { scrollYProgress: heroScroll } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroOpacity = useTransform(heroScroll, [0, 0.5], [1, 0]);
   const heroScale = useTransform(heroScroll, [0, 0.5], [1, 1.08]);
   const heroTextY = useTransform(heroScroll, [0, 0.5], [0, 80]);
+
+  useEffect(() => {
+    if (!id) { setLoading(false); return; }
+    supabase.from("imoveis").select("*").eq("id", id).maybeSingle().then(({ data }) => {
+      setImovel(data ? mapImovelFromDb(data) : null);
+      setLoading(false);
+    });
+  }, [id]);
+
+  if (loading) {
+    return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-white/40 text-sm">Carregando…</div>;
+  }
 
   if (!imovel) {
     return (
@@ -87,7 +100,7 @@ export default function ImovelDetalhePage() {
     );
   }
 
-  const image = getImageForImovel(imovel.id, imovel.tipo);
+  const image = imovel.imagem || getImageForImovel(imovel.id, imovel.tipo);
   const specs = [
     { icon: Maximize2, label: "Área", value: imovel.area },
     ...(imovel.quartos > 0 ? [{ icon: BedDouble, label: "Quartos", value: `${imovel.quartos}` }] : []),
