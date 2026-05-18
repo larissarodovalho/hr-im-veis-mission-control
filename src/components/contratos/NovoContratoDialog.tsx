@@ -15,6 +15,22 @@ import {
   generatePdfBlob, valorPorExtenso, numeroPorExtenso, maskDate,
 } from "@/lib/contratos";
 
+function Field({ label, value, onChange, type = "text", placeholder, className = "" }: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  placeholder?: string;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <Label>{label}</Label>
+      <Input type={type} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -246,13 +262,6 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
       setLoading(false);
     }
   };
-
-  const Field = ({ label, value, onChange, type = "text", placeholder, className = "" }: any) => (
-    <div className={className}>
-      <Label>{label}</Label>
-      <Input type={type} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} />
-    </div>
-  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
