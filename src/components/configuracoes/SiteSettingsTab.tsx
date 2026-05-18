@@ -161,8 +161,8 @@ export default function SiteSettingsTab() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Star className="h-5 w-5" /> Imóveis em destaque na home</CardTitle>
           <CardDescription>
-            Escolha até 3 imóveis cadastrados para aparecer nos cards de destaque da página inicial do site.
-            As fotos, título, cidade e valor são puxados do próprio imóvel.
+            Os imóveis marcados com "Imóvel em destaque" no cadastro aparecem automaticamente na home (até 3, mais recentes primeiro).
+            Use esta lista para complementar caso haja menos de 3 marcados, ou para fixar imóveis específicos.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
