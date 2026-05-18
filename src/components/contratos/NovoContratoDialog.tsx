@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Switch } from "@/components/ui/switch";
+import { SearchableSelect } from "@/components/SearchableSelect";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -449,17 +450,13 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
             {clienteOrigem !== "manual" && (
               <div>
                 <Label>{clienteOrigem === "lead" ? "Lead" : "Conta"}</Label>
-                <Select
+                <SearchableSelect
                   value={clienteOrigem === "lead" ? leadId : contaId}
-                  onValueChange={(v) => clienteOrigem === "lead" ? setLeadId(v) : setContaId(v)}
-                >
-                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>
-                    {(clienteOrigem === "lead" ? leads : contas).map((it) => (
-                      <SelectItem key={it.id} value={it.id}>{it.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(v) => clienteOrigem === "lead" ? setLeadId(v) : setContaId(v)}
+                  options={(clienteOrigem === "lead" ? leads : contas).map((it) => ({ id: it.id, nome: it.label }))}
+                  placeholder={clienteOrigem === "lead" ? "Digite o nome do lead..." : "Digite o nome do cliente..."}
+                  emptyLabel={clienteOrigem === "lead" ? "Selecione um lead" : "Selecione uma conta"}
+                />
               </div>
             )}
           </div>
