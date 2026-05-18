@@ -107,6 +107,7 @@ export default function Meetings() {
       tipo: editForm.tipo,
       lead_id: editForm.lead_id === "none" ? null : editForm.lead_id,
       conta_id: editForm.conta_id === "none" ? null : editForm.conta_id,
+      imovel_id: editForm.imovel_id === "none" ? null : editForm.imovel_id,
       agendada_para: new Date(editForm.agendada_para).toISOString(),
       local: editForm.local || null,
       link: editForm.link || null,
