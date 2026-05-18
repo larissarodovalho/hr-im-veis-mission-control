@@ -406,6 +406,16 @@ export default function Schedule() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label>Imóvel visitado</Label>
+                  <Select value={novo.imovel_id} onValueChange={(v) => setNovo({ ...novo, imovel_id: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sem imóvel vinculado</SelectItem>
+                      {imoveisList.map((i) => <SelectItem key={i.id} value={i.id}>{i.nome}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
                 {novo.tipo === "presencial" && (
                   <div>
                     <Label>Local</Label>
