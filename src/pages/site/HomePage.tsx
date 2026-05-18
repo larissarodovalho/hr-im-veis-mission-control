@@ -38,27 +38,55 @@ export default function HomePage() {
 
   useEffect(() => {
     (async () => {
-      const ids = await fetchFeaturedImoveis();
-      if (ids.length === 0) {
-        // Fallback: 3 most recent available
-        const { data } = await supabase
+      const cols = "id, titulo, cidade, valor, fotos, tipo, status";
+      const result: any[] = [];
+      const seen = new Set<string>();
+
+      // 1) Imóveis marcados como destaque no cadastro
+      const { data: flagged } = await supabase
+        .from("imoveis")
+        .select(cols)
+        .eq("destaque", true)
+        .eq("status", "Disponível")
+        .order("created_at", { ascending: false })
+        .limit(3);
+      (flagged ?? []).forEach((it) => {
+        if (!seen.has(it.id)) {
+          seen.add(it.id);
+          result.push(it);
+        }
+      });
+
+      // 2) Complementar com IDs configurados em Site Settings
+      if (result.length < 3) {
+        const ids = (await fetchFeaturedImoveis()).filter((id) => !seen.has(id));
+        if (ids.length > 0) {
+          const { data: extra } = await supabase
+            .from("imoveis")
+            .select(cols)
+            .in("id", ids);
+          ids.forEach((id) => {
+            const item = (extra ?? []).find((d) => d.id === id);
+            if (item && !seen.has(item.id) && result.length < 3) {
+              seen.add(item.id);
+              result.push(item);
+            }
+          });
+        }
+      }
+
+      // 3) Fallback: mais recentes disponíveis
+      if (result.length === 0) {
+        const { data: recent } = await supabase
           .from("imoveis")
-          .select("id, titulo, cidade, valor, fotos, tipo, status")
-          .eq("status", "disponivel")
+          .select(cols)
+          .eq("status", "Disponível")
           .order("created_at", { ascending: false })
           .limit(3);
-        setDestaque(data ?? []);
-        return;
+        (recent ?? []).forEach((it) => result.push(it));
       }
-      const { data } = await supabase
-        .from("imoveis")
-        .select("id, titulo, cidade, valor, fotos, tipo, status")
-        .in("id", ids);
-      // preserve admin order
-      const ordered = ids
-        .map((id) => (data ?? []).find((d) => d.id === id))
-        .filter(Boolean) as any[];
-      setDestaque(ordered);
+
+      setDestaque(result);
     })();
   }, []);
 
