@@ -4,8 +4,9 @@ import { MapPin, BedDouble, Bath, Car, Search, X, ArrowUpRight, Maximize2, Eye }
 import { supabase } from "@/integrations/supabase/client";
 
 function mapImovelFromDb(row: any) {
-  const areaNum = row.area_util ?? row.area_construida ?? row.area_total;
-  const area = areaNum != null ? `${Number(areaNum).toLocaleString("pt-BR")} m²` : "—";
+  const areaTotal = row.area_total != null ? `${Number(row.area_total).toLocaleString("pt-BR")} m²` : null;
+  const areaConstruida = row.area_construida != null ? `${Number(row.area_construida).toLocaleString("pt-BR")} m²` : null;
+  const areaUtil = row.area_util != null ? `${Number(row.area_util).toLocaleString("pt-BR")} m²` : null;
   return {
     id: row.id,
     codigo: row.codigo || `HR-${String(row.id).slice(0, 6).toUpperCase()}`,
@@ -17,7 +18,9 @@ function mapImovelFromDb(row: any) {
     banheiros: row.banheiros ?? 0,
     suites: row.suites ?? 0,
     vagas: row.vagas ?? 0,
-    area,
+    area: areaUtil ?? areaConstruida ?? areaTotal ?? "—",
+    area_total: areaTotal,
+    area_construida: areaConstruida,
     descricao: row.descricao ?? "",
     caracteristicas: row.caracteristicas ?? [],
     fotos: row.fotos ?? [],
