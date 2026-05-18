@@ -39,6 +39,7 @@ const baseNav: NavItem[] = [
   { to: "/crm/visitas", icon: MapPin, label: "Visitas" },
   { to: "/crm/agenda", icon: CalendarRange, label: "Agenda" },
   { to: "/crm/documentos", icon: FileSignature, label: "Documentos" },
+  { to: "/crm/contratos", icon: FileSignature, label: "Contratos" },
 ];
 const adminNav: NavItem[] = [
   { to: "/crm/relatorios", icon: BarChart3, label: "Relatórios" },
