@@ -460,39 +460,39 @@ export default function ImoveisPage() {
                         {im.tipo !== "Terreno" ? (
                           <>
                             {im.quartos > 0 && (
-                              <div className="flex items-center gap-1.5 pr-3 text-white/60">
-                                <BedDouble className="h-3.5 w-3.5" />
-                                <span className="text-[11px] font-light">{im.quartos} quartos</span>
+                              <div className="flex items-center gap-1.5 pr-3 text-white/70">
+                                <BedDouble className="h-4 w-4" />
+                                <span className="text-sm font-normal">{im.quartos} quartos</span>
                               </div>
                             )}
                             {im.banheiros > 0 && (
-                              <div className="flex items-center gap-1.5 px-3 border-l border-white/[0.06] text-white/60">
-                                <Bath className="h-3.5 w-3.5" />
-                                <span className="text-[11px] font-light">{im.banheiros}</span>
+                              <div className="flex items-center gap-1.5 px-3 border-l border-white/[0.08] text-white/70">
+                                <Bath className="h-4 w-4" />
+                                <span className="text-sm font-normal">{im.banheiros}</span>
                               </div>
                             )}
                             {im.vagas > 0 && (
-                              <div className="flex items-center gap-1.5 px-3 border-l border-white/[0.06] text-white/60">
-                                <Car className="h-3.5 w-3.5" />
-                                <span className="text-[11px] font-light">{im.vagas}</span>
+                              <div className="flex items-center gap-1.5 px-3 border-l border-white/[0.08] text-white/70">
+                                <Car className="h-4 w-4" />
+                                <span className="text-sm font-normal">{im.vagas}</span>
                               </div>
                             )}
                             {im.area_total && (
-                              <div className="flex items-center gap-1.5 pl-3 border-l border-white/[0.06] text-white/25">
-                                <Maximize2 className="h-3.5 w-3.5" />
-                                <span className="text-[11px] font-light">{im.area_total}</span>
+                              <div className="flex items-center gap-1.5 pl-3 border-l border-white/[0.08] text-white/50">
+                                <Maximize2 className="h-4 w-4" />
+                                <span className="text-sm font-normal">{im.area_total}</span>
                               </div>
                             )}
                             {im.area_construida && (
-                              <div className="flex items-center gap-1.5 pl-3 border-l border-white/[0.06] text-white/25">
-                                <span className="text-[11px] font-light">{im.area_construida}</span>
+                              <div className="flex items-center gap-1.5 pl-3 border-l border-white/[0.08] text-white/50">
+                                <span className="text-sm font-normal">{im.area_construida}</span>
                               </div>
                             )}
                           </>
                         ) : (
-                          <div className="flex items-center gap-1.5 text-white/60">
-                            <Maximize2 className="h-3.5 w-3.5" />
-                            <span className="text-[11px] font-light">Área total: {im.area_total ?? im.area}</span>
+                          <div className="flex items-center gap-1.5 text-white/70">
+                            <Maximize2 className="h-4 w-4" />
+                            <span className="text-sm font-normal">Área total: {im.area_total ?? im.area}</span>
                           </div>
                         )}
                       </div>
@@ -500,12 +500,12 @@ export default function ImoveisPage() {
                       {Array.isArray(im.caracteristicas) && im.caracteristicas.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mb-5">
                           {im.caracteristicas.slice(0, 3).map((c: string) => (
-                            <span key={c} className="text-[10px] font-light text-white/60 border border-white/10 rounded-full px-2 py-0.5 bg-white/[0.02]">
+                            <span key={c} className="text-xs font-normal text-white/70 border border-white/15 rounded-full px-2.5 py-1 bg-white/[0.03]">
                               {c}
                             </span>
                           ))}
                           {im.caracteristicas.length > 3 && (
-                            <span className="text-[10px] font-light text-white/40 px-1 py-0.5">
+                            <span className="text-xs font-normal text-white/50 px-1 py-1">
                               +{im.caracteristicas.length - 3}
                             </span>
                           )}
