@@ -1768,7 +1768,9 @@ export type Database = {
       }
       whatsapp_conversations: {
         Row: {
+          ai_debounce_token: string | null
           ai_enabled: boolean
+          ai_pending_since: string | null
           contact_name: string | null
           created_at: string
           id: string
@@ -1781,7 +1783,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ai_debounce_token?: string | null
           ai_enabled?: boolean
+          ai_pending_since?: string | null
           contact_name?: string | null
           created_at?: string
           id?: string
@@ -1794,7 +1798,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ai_debounce_token?: string | null
           ai_enabled?: boolean
+          ai_pending_since?: string | null
           contact_name?: string | null
           created_at?: string
           id?: string
