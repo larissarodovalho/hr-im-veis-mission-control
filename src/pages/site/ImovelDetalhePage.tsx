@@ -215,7 +215,7 @@ export default function ImovelDetalhePage() {
                 transition={{ duration: 1, ease }}
                 className="h-[1px] bg-gradient-to-r from-amber-300/40 to-transparent mb-4"
               />
-              <p className="text-[10px] uppercase tracking-[0.4em] text-white/50 font-light mb-2">Valor</p>
+              <p className="text-xs uppercase tracking-[0.4em] text-white/60 font-normal mb-2">Valor</p>
               <motion.h2
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -239,9 +239,9 @@ export default function ImovelDetalhePage() {
                     transition={{ delay: i * 0.08, duration: 0.5, ease }}
                     className="flex flex-col items-center gap-2 py-6 bg-[#050505] hover:bg-white/[0.02] transition-all duration-500"
                   >
-                    <spec.icon className="h-4 w-4 text-amber-300/40" />
-                    <span className="text-xl font-extralight text-white/80">{spec.value}</span>
-                    <span className="text-[9px] uppercase tracking-[0.3em] text-white/50">{spec.label}</span>
+                    <spec.icon className="h-5 w-5 text-amber-300/50" />
+                    <span className="text-2xl font-light text-white/90">{spec.value}</span>
+                    <span className="text-xs uppercase tracking-[0.3em] text-white/60">{spec.label}</span>
                   </motion.div>
                 ))}
               </div>
@@ -250,14 +250,14 @@ export default function ImovelDetalhePage() {
               <div className="mb-8">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-1 h-3 bg-gradient-to-b from-amber-300/40 to-transparent rounded-full" />
-                  <p className="text-[10px] uppercase tracking-[0.4em] text-white/50 font-light">Sobre o imóvel</p>
+                  <p className="text-xs uppercase tracking-[0.4em] text-white/60 font-normal">Sobre o imóvel</p>
                 </div>
                 <motion.p
                   initial={{ opacity: 0, y: 15 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ margin: "-40px" }}
                   transition={{ duration: 0.6, ease: smoothEase }}
-                  className="text-base text-white/60 leading-[1.9] font-light"
+                  className="text-lg text-white/70 leading-[1.8] font-normal"
                 >
                   {imovel.descricao}
                 </motion.p>
