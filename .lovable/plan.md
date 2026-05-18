@@ -1,35 +1,42 @@
-## Problema
+## Subabas em Imóveis: Disponíveis / Em Proposta / Vendidos
 
-Hoje o webhook do WhatsApp dispara a resposta da Sofia **toda vez** que chega uma mensagem do lead. Quando o lead manda 2–3 balões seguidos, a Sofia acaba respondendo o primeiro balão (e às vezes responde de novo aos próximos), sem considerar a sequência completa.
+Adicionar navegação por abas na página `/crm/imoveis` cruzando os dados de **imóveis**, **propostas** e **leads/contatos** que já existem no banco.
 
-## Solução: janela de "debounce" por conversa
+### Estrutura das abas
 
-Antes de gerar a resposta, a Sofia espera alguns segundos para ver se o lead vai mandar mais balões. Se vier outra mensagem nesse intervalo, a execução antiga é descartada e só a nova (que agora já vê todo o histórico atualizado) responde. Resultado: Sofia responde **uma vez só**, considerando todos os balões na ordem em que chegaram.
+```text
+[ Disponíveis ]  [ Em Proposta ]  [ Vendidos ]
+```
 
-### Como funciona
+1. **Disponíveis** — comportamento atual: lista todos os imóveis (grid de cards), com busca e cadastro.
+2. **Em Proposta** — imóveis que possuem ao menos uma proposta com status `Em análise` ou `Aceita` e que ainda não estão vendidos. Cada card mostra:
+   - Imóvel (foto, título, código, cidade)
+   - Lead/Contato vinculado (nome + telefone) vindo de `propostas.lead_id → leads`
+   - Corretor responsável
+   - Valor da proposta e status (`Em análise`, `Aceita`, `Recusada`)
+   - Botões: **Marcar como vendido** e **Ver proposta** (abre detalhe)
+3. **Vendidos** — imóveis com `status = 'Vendido'`. Cards mostram:
+   - Imóvel + cidade
+   - Comprador (lead/contato da proposta aceita)
+   - Corretor
+   - Valor de venda (proposta aceita) e data de fechamento
 
-1. Cada nova mensagem inbound recebe um "token" único e grava na conversa o campo `ai_debounce_token` (último token) e `ai_pending_since` (carimbo de tempo).
-2. A mensagem é salva normalmente em `whatsapp_messages` (sem mudar o histórico que o painel já mostra).
-3. Antes de chamar a IA, a função aguarda ~8 segundos e relê `ai_debounce_token` da conversa.
-   - Se o token mudou → outra mensagem chegou depois; encerra silenciosamente esta execução.
-   - Se continua igual → carrega o histórico completo atualizado (já incluindo todos os balões que chegaram nesse intervalo) e gera **uma única resposta**.
-4. A resposta é enviada normalmente para o WhatsApp e salva como `outbound`.
+### Ação "Marcar como vendido"
+Na aba **Em Proposta**, ao clicar em "Marcar como vendido" numa proposta:
+- `propostas.status = 'Aceita'`
+- `imoveis.status = 'Vendido'`
+- Demais propostas do mesmo imóvel passam a `Recusada`
+- Registra entrada em `activity_log` ("Imóvel X vendido para Y")
+
+### Vínculo de dados
+O elo já existe via `propostas (lead_id, imovel_id, corretor_id, valor, status)`. Nenhuma mudança de schema é necessária — apenas usaremos o status `Vendido` em `imoveis.status` (já permitido, é coluna text livre) e o status `Aceita` em `propostas.status`.
 
 ### Detalhes técnicos
+- `src/pages/Imoveis.tsx`: envolver o conteúdo em `<Tabs>` do shadcn; carregar `propostas` + `leads` no mount; derivar três listas em memória (disponíveis, emProposta, vendidos).
+- A busca passa a filtrar a aba ativa.
+- Reaproveitar o card existente como `ImovelCard` e criar variações leves para Proposta/Vendido (mesmas dimensões).
+- Sem migrations, sem mudanças de RLS.
 
-- Migration: adicionar colunas `ai_debounce_token text` e `ai_pending_since timestamptz` em `whatsapp_conversations` (nullable, sem default). Nenhuma RLS nova.
-- `supabase/functions/whatsapp-webhook/index.ts`:
-  - Gerar `token = crypto.randomUUID()` ao receber a mensagem.
-  - Após o `insert` em `whatsapp_messages` e antes do bloco de IA, atualizar a conversa com `{ ai_debounce_token: token, ai_pending_since: ts }`.
-  - Adicionar `await new Promise(r => setTimeout(r, 8000))` (janela configurável por constante `AI_DEBOUNCE_MS`).
-  - Reler `ai_debounce_token` da conversa; se diferente de `token`, retornar `{ ok: true, debounced: true }` sem chamar IA.
-  - Se igual, prosseguir com o fluxo atual (que já recarrega o histórico das últimas mensagens, então a Sofia "verá" todos os balões juntos).
-- Manter os atalhos determinísticos atuais (handoff, link de agenda) dentro do mesmo bloco, depois da checagem do token, para que também respeitem a sequência completa.
-- Sem mudanças no frontend.
-
-### O que NÃO muda
-
-- Cada balão do lead continua aparecendo individualmente no painel do WhatsApp em tempo real.
-- Áudio continua sendo transcrito por balão.
-- Lead continua sendo movido de "Novo Lead" para "Em Contato" no primeiro balão.
-- Quando o usuário desabilita IA na conversa, o comportamento continua igual.
+### Fora do escopo
+- Edição de proposta (já existe em outra área).
+- Relatórios/dashboard de vendas (continua no Dashboard).
