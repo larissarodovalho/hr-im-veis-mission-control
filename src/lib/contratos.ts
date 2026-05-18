@@ -53,16 +53,51 @@ export function formatNumberBR(v: number | null | undefined): string {
 
 export function formatDateBR(d: string | Date | null | undefined): string {
   if (!d) return "";
-  const dt = typeof d === "string" ? new Date(d + (d.length === 10 ? "T00:00:00" : "")) : d;
-  if (isNaN(dt.getTime())) return "";
-  return dt.toLocaleDateString("pt-BR");
+  if (d instanceof Date) {
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleDateString("pt-BR");
+  }
+  // suporta tanto ISO (AAAA-MM-DD) quanto brasileiro (DD/MM/AAAA)
+  const iso = /^\d{4}-\d{2}-\d{2}$/;
+  const br = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+  if (iso.test(d)) {
+    const dt = new Date(d + "T00:00:00");
+    if (isNaN(dt.getTime())) return "";
+    return dt.toLocaleDateString("pt-BR");
+  }
+  if (br.test(d)) {
+    const [, dd, mm, yyyy] = d.match(br)!;
+    const dt = new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
+    if (isNaN(dt.getTime())) return "";
+    return dt.toLocaleDateString("pt-BR");
+  }
+  return "";
 }
 
 export function formatDateLong(d: string | Date | null | undefined): string {
   if (!d) return "";
-  const dt = typeof d === "string" ? new Date(d + (d.length === 10 ? "T00:00:00" : "")) : d;
-  if (isNaN(dt.getTime())) return "";
+  if (d instanceof Date) {
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  }
+  const iso = /^\d{4}-\d{2}-\d{2}$/;
+  const br = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+  let dt: Date | null = null;
+  if (iso.test(d)) dt = new Date(d + "T00:00:00");
+  if (br.test(d)) {
+    const [, dd, mm, yyyy] = d.match(br)!;
+    dt = new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
+  }
+  if (!dt || isNaN(dt.getTime())) return "";
   return dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+}
+
+/** Máscara de data enquanto digita: 22121980 → 22/12/1980 */
+export function maskDate(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
 }
 
 // ---------- Números por extenso (pt-BR) ----------

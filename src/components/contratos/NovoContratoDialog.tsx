@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   renderTemplate, formatCurrency, formatDateBR, formatDateLong,
-  generatePdfBlob, valorPorExtenso, numeroPorExtenso,
+  generatePdfBlob, valorPorExtenso, numeroPorExtenso, maskDate,
 } from "@/lib/contratos";
 
 interface Props {
@@ -247,10 +247,10 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
     }
   };
 
-  const Field = ({ label, value, onChange, type = "text", className = "" }: any) => (
+  const Field = ({ label, value, onChange, type = "text", placeholder, className = "" }: any) => (
     <div className={className}>
       <Label>{label}</Label>
-      <Input type={type} value={value} onChange={(e) => onChange(e.target.value)} />
+      <Input type={type} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 
@@ -331,7 +331,7 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
                     <div className="grid grid-cols-2 gap-3">
                       <Field label="Nome completo *" value={f.socio_nome} onChange={(v: string) => set({ socio_nome: v })} />
                       <Field label="CPF *" value={f.socio_cpf} onChange={(v: string) => set({ socio_cpf: v })} />
-                      <Field label="Data de nascimento" type="date" value={f.socio_nascimento} onChange={(v: string) => set({ socio_nascimento: v })} />
+                      <Field label="Data de nascimento" placeholder="DD/MM/AAAA" value={f.socio_nascimento} onChange={(v: string) => set({ socio_nascimento: maskDate(v) })} />
                       <Field label="RG" value={f.socio_rg} onChange={(v: string) => set({ socio_rg: v })} />
                       <Field label="Estado civil" value={f.socio_estado_civil} onChange={(v: string) => set({ socio_estado_civil: v })} />
                       <Field label="Profissão" value={f.socio_profissao} onChange={(v: string) => set({ socio_profissao: v })} />
@@ -346,7 +346,7 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
                     <div className="grid grid-cols-2 gap-3">
                       <Field label="Nome completo *" value={f.c1_nome} onChange={(v: string) => set({ c1_nome: v })} />
                       <Field label="CPF *" value={f.c1_cpf} onChange={(v: string) => set({ c1_cpf: v })} />
-                      <Field label="Data de nascimento" type="date" value={f.c1_nascimento} onChange={(v: string) => set({ c1_nascimento: v })} />
+                      <Field label="Data de nascimento" placeholder="DD/MM/AAAA" value={f.c1_nascimento} onChange={(v: string) => set({ c1_nascimento: maskDate(v) })} />
                       <Field label="RG" value={f.c1_rg} onChange={(v: string) => set({ c1_rg: v })} />
                       <Field label="Estado civil" value={f.c1_estado_civil} onChange={(v: string) => set({ c1_estado_civil: v })} />
                       <Field label="Profissão" value={f.c1_profissao} onChange={(v: string) => set({ c1_profissao: v })} />
@@ -362,7 +362,7 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
                       <div className="grid grid-cols-2 gap-3 border-l-2 pl-3">
                         <Field label="Nome completo" value={f.c2_nome} onChange={(v: string) => set({ c2_nome: v })} />
                         <Field label="CPF" value={f.c2_cpf} onChange={(v: string) => set({ c2_cpf: v })} />
-                        <Field label="Data de nascimento" type="date" value={f.c2_nascimento} onChange={(v: string) => set({ c2_nascimento: v })} />
+                        <Field label="Data de nascimento" placeholder="DD/MM/AAAA" value={f.c2_nascimento} onChange={(v: string) => set({ c2_nascimento: maskDate(v) })} />
                         <Field label="RG" value={f.c2_rg} onChange={(v: string) => set({ c2_rg: v })} />
                         <Field label="Estado civil" value={f.c2_estado_civil} onChange={(v: string) => set({ c2_estado_civil: v })} />
                         <Field label="Profissão" value={f.c2_profissao} onChange={(v: string) => set({ c2_profissao: v })} />
