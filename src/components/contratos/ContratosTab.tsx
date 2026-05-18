@@ -171,6 +171,11 @@ export default function ContratosTab() {
                           <Button size="sm" variant="ghost" onClick={() => handleDownload(c)} title="Baixar/Ver PDF">
                             <Download className="h-4 w-4" />
                           </Button>
+                          {(c.status === "rascunho" || c.status === "gerado") && (
+                            <Button size="sm" variant="ghost" onClick={() => setEditCtx(c)} title="Editar contrato">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button size="sm" variant="ghost" onClick={() => setSendCtx(c)} title="Enviar para assinatura">
                             <Send className="h-4 w-4" />
                           </Button>
