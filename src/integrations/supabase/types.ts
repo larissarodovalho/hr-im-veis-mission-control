@@ -606,6 +606,7 @@ export type Database = {
           corretor_id: string | null
           created_at: string
           created_by: string | null
+          dados_partes: Json | null
           data_fim: string | null
           data_inicio: string | null
           id: string
@@ -633,6 +634,7 @@ export type Database = {
           corretor_id?: string | null
           created_at?: string
           created_by?: string | null
+          dados_partes?: Json | null
           data_fim?: string | null
           data_inicio?: string | null
           id?: string
@@ -660,6 +662,7 @@ export type Database = {
           corretor_id?: string | null
           created_at?: string
           created_by?: string | null
+          dados_partes?: Json | null
           data_fim?: string | null
           data_inicio?: string | null
           id?: string
