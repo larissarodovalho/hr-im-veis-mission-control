@@ -201,6 +201,11 @@ export default function Imoveis() {
                   </div>
                   {lead?.telefone && <div className="text-muted-foreground">{lead.telefone}</div>}
                   {p.condicoes && <div className="text-muted-foreground italic">{p.condicoes}</div>}
+                  {p.documento_url && (
+                    <button onClick={() => verDocumento(p)} className="flex items-center gap-1 text-primary hover:underline">
+                      <FileDown className="h-3 w-3" /> Ver PDF assinado
+                    </button>
+                  )}
                   <div className="flex gap-1.5 pt-1">
                     <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => recusarProposta(p)}>
                       <XCircle className="h-3 w-3 mr-1" /> Recusar
