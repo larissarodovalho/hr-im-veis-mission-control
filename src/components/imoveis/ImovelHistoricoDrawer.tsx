@@ -35,14 +35,16 @@ export default function ImovelHistoricoDrawer({ open, onOpenChange, imovel }: Pr
     if (!open || !imovel) return;
     setLoading(true);
     (async () => {
-      const [propRes, reuRes, actRes] = await Promise.all([
+      const [propRes, reuRes, visRes, actRes] = await Promise.all([
         supabase.from("propostas").select("*").eq("imovel_id", imovel.id),
         supabase.from("reunioes").select("*").eq("imovel_id", imovel.id),
+        (supabase.from("visitas" as any).select("*").eq("imovel_id", imovel.id) as any),
         supabase.from("activity_log").select("*").eq("tipo", "venda").contains("metadata", { imovel_id: imovel.id }),
       ]);
       const leadIds = new Set<string>();
       (propRes.data ?? []).forEach((p: any) => p.lead_id && leadIds.add(p.lead_id));
       (reuRes.data ?? []).forEach((r: any) => r.lead_id && leadIds.add(r.lead_id));
+      (visRes.data ?? []).forEach((v: any) => v.lead_id && leadIds.add(v.lead_id));
       const { data: leadsData } = leadIds.size
         ? await supabase.from("leads").select("id,nome,telefone").in("id", Array.from(leadIds))
         : { data: [] };
