@@ -259,6 +259,30 @@ export default function ImovelDetalhePage() {
                 </motion.p>
               </div>
 
+              {/* Características */}
+              {imovel.caracteristicas.length > 0 && (
+                <div className="mb-8">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-1 h-3 bg-gradient-to-b from-amber-300/40 to-transparent rounded-full" />
+                    <p className="text-[10px] uppercase tracking-[0.4em] text-white/50 font-light">Características</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {imovel.caracteristicas.map((c: string, i: number) => (
+                      <motion.span
+                        key={c}
+                        initial={{ opacity: 0, y: 8 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.03, duration: 0.4, ease }}
+                        className="text-xs font-light text-white/70 border border-white/15 rounded-full px-3 py-1.5 bg-white/[0.02]"
+                      >
+                        {c}
+                      </motion.span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Location */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
