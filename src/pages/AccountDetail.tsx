@@ -14,6 +14,7 @@ import EntityDocumentsTab from "@/components/EntityDocumentsTab";
 import ContaInteracoesTimeline from "@/components/contas/ContaInteracoesTimeline";
 import ContaAgendaQuickAdd from "@/components/contas/ContaAgendaQuickAdd";
 import ContaAgendamentosList from "@/components/contas/ContaAgendamentosList";
+import ContaTarefas from "@/components/contas/ContaTarefas";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";

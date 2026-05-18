@@ -28,6 +28,7 @@ import Meetings from "@/pages/Meetings";
 import Calls from "@/pages/Calls";
 import Visits from "@/pages/Visits";
 import Schedule from "@/pages/Schedule";
+import Tasks from "@/pages/Tasks";
 import Documents from "@/pages/Documents";
 import Contratos from "@/pages/Contratos";
 import DocumentDetail from "@/pages/DocumentDetail";
@@ -101,6 +102,7 @@ const App = () => (
               <Route path="ligacoes" element={<Calls />} />
               <Route path="visitas" element={<Visits />} />
               <Route path="agenda" element={<Schedule />} />
+              <Route path="tarefas" element={<Tasks />} />
               <Route path="documentos" element={<Documents />} />
               <Route path="documentos/:id" element={<DocumentDetail />} />
               <Route path="contratos" element={<Contratos />} />
