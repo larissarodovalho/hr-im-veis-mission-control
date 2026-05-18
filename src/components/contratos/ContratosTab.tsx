@@ -43,6 +43,37 @@ export default function ContratosTab() {
   const [openNew, setOpenNew] = useState(false);
   const [editCtx, setEditCtx] = useState<any | null>(null);
   const [sendCtx, setSendCtx] = useState<Contrato | null>(null);
+  const [sendFile, setSendFile] = useState<{ blob: Blob; filename: string } | null>(null);
+  const [preparingSend, setPreparingSend] = useState<string | null>(null);
+
+  const handleSendClick = async (c: Contrato) => {
+    setPreparingSend(c.id);
+    try {
+      let blob: Blob;
+      if (c.pdf_url) {
+        const { data, error } = await supabase.storage
+          .from("signed-documents")
+          .createSignedUrl(c.pdf_url, 3600);
+        if (error) throw error;
+        const res = await fetch(data.signedUrl);
+        if (!res.ok) throw new Error("Não foi possível baixar o PDF");
+        blob = await res.blob();
+      } else {
+        if (!c.conteudo_renderizado) {
+          toast.error("Gere o PDF do contrato antes de enviar para assinatura");
+          return;
+        }
+        blob = await generatePdfBlob("CONTRATO DE INTERMEDIAÇÃO IMOBILIÁRIA COM CLÁUSULA DE EXCLUSIVIDADE", c.conteudo_renderizado);
+      }
+      const filename = `contrato-${(c.cliente_nome || "sem-nome").replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-${c.id.slice(0, 8)}.pdf`;
+      setSendFile({ blob, filename });
+      setSendCtx(c);
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao preparar PDF");
+    } finally {
+      setPreparingSend(null);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -176,7 +207,7 @@ export default function ContratosTab() {
                               <Pencil className="h-4 w-4" />
                             </Button>
                           )}
-                          <Button size="sm" variant="ghost" onClick={() => setSendCtx(c)} title="Enviar para assinatura">
+                          <Button size="sm" variant="ghost" onClick={() => handleSendClick(c)} title="Enviar para assinatura" disabled={preparingSend === c.id}>
                             <Send className="h-4 w-4" />
                           </Button>
                           {isAdmin && (
@@ -219,7 +250,7 @@ export default function ContratosTab() {
       {sendCtx && (
         <SendDocumentDialog
           open={!!sendCtx}
-          onOpenChange={(v) => !v && setSendCtx(null)}
+          onOpenChange={(v) => { if (!v) { setSendCtx(null); setSendFile(null); } }}
           leadId={sendCtx.lead_id}
           contaId={sendCtx.conta_id}
           defaultSigner={{
@@ -227,7 +258,9 @@ export default function ContratosTab() {
             email: sendCtx.cliente_email || "",
             cpf: sendCtx.cliente_documento || "",
           }}
-          onCreated={() => { setSendCtx(null); load(); }}
+          defaultName={sendCtx.cliente_nome ? `Contrato — ${sendCtx.cliente_nome}` : "Contrato de intermediação"}
+          defaultFile={sendFile}
+          onCreated={() => { setSendCtx(null); setSendFile(null); load(); }}
         />
       )}
     </div>
