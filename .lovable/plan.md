@@ -1,31 +1,42 @@
-## Ajuste no formulário de contrato — imóvel opcional + manual
+## Problema
 
-### Objetivo
-No diálogo **Novo contrato**, o campo **Imóvel** deixa de ser obrigatório e passa a aceitar descrição manual, sem depender de um imóvel previamente cadastrado no sistema.
+Após clicar em "Baixar/Ver PDF" o link assinado não abre. Causas prováveis:
 
-### Mudanças no frontend (`src/components/contratos/NovoContratoDialog.tsx`)
+1. **Signed URL expira em 60s** — em `ContratosTab.handleDownload`, `createSignedUrl(path, 60)`. Se houver qualquer atraso (popup blocker, segunda aba), o token expira (o link que você colou tinha `exp - iat = 60s`).
+2. **`window.open` em nova aba** pode ser bloqueado pelo navegador e/ou abre uma aba que apenas tenta carregar o PDF inline — alguns navegadores bloqueiam o domínio assinado.
+3. Não há fallback para forçar download quando a aba não consegue renderizar.
 
-1. **Adicionar estado para descrição manual do imóvel**
-   - Incluir `imovel_descricao_manual: ""` no objeto `empty` (estado inicial).
+## Solução
 
-2. **Remover obrigatoriedade visual**
-   - Alterar label de `"Imóvel cadastrado *"` para `"Imóvel cadastrado"`.
+Ajustar **`src/components/contratos/ContratosTab.tsx`** → função `handleDownload`:
 
-3. **Adicionar campo de entrada manual**
-   - Abaixo do `<Select>` de imóveis cadastrados, incluir um `<Textarea>` (ou `<Input>` multi-line) com label `"Descrição manual do imóvel"`.
-   - O campo é preenchido livremente pelo usuário quando não quiser/vai selecionar um imóvel do cadastro.
+1. Aumentar `createSignedUrl(path, 3600)` (1h).
+2. Em vez de `window.open(signedUrl)`, **baixar o arquivo via `fetch`**, gerar um `Blob URL` local e abrir / forçar download por `<a download>`. Isso evita o bloqueio de popup e funciona mesmo se o navegador não renderizar o PDF inline.
+3. Mostrar `toast.error` claro caso o `fetch` falhe (ex.: arquivo realmente não existe no storage).
+4. Para o caminho on-the-fly (sem `pdf_url`), manter `generatePdfBlob` mas usar a mesma estratégia de `<a>` ao invés de `window.open` puro.
 
-4. **Remover validação obrigatória no submit**
-   - Remover a checagem `if (!imovelId) return toast.error("Selecione o imóvel")`.
+### Pseudocódigo do novo `handleDownload`
 
-5. **Lógica de montagem do endereço do imóvel no contrato**
-   - Se `imovelId` estiver preenchido → montar endereço a partir dos dados do imóvel cadastrado (comportamento atual).
-   - Se `imovelId` estiver vazio → usar `f.imovel_descricao_manual` como `imovel_endereco`.
+```text
+if c.pdf_url:
+  url = createSignedUrl(c.pdf_url, 3600)
+  blob = await fetch(url).then(r => r.blob())
+else:
+  blob = generatePdfBlob(...)
 
-6. **Banco de dados**
-   - A coluna `imovel_id` na tabela `contratos` já aceita `NULL`, portanto nenhuma migration é necessária.
+objUrl = URL.createObjectURL(blob)
+a = document.createElement("a")
+a.href = objUrl
+a.target = "_blank"
+a.rel = "noopener"
+a.download = `contrato-${cliente_nome}-${id}.pdf`
+a.click()
+setTimeout(() => URL.revokeObjectURL(objUrl), 60000)
+```
 
-### Resultado esperado
-- O usuário pode gerar um contrato sem ter o imóvel cadastrado no CRM.
-- O asterisco de obrigatoriedade some do campo "Imóvel cadastrado".
-- O PDF do contrato exibe a descrição manual do imóvel quando nenhum imóvel cadastrado for selecionado.
+## Validação
+
+- Criar/abrir contrato existente → o PDF abre em nova aba **ou** baixa direto, sem token expirando.
+- Para contratos sem `pdf_url` (apenas rascunho), continua gerando on-the-fly.
+
+Nenhuma alteração de banco/edge function necessária — apenas frontend.

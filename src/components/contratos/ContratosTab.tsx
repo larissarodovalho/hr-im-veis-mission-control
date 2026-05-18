@@ -74,19 +74,31 @@ export default function ContratosTab() {
 
   const handleDownload = async (c: Contrato) => {
     try {
+      let blob: Blob;
       if (c.pdf_url) {
-        const { data, error } = await supabase.storage.from("signed-documents").createSignedUrl(c.pdf_url, 60);
+        const { data, error } = await supabase.storage
+          .from("signed-documents")
+          .createSignedUrl(c.pdf_url, 3600);
         if (error) throw error;
-        window.open(data.signedUrl, "_blank");
-        return;
+        const res = await fetch(data.signedUrl);
+        if (!res.ok) throw new Error("Não foi possível baixar o PDF do servidor");
+        blob = await res.blob();
+      } else {
+        if (!c.conteudo_renderizado) return toast.error("Sem conteúdo para gerar PDF");
+        blob = generatePdfBlob("CONTRATO DE AUTORIZAÇÃO DE VENDA COM EXCLUSIVIDADE", c.conteudo_renderizado);
       }
-      // gerar on-the-fly a partir do conteúdo
-      if (!c.conteudo_renderizado) return toast.error("Sem conteúdo para gerar PDF");
-      const blob = generatePdfBlob("CONTRATO DE AUTORIZAÇÃO DE VENDA COM EXCLUSIVIDADE", c.conteudo_renderizado);
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank");
+      const objUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objUrl;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.download = `contrato-${(c.cliente_nome || "sem-nome").replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-${c.id.slice(0, 8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(objUrl), 60000);
     } catch (e: any) {
-      toast.error(e.message);
+      toast.error(e.message || "Erro ao abrir o PDF");
     }
   };
 
