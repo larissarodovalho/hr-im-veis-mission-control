@@ -280,6 +280,7 @@ export default function Meetings() {
                   placeholder="Buscar conta..."
                   emptyLabel="Sem conta vinculada"
                 />
+              </div>
             </div>
             <div>
               <Label>Imóvel visitado</Label>
