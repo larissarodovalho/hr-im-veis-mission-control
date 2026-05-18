@@ -24,10 +24,11 @@ export default function Meetings() {
   const [items, setItems] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
   const [contas, setContas] = useState<any[]>([]);
+  const [imoveis, setImoveis] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
-  const [form, setForm] = useState({ lead_id: "none", conta_id: "none", agendada_para: "", local: "", link: "", notas: "" });
-  const [editForm, setEditForm] = useState({ tipo: "presencial", lead_id: "none", conta_id: "none", agendada_para: "", local: "", link: "", notas: "", status: "agendada" });
+  const [form, setForm] = useState({ lead_id: "none", conta_id: "none", imovel_id: "none", agendada_para: "", local: "", link: "", notas: "" });
+  const [editForm, setEditForm] = useState({ tipo: "presencial", lead_id: "none", conta_id: "none", imovel_id: "none", agendada_para: "", local: "", link: "", notas: "", status: "agendada" });
 
   const load = async () => {
     const { data: meetings, error } = await supabase.from("reunioes").select("*").order("agendada_para");
