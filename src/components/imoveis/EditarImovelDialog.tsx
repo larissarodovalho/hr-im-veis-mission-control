@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Upload, X, Trash2 } from "lucide-react";
 import { applyWatermark } from "@/lib/watermark";
+import ResponsavelProprietarioSection from "./ResponsavelProprietarioSection";
 import { TIPOS_IMOVEL, FINALIDADES, STATUS_OPTIONS, CARACTERISTICAS } from "./NovoImovelDialog";
 
 interface Props {
@@ -44,6 +45,8 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
   const [novasFotos, setNovasFotos] = useState<File[]>([]);
   const [removerPaths, setRemoverPaths] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [corretorId, setCorretorId] = useState<string>("");
+  const [proprietarioId, setProprietarioId] = useState<string>("");
 
   useEffect(() => {
     if (!imovel) return;
@@ -61,6 +64,8 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
     setFotosExistentes(Array.isArray(imovel.fotos) ? imovel.fotos : []);
     setNovasFotos([]);
     setRemoverPaths([]);
+    setCorretorId(imovel.corretor_id || "");
+    setProprietarioId(imovel.proprietario_id || "");
   }, [imovel]);
 
   const upd = (k: keyof typeof empty, v: any) => setForm((p) => ({ ...p, [k]: v }));
