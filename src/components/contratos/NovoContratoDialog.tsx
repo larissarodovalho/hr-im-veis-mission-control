@@ -263,7 +263,7 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
 
       let pdfUrl: string | null = null;
       if (acao === "gerar") {
-        const blob = generatePdfBlob("CONTRATO DE INTERMEDIAÇÃO IMOBILIÁRIA COM CLÁUSULA DE EXCLUSIVIDADE", conteudo);
+        const blob = await generatePdfBlob("CONTRATO DE INTERMEDIAÇÃO IMOBILIÁRIA COM CLÁUSULA DE EXCLUSIVIDADE", conteudo);
         const path = `contratos/${user.id}/${Date.now()}.pdf`;
         const { error: upErr } = await supabase.storage.from("signed-documents").upload(path, blob, {
           contentType: "application/pdf", upsert: false,
