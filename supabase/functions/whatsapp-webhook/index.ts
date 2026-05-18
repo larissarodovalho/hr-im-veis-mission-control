@@ -481,6 +481,35 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Debounce: aguarda alguns segundos para agrupar balões enviados em sequência pelo lead.
+    // Se chegar uma mensagem nova dentro da janela, esta execução encerra silenciosamente e
+    // só a mais recente (que verá o histórico completo) responderá.
+    const AI_DEBOUNCE_MS = 8000;
+    const debounceToken = crypto.randomUUID();
+    await supabase.from("whatsapp_conversations").update({
+      ai_debounce_token: debounceToken,
+      ai_pending_since: ts,
+    }).eq("id", conv.id);
+
+    await new Promise((r) => setTimeout(r, AI_DEBOUNCE_MS));
+
+    const { data: convAfter } = await supabase
+      .from("whatsapp_conversations")
+      .select("ai_debounce_token, ai_enabled")
+      .eq("id", conv.id)
+      .maybeSingle();
+    if (!convAfter || convAfter.ai_debounce_token !== debounceToken) {
+      return new Response(JSON.stringify({ ok: true, debounced: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (convAfter.ai_enabled === false) {
+      return new Response(JSON.stringify({ ok: true, ai: "disabled" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+
     const { data: leadRow } = leadUuid
       ? await supabase.from("leads").select("nome, telefone, tags, observacoes").eq("id", leadUuid).maybeSingle()
       : { data: null as any };
