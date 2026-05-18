@@ -71,10 +71,18 @@ export default function ImovelDetalhePage() {
 
   useEffect(() => {
     if (!id) { setLoading(false); return; }
-    supabase.from("imoveis").select("*").eq("id", id).maybeSingle().then(({ data }) => {
-      setImovel(data ? mapImovelFromDb(data) : null);
-      setLoading(false);
-    });
+    const load = () => {
+      supabase.from("imoveis").select("*").eq("id", id).maybeSingle().then(({ data }) => {
+        setImovel(data ? mapImovelFromDb(data) : null);
+        setLoading(false);
+      });
+    };
+    load();
+    const channel = supabase
+      .channel(`imovel-${id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "imoveis", filter: `id=eq.${id}` }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, [id]);
 
   if (loading) {

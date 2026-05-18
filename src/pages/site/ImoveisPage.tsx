@@ -144,12 +144,20 @@ export default function ImoveisPage() {
   const [IMOVEIS_SITE, setImoveisSite] = useState<any[]>([]);
 
   useEffect(() => {
-    supabase
-      .from("imoveis")
-      .select("*")
-      .eq("status", "Disponível")
-      .order("created_at", { ascending: false })
-      .then(({ data }) => setImoveisSite((data ?? []).map(mapImovelFromDb)));
+    const load = () => {
+      supabase
+        .from("imoveis")
+        .select("*")
+        .eq("status", "Disponível")
+        .order("created_at", { ascending: false })
+        .then(({ data }) => setImoveisSite((data ?? []).map(mapImovelFromDb)));
+    };
+    load();
+    const channel = supabase
+      .channel("imoveis-public")
+      .on("postgres_changes", { event: "*", schema: "public", table: "imoveis" }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   const FAIXAS = [
