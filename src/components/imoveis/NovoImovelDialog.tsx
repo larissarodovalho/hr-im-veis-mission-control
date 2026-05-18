@@ -94,6 +94,7 @@ const empty = {
   valor_condominio: "",
   valor_iptu: "",
   area_total: "",
+  area_construida: "",
   area_util: "",
   quartos: "",
   suites: "",
