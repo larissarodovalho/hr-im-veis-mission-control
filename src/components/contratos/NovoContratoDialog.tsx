@@ -272,15 +272,12 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
       const vars: Record<string, any> = {
         ...f,
         c2_nome: f.add_c2 ? f.c2_nome : "",
-        c2_nascimento: f.add_c2 ? formatDateBR(f.c2_nascimento) : "",
         c2_estado_civil: f.add_c2 ? f.c2_estado_civil : "",
         c2_profissao: f.add_c2 ? f.c2_profissao : "",
         c2_rg: f.add_c2 ? f.c2_rg : "",
         c2_cpf: f.add_c2 ? f.c2_cpf : "",
         c2_email: f.add_c2 ? f.c2_email : "",
         c2_telefone: f.add_c2 ? f.c2_telefone : "",
-        c1_nascimento: formatDateBR(f.c1_nascimento),
-        socio_nascimento: formatDateBR(f.socio_nascimento),
         // Bloco com a descrição de todos os imóveis
         imoveis_bloco: imoveisBloco,
         // Conjugações singular/plural
