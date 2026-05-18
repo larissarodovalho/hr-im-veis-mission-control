@@ -60,6 +60,9 @@ export default function Meetings() {
     load();
     supabase.from("leads").select("id, nome").order("nome").then(({ data }) => setLeads(data ?? []));
     (supabase.from("contas" as any).select("id, nome").order("nome") as any).then(({ data }: any) => setContas(data ?? []));
+    supabase.from("imoveis").select("id, titulo, codigo").order("created_at", { ascending: false }).then(({ data }) =>
+      setImoveis((data ?? []).map((i: any) => ({ id: i.id, nome: i.codigo ? `${i.titulo} · ${i.codigo}` : i.titulo })))
+    );
   }, []);
 
   const add = async (e: React.FormEvent) => {
