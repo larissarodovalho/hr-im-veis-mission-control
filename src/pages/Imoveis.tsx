@@ -128,6 +128,13 @@ export default function Imoveis() {
     load();
   };
 
+  const verDocumento = async (p: Proposta) => {
+    if (!p.documento_url) { toast.error("Sem documento anexado"); return; }
+    const { data, error } = await supabase.storage.from("propostas").createSignedUrl(p.documento_url, 60 * 60);
+    if (error || !data?.signedUrl) { toast.error("Erro ao abrir o documento"); return; }
+    window.open(data.signedUrl, "_blank");
+  };
+
   // ---------- Cards ----------
   const Header = ({ i, badge }: { i: Imovel; badge?: React.ReactNode }) => (
     <div className="relative">
