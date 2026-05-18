@@ -1,58 +1,22 @@
-## Objetivo
+# Centralizar corpo do contrato verticalmente
 
-Remover completamente a informação de **data de nascimento** da "autorização de venda com exclusividade", tanto do template gerado quanto do formulário de preenchimento.
+## Problema
+Hoje o conteúdo do PDF começa logo abaixo do cabeçalho (`y = contentTop + ...`) e termina onde acabar — na última página fica um espaço grande em branco antes do rodapé, e nas demais o conteúdo aparece levemente acima do centro visual.
 
----
+## Solução
+Em `src/lib/contratos.ts`, dentro de `generatePdfBlob`:
 
-## Alterações
+1. **Pré-paginar** o conteúdo antes de desenhar:
+   - Quebrar `content` em parágrafos → linhas via `doc.splitTextToSize`.
+   - Simular o fluxo atual (linha = 16pt, parágrafo = +4pt, título só na 1ª página) para montar um array `pages: Line[][]`, onde cada página guarda as linhas que cabem entre `contentTop` e `contentBottom`.
 
-### 1. Template do banco (`contrato_templates`)
+2. **Renderizar centralizado**:
+   - Para cada página, calcular `usedH` (soma das alturas das linhas + título na pág. 1).
+   - `startY = contentTop + (availableH - usedH) / 2`, onde `availableH = contentBottom - contentTop`.
+   - Desenhar título (apenas pág. 1) a partir desse `startY`, depois as linhas.
+   - Manter `drawLetterhead()` em cada página.
 
-Atualizar o conteúdo do template ativo removendo:
-- `{{c1_nascido}} no dia {{c1_nascimento}}, ` da qualificação do contratante PF
-- `{{c2_nascido}} no dia {{c2_nascimento}}, ` da qualificação do segundo contratante PF
-- `{{socio_nascido}} no dia {{socio_nascimento}}, ` da qualificação do sócio representante PJ
+3. **Sem mudanças** em: margens, fonte Montserrat, papel timbrado, tamanhos, espaçamentos entre linhas/parágrafos, schema, formulário ou template.
 
-**Antes:**
-```
-{{c1_nome}}, {{c1_nacionalidade}}, {{c1_nascido}} no dia {{c1_nascimento}}, {{c1_estado_civil}}, ...
-```
-
-**Depois:**
-```
-{{c1_nome}}, {{c1_nacionalidade}}, {{c1_estado_civil}}, ...
-```
-
-### 2. Formulário (`NovoContratoDialog.tsx`)
-
-Remover os 3 campos de "Data de nascimento" do accordion "Dados do contratante":
-- Campo `c1_nascimento` (contratante 1, PF)
-- Campo `c2_nascimento` (segundo contratante, PF)
-- Campo `socio_nascimento` (sócio representante, PJ)
-
-### 3. Estado inicial
-
-Remover `c1_nascimento`, `c2_nascimento` e `socio_nascimento` do objeto `empty` de estado inicial.
-
-### 4. Variáveis de renderização (`submit`)
-
-Remover as linhas que formatam e injetam:
-- `c1_nascimento`
-- `c2_nascimento`
-- `socio_nascimento`
-
-As variáveis de gênero (`{{c1_nascido}}`, `{{c2_nascido}}`, `{{socio_nascido}}`) também serão removidas do template, portanto deixam de ser necessárias (embora possam ser mantidas no código sem uso, para evitar quebra caso o template seja usado em outro contexto; a remoção do texto no template é suficiente).
-
----
-
-## Sem alterações
-
-- Schema da tabela `contratos` e `dados_partes` (campos podem continuar existindo em registros antigos).
-- Outros templates de contrato (se houver).
-- Variáveis de gênero `gen()` permanecem funcionando para nacionalidade, portador, inscrito, domiciliado.
-
-## Validação
-
-- Criar novo contrato → campo "Data de nascimento" não aparece mais no formulário.
-- Gerar PDF → o trecho de qualificação não contém mais "nascido no dia X".
-- Editar contrato antigo → funciona normalmente (campos antigos ficam vazios, o template já foi atualizado).
+## Resultado
+Cada página do PDF terá o bloco de texto centralizado verticalmente entre o cabeçalho e o rodapé do papel timbrado, inclusive a última (que hoje fica "alta").
