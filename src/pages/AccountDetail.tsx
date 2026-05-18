@@ -217,6 +217,10 @@ export default function AccountDetail() {
         <ContaAgendamentosList contaId={acc.id} />
       </Card>
 
+      <Card className="p-5">
+        <ContaTarefas contaId={acc.id} responsavelId={acc.responsavel_id} />
+      </Card>
+
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-xl font-semibold">Propriedades / Negócios</h2>
