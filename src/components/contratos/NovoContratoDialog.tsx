@@ -60,6 +60,7 @@ const empty = {
   // imóvel
   imovel_lote: "", imovel_quadra: "", imovel_area_total: "", imovel_area_construida: "",
   imovel_matricula: "", imovel_benfeitorias: "",
+  imovel_descricao_manual: "",
   // negócio
   valor: "", forma_pagamento: "",
   comissao_percentual: "5",
