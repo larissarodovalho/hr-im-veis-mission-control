@@ -6,11 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2, FileDown } from "lucide-react";
+import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2, FileDown, History } from "lucide-react";
 import { toast } from "sonner";
 import NovoImovelDialog from "@/components/imoveis/NovoImovelDialog";
 import EditarImovelDialog from "@/components/imoveis/EditarImovelDialog";
 import NovaPropostaDialog from "@/components/imoveis/NovaPropostaDialog";
+import ImovelHistoricoDrawer from "@/components/imoveis/ImovelHistoricoDrawer";
 
 type Imovel = any;
 type Proposta = any;
@@ -28,6 +29,7 @@ export default function Imoveis() {
   const [openNew, setOpenNew] = useState(false);
   const [editing, setEditing] = useState<Imovel | null>(null);
   const [propostaFor, setPropostaFor] = useState<Imovel | null>(null);
+  const [histFor, setHistFor] = useState<Imovel | null>(null);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [contas, setContas] = useState<Record<string, string>>({});
   const [tab, setTab] = useState("disponiveis");
@@ -146,9 +148,14 @@ export default function Imoveis() {
         </div>
       )}
       {badge}
-      <Button size="icon" variant="secondary" className="absolute top-2 right-2 h-8 w-8" onClick={() => setEditing(i)} title="Editar imóvel">
-        <Pencil className="h-4 w-4" />
-      </Button>
+      <div className="absolute top-2 right-2 flex gap-1">
+        <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setHistFor(i)} title="Histórico do imóvel">
+          <History className="h-4 w-4" />
+        </Button>
+        <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setEditing(i)} title="Editar imóvel">
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 
@@ -375,6 +382,11 @@ export default function Imoveis() {
         onOpenChange={(v) => { if (!v) setPropostaFor(null); }}
         imovel={propostaFor}
         onCreated={load}
+      />
+      <ImovelHistoricoDrawer
+        open={!!histFor}
+        onOpenChange={(v) => { if (!v) setHistFor(null); }}
+        imovel={histFor}
       />
     </div>
   );

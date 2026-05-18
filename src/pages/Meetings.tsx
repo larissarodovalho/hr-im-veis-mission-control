@@ -24,10 +24,11 @@ export default function Meetings() {
   const [items, setItems] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
   const [contas, setContas] = useState<any[]>([]);
+  const [imoveis, setImoveis] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
-  const [form, setForm] = useState({ lead_id: "none", conta_id: "none", agendada_para: "", local: "", link: "", notas: "" });
-  const [editForm, setEditForm] = useState({ tipo: "presencial", lead_id: "none", conta_id: "none", agendada_para: "", local: "", link: "", notas: "", status: "agendada" });
+  const [form, setForm] = useState({ lead_id: "none", conta_id: "none", imovel_id: "none", agendada_para: "", local: "", link: "", notas: "" });
+  const [editForm, setEditForm] = useState({ tipo: "presencial", lead_id: "none", conta_id: "none", imovel_id: "none", agendada_para: "", local: "", link: "", notas: "", status: "agendada" });
 
   const load = async () => {
     const { data: meetings, error } = await supabase.from("reunioes").select("*").order("agendada_para");
@@ -59,6 +60,9 @@ export default function Meetings() {
     load();
     supabase.from("leads").select("id, nome").order("nome").then(({ data }) => setLeads(data ?? []));
     (supabase.from("contas" as any).select("id, nome").order("nome") as any).then(({ data }: any) => setContas(data ?? []));
+    supabase.from("imoveis").select("id, titulo, codigo").order("created_at", { ascending: false }).then(({ data }) =>
+      setImoveis((data ?? []).map((i: any) => ({ id: i.id, nome: i.codigo ? `${i.titulo} · ${i.codigo}` : i.titulo })))
+    );
   }, []);
 
   const add = async (e: React.FormEvent) => {
@@ -67,13 +71,14 @@ export default function Meetings() {
     const { error } = await supabase.from("reunioes").insert({
       lead_id: form.lead_id === "none" ? null : form.lead_id,
       conta_id: form.conta_id === "none" ? null : form.conta_id,
+      imovel_id: form.imovel_id === "none" ? null : form.imovel_id,
       agendada_para: new Date(form.agendada_para).toISOString(),
       local: form.local || null, link: form.link || null, notas: form.notas || null,
       created_by: user?.id, corretor_id: user?.id,
     });
     if (error) return toast.error(error.message);
     toast.success("Reunião adicionada");
-    setForm({ lead_id: "none", conta_id: "none", agendada_para: "", local: "", link: "", notas: "" });
+    setForm({ lead_id: "none", conta_id: "none", imovel_id: "none", agendada_para: "", local: "", link: "", notas: "" });
     setOpen(false);
     load();
   };
@@ -86,6 +91,7 @@ export default function Meetings() {
       tipo: m.tipo || "presencial",
       lead_id: m.lead_id || "none",
       conta_id: m.conta_id || "none",
+      imovel_id: m.imovel_id || "none",
       agendada_para: local,
       local: m.local || "",
       link: m.link || "",
@@ -101,6 +107,7 @@ export default function Meetings() {
       tipo: editForm.tipo,
       lead_id: editForm.lead_id === "none" ? null : editForm.lead_id,
       conta_id: editForm.conta_id === "none" ? null : editForm.conta_id,
+      imovel_id: editForm.imovel_id === "none" ? null : editForm.imovel_id,
       agendada_para: new Date(editForm.agendada_para).toISOString(),
       local: editForm.local || null,
       link: editForm.link || null,
@@ -160,6 +167,16 @@ export default function Meetings() {
                   options={contas}
                   placeholder="Buscar conta..."
                   emptyLabel="Sem conta vinculada"
+                />
+              </div>
+              <div>
+                <Label>Imóvel visitado</Label>
+                <SearchableSelect
+                  value={form.imovel_id}
+                  onChange={(v) => setForm({ ...form, imovel_id: v })}
+                  options={imoveis}
+                  placeholder="Buscar imóvel..."
+                  emptyLabel="Sem imóvel vinculado"
                 />
               </div>
               <div><Label>Data e hora</Label><Input type="datetime-local" value={form.agendada_para} onChange={e => setForm({ ...form, agendada_para: e.target.value })} /></div>
@@ -264,6 +281,16 @@ export default function Meetings() {
                   emptyLabel="Sem conta vinculada"
                 />
               </div>
+            </div>
+            <div>
+              <Label>Imóvel visitado</Label>
+              <SearchableSelect
+                value={editForm.imovel_id}
+                onChange={(v) => setEditForm({ ...editForm, imovel_id: v })}
+                options={imoveis}
+                placeholder="Buscar imóvel..."
+                emptyLabel="Sem imóvel vinculado"
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

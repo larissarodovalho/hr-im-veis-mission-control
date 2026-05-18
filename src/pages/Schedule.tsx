@@ -61,6 +61,7 @@ export default function Schedule() {
   const [reunioes, setReunioes] = useState<Compromisso[]>([]);
   const [bloqueios, setBloqueios] = useState<Bloqueio[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
+  const [imoveisList, setImoveisList] = useState<any[]>([]);
   const [selected, setSelected] = useState<Date | undefined>(new Date());
   const [openNovo, setOpenNovo] = useState(false);
   const [openBloqueio, setOpenBloqueio] = useState(false);
@@ -71,6 +72,7 @@ export default function Schedule() {
     agendada_para: "",
     duracao_min: 60,
     lead_id: "none",
+    imovel_id: "none",
     local: "",
     link: "",
     notas: "",
@@ -217,6 +219,8 @@ export default function Schedule() {
       created_by: x.created_by,
     })));
     setLeads(l ?? []);
+    const { data: ims } = await supabase.from("imoveis").select("id, titulo, codigo").order("created_at", { ascending: false });
+    setImoveisList((ims ?? []).map((i: any) => ({ id: i.id, nome: i.codigo ? `${i.titulo} · ${i.codigo}` : i.titulo })));
   };
 
   useEffect(() => {
@@ -277,6 +281,7 @@ export default function Schedule() {
       duracao_min: novo.duracao_min,
       titulo: novo.titulo,
       lead_id: novo.lead_id === "none" ? null : novo.lead_id,
+      imovel_id: novo.imovel_id === "none" ? null : novo.imovel_id,
       local: novo.tipo === "presencial" ? novo.local || null : null,
       link: novo.tipo === "videochamada" ? novo.link || null : null,
       notas: novo.notas || null,
@@ -286,7 +291,7 @@ export default function Schedule() {
     } as any);
     if (error) return toast.error(error.message);
     toast.success("Compromisso criado");
-    setNovo({ tipo: "presencial", titulo: "", agendada_para: "", duracao_min: 60, lead_id: "none", local: "", link: "", notas: "" });
+    setNovo({ tipo: "presencial", titulo: "", agendada_para: "", duracao_min: 60, lead_id: "none", imovel_id: "none", local: "", link: "", notas: "" });
     setOpenNovo(false);
     load();
   };
@@ -398,6 +403,16 @@ export default function Schedule() {
                     <SelectContent>
                       <SelectItem value="none">Sem lead vinculado</SelectItem>
                       {leads.map((l) => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Imóvel visitado</Label>
+                  <Select value={novo.imovel_id} onValueChange={(v) => setNovo({ ...novo, imovel_id: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sem imóvel vinculado</SelectItem>
+                      {imoveisList.map((i) => <SelectItem key={i.id} value={i.id}>{i.nome}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
