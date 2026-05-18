@@ -383,7 +383,7 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
         status: acao === "gerar" ? "gerado" : "rascunho",
         corretor_id: user.id,
         created_by: user.id,
-        dados_partes: f,
+        dados_partes: { ...f, imoveis: imoveisList },
       };
 
       let error: any = null;
