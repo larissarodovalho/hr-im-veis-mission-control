@@ -553,8 +553,8 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
                           </SelectContent>
                         </Select>
                       </div>
-                      <Field label="Data de nascimento" placeholder="DD/MM/AAAA" value={f.c1_nascimento} onChange={(v: string) => set({ c1_nascimento: maskDate(v) })} />
                       <Field label="RG" value={f.c1_rg} onChange={(v: string) => set({ c1_rg: v })} />
+
                       <Field label="Estado civil" value={f.c1_estado_civil} onChange={(v: string) => set({ c1_estado_civil: v })} />
                       <Field label="Profissão" value={f.c1_profissao} onChange={(v: string) => set({ c1_profissao: v })} />
                       <Field label="E-mail" value={f.c1_email} onChange={(v: string) => set({ c1_email: v })} />
