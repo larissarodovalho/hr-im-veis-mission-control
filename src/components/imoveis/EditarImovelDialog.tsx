@@ -236,8 +236,9 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
               {isTerreno ? "Áreas" : "Áreas e cômodos"}
             </h3>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               <div><Label>Área total (m²)</Label><Input type="number" inputMode="decimal" value={form.area_total} onChange={(e) => upd("area_total", e.target.value)} /></div>
+              {!isTerreno && <div><Label>Área construída (m²)</Label><Input type="number" inputMode="decimal" value={form.area_construida} onChange={(e) => upd("area_construida", e.target.value)} /></div>}
               {!isTerreno && <div><Label>Área útil (m²)</Label><Input type="number" inputMode="decimal" value={form.area_util} onChange={(e) => upd("area_util", e.target.value)} /></div>}
               <div><Label>Vagas garagem</Label><Input type="number" value={form.vagas} onChange={(e) => upd("vagas", e.target.value)} /></div>
             </div>
