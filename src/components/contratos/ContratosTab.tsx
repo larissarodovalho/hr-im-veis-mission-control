@@ -86,7 +86,7 @@ export default function ContratosTab() {
         blob = await res.blob();
       } else {
         if (!c.conteudo_renderizado) return toast.error("Sem conteúdo para gerar PDF");
-        blob = generatePdfBlob("CONTRATO DE AUTORIZAÇÃO DE VENDA COM EXCLUSIVIDADE", c.conteudo_renderizado);
+        blob = await generatePdfBlob("CONTRATO DE AUTORIZAÇÃO DE VENDA COM EXCLUSIVIDADE", c.conteudo_renderizado);
       }
       const objUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
