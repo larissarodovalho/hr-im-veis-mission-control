@@ -29,6 +29,7 @@ import Calls from "@/pages/Calls";
 import Visits from "@/pages/Visits";
 import Schedule from "@/pages/Schedule";
 import Documents from "@/pages/Documents";
+import Contratos from "@/pages/Contratos";
 import DocumentDetail from "@/pages/DocumentDetail";
 import Reports from "@/pages/Reports";
 import Users from "@/pages/UsuariosAdminPage";
