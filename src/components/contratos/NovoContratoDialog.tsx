@@ -43,11 +43,11 @@ const empty = {
   // tipo
   pessoa_juridica: false,
   // PF — contratante 1
-  c1_nome: "", c1_nascimento: "", c1_estado_civil: "", c1_profissao: "",
+  c1_nome: "", c1_sexo: "M", c1_nascimento: "", c1_estado_civil: "", c1_profissao: "",
   c1_rg: "", c1_cpf: "", c1_email: "", c1_telefone: "",
   // contratante 2 opcional
   add_c2: false,
-  c2_nome: "", c2_nascimento: "", c2_estado_civil: "", c2_profissao: "",
+  c2_nome: "", c2_sexo: "M", c2_nascimento: "", c2_estado_civil: "", c2_profissao: "",
   c2_rg: "", c2_cpf: "", c2_email: "", c2_telefone: "",
   // endereço residencial (PF)
   end_logradouro: "", end_numero: "", end_bairro: "", end_cidade: "", end_estado: "", end_cep: "",
@@ -55,7 +55,7 @@ const empty = {
   pj_razao_social: "", pj_cnpj: "",
   pj_logradouro: "", pj_numero: "", pj_bairro: "", pj_cidade: "", pj_estado: "", pj_cep: "",
   // sócio representante (PJ)
-  socio_nome: "", socio_nascimento: "", socio_estado_civil: "", socio_profissao: "",
+  socio_nome: "", socio_sexo: "M", socio_nascimento: "", socio_estado_civil: "", socio_profissao: "",
   socio_rg: "", socio_cpf: "", socio_email: "", socio_telefone: "", socio_endereco: "",
   // imóvel
   imovel_lote: "", imovel_quadra: "", imovel_area_total: "", imovel_area_construida: "",
@@ -68,6 +68,18 @@ const empty = {
   protecao_meses: "12",
   cidade_assinatura: "Sinop/MT",
   observacoes: "",
+};
+
+// Conjugação por gênero (M/F)
+const gen = (sexo: string) => {
+  const F = sexo === "F";
+  return {
+    nacionalidade: F ? "brasileira" : "brasileiro",
+    nascido: F ? "nascida" : "nascido",
+    portador: F ? "portadora" : "portador",
+    inscrito: F ? "inscrita" : "inscrito",
+    domiciliado: F ? "domiciliada" : "domiciliado",
+  };
 };
 
 export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Props) {
