@@ -489,6 +489,14 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
             )}
           </div>
 
+          {!editing && clienteOrigem === "manual" && (
+            <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+              <Switch checked={salvarConta} onCheckedChange={setSalvarConta} />
+              <span>Cadastrar automaticamente este cliente nas Contas do CRM</span>
+            </label>
+          )}
+
+
           <Accordion type="multiple" defaultValue={["contratante", "imovel", "negocio"]} className="w-full">
             {/* CONTRATANTE */}
             <AccordionItem value="contratante">
