@@ -1,21 +1,18 @@
-## Adicionar "Área construída" em Áreas e Cômodos
+## Exibir características no site público
 
-Hoje existem dois campos de área: **Área total** e **Área útil**. A solicitação é incluir também **Área construída**, mantendo "Área total" e adicionando o novo campo ao lado.
+As características marcadas no cadastro (piscina, churrasqueira, etc.) são salvas em `imoveis.caracteristicas`, mas não estão sendo renderizadas em nenhuma página pública.
 
-### Banco de dados
-- Migração na tabela `imoveis`: adicionar coluna `area_construida numeric` (nullable).
+### Mudanças
 
-### Cadastro/edição do imóvel
-- **`NovoImovelDialog.tsx`** e **`EditarImovelDialog.tsx`**: na seção "Áreas e cômodos", incluir o input "Área construída (m²)" junto com "Área total" e "Área útil". Incluir no estado inicial, no carregamento do imóvel (edição) e no payload de insert/update.
+**`src/pages/site/ImovelDetalhePage.tsx`**
+- Incluir `caracteristicas: row.caracteristicas ?? []` no `mapImovelFromDb`.
+- Adicionar uma nova seção "Características" na página de detalhe, exibindo cada item como chip/badge (apenas quando o array tiver itens).
 
-### Listagem CRM
-- **`Imoveis.tsx`**: quando houver `area_construida`, exibir junto das outras métricas de área no card.
-
-### Site público
-- **`ImoveisPage.tsx`** e **`ImovelDetalhePage.tsx`**: na exibição de área priorizar `area_util ?? area_construida ?? area_total`. Na página de detalhe, mostrar os três valores quando preenchidos.
+**`src/pages/site/ImoveisPage.tsx`**
+- Nos cards da listagem, mostrar as primeiras 3 características como badges discretas abaixo das infos de quartos/área (com "+N" quando houver mais), apenas se houver itens.
 
 ### Fora de escopo
-- Renomear/migrar dados das colunas existentes (`area_util`, `area_total`) — permanecem como estão.
-- Filtro por área construída na busca pública.
+- Filtro por característica na busca pública.
+- Ícones específicos por característica (todas usam o mesmo estilo de chip).
 
 Confirma para eu implementar?
