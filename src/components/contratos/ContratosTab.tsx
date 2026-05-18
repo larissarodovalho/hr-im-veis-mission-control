@@ -207,7 +207,7 @@ export default function ContratosTab() {
                               <Pencil className="h-4 w-4" />
                             </Button>
                           )}
-                          <Button size="sm" variant="ghost" onClick={() => setSendCtx(c)} title="Enviar para assinatura">
+                          <Button size="sm" variant="ghost" onClick={() => handleSendClick(c)} title="Enviar para assinatura" disabled={preparingSend === c.id}>
                             <Send className="h-4 w-4" />
                           </Button>
                           {isAdmin && (
