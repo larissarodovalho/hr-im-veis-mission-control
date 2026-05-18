@@ -43,6 +43,37 @@ export default function ContratosTab() {
   const [openNew, setOpenNew] = useState(false);
   const [editCtx, setEditCtx] = useState<any | null>(null);
   const [sendCtx, setSendCtx] = useState<Contrato | null>(null);
+  const [sendFile, setSendFile] = useState<{ blob: Blob; filename: string } | null>(null);
+  const [preparingSend, setPreparingSend] = useState<string | null>(null);
+
+  const handleSendClick = async (c: Contrato) => {
+    setPreparingSend(c.id);
+    try {
+      let blob: Blob;
+      if (c.pdf_url) {
+        const { data, error } = await supabase.storage
+          .from("signed-documents")
+          .createSignedUrl(c.pdf_url, 3600);
+        if (error) throw error;
+        const res = await fetch(data.signedUrl);
+        if (!res.ok) throw new Error("Não foi possível baixar o PDF");
+        blob = await res.blob();
+      } else {
+        if (!c.conteudo_renderizado) {
+          toast.error("Gere o PDF do contrato antes de enviar para assinatura");
+          return;
+        }
+        blob = await generatePdfBlob("CONTRATO DE INTERMEDIAÇÃO IMOBILIÁRIA COM CLÁUSULA DE EXCLUSIVIDADE", c.conteudo_renderizado);
+      }
+      const filename = `contrato-${(c.cliente_nome || "sem-nome").replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-${c.id.slice(0, 8)}.pdf`;
+      setSendFile({ blob, filename });
+      setSendCtx(c);
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao preparar PDF");
+    } finally {
+      setPreparingSend(null);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
