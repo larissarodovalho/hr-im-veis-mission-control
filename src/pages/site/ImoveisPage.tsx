@@ -4,8 +4,9 @@ import { MapPin, BedDouble, Bath, Car, Search, X, ArrowUpRight, Maximize2, Eye }
 import { supabase } from "@/integrations/supabase/client";
 
 function mapImovelFromDb(row: any) {
-  const areaNum = row.area_util ?? row.area_construida ?? row.area_total;
-  const area = areaNum != null ? `${Number(areaNum).toLocaleString("pt-BR")} m²` : "—";
+  const areaTotal = row.area_total != null ? `${Number(row.area_total).toLocaleString("pt-BR")} m²` : null;
+  const areaConstruida = row.area_construida != null ? `${Number(row.area_construida).toLocaleString("pt-BR")} m²` : null;
+  const areaUtil = row.area_util != null ? `${Number(row.area_util).toLocaleString("pt-BR")} m²` : null;
   return {
     id: row.id,
     codigo: row.codigo || `HR-${String(row.id).slice(0, 6).toUpperCase()}`,
@@ -17,7 +18,9 @@ function mapImovelFromDb(row: any) {
     banheiros: row.banheiros ?? 0,
     suites: row.suites ?? 0,
     vagas: row.vagas ?? 0,
-    area,
+    area: areaUtil ?? areaConstruida ?? areaTotal ?? "—",
+    area_total: areaTotal,
+    area_construida: areaConstruida,
     descricao: row.descricao ?? "",
     caracteristicas: row.caracteristicas ?? [],
     fotos: row.fotos ?? [],
@@ -474,14 +477,22 @@ export default function ImoveisPage() {
                                 <span className="text-[11px] font-light">{im.vagas}</span>
                               </div>
                             )}
-                            <div className="flex items-center gap-1.5 pl-3 border-l border-white/[0.06] text-white/25">
-                              <span className="text-[11px] font-light">{im.area}</span>
-                            </div>
+                            {im.area_total && (
+                              <div className="flex items-center gap-1.5 pl-3 border-l border-white/[0.06] text-white/25">
+                                <Maximize2 className="h-3.5 w-3.5" />
+                                <span className="text-[11px] font-light">{im.area_total}</span>
+                              </div>
+                            )}
+                            {im.area_construida && (
+                              <div className="flex items-center gap-1.5 pl-3 border-l border-white/[0.06] text-white/25">
+                                <span className="text-[11px] font-light">{im.area_construida}</span>
+                              </div>
+                            )}
                           </>
                         ) : (
                           <div className="flex items-center gap-1.5 text-white/60">
                             <Maximize2 className="h-3.5 w-3.5" />
-                            <span className="text-[11px] font-light">Área total: {im.area}</span>
+                            <span className="text-[11px] font-light">Área total: {im.area_total ?? im.area}</span>
                           </div>
                         )}
                       </div>
