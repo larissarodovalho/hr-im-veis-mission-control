@@ -41,12 +41,13 @@ export default function ContratosTab() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [openNew, setOpenNew] = useState(false);
+  const [editCtx, setEditCtx] = useState<any | null>(null);
   const [sendCtx, setSendCtx] = useState<Contrato | null>(null);
 
   const load = async () => {
     setLoading(true);
     const { data, error } = await (supabase.from("contratos" as any) as any)
-      .select("id,cliente_nome,imovel_id,valor,status,created_at,pdf_url,conteudo_renderizado,lead_id,conta_id,cliente_email,cliente_documento")
+      .select("id,cliente_nome,imovel_id,valor,status,created_at,pdf_url,conteudo_renderizado,lead_id,conta_id,cliente_email,cliente_documento,dados_partes")
       .order("created_at", { ascending: false });
     if (error) { toast.error(error.message); setLoading(false); return; }
     setItems((data as any) || []);
