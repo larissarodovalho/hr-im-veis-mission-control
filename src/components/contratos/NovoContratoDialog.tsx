@@ -113,6 +113,7 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
   const [clienteOrigem, setClienteOrigem] = useState<"lead" | "conta" | "manual">("manual");
   const [leadId, setLeadId] = useState<string>("");
   const [contaId, setContaId] = useState<string>("");
+  const [salvarConta, setSalvarConta] = useState<boolean>(true);
   const [imoveisList, setImoveisList] = useState<ImovelEntry[]>([emptyImovel()]);
 
   const [f, setF] = useState({ ...empty });
