@@ -370,7 +370,7 @@ export default function ImovelDetalhePage() {
               >
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-1 h-3 bg-gradient-to-b from-amber-300/40 to-transparent rounded-full" />
-                  <h3 className="text-[10px] font-medium text-white/60 uppercase tracking-[0.3em]">Detalhes</h3>
+                  <h3 className="text-xs font-medium text-white/60 uppercase tracking-[0.3em]">Detalhes</h3>
                 </div>
                 {[
                   { label: "Código", value: imovel.codigo },
@@ -390,8 +390,8 @@ export default function ImovelDetalhePage() {
                     transition={{ delay: i * 0.04, duration: 0.3 }}
                     className="flex items-center justify-between py-2.5 border-b border-white/[0.04] last:border-0"
                   >
-                    <span className="text-[10px] text-white/50 font-light">{item.label}</span>
-                    <span className="text-[10px] text-white/50 font-medium">{item.value}</span>
+                    <span className="text-xs text-white/50 font-normal">{item.label}</span>
+                    <span className="text-xs text-white/70 font-medium">{item.value}</span>
                   </motion.div>
                 ))}
               </motion.div>
