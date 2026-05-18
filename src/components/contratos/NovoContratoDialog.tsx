@@ -386,6 +386,16 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
                     <div className="grid grid-cols-2 gap-3">
                       <Field label="Nome completo *" value={f.socio_nome} onChange={(v: string) => set({ socio_nome: v })} />
                       <Field label="CPF *" value={f.socio_cpf} onChange={(v: string) => set({ socio_cpf: v })} />
+                      <div>
+                        <Label>Sexo</Label>
+                        <Select value={f.socio_sexo} onValueChange={(v) => set({ socio_sexo: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="M">Masculino</SelectItem>
+                            <SelectItem value="F">Feminino</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <Field label="Data de nascimento" placeholder="DD/MM/AAAA" value={f.socio_nascimento} onChange={(v: string) => set({ socio_nascimento: maskDate(v) })} />
                       <Field label="RG" value={f.socio_rg} onChange={(v: string) => set({ socio_rg: v })} />
                       <Field label="Estado civil" value={f.socio_estado_civil} onChange={(v: string) => set({ socio_estado_civil: v })} />
