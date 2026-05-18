@@ -233,31 +233,71 @@ export async function generatePdfBlob(title: string, content: string): Promise<B
     if (footer) doc.addImage(footer.dataUrl, "PNG", 0, pageH - footerH, pageW, footerH);
   };
 
-  drawLetterhead();
+  const lineH = 16;
+  const paraGap = 4;
+  const titleSize = 13;
+  const bodySize = 11;
+  const availableH = contentBottom - contentTop;
 
+  // Título (somente na 1ª página)
   doc.setFont("Montserrat", "bold");
-  doc.setFontSize(13);
+  doc.setFontSize(titleSize);
   const titleLines = doc.splitTextToSize(title, maxW);
-  doc.text(titleLines, pageW / 2, contentTop + 4, { align: "center" });
+  const titleBlockH = titleLines.length * lineH + 20;
 
+  // Pré-pagina o corpo
   doc.setFont("Montserrat", "normal");
-  doc.setFontSize(11);
-  let y = contentTop + titleLines.length * 16 + 20;
-
+  doc.setFontSize(bodySize);
   const paragraphs = content.split(/\n/);
+
+  type Item = { line: string; gapAfter: number };
+  const items: Item[] = [];
   for (const para of paragraphs) {
     const lines = doc.splitTextToSize(para.length ? para : " ", maxW);
-    for (const line of lines) {
-      if (y > contentBottom) {
-        doc.addPage();
-        drawLetterhead();
-        y = contentTop;
-      }
-      doc.text(line, margin, y);
-      y += 16;
-    }
-    y += 4;
+    lines.forEach((line: string, idx: number) => {
+      items.push({ line, gapAfter: idx === lines.length - 1 ? paraGap : 0 });
+    });
   }
+
+  const pages: { items: Item[]; usedH: number }[] = [];
+  let cur: Item[] = [];
+  let curH = titleBlockH; // 1ª página inclui título
+  for (const it of items) {
+    const add = lineH + it.gapAfter;
+    if (curH + add > availableH && cur.length > 0) {
+      pages.push({ items: cur, usedH: curH });
+      cur = [];
+      curH = 0; // demais páginas sem título
+    }
+    cur.push(it);
+    curH += add;
+  }
+  if (cur.length > 0 || pages.length === 0) {
+    pages.push({ items: cur, usedH: curH });
+  }
+
+  // Renderiza centralizado verticalmente
+  pages.forEach((pg, pageIdx) => {
+    if (pageIdx > 0) doc.addPage();
+    drawLetterhead();
+
+    let y = contentTop + Math.max(0, (availableH - pg.usedH) / 2);
+
+    if (pageIdx === 0) {
+      doc.setFont("Montserrat", "bold");
+      doc.setFontSize(titleSize);
+      doc.text(titleLines, pageW / 2, y + 4, { align: "center" });
+      y += titleBlockH;
+    }
+
+    doc.setFont("Montserrat", "normal");
+    doc.setFontSize(bodySize);
+    for (const it of pg.items) {
+      doc.text(it.line, margin, y);
+      y += lineH + it.gapAfter;
+    }
+  });
+
   return doc.output("blob");
 }
 
