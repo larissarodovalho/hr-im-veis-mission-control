@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2 } from "lucide-react";
+import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import NovoImovelDialog from "@/components/imoveis/NovoImovelDialog";
 import EditarImovelDialog from "@/components/imoveis/EditarImovelDialog";
