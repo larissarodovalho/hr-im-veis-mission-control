@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { FileSignature, Plus, Search, Download, Send, Trash2 } from "lucide-react";
+import { FileSignature, Plus, Search, Download, Send, Trash2, Pencil } from "lucide-react";
 import NovoContratoDialog from "@/components/contratos/NovoContratoDialog";
 import SendDocumentDialog from "@/components/SendDocumentDialog";
 import { CONTRATO_STATUS, formatCurrency, generatePdfBlob } from "@/lib/contratos";
@@ -41,12 +41,13 @@ export default function ContratosTab() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [openNew, setOpenNew] = useState(false);
+  const [editCtx, setEditCtx] = useState<any | null>(null);
   const [sendCtx, setSendCtx] = useState<Contrato | null>(null);
 
   const load = async () => {
     setLoading(true);
     const { data, error } = await (supabase.from("contratos" as any) as any)
-      .select("id,cliente_nome,imovel_id,valor,status,created_at,pdf_url,conteudo_renderizado,lead_id,conta_id,cliente_email,cliente_documento")
+      .select("id,cliente_nome,imovel_id,valor,status,created_at,pdf_url,conteudo_renderizado,lead_id,conta_id,cliente_email,cliente_documento,dados_partes")
       .order("created_at", { ascending: false });
     if (error) { toast.error(error.message); setLoading(false); return; }
     setItems((data as any) || []);
@@ -170,6 +171,11 @@ export default function ContratosTab() {
                           <Button size="sm" variant="ghost" onClick={() => handleDownload(c)} title="Baixar/Ver PDF">
                             <Download className="h-4 w-4" />
                           </Button>
+                          {(c.status === "rascunho" || c.status === "gerado") && (
+                            <Button size="sm" variant="ghost" onClick={() => setEditCtx(c)} title="Editar contrato">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button size="sm" variant="ghost" onClick={() => setSendCtx(c)} title="Enviar para assinatura">
                             <Send className="h-4 w-4" />
                           </Button>
@@ -202,6 +208,13 @@ export default function ContratosTab() {
       </Card>
 
       <NovoContratoDialog open={openNew} onOpenChange={setOpenNew} onCreated={load} />
+
+      <NovoContratoDialog
+        open={!!editCtx}
+        onOpenChange={(v) => !v && setEditCtx(null)}
+        editing={editCtx}
+        onCreated={() => { setEditCtx(null); load(); }}
+      />
 
       {sendCtx && (
         <SendDocumentDialog
