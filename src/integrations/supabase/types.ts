@@ -560,6 +560,131 @@ export type Database = {
         }
         Relationships: []
       }
+      contrato_templates: {
+        Row: {
+          ativo: boolean
+          conteudo: string
+          created_at: string
+          created_by: string | null
+          id: string
+          nome: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          conteudo: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome: string
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          conteudo?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      contratos: {
+        Row: {
+          cliente_documento: string | null
+          cliente_email: string | null
+          cliente_endereco: string | null
+          cliente_nome: string | null
+          cliente_telefone: string | null
+          comissao_percentual: number | null
+          conta_id: string | null
+          conteudo_renderizado: string | null
+          corretor_id: string | null
+          created_at: string
+          created_by: string | null
+          data_fim: string | null
+          data_inicio: string | null
+          id: string
+          imovel_id: string | null
+          lead_id: string | null
+          observacoes: string | null
+          pdf_url: string | null
+          prazo_dias: number | null
+          signed_document_id: string | null
+          status: string
+          template_id: string | null
+          tipo: string
+          updated_at: string
+          valor: number | null
+        }
+        Insert: {
+          cliente_documento?: string | null
+          cliente_email?: string | null
+          cliente_endereco?: string | null
+          cliente_nome?: string | null
+          cliente_telefone?: string | null
+          comissao_percentual?: number | null
+          conta_id?: string | null
+          conteudo_renderizado?: string | null
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          id?: string
+          imovel_id?: string | null
+          lead_id?: string | null
+          observacoes?: string | null
+          pdf_url?: string | null
+          prazo_dias?: number | null
+          signed_document_id?: string | null
+          status?: string
+          template_id?: string | null
+          tipo?: string
+          updated_at?: string
+          valor?: number | null
+        }
+        Update: {
+          cliente_documento?: string | null
+          cliente_email?: string | null
+          cliente_endereco?: string | null
+          cliente_nome?: string | null
+          cliente_telefone?: string | null
+          comissao_percentual?: number | null
+          conta_id?: string | null
+          conteudo_renderizado?: string | null
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          id?: string
+          imovel_id?: string | null
+          lead_id?: string | null
+          observacoes?: string | null
+          pdf_url?: string | null
+          prazo_dias?: number | null
+          signed_document_id?: string | null
+          status?: string
+          template_id?: string | null
+          tipo?: string
+          updated_at?: string
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "contrato_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_events: {
         Row: {
           created_at: string
