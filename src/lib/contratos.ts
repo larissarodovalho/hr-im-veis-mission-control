@@ -188,7 +188,18 @@ async function loadFontBase64(path: string): Promise<string> {
 }
 
 // ---------- PDF ----------
-export async function generatePdfBlob(title: string, content: string): Promise<Blob> {
+export type SignatureBlock = {
+  /** Linhas da coluna esquerda (CONTRATANTE) — primeira é o nome (negrito). */
+  contratante: string[];
+  /** Linhas da coluna direita (CONTRATADA) — primeira é o nome (negrito). */
+  contratada: string[];
+};
+
+export async function generatePdfBlob(
+  title: string,
+  content: string,
+  signatures?: SignatureBlock,
+): Promise<Blob> {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const margin = 56;
   const pageW = doc.internal.pageSize.getWidth();
@@ -245,17 +256,108 @@ export async function generatePdfBlob(title: string, content: string): Promise<B
   const titleLines = doc.splitTextToSize(title, maxW);
   const titleBlockH = titleLines.length * lineH + 20;
 
+  // ---------- Blocos especiais (assinaturas / testemunhas) ----------
+  const colGap = 24;
+  const colW = (maxW - colGap) / 2;
+  const leftX = margin;
+  const rightX = margin + colW + colGap;
+  const signLine = "_______________________________";
+
+  const buildAssinaturasBlock = () => {
+    const c = signatures?.contratante ?? [];
+    const d = signatures?.contratada ?? [
+      "HR CORRETOR DE IMÓVEIS LTDA",
+      "CNPJ nº 27.311.298/0001-07",
+      "Rep. por Hans M. E. L. Rodovalho Martins",
+      "CPF nº 022.540.031-60",
+    ];
+    const headerH2 = lineH;        // "CONTRATANTE:" / "CONTRATADA:"
+    const sigGap = 56;             // espaço para a assinatura
+    const lineGap = 6;             // até a linha "_____"
+    const afterLine = lineH;       // espaço após a linha
+    const detailLines = Math.max(c.length, d.length);
+    const detailsH = detailLines * lineH;
+    const height = headerH2 + sigGap + lineGap + afterLine + detailsH + 8;
+
+    const render = (y: number) => {
+      doc.setFont("Montserrat", "bold");
+      doc.setFontSize(bodySize);
+      doc.text("CONTRATANTE:", leftX, y);
+      doc.text("CONTRATADA:", rightX, y);
+      const lineY = y + headerH2 + sigGap;
+      doc.setDrawColor(0);
+      doc.setLineWidth(0.5);
+      doc.line(leftX, lineY, leftX + colW, lineY);
+      doc.line(rightX, lineY, rightX + colW, lineY);
+      const detailsY = lineY + afterLine;
+      // primeira linha em negrito (nome), demais normais
+      for (let i = 0; i < detailLines; i++) {
+        const yy = detailsY + i * lineH;
+        if (c[i] !== undefined) {
+          doc.setFont("Montserrat", i === 0 ? "bold" : "normal");
+          doc.text(c[i], leftX, yy);
+        }
+        if (d[i] !== undefined) {
+          doc.setFont("Montserrat", i === 0 ? "bold" : "normal");
+          doc.text(d[i], rightX, yy);
+        }
+      }
+      doc.setFont("Montserrat", "normal");
+    };
+
+    return { kind: "block" as const, height, render };
+  };
+
+  const buildTestemunhasBlock = () => {
+    const headerH2 = lineH;
+    const sigGap = 40;
+    const lineGap = 6;
+    const afterLine = lineH;
+    const detailsH = lineH; // "CPF nº ___"
+    const height = headerH2 + sigGap + lineGap + afterLine + detailsH + 4;
+
+    const render = (y: number) => {
+      doc.setFont("Montserrat", "bold");
+      doc.setFontSize(bodySize);
+      doc.text("TESTEMUNHAS:", leftX, y);
+      const lineY = y + headerH2 + sigGap;
+      doc.setDrawColor(0);
+      doc.setLineWidth(0.5);
+      doc.setFont("Montserrat", "normal");
+      doc.text("1 -", leftX, lineY);
+      doc.line(leftX + 18, lineY, leftX + colW, lineY);
+      doc.text("2 -", rightX, lineY);
+      doc.line(rightX + 18, lineY, rightX + colW, lineY);
+      const detailsY = lineY + afterLine;
+      doc.text("CPF nº ____________________________", leftX, detailsY);
+      doc.text("CPF nº ____________________________", rightX, detailsY);
+    };
+
+    return { kind: "block" as const, height, render };
+  };
+
   // Pré-pagina o corpo
   doc.setFont("Montserrat", "normal");
   doc.setFontSize(bodySize);
   const paragraphs = content.split(/\n/);
 
-  type Item = { line: string; gapAfter: number };
+  type Item =
+    | { kind: "text"; line: string; gapAfter: number }
+    | { kind: "block"; height: number; render: (y: number) => void };
   const items: Item[] = [];
   for (const para of paragraphs) {
+    const trimmed = para.trim();
+    if (trimmed === "[[ASSINATURAS]]") {
+      items.push(buildAssinaturasBlock());
+      continue;
+    }
+    if (trimmed === "[[TESTEMUNHAS]]") {
+      items.push(buildTestemunhasBlock());
+      continue;
+    }
     const lines = doc.splitTextToSize(para.length ? para : " ", maxW);
     lines.forEach((line: string, idx: number) => {
-      items.push({ line, gapAfter: idx === lines.length - 1 ? paraGap : 0 });
+      items.push({ kind: "text", line, gapAfter: idx === lines.length - 1 ? paraGap : 0 });
     });
   }
 
@@ -263,7 +365,7 @@ export async function generatePdfBlob(title: string, content: string): Promise<B
   let cur: Item[] = [];
   let curH = titleBlockH; // 1ª página inclui título
   for (const it of items) {
-    const add = lineH + it.gapAfter;
+    const add = it.kind === "text" ? lineH + it.gapAfter : it.height;
     if (curH + add > availableH && cur.length > 0) {
       pages.push({ items: cur, usedH: curH });
       cur = [];
@@ -293,8 +395,13 @@ export async function generatePdfBlob(title: string, content: string): Promise<B
     doc.setFont("Montserrat", "normal");
     doc.setFontSize(bodySize);
     for (const it of pg.items) {
-      doc.text(it.line, margin, y);
-      y += lineH + it.gapAfter;
+      if (it.kind === "text") {
+        doc.text(it.line, margin, y);
+        y += lineH + it.gapAfter;
+      } else {
+        it.render(y);
+        y += it.height;
+      }
     }
   });
 
