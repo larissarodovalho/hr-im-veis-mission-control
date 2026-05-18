@@ -130,6 +130,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
         valor_condominio: num(form.valor_condominio),
         valor_iptu: num(form.valor_iptu),
         area_total: num(form.area_total),
+        area_construida: num(form.area_construida),
         area_util: num(form.area_util),
         quartos: int(form.quartos) ?? 0,
         suites: int(form.suites) ?? 0,
