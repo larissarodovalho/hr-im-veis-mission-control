@@ -114,7 +114,8 @@ export default function ImovelDetalhePage() {
 
   const image = imovel.imagem || getImageForImovel(imovel.id, imovel.tipo);
   const specs = [
-    { icon: Maximize2, label: "Área", value: imovel.area },
+    ...(imovel.area_total ? [{ icon: Maximize2, label: "Área total", value: imovel.area_total }] : []),
+    ...(imovel.area_construida ? [{ icon: Maximize2, label: "Área construída", value: imovel.area_construida }] : []),
     ...(imovel.quartos > 0 ? [{ icon: BedDouble, label: "Quartos", value: `${imovel.quartos}` }] : []),
     ...(imovel.banheiros > 0 ? [{ icon: Bath, label: "Banheiros", value: `${imovel.banheiros}` }] : []),
     ...(imovel.vagas > 0 ? [{ icon: Car, label: "Vagas", value: `${imovel.vagas}` }] : []),
@@ -375,7 +376,8 @@ export default function ImovelDetalhePage() {
                   { label: "Código", value: imovel.codigo },
                   { label: "Tipo", value: imovel.tipo },
                   { label: "Status", value: imovel.status },
-                  { label: "Área total", value: imovel.area },
+                  ...(imovel.area_total ? [{ label: "Área total", value: imovel.area_total }] : []),
+                  ...(imovel.area_construida ? [{ label: "Área construída", value: imovel.area_construida }] : []),
                   ...(imovel.quartos > 0 ? [{ label: "Quartos", value: `${imovel.quartos}` }] : []),
                   ...(imovel.banheiros > 0 ? [{ label: "Banheiros", value: `${imovel.banheiros}` }] : []),
                   ...(imovel.vagas > 0 ? [{ label: "Vagas", value: `${imovel.vagas}` }] : []),

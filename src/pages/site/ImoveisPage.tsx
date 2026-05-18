@@ -477,14 +477,22 @@ export default function ImoveisPage() {
                                 <span className="text-[11px] font-light">{im.vagas}</span>
                               </div>
                             )}
-                            <div className="flex items-center gap-1.5 pl-3 border-l border-white/[0.06] text-white/25">
-                              <span className="text-[11px] font-light">{im.area}</span>
-                            </div>
+                            {im.area_total && (
+                              <div className="flex items-center gap-1.5 pl-3 border-l border-white/[0.06] text-white/25">
+                                <Maximize2 className="h-3.5 w-3.5" />
+                                <span className="text-[11px] font-light">{im.area_total}</span>
+                              </div>
+                            )}
+                            {im.area_construida && (
+                              <div className="flex items-center gap-1.5 pl-3 border-l border-white/[0.06] text-white/25">
+                                <span className="text-[11px] font-light">{im.area_construida}</span>
+                              </div>
+                            )}
                           </>
                         ) : (
                           <div className="flex items-center gap-1.5 text-white/60">
                             <Maximize2 className="h-3.5 w-3.5" />
-                            <span className="text-[11px] font-light">Área total: {im.area}</span>
+                            <span className="text-[11px] font-light">Área total: {im.area_total ?? im.area}</span>
                           </div>
                         )}
                       </div>
