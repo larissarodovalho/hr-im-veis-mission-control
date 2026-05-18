@@ -18,7 +18,7 @@ export const ETAPAS: { id: EtapaFunil; label: string; color: string }[] = [
   { id: "visita", label: "Visita", color: "bg-teal-500/15 text-teal-700 border-teal-500/30" },
   { id: "proposta", label: "Proposta", color: "bg-sky-500/15 text-sky-700 border-sky-500/30" },
   { id: "fechado", label: "Fechado", color: "bg-success/15 text-success border-success/30" },
-  { id: "perdido", label: "Perdido", color: "bg-destructive/15 text-destructive border-destructive/30" },
+  { id: "perdido", label: "Followup", color: "bg-destructive/15 text-destructive border-destructive/30" },
 ];
 
 export const etapaLabel = (id: string) => ETAPAS.find((e) => e.id === id)?.label ?? "A contatar";
