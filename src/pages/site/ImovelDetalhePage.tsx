@@ -291,7 +291,7 @@ export default function ImovelDetalhePage() {
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-1 h-3 bg-gradient-to-b from-amber-300/40 to-transparent rounded-full" />
-                  <p className="text-[10px] uppercase tracking-[0.4em] text-white/50 font-light">Localização</p>
+                  <p className="text-xs uppercase tracking-[0.4em] text-white/60 font-normal">Localização</p>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {[
@@ -306,8 +306,8 @@ export default function ImovelDetalhePage() {
                       viewport={{ once: true }}
                       transition={{ delay: i * 0.08, duration: 0.5, ease }}
                     >
-                      <span className="text-[9px] uppercase tracking-[0.3em] text-white/15 block mb-1">{item.label}</span>
-                      <p className="text-base font-light text-white/50">{item.value}</p>
+                      <span className="text-xs uppercase tracking-[0.3em] text-white/30 block mb-1">{item.label}</span>
+                      <p className="text-lg font-normal text-white/70">{item.value}</p>
                     </motion.div>
                   ))}
                 </div>
