@@ -333,7 +333,7 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Novo contrato — Intermediação com exclusividade</DialogTitle>
+          <DialogTitle>{editing ? "Editar contrato" : "Novo contrato"} — Intermediação com exclusividade</DialogTitle>
           <DialogDescription>Preencha os dados das partes, do imóvel e do negócio.</DialogDescription>
         </DialogHeader>
 
