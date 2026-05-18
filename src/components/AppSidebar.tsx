@@ -79,9 +79,13 @@ export function AppSidebar() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const isCRM = location.pathname === "/crm";
-  const isMarketing = location.pathname === "/marketing";
-  const activeTab = searchParams.get("tab") || (isCRM ? "leads" : "geral");
+  const isCRM = location.pathname === "/crm" || location.pathname.startsWith("/crm/");
+  const isMarketing = location.pathname === "/marketing" || location.pathname.startsWith("/marketing/");
+  const activeTab =
+    searchParams.get("tab") ||
+    (isCRM
+      ? Object.entries(CRM_SUBTAB_ROUTES).find(([, r]) => location.pathname === r)?.[0] || "leads"
+      : "geral");
 
   const items = ALL_ITEMS.filter((i) => !isCorretorOnly || !i.restricted);
   const visibleCrmSubtabs = isCorretorOnly
