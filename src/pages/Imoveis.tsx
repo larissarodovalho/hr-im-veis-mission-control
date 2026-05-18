@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2 } from "lucide-react";
+import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import NovoImovelDialog from "@/components/imoveis/NovoImovelDialog";
 import EditarImovelDialog from "@/components/imoveis/EditarImovelDialog";
@@ -128,6 +128,13 @@ export default function Imoveis() {
     load();
   };
 
+  const verDocumento = async (p: Proposta) => {
+    if (!p.documento_url) { toast.error("Sem documento anexado"); return; }
+    const { data, error } = await supabase.storage.from("propostas").createSignedUrl(p.documento_url, 60 * 60);
+    if (error || !data?.signedUrl) { toast.error("Erro ao abrir o documento"); return; }
+    window.open(data.signedUrl, "_blank");
+  };
+
   // ---------- Cards ----------
   const Header = ({ i, badge }: { i: Imovel; badge?: React.ReactNode }) => (
     <div className="relative">
@@ -194,6 +201,11 @@ export default function Imoveis() {
                   </div>
                   {lead?.telefone && <div className="text-muted-foreground">{lead.telefone}</div>}
                   {p.condicoes && <div className="text-muted-foreground italic">{p.condicoes}</div>}
+                  {p.documento_url && (
+                    <button onClick={() => verDocumento(p)} className="flex items-center gap-1 text-primary hover:underline">
+                      <FileDown className="h-3 w-3" /> Ver PDF assinado
+                    </button>
+                  )}
                   <div className="flex gap-1.5 pt-1">
                     <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => recusarProposta(p)}>
                       <XCircle className="h-3 w-3 mr-1" /> Recusar
@@ -236,6 +248,11 @@ export default function Imoveis() {
             </div>
           </div>
           <div className="text-[11px] text-muted-foreground">Corretor: <span className="text-foreground">{profiles[aceita?.corretor_id || i.corretor_id] || "—"}</span></div>
+          {aceita?.documento_url && (
+            <Button size="sm" variant="outline" className="w-full" onClick={() => verDocumento(aceita)}>
+              <FileDown className="h-3.5 w-3.5 mr-1.5" /> Ver PDF assinado
+            </Button>
+          )}
           <div className="grid grid-cols-2 gap-2 pt-1">
             <Button size="sm" variant="outline" asChild>
               <Link to="/crm/contratos"><FileSignature className="h-3.5 w-3.5 mr-1.5" /> Contrato</Link>
@@ -275,6 +292,11 @@ export default function Imoveis() {
             </div>
           </div>
           <div className="text-[11px] text-muted-foreground">Corretor: <span className="text-foreground">{profiles[aceita?.corretor_id || i.corretor_id] || "—"}</span></div>
+          {aceita?.documento_url && (
+            <Button size="sm" variant="outline" className="w-full" onClick={() => verDocumento(aceita)}>
+              <FileDown className="h-3.5 w-3.5 mr-1.5" /> Ver PDF assinado
+            </Button>
+          )}
         </div>
       </Card>
     );
