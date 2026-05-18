@@ -367,7 +367,7 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
         template_id: template.id,
         lead_id: clienteOrigem === "lead" ? leadId || null : null,
         conta_id: clienteOrigem === "conta" ? contaId || null : null,
-        imovel_id: imovelId || null,
+        imovel_id: imoveisList.find((x) => x.id)?.id || null,
         cliente_nome: clienteNome,
         cliente_documento: clienteCpfCnpj || null,
         cliente_email: clienteEmail || null,
