@@ -83,7 +83,7 @@ const gen = (sexo: string) => {
   };
 };
 
-export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Props) {
+export default function NovoContratoDialog({ open, onOpenChange, onCreated, editing }: Props) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [template, setTemplate] = useState<any>(null);
@@ -102,7 +102,15 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
 
   useEffect(() => {
     if (!open) return;
-    setF({ ...empty }); setLeadId(""); setContaId(""); setImovelId(""); setClienteOrigem("manual");
+    if (editing) {
+      setF({ ...empty, ...(editing.dados_partes || {}) });
+      setLeadId(editing.lead_id || "");
+      setContaId(editing.conta_id || "");
+      setImovelId(editing.imovel_id || "");
+      setClienteOrigem(editing.lead_id ? "lead" : editing.conta_id ? "conta" : "manual");
+    } else {
+      setF({ ...empty }); setLeadId(""); setContaId(""); setImovelId(""); setClienteOrigem("manual");
+    }
     (async () => {
       const [tpl, ld, ct, im] = await Promise.all([
         (supabase.from("contrato_templates" as any) as any)
@@ -117,7 +125,7 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
       if (ct.data) setContas(ct.data.map((c: any) => ({ id: c.id, label: c.nome, extra: c })));
       if (im.data) setImoveis(im.data.map((i: any) => ({ id: i.id, label: `${i.codigo ? i.codigo + " — " : ""}${i.titulo}`, extra: i })));
     })();
-  }, [open]);
+  }, [open, editing]);
 
   // Pré-preenche pelo lead/conta
   useEffect(() => {
