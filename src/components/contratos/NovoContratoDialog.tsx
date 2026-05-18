@@ -572,42 +572,64 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
               </AccordionContent>
             </AccordionItem>
 
-            {/* IMÓVEL */}
+            {/* IMÓVEL(IS) */}
             <AccordionItem value="imovel">
-              <AccordionTrigger>Imóvel</AccordionTrigger>
-              <AccordionContent className="space-y-3 pt-2">
-                <div>
-                  <Label>Imóvel cadastrado</Label>
-                  <Select value={imovelId || "__none__"} onValueChange={(v) => setImovelId(v === "__none__" ? "" : v)}>
-                    <SelectTrigger><SelectValue placeholder="Selecione o imóvel (opcional)..." /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">— Nenhum (preencher manualmente) —</SelectItem>
-                      {imoveis.map((i) => <SelectItem key={i.id} value={i.id}>{i.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {!imovelId && (
-                  <div>
-                    <Label>Descrição manual do imóvel</Label>
-                    <Textarea
-                      rows={3}
-                      placeholder="Endereço completo, características e identificação do imóvel..."
-                      value={f.imovel_descricao_manual}
-                      onChange={(e) => set({ imovel_descricao_manual: e.target.value })}
-                    />
+              <AccordionTrigger>
+                Imóvel{imoveisList.length > 1 ? `is (${imoveisList.length})` : ""}
+              </AccordionTrigger>
+              <AccordionContent className="space-y-4 pt-2">
+                {imoveisList.map((it, idx) => (
+                  <div key={idx} className="border rounded-md p-3 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        {imoveisList.length > 1 ? `Imóvel ${idx + 1}` : "Imóvel"}
+                      </p>
+                      {imoveisList.length > 1 && (
+                        <Button type="button" variant="ghost" size="sm" onClick={() => removeImovel(idx)}>
+                          Remover
+                        </Button>
+                      )}
+                    </div>
+                    <div>
+                      <Label>Imóvel cadastrado</Label>
+                      <Select
+                        value={it.id || "__none__"}
+                        onValueChange={(v) => updateImovel(idx, { id: v === "__none__" ? null : v })}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Selecione o imóvel (opcional)..." /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">— Nenhum (preencher manualmente) —</SelectItem>
+                          {imoveis.map((i) => <SelectItem key={i.id} value={i.id}>{i.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {!it.id && (
+                      <div>
+                        <Label>Descrição manual do imóvel</Label>
+                        <Textarea
+                          rows={3}
+                          placeholder="Endereço completo, características e identificação do imóvel..."
+                          value={it.descricao_manual}
+                          onChange={(e) => updateImovel(idx, { descricao_manual: e.target.value })}
+                        />
+                      </div>
+                    )}
+                    <div className="grid grid-cols-4 gap-3">
+                      <Field label="Lote" value={it.lote} onChange={(v: string) => updateImovel(idx, { lote: v })} />
+                      <Field label="Quadra" value={it.quadra} onChange={(v: string) => updateImovel(idx, { quadra: v })} />
+                      <Field label="Área total (m²)" type="number" value={it.area_total} onChange={(v: string) => updateImovel(idx, { area_total: v })} />
+                      <Field label="Área construída (m²)" type="number" value={it.area_construida} onChange={(v: string) => updateImovel(idx, { area_construida: v })} />
+                      <Field className="col-span-2" label="Matrícula nº" value={it.matricula} onChange={(v: string) => updateImovel(idx, { matricula: v })} />
+                      <div className="col-span-4">
+                        <Label>Benfeitorias</Label>
+                        <Textarea rows={2} value={it.benfeitorias} onChange={(e) => updateImovel(idx, { benfeitorias: e.target.value })} />
+                      </div>
+                    </div>
                   </div>
-                )}
-                <div className="grid grid-cols-4 gap-3">
-                  <Field label="Lote" value={f.imovel_lote} onChange={(v: string) => set({ imovel_lote: v })} />
-                  <Field label="Quadra" value={f.imovel_quadra} onChange={(v: string) => set({ imovel_quadra: v })} />
-                  <Field label="Área total (m²)" type="number" value={f.imovel_area_total} onChange={(v: string) => set({ imovel_area_total: v })} />
-                  <Field label="Área construída (m²)" type="number" value={f.imovel_area_construida} onChange={(v: string) => set({ imovel_area_construida: v })} />
-                  <Field className="col-span-2" label="Matrícula nº" value={f.imovel_matricula} onChange={(v: string) => set({ imovel_matricula: v })} />
-                  <div className="col-span-4">
-                    <Label>Benfeitorias</Label>
-                    <Textarea rows={2} value={f.imovel_benfeitorias} onChange={(e) => set({ imovel_benfeitorias: e.target.value })} />
-                  </div>
-                </div>
+                ))}
+                <Button type="button" variant="outline" size="sm" onClick={addImovel}>
+                  + Adicionar outro imóvel
+                </Button>
               </AccordionContent>
             </AccordionItem>
 
