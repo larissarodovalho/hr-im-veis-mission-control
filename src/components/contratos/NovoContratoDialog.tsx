@@ -160,9 +160,10 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated }: Pr
     setLoading(true);
     try {
       const imovel = imoveis.find((x) => x.id === imovelId)?.extra;
-      const imovelEndereco = [imovel?.endereco, imovel?.numero, imovel?.complemento, imovel?.bairro,
+      const imovelEnderecoCadastrado = imovel ? [imovel?.endereco, imovel?.numero, imovel?.complemento, imovel?.bairro,
         imovel?.cidade && imovel?.estado ? `${imovel.cidade}/${imovel.estado}` : (imovel?.cidade || imovel?.estado),
-        imovel?.cep ? `CEP ${imovel.cep}` : ""].filter(Boolean).join(", ");
+        imovel?.cep ? `CEP ${imovel.cep}` : ""].filter(Boolean).join(", ") : "";
+      const imovelEndereco = imovelEnderecoCadastrado || f.imovel_descricao_manual || "";
 
       const { data: perfil } = await supabase.from("profiles").select("nome").eq("user_id", user.id).maybeSingle();
 
