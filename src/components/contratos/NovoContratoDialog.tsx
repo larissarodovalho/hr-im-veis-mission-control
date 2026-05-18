@@ -344,7 +344,27 @@ export default function NovoContratoDialog({ open, onOpenChange, onCreated, edit
 
       let pdfUrl: string | null = null;
       if (acao === "gerar") {
-        const blob = await generatePdfBlob("CONTRATO DE INTERMEDIAÇÃO IMOBILIÁRIA COM CLÁUSULA DE EXCLUSIVIDADE", conteudo);
+        const contratanteLines = f.pessoa_juridica
+          ? [
+              String(f.pj_razao_social || ""),
+              f.pj_cnpj ? `CNPJ nº ${f.pj_cnpj}` : "",
+              f.socio_nome ? `Rep. por ${f.socio_nome}` : "",
+              f.socio_cpf ? `CPF nº ${f.socio_cpf}` : "",
+            ].filter(Boolean)
+          : [
+              String(f.c1_nome || ""),
+              f.c1_cpf ? `CPF nº ${f.c1_cpf}` : "",
+            ].filter(Boolean);
+        const blob = await generatePdfBlob(
+          "CONTRATO DE INTERMEDIAÇÃO IMOBILIÁRIA COM CLÁUSULA DE EXCLUSIVIDADE",
+          conteudo,
+          { contratante: contratanteLines, contratada: [
+            "HR CORRETOR DE IMÓVEIS LTDA",
+            "CNPJ nº 27.311.298/0001-07",
+            "Rep. por Hans M. E. L. Rodovalho Martins",
+            "CPF nº 022.540.031-60",
+          ] },
+        );
         const path = `contratos/${user.id}/${Date.now()}.pdf`;
         const { error: upErr } = await supabase.storage.from("signed-documents").upload(path, blob, {
           contentType: "application/pdf", upsert: false,
