@@ -75,6 +75,17 @@ export default function ImovelHistoricoDrawer({ open, onOpenChange, imovel }: Pr
           status: r.status,
         });
       });
+      (visRes.data ?? []).forEach((v: any) => {
+        const lead = leadsMap.get(v.lead_id);
+        merged.push({
+          id: `vt-${v.id}`,
+          date: v.data_visita,
+          kind: "visita",
+          title: `Visita · ${lead?.nome || "—"}`,
+          subtitle: v.observacoes || undefined,
+          status: v.status,
+        });
+      });
       (actRes.data ?? []).forEach((a: any) => {
         merged.push({
           id: `a-${a.id}`,
