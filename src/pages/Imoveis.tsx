@@ -383,6 +383,11 @@ export default function Imoveis() {
         imovel={propostaFor}
         onCreated={load}
       />
+      <ImovelHistoricoDrawer
+        open={!!histFor}
+        onOpenChange={(v) => { if (!v) setHistFor(null); }}
+        imovel={histFor}
+      />
     </div>
   );
 }
