@@ -1,10 +1,36 @@
 import { useParams, Link } from "react-router-dom";
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { MapPin, BedDouble, Bath, Car, Maximize2, ArrowLeft, ArrowUpRight, Home, Phone, MessageCircle } from "lucide-react";
 import { createWhatsAppUrl, openWhatsApp } from "@/lib/whatsapp";
 import { ScrollSection } from "@/components/site/MotionSections";
-const IMOVEIS_SITE: any[] = [];
+import { supabase } from "@/integrations/supabase/client";
+
+function mapImovelFromDb(row: any) {
+  const areaNum = row.area_util ?? row.area_total;
+  const area = areaNum != null ? `${Number(areaNum).toLocaleString("pt-BR")} m²` : "—";
+  return {
+    id: row.id,
+    codigo: `HR-${String(row.id).slice(0, 6).toUpperCase()}`,
+    nome: row.titulo,
+    tipo: row.tipo,
+    status: row.status,
+    valor: Number(row.valor ?? 0),
+    quartos: row.quartos ?? 0,
+    banheiros: row.banheiros ?? 0,
+    vagas: row.vagas ?? 0,
+    area,
+    descricao: row.descricao ?? "",
+    fotos: row.fotos ?? [],
+    imagem: row.fotos?.[0] ?? null,
+    endereco: {
+      bairro: row.bairro ?? "",
+      condominio: row.complemento ?? "",
+      cidade: row.cidade ?? "",
+      estado: row.estado ?? "",
+    },
+  };
+}
 
 import casaLuxo1 from "@/assets/imoveis/casa-luxo-1.jpg";
 import casaLuxo2 from "@/assets/imoveis/casa-luxo-2.jpg";
@@ -35,12 +61,25 @@ const smoothEase = [0.25, 0.4, 0.25, 1] as [number, number, number, number];
 
 export default function ImovelDetalhePage() {
   const { id } = useParams<{ id: string }>();
-  const imovel = IMOVEIS_SITE.find((im) => im.id === id);
+  const [imovel, setImovel] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
   const heroRef = useRef(null);
   const { scrollYProgress: heroScroll } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroOpacity = useTransform(heroScroll, [0, 0.5], [1, 0]);
   const heroScale = useTransform(heroScroll, [0, 0.5], [1, 1.08]);
   const heroTextY = useTransform(heroScroll, [0, 0.5], [0, 80]);
+
+  useEffect(() => {
+    if (!id) { setLoading(false); return; }
+    supabase.from("imoveis").select("*").eq("id", id).maybeSingle().then(({ data }) => {
+      setImovel(data ? mapImovelFromDb(data) : null);
+      setLoading(false);
+    });
+  }, [id]);
+
+  if (loading) {
+    return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-white/40 text-sm">Carregando…</div>;
+  }
 
   if (!imovel) {
     return (
@@ -61,7 +100,7 @@ export default function ImovelDetalhePage() {
     );
   }
 
-  const image = getImageForImovel(imovel.id, imovel.tipo);
+  const image = imovel.imagem || getImageForImovel(imovel.id, imovel.tipo);
   const specs = [
     { icon: Maximize2, label: "Área", value: imovel.area },
     ...(imovel.quartos > 0 ? [{ icon: BedDouble, label: "Quartos", value: `${imovel.quartos}` }] : []),
