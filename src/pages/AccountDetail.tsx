@@ -336,6 +336,15 @@ export default function AccountDetail() {
                   </Select>
                 </div>
               </div>
+              </div>
+              <div>
+                <Label>Ramo de atividade</Label>
+                <Input
+                  placeholder="Ex: Agronegócio, Construção civil, Advocacia…"
+                  value={editing.ramo_atividade ?? ""}
+                  onChange={e => setEditing({ ...editing, ramo_atividade: e.target.value })}
+                />
+              </div>
               <div>
                 <Label>Responsável</Label>
                 <Select
