@@ -182,6 +182,14 @@ export default function AccountDetail() {
                 Ramo: {acc.ramo_atividade}
               </Badge>
             )}
+            {(() => {
+              const t = tempInfo(acc.temperatura);
+              return t ? (
+                <Badge variant="outline" className={`${t.badge} text-sm px-2.5 py-1`}>
+                  {t.emoji} {t.label}
+                </Badge>
+              ) : null;
+            })()}
             {listaAtual !== "nenhuma" && (
               <Badge variant="outline" className={listaAtual === "carteira" ? "bg-blue-500/15 text-blue-700 border-blue-500/30" : "bg-pink-500/15 text-pink-700 border-pink-500/30"}>
                 {listaAtual === "carteira" ? "Carteira" : "Marketing"}
