@@ -43,14 +43,13 @@ export default function HomePage() {
       const seen = new Set<string>();
 
       // 1) Imóveis marcados como destaque no cadastro
-      const { data: flagged } = await supabase
-        .from("imoveis")
+      const { data: flagged } = await (supabase
+        .from("imoveis_public" as any)
         .select(cols)
         .eq("destaque", true)
-        .eq("status", "Disponível")
         .order("created_at", { ascending: false })
-        .limit(3);
-      (flagged ?? []).forEach((it) => {
+        .limit(3) as any);
+      (flagged ?? []).forEach((it: any) => {
         if (!seen.has(it.id)) {
           seen.add(it.id);
           result.push(it);
@@ -61,12 +60,12 @@ export default function HomePage() {
       if (result.length < 3) {
         const ids = (await fetchFeaturedImoveis()).filter((id) => !seen.has(id));
         if (ids.length > 0) {
-          const { data: extra } = await supabase
-            .from("imoveis")
+          const { data: extra } = await (supabase
+            .from("imoveis_public" as any)
             .select(cols)
-            .in("id", ids);
+            .in("id", ids) as any);
           ids.forEach((id) => {
-            const item = (extra ?? []).find((d) => d.id === id);
+            const item = (extra ?? []).find((d: any) => d.id === id);
             if (item && !seen.has(item.id) && result.length < 3) {
               seen.add(item.id);
               result.push(item);
@@ -77,13 +76,12 @@ export default function HomePage() {
 
       // 3) Fallback: mais recentes disponíveis
       if (result.length === 0) {
-        const { data: recent } = await supabase
-          .from("imoveis")
+        const { data: recent } = await (supabase
+          .from("imoveis_public" as any)
           .select(cols)
-          .eq("status", "Disponível")
           .order("created_at", { ascending: false })
-          .limit(3);
-        (recent ?? []).forEach((it) => result.push(it));
+          .limit(3) as any);
+        (recent ?? []).forEach((it: any) => result.push(it));
       }
 
       setDestaque(result);

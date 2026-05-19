@@ -76,7 +76,7 @@ export default function ImovelDetalhePage() {
   useEffect(() => {
     if (!id) { setLoading(false); return; }
     const load = () => {
-      supabase.from("imoveis").select("*").eq("id", id).maybeSingle().then(({ data }) => {
+      (supabase.from("imoveis_public" as any).select("*").eq("id", id).maybeSingle() as any).then(({ data }: { data: any }) => {
         setImovel(data ? mapImovelFromDb(data) : null);
         setLoading(false);
       });

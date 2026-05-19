@@ -1320,6 +1320,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "propostas_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "propostas_lead_id_fkey"
             columns: ["lead_id"]
             isOneToOne: false
@@ -1767,6 +1774,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "visitas_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "visitas_lead_id_fkey"
             columns: ["lead_id"]
             isOneToOne: false
@@ -1875,7 +1889,102 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      imoveis_public: {
+        Row: {
+          area_construida: number | null
+          area_total: number | null
+          area_util: number | null
+          bairro: string | null
+          banheiros: number | null
+          caracteristicas: string[] | null
+          cep: string | null
+          cidade: string | null
+          codigo: string | null
+          complemento: string | null
+          created_at: string | null
+          descricao: string | null
+          destaque: boolean | null
+          endereco: string | null
+          estado: string | null
+          finalidade: string | null
+          fotos: string[] | null
+          id: string | null
+          numero: string | null
+          quartos: number | null
+          status: string | null
+          suites: number | null
+          tipo: string | null
+          titulo: string | null
+          updated_at: string | null
+          vagas: number | null
+          valor: number | null
+          valor_condominio: number | null
+          valor_iptu: number | null
+        }
+        Insert: {
+          area_construida?: number | null
+          area_total?: number | null
+          area_util?: number | null
+          bairro?: string | null
+          banheiros?: number | null
+          caracteristicas?: string[] | null
+          cep?: string | null
+          cidade?: string | null
+          codigo?: string | null
+          complemento?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          destaque?: boolean | null
+          endereco?: string | null
+          estado?: string | null
+          finalidade?: string | null
+          fotos?: string[] | null
+          id?: string | null
+          numero?: string | null
+          quartos?: number | null
+          status?: string | null
+          suites?: number | null
+          tipo?: string | null
+          titulo?: string | null
+          updated_at?: string | null
+          vagas?: number | null
+          valor?: number | null
+          valor_condominio?: number | null
+          valor_iptu?: number | null
+        }
+        Update: {
+          area_construida?: number | null
+          area_total?: number | null
+          area_util?: number | null
+          bairro?: string | null
+          banheiros?: number | null
+          caracteristicas?: string[] | null
+          cep?: string | null
+          cidade?: string | null
+          codigo?: string | null
+          complemento?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          destaque?: boolean | null
+          endereco?: string | null
+          estado?: string | null
+          finalidade?: string | null
+          fotos?: string[] | null
+          id?: string | null
+          numero?: string | null
+          quartos?: number | null
+          status?: string | null
+          suites?: number | null
+          tipo?: string | null
+          titulo?: string | null
+          updated_at?: string | null
+          vagas?: number | null
+          valor?: number | null
+          valor_condominio?: number | null
+          valor_iptu?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       delete_email: {
