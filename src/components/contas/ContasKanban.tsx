@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ETAPAS, EtapaFunil } from "@/lib/contasFunil";
 import { Handshake, Target, User } from "lucide-react";
+import { tempInfo } from "@/lib/contasTemperatura";
 
 type Account = {
   id: string;
@@ -22,6 +23,7 @@ type Account = {
   interesse: string | null;
   etapa_funil: string | null;
   responsavel_id: string | null;
+  temperatura?: string | null;
 };
 
 type Property = { conta_id: string; valor_negocio: number | null };
