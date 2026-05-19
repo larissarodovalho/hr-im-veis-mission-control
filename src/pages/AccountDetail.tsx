@@ -171,6 +171,11 @@ export default function AccountDetail() {
                 <Target className="h-3.5 w-3.5 mr-1" /> Interesse: {acc.interesse}
               </Badge>
             )}
+            {acc.ramo_atividade && (
+              <Badge variant="outline" className="bg-indigo-500/15 text-indigo-700 border-indigo-500/30 text-sm px-2.5 py-1">
+                Ramo: {acc.ramo_atividade}
+              </Badge>
+            )}
             {listaAtual !== "nenhuma" && (
               <Badge variant="outline" className={listaAtual === "carteira" ? "bg-blue-500/15 text-blue-700 border-blue-500/30" : "bg-pink-500/15 text-pink-700 border-pink-500/30"}>
                 {listaAtual === "carteira" ? "Carteira" : "Marketing"}
