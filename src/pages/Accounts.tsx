@@ -41,6 +41,7 @@ type Account = {
   is_partner: boolean | null;
   tags: string[] | null;
   etapa_funil: string | null;
+  temperatura: string | null;
 };
 
 const formatDoc = (doc: string | null, tipo: string | null) => {
