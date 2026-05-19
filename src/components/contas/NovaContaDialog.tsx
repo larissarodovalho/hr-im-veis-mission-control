@@ -74,6 +74,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
       telefone: form.telefone || null,
       endereco: form.endereco || null,
       ramo_atividade: form.ramo_atividade || null,
+      temperatura: form.temperatura || null,
       observacoes: form.observacoes || null,
       tags: defaultTags && defaultTags.length ? defaultTags : null,
       created_by: auth.user?.id,
@@ -82,7 +83,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Conta criada");
-    setForm({ nome: "", tipo: "PF", documento: "", email: "", telefone: "", endereco: "", ramo_atividade: "", observacoes: "" });
+    setForm({ nome: "", tipo: "PF", documento: "", email: "", telefone: "", endereco: "", ramo_atividade: "", temperatura: "", observacoes: "" });
     setDuplicates([]);
     setForceCreate(false);
     onOpenChange(false);
