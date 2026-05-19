@@ -19,6 +19,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
+import { tempInfo, TEMPERATURAS } from "@/lib/contasTemperatura";
 
 type Propriedade = {
   id: string;
