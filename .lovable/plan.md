@@ -1,25 +1,27 @@
-## Adicionar coluna "Captação/Imóvel" no Kanban de Contas
+## Fazer o botão "Voltar" do CRM voltar para a página anterior real
 
-Nova etapa do funil que aparece como coluna no Kanban e nos relatórios, válida tanto na lista Carteira quanto na Marketing (o filtro de lista é por tag, independente da etapa, então a nova coluna aparece automaticamente nas duas abas).
+Hoje os botões Voltar em **AccountDetail** e **LeadDetail** são `<Link>` fixos (`/crm/contas` e `/crm/leads`), então sempre caem na lista — perdendo filtros, scroll e a aba do kanban em que o usuário estava. Quero usar o histórico do navegador.
 
-### Onde mudar
+### Mudanças
 
-1. **`src/lib/contasFunil.ts`** — fonte única do funil.
-   - Adicionar `"captacao_imovel"` ao tipo `EtapaFunil`.
-   - Adicionar entrada no array `ETAPAS` com label "Captação/Imóvel" e cor própria (ex.: fuchsia/rose — distinta das já usadas). Posição sugerida: entre `contato_estabelecido` e `reuniao` (faz sentido no fluxo: já houve contato → estamos captando o imóvel → reunião/visita).
+1. **`src/pages/AccountDetail.tsx`** — trocar o `<Link to="/crm/contas">` por um `<button>` (ou `Button variant="ghost"`) com `onClick={() => navigate(-1)}`. Importar `useNavigate` do `react-router-dom`.
 
-2. **`src/components/reports/FunilContasReport.tsx`** — relatório do funil.
-   - Adicionar `"captacao_imovel"` ao array `FLUXO` (para entrar no cálculo acumulado e na taxa de avanço) na mesma posição.
-   - Adicionar cor correspondente no objeto `COLORS`.
+2. **`src/pages/LeadDetail.tsx`** — mesma mudança: `<Link to="/crm/leads">` vira `navigate(-1)`.
 
-### O que NÃO precisa mudar
+### Fallback
 
-- **Banco**: `contas.etapa_funil` é `text` livre, sem CHECK/enum. Nada para migrar.
-- **`ContasKanban.tsx`**: já itera sobre `ETAPAS` dinamicamente — a coluna aparece sozinha.
-- **Filtro Carteira/Marketing**: é por tag, ortogonal à etapa. A nova coluna aparece nas duas listas automaticamente.
-- **`Accounts.tsx` / `AccountDetail.tsx`**: usam `etapaLabel`/`ETAPAS` dinamicamente.
+Se o usuário abrir a URL diretamente (sem histórico interno — ex.: link do WhatsApp), `navigate(-1)` sai do app. Para evitar isso, uso este padrão:
 
-### Confirmações rápidas
+```ts
+const onBack = () => {
+  if (window.history.length > 1) navigate(-1);
+  else navigate("/crm/contas"); // ou /crm/leads
+};
+```
 
-- Label exato: **"Captação/Imóvel"** (com barra)? Ou prefere "Captação de imóvel"?
-- Posição no fluxo: entre **Contato estabelecido** e **Reunião** — ok? (Alternativa: logo após "A contatar", se captação for o ponto de entrada).
+### Fora de escopo
+
+- `DocumentDetail.tsx` já usa `navigate(-1)`.
+- Botões "Voltar" do site público (`ImovelDetalhePage`) não fazem parte do CRM — não vou mexer.
+
+Posso prosseguir?

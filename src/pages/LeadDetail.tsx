@@ -302,7 +302,10 @@ export default function LeadDetail() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      <Link to="/crm/leads" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4 mr-1" /> Voltar</Link>
+      <button
+        onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/crm/leads"))}
+        className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+      ><ArrowLeft className="h-4 w-4 mr-1" /> Voltar</button>
 
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">

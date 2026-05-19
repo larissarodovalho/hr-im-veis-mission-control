@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +41,11 @@ const fmtMoney = (v: number | null) =>
 
 export default function AccountDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const handleBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/crm/contas");
+  };
   const [acc, setAcc] = useState<any>(null);
   const [props, setProps] = useState<Propriedade[]>([]);
   const [editing, setEditing] = useState<any>(null);
@@ -154,9 +159,9 @@ export default function AccountDetail() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      <Link to="/crm/contas" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+      <button onClick={handleBack} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
-      </Link>
+      </button>
 
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
