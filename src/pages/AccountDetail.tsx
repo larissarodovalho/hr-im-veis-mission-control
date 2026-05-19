@@ -351,13 +351,30 @@ export default function AccountDetail() {
                   </Select>
                 </div>
               </div>
-              <div>
-                <Label>Ramo de atividade</Label>
-                <Input
-                  placeholder="Ex: Agronegócio, Construção civil, Advocacia…"
-                  value={editing.ramo_atividade ?? ""}
-                  onChange={e => setEditing({ ...editing, ramo_atividade: e.target.value })}
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Ramo de atividade</Label>
+                  <Input
+                    placeholder="Ex: Agronegócio, Construção…"
+                    value={editing.ramo_atividade ?? ""}
+                    onChange={e => setEditing({ ...editing, ramo_atividade: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Temperatura</Label>
+                  <Select
+                    value={editing.temperatura || "none"}
+                    onValueChange={v => setEditing({ ...editing, temperatura: v === "none" ? null : v })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Não definida</SelectItem>
+                      {TEMPERATURAS.map(t => (
+                        <SelectItem key={t.id} value={t.id}>{t.emoji} {t.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div>
                 <Label>Responsável</Label>
