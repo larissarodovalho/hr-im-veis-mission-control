@@ -41,6 +41,11 @@ const fmtMoney = (v: number | null) =>
 
 export default function AccountDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const handleBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/crm/contas");
+  };
   const [acc, setAcc] = useState<any>(null);
   const [props, setProps] = useState<Propriedade[]>([]);
   const [editing, setEditing] = useState<any>(null);
