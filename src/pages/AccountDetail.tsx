@@ -336,7 +336,6 @@ export default function AccountDetail() {
                   </Select>
                 </div>
               </div>
-              </div>
               <div>
                 <Label>Ramo de atividade</Label>
                 <Input
