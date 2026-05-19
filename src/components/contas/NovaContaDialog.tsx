@@ -28,6 +28,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
     email: "",
     telefone: "",
     endereco: "",
+    ramo_atividade: "",
     observacoes: "",
   });
 
