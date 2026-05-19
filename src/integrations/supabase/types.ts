@@ -415,6 +415,7 @@ export type Database = {
           lead_id_origem: string | null
           nome: string
           observacoes: string | null
+          ramo_atividade: string | null
           responsavel_id: string | null
           status: string
           tags: string[] | null
@@ -435,6 +436,7 @@ export type Database = {
           lead_id_origem?: string | null
           nome: string
           observacoes?: string | null
+          ramo_atividade?: string | null
           responsavel_id?: string | null
           status?: string
           tags?: string[] | null
@@ -455,6 +457,7 @@ export type Database = {
           lead_id_origem?: string | null
           nome?: string
           observacoes?: string | null
+          ramo_atividade?: string | null
           responsavel_id?: string | null
           status?: string
           tags?: string[] | null

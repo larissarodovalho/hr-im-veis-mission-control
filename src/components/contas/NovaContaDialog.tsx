@@ -28,6 +28,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
     email: "",
     telefone: "",
     endereco: "",
+    ramo_atividade: "",
     observacoes: "",
   });
 
@@ -71,6 +72,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
       email: form.email || null,
       telefone: form.telefone || null,
       endereco: form.endereco || null,
+      ramo_atividade: form.ramo_atividade || null,
       observacoes: form.observacoes || null,
       tags: defaultTags && defaultTags.length ? defaultTags : null,
       created_by: auth.user?.id,
@@ -79,7 +81,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Conta criada");
-    setForm({ nome: "", tipo: "PF", documento: "", email: "", telefone: "", endereco: "", observacoes: "" });
+    setForm({ nome: "", tipo: "PF", documento: "", email: "", telefone: "", endereco: "", ramo_atividade: "", observacoes: "" });
     setDuplicates([]);
     setForceCreate(false);
     onOpenChange(false);
@@ -126,6 +128,14 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
           <div>
             <Label>Endereço</Label>
             <Input value={form.endereco} onChange={(e) => update("endereco", e.target.value)} />
+          </div>
+          <div>
+            <Label>Ramo de atividade</Label>
+            <Input
+              placeholder="Ex: Agronegócio, Construção civil, Advocacia…"
+              value={form.ramo_atividade}
+              onChange={(e) => update("ramo_atividade", e.target.value)}
+            />
           </div>
           <div>
             <Label>Observações</Label>

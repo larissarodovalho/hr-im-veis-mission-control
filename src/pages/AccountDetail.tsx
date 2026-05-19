@@ -103,6 +103,7 @@ export default function AccountDetail() {
       observacoes: editing.observacoes?.trim() || null,
       status: editing.status || "ativo",
       interesse: editing.interesse || null,
+      ramo_atividade: editing.ramo_atividade?.trim() || null,
       responsavel_id: editing.responsavel_id || null,
       tags,
     }).eq("id", acc.id);
@@ -168,6 +169,11 @@ export default function AccountDetail() {
             {acc.interesse && (
               <Badge className="bg-amber-500/15 text-amber-700 border-amber-500/30 border text-sm px-2.5 py-1">
                 <Target className="h-3.5 w-3.5 mr-1" /> Interesse: {acc.interesse}
+              </Badge>
+            )}
+            {acc.ramo_atividade && (
+              <Badge variant="outline" className="bg-indigo-500/15 text-indigo-700 border-indigo-500/30 text-sm px-2.5 py-1">
+                Ramo: {acc.ramo_atividade}
               </Badge>
             )}
             {listaAtual !== "nenhuma" && (
@@ -329,6 +335,14 @@ export default function AccountDetail() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              <div>
+                <Label>Ramo de atividade</Label>
+                <Input
+                  placeholder="Ex: Agronegócio, Construção civil, Advocacia…"
+                  value={editing.ramo_atividade ?? ""}
+                  onChange={e => setEditing({ ...editing, ramo_atividade: e.target.value })}
+                />
               </div>
               <div>
                 <Label>Responsável</Label>
