@@ -130,6 +130,14 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
             <Input value={form.endereco} onChange={(e) => update("endereco", e.target.value)} />
           </div>
           <div>
+            <Label>Ramo de atividade</Label>
+            <Input
+              placeholder="Ex: Agronegócio, Construção civil, Advocacia…"
+              value={form.ramo_atividade}
+              onChange={(e) => update("ramo_atividade", e.target.value)}
+            />
+          </div>
+          <div>
             <Label>Observações</Label>
             <Textarea rows={3} value={form.observacoes} onChange={(e) => update("observacoes", e.target.value)} />
           </div>
