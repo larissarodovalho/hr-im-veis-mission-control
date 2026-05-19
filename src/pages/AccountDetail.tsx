@@ -109,6 +109,7 @@ export default function AccountDetail() {
       status: editing.status || "ativo",
       interesse: editing.interesse || null,
       ramo_atividade: editing.ramo_atividade?.trim() || null,
+      temperatura: editing.temperatura || null,
       responsavel_id: editing.responsavel_id || null,
       tags,
     }).eq("id", acc.id);
