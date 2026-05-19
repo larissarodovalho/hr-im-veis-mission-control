@@ -29,6 +29,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
     telefone: "",
     endereco: "",
     ramo_atividade: "",
+    temperatura: "",
     observacoes: "",
   });
 
@@ -73,6 +74,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
       telefone: form.telefone || null,
       endereco: form.endereco || null,
       ramo_atividade: form.ramo_atividade || null,
+      temperatura: form.temperatura || null,
       observacoes: form.observacoes || null,
       tags: defaultTags && defaultTags.length ? defaultTags : null,
       created_by: auth.user?.id,
@@ -81,7 +83,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Conta criada");
-    setForm({ nome: "", tipo: "PF", documento: "", email: "", telefone: "", endereco: "", ramo_atividade: "", observacoes: "" });
+    setForm({ nome: "", tipo: "PF", documento: "", email: "", telefone: "", endereco: "", ramo_atividade: "", temperatura: "", observacoes: "" });
     setDuplicates([]);
     setForceCreate(false);
     onOpenChange(false);
@@ -129,13 +131,27 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
             <Label>Endereço</Label>
             <Input value={form.endereco} onChange={(e) => update("endereco", e.target.value)} />
           </div>
-          <div>
-            <Label>Ramo de atividade</Label>
-            <Input
-              placeholder="Ex: Agronegócio, Construção civil, Advocacia…"
-              value={form.ramo_atividade}
-              onChange={(e) => update("ramo_atividade", e.target.value)}
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Ramo de atividade</Label>
+              <Input
+                placeholder="Ex: Agronegócio, Construção…"
+                value={form.ramo_atividade}
+                onChange={(e) => update("ramo_atividade", e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Temperatura</Label>
+              <Select value={form.temperatura || "none"} onValueChange={(v) => update("temperatura", v === "none" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Não definida</SelectItem>
+                  <SelectItem value="quente">🔥 Quente</SelectItem>
+                  <SelectItem value="morno">🌤️ Morno</SelectItem>
+                  <SelectItem value="frio">❄️ Frio</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div>
             <Label>Observações</Label>

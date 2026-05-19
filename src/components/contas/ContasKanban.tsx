@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ETAPAS, EtapaFunil } from "@/lib/contasFunil";
 import { Handshake, Target, User } from "lucide-react";
+import { tempInfo } from "@/lib/contasTemperatura";
 
 type Account = {
   id: string;
@@ -22,6 +23,7 @@ type Account = {
   interesse: string | null;
   etapa_funil: string | null;
   responsavel_id: string | null;
+  temperatura?: string | null;
 };
 
 type Property = { conta_id: string; valor_negocio: number | null };
@@ -67,6 +69,12 @@ function ContaCard({ a, total, responsavelNome }: { a: Account; total: number; r
       </div>
       <div className="text-xs text-muted-foreground truncate">{a.telefone || a.email || "—"}</div>
       <div className="flex flex-wrap gap-1">
+        {(() => {
+          const t = tempInfo(a.temperatura);
+          return t ? (
+            <Badge variant="outline" className={`${t.badge} text-[10px]`}>{t.emoji} {t.label}</Badge>
+          ) : null;
+        })()}
         {a.interesse && (
           <Badge variant="outline" className="bg-amber-500/15 text-amber-700 border-amber-500/30 text-[10px]">
             <Target className="h-3 w-3 mr-1" /> {a.interesse}

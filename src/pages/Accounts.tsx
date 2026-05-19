@@ -20,6 +20,7 @@ import ImportarContasDialog from "@/components/contas/ImportarContasDialog";
 import ContasKanban from "@/components/contas/ContasKanban";
 import { EtapaFunil } from "@/lib/contasFunil";
 import { LayoutGrid, List as ListIcon } from "lucide-react";
+import { TEMPERATURAS, tempInfo } from "@/lib/contasTemperatura";
 
 type Operation = "compra" | "venda" | "arrendamento" | "outro";
 type Status = "ativo" | "inativo";
@@ -41,6 +42,7 @@ type Account = {
   is_partner: boolean | null;
   tags: string[] | null;
   etapa_funil: string | null;
+  temperatura: string | null;
 };
 
 const formatDoc = (doc: string | null, tipo: string | null) => {
@@ -130,6 +132,7 @@ export default function Accounts() {
   const [statusFilter, setStatusFilter] = useState<"todos" | Status>("todos");
   const [interestFilter, setInterestFilter] = useState<string>("todos");
   const [typeFilter, setTypeFilter] = useState<"todas" | "cliente" | "parceiro">("todas");
+  const [tempFilter, setTempFilter] = useState<string>("todos");
   const [loading, setLoading] = useState(true);
   const [novaOpen, setNovaOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -143,7 +146,7 @@ export default function Accounts() {
     while (true) {
       const { data, error } = await supabase
         .from("contas")
-        .select("id, nome, email, telefone, documento, tipo, responsavel_id, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil")
+        .select("id, nome, email, telefone, documento, tipo, responsavel_id, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil, temperatura")
         .order("nome", { ascending: true })
         .range(from, from + PAGE - 1);
       if (error) throw error;
@@ -198,6 +201,7 @@ export default function Accounts() {
     const status = (a.status ?? "ativo") as Status;
     if (statusFilter !== "todos" && status !== statusFilter) return false;
     if (interestFilter !== "todos" && a.interesse !== interestFilter) return false;
+    if (tempFilter !== "todos" && (a.temperatura || "") !== tempFilter) return false;
     if (typeFilter === "cliente" && a.is_partner) return false;
     if (typeFilter === "parceiro" && !a.is_partner) return false;
     const accProps = propsByAccount[a.id] ?? [];
@@ -350,6 +354,15 @@ export default function Accounts() {
               <SelectItem value="inativo">Inativos</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={tempFilter} onValueChange={(v) => setTempFilter(v)}>
+            <SelectTrigger><SelectValue placeholder="Temperatura" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todas temperaturas</SelectItem>
+              {TEMPERATURAS.map(t => (
+                <SelectItem key={t.id} value={t.id}>{t.emoji} {t.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </header>
 
@@ -419,6 +432,12 @@ export default function Accounts() {
                           <Handshake className="h-3 w-3 mr-1" /> Parceiro
                         </Badge>
                       )}
+                      {(() => {
+                        const t = tempInfo(a.temperatura);
+                        return t ? (
+                          <Badge variant="outline" className={`${t.badge} text-[10px]`}>{t.emoji} {t.label}</Badge>
+                        ) : null;
+                      })()}
                     </div>
                   </div>
                   <Badge className={status === "ativo" ? "bg-success/15 text-success border-success/30 border shrink-0" : "bg-muted text-muted-foreground border shrink-0"}>
@@ -513,6 +532,12 @@ export default function Accounts() {
                               <Handshake className="h-3 w-3 mr-1" /> Parceiro
                             </Badge>
                           )}
+                          {(() => {
+                            const t = tempInfo(a.temperatura);
+                            return t ? (
+                              <Badge variant="outline" className={`${t.badge} text-[10px]`}>{t.emoji} {t.label}</Badge>
+                            ) : null;
+                          })()}
                         </div>
                       </td>
                       <td className="p-3 whitespace-nowrap">{a.telefone || <span className="text-muted-foreground">—</span>}</td>

@@ -19,6 +19,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
+import { tempInfo, TEMPERATURAS } from "@/lib/contasTemperatura";
 
 type Propriedade = {
   id: string;
@@ -109,6 +110,7 @@ export default function AccountDetail() {
       status: editing.status || "ativo",
       interesse: editing.interesse || null,
       ramo_atividade: editing.ramo_atividade?.trim() || null,
+      temperatura: editing.temperatura || null,
       responsavel_id: editing.responsavel_id || null,
       tags,
     }).eq("id", acc.id);
@@ -181,6 +183,14 @@ export default function AccountDetail() {
                 Ramo: {acc.ramo_atividade}
               </Badge>
             )}
+            {(() => {
+              const t = tempInfo(acc.temperatura);
+              return t ? (
+                <Badge variant="outline" className={`${t.badge} text-sm px-2.5 py-1`}>
+                  {t.emoji} {t.label}
+                </Badge>
+              ) : null;
+            })()}
             {listaAtual !== "nenhuma" && (
               <Badge variant="outline" className={listaAtual === "carteira" ? "bg-blue-500/15 text-blue-700 border-blue-500/30" : "bg-pink-500/15 text-pink-700 border-pink-500/30"}>
                 {listaAtual === "carteira" ? "Carteira" : "Marketing"}
@@ -341,13 +351,30 @@ export default function AccountDetail() {
                   </Select>
                 </div>
               </div>
-              <div>
-                <Label>Ramo de atividade</Label>
-                <Input
-                  placeholder="Ex: Agronegócio, Construção civil, Advocacia…"
-                  value={editing.ramo_atividade ?? ""}
-                  onChange={e => setEditing({ ...editing, ramo_atividade: e.target.value })}
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Ramo de atividade</Label>
+                  <Input
+                    placeholder="Ex: Agronegócio, Construção…"
+                    value={editing.ramo_atividade ?? ""}
+                    onChange={e => setEditing({ ...editing, ramo_atividade: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Temperatura</Label>
+                  <Select
+                    value={editing.temperatura || "none"}
+                    onValueChange={v => setEditing({ ...editing, temperatura: v === "none" ? null : v })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Não definida</SelectItem>
+                      {TEMPERATURAS.map(t => (
+                        <SelectItem key={t.id} value={t.id}>{t.emoji} {t.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div>
                 <Label>Responsável</Label>
