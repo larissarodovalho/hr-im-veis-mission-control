@@ -20,6 +20,7 @@ import ImportarContasDialog from "@/components/contas/ImportarContasDialog";
 import ContasKanban from "@/components/contas/ContasKanban";
 import { EtapaFunil } from "@/lib/contasFunil";
 import { LayoutGrid, List as ListIcon } from "lucide-react";
+import { TEMPERATURAS, tempInfo } from "@/lib/contasTemperatura";
 
 type Operation = "compra" | "venda" | "arrendamento" | "outro";
 type Status = "ativo" | "inativo";
