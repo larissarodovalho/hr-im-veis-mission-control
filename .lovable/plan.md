@@ -1,27 +1,38 @@
-## Fazer o botão "Voltar" do CRM voltar para a página anterior real
+## Adicionar Temperatura do contato (Quente / Morno / Frio) nas Contas
 
-Hoje os botões Voltar em **AccountDetail** e **LeadDetail** são `<Link>` fixos (`/crm/contas` e `/crm/leads`), então sempre caem na lista — perdendo filtros, scroll e a aba do kanban em que o usuário estava. Quero usar o histórico do navegador.
+Novo campo qualitativo para classificar o "calor" do lead/cliente, visível na conta, no Kanban e nos cards da listagem.
 
-### Mudanças
+### Banco
 
-1. **`src/pages/AccountDetail.tsx`** — trocar o `<Link to="/crm/contas">` por um `<button>` (ou `Button variant="ghost"`) com `onClick={() => navigate(-1)}`. Importar `useNavigate` do `react-router-dom`.
+- Migration: `ALTER TABLE public.contas ADD COLUMN IF NOT EXISTS temperatura text;`
+- Sem CHECK constraint (mantém padrão do projeto — valores livres validados na UI). Valores aceitos pela UI: `quente`, `morno`, `frio`, ou vazio.
+- Index leve por temperatura: `CREATE INDEX IF NOT EXISTS idx_contas_temperatura ON public.contas(temperatura);`
 
-2. **`src/pages/LeadDetail.tsx`** — mesma mudança: `<Link to="/crm/leads">` vira `navigate(-1)`.
+### Frontend — escopo
 
-### Fallback
+1. **`src/lib/contasTemperatura.ts`** (novo) — helper único com labels, ícones e cores:
+   - `quente` → 🔥 vermelho/laranja
+   - `morno` → 🌤️ âmbar
+   - `frio` → ❄️ azul
 
-Se o usuário abrir a URL diretamente (sem histórico interno — ex.: link do WhatsApp), `navigate(-1)` sai do app. Para evitar isso, uso este padrão:
+2. **`src/components/contas/NovaContaDialog.tsx`** — `Select` "Temperatura" (com opção "Não definida") ao lado do Tipo PF/PJ.
 
-```ts
-const onBack = () => {
-  if (window.history.length > 1) navigate(-1);
-  else navigate("/crm/contas"); // ou /crm/leads
-};
-```
+3. **`src/pages/AccountDetail.tsx`**
+   - Badge no cabeçalho (junto com Interesse e Ramo).
+   - `Select` no diálogo "Editar conta" e incluir `temperatura` no `update`.
+
+4. **`src/pages/Accounts.tsx`**
+   - Adicionar `temperatura` no `select(...)`.
+   - Badge nos cards (tabela e grid).
+   - Filtro topo: "Temperatura: todas / quente / morno / frio".
+
+5. **`src/components/contas/ContasKanban.tsx`** — pequeno badge de temperatura no card (ao lado de Interesse/Responsável).
 
 ### Fora de escopo
 
-- `DocumentDetail.tsx` já usa `navigate(-1)`.
-- Botões "Voltar" do site público (`ImovelDetalhePage`) não fazem parte do CRM — não vou mexer.
+- Não vou criar coluna no Kanban por temperatura (etapa de funil é outro eixo).
+- Sem regra automática de definir temperatura — é manual.
 
-Posso prosseguir?
+### Confirmações
+
+- Manter exatamente 3 níveis (Quente / Morno / Frio) + "Não definida"? Ou quer um quarto tipo (ex.: "Gelado" para descartado)?

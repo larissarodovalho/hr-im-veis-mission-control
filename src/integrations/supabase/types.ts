@@ -420,6 +420,7 @@ export type Database = {
           status: string
           tags: string[] | null
           telefone: string | null
+          temperatura: string | null
           tipo: string
           updated_at: string
         }
@@ -441,6 +442,7 @@ export type Database = {
           status?: string
           tags?: string[] | null
           telefone?: string | null
+          temperatura?: string | null
           tipo?: string
           updated_at?: string
         }
@@ -462,6 +464,7 @@ export type Database = {
           status?: string
           tags?: string[] | null
           telefone?: string | null
+          temperatura?: string | null
           tipo?: string
           updated_at?: string
         }
