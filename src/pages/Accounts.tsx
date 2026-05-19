@@ -201,6 +201,7 @@ export default function Accounts() {
     const status = (a.status ?? "ativo") as Status;
     if (statusFilter !== "todos" && status !== statusFilter) return false;
     if (interestFilter !== "todos" && a.interesse !== interestFilter) return false;
+    if (tempFilter !== "todos" && (a.temperatura || "") !== tempFilter) return false;
     if (typeFilter === "cliente" && a.is_partner) return false;
     if (typeFilter === "parceiro" && !a.is_partner) return false;
     const accProps = propsByAccount[a.id] ?? [];
