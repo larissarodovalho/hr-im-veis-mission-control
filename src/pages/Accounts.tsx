@@ -354,6 +354,15 @@ export default function Accounts() {
               <SelectItem value="inativo">Inativos</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={tempFilter} onValueChange={(v) => setTempFilter(v)}>
+            <SelectTrigger><SelectValue placeholder="Temperatura" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todas temperaturas</SelectItem>
+              {TEMPERATURAS.map(t => (
+                <SelectItem key={t.id} value={t.id}>{t.emoji} {t.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </header>
 
