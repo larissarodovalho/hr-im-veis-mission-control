@@ -29,6 +29,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
     telefone: "",
     endereco: "",
     ramo_atividade: "",
+    temperatura: "",
     observacoes: "",
   });
 
