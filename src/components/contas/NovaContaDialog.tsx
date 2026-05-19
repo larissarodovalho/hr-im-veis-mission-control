@@ -30,6 +30,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
     endereco: "",
     ramo_atividade: "",
     temperatura: "",
+    interesse: "",
     observacoes: "",
   });
 
@@ -75,6 +76,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
       endereco: form.endereco || null,
       ramo_atividade: form.ramo_atividade || null,
       temperatura: form.temperatura || null,
+      interesse: form.interesse || null,
       observacoes: form.observacoes || null,
       tags: defaultTags && defaultTags.length ? defaultTags : null,
       created_by: auth.user?.id,
@@ -83,7 +85,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Conta criada");
-    setForm({ nome: "", tipo: "PF", documento: "", email: "", telefone: "", endereco: "", ramo_atividade: "", temperatura: "", observacoes: "" });
+    setForm({ nome: "", tipo: "PF", documento: "", email: "", telefone: "", endereco: "", ramo_atividade: "", temperatura: "", interesse: "", observacoes: "" });
     setDuplicates([]);
     setForceCreate(false);
     onOpenChange(false);
@@ -152,6 +154,25 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div>
+            <Label>Interesse</Label>
+            <Select value={form.interesse || "none"} onValueChange={(v) => update("interesse", v === "none" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Não definido</SelectItem>
+                <SelectItem value="Comprar">Comprar</SelectItem>
+                <SelectItem value="Vender">Vender</SelectItem>
+                <SelectItem value="Alugar">Alugar</SelectItem>
+                <SelectItem value="Incorporar">Incorporar</SelectItem>
+                <SelectItem value="Investimento">Investimento</SelectItem>
+                <SelectItem value="Ocasião de oportunidade">Ocasião de oportunidade</SelectItem>
+                <SelectItem value="Permuta">Permuta</SelectItem>
+                <SelectItem value="Arquiteto">Arquiteto</SelectItem>
+                <SelectItem value="Construtor">Construtor</SelectItem>
+                <SelectItem value="Corretor parceiro">Corretor parceiro</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label>Observações</Label>
