@@ -148,12 +148,11 @@ export default function ImoveisPage() {
 
   useEffect(() => {
     const load = () => {
-      supabase
-        .from("imoveis")
+      (supabase
+        .from("imoveis_public" as any)
         .select("*")
-        .eq("status", "Disponível")
-        .order("created_at", { ascending: false })
-        .then(({ data }) => setImoveisSite((data ?? []).map(mapImovelFromDb)));
+        .order("created_at", { ascending: false }) as any)
+        .then(({ data }: { data: any[] }) => setImoveisSite((data ?? []).map(mapImovelFromDb)));
     };
     load();
     const channel = supabase
