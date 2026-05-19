@@ -334,9 +334,10 @@ export default function AccountDetail() {
                 </div>
                 <div>
                   <Label>Interesse</Label>
-                  <Select value={editing.interesse || ""} onValueChange={v => setEditing({ ...editing, interesse: v })}>
+                  <Select value={editing.interesse || "none"} onValueChange={v => setEditing({ ...editing, interesse: v === "none" ? null : v })}>
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">Não definido</SelectItem>
                       <SelectItem value="Comprar">Comprar</SelectItem>
                       <SelectItem value="Vender">Vender</SelectItem>
                       <SelectItem value="Alugar">Alugar</SelectItem>
