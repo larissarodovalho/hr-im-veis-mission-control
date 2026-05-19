@@ -103,6 +103,7 @@ export default function AccountDetail() {
       observacoes: editing.observacoes?.trim() || null,
       status: editing.status || "ativo",
       interesse: editing.interesse || null,
+      ramo_atividade: editing.ramo_atividade?.trim() || null,
       responsavel_id: editing.responsavel_id || null,
       tags,
     }).eq("id", acc.id);
