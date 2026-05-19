@@ -146,7 +146,7 @@ export default function Accounts() {
     while (true) {
       const { data, error } = await supabase
         .from("contas")
-        .select("id, nome, email, telefone, documento, tipo, responsavel_id, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil")
+        .select("id, nome, email, telefone, documento, tipo, responsavel_id, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil, temperatura")
         .order("nome", { ascending: true })
         .range(from, from + PAGE - 1);
       if (error) throw error;
