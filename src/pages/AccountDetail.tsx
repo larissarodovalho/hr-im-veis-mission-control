@@ -323,6 +323,9 @@ export default function AccountDetail() {
                       <SelectItem value="Investimento">Investimento</SelectItem>
                       <SelectItem value="Ocasião de oportunidade">Ocasião de oportunidade</SelectItem>
                       <SelectItem value="Permuta">Permuta</SelectItem>
+                      <SelectItem value="Arquiteto">Arquiteto</SelectItem>
+                      <SelectItem value="Construtor">Construtor</SelectItem>
+                      <SelectItem value="Corretor parceiro">Corretor parceiro</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
