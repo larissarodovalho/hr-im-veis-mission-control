@@ -432,6 +432,12 @@ export default function Accounts() {
                           <Handshake className="h-3 w-3 mr-1" /> Parceiro
                         </Badge>
                       )}
+                      {(() => {
+                        const t = tempInfo(a.temperatura);
+                        return t ? (
+                          <Badge variant="outline" className={`${t.badge} text-[10px]`}>{t.emoji} {t.label}</Badge>
+                        ) : null;
+                      })()}
                     </div>
                   </div>
                   <Badge className={status === "ativo" ? "bg-success/15 text-success border-success/30 border shrink-0" : "bg-muted text-muted-foreground border shrink-0"}>
