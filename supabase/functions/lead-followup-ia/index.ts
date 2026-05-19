@@ -26,6 +26,21 @@ Deno.serve(async (req) => {
 
     const { data: lead } = await supabase.from("leads").select("*").eq("id", lead_id).single();
     if (!lead) return new Response(JSON.stringify({ error: "Lead não encontrado" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+    // Authorization: caller must be admin/gestor OR the assigned corretor / creator
+    const callerId = userRes.user.id;
+    const isOwner = lead.corretor_id === callerId || lead.created_by === callerId;
+    if (!isOwner) {
+      const { data: privRoles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", callerId)
+        .in("role", ["admin", "gestor"]);
+      if (!privRoles || privRoles.length === 0) {
+        return new Response(JSON.stringify({ error: "Sem permissão para este lead" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+
     if (!lead.telefone) return new Response(JSON.stringify({ error: "Lead sem telefone" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     // Gera mensagem com IA
