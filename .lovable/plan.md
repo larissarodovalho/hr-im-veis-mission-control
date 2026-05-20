@@ -1,32 +1,41 @@
-## Diagnóstico até aqui
+# Corrigir tela branca ao abrir conta no CRM
 
-- Reproduzi o fluxo no preview clicando em uma conta (`/crm/contas/:id`) e a página **carregou normalmente**, sem erros no console.
-- Não há service worker no projeto (nada para "ficar preso" em cache antigo automaticamente).
-- A página `AccountDetail.tsx` só retorna "Carregando…" enquanto não tem dados. Para a tela ficar **100% em branco**, algum componente filho precisa estar **lançando exceção no render** — e como não existe `ErrorBoundary` envolvendo as rotas do CRM, qualquer crash desmonta a árvore inteira e deixa só o fundo branco.
-- Recentemente foram adicionados os campos `temperatura` e a opção `"Não definido"` em `interesse`. Os componentes que renderizam dados da conta (`ContaInteracoesTimeline`, `ContaAgendamentosList`, `ContaTarefas`, `ContaAgendaQuickAdd`, `EntityDocumentsTab`) precisam ser revisados para garantir que não quebrem com valores `null`/novos.
-- O sintoma "todas as contas, em qualquer navegador, só no CRM publicado" combina com bundle publicado mais antigo do que o schema atual (ou um crash determinístico que só dispara em produção).
+## Diagnóstico (confirmado)
 
-## Plano
+O `ErrorBoundary` que adicionamos capturou a mensagem exata:
 
-1. **Adicionar um ErrorBoundary global do CRM** envolvendo `<AppLayout />` em `src/App.tsx`. Em vez de tela branca, o usuário verá uma mensagem ("Algo deu errado nesta página") com botão "Tentar novamente" e o stack do erro logado no console — assim já evitamos para sempre o sintoma de tela branca silenciosa.
+> Failed to execute 'removeChild' on 'Node': O nó a ser removido não é filho deste nó.
 
-2. **Endurecer `src/pages/AccountDetail.tsx`**:
-   - Capturar erros do `load()` em `try/catch`, mostrar um estado "Não foi possível carregar esta conta" com botão de tentar novamente, e logar o erro real.
-   - Garantir que campos opcionais (`tags`, `temperatura`, `interesse`, `responsavel_id`) sejam tratados defensivamente em todos os ramos.
+Esse erro **não vem do nosso código**. É um bug conhecido do React quando o **Google Translate** (ou a tradução automática do Chrome/Edge/Safari) está ligado: o navegador troca os nós de texto em português por nós traduzidos, e quando o React tenta remover/atualizar esses nós, encontra elementos que já foram substituídos pelo tradutor e quebra a árvore — resultando em tela branca.
 
-3. **Revisar os componentes filhos** (`ContaInteracoesTimeline`, `ContaAgendamentosList`, `ContaTarefas`, `ContaAgendaQuickAdd`, `EntityDocumentsTab`) só para confirmar que nenhum acessa campo em objeto possivelmente `null` sem checagem. Corrigir o que aparecer.
+Isso explica perfeitamente o cenário:
+- Acontece no site publicado (onde a tradução automática dispara com mais frequência)
+- Acontece em todos os navegadores (todos baseados em Chromium têm a feature)
+- Acontece em páginas com muito conteúdo dinâmico em português (lista de contas, detalhe da conta, timeline, agendamentos)
+- Não acontece no preview do Lovable (domínio diferente, tradutor geralmente não ativa)
 
-4. **Republicar o app** para que o bundle do CRM (`hrimoveis.com` / `royal-dashboard.lovable.app`) passe a incluir o ErrorBoundary e o tratamento de erro. Isso já elimina o sintoma "100% em branco" — se ainda houver erro, ele aparecerá em texto e poderemos diagnosticar com precisão.
+## Solução
 
-## Detalhes técnicos
+Como o CRM é uma ferramenta interna em português, a tradução automática nunca deve agir sobre ele. Vamos instruir os navegadores a **não traduzir** a aplicação.
 
-- `ErrorBoundary` será um componente class simples em `src/components/ErrorBoundary.tsx` com `getDerivedStateFromError` + `componentDidCatch` (chama `console.error`), e fallback usando `Card`/`Button` do design system (sem cores hardcoded).
-- Aplicado em `src/App.tsx` envolvendo o `<AppLayout />` da rota `/crm`.
-- `AccountDetail.load()` passa a setar um estado `loadError` em caso de exceção (timeout, RLS, etc.), com renderização condicional antes do `if (!acc)`.
+### 1. `index.html`
+- Adicionar `<meta name="google" content="notranslate" />` no `<head>`
+- Adicionar atributo `translate="no"` na tag `<html>`
+- Adicionar classe `notranslate` no `<body>`
 
-## O que NÃO está no escopo
+Isso desativa de forma definitiva o Google Translate, o tradutor do Chrome, do Edge e do Safari para toda a aplicação.
 
-- Não vou mexer em lógica de negócios das contas, RLS, ou em outros componentes do CRM além do que for necessário para evitar/diagnosticar a tela branca.
-- Não vou alterar o site público (`/`, `/imoveis`, etc.).
+### 2. Manter o `ErrorBoundary`
+Mantemos o ErrorBoundary que adicionamos — ele continua sendo a rede de segurança caso surja qualquer outro erro de render no futuro.
 
-Depois que aprovar, implemento e te aviso para republicar e validar.
+### Fora de escopo
+- Nenhuma mudança em lógica de negócio, RLS, queries ou componentes do CRM
+- Nenhuma mudança no site público (onde tradução pode ser desejável para visitantes estrangeiros)
+
+## Como validar
+Depois de publicar:
+1. Abrir o CRM no navegador que estava quebrando
+2. Clicar em qualquer contato — a página de detalhe deve carregar normalmente
+3. Se o navegador oferecer "Traduzir esta página", a opção não deve mais aparecer dentro do CRM
+
+Se mesmo assim houver tela branca, o ErrorBoundary vai mostrar a nova mensagem e conseguimos atacar a próxima causa.
