@@ -12,6 +12,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import StaffRoute from "@/components/StaffRoute";
 import AppLayout from "@/components/AppLayout";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import SiteLayout from "@/components/site/SiteLayout";
 import Landing from "@/pages/Landing";
 import Auth from "@/pages/Auth";
@@ -87,7 +88,9 @@ const App = () => (
               path="/crm"
               element={
                 <ProtectedRoute>
-                  <AppLayout />
+                  <ErrorBoundary>
+                    <AppLayout />
+                  </ErrorBoundary>
                 </ProtectedRoute>
               }
             >

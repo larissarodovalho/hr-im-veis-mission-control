@@ -52,24 +52,49 @@ export default function AccountDetail() {
   const [editing, setEditing] = useState<any>(null);
   const [propEditing, setPropEditing] = useState<Partial<Propriedade> | null>(null);
   const [corretores, setCorretores] = useState<{ user_id: string; nome: string | null }[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const { isAdmin } = useRole();
 
   const load = async () => {
     if (!id) return;
-    const [{ data: a }, { data: p }, { data: c }] = await Promise.all([
-      supabase.from("contas").select("*").eq("id", id).maybeSingle(),
-      supabase.from("conta_propriedades").select("*").eq("conta_id", id).order("created_at", { ascending: false }),
-      supabase.from("profiles").select("user_id, nome").eq("ativo", true).order("nome"),
-    ]);
-    setAcc(a);
-    setProps((p as Propriedade[]) || []);
-    setCorretores((c as any) || []);
+    setLoadError(null);
+    try {
+      const [{ data: a, error: e1 }, { data: p, error: e2 }, { data: c, error: e3 }] = await Promise.all([
+        supabase.from("contas").select("*").eq("id", id).maybeSingle(),
+        supabase.from("conta_propriedades").select("*").eq("conta_id", id).order("created_at", { ascending: false }),
+        supabase.from("profiles").select("user_id, nome").eq("ativo", true).order("nome"),
+      ]);
+      if (e1) throw e1;
+      if (e2) console.warn("[AccountDetail] propriedades:", e2);
+      if (e3) console.warn("[AccountDetail] corretores:", e3);
+      setAcc(a);
+      setProps((p as Propriedade[]) || []);
+      setCorretores((c as any) || []);
+    } catch (err: any) {
+      console.error("[AccountDetail] load error:", err);
+      setLoadError(err?.message || "Erro ao carregar conta");
+    }
   };
   useEffect(() => { load(); }, [id]);
 
   const responsavelNome = acc?.responsavel_id
     ? corretores.find(c => c.user_id === acc.responsavel_id)?.nome ?? null
     : null;
+
+  if (loadError) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 space-y-4">
+        <button onClick={handleBack} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
+        </button>
+        <Card className="p-6 max-w-2xl space-y-3">
+          <h2 className="font-display text-lg font-semibold">Não foi possível carregar esta conta</h2>
+          <p className="text-sm text-muted-foreground">{loadError}</p>
+          <Button onClick={load}>Tentar novamente</Button>
+        </Card>
+      </div>
+    );
+  }
 
   if (!acc) return <div className="p-4 sm:p-6 lg:p-8 text-muted-foreground">Carregando…</div>;
 
