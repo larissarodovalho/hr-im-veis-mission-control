@@ -88,7 +88,9 @@ const App = () => (
               path="/crm"
               element={
                 <ProtectedRoute>
-                  <AppLayout />
+                  <ErrorBoundary>
+                    <AppLayout />
+                  </ErrorBoundary>
                 </ProtectedRoute>
               }
             >
