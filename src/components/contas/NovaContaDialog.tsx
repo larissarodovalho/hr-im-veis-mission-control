@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { findDuplicates, DuplicateMatch } from "@/lib/duplicates";
 import DuplicateAlert from "@/components/DuplicateAlert";
+import { SearchableSelect } from "@/components/SearchableSelect";
 
 interface Props {
   open: boolean;
