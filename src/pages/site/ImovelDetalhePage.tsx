@@ -155,11 +155,23 @@ export default function ImovelDetalhePage() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white">
-      {/* ─── Hero — clean photo only ─── */}
-      <section ref={heroRef} className="relative h-[60vh] overflow-hidden mt-20">
+      {/* ─── Hero — main photo with gallery controls ─── */}
+      <section ref={heroRef} className="relative h-[60vh] overflow-hidden mt-20 group">
         <motion.div className="absolute inset-0" style={{ scale: heroScale }}>
-          <img src={image} alt={imovel.nome} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/30 to-black/10" />
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={image}
+              src={image}
+              alt={imovel.nome}
+              className="w-full h-full object-cover cursor-zoom-in"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              onClick={() => setLightboxOpen(true)}
+            />
+          </AnimatePresence>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/30 to-black/10 pointer-events-none" />
         </motion.div>
 
         <div
@@ -167,7 +179,7 @@ export default function ImovelDetalhePage() {
           style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 119px, rgba(255,255,255,0.15) 120px)" }}
         />
 
-        {/* Back link only */}
+        {/* Back link */}
         <motion.div
           style={{ opacity: heroOpacity }}
           className="absolute top-24 left-6 z-10"
@@ -180,7 +192,122 @@ export default function ImovelDetalhePage() {
             Voltar
           </Link>
         </motion.div>
+
+        {/* Gallery controls — only when 2+ photos */}
+        {fotos.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={prevPhoto}
+              aria-label="Foto anterior"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 h-11 w-11 rounded-full bg-black/40 hover:bg-black/70 border border-white/15 backdrop-blur-md flex items-center justify-center text-white/80 hover:text-white transition opacity-0 group-hover:opacity-100"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={nextPhoto}
+              aria-label="Próxima foto"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 h-11 w-11 rounded-full bg-black/40 hover:bg-black/70 border border-white/15 backdrop-blur-md flex items-center justify-center text-white/80 hover:text-white transition opacity-0 group-hover:opacity-100"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setLightboxOpen(true)}
+              className="absolute bottom-6 right-6 z-10 inline-flex items-center gap-2 px-4 py-2 rounded-full text-[11px] uppercase tracking-[0.18em] bg-black/50 hover:bg-black/70 border border-white/15 backdrop-blur-md text-white/85 hover:text-white transition"
+            >
+              <Images className="h-3.5 w-3.5" />
+              {safeIdx + 1} / {fotos.length}
+            </button>
+          </>
+        )}
       </section>
+
+      {/* ─── Thumbnails strip ─── */}
+      {fotos.length > 1 && (
+        <div className="border-t border-white/[0.04] bg-black/40">
+          <div className="max-w-7xl mx-auto px-6 py-4 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-2">
+              {fotos.map((src, i) => (
+                <button
+                  key={src + i}
+                  type="button"
+                  onClick={() => setActivePhoto(i)}
+                  className={`relative shrink-0 h-16 w-24 rounded-md overflow-hidden border transition-all ${
+                    i === safeIdx
+                      ? "border-white/70 ring-2 ring-white/30"
+                      : "border-white/10 opacity-60 hover:opacity-100"
+                  }`}
+                  aria-label={`Ver foto ${i + 1}`}
+                >
+                  <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Lightbox ─── */}
+      <AnimatePresence>
+        {lightboxOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center"
+            onClick={() => setLightboxOpen(false)}
+          >
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setLightboxOpen(false); }}
+              className="absolute top-6 right-6 h-11 w-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition"
+              aria-label="Fechar"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            {fotos.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
+                  className="absolute left-6 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition"
+                  aria-label="Foto anterior"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); nextPhoto(); }}
+                  className="absolute right-6 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition"
+                  aria-label="Próxima foto"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-xs uppercase tracking-[0.2em] text-white/60">
+                  {safeIdx + 1} / {fotos.length}
+                </div>
+              </>
+            )}
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={image}
+                src={image}
+                alt={imovel.nome}
+                onClick={(e) => e.stopPropagation()}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.25 }}
+                className="max-h-[88vh] max-w-[92vw] object-contain"
+              />
+            </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
 
       {/* ─── Info Section: Title, Price, Specs, Description, Location ─── */}
       <ScrollSection className="py-6 sm:py-8 md:-mt-12" index={1}>
