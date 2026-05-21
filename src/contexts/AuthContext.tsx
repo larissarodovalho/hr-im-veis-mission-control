@@ -36,36 +36,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadUserData = async (uid: string) => {
-    // Defer para evitar deadlock no callback
-    setTimeout(async () => {
-      const [{ data: prof }, { data: rs }] = await Promise.all([
-        supabase.from("profiles").select("*").eq("user_id", uid).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", uid),
-      ]);
-      setProfile(prof as Profile | null);
-      setRoles((rs ?? []).map((r: any) => r.role as AppRole));
-    }, 0);
+    const [{ data: prof }, { data: rs }] = await Promise.all([
+      supabase.from("profiles").select("*").eq("user_id", uid).maybeSingle(),
+      supabase.from("user_roles").select("role").eq("user_id", uid),
+    ]);
+    setProfile(prof as Profile | null);
+    setRoles((rs ?? []).map((r: any) => r.role as AppRole));
   };
 
   useEffect(() => {
-    // 1. Listener PRIMEIRO
+    let mounted = true;
+
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
       setSession(sess);
       setUser(sess?.user ?? null);
-      if (sess?.user) loadUserData(sess.user.id);
-      else { setProfile(null); setRoles([]); }
+      if (sess?.user) {
+        // Defer para evitar deadlock no callback
+        setTimeout(() => {
+          if (mounted) loadUserData(sess.user.id);
+        }, 0);
+      } else {
+        setProfile(null);
+        setRoles([]);
+      }
     });
 
-    // 2. Depois sessão atual
-    supabase.auth.getSession().then(({ data: { session: sess } }) => {
+    supabase.auth.getSession().then(async ({ data: { session: sess } }) => {
+      if (!mounted) return;
       setSession(sess);
       setUser(sess?.user ?? null);
-      if (sess?.user) loadUserData(sess.user.id);
-      setLoading(false);
+      if (sess?.user) {
+        await loadUserData(sess.user.id);
+      }
+      if (mounted) setLoading(false);
     });
 
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
+
 
   const refreshProfile = async () => {
     if (user) await loadUserData(user.id);
