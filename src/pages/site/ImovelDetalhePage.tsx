@@ -1,7 +1,8 @@
 import { useParams, Link } from "react-router-dom";
 import { useRef, useEffect, useState } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { MapPin, BedDouble, Bath, Car, Maximize2, ArrowLeft, ArrowUpRight, Home, Phone, MessageCircle } from "lucide-react";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { MapPin, BedDouble, Bath, Car, Maximize2, ArrowLeft, ArrowUpRight, Home, Phone, MessageCircle, ChevronLeft, ChevronRight, X, Images } from "lucide-react";
+
 import { createWhatsAppUrl, openWhatsApp } from "@/lib/whatsapp";
 import { ScrollSection } from "@/components/site/MotionSections";
 import { supabase } from "@/integrations/supabase/client";
