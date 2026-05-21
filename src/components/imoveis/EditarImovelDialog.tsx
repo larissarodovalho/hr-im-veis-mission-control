@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload, X, Trash2 } from "lucide-react";
+import { Loader2, Upload, X, Trash2, Droplet } from "lucide-react";
 import { applyWatermark } from "@/lib/watermark";
 import ResponsavelProprietarioSection from "./ResponsavelProprietarioSection";
 import { TIPOS_IMOVEL, FINALIDADES, STATUS_OPTIONS, CARACTERISTICAS } from "./NovoImovelDialog";
@@ -46,6 +46,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
   const [novasFotos, setNovasFotos] = useState<File[]>([]);
   const [removerPaths, setRemoverPaths] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [reapplying, setReapplying] = useState(false);
   const [corretorId, setCorretorId] = useState<string>("");
   const [proprietarioId, setProprietarioId] = useState<string>("");
   const [captadorId, setCaptadorId] = useState<string>("");
@@ -91,6 +92,46 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
 
   const isTerreno = ["Terreno", "Lote em condomínio", "Chácara", "Sítio", "Fazenda"].includes(form.tipo);
   const isComercial = ["Galpão", "Sala comercial", "Loja", "Prédio comercial", "Ponto comercial"].includes(form.tipo);
+
+  const reapplyWatermark = async () => {
+    if (!imovel?.id || fotosExistentes.length === 0) return;
+    if (!confirm(`Reaplicar marca d'água em ${fotosExistentes.length} foto(s)? As originais no storage serão sobrescritas.`)) return;
+    setReapplying(true);
+    let ok = 0, fail = 0;
+    const novasUrls: string[] = [];
+    for (const url of fotosExistentes) {
+      try {
+        const path = extractStoragePath(url);
+        if (!path) { fail++; novasUrls.push(url); continue; }
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        const baseName = path.split("/").pop() || "foto.jpg";
+        const file = new File([blob], baseName, { type: blob.type || "image/jpeg" });
+        const stamped = await applyWatermark(file);
+        const { error: upErr } = await supabase.storage.from("imoveis").upload(path, stamped, {
+          upsert: true, cacheControl: "3600", contentType: stamped.type,
+        });
+        if (upErr) throw upErr;
+        const { data: pub } = supabase.storage.from("imoveis").getPublicUrl(path);
+        novasUrls.push(`${pub.publicUrl}?v=${Date.now()}`);
+        ok++;
+      } catch (e) {
+        console.error("reapply watermark falhou", url, e);
+        novasUrls.push(url);
+        fail++;
+      }
+    }
+    // Atualiza array de fotos pra forçar refresh de cache nos clientes
+    await supabase.from("imoveis").update({ fotos: novasUrls }).eq("id", imovel.id);
+    setFotosExistentes(novasUrls);
+    setReapplying(false);
+    if (fail === 0) toast.success(`Marca d'água aplicada em ${ok} foto(s)`);
+    else toast.warning(`${ok} ok, ${fail} falharam`);
+    onSaved();
+  };
+
+
 
   const submit = async () => {
     if (!imovel?.id) return;
@@ -306,7 +347,20 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Fotos</h3>
             {fotosExistentes.length > 0 && (
               <div>
-                <p className="text-xs text-muted-foreground mb-2">Fotos atuais</p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-muted-foreground">Fotos atuais</p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={reapplyWatermark}
+                    disabled={reapplying || saving}
+                    className="h-7 text-xs"
+                  >
+                    {reapplying ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Droplet className="h-3 w-3 mr-1" />}
+                    Reaplicar marca d'água
+                  </Button>
+                </div>
                 <div className="grid grid-cols-4 gap-2">
                   {fotosExistentes.map((url) => (
                     <div key={url} className="relative group">
