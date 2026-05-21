@@ -377,10 +377,11 @@ export default function ImoveisPage() {
                   transition={{ duration: 0.9, delay: (i % 3) * 0.12, ease }}
                   className="group"
                 >
-                  <motion.div
+                  <motion.a
+                    href={`/imovel/${im.id}`}
                     whileHover={{ y: -8 }}
                     transition={{ duration: 0.4, ease: smoothEase }}
-                    className="bg-white/[0.02] border border-white/[0.05] rounded-2xl overflow-hidden hover:border-white/[0.12] hover:bg-white/[0.04] transition-all duration-700 hover:shadow-2xl hover:shadow-white/[0.03]"
+                    className="block cursor-pointer bg-white/[0.02] border border-white/[0.05] rounded-2xl overflow-hidden hover:border-white/[0.12] hover:bg-white/[0.04] transition-all duration-700 hover:shadow-2xl hover:shadow-white/[0.03]"
                   >
                     {/* Image */}
                     <div className="aspect-[16/10] relative overflow-hidden">
