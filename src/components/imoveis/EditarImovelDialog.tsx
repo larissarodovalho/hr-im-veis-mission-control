@@ -46,6 +46,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
   const [novasFotos, setNovasFotos] = useState<File[]>([]);
   const [removerPaths, setRemoverPaths] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [reapplying, setReapplying] = useState(false);
   const [corretorId, setCorretorId] = useState<string>("");
   const [proprietarioId, setProprietarioId] = useState<string>("");
   const [captadorId, setCaptadorId] = useState<string>("");
