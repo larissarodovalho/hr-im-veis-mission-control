@@ -93,6 +93,46 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
   const isTerreno = ["Terreno", "Lote em condomínio", "Chácara", "Sítio", "Fazenda"].includes(form.tipo);
   const isComercial = ["Galpão", "Sala comercial", "Loja", "Prédio comercial", "Ponto comercial"].includes(form.tipo);
 
+  const reapplyWatermark = async () => {
+    if (!imovel?.id || fotosExistentes.length === 0) return;
+    if (!confirm(`Reaplicar marca d'água em ${fotosExistentes.length} foto(s)? As originais no storage serão sobrescritas.`)) return;
+    setReapplying(true);
+    let ok = 0, fail = 0;
+    const novasUrls: string[] = [];
+    for (const url of fotosExistentes) {
+      try {
+        const path = extractStoragePath(url);
+        if (!path) { fail++; novasUrls.push(url); continue; }
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        const baseName = path.split("/").pop() || "foto.jpg";
+        const file = new File([blob], baseName, { type: blob.type || "image/jpeg" });
+        const stamped = await applyWatermark(file);
+        const { error: upErr } = await supabase.storage.from("imoveis").upload(path, stamped, {
+          upsert: true, cacheControl: "3600", contentType: stamped.type,
+        });
+        if (upErr) throw upErr;
+        const { data: pub } = supabase.storage.from("imoveis").getPublicUrl(path);
+        novasUrls.push(`${pub.publicUrl}?v=${Date.now()}`);
+        ok++;
+      } catch (e) {
+        console.error("reapply watermark falhou", url, e);
+        novasUrls.push(url);
+        fail++;
+      }
+    }
+    // Atualiza array de fotos pra forçar refresh de cache nos clientes
+    await supabase.from("imoveis").update({ fotos: novasUrls }).eq("id", imovel.id);
+    setFotosExistentes(novasUrls);
+    setReapplying(false);
+    if (fail === 0) toast.success(`Marca d'água aplicada em ${ok} foto(s)`);
+    else toast.warning(`${ok} ok, ${fail} falharam`);
+    onSaved();
+  };
+
+
+
   const submit = async () => {
     if (!imovel?.id) return;
     if (!form.titulo.trim()) return toast.error("Título é obrigatório");
