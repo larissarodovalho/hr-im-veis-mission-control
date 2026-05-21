@@ -33,6 +33,7 @@ export default function NovaVendaDialog({
   const [leads, setLeads] = useState<any[]>([]);
   const [contas, setContas] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
+  const [parceiros, setParceiros] = useState<any[]>([]);
 
   const [form, setForm] = useState<any>({
     imovel_id: "none",
