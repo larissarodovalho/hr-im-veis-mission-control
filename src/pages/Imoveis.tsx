@@ -13,6 +13,7 @@ import EditarImovelDialog from "@/components/imoveis/EditarImovelDialog";
 import NovaPropostaDialog from "@/components/imoveis/NovaPropostaDialog";
 import ImovelHistoricoDrawer from "@/components/imoveis/ImovelHistoricoDrawer";
 import VendidosTab from "@/pages/imoveis/VendidosTab";
+import ParceirosTab from "@/pages/imoveis/ParceirosTab";
 
 type Imovel = any;
 type Proposta = any;
@@ -340,6 +341,7 @@ export default function Imoveis() {
           <TabsTrigger value="proposta">Em Proposta <Badge variant="secondary" className="ml-2 text-[10px]">{counts.p}</Badge></TabsTrigger>
           <TabsTrigger value="fechamento">Em Fechamento <Badge variant="secondary" className="ml-2 text-[10px]">{counts.f}</Badge></TabsTrigger>
           <TabsTrigger value="vendidos">Vendidos <Badge variant="secondary" className="ml-2 text-[10px]">{counts.v}</Badge></TabsTrigger>
+          <TabsTrigger value="parceiros">Parceiros</TabsTrigger>
         </TabsList>
 
         <TabsContent value="disponiveis" className="mt-4">
@@ -365,6 +367,10 @@ export default function Imoveis() {
 
         <TabsContent value="vendidos" className="mt-4">
           <VendidosTab />
+        </TabsContent>
+
+        <TabsContent value="parceiros" className="mt-4">
+          <ParceirosTab />
         </TabsContent>
       </Tabs>
 

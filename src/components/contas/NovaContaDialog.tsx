@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { findDuplicates, DuplicateMatch } from "@/lib/duplicates";
 import DuplicateAlert from "@/components/DuplicateAlert";
+import { SearchableSelect } from "@/components/SearchableSelect";
 
 interface Props {
   open: boolean;
@@ -32,7 +33,14 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
     temperatura: "",
     interesse: "",
     observacoes: "",
+    parceiro_origem_id: "none",
   });
+  const [parceiros, setParceiros] = useState<{ id: string; nome: string }[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    supabase.from("corretores_parceiros").select("id,nome").eq("ativo", true).order("nome").then(({ data }) => setParceiros(data ?? []));
+  }, [open]);
 
   const update = (k: string, v: string) => {
     setForm((p) => ({ ...p, [k]: v }));
@@ -78,6 +86,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
       temperatura: form.temperatura || null,
       interesse: form.interesse || null,
       observacoes: form.observacoes || null,
+      parceiro_origem_id: form.parceiro_origem_id !== "none" ? form.parceiro_origem_id : null,
       tags: defaultTags && defaultTags.length ? defaultTags : null,
       created_by: auth.user?.id,
       responsavel_id: auth.user?.id,
@@ -85,7 +94,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Conta criada");
-    setForm({ nome: "", tipo: "PF", documento: "", email: "", telefone: "", endereco: "", ramo_atividade: "", temperatura: "", interesse: "", observacoes: "" });
+    setForm({ nome: "", tipo: "PF", documento: "", email: "", telefone: "", endereco: "", ramo_atividade: "", temperatura: "", interesse: "", observacoes: "", parceiro_origem_id: "none" });
     setDuplicates([]);
     setForceCreate(false);
     onOpenChange(false);
@@ -173,6 +182,16 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
                 <SelectItem value="Corretor parceiro">Corretor parceiro</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div>
+            <Label>Trazido pelo parceiro</Label>
+            <SearchableSelect
+              value={form.parceiro_origem_id}
+              onChange={(v) => update("parceiro_origem_id", v)}
+              options={parceiros}
+              placeholder="Buscar corretor parceiro…"
+              emptyLabel="Nenhum"
+            />
           </div>
           <div>
             <Label>Observações</Label>

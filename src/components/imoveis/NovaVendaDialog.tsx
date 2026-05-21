@@ -33,6 +33,7 @@ export default function NovaVendaDialog({
   const [leads, setLeads] = useState<any[]>([]);
   const [contas, setContas] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
+  const [parceiros, setParceiros] = useState<any[]>([]);
 
   const [form, setForm] = useState<any>({
     imovel_id: "none",
@@ -64,6 +65,7 @@ export default function NovaVendaDialog({
     supabase.from("leads").select("id,nome").order("nome").then(({ data }) => setLeads((data ?? []).map((l: any) => ({ id: l.id, nome: l.nome }))));
     supabase.from("contas").select("id,nome").order("nome").then(({ data }) => setContas((data ?? []).map((c: any) => ({ id: c.id, nome: c.nome }))));
     supabase.from("profiles").select("user_id,nome").then(({ data }) => setProfiles((data ?? []).map((p: any) => ({ id: p.user_id, nome: p.nome || "Sem nome" }))));
+    supabase.from("corretores_parceiros").select("id,nome").eq("ativo", true).order("nome").then(({ data }) => setParceiros(data ?? []));
   }, [open]);
 
   useEffect(() => {
@@ -186,7 +188,7 @@ export default function NovaVendaDialog({
           </div>
           <div>
             <Label>Corretor parceiro</Label>
-            <SearchableSelect value={form.corretor_parceiro_id} onChange={(v) => setForm({ ...form, corretor_parceiro_id: v })} options={profiles} placeholder="Buscar corretor…" emptyLabel="—" />
+            <SearchableSelect value={form.corretor_parceiro_id} onChange={(v) => setForm({ ...form, corretor_parceiro_id: v })} options={parceiros} placeholder="Buscar parceiro…" emptyLabel="—" />
           </div>
           <div>
             <Label>Lead (opcional)</Label>

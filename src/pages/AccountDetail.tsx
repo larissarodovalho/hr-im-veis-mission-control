@@ -53,6 +53,7 @@ export default function AccountDetail() {
   const [editing, setEditing] = useState<any>(null);
   const [propEditing, setPropEditing] = useState<Partial<Propriedade> | null>(null);
   const [corretores, setCorretores] = useState<{ user_id: string; nome: string | null }[]>([]);
+  const [parceiros, setParceiros] = useState<{ id: string; nome: string }[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const { isAdmin } = useRole();
 
@@ -60,10 +61,11 @@ export default function AccountDetail() {
     if (!id) return;
     setLoadError(null);
     try {
-      const [{ data: a, error: e1 }, { data: p, error: e2 }, { data: c, error: e3 }] = await Promise.all([
+      const [{ data: a, error: e1 }, { data: p, error: e2 }, { data: c, error: e3 }, { data: pa }] = await Promise.all([
         supabase.from("contas").select("*").eq("id", id).maybeSingle(),
         supabase.from("conta_propriedades").select("*").eq("conta_id", id).order("created_at", { ascending: false }),
         supabase.from("profiles").select("user_id, nome").eq("ativo", true).order("nome"),
+        supabase.from("corretores_parceiros").select("id, nome").eq("ativo", true).order("nome"),
       ]);
       if (e1) throw e1;
       if (e2) console.warn("[AccountDetail] propriedades:", e2);
@@ -71,6 +73,7 @@ export default function AccountDetail() {
       setAcc(a);
       setProps((p as Propriedade[]) || []);
       setCorretores((c as any) || []);
+      setParceiros((pa as any) || []);
     } catch (err: any) {
       console.error("[AccountDetail] load error:", err);
       setLoadError(err?.message || "Erro ao carregar conta");
@@ -139,6 +142,7 @@ export default function AccountDetail() {
       temperatura: editing.temperatura || null,
       etapa_funil: editing.etapa_funil || "a_contatar",
       responsavel_id: editing.responsavel_id || null,
+      parceiro_origem_id: editing.parceiro_origem_id && editing.parceiro_origem_id !== "none" ? editing.parceiro_origem_id : null,
       tags,
     }).eq("id", acc.id);
     if (error) return toast.error(error.message);
@@ -441,6 +445,21 @@ export default function AccountDetail() {
                     <SelectItem value="nenhuma">Sem lista</SelectItem>
                     <SelectItem value="carteira">Carteira</SelectItem>
                     <SelectItem value="marketing">Marketing</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Trazido pelo parceiro</Label>
+                <Select
+                  value={editing.parceiro_origem_id || "none"}
+                  onValueChange={v => setEditing({ ...editing, parceiro_origem_id: v === "none" ? null : v })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {parceiros.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
