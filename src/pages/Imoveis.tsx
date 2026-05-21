@@ -12,6 +12,7 @@ import NovoImovelDialog from "@/components/imoveis/NovoImovelDialog";
 import EditarImovelDialog from "@/components/imoveis/EditarImovelDialog";
 import NovaPropostaDialog from "@/components/imoveis/NovaPropostaDialog";
 import ImovelHistoricoDrawer from "@/components/imoveis/ImovelHistoricoDrawer";
+import VendidosTab from "@/pages/imoveis/VendidosTab";
 
 type Imovel = any;
 type Proposta = any;
@@ -363,10 +364,7 @@ export default function Imoveis() {
         </TabsContent>
 
         <TabsContent value="vendidos" className="mt-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {vendidos.map(renderVendido)}
-            {vendidos.length === 0 && emptyState("Nenhuma venda registrada ainda.")}
-          </div>
+          <VendidosTab />
         </TabsContent>
       </Tabs>
 
