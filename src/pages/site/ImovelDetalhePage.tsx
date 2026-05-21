@@ -93,6 +93,23 @@ export default function ImovelDetalhePage() {
     return () => { supabase.removeChannel(channel); };
   }, [id]);
 
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxOpen(false);
+      if (e.key === "ArrowRight") setActivePhoto((i) => {
+        const n = Array.isArray(imovel?.fotos) ? imovel.fotos.length : 1;
+        return n > 0 ? (i + 1) % n : 0;
+      });
+      if (e.key === "ArrowLeft") setActivePhoto((i) => {
+        const n = Array.isArray(imovel?.fotos) ? imovel.fotos.length : 1;
+        return n > 0 ? (i - 1 + n) % n : 0;
+      });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxOpen, imovel]);
+
   if (loading) {
     return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-white/40 text-sm">Carregando…</div>;
   }
