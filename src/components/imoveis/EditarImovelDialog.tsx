@@ -150,11 +150,15 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
         cidade: form.cidade || null,
         estado: form.estado || null,
         destaque: form.destaque,
+        matricula: form.matricula || null,
         caracteristicas: caracs,
         fotos: [...fotosExistentes, ...novasUrls],
         corretor_id: corretorId || null,
         proprietario_id: proprietarioId || null,
+        corretor_captador_id: captadorId || null,
+        corretor_parceiro_id: parceiroId || null,
       }).eq("id", imovel.id);
+
 
       if (error) throw error;
       toast.success("Imóvel atualizado!");
@@ -216,6 +220,10 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
               <Label>Descrição</Label>
               <Textarea rows={3} value={form.descricao} onChange={(e) => upd("descricao", e.target.value)} />
             </div>
+            <div>
+              <Label>Matrícula (uso interno)</Label>
+              <Input value={form.matricula} onChange={(e) => upd("matricula", e.target.value)} placeholder="Nº da matrícula no cartório" />
+            </div>
             <div className="flex items-center gap-2">
               <Switch id="edit-destaque" checked={form.destaque} onCheckedChange={(v) => upd("destaque", v)} />
               <Label htmlFor="edit-destaque" className="cursor-pointer">Imóvel em destaque</Label>
@@ -227,7 +235,12 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
             onCorretorChange={setCorretorId}
             proprietarioId={proprietarioId}
             onProprietarioChange={setProprietarioId}
+            captadorId={captadorId}
+            onCaptadorChange={setCaptadorId}
+            parceiroId={parceiroId}
+            onParceiroChange={setParceiroId}
           />
+
 
           <section className="space-y-3">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Valores</h3>
