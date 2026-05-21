@@ -142,6 +142,7 @@ export default function AccountDetail() {
       temperatura: editing.temperatura || null,
       etapa_funil: editing.etapa_funil || "a_contatar",
       responsavel_id: editing.responsavel_id || null,
+      parceiro_origem_id: editing.parceiro_origem_id && editing.parceiro_origem_id !== "none" ? editing.parceiro_origem_id : null,
       tags,
     }).eq("id", acc.id);
     if (error) return toast.error(error.message);
