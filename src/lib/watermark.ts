@@ -29,9 +29,8 @@ export async function applyWatermark(
   opts: WatermarkOptions = {}
 ): Promise<File> {
   const {
-    opacity = 0.55,
-    widthRatio = 0.22,
-    marginRatio = 0.03,
+    opacity = 0.35,
+    widthRatio = 0.38,
     quality = 0.9,
     maxDimension = 2400,
   } = opts;
@@ -74,19 +73,19 @@ export async function applyWatermark(
     const minSide = Math.min(width, height);
     const logoW = Math.round(minSide * widthRatio);
     const logoH = Math.round((logo.height / logo.width) * logoW);
-    const margin = Math.round(minSide * marginRatio);
-    const x = width - logoW - margin;
-    const y = height - logoH - margin;
+    const x = Math.round((width - logoW) / 2);
+    const y = Math.round((height - logoH) / 2);
 
-    // Sombra sutil pra logo ficar legível sobre fundo claro
+    // Sombra sutil pra logo ficar legível sobre qualquer fundo
     ctx.save();
     ctx.globalAlpha = opacity;
-    ctx.shadowColor = "rgba(0,0,0,0.45)";
-    ctx.shadowBlur = Math.max(4, Math.round(minSide * 0.004));
+    ctx.shadowColor = "rgba(0,0,0,0.55)";
+    ctx.shadowBlur = Math.max(6, Math.round(minSide * 0.008));
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
     ctx.drawImage(logo, x, y, logoW, logoH);
     ctx.restore();
+
 
     const blob: Blob | null = await new Promise((resolve) =>
       canvas.toBlob(resolve, "image/jpeg", quality)
