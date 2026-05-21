@@ -137,7 +137,7 @@ export default function HomePage() {
             className="text-4xl sm:text-6xl lg:text-[5.5rem] font-extralight leading-[1.02] tracking-[-0.03em] mb-8"
           >
             Seu novo lar{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/90 to-amber-100/70 font-light italic">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/90 to-amber-100/70 font-light italic inline-block pr-[0.15em]">
               começa aqui.
             </span>
           </motion.h1>
@@ -379,7 +379,7 @@ export default function HomePage() {
                 <div className="relative p-12 sm:p-20 text-center flex flex-col items-center">
                   <MessageCircle className="h-7 w-7 text-white/50 mb-8" />
                   <h3 className="text-2xl sm:text-3xl font-extralight tracking-wide mb-5">
-                    Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 font-light">comprar</span> um imóvel?
+                    Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 font-light inline-block pr-[0.15em]">comprar</span> um imóvel?
                   </h3>
                   <p className="text-base text-white/60 font-light leading-[1.8] max-w-sm mb-10">
                     Nossa equipe de consultores vai te ajudar a encontrar o imóvel perfeito para você e sua família.
@@ -412,7 +412,7 @@ export default function HomePage() {
                 <div className="relative p-12 sm:p-20 text-center flex flex-col items-center">
                   <Building2 className="h-7 w-7 text-white/50 mb-8" />
                   <h3 className="text-2xl sm:text-3xl font-extralight tracking-wide mb-5">
-                    Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 font-light">vender</span> seu imóvel?
+                    Quer <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 font-light inline-block pr-[0.15em]">vender</span> seu imóvel?
                   </h3>
                   <p className="text-base text-white/60 font-light leading-[1.8] max-w-sm mb-10">
                     Avaliamos e anunciamos seu imóvel com exclusividade. Alcance compradores qualificados com a HR Imóveis.
@@ -504,7 +504,7 @@ function NewsletterSection() {
           className="text-2xl sm:text-4xl font-extralight tracking-wide mb-5"
         >
           Fique por dentro do mercado{" "}
-          <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 font-light">
+          <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 font-light inline-block pr-[0.15em]">
             imobiliário
           </span>
         </motion.h2>

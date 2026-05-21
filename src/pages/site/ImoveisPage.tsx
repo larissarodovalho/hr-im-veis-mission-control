@@ -118,7 +118,7 @@ function ParallaxHero() {
           className="text-4xl sm:text-6xl lg:text-[5.5rem] font-extralight leading-[1.02] tracking-[-0.03em] mb-8"
         >
           Imóveis que{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/90 to-amber-100/70 font-light italic">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/90 to-amber-100/70 font-light italic inline-block pr-[0.15em]">
             inspiram viver.
           </span>
         </motion.h1>
@@ -600,7 +600,7 @@ export default function ImoveisPage() {
               className="text-3xl sm:text-4xl lg:text-5xl font-extralight leading-[1.12] tracking-[-0.02em] mb-4"
             >
               Não encontrou o que{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/90 to-amber-100/70 font-light italic">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/90 to-amber-100/70 font-light italic inline-block pr-[0.15em]">
                 procura?
               </span>
             </motion.h2>
