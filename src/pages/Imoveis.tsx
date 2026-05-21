@@ -368,6 +368,10 @@ export default function Imoveis() {
         <TabsContent value="vendidos" className="mt-4">
           <VendidosTab />
         </TabsContent>
+
+        <TabsContent value="parceiros" className="mt-4">
+          <ParceirosTab />
+        </TabsContent>
       </Tabs>
 
       <NovoImovelDialog open={openNew} onOpenChange={setOpenNew} onCreated={load} />
