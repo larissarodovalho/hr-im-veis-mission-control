@@ -570,7 +570,7 @@ export default function ImovelDetalhePage() {
             whileInView={{ opacity: 1, letterSpacing: "0.5em" }}
             viewport={{ margin: "-40px" }}
             transition={{ duration: 1.2, ease }}
-            className="text-[11px] uppercase text-white/25 font-light mb-8"
+            className="text-[11px] uppercase text-white/45 font-light mb-8"
           >
             Agende uma visita
           </motion.p>

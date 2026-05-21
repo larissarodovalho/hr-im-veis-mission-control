@@ -124,7 +124,7 @@ export default function SobrePage() {
                 whileInView={{ opacity: 1 }}
                 viewport={{ margin: "-40px" }}
                 transition={{ duration: 0.8 }}
-                className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light mb-8"
+                className="text-[11px] uppercase tracking-[0.5em] text-white/45 font-light mb-8"
               >
                 Nossa história
               </motion.p>
@@ -216,7 +216,7 @@ export default function SobrePage() {
               whileInView={{ opacity: 1 }}
               viewport={{ margin: "-40px" }}
               transition={{ duration: 0.8 }}
-              className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light mb-6"
+              className="text-[11px] uppercase tracking-[0.5em] text-white/45 font-light mb-6"
             >
               Nossos valores
             </motion.p>
@@ -274,7 +274,7 @@ export default function SobrePage() {
                 whileInView={{ opacity: 1 }}
                 viewport={{ margin: "-40px" }}
                 transition={{ duration: 0.8 }}
-                className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light mb-8"
+                className="text-[11px] uppercase tracking-[0.5em] text-white/45 font-light mb-8"
               >
                 Nossa missão
               </motion.p>
@@ -327,7 +327,7 @@ export default function SobrePage() {
             whileInView={{ opacity: 1, letterSpacing: "0.5em" }}
             viewport={{ margin: "-40px" }}
             transition={{ duration: 1.2, ease }}
-            className="text-[11px] uppercase text-white/25 font-light mb-8"
+            className="text-[11px] uppercase text-white/45 font-light mb-8"
           >
             Próximo passo
           </motion.p>

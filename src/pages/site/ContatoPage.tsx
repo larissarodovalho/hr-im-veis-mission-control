@@ -91,7 +91,7 @@ export default function ContatoPage() {
                 <div key={info.label} className="group">
                   <div className="flex items-start gap-5">
                     <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0 group-hover:bg-white/[0.08] transition-colors duration-500">
-                      <info.icon className="h-4 w-4 text-white/25 group-hover:text-white/75 transition-colors duration-500" />
+                      <info.icon className="h-4 w-4 text-white/45 group-hover:text-white/75 transition-colors duration-500" />
                     </div>
                     <div>
                       <span className="text-[10px] uppercase tracking-[0.2em] text-white/50 block mb-1.5">{info.label}</span>
@@ -112,7 +112,7 @@ export default function ContatoPage() {
           <h2 className="text-3xl md:text-4xl font-extralight text-white/90 tracking-tight">
             Av. dos Ingás, 2075
           </h2>
-          <p className="text-base text-white/25 font-light mt-2">Jd. Maringá — Sinop, MT</p>
+          <p className="text-base text-white/45 font-light mt-2">Jd. Maringá — Sinop, MT</p>
         </div>
         <div className="rounded-3xl overflow-hidden border border-white/[0.06] h-[450px]">
           <iframe

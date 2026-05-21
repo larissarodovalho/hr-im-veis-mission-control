@@ -125,7 +125,7 @@ export default function HomePage() {
             initial={{ opacity: 0, letterSpacing: "0.2em" }}
             animate={{ opacity: 1, letterSpacing: "0.5em" }}
             transition={{ duration: 1.5, delay: 0.3, ease }}
-            className="text-[11px] uppercase text-white/25 font-light mb-8"
+            className="text-[11px] uppercase text-white/45 font-light mb-8"
           >
             Sinop — Mato Grosso
           </motion.p>
@@ -257,7 +257,7 @@ export default function HomePage() {
                 whileInView={{ opacity: 1 }}
                 viewport={{ margin: "-40px" }}
                 transition={{ duration: 0.8, ease: smoothEase }}
-                className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light mb-4"
+                className="text-[11px] uppercase tracking-[0.5em] text-white/45 font-light mb-4"
               >
                 Portfolio
               </motion.p>
@@ -311,13 +311,13 @@ export default function HomePage() {
                   </div>
                   <div className="p-8 sm:p-10">
                     <div className="flex items-center justify-between mb-5">
-                      <span className="text-[10px] uppercase tracking-[0.4em] text-white/25 font-light">{imovel.tipo}</span>
+                      <span className="text-[10px] uppercase tracking-[0.4em] text-white/45 font-light">{imovel.tipo}</span>
                       <ArrowUpRight className="h-3.5 w-3.5 text-white/50 group-hover:text-amber-300/50 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-500" />
                     </div>
                     <h3 className="font-light text-base mb-3 tracking-wide text-white/80 group-hover:text-white/95 transition-colors duration-500">
                       {imovel.titulo}
                     </h3>
-                    <p className="flex items-center gap-1.5 text-[11px] text-white/25 mb-6 font-light tracking-[0.15em]">
+                    <p className="flex items-center gap-1.5 text-[11px] text-white/45 mb-6 font-light tracking-[0.15em]">
                       <MapPin className="h-2.5 w-2.5" /> {imovel.cidade || "Sinop, MT"}
                     </p>
                     <p className="text-xl font-extralight text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 tracking-wide">
@@ -361,7 +361,7 @@ export default function HomePage() {
             whileInView={{ opacity: 1 }}
             viewport={{ margin: "-40px" }}
             transition={{ duration: 0.8, ease: smoothEase }}
-            className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light mb-10 text-center"
+            className="text-[11px] uppercase tracking-[0.5em] text-white/45 font-light mb-10 text-center"
           >
             Como podemos ajudar
           </motion.p>
@@ -492,7 +492,7 @@ function NewsletterSection() {
           whileInView={{ opacity: 1 }}
           viewport={{ margin: "-40px" }}
           transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] as [number, number, number, number] }}
-          className="text-[11px] uppercase tracking-[0.5em] text-white/25 font-light mb-8"
+          className="text-[11px] uppercase tracking-[0.5em] text-white/45 font-light mb-8"
         >
           Newsletter
         </motion.p>
