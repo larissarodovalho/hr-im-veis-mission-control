@@ -12,6 +12,7 @@ import NovoImovelDialog from "@/components/imoveis/NovoImovelDialog";
 import EditarImovelDialog from "@/components/imoveis/EditarImovelDialog";
 import NovaPropostaDialog from "@/components/imoveis/NovaPropostaDialog";
 import ImovelHistoricoDrawer from "@/components/imoveis/ImovelHistoricoDrawer";
+import VendidosTab from "@/pages/imoveis/VendidosTab";
 
 type Imovel = any;
 type Proposta = any;
