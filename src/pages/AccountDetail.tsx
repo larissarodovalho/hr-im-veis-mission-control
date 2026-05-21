@@ -53,6 +53,7 @@ export default function AccountDetail() {
   const [editing, setEditing] = useState<any>(null);
   const [propEditing, setPropEditing] = useState<Partial<Propriedade> | null>(null);
   const [corretores, setCorretores] = useState<{ user_id: string; nome: string | null }[]>([]);
+  const [parceiros, setParceiros] = useState<{ id: string; nome: string }[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const { isAdmin } = useRole();
 
