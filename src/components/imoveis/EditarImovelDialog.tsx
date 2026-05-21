@@ -347,7 +347,20 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Fotos</h3>
             {fotosExistentes.length > 0 && (
               <div>
-                <p className="text-xs text-muted-foreground mb-2">Fotos atuais</p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-muted-foreground">Fotos atuais</p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={reapplyWatermark}
+                    disabled={reapplying || saving}
+                    className="h-7 text-xs"
+                  >
+                    {reapplying ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Droplet className="h-3 w-3 mr-1" />}
+                    Reaplicar marca d'água
+                  </Button>
+                </div>
                 <div className="grid grid-cols-4 gap-2">
                   {fotosExistentes.map((url) => (
                     <div key={url} className="relative group">
