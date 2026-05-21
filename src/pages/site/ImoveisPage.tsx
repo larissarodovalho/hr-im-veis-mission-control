@@ -204,7 +204,7 @@ export default function ImoveisPage() {
       <ParallaxHero />
 
       {/* ─── Filter Section ─── */}
-      <ScrollSection className="py-2 sm:py-4 md:-mt-24" index={1}>
+      <ScrollSection className="py-2 sm:py-4 md:-mt-24" index={10}>
         <div className="px-6 relative z-20">
           <div className="max-w-7xl mx-auto">
             {/* Section label — amber accent like HomePage */}
