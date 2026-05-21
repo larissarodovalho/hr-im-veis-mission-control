@@ -377,10 +377,11 @@ export default function ImoveisPage() {
                   transition={{ duration: 0.9, delay: (i % 3) * 0.12, ease }}
                   className="group"
                 >
-                  <motion.div
+                  <motion.a
+                    href={`/imovel/${im.id}`}
                     whileHover={{ y: -8 }}
                     transition={{ duration: 0.4, ease: smoothEase }}
-                    className="bg-white/[0.02] border border-white/[0.05] rounded-2xl overflow-hidden hover:border-white/[0.12] hover:bg-white/[0.04] transition-all duration-700 hover:shadow-2xl hover:shadow-white/[0.03]"
+                    className="block cursor-pointer bg-white/[0.02] border border-white/[0.05] rounded-2xl overflow-hidden hover:border-white/[0.12] hover:bg-white/[0.04] transition-all duration-700 hover:shadow-2xl hover:shadow-white/[0.03]"
                   >
                     {/* Image */}
                     <div className="aspect-[16/10] relative overflow-hidden">
@@ -515,30 +516,27 @@ export default function ImoveisPage() {
 
                       {/* CTAs */}
                       <div className="flex gap-2">
-                        <motion.a
-                          href={createWhatsAppUrl(`Olá! Tenho interesse no imóvel ${im.codigo} - ${im.nome}`)}
-                          onClick={(event) => openWhatsApp(event, `Olá! Tenho interesse no imóvel ${im.codigo} - ${im.nome}`)}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <motion.button
+                          type="button"
+                          onClick={(event) => { event.preventDefault(); event.stopPropagation(); openWhatsApp(event, `Olá! Tenho interesse no imóvel ${im.codigo} - ${im.nome}`); }}
                           whileHover={{ scale: 1.01 }}
                           whileTap={{ scale: 0.98 }}
                           className="flex items-center justify-center gap-2 flex-1 py-3 rounded-xl text-sm font-semibold bg-white/[0.08] border border-white/[0.12] text-white/70 hover:bg-white/[0.14] hover:text-white hover:border-white/25 transition-all duration-400 group/btn"
                         >
                           Solicitar visita
                           <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
-                        </motion.a>
-                        <motion.a
-                          href={`/imovel/${im.id}`}
+                        </motion.button>
+                        <motion.span
                           whileHover={{ scale: 1.01 }}
                           whileTap={{ scale: 0.98 }}
-                          className="flex items-center justify-center gap-2 flex-1 py-3 rounded-xl text-sm font-semibold bg-white/[0.08] border border-white/[0.12] text-white/70 hover:bg-white/[0.14] hover:text-white hover:border-white/25 transition-all duration-400 group/btn2"
+                          className="flex items-center justify-center gap-2 flex-1 py-3 rounded-xl text-sm font-semibold bg-white/[0.08] border border-white/[0.12] text-white/70 group-hover:bg-white/[0.14] group-hover:text-white group-hover:border-white/25 transition-all duration-400 group/btn2"
                         >
                           Ver imóvel
                           <Eye className="h-4 w-4 transition-transform duration-300 group-hover/btn2:scale-110" />
-                        </motion.a>
+                        </motion.span>
                       </div>
                     </div>
-                  </motion.div>
+                  </motion.a>
                 </motion.div>
               ))}
             </div>
