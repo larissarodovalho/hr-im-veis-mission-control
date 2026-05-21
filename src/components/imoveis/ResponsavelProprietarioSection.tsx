@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SearchableSelect } from "@/components/SearchableSelect";
 import NovaContaDialog from "@/components/contas/NovaContaDialog";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus } from "lucide-react";
+import { Plus, Phone } from "lucide-react";
 
 interface Props {
   corretorId: string;
@@ -24,12 +24,12 @@ export default function ResponsavelProprietarioSection({
   parceiroId = "", onParceiroChange,
 }: Props) {
   const [corretores, setCorretores] = useState<{ user_id: string; nome: string }[]>([]);
-  const [contas, setContas] = useState<{ id: string; nome: string; documento?: string | null }[]>([]);
+  const [contas, setContas] = useState<{ id: string; nome: string; documento?: string | null; telefone?: string | null }[]>([]);
   const [parceiros, setParceiros] = useState<{ id: string; nome: string }[]>([]);
   const [openNovaConta, setOpenNovaConta] = useState(false);
 
   const loadContas = () =>
-    supabase.from("contas").select("id,nome,documento").order("nome").then(({ data }) => setContas(data ?? []));
+    supabase.from("contas").select("id,nome,documento,telefone").order("nome").then(({ data }) => setContas(data ?? []));
 
   useEffect(() => {
     supabase.from("profiles").select("user_id,nome").eq("ativo", true).order("nome")

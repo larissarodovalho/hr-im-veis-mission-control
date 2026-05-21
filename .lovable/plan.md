@@ -1,40 +1,19 @@
-## Adicionar campos no cadastro/edição de imóvel
+## Objetivo
 
-Adicionar 3 novos campos ao imóvel: **corretor captador**, **corretor parceiro** e **número da matrícula** (informação interna).
+Na seção "Responsável e proprietário" (usada em Novo/Editar imóvel), assim que o usuário selecionar uma conta no campo "Proprietário (conta)", exibir logo abaixo do select uma linha discreta com **nome** e **telefone** do proprietário selecionado.
 
-### 1. Banco de dados
+## Mudanças
 
-Migration em `public.imoveis`:
-- `corretor_captador_id` (uuid) — perfil interno (profiles.user_id) que captou o imóvel.
-- `corretor_parceiro_id` (uuid) — referência a `corretores_parceiros.id` (parceiro externo, mesma lista usada em Nova Venda).
-- `matricula` (text) — número da matrícula do imóvel no cartório (uso interno).
+Arquivo único: `src/components/imoveis/ResponsavelProprietarioSection.tsx`
 
-Sem alteração em RLS (herda das policies existentes).
+1. Ampliar a query de `contas` para trazer também `telefone` (hoje busca `id, nome, documento`).
+2. Quando `proprietarioId` estiver preenchido, localizar a conta correspondente na lista já carregada e renderizar abaixo do `SearchableSelect`:
+   - Nome do proprietário
+   - Telefone (com link `tel:` clicável); se não houver telefone cadastrado, mostrar "Sem telefone cadastrado" em tom suave.
+3. Estilo: texto pequeno (`text-xs text-muted-foreground`), ícone `Phone` do lucide ao lado do telefone. Sem mudanças de layout no grid.
 
-### 2. Frontend
+## Fora de escopo
 
-**`ResponsavelProprietarioSection.tsx`** — estender props e UI:
-- Novas props: `captadorId`, `onCaptadorChange`, `parceiroId`, `onParceiroChange`.
-- Carregar lista de `corretores_parceiros` (ativos).
-- Adicionar 2 novos selects no grid: "Corretor captador" (lista de profiles, igual ao responsável) e "Corretor parceiro" (SearchableSelect de corretores_parceiros, com opção "Nenhum").
-
-**`EditarImovelDialog.tsx`**:
-- Adicionar estados `captadorId`, `parceiroId`, `matricula`.
-- Hidratar a partir do imóvel no `useEffect`.
-- Passar props novas para `ResponsavelProprietarioSection`.
-- Adicionar campo "Matrícula (uso interno)" na seção **Identificação** (input texto).
-- Incluir os 3 campos no `update`.
-
-**`NovoImovelDialog.tsx`**:
-- Espelhar as mesmas adições (estados, props na seção, campo matrícula no form, salvar no insert).
-
-### 3. UX
-
-- Matrícula fica em campo único de texto livre, ao lado/abaixo da descrição na seção Identificação, marcado como "uso interno".
-- Captador e parceiro são opcionais. Parceiro abre rapidinho para criar novo via fluxo já existente em Parceiros (não embutimos botão "novo parceiro" aqui nessa iteração — usuário cadastra em Imóveis > Parceiros).
-
-### 4. Out of scope
-
-- Mostrar captador/parceiro/matrícula nas listagens públicas/cards de imóvel.
-- Validação de matrícula única.
-- Botão "novo parceiro" inline no dialog de imóvel.
+- Não alterar o card de Conta em outras telas.
+- Não adicionar e-mail ou outros campos (só nome + telefone, conforme pedido).
+- Sem mudanças no banco.
