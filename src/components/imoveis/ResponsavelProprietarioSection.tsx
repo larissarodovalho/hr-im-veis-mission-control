@@ -74,6 +74,22 @@ export default function ResponsavelProprietarioSection({
               <Plus className="h-4 w-4" />
             </Button>
           </div>
+          {proprietarioSelecionado && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">{proprietarioSelecionado.nome}</span>
+              {proprietarioSelecionado.telefone ? (
+                <a href={`tel:${proprietarioSelecionado.telefone}`} className="inline-flex items-center gap-1 hover:text-foreground">
+                  <Phone className="h-3 w-3" />
+                  {proprietarioSelecionado.telefone}
+                </a>
+              ) : (
+                <span className="inline-flex items-center gap-1 opacity-70">
+                  <Phone className="h-3 w-3" />
+                  Sem telefone cadastrado
+                </span>
+              )}
+            </div>
+          )}
         </div>
         {onCaptadorChange && (
           <div>
