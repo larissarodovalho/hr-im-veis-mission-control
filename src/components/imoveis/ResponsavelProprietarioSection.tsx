@@ -12,13 +12,20 @@ interface Props {
   onCorretorChange: (v: string) => void;
   proprietarioId: string;
   onProprietarioChange: (v: string) => void;
+  captadorId?: string;
+  onCaptadorChange?: (v: string) => void;
+  parceiroId?: string;
+  onParceiroChange?: (v: string) => void;
 }
 
 export default function ResponsavelProprietarioSection({
   corretorId, onCorretorChange, proprietarioId, onProprietarioChange,
+  captadorId = "", onCaptadorChange,
+  parceiroId = "", onParceiroChange,
 }: Props) {
   const [corretores, setCorretores] = useState<{ user_id: string; nome: string }[]>([]);
   const [contas, setContas] = useState<{ id: string; nome: string; documento?: string | null }[]>([]);
+  const [parceiros, setParceiros] = useState<{ id: string; nome: string }[]>([]);
   const [openNovaConta, setOpenNovaConta] = useState(false);
 
   const loadContas = () =>
@@ -28,9 +35,12 @@ export default function ResponsavelProprietarioSection({
     supabase.from("profiles").select("user_id,nome").eq("ativo", true).order("nome")
       .then(({ data }) => setCorretores((data ?? []).map((p: any) => ({ user_id: p.user_id, nome: p.nome || "Sem nome" }))));
     loadContas();
+    supabase.from("corretores_parceiros").select("id,nome").eq("ativo", true).order("nome")
+      .then(({ data }) => setParceiros((data ?? []) as any));
   }, []);
 
   const contaOptions = contas.map((c) => ({ id: c.id, nome: c.documento ? `${c.nome} · ${c.documento}` : c.nome }));
+  const parceiroOptions = parceiros.map((p) => ({ id: p.id, nome: p.nome }));
 
   return (
     <section className="space-y-3">
@@ -64,6 +74,32 @@ export default function ResponsavelProprietarioSection({
             </Button>
           </div>
         </div>
+        {onCaptadorChange && (
+          <div>
+            <Label>Corretor captador</Label>
+            <Select value={captadorId || "none"} onValueChange={(v) => onCaptadorChange(v === "none" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="Selecionar…" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhum</SelectItem>
+                {corretores.map((c) => (
+                  <SelectItem key={c.user_id} value={c.user_id}>{c.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {onParceiroChange && (
+          <div>
+            <Label>Corretor parceiro (externo)</Label>
+            <SearchableSelect
+              value={parceiroId || "none"}
+              onChange={(v) => onParceiroChange(v === "none" ? "" : v)}
+              options={parceiroOptions}
+              placeholder="Buscar parceiro…"
+              emptyLabel="Sem parceiro"
+            />
+          </div>
+        )}
       </div>
 
       <NovaContaDialog

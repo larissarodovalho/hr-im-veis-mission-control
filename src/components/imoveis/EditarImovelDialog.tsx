@@ -27,8 +27,9 @@ const empty = {
   area_total: "", area_construida: "", area_util: "",
   quartos: "", suites: "", banheiros: "", vagas: "",
   cep: "", endereco: "", numero: "", complemento: "", bairro: "", cidade: "", estado: "",
-  destaque: false,
+  destaque: false, matricula: "",
 };
+
 
 const s = (v: any) => (v == null ? "" : String(v));
 
