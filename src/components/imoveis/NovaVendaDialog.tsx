@@ -188,7 +188,7 @@ export default function NovaVendaDialog({
           </div>
           <div>
             <Label>Corretor parceiro</Label>
-            <SearchableSelect value={form.corretor_parceiro_id} onChange={(v) => setForm({ ...form, corretor_parceiro_id: v })} options={profiles} placeholder="Buscar corretor…" emptyLabel="—" />
+            <SearchableSelect value={form.corretor_parceiro_id} onChange={(v) => setForm({ ...form, corretor_parceiro_id: v })} options={parceiros} placeholder="Buscar parceiro…" emptyLabel="—" />
           </div>
           <div>
             <Label>Lead (opcional)</Label>
