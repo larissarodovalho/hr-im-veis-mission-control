@@ -41,6 +41,7 @@ export default function ResponsavelProprietarioSection({
 
   const contaOptions = contas.map((c) => ({ id: c.id, nome: c.documento ? `${c.nome} · ${c.documento}` : c.nome }));
   const parceiroOptions = parceiros.map((p) => ({ id: p.id, nome: p.nome }));
+  const proprietarioSelecionado = proprietarioId ? contas.find((c) => c.id === proprietarioId) : null;
 
   return (
     <section className="space-y-3">
