@@ -1,19 +1,31 @@
-## Objetivo
+## Diagnóstico
 
-Na seção "Responsável e proprietário" (usada em Novo/Editar imóvel), assim que o usuário selecionar uma conta no campo "Proprietário (conta)", exibir logo abaixo do select uma linha discreta com **nome** e **telefone** do proprietário selecionado.
+Verifiquei o fluxo atual e o comportamento que você quer **já acontece** no site — mas vale confirmar e deixar isso explícito/documentado para não quebrar no futuro.
 
-## Mudanças
+### Como funciona hoje
 
-Arquivo único: `src/components/imoveis/ResponsavelProprietarioSection.tsx`
+1. **CRM (`Imoveis.tsx`)** — As abas "Em Proposta" e "Em Fechamento" são derivadas das **propostas** vinculadas ao imóvel, **não** mudam o campo `imoveis.status`. O status do imóvel só muda em dois pontos:
+   - `confirmarVenda()` em `Imoveis.tsx` → seta `status = 'Vendido'`
+   - `NovaVendaDialog.tsx` → seta `status = 'Vendido'`
+2. **Site público** consome a view `imoveis_public`, que filtra `WHERE status = 'Disponível'`. Como o status não muda enquanto a proposta está em análise/fechamento, **o imóvel continua aparecendo no site** durante todo esse período.
+3. Só quando a venda é confirmada (status vira "Vendido") ele sai do site e entra na aba "Vendidos" do CRM.
 
-1. Ampliar a query de `contas` para trazer também `telefone` (hoje busca `id, nome, documento`).
-2. Quando `proprietarioId` estiver preenchido, localizar a conta correspondente na lista já carregada e renderizar abaixo do `SearchableSelect`:
-   - Nome do proprietário
-   - Telefone (com link `tel:` clicável); se não houver telefone cadastrado, mostrar "Sem telefone cadastrado" em tom suave.
-3. Estilo: texto pequeno (`text-xs text-muted-foreground`), ícone `Phone` do lucide ao lado do telefone. Sem mudanças de layout no grid.
+Ou seja: o comportamento que você descreveu **já está implementado corretamente**.
 
-## Fora de escopo
+## Plano de ajustes (limpeza preventiva)
 
-- Não alterar o card de Conta em outras telas.
-- Não adicionar e-mail ou outros campos (só nome + telefone, conforme pedido).
-- Sem mudanças no banco.
+Para garantir que ninguém quebre isso sem querer e para deixar o código mais claro:
+
+1. **`src/pages/site/ImoveisPage.tsx`** — Remover `"Em negociação"` do `STATUS_FILTER` (linha 66). Esse valor nunca é usado em lugar nenhum do sistema (só `Disponível` e `Vendido` aparecem) e cria confusão. Fica apenas `["Disponível"]`.
+
+2. **Adicionar um comentário no topo de `Imoveis.tsx`** explicando a regra: "o campo `imoveis.status` permanece `Disponível` enquanto há propostas em análise ou em fechamento; só muda para `Vendido` na confirmação da venda. O site usa esse campo via `imoveis_public`."
+
+3. **Nenhuma migração de banco** é necessária.
+
+### Fora do escopo
+
+- Não vou mexer na view `imoveis_public` (já filtra corretamente).
+- Não vou mexer no `NovaPropostaDialog` (já não toca em `imoveis.status`).
+- Não vou alterar o badge do site em `ImovelDetalhePage` (continua mostrando "Disponível").
+
+Se preferir, posso pular essa limpeza e só confirmar o comportamento — me diga.

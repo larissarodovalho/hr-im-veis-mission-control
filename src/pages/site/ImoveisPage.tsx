@@ -63,7 +63,9 @@ function formatPrice(valor: number) {
 }
 
 const TIPOS = ["Todos", "Casa", "Sobrado", "Apartamento"] as const;
-const STATUS_FILTER = ["Disponível", "Em negociação"] as const;
+// Imóveis com propostas em análise ou em fechamento permanecem com status "Disponível"
+// e continuam aparecendo no site. Só saem daqui quando a venda é confirmada (status = "Vendido").
+const STATUS_FILTER = ["Disponível"] as const;
 
 const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];
 const smoothEase = [0.25, 0.4, 0.25, 1] as [number, number, number, number];
