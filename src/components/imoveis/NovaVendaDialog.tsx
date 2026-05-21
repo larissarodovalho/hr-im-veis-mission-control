@@ -39,6 +39,9 @@ export default function NovaVendaDialog({
     lead_id: "none",
     conta_id: "none",
     corretor_id: "none",
+    corretor_vendedor_id: "none",
+    corretor_captador_id: "none",
+    corretor_parceiro_id: "none",
     cliente_nome: "",
     valor_venda: "",
     valor_comissao: "",
@@ -72,6 +75,9 @@ export default function NovaVendaDialog({
       lead_id: initial?.lead_id || "none",
       conta_id: initial?.conta_id || "none",
       corretor_id: initial?.corretor_id || "none",
+      corretor_vendedor_id: initial?.corretor_vendedor_id || "none",
+      corretor_captador_id: initial?.corretor_captador_id || "none",
+      corretor_parceiro_id: initial?.corretor_parceiro_id || "none",
       data_venda: initial?.data_venda ? new Date(initial.data_venda).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
     }));
   }, [open, initial]);
@@ -121,6 +127,9 @@ export default function NovaVendaDialog({
       lead_id: form.lead_id !== "none" ? form.lead_id : null,
       conta_id: form.conta_id !== "none" ? form.conta_id : null,
       corretor_id: form.corretor_id !== "none" ? form.corretor_id : null,
+      corretor_vendedor_id: form.corretor_vendedor_id !== "none" ? form.corretor_vendedor_id : null,
+      corretor_captador_id: form.corretor_captador_id !== "none" ? form.corretor_captador_id : null,
+      corretor_parceiro_id: form.corretor_parceiro_id !== "none" ? form.corretor_parceiro_id : null,
       proposta_id: form.proposta_id || null,
       cliente_nome: form.cliente_nome,
       valor_venda: parseFloat(form.valor_venda) || 0,
@@ -168,8 +177,16 @@ export default function NovaVendaDialog({
             <SearchableSelect value={form.imovel_id} onChange={(v) => setForm({ ...form, imovel_id: v })} options={imoveis} placeholder="Buscar imóvel…" emptyLabel="—" />
           </div>
           <div>
-            <Label>Corretor</Label>
-            <SearchableSelect value={form.corretor_id} onChange={(v) => setForm({ ...form, corretor_id: v })} options={profiles} placeholder="Buscar corretor…" emptyLabel="—" />
+            <Label>Corretor vendedor</Label>
+            <SearchableSelect value={form.corretor_vendedor_id} onChange={(v) => setForm({ ...form, corretor_vendedor_id: v, corretor_id: v })} options={profiles} placeholder="Buscar corretor…" emptyLabel="—" />
+          </div>
+          <div>
+            <Label>Corretor captador</Label>
+            <SearchableSelect value={form.corretor_captador_id} onChange={(v) => setForm({ ...form, corretor_captador_id: v })} options={profiles} placeholder="Buscar corretor…" emptyLabel="—" />
+          </div>
+          <div>
+            <Label>Corretor parceiro</Label>
+            <SearchableSelect value={form.corretor_parceiro_id} onChange={(v) => setForm({ ...form, corretor_parceiro_id: v })} options={profiles} placeholder="Buscar corretor…" emptyLabel="—" />
           </div>
           <div>
             <Label>Lead (opcional)</Label>
