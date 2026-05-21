@@ -1,3 +1,10 @@
+// Regra de status do imóvel:
+// O campo `imoveis.status` permanece "Disponível" enquanto houver propostas em análise
+// ou em fechamento. As abas "Em Proposta" e "Em Fechamento" abaixo são derivadas das
+// propostas vinculadas, sem alterar o status do imóvel. O status só muda para "Vendido"
+// na confirmação da venda (confirmarVenda / NovaVendaDialog). O site público
+// (`imoveis_public`) filtra por status = 'Disponível', então o imóvel continua visível
+// no site durante todo o ciclo de proposta/fechamento.
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
