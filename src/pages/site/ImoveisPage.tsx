@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { MapPin, BedDouble, Bath, Car, Search, X, ArrowUpRight, Maximize2, Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 function mapImovelFromDb(row: any) {
@@ -142,6 +143,7 @@ function ParallaxHero() {
 }
 
 export default function ImoveisPage() {
+  const navigate = useNavigate();
   const [busca, setBusca] = useState("");
   const [tipoSelecionado, setTipoSelecionado] = useState<string>("Todos");
   const [faixaSelecionada, setFaixaSelecionada] = useState<string>("Todos");
@@ -363,7 +365,7 @@ export default function ImoveisPage() {
       </ScrollSection>
 
       {/* ─── Grid — elegant cards ─── */}
-      <ScrollSection className="py-4 sm:py-6 md:-mt-8" index={2}>
+      <ScrollSection className="py-4 sm:py-6 md:-mt-8" index={2} fadeEdges={false}>
         <div className="px-6 relative z-20">
           <div className="max-w-7xl mx-auto">
 
@@ -377,8 +379,16 @@ export default function ImoveisPage() {
                   transition={{ duration: 0.9, delay: (i % 3) * 0.12, ease }}
                   className="group"
                 >
-                  <motion.a
-                    href={`/imovel/${im.id}`}
+                  <motion.div
+                    role="link"
+                    tabIndex={0}
+                    onClick={() => navigate(`/imovel/${im.id}`)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        navigate(`/imovel/${im.id}`);
+                      }
+                    }}
                     whileHover={{ y: -8 }}
                     transition={{ duration: 0.4, ease: smoothEase }}
                     className="block cursor-pointer bg-white/[0.02] border border-white/[0.05] rounded-2xl overflow-hidden hover:border-white/[0.12] hover:bg-white/[0.04] transition-all duration-700 hover:shadow-2xl hover:shadow-white/[0.03]"
@@ -439,7 +449,7 @@ export default function ImoveisPage() {
                     </div>
 
                     {/* Content */}
-                    <div className="p-5 sm:p-6">
+                    <div className="p-5 pb-7 sm:p-6 sm:pb-8">
                       <motion.h3
                         className="text-lg font-medium leading-snug text-white/90 group-hover:text-white transition-colors duration-500 mb-2"
                       >
@@ -536,7 +546,7 @@ export default function ImoveisPage() {
                         </motion.span>
                       </div>
                     </div>
-                  </motion.a>
+                  </motion.div>
                 </motion.div>
               ))}
             </div>
@@ -561,7 +571,7 @@ export default function ImoveisPage() {
       </ScrollSection>
 
       {/* ─── Bottom CTA ─── */}
-      <ScrollSection className="py-6 sm:py-10 md:-mt-16" index={3}>
+      <ScrollSection className="py-10 sm:py-14 md:mt-8" index={3}>
         <div className="px-6 relative z-20">
           <div className="max-w-7xl mx-auto text-center">
             <motion.div
