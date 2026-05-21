@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SearchableSelect } from "@/components/SearchableSelect";
 import NovaContaDialog from "@/components/contas/NovaContaDialog";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus } from "lucide-react";
+import { Plus, Phone } from "lucide-react";
 
 interface Props {
   corretorId: string;
@@ -24,12 +24,12 @@ export default function ResponsavelProprietarioSection({
   parceiroId = "", onParceiroChange,
 }: Props) {
   const [corretores, setCorretores] = useState<{ user_id: string; nome: string }[]>([]);
-  const [contas, setContas] = useState<{ id: string; nome: string; documento?: string | null }[]>([]);
+  const [contas, setContas] = useState<{ id: string; nome: string; documento?: string | null; telefone?: string | null }[]>([]);
   const [parceiros, setParceiros] = useState<{ id: string; nome: string }[]>([]);
   const [openNovaConta, setOpenNovaConta] = useState(false);
 
   const loadContas = () =>
-    supabase.from("contas").select("id,nome,documento").order("nome").then(({ data }) => setContas(data ?? []));
+    supabase.from("contas").select("id,nome,documento,telefone").order("nome").then(({ data }) => setContas(data ?? []));
 
   useEffect(() => {
     supabase.from("profiles").select("user_id,nome").eq("ativo", true).order("nome")
@@ -41,6 +41,7 @@ export default function ResponsavelProprietarioSection({
 
   const contaOptions = contas.map((c) => ({ id: c.id, nome: c.documento ? `${c.nome} · ${c.documento}` : c.nome }));
   const parceiroOptions = parceiros.map((p) => ({ id: p.id, nome: p.nome }));
+  const proprietarioSelecionado = proprietarioId ? contas.find((c) => c.id === proprietarioId) : null;
 
   return (
     <section className="space-y-3">
@@ -73,6 +74,22 @@ export default function ResponsavelProprietarioSection({
               <Plus className="h-4 w-4" />
             </Button>
           </div>
+          {proprietarioSelecionado && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">{proprietarioSelecionado.nome}</span>
+              {proprietarioSelecionado.telefone ? (
+                <a href={`tel:${proprietarioSelecionado.telefone}`} className="inline-flex items-center gap-1 hover:text-foreground">
+                  <Phone className="h-3 w-3" />
+                  {proprietarioSelecionado.telefone}
+                </a>
+              ) : (
+                <span className="inline-flex items-center gap-1 opacity-70">
+                  <Phone className="h-3 w-3" />
+                  Sem telefone cadastrado
+                </span>
+              )}
+            </div>
+          )}
         </div>
         {onCaptadorChange && (
           <div>
