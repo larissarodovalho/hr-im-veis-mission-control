@@ -33,7 +33,14 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
     temperatura: "",
     interesse: "",
     observacoes: "",
+    parceiro_origem_id: "none",
   });
+  const [parceiros, setParceiros] = useState<{ id: string; nome: string }[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    supabase.from("corretores_parceiros").select("id,nome").eq("ativo", true).order("nome").then(({ data }) => setParceiros(data ?? []));
+  }, [open]);
 
   const update = (k: string, v: string) => {
     setForm((p) => ({ ...p, [k]: v }));
