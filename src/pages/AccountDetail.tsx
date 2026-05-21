@@ -20,6 +20,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
 import { tempInfo, TEMPERATURAS } from "@/lib/contasTemperatura";
+import { ETAPAS } from "@/lib/contasFunil";
 
 type Propriedade = {
   id: string;
@@ -136,6 +137,7 @@ export default function AccountDetail() {
       interesse: editing.interesse || null,
       ramo_atividade: editing.ramo_atividade?.trim() || null,
       temperatura: editing.temperatura || null,
+      etapa_funil: editing.etapa_funil || "a_contatar",
       responsavel_id: editing.responsavel_id || null,
       tags,
     }).eq("id", acc.id);
@@ -413,6 +415,20 @@ export default function AccountDetail() {
                     <SelectItem value="none">Sem responsável</SelectItem>
                     {corretores.map(c => (
                       <SelectItem key={c.user_id} value={c.user_id}>{c.nome || "Sem nome"}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Etapa do funil</Label>
+                <Select
+                  value={editing.etapa_funil || "a_contatar"}
+                  onValueChange={v => setEditing({ ...editing, etapa_funil: v })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {ETAPAS.map(e => (
+                      <SelectItem key={e.id} value={e.id}>{e.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
