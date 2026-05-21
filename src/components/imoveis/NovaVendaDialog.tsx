@@ -75,6 +75,9 @@ export default function NovaVendaDialog({
       lead_id: initial?.lead_id || "none",
       conta_id: initial?.conta_id || "none",
       corretor_id: initial?.corretor_id || "none",
+      corretor_vendedor_id: initial?.corretor_vendedor_id || "none",
+      corretor_captador_id: initial?.corretor_captador_id || "none",
+      corretor_parceiro_id: initial?.corretor_parceiro_id || "none",
       data_venda: initial?.data_venda ? new Date(initial.data_venda).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
     }));
   }, [open, initial]);
