@@ -1,67 +1,53 @@
-## Sub-aba "Vendidos" na página Imóveis
+## Sub-aba "Parceiros" na página Imóveis
 
-Adicionar uma nova sub-aba dentro de `/crm/imoveis` para registrar e acompanhar imóveis vendidos, com KPIs no topo e tabela detalhada (espelhando o layout do exemplo anexado). Lançamento dual: conversão automática de proposta "Aceita" + lançamento manual. Permissão de criação/edição restrita a admin/gestor; corretor apenas visualiza as próprias.
+Cadastro de corretores externos que fazem parcerias esporádicas. Cada parceiro pode ser vinculado a uma ou várias contas (clientes que ele trouxe, sejam compradores ou vendedores). O campo "Corretor parceiro" em Nova Venda passa a usar essa lista.
 
 ### 1. Banco de dados
 
-Nova tabela `public.vendas`:
-
-- `imovel_id` (uuid → imoveis, ON DELETE SET NULL)
-- `proposta_id` (uuid → propostas, ON DELETE SET NULL, opcional — preenchido em conversão)
-- `lead_id` / `conta_id` (uuid, opcionais — vínculo com cliente)
-- `cliente_nome` (text, obrigatório — fallback quando sem lead/conta)
-- `corretor_id` (uuid — corretor responsável)
-- `valor_venda` (numeric)
-- `valor_comissao` (numeric)
-- `percentual_comissao` (numeric, opcional)
-- `tipo` (text: "Venda" | "Aluguel", default "Venda")
-- `status_pagamento` (text: "Pagamento pendente" | "Finalizada" | "Cancelada", default "Pagamento pendente")
-- `origem` (text: ex. "Site", "Indicação", "Tráfego pago"…)
-- `data_venda` (timestamptz, default now())
+Nova tabela `public.corretores_parceiros`:
+- `nome` (text, obrigatório)
+- `telefone`, `email`, `documento` (text)
+- `creci` (text)
+- `cidade`, `estado` (text)
+- `comissao_padrao` (numeric, %)
+- `dados_bancarios` (text — pix/banco/agência/conta livre)
 - `observacoes` (text)
+- `ativo` (boolean, default true)
 - `created_by`, `created_at`, `updated_at`
 
-RLS:
-- SELECT: admin/gestor vê tudo; corretor vê quando `corretor_id = auth.uid()` ou `created_by = auth.uid()`.
-- INSERT/UPDATE/DELETE: apenas admin/gestor (`is_admin()`).
+Alteração em `public.contas`:
+- Adicionar coluna `parceiro_origem_id` (uuid → `corretores_parceiros.id` ON DELETE SET NULL)
 
-Trigger `update_updated_at_column` em UPDATE.
+Alteração em `public.vendas`:
+- Trocar `corretor_parceiro_id` de "perfil interno" para apontar pra `corretores_parceiros` (coluna mantém o nome; é só um uuid, sem FK estrita).
 
-Índices em `imovel_id`, `corretor_id`, `data_venda`.
+RLS em `corretores_parceiros`:
+- SELECT: todo staff (admin/gestor/corretor).
+- INSERT/UPDATE/DELETE: admin/gestor.
+- Trigger `update_updated_at_column` em UPDATE.
 
-### 2. Backend behavior
+### 2. Frontend
 
-Ao criar venda (manual ou via conversão), opcionalmente atualizar `imoveis.status` para `"Vendido"`. Feito no frontend após o insert (admin/gestor já pode atualizar imóveis).
-
-Conversão a partir de proposta Aceita: botão "Registrar venda" em `NovaPropostaDialog`/lista de propostas aceitas que pré-preenche o diálogo de nova venda com `proposta_id`, `imovel_id`, `lead_id`, `corretor_id`, `valor_venda` e abre o formulário pra completar comissão, tipo, status de pagamento e origem.
-
-### 3. Frontend
-
-`src/pages/Imoveis.tsx` — adicionar `<TabsTrigger value="vendidos">Vendidos</TabsTrigger>` e renderizar novo componente `VendidosTab`.
+`src/pages/Imoveis.tsx` — adicionar `<TabsTrigger value="parceiros">Parceiros</TabsTrigger>` e renderizar novo componente `ParceirosTab`.
 
 Novos arquivos:
+- `src/pages/imoveis/ParceirosTab.tsx` — tabela com colunas: Nome, Telefone, Email, CRECI, Cidade, Comissão %, Clientes vinculados (contagem), Status (ativo). Botão "Novo parceiro" (admin/gestor). Ações: editar / desativar / excluir.
+- `src/components/imoveis/NovoCorretorParceiroDialog.tsx` — formulário com todos os campos da tabela, mais uma seção "Clientes vinculados" listando as contas com `parceiro_origem_id = this.id`, com um SearchableSelect "Vincular conta existente" pra adicionar/remover vínculo (atualiza `contas.parceiro_origem_id`).
 
-- `src/pages/imoveis/VendidosTab.tsx` — orquestra KPIs + tabela + botão "Nova venda" (visível apenas a admin/gestor via `useRole`).
-- `src/components/imoveis/VendasKPIs.tsx` — 4 cards estilo do exemplo:
-  - **Valor total das vendas** (soma `valor_venda`) com sparkline + variação vs período anterior
-  - **Quantidade de vendas** (count) com donut por status + variação
-  - **Ticket médio** (valor_total / count) com sparkline + variação
-  - **Origem das vendas** (mini donut por `origem`)
-  - Filtro de período (Mês atual / Últimos 30d / Últimos 90d / Ano)
-- `src/components/imoveis/VendasTable.tsx` — colunas:
-  Nome (cliente_nome), Imóvel (codigo), Valor, Comissão, Corretor (avatar do profile), Status (badge colorido), Tipo (badge), Data da Venda. Ações: editar / excluir (admin/gestor).
-- `src/components/imoveis/NovaVendaDialog.tsx` — formulário com SearchableSelect para imóvel/lead/conta/corretor, campos de valor, comissão (R$ e %), tipo, status, origem, data, observações. Aceita `initialData` para conversão de proposta.
+Mudanças em formulários existentes:
+- `src/components/contas/NovaContaDialog.tsx` — adicionar campo "Trazido pelo parceiro" (SearchableSelect com lista de `corretores_parceiros`).
+- `src/pages/AccountDetail.tsx` (aba editar conta) — mesmo campo.
+- `src/components/imoveis/NovaVendaDialog.tsx` — substituir o `SearchableSelect` do "Corretor parceiro" para listar `corretores_parceiros` em vez de `profiles`.
 
-Charts: usar `recharts` (já no projeto via `src/components/ui/chart.tsx`).
+### 3. UX
 
-### 4. Permissões e UX
+- Badge "via Parceiro X" nas linhas de contas (Accounts.tsx) quando `parceiro_origem_id` estiver setado — opcional, fica para próxima iteração se ficar grande demais nesse turno.
+- Toast de confirmação em todas as ações.
+- Apenas admin/gestor podem criar/editar/excluir parceiros e vincular contas; corretores apenas visualizam.
 
-- Botão "Nova venda" e ações de edição/exclusão escondidos para corretor (mostra somente a tabela das próprias vendas).
-- Toast de confirmação após criar/editar/excluir.
-- Atualização do `imoveis.status` é opt-in via checkbox "Marcar imóvel como vendido" no diálogo (default ligado).
+### 4. Out of scope
 
-### 5. Out of scope
-
-- Relatório financeiro avançado / split de comissão por equipe.
-- Edição em lote.
-- Exportação CSV (pode ser adicionada depois reutilizando o padrão de `Reports.tsx`).
+- Cálculo automático de split de comissão entre parceiro e corretor interno.
+- Histórico de movimentações por parceiro.
+- Exportação CSV de parceiros (pode ser adicionada depois).
+- Vincular parceiro a imóveis individualmente (apenas via venda/conta nessa iteração).

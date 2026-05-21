@@ -415,6 +415,7 @@ export type Database = {
           lead_id_origem: string | null
           nome: string
           observacoes: string | null
+          parceiro_origem_id: string | null
           ramo_atividade: string | null
           responsavel_id: string | null
           status: string
@@ -437,6 +438,7 @@ export type Database = {
           lead_id_origem?: string | null
           nome: string
           observacoes?: string | null
+          parceiro_origem_id?: string | null
           ramo_atividade?: string | null
           responsavel_id?: string | null
           status?: string
@@ -459,6 +461,7 @@ export type Database = {
           lead_id_origem?: string | null
           nome?: string
           observacoes?: string | null
+          parceiro_origem_id?: string | null
           ramo_atividade?: string | null
           responsavel_id?: string | null
           status?: string
@@ -468,7 +471,15 @@ export type Database = {
           tipo?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contas_parceiro_origem_id_fkey"
+            columns: ["parceiro_origem_id"]
+            isOneToOne: false
+            referencedRelation: "corretores_parceiros"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contatos: {
         Row: {
@@ -693,6 +704,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      corretores_parceiros: {
+        Row: {
+          ativo: boolean
+          cidade: string | null
+          comissao_padrao: number | null
+          created_at: string
+          created_by: string | null
+          creci: string | null
+          dados_bancarios: string | null
+          documento: string | null
+          email: string | null
+          estado: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cidade?: string | null
+          comissao_padrao?: number | null
+          created_at?: string
+          created_by?: string | null
+          creci?: string | null
+          dados_bancarios?: string | null
+          documento?: string | null
+          email?: string | null
+          estado?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cidade?: string | null
+          comissao_padrao?: number | null
+          created_at?: string
+          created_by?: string | null
+          creci?: string | null
+          dados_bancarios?: string | null
+          documento?: string | null
+          email?: string | null
+          estado?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       document_events: {
         Row: {
