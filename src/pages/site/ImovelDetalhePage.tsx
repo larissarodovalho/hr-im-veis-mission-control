@@ -116,7 +116,13 @@ export default function ImovelDetalhePage() {
     );
   }
 
-  const image = imovel.imagem || getImageForImovel(imovel.id, imovel.tipo);
+  const fotos: string[] = Array.isArray(imovel.fotos) && imovel.fotos.length > 0
+    ? imovel.fotos
+    : [getImageForImovel(imovel.id, imovel.tipo)];
+  const safeIdx = Math.min(activePhoto, fotos.length - 1);
+  const image = fotos[safeIdx];
+  const prevPhoto = () => setActivePhoto((i) => (i - 1 + fotos.length) % fotos.length);
+  const nextPhoto = () => setActivePhoto((i) => (i + 1) % fotos.length);
   const specs = [
     ...(imovel.area_total ? [{ icon: Maximize2, label: "Área total", value: imovel.area_total }] : []),
     ...(imovel.area_construida ? [{ icon: Maximize2, label: "Área construída", value: imovel.area_construida }] : []),
