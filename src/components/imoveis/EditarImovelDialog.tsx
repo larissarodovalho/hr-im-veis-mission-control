@@ -48,6 +48,8 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
   const [saving, setSaving] = useState(false);
   const [corretorId, setCorretorId] = useState<string>("");
   const [proprietarioId, setProprietarioId] = useState<string>("");
+  const [captadorId, setCaptadorId] = useState<string>("");
+  const [parceiroId, setParceiroId] = useState<string>("");
 
   useEffect(() => {
     if (!imovel) return;
@@ -59,7 +61,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
       quartos: s(imovel.quartos), suites: s(imovel.suites), banheiros: s(imovel.banheiros), vagas: s(imovel.vagas),
       cep: s(imovel.cep), endereco: s(imovel.endereco), numero: s(imovel.numero),
       complemento: s(imovel.complemento), bairro: s(imovel.bairro), cidade: s(imovel.cidade), estado: s(imovel.estado),
-      destaque: !!imovel.destaque,
+      destaque: !!imovel.destaque, matricula: s(imovel.matricula),
     });
     setCaracs(Array.isArray(imovel.caracteristicas) ? imovel.caracteristicas : []);
     setFotosExistentes(Array.isArray(imovel.fotos) ? imovel.fotos : []);
@@ -67,7 +69,10 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
     setRemoverPaths([]);
     setCorretorId(imovel.corretor_id || "");
     setProprietarioId(imovel.proprietario_id || "");
+    setCaptadorId(imovel.corretor_captador_id || "");
+    setParceiroId(imovel.corretor_parceiro_id || "");
   }, [imovel]);
+
 
   const upd = (k: keyof typeof empty, v: any) => setForm((p) => ({ ...p, [k]: v }));
   const toggleCarac = (c: string) =>
