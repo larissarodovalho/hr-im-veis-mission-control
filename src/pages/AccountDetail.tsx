@@ -420,6 +420,20 @@ export default function AccountDetail() {
                 </Select>
               </div>
               <div>
+                <Label>Etapa do funil</Label>
+                <Select
+                  value={editing.etapa_funil || "a_contatar"}
+                  onValueChange={v => setEditing({ ...editing, etapa_funil: v })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {ETAPAS.map(e => (
+                      <SelectItem key={e.id} value={e.id}>{e.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <Label>Lista</Label>
                 <Select value={editing.lista || "nenhuma"} onValueChange={v => setEditing({ ...editing, lista: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
