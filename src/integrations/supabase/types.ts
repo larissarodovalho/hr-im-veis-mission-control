@@ -1724,6 +1724,105 @@ export type Database = {
         }
         Relationships: []
       }
+      vendas: {
+        Row: {
+          cliente_nome: string
+          conta_id: string | null
+          corretor_id: string | null
+          created_at: string
+          created_by: string | null
+          data_venda: string
+          id: string
+          imovel_id: string | null
+          lead_id: string | null
+          observacoes: string | null
+          origem: string | null
+          percentual_comissao: number | null
+          proposta_id: string | null
+          status_pagamento: string
+          tipo: string
+          updated_at: string
+          valor_comissao: number
+          valor_venda: number
+        }
+        Insert: {
+          cliente_nome: string
+          conta_id?: string | null
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_venda?: string
+          id?: string
+          imovel_id?: string | null
+          lead_id?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          percentual_comissao?: number | null
+          proposta_id?: string | null
+          status_pagamento?: string
+          tipo?: string
+          updated_at?: string
+          valor_comissao?: number
+          valor_venda?: number
+        }
+        Update: {
+          cliente_nome?: string
+          conta_id?: string | null
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_venda?: string
+          id?: string
+          imovel_id?: string | null
+          lead_id?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          percentual_comissao?: number | null
+          proposta_id?: string | null
+          status_pagamento?: string
+          tipo?: string
+          updated_at?: string
+          valor_comissao?: number
+          valor_venda?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendas_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendas_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendas_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendas_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendas_proposta_id_fkey"
+            columns: ["proposta_id"]
+            isOneToOne: false
+            referencedRelation: "propostas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       visitas: {
         Row: {
           conta_id: string | null
