@@ -177,8 +177,16 @@ export default function NovaVendaDialog({
             <SearchableSelect value={form.imovel_id} onChange={(v) => setForm({ ...form, imovel_id: v })} options={imoveis} placeholder="Buscar imóvel…" emptyLabel="—" />
           </div>
           <div>
-            <Label>Corretor</Label>
-            <SearchableSelect value={form.corretor_id} onChange={(v) => setForm({ ...form, corretor_id: v })} options={profiles} placeholder="Buscar corretor…" emptyLabel="—" />
+            <Label>Corretor vendedor</Label>
+            <SearchableSelect value={form.corretor_vendedor_id} onChange={(v) => setForm({ ...form, corretor_vendedor_id: v, corretor_id: v })} options={profiles} placeholder="Buscar corretor…" emptyLabel="—" />
+          </div>
+          <div>
+            <Label>Corretor captador</Label>
+            <SearchableSelect value={form.corretor_captador_id} onChange={(v) => setForm({ ...form, corretor_captador_id: v })} options={profiles} placeholder="Buscar corretor…" emptyLabel="—" />
+          </div>
+          <div>
+            <Label>Corretor parceiro</Label>
+            <SearchableSelect value={form.corretor_parceiro_id} onChange={(v) => setForm({ ...form, corretor_parceiro_id: v })} options={profiles} placeholder="Buscar corretor…" emptyLabel="—" />
           </div>
           <div>
             <Label>Lead (opcional)</Label>
