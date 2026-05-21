@@ -348,6 +348,7 @@ export default function Imoveis() {
           <TabsTrigger value="proposta">Em Proposta <Badge variant="secondary" className="ml-2 text-[10px]">{counts.p}</Badge></TabsTrigger>
           <TabsTrigger value="fechamento">Em Fechamento <Badge variant="secondary" className="ml-2 text-[10px]">{counts.f}</Badge></TabsTrigger>
           <TabsTrigger value="vendidos">Vendidos <Badge variant="secondary" className="ml-2 text-[10px]">{counts.v}</Badge></TabsTrigger>
+          <TabsTrigger value="oportunidades">Oportunidades de Negócio</TabsTrigger>
           <TabsTrigger value="parceiros">Parceiros</TabsTrigger>
         </TabsList>
 
