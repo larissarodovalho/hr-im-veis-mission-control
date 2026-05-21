@@ -448,6 +448,21 @@ export default function AccountDetail() {
                   </SelectContent>
                 </Select>
               </div>
+              <div>
+                <Label>Trazido pelo parceiro</Label>
+                <Select
+                  value={editing.parceiro_origem_id || "none"}
+                  onValueChange={v => setEditing({ ...editing, parceiro_origem_id: v === "none" ? null : v })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {parceiros.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div><Label>Endereço</Label><Input value={editing.endereco ?? ""} onChange={e => setEditing({ ...editing, endereco: e.target.value })} /></div>
               <div><Label>Observações</Label><Textarea rows={3} value={editing.observacoes ?? ""} onChange={e => setEditing({ ...editing, observacoes: e.target.value })} /></div>
             </div>
