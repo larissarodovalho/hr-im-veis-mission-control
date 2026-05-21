@@ -583,7 +583,7 @@ export default function ImovelDetalhePage() {
             className="text-3xl sm:text-4xl lg:text-5xl font-extralight leading-[1.12] tracking-[-0.02em] mb-4"
           >
             Este imóvel chamou sua{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/90 to-amber-100/70 font-light italic">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/90 to-amber-100/70 font-light italic inline-block pr-[0.15em]">
               atenção?
             </span>
           </motion.h2>

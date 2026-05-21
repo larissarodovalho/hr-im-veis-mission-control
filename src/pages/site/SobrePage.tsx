@@ -72,7 +72,7 @@ export default function SobrePage() {
             className="text-4xl sm:text-6xl lg:text-[5.5rem] font-extralight leading-[1.02] tracking-[-0.03em] mb-8"
           >
             14 anos transformando{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/90 to-amber-100/70 font-light italic">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/90 to-amber-100/70 font-light italic inline-block pr-[0.15em]">
               sonhos em endereços.
             </span>
           </motion.h1>
@@ -136,7 +136,7 @@ export default function SobrePage() {
                 className="text-3xl sm:text-4xl lg:text-5xl font-extralight leading-[1.12] tracking-[-0.02em] mb-8"
               >
                 Referência no mercado{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/90 to-amber-100/70 font-light italic">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/90 to-amber-100/70 font-light italic inline-block pr-[0.15em]">
                   imobiliário de Sinop
                 </span>
               </motion.h2>
@@ -190,7 +190,7 @@ export default function SobrePage() {
                   className="text-2xl sm:text-3xl lg:text-4xl font-extralight text-white/70 tracking-[-0.02em] leading-[1.4]"
                 >
                   Encontrar o imóvel ideal vai além de metros quadrados,{" "}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 font-light italic">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 font-light italic inline-block pr-[0.15em]">
                     é sobre encontrar um lugar que transforme vidas.
                   </span>
                 </motion.p>
@@ -228,7 +228,7 @@ export default function SobrePage() {
               className="text-3xl sm:text-4xl lg:text-5xl font-extralight tracking-[-0.02em]"
             >
               O que nos{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/90 to-amber-100/70 font-light italic">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/90 to-amber-100/70 font-light italic inline-block pr-[0.15em]">
                 move.
               </span>
             </motion.h2>
@@ -286,7 +286,7 @@ export default function SobrePage() {
                 className="text-3xl sm:text-4xl lg:text-5xl font-extralight leading-[1.12] tracking-[-0.02em] mb-8"
               >
                 Conectar pessoas aos{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/90 to-amber-100/70 font-light italic">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/90 to-amber-100/70 font-light italic inline-block pr-[0.15em]">
                   melhores imóveis de Sinop.
                 </span>
               </motion.h2>
@@ -340,7 +340,7 @@ export default function SobrePage() {
             className="text-3xl sm:text-4xl lg:text-5xl font-extralight leading-[1.12] tracking-[-0.02em] mb-4"
           >
             Vamos{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/90 to-amber-100/70 font-light italic">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200/90 to-amber-100/70 font-light italic inline-block pr-[0.15em]">
               conversar?
             </span>
           </motion.h2>
