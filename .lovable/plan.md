@@ -1,17 +1,28 @@
-## Tornar o card do imóvel inteiro clicável
+## Problema
 
-No `src/pages/site/ImoveisPage.tsx`, envolver o card inteiro com um `<a href={`/imovel/${im.id}`}>` (ou usar `react-router-dom` `Link`) para que qualquer clique no card leve à página de detalhe.
+No card de imóvel em `src/pages/site/ImoveisPage.tsx` (linha 531), o botão "Solicitar visita" chama:
 
-### Mudanças
-- Envolver o `motion.div` do card (linha 380) com um link para `/imovel/${im.id}`.
-- Manter os 2 botões existentes ("Solicitar visita" no WhatsApp e "Ver imóvel"), mas adicionar `onClick={(e) => e.stopPropagation()}` no botão do WhatsApp para não navegar — o link "Ver imóvel" pode continuar como está (mesmo destino) ou virar redundante.
-- Adicionar `cursor-pointer` e manter as animações de hover.
+```tsx
+onClick={(event) => { event.preventDefault(); event.stopPropagation(); openWhatsApp(event, msg); }}
+```
 
-### Detalhe técnico
-- O wrapper externo (`motion.div` com `initial/whileInView`) continua igual.
-- Trocar o `motion.div` interno (com `whileHover={{ y: -8 }}`) por `motion.a href={`/imovel/${im.id}`} className="block ..."`.
-- No `<a>` do WhatsApp, adicionar `onClick={(e) => { e.stopPropagation(); openWhatsApp(...); }}` para impedir que o clique no botão WhatsApp também dispare navegação para o detalhe (links aninhados são inválidos em HTML, então o botão WhatsApp passará a ser um `<button>` que abre WhatsApp via JS, evitando `<a>` dentro de `<a>`).
-- Remover o botão "Ver imóvel" (redundante) OU mantê-lo como indicação visual sem `<a>` aninhado.
+A função `openWhatsApp` em `src/lib/whatsapp.ts` faz `if (event?.defaultPrevented) return;` logo no início. Como `preventDefault()` é chamado antes, `openWhatsApp` retorna sem abrir nada — o botão fica inerte.
 
-### Resultado
-Clicar em qualquer área do card abre `/imovel/:id`. O botão de WhatsApp continua funcionando independentemente.
+## Correção
+
+Em `src/pages/site/ImoveisPage.tsx`, no `onClick` do botão "Solicitar visita":
+
+- Remover `event.preventDefault()` (não é necessário — é um `<button type="button">`, não tem ação padrão de navegação).
+- Manter `event.stopPropagation()` para que o clique não dispare a navegação do card clicável.
+
+Resultado:
+```tsx
+onClick={(event) => { event.stopPropagation(); openWhatsApp(event, `Olá! Tenho interesse no imóvel ${im.codigo} - ${im.nome}`); }}
+```
+
+## Validação
+
+- Recarregar `/imoveis` no preview.
+- Clicar em "Solicitar visita" em um card → deve abrir o WhatsApp com a mensagem pré-preenchida em nova aba.
+- Clicar no restante do card → ainda navega para `/imovel/:id`.
+- O botão "Solicitar visita" na página de detalhe (`ImovelDetalhePage.tsx`) já está correto e não precisa de mudança.

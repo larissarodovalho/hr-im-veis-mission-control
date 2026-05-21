@@ -528,7 +528,7 @@ export default function ImoveisPage() {
                       <div className="flex gap-2">
                         <motion.button
                           type="button"
-                          onClick={(event) => { event.preventDefault(); event.stopPropagation(); openWhatsApp(event, `Olá! Tenho interesse no imóvel ${im.codigo} - ${im.nome}`); }}
+                          onClick={(event) => { event.stopPropagation(); openWhatsApp(event, `Olá! Tenho interesse no imóvel ${im.codigo} - ${im.nome}`); }}
                           whileHover={{ scale: 1.01 }}
                           whileTap={{ scale: 0.98 }}
                           className="flex items-center justify-center gap-2 flex-1 py-3 rounded-xl text-sm font-semibold bg-white/[0.08] border border-white/[0.12] text-white/70 hover:bg-white/[0.14] hover:text-white hover:border-white/25 transition-all duration-400 group/btn"
