@@ -27,8 +27,9 @@ const empty = {
   area_total: "", area_construida: "", area_util: "",
   quartos: "", suites: "", banheiros: "", vagas: "",
   cep: "", endereco: "", numero: "", complemento: "", bairro: "", cidade: "", estado: "",
-  destaque: false,
+  destaque: false, matricula: "",
 };
+
 
 const s = (v: any) => (v == null ? "" : String(v));
 
@@ -47,6 +48,8 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
   const [saving, setSaving] = useState(false);
   const [corretorId, setCorretorId] = useState<string>("");
   const [proprietarioId, setProprietarioId] = useState<string>("");
+  const [captadorId, setCaptadorId] = useState<string>("");
+  const [parceiroId, setParceiroId] = useState<string>("");
 
   useEffect(() => {
     if (!imovel) return;
@@ -58,7 +61,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
       quartos: s(imovel.quartos), suites: s(imovel.suites), banheiros: s(imovel.banheiros), vagas: s(imovel.vagas),
       cep: s(imovel.cep), endereco: s(imovel.endereco), numero: s(imovel.numero),
       complemento: s(imovel.complemento), bairro: s(imovel.bairro), cidade: s(imovel.cidade), estado: s(imovel.estado),
-      destaque: !!imovel.destaque,
+      destaque: !!imovel.destaque, matricula: s(imovel.matricula),
     });
     setCaracs(Array.isArray(imovel.caracteristicas) ? imovel.caracteristicas : []);
     setFotosExistentes(Array.isArray(imovel.fotos) ? imovel.fotos : []);
@@ -66,7 +69,10 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
     setRemoverPaths([]);
     setCorretorId(imovel.corretor_id || "");
     setProprietarioId(imovel.proprietario_id || "");
+    setCaptadorId(imovel.corretor_captador_id || "");
+    setParceiroId(imovel.corretor_parceiro_id || "");
   }, [imovel]);
+
 
   const upd = (k: keyof typeof empty, v: any) => setForm((p) => ({ ...p, [k]: v }));
   const toggleCarac = (c: string) =>
@@ -144,11 +150,15 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
         cidade: form.cidade || null,
         estado: form.estado || null,
         destaque: form.destaque,
+        matricula: form.matricula || null,
         caracteristicas: caracs,
         fotos: [...fotosExistentes, ...novasUrls],
         corretor_id: corretorId || null,
         proprietario_id: proprietarioId || null,
+        corretor_captador_id: captadorId || null,
+        corretor_parceiro_id: parceiroId || null,
       }).eq("id", imovel.id);
+
 
       if (error) throw error;
       toast.success("Imóvel atualizado!");
@@ -210,6 +220,10 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
               <Label>Descrição</Label>
               <Textarea rows={3} value={form.descricao} onChange={(e) => upd("descricao", e.target.value)} />
             </div>
+            <div>
+              <Label>Matrícula (uso interno)</Label>
+              <Input value={form.matricula} onChange={(e) => upd("matricula", e.target.value)} placeholder="Nº da matrícula no cartório" />
+            </div>
             <div className="flex items-center gap-2">
               <Switch id="edit-destaque" checked={form.destaque} onCheckedChange={(v) => upd("destaque", v)} />
               <Label htmlFor="edit-destaque" className="cursor-pointer">Imóvel em destaque</Label>
@@ -221,7 +235,12 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
             onCorretorChange={setCorretorId}
             proprietarioId={proprietarioId}
             onProprietarioChange={setProprietarioId}
+            captadorId={captadorId}
+            onCaptadorChange={setCaptadorId}
+            parceiroId={parceiroId}
+            onParceiroChange={setParceiroId}
           />
+
 
           <section className="space-y-3">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Valores</h3>

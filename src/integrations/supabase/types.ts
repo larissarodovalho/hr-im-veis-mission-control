@@ -959,7 +959,9 @@ export type Database = {
           cidade: string | null
           codigo: string | null
           complemento: string | null
+          corretor_captador_id: string | null
           corretor_id: string | null
+          corretor_parceiro_id: string | null
           created_at: string
           created_by: string | null
           descricao: string | null
@@ -969,6 +971,7 @@ export type Database = {
           finalidade: string
           fotos: string[] | null
           id: string
+          matricula: string | null
           numero: string | null
           proprietario_id: string | null
           quartos: number | null
@@ -993,7 +996,9 @@ export type Database = {
           cidade?: string | null
           codigo?: string | null
           complemento?: string | null
+          corretor_captador_id?: string | null
           corretor_id?: string | null
+          corretor_parceiro_id?: string | null
           created_at?: string
           created_by?: string | null
           descricao?: string | null
@@ -1003,6 +1008,7 @@ export type Database = {
           finalidade?: string
           fotos?: string[] | null
           id?: string
+          matricula?: string | null
           numero?: string | null
           proprietario_id?: string | null
           quartos?: number | null
@@ -1027,7 +1033,9 @@ export type Database = {
           cidade?: string | null
           codigo?: string | null
           complemento?: string | null
+          corretor_captador_id?: string | null
           corretor_id?: string | null
+          corretor_parceiro_id?: string | null
           created_at?: string
           created_by?: string | null
           descricao?: string | null
@@ -1037,6 +1045,7 @@ export type Database = {
           finalidade?: string
           fotos?: string[] | null
           id?: string
+          matricula?: string | null
           numero?: string | null
           proprietario_id?: string | null
           quartos?: number | null
