@@ -1303,6 +1303,90 @@ export type Database = {
         }
         Relationships: []
       }
+      oportunidade_imoveis: {
+        Row: {
+          created_at: string
+          id: string
+          imovel_id: string
+          interesse: string | null
+          observacao: string | null
+          oportunidade_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          imovel_id: string
+          interesse?: string | null
+          observacao?: string | null
+          oportunidade_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          imovel_id?: string
+          interesse?: string | null
+          observacao?: string | null
+          oportunidade_id?: string
+        }
+        Relationships: []
+      }
+      oportunidades: {
+        Row: {
+          bairro: string | null
+          cidade: string | null
+          cliente_id: string
+          cliente_tipo: string
+          corretor_id: string | null
+          created_at: string
+          created_by: string | null
+          descricao_busca: string | null
+          estagio: string
+          id: string
+          observacoes: string | null
+          prioridade: string
+          tipo_imovel: string | null
+          titulo: string
+          updated_at: string
+          valor_alvo: number | null
+        }
+        Insert: {
+          bairro?: string | null
+          cidade?: string | null
+          cliente_id: string
+          cliente_tipo: string
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          descricao_busca?: string | null
+          estagio?: string
+          id?: string
+          observacoes?: string | null
+          prioridade?: string
+          tipo_imovel?: string | null
+          titulo: string
+          updated_at?: string
+          valor_alvo?: number | null
+        }
+        Update: {
+          bairro?: string | null
+          cidade?: string | null
+          cliente_id?: string
+          cliente_tipo?: string
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          descricao_busca?: string | null
+          estagio?: string
+          id?: string
+          observacoes?: string | null
+          prioridade?: string
+          tipo_imovel?: string | null
+          titulo?: string
+          updated_at?: string
+          valor_alvo?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           ativo: boolean
