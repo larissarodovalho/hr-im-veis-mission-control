@@ -68,11 +68,14 @@ export default function ImovelDetalhePage() {
   const { id } = useParams<{ id: string }>();
   const [imovel, setImovel] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activePhoto, setActivePhoto] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const heroRef = useRef(null);
   const { scrollYProgress: heroScroll } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroOpacity = useTransform(heroScroll, [0, 0.5], [1, 0]);
   const heroScale = useTransform(heroScroll, [0, 0.5], [1, 1.08]);
   const heroTextY = useTransform(heroScroll, [0, 0.5], [0, 80]);
+
 
   useEffect(() => {
     if (!id) { setLoading(false); return; }
