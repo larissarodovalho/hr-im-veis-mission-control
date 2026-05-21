@@ -377,6 +377,10 @@ export default function Imoveis() {
           <VendidosTab />
         </TabsContent>
 
+        <TabsContent value="oportunidades" className="mt-4">
+          <OportunidadesTab />
+        </TabsContent>
+
         <TabsContent value="parceiros" className="mt-4">
           <ParceirosTab />
         </TabsContent>
