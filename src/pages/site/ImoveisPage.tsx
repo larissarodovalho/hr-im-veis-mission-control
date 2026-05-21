@@ -365,7 +365,7 @@ export default function ImoveisPage() {
       </ScrollSection>
 
       {/* ─── Grid — elegant cards ─── */}
-      <ScrollSection className="py-4 sm:py-6 md:-mt-8" index={2}>
+      <ScrollSection className="py-4 sm:py-6 md:-mt-8" index={2} fadeEdges={false}>
         <div className="px-6 relative z-20">
           <div className="max-w-7xl mx-auto">
 
@@ -449,7 +449,7 @@ export default function ImoveisPage() {
                     </div>
 
                     {/* Content */}
-                    <div className="p-5 sm:p-6">
+                    <div className="p-5 pb-7 sm:p-6 sm:pb-8">
                       <motion.h3
                         className="text-lg font-medium leading-snug text-white/90 group-hover:text-white transition-colors duration-500 mb-2"
                       >
