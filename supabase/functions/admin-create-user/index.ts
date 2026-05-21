@@ -32,15 +32,14 @@ Deno.serve(async (req) => {
     const jwt = authHeader.replace("Bearer ", "");
     if (!jwt) return json({ error: "Unauthorized" }, 401);
 
-    // Verify caller and check admin role
-    const userClient = createClient(SUPABASE_URL, ANON, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: userData, error: userErr } = await userClient.auth.getUser(jwt);
-    if (userErr || !userData.user) return json({ error: "Unauthorized" }, 401);
-    const callerId = userData.user.id;
-
+    // Verify caller using service role (works with new asymmetric signing keys)
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
+    const { data: userData, error: userErr } = await admin.auth.getUser(jwt);
+    if (userErr || !userData.user) {
+      console.error("getUser failed:", userErr?.message);
+      return json({ error: "Unauthorized", detail: userErr?.message }, 401);
+    }
+    const callerId = userData.user.id;
     const { data: roleRow } = await admin
       .from("user_roles")
       .select("role")
