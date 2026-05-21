@@ -184,6 +184,16 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
             </Select>
           </div>
           <div>
+            <Label>Trazido pelo parceiro</Label>
+            <SearchableSelect
+              value={form.parceiro_origem_id}
+              onChange={(v) => update("parceiro_origem_id", v)}
+              options={parceiros}
+              placeholder="Buscar corretor parceiro…"
+              emptyLabel="Nenhum"
+            />
+          </div>
+          <div>
             <Label>Observações</Label>
             <Textarea rows={3} value={form.observacoes} onChange={(e) => update("observacoes", e.target.value)} />
           </div>
