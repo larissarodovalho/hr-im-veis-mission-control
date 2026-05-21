@@ -108,7 +108,9 @@ const empty = {
   cidade: "",
   estado: "",
   destaque: false,
+  matricula: "",
 };
+
 
 export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Props) {
   const [form, setForm] = useState({ ...empty });
@@ -117,6 +119,9 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
   const [saving, setSaving] = useState(false);
   const [corretorId, setCorretorId] = useState<string>("");
   const [proprietarioId, setProprietarioId] = useState<string>("");
+  const [captadorId, setCaptadorId] = useState<string>("");
+  const [parceiroId, setParceiroId] = useState<string>("");
+
 
   useEffect(() => {
     if (!open) return;
@@ -142,7 +147,10 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
     setCaracs([]);
     setFotos([]);
     setProprietarioId("");
+    setCaptadorId("");
+    setParceiroId("");
   };
+
 
   const isTerreno = ["Terreno", "Lote em condomínio", "Chácara", "Sítio", "Fazenda"].includes(form.tipo);
   const isComercial = ["Galpão", "Sala comercial", "Loja", "Prédio comercial", "Ponto comercial"].includes(form.tipo);
@@ -201,12 +209,16 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
         cidade: form.cidade || null,
         estado: form.estado || null,
         destaque: form.destaque,
+        matricula: form.matricula || null,
         caracteristicas: caracs,
         fotos: urls,
         created_by: userId,
         corretor_id: corretorId || userId,
         proprietario_id: proprietarioId || null,
+        corretor_captador_id: captadorId || null,
+        corretor_parceiro_id: parceiroId || null,
       });
+
 
       if (error) throw error;
       toast.success("Imóvel cadastrado!");
@@ -269,6 +281,10 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
               <Label>Descrição</Label>
               <Textarea rows={3} value={form.descricao} onChange={(e) => upd("descricao", e.target.value)} />
             </div>
+            <div>
+              <Label>Matrícula (uso interno)</Label>
+              <Input value={form.matricula} onChange={(e) => upd("matricula", e.target.value)} placeholder="Nº da matrícula no cartório" />
+            </div>
             <div className="flex items-center gap-2">
               <Switch id="destaque" checked={form.destaque} onCheckedChange={(v) => upd("destaque", v)} />
               <Label htmlFor="destaque" className="cursor-pointer">Imóvel em destaque</Label>
@@ -280,7 +296,12 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
             onCorretorChange={setCorretorId}
             proprietarioId={proprietarioId}
             onProprietarioChange={setProprietarioId}
+            captadorId={captadorId}
+            onCaptadorChange={setCaptadorId}
+            parceiroId={parceiroId}
+            onParceiroChange={setParceiroId}
           />
+
 
           {/* Valores */}
           <section className="space-y-3">
