@@ -137,6 +137,7 @@ export default function AccountDetail() {
       interesse: editing.interesse || null,
       ramo_atividade: editing.ramo_atividade?.trim() || null,
       temperatura: editing.temperatura || null,
+      etapa_funil: editing.etapa_funil || "a_contatar",
       responsavel_id: editing.responsavel_id || null,
       tags,
     }).eq("id", acc.id);
