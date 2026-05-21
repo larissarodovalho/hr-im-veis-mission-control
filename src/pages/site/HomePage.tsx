@@ -148,7 +148,7 @@ export default function HomePage() {
             transition={{ duration: 1, delay: 0.8 }}
             className="text-base sm:text-base text-white/60 max-w-lg mb-12 font-light leading-[1.8] tracking-wide"
           >
-            Casas, terrenos e apartamentos de alto padrão nos melhores condomínios fechados.
+            Casas, terrenos e apartamentos de alto padrão nos melhores bairros e condomínios fechados.
           </motion.p>
 
           <motion.div
