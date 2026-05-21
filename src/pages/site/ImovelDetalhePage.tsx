@@ -310,7 +310,7 @@ export default function ImovelDetalhePage() {
 
 
       {/* ─── Info Section: Title, Price, Specs, Description, Location ─── */}
-      <ScrollSection className="py-6 sm:py-8 md:-mt-12" index={1}>
+      <ScrollSection className="py-6 sm:py-8" index={1}>
         <div className="max-w-7xl mx-auto px-6 relative z-20">
           {/* Badges */}
           <motion.div
