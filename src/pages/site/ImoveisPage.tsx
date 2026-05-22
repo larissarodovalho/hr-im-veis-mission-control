@@ -412,7 +412,7 @@ export default function ImoveisPage() {
                         <motion.span
                           initial={{ opacity: 0, x: -10 }}
                           whileInView={{ opacity: 1, x: 0 }}
-                          viewport={{ once: true }}
+                          viewport={{ once: true, amount: 0 }}
                           transition={{ delay: 0.2 + (i % 3) * 0.1 }}
                           className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider backdrop-blur-xl ${
                             im.status === "Disponível"
