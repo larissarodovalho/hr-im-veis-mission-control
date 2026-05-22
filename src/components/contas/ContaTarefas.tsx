@@ -77,6 +77,7 @@ export default function ContaTarefas({ contaId, responsavelId }: Props) {
   }, [contaId]);
 
   const novaTarefa = () => {
+    setEditingId(null);
     setForm({
       titulo: "",
       descricao: "",
@@ -87,23 +88,36 @@ export default function ContaTarefas({ contaId, responsavelId }: Props) {
     setOpen(true);
   };
 
+  const editar = (t: Tarefa) => {
+    setEditingId(t.id);
+    setForm({
+      titulo: t.titulo,
+      descricao: t.descricao ?? "",
+      prazo: t.prazo ? new Date(new Date(t.prazo).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "",
+      prioridade: t.prioridade,
+      responsavel_id: t.responsavel_id ?? "",
+    });
+    setOpen(true);
+  };
+
   const salvar = async () => {
     if (!form.titulo?.trim()) return toast.error("Informe um título");
     setSaving(true);
-    const { error } = await supabase.from("tarefas").insert({
-      conta_id: contaId,
+    const payload = {
       titulo: form.titulo.trim(),
       descricao: form.descricao?.trim() || null,
       prazo: form.prazo ? new Date(form.prazo).toISOString() : null,
       prioridade: form.prioridade || "Média",
-      status: "A fazer",
       responsavel_id: form.responsavel_id || null,
-      created_by: userId,
-    });
+    };
+    const { error } = editingId
+      ? await supabase.from("tarefas").update(payload).eq("id", editingId)
+      : await supabase.from("tarefas").insert({ ...payload, conta_id: contaId, status: "A fazer", created_by: userId });
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success("Tarefa criada");
+    toast.success(editingId ? "Tarefa atualizada" : "Tarefa criada");
     setOpen(false);
+    setEditingId(null);
     load();
   };
 
