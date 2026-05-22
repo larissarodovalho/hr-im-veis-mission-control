@@ -111,7 +111,7 @@ export default function FaturamentoReport() {
       const com = v.valor_comissao || 0;
       vgv += val;
       comissao += com;
-      hr += com * ((v.percent_hr ?? 0) / 100);
+      hr += (v.valor_venda || 0) * ((v.percent_hr ?? 0) / 100);
     });
     return { vgv, comissao, hr, count: filtered.length };
   }, [filtered]);
@@ -140,13 +140,13 @@ export default function FaturamentoReport() {
       if (v.corretor_vendedor_id && (papel === "todos" || papel === "vendedor")) {
         const r = ensure(v.corretor_vendedor_id);
         r.vgv_vendedor += val;
-        r.com_vendedor += com * ((v.percent_vendedor ?? 0) / 100);
+        r.com_vendedor += val * ((v.percent_vendedor ?? 0) / 100);
         r.vendas_vendedor++;
       }
       if (v.corretor_captador_id && (papel === "todos" || papel === "captador")) {
         const r = ensure(v.corretor_captador_id);
         r.vgv_captador += val;
-        r.com_captador += com * ((v.percent_captador ?? 0) / 100);
+        r.com_captador += val * ((v.percent_captador ?? 0) / 100);
         r.vendas_captador++;
       }
     });
@@ -171,9 +171,9 @@ export default function FaturamentoReport() {
         if (v.corretor_captador_id) b.Captador += val;
         b.HR += val; // a casa participa de toda venda
       } else {
-        b.Vendedor += com * ((v.percent_vendedor ?? 0) / 100);
-        b.Captador += com * ((v.percent_captador ?? 0) / 100);
-        b.HR += com * ((v.percent_hr ?? 0) / 100);
+        b.Vendedor += val * ((v.percent_vendedor ?? 0) / 100);
+        b.Captador += val * ((v.percent_captador ?? 0) / 100);
+        b.HR += val * ((v.percent_hr ?? 0) / 100);
       }
     });
     return [...buckets.values()].sort((a, b) => a.mes.localeCompare(b.mes));
