@@ -84,6 +84,10 @@ export default function NovaVendaDialog({
   const [saving, setSaving] = useState(false);
   const [manualCliente, setManualCliente] = useState(false);
   const [manualImovel, setManualImovel] = useState(false);
+  const [contratoFile, setContratoFile] = useState<File | null>(null);
+  const [contratoPath, setContratoPath] = useState<string | null>(null);
+  const [contratoUrl, setContratoUrl] = useState<string | null>(null);
+  const [removeContrato, setRemoveContrato] = useState(false);
   const [imovelManual, setImovelManual] = useState({
     titulo: "",
     tipo: "Casa",
@@ -149,6 +153,16 @@ export default function NovaVendaDialog({
     setManualCliente(!!initial?.cliente_nome && (!initial?.conta_id || initial.conta_id === "none"));
     setManualImovel(false);
     setImovelManual({ titulo: "", tipo: "Casa", finalidade: "Venda", endereco: "", bairro: "", cidade: "", valor: "" });
+    setContratoFile(null);
+    setRemoveContrato(false);
+    const path = (initial as any)?.contrato_pdf_path || null;
+    setContratoPath(path);
+    setContratoUrl(null);
+    if (path) {
+      supabase.storage.from("contratos-vendas").createSignedUrl(path, 3600).then(({ data }) => {
+        setContratoUrl(data?.signedUrl || null);
+      });
+    }
   }, [open, initial]);
 
   // Auto-preenche nível a partir do nível do corretor vendedor selecionado
@@ -256,13 +270,39 @@ export default function NovaVendaDialog({
       created_by: user?.id,
     };
 
+    let vendaId = initial?.id as string | undefined;
     let error;
     if (initial?.id) {
       ({ error } = await supabase.from("vendas").update(payload).eq("id", initial.id));
     } else {
-      ({ error } = await supabase.from("vendas").insert(payload));
+      const ins = await supabase.from("vendas").insert(payload).select("id").single();
+      error = ins.error;
+      vendaId = ins.data?.id;
     }
     if (error) { setSaving(false); return toast.error(error.message); }
+
+    // Contrato PDF: upload novo arquivo / remoção
+    let novoContratoPath: string | null | undefined = undefined;
+    if (contratoFile && vendaId) {
+      const ext = contratoFile.name.split(".").pop() || "pdf";
+      const path = `${vendaId}/${Date.now()}.${ext}`;
+      const up = await supabase.storage.from("contratos-vendas").upload(path, contratoFile, {
+        upsert: true,
+        contentType: contratoFile.type || "application/pdf",
+      });
+      if (up.error) { setSaving(false); return toast.error("Erro ao enviar contrato: " + up.error.message); }
+      // Remove anterior se havia outro
+      if (contratoPath && contratoPath !== path) {
+        await supabase.storage.from("contratos-vendas").remove([contratoPath]);
+      }
+      novoContratoPath = path;
+    } else if (removeContrato && contratoPath) {
+      await supabase.storage.from("contratos-vendas").remove([contratoPath]);
+      novoContratoPath = null;
+    }
+    if (novoContratoPath !== undefined && vendaId) {
+      await supabase.from("vendas").update({ contrato_pdf_path: novoContratoPath }).eq("id", vendaId);
+    }
 
     if (marcarVendido && payload.imovel_id) {
       await supabase.from("imoveis").update({ status: "Vendido" }).eq("id", payload.imovel_id);
@@ -505,6 +545,33 @@ export default function NovaVendaDialog({
           <div className="md:col-span-2">
             <Label>Observações</Label>
             <Textarea rows={2} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+          </div>
+          <div className="md:col-span-2">
+            <Label>Contrato (PDF)</Label>
+            {contratoPath && !removeContrato && !contratoFile && (
+              <div className="flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2 mb-2">
+                <a href={contratoUrl ?? "#"} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline truncate">
+                  Ver contrato atual
+                </a>
+                <button type="button" className="text-xs text-rose-600 hover:underline" onClick={() => setRemoveContrato(true)}>
+                  Remover
+                </button>
+              </div>
+            )}
+            {removeContrato && (
+              <div className="flex items-center justify-between rounded-md border border-dashed px-3 py-2 mb-2 text-xs text-muted-foreground">
+                <span>Contrato será removido ao salvar.</span>
+                <button type="button" className="text-primary hover:underline" onClick={() => setRemoveContrato(false)}>Desfazer</button>
+              </div>
+            )}
+            <Input
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => { setContratoFile(e.target.files?.[0] ?? null); setRemoveContrato(false); }}
+            />
+            {contratoFile && (
+              <p className="text-xs text-muted-foreground mt-1">{contratoFile.name}</p>
+            )}
           </div>
           {form.imovel_id !== "none" && (
             <div className="md:col-span-2 flex items-center gap-2">
