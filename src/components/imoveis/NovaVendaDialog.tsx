@@ -71,6 +71,16 @@ export default function NovaVendaDialog({
   const [marcarVendido, setMarcarVendido] = useState(true);
   const [saving, setSaving] = useState(false);
   const [manualCliente, setManualCliente] = useState(false);
+  const [manualImovel, setManualImovel] = useState(false);
+  const [imovelManual, setImovelManual] = useState({
+    titulo: "",
+    tipo: "Casa",
+    finalidade: "Venda",
+    endereco: "",
+    bairro: "",
+    cidade: "",
+    valor: "",
+  });
 
   useEffect(() => {
     if (!open) return;
