@@ -102,6 +102,7 @@ export default function HomePage() {
               decoding="async"
             />
           )}
+          <div className="absolute inset-0 bg-black/35" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/50 to-transparent" />
         </motion.div>
 
