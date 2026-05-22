@@ -314,9 +314,73 @@ export default function NovaVendaDialog({
               </>
             )}
           </div>
-          <div>
+          <div className="md:col-span-2">
             <Label>Imóvel</Label>
-            <SearchableSelect value={form.imovel_id} onChange={(v) => setForm({ ...form, imovel_id: v })} options={imoveis} placeholder="Buscar imóvel…" emptyLabel="—" />
+            {manualImovel ? (
+              <div className="rounded-md border bg-muted/30 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Novo imóvel (não divulgado) — será criado ao salvar</span>
+                  <button type="button" className="text-xs text-primary hover:underline" onClick={() => setManualImovel(false)}>
+                    Selecionar imóvel cadastrado
+                  </button>
+                </div>
+                <div>
+                  <Label className="text-xs">Título *</Label>
+                  <Input value={imovelManual.titulo} onChange={(e) => setImovelManual({ ...imovelManual, titulo: e.target.value })} placeholder="Ex.: Casa Jardim Europa" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Tipo</Label>
+                    <Select value={imovelManual.tipo} onValueChange={(v) => setImovelManual({ ...imovelManual, tipo: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {["Casa", "Apartamento", "Terreno", "Comercial", "Rural", "Outro"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Finalidade</Label>
+                    <Select value={imovelManual.finalidade} onValueChange={(v) => setImovelManual({ ...imovelManual, finalidade: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {["Venda", "Aluguel"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs">Endereço</Label>
+                  <Input value={imovelManual.endereco} onChange={(e) => setImovelManual({ ...imovelManual, endereco: e.target.value })} placeholder="Rua, número" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Bairro</Label>
+                    <Input value={imovelManual.bairro} onChange={(e) => setImovelManual({ ...imovelManual, bairro: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Cidade</Label>
+                    <Input value={imovelManual.cidade} onChange={(e) => setImovelManual({ ...imovelManual, cidade: e.target.value })} />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs">Valor do imóvel (opcional)</Label>
+                  <Input type="number" step="0.01" value={imovelManual.valor} onChange={(e) => setImovelManual({ ...imovelManual, valor: e.target.value })} placeholder="Se vazio, usa o valor da venda" />
+                </div>
+              </div>
+            ) : (
+              <>
+                <SearchableSelect value={form.imovel_id} onChange={(v) => setForm({ ...form, imovel_id: v })} options={imoveis} placeholder="Buscar imóvel…" emptyLabel="—" />
+                {!initial?.id && (
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground hover:text-primary hover:underline mt-1"
+                    onClick={() => { setManualImovel(true); setForm((f: any) => ({ ...f, imovel_id: "none" })); }}
+                  >
+                    Imóvel não cadastrado? Adicionar manualmente
+                  </button>
+                )}
+              </>
+            )}
           </div>
           <div>
             <Label>Corretor vendedor</Label>
