@@ -748,7 +748,7 @@ Deno.serve(async (req) => {
     // qualquer resposta combinando com um dos 4 formatos vira link/contato direto,
     // sem depender de o LLM lembrar de chamar a tool.
     const lastAssistantMsg = (history ?? []).filter(h => h.direction === "outbound").slice(-1)[0]?.content || "";
-    const askedForFormat = /posso te conectar|prefere agendar|falar agora mesmo|videochamada.*presencial|prefere:?\s*videochamada/i.test(lastAssistantMsg);
+    const askedForFormat = /posso te conectar|prefere agendar|falar agora mesmo|como prefere seguir|videochamada.*presencial|presencial.*videochamada|prefere:?\s*videochamada|liga[çc][ãa]o.*reuni[ãa]o.*videochamada/i.test(lastAssistantMsg);
     const userLower = (content || "").toLowerCase();
     let forcedBookingKind: string | null = null;
     let forcedImmediateKind: string | null = null;
