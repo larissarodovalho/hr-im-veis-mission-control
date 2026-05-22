@@ -981,7 +981,11 @@ Deno.serve(async (req) => {
       // Sanitiza qualquer URL/parametro inventado
       reply = sanitizeReply(reply);
       if (!reply) {
-        reply = `Pronto! Já avisei o Hans, ele vai te chamar agora mesmo via ${KIND_LABELS[immediateKind]}.`;
+        if (immediateKind === "whatsapp") {
+          reply = `Perfeito${firstName ? `, ${firstName}` : ""}! Já registrei seu pré-atendimento. Um corretor da **HR Imóveis** vai entrar em contato com você pelo **WhatsApp** em breve para dar continuidade e te atender da melhor forma.`;
+        } else {
+          reply = `Pronto${firstName ? `, ${firstName}` : ""}! Já avisei um corretor da **HR Imóveis**, ele vai te chamar agora mesmo via ${KIND_LABELS[immediateKind]}.`;
+        }
       }
     } else if (bookingKind) {
       // Gera token único e cria o link de agendamento
