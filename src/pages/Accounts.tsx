@@ -305,6 +305,18 @@ export default function Accounts() {
     }
   };
 
+  const changeTemperatura = async (id: string, temp: string | null) => {
+    const prev = accounts;
+    setAccounts((cur) => cur.map((a) => (a.id === id ? { ...a, temperatura: temp } : a)));
+    const { error } = await supabase.from("contas").update({ temperatura: temp } as any).eq("id", id);
+    if (error) {
+      setAccounts(prev);
+      toast.error("Não foi possível alterar temperatura: " + error.message);
+    } else {
+      toast.success("Temperatura atualizada");
+    }
+  };
+
   const moveStage = async (id: string, etapa: EtapaFunil) => {
     const prev = accounts;
     setAccounts((cur) => cur.map((a) => (a.id === id ? { ...a, etapa_funil: etapa } : a)));
