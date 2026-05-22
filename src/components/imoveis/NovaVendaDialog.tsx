@@ -173,8 +173,7 @@ export default function NovaVendaDialog({
         percent_hr: String(s.hr),
       };
       const n = parseFloat(f.valor_venda);
-      const soma = s.captador + s.vendedor + s.hr;
-      if (!isNaN(n)) next.valor_comissao = ((n * soma) / 100).toFixed(2);
+      if (!isNaN(n)) next.valor_comissao = calculateCommissionValue(n, s).toFixed(2);
       return next;
     });
   };
@@ -184,11 +183,7 @@ export default function NovaVendaDialog({
     const n = parseFloat(v);
     setForm((f: any) => {
       const next = { ...f, valor_venda: v };
-      const soma =
-        (parseFloat(f.percent_captador) || 0) +
-        (parseFloat(f.percent_vendedor) || 0) +
-        (parseFloat(f.percent_hr) || 0);
-      if (!isNaN(n)) next.valor_comissao = ((n * soma) / 100).toFixed(2);
+      if (!isNaN(n)) next.valor_comissao = calculateCommissionValue(n, splitFromForm(f)).toFixed(2);
       return next;
     });
   };
@@ -197,12 +192,8 @@ export default function NovaVendaDialog({
   const onPctPapel = (papel: "captador" | "vendedor" | "hr", v: string) => {
     setForm((f: any) => {
       const next = { ...f, [`percent_${papel}`]: v };
-      const soma =
-        (parseFloat(papel === "captador" ? v : f.percent_captador) || 0) +
-        (parseFloat(papel === "vendedor" ? v : f.percent_vendedor) || 0) +
-        (parseFloat(papel === "hr" ? v : f.percent_hr) || 0);
       const n = parseFloat(f.valor_venda);
-      if (!isNaN(n)) next.valor_comissao = ((n * soma) / 100).toFixed(2);
+      if (!isNaN(n)) next.valor_comissao = calculateCommissionValue(n, splitFromForm(next)).toFixed(2);
       return next;
     });
   };
