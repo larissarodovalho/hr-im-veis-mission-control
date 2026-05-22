@@ -138,4 +138,14 @@
 @layer utilities {
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* iOS Safari fallback: garante que cards animados via whileInView
+     fiquem visíveis mesmo se o IntersectionObserver não disparar. */
+  @keyframes hr-force-visible {
+    to { opacity: 1; transform: none; }
+  }
+  .hr-card-safety {
+    animation: hr-force-visible 0.6s ease-out 1.2s forwards;
+  }
 }
+

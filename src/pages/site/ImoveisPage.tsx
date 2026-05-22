@@ -375,9 +375,9 @@ export default function ImoveisPage() {
                   key={im.id}
                   initial={{ opacity: 0, y: 60 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-60px" }}
+                  viewport={{ once: true, amount: 0.05 }}
                   transition={{ duration: 0.9, delay: (i % 3) * 0.12, ease }}
-                  className="group"
+                  className="group hr-card-safety"
                 >
                   <motion.div
                     role="link"
@@ -412,7 +412,7 @@ export default function ImoveisPage() {
                         <motion.span
                           initial={{ opacity: 0, x: -10 }}
                           whileInView={{ opacity: 1, x: 0 }}
-                          viewport={{ once: true }}
+                          viewport={{ once: true, amount: 0 }}
                           transition={{ delay: 0.2 + (i % 3) * 0.1 }}
                           className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider backdrop-blur-xl ${
                             im.status === "Disponível"
@@ -433,7 +433,7 @@ export default function ImoveisPage() {
                           className="text-xl sm:text-2xl font-light tracking-tight text-white drop-shadow-lg"
                           initial={{ opacity: 0, y: 10 }}
                           whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true }}
+                          viewport={{ once: true, amount: 0 }}
                           transition={{ delay: 0.3 + (i % 3) * 0.1 }}
                         >
                           {formatPrice(im.valor)}
