@@ -8,8 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, Download, Trash2, FileSpreadsheet, FileText, Building2, ArrowRight, Handshake, Plus } from "lucide-react";
+import { Search, Download, Trash2, FileSpreadsheet, FileText, Building2, ArrowRight, Handshake, Plus, X, Check } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -135,9 +139,26 @@ export default function Accounts() {
   const [typeFilter, setTypeFilter] = useState<"todas" | "cliente" | "parceiro">("todas");
   const [tempFilter, setTempFilter] = useState<string>("todos");
   const [ownerFilter, setOwnerFilter] = useState<string>("todos");
+  // Rascunho — não filtra até clicar em Aplicar
+  const [draftSearch, setDraftSearch] = useState("");
+  const [draftStatus, setDraftStatus] = useState<"todos" | Status>("todos");
+  const [draftInterest, setDraftInterest] = useState<string>("todos");
+  const [draftType, setDraftType] = useState<"todas" | "cliente" | "parceiro">("todas");
+  const [draftTemp, setDraftTemp] = useState<string>("todos");
+  const [draftOwner, setDraftOwner] = useState<string>("todos");
   const [loading, setLoading] = useState(true);
   const [novaOpen, setNovaOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+
+  const interestLabel = (v: string | null | undefined) => {
+    if (!v) return "";
+    const map: Record<string, string> = INTEREST_LABEL as any;
+    return map[v] ?? v;
+  };
+  const tempLabel = (v: string | null | undefined) => tempInfo(v ?? "")?.label ?? "";
+  const ownerLabel = (v: string) =>
+    v === "none" ? "Sem responsável" : (ownerMap[v] ?? owners.find((o) => o.id === v)?.nome ?? v);
 
   const [ownerMap, setOwnerMap] = useState<Record<string, string>>({});
   const [owners, setOwners] = useState<{ id: string; nome: string }[]>([]);
@@ -199,6 +220,30 @@ export default function Accounts() {
     return () => { supabase.removeChannel(ch); };
   }, []);
 
+  const isDirty =
+    draftSearch !== search ||
+    draftStatus !== statusFilter ||
+    draftInterest !== interestFilter ||
+    draftType !== typeFilter ||
+    draftTemp !== tempFilter ||
+    draftOwner !== ownerFilter;
+
+  const applyFilters = () => {
+    setSearch(draftSearch);
+    setStatusFilter(draftStatus);
+    setInterestFilter(draftInterest);
+    setTypeFilter(draftType);
+    setTempFilter(draftTemp);
+    setOwnerFilter(draftOwner);
+  };
+
+  const clearFilters = () => {
+    setDraftSearch(""); setDraftStatus("todos"); setDraftInterest("todos");
+    setDraftType("todas"); setDraftTemp("todos"); setDraftOwner("todos");
+    setSearch(""); setStatusFilter("todos"); setInterestFilter("todos");
+    setTypeFilter("todas"); setTempFilter("todos"); setOwnerFilter("todos");
+  };
+
   const propsByAccount = properties.reduce<Record<string, Property[]>>((acc, p) => {
     (acc[p.conta_id] ??= []).push(p);
     return acc;
@@ -251,47 +296,106 @@ export default function Accounts() {
     0
   );
 
-  const buildExportRows = () => {
+  type ColKey =
+    | "nome" | "telefone" | "email" | "documento" | "responsavel" | "tipo" | "status" | "criado_em"
+    | "interesse" | "temperatura" | "tags" | "ramo" | "etapa" | "observacoes" | "endereco"
+    | "valor_negocio" | "valor_comissao";
+  const COLUMNS: { key: ColKey; label: string; default?: boolean }[] = [
+    { key: "nome", label: "Nome", default: true },
+    { key: "telefone", label: "Telefone", default: true },
+    { key: "email", label: "Email", default: true },
+    { key: "documento", label: "CPF/CNPJ", default: true },
+    { key: "responsavel", label: "Responsável", default: true },
+    { key: "tipo", label: "Tipo", default: true },
+    { key: "status", label: "Status", default: true },
+    { key: "criado_em", label: "Criado em", default: true },
+    { key: "interesse", label: "Interesse" },
+    { key: "temperatura", label: "Temperatura" },
+    { key: "tags", label: "Tags" },
+    { key: "ramo", label: "Ramo de atividade" },
+    { key: "etapa", label: "Etapa do funil" },
+    { key: "observacoes", label: "Observações" },
+    { key: "endereco", label: "Endereço" },
+    { key: "valor_negocio", label: "Valor total negócios" },
+    { key: "valor_comissao", label: "Valor total comissão" },
+  ];
+  const COLS_KEY = "contas:export:cols";
+  const FMT_KEY = "contas:export:format";
+  const [exportCols, setExportCols] = useState<ColKey[]>(() => {
+    try {
+      const raw = localStorage.getItem(COLS_KEY);
+      if (raw) return JSON.parse(raw) as ColKey[];
+    } catch {}
+    return COLUMNS.filter((c) => c.default).map((c) => c.key);
+  });
+  const [exportFormat, setExportFormat] = useState<"xlsx" | "csv">(() => {
+    try { return (localStorage.getItem(FMT_KEY) as any) || "xlsx"; } catch { return "xlsx"; }
+  });
+  const toggleExportCol = (k: ColKey) =>
+    setExportCols((cur) => (cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k]));
+
+  const buildExportRows = (cols: ColKey[]) => {
     return filtered.map((a) => {
       const status = (a.status ?? "ativo") as Status;
-      return {
-        Nome: a.nome,
-        Telefone: a.telefone ?? "",
-        Email: a.email ?? "",
-        "CPF/CNPJ": a.documento ? formatDoc(a.documento, a.tipo) : "",
-        Proprietário: a.responsavel_id ? (ownerMap[a.responsavel_id] ?? "") : "",
-        Tipo: a.is_partner ? "Parceiro" : "Cliente",
-        Status: status === "ativo" ? "Ativo" : "Inativo",
-        "Criado em": format(new Date(a.created_at), "dd/MM/yyyy", { locale: ptBR }),
+      const accProps = propsByAccount[a.id] ?? [];
+      const totalNeg = accProps.reduce((s, p) => s + (p.valor_negocio ?? 0), 0);
+      const totalCom = accProps.reduce((s, p) => s + (p.valor_comissao ?? 0), 0);
+      const full: Record<ColKey, any> = {
+        nome: a.nome,
+        telefone: a.telefone ?? "",
+        email: a.email ?? "",
+        documento: a.documento ? formatDoc(a.documento, a.tipo) : "",
+        responsavel: a.responsavel_id ? (ownerMap[a.responsavel_id] ?? "") : "",
+        tipo: a.is_partner ? "Parceiro" : "Cliente",
+        status: status === "ativo" ? "Ativo" : "Inativo",
+        criado_em: format(new Date(a.created_at), "dd/MM/yyyy", { locale: ptBR }),
+        interesse: a.interesse ?? "",
+        temperatura: tempInfo(a.temperatura)?.label ?? "",
+        tags: (a.tags ?? []).join(", "),
+        ramo: a.ramo_atividade ?? "",
+        etapa: a.etapa_funil ?? "",
+        observacoes: a.observacoes ?? "",
+        endereco: (a as any).endereco ?? "",
+        valor_negocio: totalNeg || "",
+        valor_comissao: totalCom || "",
       };
+      const out: Record<string, any> = {};
+      cols.forEach((k) => {
+        const label = COLUMNS.find((c) => c.key === k)?.label ?? k;
+        out[label] = full[k];
+      });
+      return out;
     });
   };
 
-  const exportXlsx = () => {
+  const runExport = () => {
     if (!filtered.length) return toast.error("Nenhuma conta para exportar");
-    const rows = buildExportRows();
+    if (!exportCols.length) return toast.error("Selecione ao menos uma coluna");
+    try { localStorage.setItem(COLS_KEY, JSON.stringify(exportCols)); } catch {}
+    try { localStorage.setItem(FMT_KEY, exportFormat); } catch {}
+    const rows = buildExportRows(exportCols);
     const ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = Array(Object.keys(rows[0] || {}).length).fill({ wch: 18 });
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Contas");
-    XLSX.writeFile(wb, `contas-${format(new Date(), "yyyy-MM-dd")}.xlsx`);
-    toast.success("Arquivo Excel gerado");
+    ws["!cols"] = Array(Object.keys(rows[0] || {}).length).fill({ wch: 20 });
+    if (exportFormat === "xlsx") {
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Contas");
+      XLSX.writeFile(wb, `contas-${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+      toast.success("Arquivo Excel gerado");
+    } else {
+      const csv = XLSX.utils.sheet_to_csv(ws, { FS: ";" });
+      const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `contas-${format(new Date(), "yyyy-MM-dd")}.csv`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Arquivo CSV gerado");
+    }
+    setExportOpen(false);
   };
 
-  const exportCsv = () => {
-    if (!filtered.length) return toast.error("Nenhuma conta para exportar");
-    const rows = buildExportRows();
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const csv = XLSX.utils.sheet_to_csv(ws, { FS: ";" });
-    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `contas-${format(new Date(), "yyyy-MM-dd")}.csv`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success("Arquivo CSV gerado");
-  };
+
 
   const changeOwner = async (id: string, userId: string | null) => {
     const prev = accounts;
@@ -353,24 +457,24 @@ export default function Accounts() {
             <Button variant="outline" onClick={() => setNovaOpen(true)}>
               <Plus className="h-4 w-4 mr-1" /> Nova conta
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button><Download className="h-4 w-4 mr-1" /> Exportar</Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={exportXlsx}><FileSpreadsheet className="h-4 w-4 mr-2" /> Excel (.xlsx)</DropdownMenuItem>
-                <DropdownMenuItem onClick={exportCsv}><FileText className="h-4 w-4 mr-2" /> CSV</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button onClick={() => setExportOpen(true)}>
+              <Download className="h-4 w-4 mr-1" /> Exportar
+            </Button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
           <div className="relative lg:col-span-1 sm:col-span-2 lg:col-start-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar nome, tag, interesse, profissão…" className="pl-8 w-full" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input
+              placeholder="Buscar nome, tag, interesse, profissão…"
+              className="pl-8 w-full"
+              value={draftSearch}
+              onChange={(e) => setDraftSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") applyFilters(); }}
+            />
           </div>
-          <Select value={typeFilter} onValueChange={(v: any) => setTypeFilter(v)}>
+          <Select value={draftType} onValueChange={(v: any) => setDraftType(v)}>
             <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todas">Todos os tipos</SelectItem>
@@ -378,7 +482,7 @@ export default function Accounts() {
               <SelectItem value="parceiro">Apenas parceiros</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={interestFilter} onValueChange={(v: any) => setInterestFilter(v)}>
+          <Select value={draftInterest} onValueChange={(v: any) => setDraftInterest(v)}>
             <SelectTrigger><SelectValue placeholder="Interesse" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os interesses</SelectItem>
@@ -395,7 +499,7 @@ export default function Accounts() {
               <SelectItem value="Corretor parceiro">Corretor parceiro</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
+          <Select value={draftStatus} onValueChange={(v: any) => setDraftStatus(v)}>
             <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os status</SelectItem>
@@ -403,7 +507,7 @@ export default function Accounts() {
               <SelectItem value="inativo">Inativos</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={tempFilter} onValueChange={(v) => setTempFilter(v)}>
+          <Select value={draftTemp} onValueChange={(v) => setDraftTemp(v)}>
             <SelectTrigger><SelectValue placeholder="Temperatura" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todas temperaturas</SelectItem>
@@ -412,7 +516,7 @@ export default function Accounts() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={ownerFilter} onValueChange={(v) => setOwnerFilter(v)}>
+          <Select value={draftOwner} onValueChange={(v) => setDraftOwner(v)}>
             <SelectTrigger><SelectValue placeholder="Responsável" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os responsáveis</SelectItem>
@@ -422,6 +526,34 @@ export default function Accounts() {
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" onClick={applyFilters} disabled={!isDirty}>
+            <Check className="h-4 w-4 mr-1" /> Aplicar filtros
+          </Button>
+          <Button size="sm" variant="outline" onClick={clearFilters}>
+            <X className="h-4 w-4 mr-1" /> Limpar
+          </Button>
+          {isDirty && (
+            <span className="text-xs text-amber-600">Filtros não aplicados — clique em Aplicar</span>
+          )}
+          {/* Chips de filtros ativos */}
+          {[
+            typeFilter !== "todas" && { label: `Tipo: ${typeFilter === "cliente" ? "Clientes" : "Parceiros"}`, clear: () => { setTypeFilter("todas"); setDraftType("todas"); } },
+            interestFilter !== "todos" && { label: `Interesse: ${interestFilter === "none" ? "Não definido" : interestFilter}`, clear: () => { setInterestFilter("todos"); setDraftInterest("todos"); } },
+            statusFilter !== "todos" && { label: `Status: ${statusFilter === "ativo" ? "Ativos" : "Inativos"}`, clear: () => { setStatusFilter("todos"); setDraftStatus("todos"); } },
+            tempFilter !== "todos" && { label: `Temperatura: ${tempLabel(tempFilter)}`, clear: () => { setTempFilter("todos"); setDraftTemp("todos"); } },
+            ownerFilter !== "todos" && { label: `Responsável: ${ownerLabel(ownerFilter)}`, clear: () => { setOwnerFilter("todos"); setDraftOwner("todos"); } },
+            search && { label: `Busca: "${search}"`, clear: () => { setSearch(""); setDraftSearch(""); } },
+          ].filter(Boolean).map((chip: any, i) => (
+            <Badge key={i} variant="outline" className="gap-1 pl-2 pr-1 py-1">
+              {chip.label}
+              <button onClick={chip.clear} className="ml-1 rounded-sm hover:bg-muted p-0.5" aria-label="Remover">
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
         </div>
       </header>
 
@@ -457,6 +589,60 @@ export default function Accounts() {
 
       <NovaContaDialog open={novaOpen} onOpenChange={setNovaOpen} onCreated={load} defaultTags={lista === "todos" ? [] : [lista]} />
       <ImportarContasDialog open={importOpen} onOpenChange={setImportOpen} onImported={load} defaultTags={lista === "todos" ? [] : [lista]} />
+
+      <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Exportar relatório</DialogTitle>
+            <DialogDescription>
+              Escolha as colunas que devem aparecer no arquivo. Serão exportadas <strong>{filtered.length}</strong> contas (resultado atual dos filtros).
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">Colunas ({exportCols.length})</span>
+                <div className="flex gap-2 text-xs">
+                  <button className="text-primary hover:underline" onClick={() => setExportCols(COLUMNS.map((c) => c.key))}>Todas</button>
+                  <button className="text-muted-foreground hover:underline" onClick={() => setExportCols(COLUMNS.filter((c) => c.default).map((c) => c.key))}>Padrão</button>
+                  <button className="text-muted-foreground hover:underline" onClick={() => setExportCols([])}>Nenhuma</button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto border rounded-md p-3">
+                {COLUMNS.map((c) => (
+                  <label key={c.key} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <Checkbox
+                      checked={exportCols.includes(c.key)}
+                      onCheckedChange={() => toggleExportCol(c.key)}
+                    />
+                    {c.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Formato</Label>
+              <RadioGroup value={exportFormat} onValueChange={(v: any) => setExportFormat(v)} className="flex gap-4">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <RadioGroupItem value="xlsx" /> Excel (.xlsx)
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <RadioGroupItem value="csv" /> CSV
+                </label>
+              </RadioGroup>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExportOpen(false)}>Cancelar</Button>
+            <Button onClick={runExport} disabled={!exportCols.length || !filtered.length}>
+              <Download className="h-4 w-4 mr-1" /> Baixar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {view === "kanban" && lista !== "todos" ? (
         loading ? (
