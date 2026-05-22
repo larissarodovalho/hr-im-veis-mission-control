@@ -31,6 +31,7 @@ type Row = {
   ativo: boolean;
   created_at: string;
   role: UiRole;
+  nivel: "junior" | "senior";
 };
 
 function genPassword() {
