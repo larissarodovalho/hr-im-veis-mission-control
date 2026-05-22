@@ -809,11 +809,14 @@ Deno.serve(async (req) => {
       if (!hasInterest) {
         const inboundTexts = (history ?? []).filter(h => h.direction === "inbound").map(h => (h.content || "").toLowerCase()).join(" | ");
         let interest: string | null = null;
-        if (/vender|venda/.test(inboundTexts)) interest = "venda";
+        if (/vender|venda|anunciar/.test(inboundTexts)) interest = "venda";
         else if (/comprar|compra/.test(inboundTexts)) interest = "compra";
+        else if (/alto.?padr|luxo|cobertura|mans[ãa]o|premium|exclusivo/.test(inboundTexts)) interest = "alto_padrao";
+        else if (/parceri|co-?correta|indica[çc]|capta[çc]/.test(inboundTexts)) interest = "parceria";
+        else if (/investiment|valoriza[çc]|patrim[ôo]nio|revend/.test(inboundTexts)) interest = "investimento";
+        else if (/im[óo]vel anunciado|vi o an[úu]ncio|tenho interesse nesse|saber mais/.test(inboundTexts)) interest = "propriedade";
         else if (/alug/.test(inboundTexts)) interest = "aluguel";
         else if (/incorpor/.test(inboundTexts)) interest = "incorporacao";
-        else if (/investiment|ocasi/.test(inboundTexts)) interest = "investimento_ocasiao";
         if (interest) {
           const { data: cur } = await supabase.from("leads").select("observacoes").eq("id", leadUuid).maybeSingle();
           const note = `Intenção: ${interest}`;
