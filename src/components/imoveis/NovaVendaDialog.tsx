@@ -199,9 +199,36 @@ export default function NovaVendaDialog({
   const handleSave = async () => {
     if (!form.cliente_nome) return toast.error("Informe o nome do cliente");
     if (!form.valor_venda) return toast.error("Informe o valor");
+    if (manualImovel && !imovelManual.titulo.trim()) return toast.error("Informe o título do imóvel manual");
     setSaving(true);
+
+    let imovelIdFinal: string | null = form.imovel_id !== "none" ? form.imovel_id : null;
+
+    // Cria imóvel não divulgado quando em modo manual
+    if (manualImovel) {
+      const valorImv = parseFloat(imovelManual.valor) || parseFloat(form.valor_venda) || null;
+      const { data: imvIns, error: imvErr } = await supabase
+        .from("imoveis")
+        .insert({
+          titulo: imovelManual.titulo.trim(),
+          tipo: imovelManual.tipo,
+          finalidade: imovelManual.finalidade,
+          endereco: imovelManual.endereco || null,
+          bairro: imovelManual.bairro || null,
+          cidade: imovelManual.cidade || null,
+          valor: valorImv,
+          status: "Não divulgado",
+          created_by: user?.id,
+          corretor_id: form.corretor_vendedor_id !== "none" ? form.corretor_vendedor_id : null,
+        })
+        .select("id")
+        .single();
+      if (imvErr || !imvIns) { setSaving(false); return toast.error("Erro ao criar imóvel: " + (imvErr?.message || "")); }
+      imovelIdFinal = imvIns.id;
+    }
+
     const payload: any = {
-      imovel_id: form.imovel_id !== "none" ? form.imovel_id : null,
+      imovel_id: imovelIdFinal,
       lead_id: form.lead_id !== "none" ? form.lead_id : null,
       conta_id: form.conta_id !== "none" ? form.conta_id : null,
       corretor_id: form.corretor_id !== "none" ? form.corretor_id : null,
