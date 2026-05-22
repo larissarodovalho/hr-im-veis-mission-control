@@ -241,7 +241,39 @@ export default function NovaVendaDialog({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="md:col-span-2">
             <Label>Cliente *</Label>
-            <Input value={form.cliente_nome} onChange={(e) => setForm({ ...form, cliente_nome: e.target.value })} />
+            {manualCliente ? (
+              <>
+                <Input
+                  value={form.cliente_nome}
+                  onChange={(e) => setForm({ ...form, cliente_nome: e.target.value, conta_id: "none" })}
+                  placeholder="Nome do cliente"
+                />
+                <button
+                  type="button"
+                  className="text-xs text-primary hover:underline mt-1"
+                  onClick={() => { setManualCliente(false); setForm((f: any) => ({ ...f, cliente_nome: "", conta_id: "none" })); }}
+                >
+                  Selecionar uma conta existente
+                </button>
+              </>
+            ) : (
+              <>
+                <SearchableSelect
+                  value={form.conta_id}
+                  onChange={(v) => setForm({ ...form, conta_id: v })}
+                  options={contas}
+                  placeholder="Buscar cliente nas contas…"
+                  emptyLabel="—"
+                />
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground hover:text-primary hover:underline mt-1"
+                  onClick={() => { setManualCliente(true); setForm((f: any) => ({ ...f, conta_id: "none" })); }}
+                >
+                  Cliente não está nas contas? Digitar nome manualmente
+                </button>
+              </>
+            )}
           </div>
           <div>
             <Label>Imóvel</Label>
