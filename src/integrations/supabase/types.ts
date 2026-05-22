@@ -1395,6 +1395,7 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          nivel: string
           nome: string | null
           telefone: string | null
           updated_at: string
@@ -1407,6 +1408,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          nivel?: string
           nome?: string | null
           telefone?: string | null
           updated_at?: string
@@ -1419,6 +1421,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          nivel?: string
           nome?: string | null
           telefone?: string | null
           updated_at?: string
@@ -1896,8 +1899,10 @@ export type Database = {
           id: string
           imovel_id: string | null
           lead_id: string | null
+          nivel_corretor: string | null
           observacoes: string | null
           origem: string | null
+          origem_negocio: string | null
           percent_captador: number
           percent_hr: number
           percent_vendedor: number
@@ -1922,8 +1927,10 @@ export type Database = {
           id?: string
           imovel_id?: string | null
           lead_id?: string | null
+          nivel_corretor?: string | null
           observacoes?: string | null
           origem?: string | null
+          origem_negocio?: string | null
           percent_captador?: number
           percent_hr?: number
           percent_vendedor?: number
@@ -1948,8 +1955,10 @@ export type Database = {
           id?: string
           imovel_id?: string | null
           lead_id?: string | null
+          nivel_corretor?: string | null
           observacoes?: string | null
           origem?: string | null
+          origem_negocio?: string | null
           percent_captador?: number
           percent_hr?: number
           percent_vendedor?: number

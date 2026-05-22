@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchableSelect from "@/components/SearchableSelect";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Download, TrendingUp, Coins, Building2, BarChart3 } from "lucide-react";
+import { ORIGENS, NIVEIS, origemLabel, nivelLabel, type OrigemNegocio, type NivelCorretor } from "@/lib/comissaoHR";
 import * as XLSX from "xlsx";
 
 type Venda = {
@@ -25,6 +26,8 @@ type Venda = {
   percent_hr: number | null;
   status_pagamento: string | null;
   cliente_nome: string | null;
+  origem_negocio: string | null;
+  nivel_corretor: string | null;
 };
 
 const fmtBRL = (n: number) =>
@@ -60,6 +63,8 @@ export default function FaturamentoReport() {
   const [to, setTo] = useState("");
   const [papel, setPapel] = useState<"todos" | "vendedor" | "captador" | "hr">("todos");
   const [corretorId, setCorretorId] = useState<string>("none");
+  const [origem, setOrigem] = useState<"todos" | OrigemNegocio>("todos");
+  const [nivel, setNivel] = useState<"todos" | NivelCorretor>("todos");
 
   useEffect(() => {
     (async () => {
@@ -86,6 +91,8 @@ export default function FaturamentoReport() {
       if (!v.data_venda) return false;
       const d = new Date(v.data_venda);
       if (d < range.from || d > range.to) return false;
+      if (origem !== "todos" && v.origem_negocio !== origem) return false;
+      if (nivel !== "todos" && v.nivel_corretor !== nivel) return false;
       if (corretorId !== "none") {
         const inRole =
           (papel === "todos" || papel === "vendedor") && v.corretor_vendedor_id === corretorId ||
@@ -94,7 +101,7 @@ export default function FaturamentoReport() {
       }
       return true;
     });
-  }, [vendas, range, papel, corretorId]);
+  }, [vendas, range, papel, corretorId, origem, nivel]);
 
   // KPIs
   const kpis = useMemo(() => {
@@ -212,7 +219,7 @@ export default function FaturamentoReport() {
       </div>
 
       {/* Filtros */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <div>
           <Label className="text-xs">Período</Label>
           <Select value={preset} onValueChange={(v) => setPreset(v as Preset)}>
@@ -246,6 +253,26 @@ export default function FaturamentoReport() {
               <SelectItem value="vendedor">Vendedor</SelectItem>
               <SelectItem value="captador">Captador</SelectItem>
               <SelectItem value="hr">HR Imóveis</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs">Origem</Label>
+          <Select value={origem} onValueChange={(v) => setOrigem(v as any)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todas</SelectItem>
+              {ORIGENS.map((o) => <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs">Nível</Label>
+          <Select value={nivel} onValueChange={(v) => setNivel(v as any)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              {NIVEIS.map((n) => <SelectItem key={n.id} value={n.id}>{n.label}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>

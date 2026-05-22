@@ -1,43 +1,56 @@
-## Aba "Faturamento" em Relatórios — VGV e comissão por responsável
+## Comissionamento HR Imóveis — matriz oficial
 
-Nova aba dentro de `/relatorios` que consolida vendas por papel (vendedor, captador, HR Imóveis), com filtros de período e gráfico de evolução.
+A comissão total é sempre **5% do VGV**, dividida entre **Captador / Vendedor / HR Imóveis** conforme **Origem do Negócio × Nível** do corretor. O caso mais comum (Base do Corretor + Sênior) corresponde ao split mencionado: **20% / 40% / 40%** dos 5%.
 
-### 1. Schema — split de comissão por papel
-Hoje `vendas` tem só `valor_comissao` e `percentual_comissao` totais. Adicionar campos para dividir a comissão entre os três papéis:
+### Matriz aplicada (em % do VGV)
 
-- `percent_vendedor numeric` (default 40)
-- `percent_captador numeric` (default 30)
-- `percent_hr numeric` (default 30)
+| Origem | Nível | Captador | Vendedor | HR | Total |
+|---|---|---|---|---|---|
+| Base do Corretor (Orgânico) | Júnior | 0,5% | 1,0% | 3,5% | 5% |
+| Base do Corretor (Orgânico) | **Sênior** | **1,0%** | **2,0%** | **2,0%** | **5%** |
+| Base Institucional (CRM Interno) | Júnior | 0,5% | 0,5% | 4,0% | 5% |
+| Base Institucional (CRM Interno) | Sênior | 0,5% | 2,0% | 2,5% | 5% |
+| Base HRX (Tráfego/Marketing) | Júnior | 0,5% | 0,5% | 4,0% | 5% |
+| Base HRX (Tráfego/Marketing) | Sênior | 0,5% | 1,5% | 3,0% | 5% |
 
-Regra: os três somam 100% da `valor_comissao` da venda. Edição direta no `NovaVendaDialog`/`EditarVendaDialog` (3 inputs com soma validada = 100). Valores em R$ são calculados em runtime (`valor_comissao * pct/100`).
+Default ao criar uma venda: **Base do Corretor + Sênior** (=20%/40%/40% dos 5%).
 
-### 2. Página — `src/components/reports/FaturamentoReport.tsx`
-Plugar como nova `<TabsTrigger value="faturamento">` em `src/pages/Reports.tsx`.
+### 1. Schema
 
-**Filtros (topo)**:
-- Período: presets *Mês atual*, *Últimos 3 meses*, *Ano atual*, *Customizado* (date-range). Filtra por `data_venda`.
-- Papel: *Todos*, *Vendedor*, *Captador*, *HR Imóveis*.
-- Corretor: SearchableSelect populado de `profiles` (limpável).
+**`profiles`** — adicionar `nivel text default 'senior'` (`'junior' | 'senior'`).
 
-**KPIs (cards)**:
-- VGV total no período (soma de `valor_venda`).
-- Comissão total (soma de `valor_comissao`).
-- Participação HR Imóveis (soma de `valor_comissao * percent_hr/100`).
-- Nº de vendas no período.
+**`vendas`** — adicionar
+- `origem_negocio text` (`'base_corretor' | 'base_institucional' | 'base_hrx'`)
+- `nivel_corretor text` (`'junior' | 'senior'`, snapshot da venda)
 
-**Ranking por corretor (tabela)**:
-Colunas: Corretor • VGV vendedor • VGV captador • VGV total • Comissão vendedor • Comissão captador • Comissão total • Nº vendas. Ordenável por VGV total. Quando filtro "Papel" estiver ativo, mostra só as colunas relevantes. Linha final "HR Imóveis (casa)" agregando todas as participações da casa.
+Reaproveitar `percent_vendedor` / `percent_captador` / `percent_hr` (já existem) — passam a representar **% do VGV** (não mais % da comissão). `valor_comissao` = `valor_venda × soma_pcts / 100` (≈ 5%).
 
-**Gráfico de evolução mensal**:
-`recharts` (já no projeto). Barras empilhadas por mês × papel (vendedor/captador/HR) para VGV; toggle para alternar entre VGV e Comissão.
+Tabela de referência em `src/lib/comissaoHR.ts` com a matriz e `getSplit(origem, nivel)`.
 
-### 3. Sem mudanças em
-- RLS de `vendas` (mantém regras atuais — admin/gestor vê tudo, corretor vê o que participa).
-- Outros relatórios, Kanban de contas, ou páginas existentes.
-- Migrations destrutivas — só `ALTER TABLE vendas ADD COLUMN` com defaults.
+### 2. UI — `NovaVendaDialog` / `EditarVendaDialog`
 
-### Detalhes técnicos
-- Hook novo `useVendasFaturamento(period, papel, corretorId)` agrega no client (volume de vendas é baixo). Se crescer, migrar para uma view materializada.
-- Mapa de IDs → nome via `profiles` (já carregado em outras telas).
-- Formatação BRL via `Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })`.
-- Export CSV/Excel da tabela de ranking reaproveitando padrão já usado em Accounts (xlsx + papaparse).
+- Novos selects **Origem do Negócio** e **Nível** (Júnior/Sênior).
+- Nível pré-preenche com o `nivel` do corretor vendedor selecionado (editável na venda).
+- Bloco "Divisão da comissão (% do VGV)" auto-preenche pela matriz ao mudar origem/nível; permanece editável (sugestão editável).
+- `Comissão R$` recalcula automaticamente a partir do VGV × soma dos %.
+- Indicador "fora da tabela" quando o usuário sobrescrever os valores.
+
+### 3. UI — `FaturamentoReport`
+
+- Filtros novos: **Origem do Negócio** e **Nível** (combinam com os atuais Período/Papel/Corretor).
+- Cálculos já ficam corretos: `R$_papel = valor_venda × percent_papel / 100`.
+- Ranking ganha breakdown opcional por origem.
+
+### 4. Nível por corretor
+
+Em `src/pages/UsuariosAdminPage.tsx`: select **Nível** (Júnior/Sênior) por linha, persistindo em `profiles.nivel`. Só admin/gestor edita.
+
+### 5. Sem mudanças
+
+- RLS, outras telas e relatórios permanecem.
+- Vendas antigas (sem origem/nível) mantêm os percentuais salvos, sem recálculo retroativo.
+
+### Fora de escopo
+
+- Folha de pagamento / fechamento contábil.
+- Inferência automática da origem a partir de tags do lead — origem é sempre selecionada manualmente no momento da venda (auditável).

@@ -10,6 +10,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { SearchableSelect } from "@/components/SearchableSelect";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  ORIGENS as ORIGENS_NEGOCIO,
+  NIVEIS,
+  getSplit,
+  DEFAULT_ORIGEM,
+  DEFAULT_NIVEL,
+  type OrigemNegocio,
+  type NivelCorretor,
+} from "@/lib/comissaoHR";
 
 export type VendaRow = any;
 
@@ -47,9 +56,11 @@ export default function NovaVendaDialog({
     valor_venda: "",
     valor_comissao: "",
     percentual_comissao: "",
-    percent_vendedor: "40",
-    percent_captador: "30",
-    percent_hr: "30",
+    origem_negocio: DEFAULT_ORIGEM as OrigemNegocio,
+    nivel_corretor: DEFAULT_NIVEL as NivelCorretor,
+    percent_vendedor: "2",
+    percent_captador: "1",
+    percent_hr: "2",
     tipo: "Venda",
     status_pagamento: "Pagamento pendente",
     origem: "",
@@ -67,7 +78,7 @@ export default function NovaVendaDialog({
     });
     supabase.from("leads").select("id,nome").order("nome").then(({ data }) => setLeads((data ?? []).map((l: any) => ({ id: l.id, nome: l.nome }))));
     supabase.from("contas").select("id,nome").order("nome").then(({ data }) => setContas((data ?? []).map((c: any) => ({ id: c.id, nome: c.nome }))));
-    supabase.from("profiles").select("user_id,nome").then(({ data }) => setProfiles((data ?? []).map((p: any) => ({ id: p.user_id, nome: p.nome || "Sem nome" }))));
+    supabase.from("profiles").select("user_id,nome,nivel").then(({ data }) => setProfiles((data ?? []).map((p: any) => ({ id: p.user_id, nome: p.nome || "Sem nome", nivel: p.nivel || "senior" }))));
     supabase.from("corretores_parceiros").select("id,nome").eq("ativo", true).order("nome").then(({ data }) => setParceiros(data ?? []));
   }, [open]);
 
@@ -83,9 +94,11 @@ export default function NovaVendaDialog({
       corretor_vendedor_id: initial?.corretor_vendedor_id || "none",
       corretor_captador_id: initial?.corretor_captador_id || "none",
       corretor_parceiro_id: initial?.corretor_parceiro_id || "none",
-      percent_vendedor: initial?.percent_vendedor != null ? String(initial.percent_vendedor) : "40",
-      percent_captador: initial?.percent_captador != null ? String(initial.percent_captador) : "30",
-      percent_hr: initial?.percent_hr != null ? String(initial.percent_hr) : "30",
+      origem_negocio: (initial?.origem_negocio as OrigemNegocio) || DEFAULT_ORIGEM,
+      nivel_corretor: (initial?.nivel_corretor as NivelCorretor) || DEFAULT_NIVEL,
+      percent_vendedor: initial?.percent_vendedor != null ? String(initial.percent_vendedor) : "2",
+      percent_captador: initial?.percent_captador != null ? String(initial.percent_captador) : "1",
+      percent_hr: initial?.percent_hr != null ? String(initial.percent_hr) : "2",
       data_venda: initial?.data_venda ? new Date(initial.data_venda).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
     }));
   }, [open, initial]);
@@ -104,24 +117,59 @@ export default function NovaVendaDialog({
     }
   }, [form.conta_id, contas]);
 
-  // Auto-cálculo comissão
+  // Auto-preenche nível a partir do nível do corretor vendedor selecionado
+  useEffect(() => {
+    if (form.corretor_vendedor_id && form.corretor_vendedor_id !== "none") {
+      const v = profiles.find((p) => p.id === form.corretor_vendedor_id);
+      if (v?.nivel && (v.nivel === "junior" || v.nivel === "senior")) {
+        setForm((f: any) => (f.nivel_corretor === v.nivel ? f : { ...f, nivel_corretor: v.nivel }));
+      }
+    }
+  }, [form.corretor_vendedor_id, profiles]);
+
+  // Aplica matriz HR quando origem/nível mudam
+  const applyMatriz = (origem: OrigemNegocio, nivel: NivelCorretor) => {
+    const s = getSplit(origem, nivel);
+    setForm((f: any) => {
+      const next = {
+        ...f,
+        origem_negocio: origem,
+        nivel_corretor: nivel,
+        percent_captador: String(s.captador),
+        percent_vendedor: String(s.vendedor),
+        percent_hr: String(s.hr),
+      };
+      const n = parseFloat(f.valor_venda);
+      const soma = s.captador + s.vendedor + s.hr;
+      if (!isNaN(n)) next.valor_comissao = ((n * soma) / 100).toFixed(2);
+      return next;
+    });
+  };
+
+  // Recalcula comissão R$ ao mudar valor da venda (com base na soma dos % do VGV)
   const onValor = (v: string) => {
     const n = parseFloat(v);
     setForm((f: any) => {
       const next = { ...f, valor_venda: v };
-      if (!isNaN(n) && f.percentual_comissao) {
-        const pct = parseFloat(f.percentual_comissao);
-        if (!isNaN(pct)) next.valor_comissao = ((n * pct) / 100).toFixed(2);
-      }
+      const soma =
+        (parseFloat(f.percent_captador) || 0) +
+        (parseFloat(f.percent_vendedor) || 0) +
+        (parseFloat(f.percent_hr) || 0);
+      if (!isNaN(n)) next.valor_comissao = ((n * soma) / 100).toFixed(2);
       return next;
     });
   };
-  const onPct = (v: string) => {
-    const pct = parseFloat(v);
+
+  // Edição manual de algum % → recalcula comissão R$
+  const onPctPapel = (papel: "captador" | "vendedor" | "hr", v: string) => {
     setForm((f: any) => {
-      const next = { ...f, percentual_comissao: v };
+      const next = { ...f, [`percent_${papel}`]: v };
+      const soma =
+        (parseFloat(papel === "captador" ? v : f.percent_captador) || 0) +
+        (parseFloat(papel === "vendedor" ? v : f.percent_vendedor) || 0) +
+        (parseFloat(papel === "hr" ? v : f.percent_hr) || 0);
       const n = parseFloat(f.valor_venda);
-      if (!isNaN(n) && !isNaN(pct)) next.valor_comissao = ((n * pct) / 100).toFixed(2);
+      if (!isNaN(n)) next.valor_comissao = ((n * soma) / 100).toFixed(2);
       return next;
     });
   };
@@ -146,6 +194,8 @@ export default function NovaVendaDialog({
       percent_vendedor: parseFloat(form.percent_vendedor) || 0,
       percent_captador: parseFloat(form.percent_captador) || 0,
       percent_hr: parseFloat(form.percent_hr) || 0,
+      origem_negocio: form.origem_negocio || null,
+      nivel_corretor: form.nivel_corretor || null,
       tipo: form.tipo,
       status_pagamento: form.status_pagamento,
       origem: form.origem || null,
@@ -211,41 +261,69 @@ export default function NovaVendaDialog({
             <Label>Valor da venda (R$) *</Label>
             <Input type="number" step="0.01" value={form.valor_venda} onChange={(e) => onValor(e.target.value)} />
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label>Comissão %</Label>
-              <Input type="number" step="0.01" value={form.percentual_comissao} onChange={(e) => onPct(e.target.value)} />
-            </div>
-            <div>
-              <Label>Comissão R$</Label>
-              <Input type="number" step="0.01" value={form.valor_comissao} onChange={(e) => setForm({ ...form, valor_comissao: e.target.value })} />
-            </div>
+          <div>
+            <Label>Comissão R$ (auto)</Label>
+            <Input type="number" step="0.01" value={form.valor_comissao} onChange={(e) => setForm({ ...form, valor_comissao: e.target.value })} />
           </div>
           {(() => {
             const sum = (parseFloat(form.percent_vendedor) || 0) + (parseFloat(form.percent_captador) || 0) + (parseFloat(form.percent_hr) || 0);
-            const comissao = parseFloat(form.valor_comissao) || 0;
+            const vgv = parseFloat(form.valor_venda) || 0;
             const fmt = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+            const matriz = getSplit(form.origem_negocio as OrigemNegocio, form.nivel_corretor as NivelCorretor);
+            const foraDaTabela =
+              Math.abs((parseFloat(form.percent_captador) || 0) - matriz.captador) > 0.001 ||
+              Math.abs((parseFloat(form.percent_vendedor) || 0) - matriz.vendedor) > 0.001 ||
+              Math.abs((parseFloat(form.percent_hr) || 0) - matriz.hr) > 0.001;
             return (
-              <div className="md:col-span-2 rounded-md border bg-muted/30 p-3 space-y-2">
+              <div className="md:col-span-2 rounded-md border bg-muted/30 p-3 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Origem do Negócio</Label>
+                    <Select
+                      value={form.origem_negocio}
+                      onValueChange={(v) => applyMatriz(v as OrigemNegocio, form.nivel_corretor)}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {ORIGENS_NEGOCIO.map((o) => <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Nível do corretor</Label>
+                    <Select
+                      value={form.nivel_corretor}
+                      onValueChange={(v) => applyMatriz(form.origem_negocio, v as NivelCorretor)}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {NIVEIS.map((n) => <SelectItem key={n.id} value={n.id}>{n.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Divisão da comissão (%)</Label>
-                  <span className={`text-xs ${Math.abs(sum - 100) < 0.01 ? "text-emerald-600" : "text-destructive"}`}>Soma: {sum.toFixed(1)}%</span>
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Divisão da comissão (% do VGV)</Label>
+                  <div className="flex items-center gap-2">
+                    {foraDaTabela && <span className="text-[10px] text-amber-600">fora da tabela</span>}
+                    <span className="text-xs text-muted-foreground">Total: {sum.toFixed(2)}% ({fmt(vgv * sum / 100)})</span>
+                  </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div>
-                    <Label className="text-xs">Vendedor</Label>
-                    <Input type="number" step="0.1" value={form.percent_vendedor} onChange={(e) => setForm({ ...form, percent_vendedor: e.target.value })} />
-                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(comissao * (parseFloat(form.percent_vendedor) || 0) / 100)}</div>
+                    <Label className="text-xs">Captador</Label>
+                    <Input type="number" step="0.1" value={form.percent_captador} onChange={(e) => onPctPapel("captador", e.target.value)} />
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(vgv * (parseFloat(form.percent_captador) || 0) / 100)}</div>
                   </div>
                   <div>
-                    <Label className="text-xs">Captador</Label>
-                    <Input type="number" step="0.1" value={form.percent_captador} onChange={(e) => setForm({ ...form, percent_captador: e.target.value })} />
-                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(comissao * (parseFloat(form.percent_captador) || 0) / 100)}</div>
+                    <Label className="text-xs">Vendedor</Label>
+                    <Input type="number" step="0.1" value={form.percent_vendedor} onChange={(e) => onPctPapel("vendedor", e.target.value)} />
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(vgv * (parseFloat(form.percent_vendedor) || 0) / 100)}</div>
                   </div>
                   <div>
                     <Label className="text-xs">HR Imóveis</Label>
-                    <Input type="number" step="0.1" value={form.percent_hr} onChange={(e) => setForm({ ...form, percent_hr: e.target.value })} />
-                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(comissao * (parseFloat(form.percent_hr) || 0) / 100)}</div>
+                    <Input type="number" step="0.1" value={form.percent_hr} onChange={(e) => onPctPapel("hr", e.target.value)} />
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(vgv * (parseFloat(form.percent_hr) || 0) / 100)}</div>
                   </div>
                 </div>
               </div>
