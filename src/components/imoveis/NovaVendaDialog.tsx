@@ -194,6 +194,8 @@ export default function NovaVendaDialog({
       percent_vendedor: parseFloat(form.percent_vendedor) || 0,
       percent_captador: parseFloat(form.percent_captador) || 0,
       percent_hr: parseFloat(form.percent_hr) || 0,
+      origem_negocio: form.origem_negocio || null,
+      nivel_corretor: form.nivel_corretor || null,
       tipo: form.tipo,
       status_pagamento: form.status_pagamento,
       origem: form.origem || null,
