@@ -217,6 +217,11 @@ export default function Accounts() {
       } else if (a.interesse !== interestFilter) return false;
     }
     if (tempFilter !== "todos" && (a.temperatura || "") !== tempFilter) return false;
+    if (ownerFilter !== "todos") {
+      if (ownerFilter === "none") {
+        if (a.responsavel_id) return false;
+      } else if (a.responsavel_id !== ownerFilter) return false;
+    }
     if (typeFilter === "cliente" && a.is_partner) return false;
     if (typeFilter === "parceiro" && !a.is_partner) return false;
     const accProps = propsByAccount[a.id] ?? [];
@@ -225,10 +230,14 @@ export default function Accounts() {
     const propMatch = accProps.some(
       (p) => (p.nome_fazenda?.toLowerCase().includes(s) ?? false) || (p.regiao?.toLowerCase().includes(s) ?? false)
     );
+    const tagMatch = (a.tags ?? []).some((t) => t.toLowerCase().includes(s));
     return (
       a.nome.toLowerCase().includes(s) ||
       (a.email?.toLowerCase().includes(s) ?? false) ||
       (a.telefone?.includes(search) ?? false) ||
+      (a.interesse?.toLowerCase().includes(s) ?? false) ||
+      (a.ramo_atividade?.toLowerCase().includes(s) ?? false) ||
+      tagMatch ||
       propMatch
     );
   });
