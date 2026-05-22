@@ -220,6 +220,30 @@ export default function Accounts() {
     return () => { supabase.removeChannel(ch); };
   }, []);
 
+  const isDirty =
+    draftSearch !== search ||
+    draftStatus !== statusFilter ||
+    draftInterest !== interestFilter ||
+    draftType !== typeFilter ||
+    draftTemp !== tempFilter ||
+    draftOwner !== ownerFilter;
+
+  const applyFilters = () => {
+    setSearch(draftSearch);
+    setStatusFilter(draftStatus);
+    setInterestFilter(draftInterest);
+    setTypeFilter(draftType);
+    setTempFilter(draftTemp);
+    setOwnerFilter(draftOwner);
+  };
+
+  const clearFilters = () => {
+    setDraftSearch(""); setDraftStatus("todos"); setDraftInterest("todos");
+    setDraftType("todas"); setDraftTemp("todos"); setDraftOwner("todos");
+    setSearch(""); setStatusFilter("todos"); setInterestFilter("todos");
+    setTypeFilter("todas"); setTempFilter("todos"); setOwnerFilter("todos");
+  };
+
   const propsByAccount = properties.reduce<Record<string, Property[]>>((acc, p) => {
     (acc[p.conta_id] ??= []).push(p);
     return acc;
