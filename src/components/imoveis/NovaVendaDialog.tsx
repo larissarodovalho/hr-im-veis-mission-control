@@ -545,6 +545,7 @@ export default function NovaVendaDialog({
           <div className="md:col-span-2">
             <Label>Observações</Label>
             <Textarea rows={2} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+          </div>
           <div className="md:col-span-2">
             <Label>Contrato (PDF)</Label>
             {contratoPath && !removeContrato && !contratoFile && (
