@@ -72,9 +72,11 @@ Deno.serve(async (req) => {
     }
 
     const allowedKinds = ["videochamada", "presencial", "ligacao"];
-    if (kindReq && allowedKinds.includes(kindReq) && kindReq !== link.kind) {
-      await supabase.from("booking_links").update({ kind: kindReq }).eq("id", link.id);
-      link.kind = kindReq;
+    // Aceita 'reuniao' como apelido de 'presencial' (compatibilidade com prompt novo da Sofia)
+    const kindNormalized = (kindReq === "reuniao" || kindReq === "reunião") ? "presencial" : kindReq;
+    if (kindNormalized && allowedKinds.includes(kindNormalized) && kindNormalized !== link.kind) {
+      await supabase.from("booking_links").update({ kind: kindNormalized }).eq("id", link.id);
+      link.kind = kindNormalized;
     }
     const dur = durationMin(link.kind);
     const startIso = dt.toISOString();
