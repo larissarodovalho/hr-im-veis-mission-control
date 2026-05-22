@@ -131,7 +131,11 @@ export default function ContatoPage() {
       {/* Final CTA */}
       <ScrollSection className="max-w-4xl mx-auto px-6 pb-32 text-center">
         <div className="py-16">
-          <p className="text-[11px] uppercase tracking-[0.4em] text-white/55 font-light mb-8">HR Imóveis</p>
+          <img
+            src="/logo-hr-branco.png"
+            alt="HR Imóveis"
+            className="h-10 md:h-12 w-auto mx-auto mb-8 opacity-90"
+          />
           <h3 className="text-3xl md:text-5xl font-extralight text-white/90 tracking-tight mb-4 leading-[1.05]">
             Não perca mais tempo,
             <br />
