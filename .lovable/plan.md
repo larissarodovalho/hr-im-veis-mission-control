@@ -1,29 +1,12 @@
 ## Objetivo
-Adicionar um menu de três pontinhos (⋮) em cada card do Kanban de Contas (aba "A Contatar" e demais etapas) permitindo alterar rapidamente:
-1. **Responsável** pelo contato
-2. **Etapa do funil** (qualificação no Kanban)
+Diferenciar visualmente o badge do **Responsável** em cada card do Kanban de Contas, atribuindo uma cor única e consistente por pessoa.
 
-## Mudanças
-
-### `src/components/contas/ContasKanban.tsx`
-- Adicionar botão `MoreVertical` (lucide) no canto superior direito do `ContaCard`, ao lado do badge "Parceiro".
-- Envolver em `DropdownMenu` (shadcn) com dois submenus:
-  - **"Mover para etapa"** → lista todas as `ETAPAS` de `contasFunil.ts`; ao clicar chama `onMoveStage(conta.id, etapa)` (já existe).
-  - **"Responsável"** → lista de usuários (corretores/gestores/admins) vinda de uma nova prop `owners: { id: string; nome: string }[]`; ao clicar chama nova prop `onChangeOwner(contaId, userId)`.
-- Impedir propagação de pointer/click no trigger pra não disparar o drag do `useDraggable`.
-
-### `src/pages/Accounts.tsx` (página que renderiza o Kanban)
-- Já carrega `ownerMap`; carregar também a lista bruta `owners` (id + nome) — provavelmente já existe; reusar.
-- Implementar `handleChangeOwner(contaId, userId)`:
-  - `supabase.from("contas").update({ responsavel_id: userId }).eq("id", contaId)`
-  - Toast + refetch (mesmo padrão de `onMoveStage`).
-- Passar `owners` e `onChangeOwner` para `<ContasKanban />`.
-
-## Detalhes técnicos
-- Usar `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuSub`, `DropdownMenuSubTrigger`, `DropdownMenuSubContent`, `DropdownMenuItem`, `DropdownMenuLabel`, `DropdownMenuSeparator` (já disponíveis em `@/components/ui/dropdown-menu`).
-- No trigger do menu: `onPointerDown={(e) => e.stopPropagation()}` e `onClick={(e) => e.stopPropagation()}` pra não conflitar com `useDraggable`.
-- Marcar a etapa atual e o responsável atual com check (`Check` icon) pra feedback visual.
-- Nenhuma alteração de schema necessária — coluna `responsavel_id` e `etapa_funil` já existem em `contas`.
+## Mudança
+Em `src/components/contas/ContasKanban.tsx`:
+- Criar helper `ownerColor(userId)` que faz hash determinístico do `responsavel_id` e seleciona uma classe Tailwind de uma paleta com ~10 variações (bg + text + border em tons suaves, ex.: indigo, emerald, rose, amber, sky, violet, teal, fuchsia, lime, orange).
+- Aplicar a classe retornada no `<Badge>` do responsável (substituindo o fixo `bg-indigo-500/15 text-indigo-700 border-indigo-500/30`).
+- Mesmo usuário sempre recebe a mesma cor em qualquer card.
 
 ## Fora de escopo
-- Não mexer em outras visualizações (lista/tabela) nem na lógica do drag-and-drop existente.
+- Não alterar cores de outros badges (temperatura, interesse, parceiro).
+- Não alterar a lista/tabela — só o Kanban.

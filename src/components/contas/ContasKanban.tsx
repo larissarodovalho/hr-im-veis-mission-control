@@ -53,6 +53,26 @@ interface Props {
 const fmt = (v: number) =>
   v ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }) : "—";
 
+const OWNER_PALETTE = [
+  "bg-indigo-500/15 text-indigo-700 border-indigo-500/30",
+  "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
+  "bg-rose-500/15 text-rose-700 border-rose-500/30",
+  "bg-amber-500/15 text-amber-700 border-amber-500/30",
+  "bg-sky-500/15 text-sky-700 border-sky-500/30",
+  "bg-violet-500/15 text-violet-700 border-violet-500/30",
+  "bg-teal-500/15 text-teal-700 border-teal-500/30",
+  "bg-fuchsia-500/15 text-fuchsia-700 border-fuchsia-500/30",
+  "bg-lime-600/15 text-lime-700 border-lime-600/30",
+  "bg-orange-500/15 text-orange-700 border-orange-500/30",
+];
+
+function ownerColor(id?: string | null) {
+  if (!id) return OWNER_PALETTE[0];
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return OWNER_PALETTE[h % OWNER_PALETTE.length];
+}
+
 function ContaCard({
   a,
   total,
