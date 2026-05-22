@@ -1898,6 +1898,9 @@ export type Database = {
           lead_id: string | null
           observacoes: string | null
           origem: string | null
+          percent_captador: number
+          percent_hr: number
+          percent_vendedor: number
           percentual_comissao: number | null
           proposta_id: string | null
           status_pagamento: string
@@ -1921,6 +1924,9 @@ export type Database = {
           lead_id?: string | null
           observacoes?: string | null
           origem?: string | null
+          percent_captador?: number
+          percent_hr?: number
+          percent_vendedor?: number
           percentual_comissao?: number | null
           proposta_id?: string | null
           status_pagamento?: string
@@ -1944,6 +1950,9 @@ export type Database = {
           lead_id?: string | null
           observacoes?: string | null
           origem?: string | null
+          percent_captador?: number
+          percent_hr?: number
+          percent_vendedor?: number
           percentual_comissao?: number | null
           proposta_id?: string | null
           status_pagamento?: string
