@@ -194,9 +194,9 @@ export default function ContaTarefas({ contaId, responsavelId }: Props) {
         </>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditingId(null); }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Nova tarefa</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingId ? "Editar tarefa" : "Nova tarefa"}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div>
               <Label>Título*</Label>
