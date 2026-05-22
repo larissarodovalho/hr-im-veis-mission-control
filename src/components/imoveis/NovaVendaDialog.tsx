@@ -94,9 +94,11 @@ export default function NovaVendaDialog({
       corretor_vendedor_id: initial?.corretor_vendedor_id || "none",
       corretor_captador_id: initial?.corretor_captador_id || "none",
       corretor_parceiro_id: initial?.corretor_parceiro_id || "none",
-      percent_vendedor: initial?.percent_vendedor != null ? String(initial.percent_vendedor) : "40",
-      percent_captador: initial?.percent_captador != null ? String(initial.percent_captador) : "30",
-      percent_hr: initial?.percent_hr != null ? String(initial.percent_hr) : "30",
+      origem_negocio: (initial?.origem_negocio as OrigemNegocio) || DEFAULT_ORIGEM,
+      nivel_corretor: (initial?.nivel_corretor as NivelCorretor) || DEFAULT_NIVEL,
+      percent_vendedor: initial?.percent_vendedor != null ? String(initial.percent_vendedor) : "2",
+      percent_captador: initial?.percent_captador != null ? String(initial.percent_captador) : "1",
+      percent_hr: initial?.percent_hr != null ? String(initial.percent_hr) : "2",
       data_venda: initial?.data_venda ? new Date(initial.data_venda).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
     }));
   }, [open, initial]);
