@@ -446,10 +446,11 @@ async function sendToProvider(phone: string, content: string): Promise<boolean> 
     return false;
   }
   const baseUrl = normalizeEvolutionBaseUrl(url);
+  const text = toWhatsAppMarkdown(content);
   const r = await fetch(`${baseUrl}/message/sendText/${instance}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", apikey: key },
-    body: JSON.stringify({ number: phone, text: content }),
+    body: JSON.stringify({ number: phone, text }),
   });
   const txt = await r.text();
   if (!r.ok) { console.error("Evolution send fail", r.status, txt.slice(0, 200)); return false; }
