@@ -90,11 +90,8 @@ export default function VendidosTab() {
     return Object.entries(m).map(([name, value]) => ({ name, value }));
   }, [atual]);
 
-  const origemPie = useMemo(() => {
-    const m: Record<string, number> = {};
-    atual.forEach((v) => { const k = v.origem || "Não informado"; m[k] = (m[k] || 0) + 1; });
-    return Object.entries(m).map(([name, value]) => ({ name, value }));
-  }, [atual]);
+
+
 
   const onDelete = async (v: any) => {
     if (!confirm(`Excluir venda de "${v.cliente_nome}"?`)) return;
@@ -186,17 +183,6 @@ export default function VendidosTab() {
             <LineChart data={sparkData(atual, "sum").map((d, i, arr) => ({ value: arr[i].value / Math.max(1, (atual.length / arr.length)) }))}>
               <Line type="monotone" dataKey="value" stroke="#f59e0b" strokeWidth={2} dot={false} />
             </LineChart>
-          </ResponsiveContainer>
-        </KPI>
-        <KPI title="Origem das vendas" value={origemPie.length ? `${origemPie.length} fontes` : "—"} color="border-l-teal-500">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie data={origemPie.length ? origemPie : [{ name: "—", value: 1 }]} dataKey="value" innerRadius={16} outerRadius={26}>
-                {(origemPie.length ? origemPie : [{ name: "—", value: 1 }]).map((_, idx) => (
-                  <Cell key={idx} fill={PIE[idx % PIE.length]} />
-                ))}
-              </Pie>
-            </PieChart>
           </ResponsiveContainer>
         </KPI>
       </div>
