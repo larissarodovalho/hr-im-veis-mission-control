@@ -463,7 +463,7 @@ export default function Accounts() {
           <Card className="p-6 text-center text-muted-foreground hidden md:block">Carregando…</Card>
         ) : (
           <div className="hidden md:block">
-            <ContasKanban accounts={filtered as any} propsByAccount={propsByAccount} onMoveStage={moveStage} onChangeOwner={changeOwner} ownerMap={ownerMap} owners={owners} />
+            <ContasKanban accounts={filtered as any} propsByAccount={propsByAccount} onMoveStage={moveStage} onChangeOwner={changeOwner} onChangeTemperatura={changeTemperatura} ownerMap={ownerMap} owners={owners} />
           </div>
         )
       ) : null}
