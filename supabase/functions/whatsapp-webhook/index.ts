@@ -337,9 +337,21 @@ function sanitizeReply(s: string): string {
     .replace(/\b(send_booking_link|request_immediate_contact|update_lead_info)\s*\([^)]*\)/gi, "")
     .replace(/\b(send_booking_link|request_immediate_contact|update_lead_info)\b/gi, "")
     .replace(/```[\s\S]*?```/g, "")
+    // Remove meta-comentários do modelo (em inglês) sobre duplicação/mensagens finais
+    .replace(/\([^)]*\b(final|duplicat|ignore|above|previous)[^)]*\)/gi, "")
+    .replace(/^.*\b(we have|ignore duplication|duplicate message)\b.*$/gim, "")
     .replace(/[ \t]{2,}/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+// Converte Markdown padrão (**bold**) para o formato do WhatsApp (*bold*).
+function toWhatsAppMarkdown(s: string): string {
+  if (!s) return "";
+  let out = s.replace(/\*\*([^*\n]+?)\*\*/g, "*$1*").replace(/__([^_\n]+?)__/g, "*$1*");
+  // Colapsa quaisquer sequências de asteriscos remanescentes (ex.: ***x*** -> *x*)
+  out = out.replace(/\*{2,}/g, "*");
+  return out;
 }
 
 function getEvolutionInstance(): string | null {
