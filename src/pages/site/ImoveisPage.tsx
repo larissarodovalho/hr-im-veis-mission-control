@@ -433,7 +433,7 @@ export default function ImoveisPage() {
                           className="text-xl sm:text-2xl font-light tracking-tight text-white drop-shadow-lg"
                           initial={{ opacity: 0, y: 10 }}
                           whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true }}
+                          viewport={{ once: true, amount: 0 }}
                           transition={{ delay: 0.3 + (i % 3) * 0.1 }}
                         >
                           {formatPrice(im.valor)}
