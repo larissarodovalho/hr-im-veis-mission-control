@@ -52,6 +52,7 @@ export default function ContaTarefas({ contaId, responsavelId }: Props) {
   const [userId, setUserId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<any>({});
 
   const load = async () => {
