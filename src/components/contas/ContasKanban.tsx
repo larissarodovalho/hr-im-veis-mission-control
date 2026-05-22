@@ -202,7 +202,7 @@ function ContaCard({
           </Badge>
         )}
         {responsavelNome && (
-          <Badge variant="outline" className="bg-indigo-500/15 text-indigo-700 border-indigo-500/30 text-[10px]">
+          <Badge variant="outline" className={`${ownerColor(a.responsavel_id)} text-[10px]`}>
             <User className="h-3 w-3 mr-1" /> {responsavelNome}
           </Badge>
         )}
