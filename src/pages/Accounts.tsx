@@ -170,8 +170,16 @@ export default function Accounts() {
       setAccounts((accs ?? []) as Account[]);
       setProperties(((props as any) ?? []) as Property[]);
       const map: Record<string, string> = {};
-      ((profs as any) ?? []).forEach((p: any) => { if (p.user_id) map[p.user_id] = p.nome || "—"; });
+      const list: { id: string; nome: string }[] = [];
+      ((profs as any) ?? []).forEach((p: any) => {
+        if (p.user_id) {
+          map[p.user_id] = p.nome || "—";
+          list.push({ id: p.user_id, nome: p.nome || "—" });
+        }
+      });
+      list.sort((a, b) => a.nome.localeCompare(b.nome));
       setOwnerMap(map);
+      setOwners(list);
     } catch (e: any) {
       toast.error(e?.message ?? "Erro ao carregar contas");
     } finally {
