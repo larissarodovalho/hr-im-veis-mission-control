@@ -70,6 +70,7 @@ export default function NovaVendaDialog({
   });
   const [marcarVendido, setMarcarVendido] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [manualCliente, setManualCliente] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -77,7 +78,10 @@ export default function NovaVendaDialog({
       setImoveis((data ?? []).map((i: any) => ({ id: i.id, nome: `${i.codigo || ""} ${i.titulo}`.trim(), raw: i })));
     });
     supabase.from("leads").select("id,nome").order("nome").then(({ data }) => setLeads((data ?? []).map((l: any) => ({ id: l.id, nome: l.nome }))));
-    supabase.from("contas").select("id,nome").order("nome").then(({ data }) => setContas((data ?? []).map((c: any) => ({ id: c.id, nome: c.nome }))));
+    supabase.from("contas").select("id,nome,email,telefone").order("nome").then(({ data }) => setContas((data ?? []).map((c: any) => {
+      const extra = [c.email, c.telefone].filter(Boolean).join(" · ");
+      return { id: c.id, nome: extra ? `${c.nome} — ${extra}` : c.nome, rawNome: c.nome };
+    })));
     supabase.from("profiles").select("user_id,nome,nivel").then(({ data }) => setProfiles((data ?? []).map((p: any) => ({ id: p.user_id, nome: p.nome || "Sem nome", nivel: p.nivel || "senior" }))));
     supabase.from("corretores_parceiros").select("id,nome").eq("ativo", true).order("nome").then(({ data }) => setParceiros(data ?? []));
   }, [open]);
@@ -111,11 +115,17 @@ export default function NovaVendaDialog({
     }
   }, [form.lead_id, leads]);
   useEffect(() => {
-    if (form.conta_id && form.conta_id !== "none" && !form.cliente_nome) {
-      const c = contas.find((x) => x.id === form.conta_id);
-      if (c) setForm((f: any) => ({ ...f, cliente_nome: c.nome }));
+    if (form.conta_id && form.conta_id !== "none") {
+      const c = contas.find((x: any) => x.id === form.conta_id);
+      if (c) setForm((f: any) => (f.cliente_nome === c.rawNome ? f : { ...f, cliente_nome: c.rawNome }));
     }
   }, [form.conta_id, contas]);
+
+  useEffect(() => {
+    if (!open) return;
+    // Em edição: se já existe nome de cliente mas sem conta vinculada, abre em modo manual
+    setManualCliente(!!initial?.cliente_nome && (!initial?.conta_id || initial.conta_id === "none"));
+  }, [open, initial]);
 
   // Auto-preenche nível a partir do nível do corretor vendedor selecionado
   useEffect(() => {
@@ -231,7 +241,39 @@ export default function NovaVendaDialog({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="md:col-span-2">
             <Label>Cliente *</Label>
-            <Input value={form.cliente_nome} onChange={(e) => setForm({ ...form, cliente_nome: e.target.value })} />
+            {manualCliente ? (
+              <>
+                <Input
+                  value={form.cliente_nome}
+                  onChange={(e) => setForm({ ...form, cliente_nome: e.target.value, conta_id: "none" })}
+                  placeholder="Nome do cliente"
+                />
+                <button
+                  type="button"
+                  className="text-xs text-primary hover:underline mt-1"
+                  onClick={() => { setManualCliente(false); setForm((f: any) => ({ ...f, cliente_nome: "", conta_id: "none" })); }}
+                >
+                  Selecionar uma conta existente
+                </button>
+              </>
+            ) : (
+              <>
+                <SearchableSelect
+                  value={form.conta_id}
+                  onChange={(v) => setForm({ ...form, conta_id: v })}
+                  options={contas}
+                  placeholder="Buscar cliente nas contas…"
+                  emptyLabel="—"
+                />
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground hover:text-primary hover:underline mt-1"
+                  onClick={() => { setManualCliente(true); setForm((f: any) => ({ ...f, conta_id: "none" })); }}
+                >
+                  Cliente não está nas contas? Digitar nome manualmente
+                </button>
+              </>
+            )}
           </div>
           <div>
             <Label>Imóvel</Label>
@@ -252,10 +294,6 @@ export default function NovaVendaDialog({
           <div>
             <Label>Lead (opcional)</Label>
             <SearchableSelect value={form.lead_id} onChange={(v) => setForm({ ...form, lead_id: v })} options={leads} placeholder="Buscar lead…" emptyLabel="—" />
-          </div>
-          <div>
-            <Label>Conta (opcional)</Label>
-            <SearchableSelect value={form.conta_id} onChange={(v) => setForm({ ...form, conta_id: v })} options={contas} placeholder="Buscar conta…" emptyLabel="—" />
           </div>
           <div>
             <Label>Valor da venda (R$) *</Label>
