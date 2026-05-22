@@ -63,6 +63,8 @@ export default function FaturamentoReport() {
   const [to, setTo] = useState("");
   const [papel, setPapel] = useState<"todos" | "vendedor" | "captador" | "hr">("todos");
   const [corretorId, setCorretorId] = useState<string>("none");
+  const [origem, setOrigem] = useState<"todos" | OrigemNegocio>("todos");
+  const [nivel, setNivel] = useState<"todos" | NivelCorretor>("todos");
 
   useEffect(() => {
     (async () => {
@@ -89,6 +91,8 @@ export default function FaturamentoReport() {
       if (!v.data_venda) return false;
       const d = new Date(v.data_venda);
       if (d < range.from || d > range.to) return false;
+      if (origem !== "todos" && v.origem_negocio !== origem) return false;
+      if (nivel !== "todos" && v.nivel_corretor !== nivel) return false;
       if (corretorId !== "none") {
         const inRole =
           (papel === "todos" || papel === "vendedor") && v.corretor_vendedor_id === corretorId ||
@@ -97,7 +101,7 @@ export default function FaturamentoReport() {
       }
       return true;
     });
-  }, [vendas, range, papel, corretorId]);
+  }, [vendas, range, papel, corretorId, origem, nivel]);
 
   // KPIs
   const kpis = useMemo(() => {
