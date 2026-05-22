@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "admin" | "gestor" | "corretor";
+export type AppRole = "admin" | "gestor" | "corretor" | "marketing";
 
 interface Profile {
   id: string;
@@ -22,6 +22,8 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   isGestor: boolean;
+  isMarketing: boolean;
+  isMarketingOnly: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -94,6 +96,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user, session, profile, roles, loading,
         isAdmin: roles.includes("admin"),
         isGestor: roles.includes("gestor") || roles.includes("admin"),
+        isMarketing: roles.includes("marketing"),
+        isMarketingOnly:
+          roles.includes("marketing") &&
+          !roles.includes("admin") &&
+          !roles.includes("gestor") &&
+          !roles.includes("corretor"),
         signOut, refreshProfile,
       }}
     >
