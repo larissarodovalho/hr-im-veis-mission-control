@@ -149,6 +149,16 @@ export default function Accounts() {
   const [loading, setLoading] = useState(true);
   const [novaOpen, setNovaOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+
+  const interestLabel = (v: string | null | undefined) => {
+    if (!v) return "";
+    const map: Record<string, string> = INTEREST_LABEL as any;
+    return map[v] ?? v;
+  };
+  const tempLabel = (v: string | null | undefined) => tempInfo(v ?? "")?.label ?? "";
+  const ownerLabel = (v: string) =>
+    v === "none" ? "Sem responsável" : (ownerMap[v] ?? owners.find((o) => o.id === v)?.nome ?? v);
 
   const [ownerMap, setOwnerMap] = useState<Record<string, string>>({});
   const [owners, setOwners] = useState<{ id: string; nome: string }[]>([]);
