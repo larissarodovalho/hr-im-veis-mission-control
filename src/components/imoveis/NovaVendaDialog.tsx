@@ -153,6 +153,16 @@ export default function NovaVendaDialog({
     setManualCliente(!!initial?.cliente_nome && (!initial?.conta_id || initial.conta_id === "none"));
     setManualImovel(false);
     setImovelManual({ titulo: "", tipo: "Casa", finalidade: "Venda", endereco: "", bairro: "", cidade: "", valor: "" });
+    setContratoFile(null);
+    setRemoveContrato(false);
+    const path = (initial as any)?.contrato_pdf_path || null;
+    setContratoPath(path);
+    setContratoUrl(null);
+    if (path) {
+      supabase.storage.from("contratos-vendas").createSignedUrl(path, 3600).then(({ data }) => {
+        setContratoUrl(data?.signedUrl || null);
+      });
+    }
   }, [open, initial]);
 
   // Auto-preenche nível a partir do nível do corretor vendedor selecionado
