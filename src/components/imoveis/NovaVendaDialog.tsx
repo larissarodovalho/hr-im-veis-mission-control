@@ -270,13 +270,39 @@ export default function NovaVendaDialog({
       created_by: user?.id,
     };
 
+    let vendaId = initial?.id as string | undefined;
     let error;
     if (initial?.id) {
       ({ error } = await supabase.from("vendas").update(payload).eq("id", initial.id));
     } else {
-      ({ error } = await supabase.from("vendas").insert(payload));
+      const ins = await supabase.from("vendas").insert(payload).select("id").single();
+      error = ins.error;
+      vendaId = ins.data?.id;
     }
     if (error) { setSaving(false); return toast.error(error.message); }
+
+    // Contrato PDF: upload novo arquivo / remoção
+    let novoContratoPath: string | null | undefined = undefined;
+    if (contratoFile && vendaId) {
+      const ext = contratoFile.name.split(".").pop() || "pdf";
+      const path = `${vendaId}/${Date.now()}.${ext}`;
+      const up = await supabase.storage.from("contratos-vendas").upload(path, contratoFile, {
+        upsert: true,
+        contentType: contratoFile.type || "application/pdf",
+      });
+      if (up.error) { setSaving(false); return toast.error("Erro ao enviar contrato: " + up.error.message); }
+      // Remove anterior se havia outro
+      if (contratoPath && contratoPath !== path) {
+        await supabase.storage.from("contratos-vendas").remove([contratoPath]);
+      }
+      novoContratoPath = path;
+    } else if (removeContrato && contratoPath) {
+      await supabase.storage.from("contratos-vendas").remove([contratoPath]);
+      novoContratoPath = null;
+    }
+    if (novoContratoPath !== undefined && vendaId) {
+      await supabase.from("vendas").update({ contrato_pdf_path: novoContratoPath }).eq("id", vendaId);
+    }
 
     if (marcarVendido && payload.imovel_id) {
       await supabase.from("imoveis").update({ status: "Vendido" }).eq("id", payload.imovel_id);
