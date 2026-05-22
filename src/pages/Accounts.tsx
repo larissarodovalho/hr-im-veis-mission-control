@@ -412,6 +412,16 @@ export default function Accounts() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={ownerFilter} onValueChange={(v) => setOwnerFilter(v)}>
+            <SelectTrigger><SelectValue placeholder="Responsável" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os responsáveis</SelectItem>
+              <SelectItem value="none">Sem responsável</SelectItem>
+              {owners.map((o) => (
+                <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </header>
 
