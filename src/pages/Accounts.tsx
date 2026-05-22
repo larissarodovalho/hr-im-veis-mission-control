@@ -282,6 +282,18 @@ export default function Accounts() {
     toast.success("Arquivo CSV gerado");
   };
 
+  const changeOwner = async (id: string, userId: string | null) => {
+    const prev = accounts;
+    setAccounts((cur) => cur.map((a) => (a.id === id ? { ...a, responsavel_id: userId } : a)));
+    const { error } = await supabase.from("contas").update({ responsavel_id: userId } as any).eq("id", id);
+    if (error) {
+      setAccounts(prev);
+      toast.error("Não foi possível alterar responsável: " + error.message);
+    } else {
+      toast.success("Responsável atualizado");
+    }
+  };
+
   const moveStage = async (id: string, etapa: EtapaFunil) => {
     const prev = accounts;
     setAccounts((cur) => cur.map((a) => (a.id === id ? { ...a, etapa_funil: etapa } : a)));
