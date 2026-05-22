@@ -77,7 +77,7 @@ export default function UsuariosAdminPage() {
       if (set.has("gestor")) return "gestor";
       return "corretor";
     };
-    setRows(((profs ?? []) as any[]).map((p) => ({ ...p, role: resolve(rolesByUser.get(p.user_id)) })));
+    setRows(((profs ?? []) as any[]).map((p) => ({ ...p, nivel: p.nivel || "senior", role: resolve(rolesByUser.get(p.user_id)) })));
     setLoading(false);
   }, []);
 
