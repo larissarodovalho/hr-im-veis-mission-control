@@ -115,11 +115,17 @@ export default function NovaVendaDialog({
     }
   }, [form.lead_id, leads]);
   useEffect(() => {
-    if (form.conta_id && form.conta_id !== "none" && !form.cliente_nome) {
-      const c = contas.find((x) => x.id === form.conta_id);
-      if (c) setForm((f: any) => ({ ...f, cliente_nome: c.nome }));
+    if (form.conta_id && form.conta_id !== "none") {
+      const c = contas.find((x: any) => x.id === form.conta_id);
+      if (c) setForm((f: any) => (f.cliente_nome === c.rawNome ? f : { ...f, cliente_nome: c.rawNome }));
     }
   }, [form.conta_id, contas]);
+
+  useEffect(() => {
+    if (!open) return;
+    // Em edição: se já existe nome de cliente mas sem conta vinculada, abre em modo manual
+    setManualCliente(!!initial?.cliente_nome && (!initial?.conta_id || initial.conta_id === "none"));
+  }, [open, initial]);
 
   // Auto-preenche nível a partir do nível do corretor vendedor selecionado
   useEffect(() => {
