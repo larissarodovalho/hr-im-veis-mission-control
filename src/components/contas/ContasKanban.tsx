@@ -50,7 +50,6 @@ interface Props {
   ownerMap?: Record<string, string>;
   owners?: { id: string; nome: string }[];
 }
-}
 
 const fmt = (v: number) =>
   v ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }) : "—";
