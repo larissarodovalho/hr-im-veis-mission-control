@@ -457,17 +457,17 @@ export default function NovaVendaDialog({
                   <div>
                     <Label className="text-xs">Captador</Label>
                     <Input type="number" step="0.1" value={form.percent_captador} onChange={(e) => onPctPapel("captador", e.target.value)} />
-                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(vgv * (parseFloat(form.percent_captador) || 0) / 100)}</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(calculateCommissionValue(vgv, { captador: split.captador, vendedor: 0, hr: 0 }))}</div>
                   </div>
                   <div>
                     <Label className="text-xs">Vendedor</Label>
                     <Input type="number" step="0.1" value={form.percent_vendedor} onChange={(e) => onPctPapel("vendedor", e.target.value)} />
-                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(vgv * (parseFloat(form.percent_vendedor) || 0) / 100)}</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(calculateCommissionValue(vgv, { captador: 0, vendedor: split.vendedor, hr: 0 }))}</div>
                   </div>
                   <div>
                     <Label className="text-xs">HR Imóveis</Label>
                     <Input type="number" step="0.1" value={form.percent_hr} onChange={(e) => onPctPapel("hr", e.target.value)} />
-                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(vgv * (parseFloat(form.percent_hr) || 0) / 100)}</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(calculateCommissionValue(vgv, { captador: 0, vendedor: 0, hr: split.hr }))}</div>
                   </div>
                 </div>
               </div>
