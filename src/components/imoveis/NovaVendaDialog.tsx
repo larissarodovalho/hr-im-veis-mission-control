@@ -135,6 +135,8 @@ export default function NovaVendaDialog({
     if (!open) return;
     // Em edição: se já existe nome de cliente mas sem conta vinculada, abre em modo manual
     setManualCliente(!!initial?.cliente_nome && (!initial?.conta_id || initial.conta_id === "none"));
+    setManualImovel(false);
+    setImovelManual({ titulo: "", tipo: "Casa", finalidade: "Venda", endereco: "", bairro: "", cidade: "", valor: "" });
   }, [open, initial]);
 
   // Auto-preenche nível a partir do nível do corretor vendedor selecionado
