@@ -625,6 +625,7 @@ Deno.serve(async (req) => {
     let content: string | null = null;
     let externalId: string | null = null;
     let pushName: string | null = null;
+    let adReferral: ReturnType<typeof extractAdReferral> = null;
 
     if (body?.data?.key) {
       const fromMe = body.data.key.fromMe;
@@ -642,6 +643,11 @@ Deno.serve(async (req) => {
         body.data.message?.imageMessage?.caption ||
         body.data.message?.videoMessage?.caption ||
         null;
+
+      adReferral = extractAdReferral(body.data.message);
+      if (adReferral) {
+        console.log("[whatsapp-webhook] referral Meta Ads detectado", { ad_id: adReferral.ad_id, title: adReferral.title?.slice(0, 60) });
+      }
 
       if (!content && (body.data.message?.audioMessage || body.data.message?.pttMessage)) {
         const mimetype = body.data.message?.audioMessage?.mimetype || "audio/ogg";
