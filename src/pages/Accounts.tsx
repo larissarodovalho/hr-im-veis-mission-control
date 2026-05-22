@@ -138,6 +138,7 @@ export default function Accounts() {
   const [importOpen, setImportOpen] = useState(false);
 
   const [ownerMap, setOwnerMap] = useState<Record<string, string>>({});
+  const [owners, setOwners] = useState<{ id: string; nome: string }[]>([]);
 
   const fetchAllContas = async () => {
     const PAGE = 1000;
