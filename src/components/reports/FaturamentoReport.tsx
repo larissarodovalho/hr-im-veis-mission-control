@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchableSelect from "@/components/SearchableSelect";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Download, TrendingUp, Coins, Building2, BarChart3 } from "lucide-react";
-import { ORIGENS, NIVEIS, origemLabel, nivelLabel, type OrigemNegocio, type NivelCorretor } from "@/lib/comissaoHR";
+import { ORIGENS, NIVEIS, calculateCommissionPart, calculateCommissionValue, origemLabel, nivelLabel, type OrigemNegocio, type NivelCorretor } from "@/lib/comissaoHR";
 import * as XLSX from "xlsx";
 
 type Venda = {
@@ -32,6 +32,13 @@ type Venda = {
 
 import { formatBRL } from "@/lib/format";
 const fmtBRL = (n: number) => formatBRL(n || 0, { dash: false });
+
+const getVendaComissaoTotal = (v: Venda) =>
+  calculateCommissionValue(v.valor_venda || 0, {
+    vendedor: v.percent_vendedor ?? 0,
+    captador: v.percent_captador ?? 0,
+    hr: v.percent_hr ?? 0,
+  });
 
 type Preset = "mes" | "trimestre" | "ano" | "custom";
 
