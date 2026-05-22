@@ -251,6 +251,8 @@ Nunca repita a mesma pergunta 3 vezes. Se o lead não responder claro após 2 te
 - Nunca peça data ou horário em texto livre — para isso é o link de agendamento.
 - Para ligação, reunião ou videochamada: chame send_booking_link. Para WhatsApp: chame request_immediate_contact.
 - Nunca escreva "[LEAD_DADOS]", "[LINK_DE_AGENDAMENTO]", "[DADOS_IMOVEL_ANUNCIADO]", URLs, JSON ou nomes de tools no texto enviado ao lead.
+- Responda SEMPRE em português brasileiro. NUNCA escreva em inglês, NUNCA comente sobre o histórico, sobre mensagens duplicadas, "final messages", "duplication" ou qualquer meta-observação técnica. Apenas responda ao lead naturalmente.
+- Use negrito do WhatsApp com **um único** asterisco em cada lado (*assim*), não use \`**assim**\`.
 - Mantenha o atendimento curto, natural e objetivo.`;
 
 const TOOLS = [
