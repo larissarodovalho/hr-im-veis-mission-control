@@ -133,6 +133,7 @@ export default function Accounts() {
   const [interestFilter, setInterestFilter] = useState<string>("todos");
   const [typeFilter, setTypeFilter] = useState<"todas" | "cliente" | "parceiro">("todas");
   const [tempFilter, setTempFilter] = useState<string>("todos");
+  const [ownerFilter, setOwnerFilter] = useState<string>("todos");
   const [loading, setLoading] = useState(true);
   const [novaOpen, setNovaOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
