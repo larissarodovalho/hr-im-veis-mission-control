@@ -81,6 +81,7 @@ function ContaCard({
   owners,
   onMoveStage,
   onChangeOwner,
+  onChangeTemperatura,
 }: {
   a: Account;
   total: number;
@@ -88,6 +89,7 @@ function ContaCard({
   owners?: { id: string; nome: string }[];
   onMoveStage: (id: string, etapa: EtapaFunil) => void;
   onChangeOwner?: (id: string, userId: string | null) => void;
+  onChangeTemperatura?: (id: string, temp: string | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: a.id });
   const style: React.CSSProperties = {
