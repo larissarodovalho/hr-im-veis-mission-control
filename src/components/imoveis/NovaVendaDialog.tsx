@@ -10,6 +10,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { SearchableSelect } from "@/components/SearchableSelect";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  ORIGENS as ORIGENS_NEGOCIO,
+  NIVEIS,
+  getSplit,
+  DEFAULT_ORIGEM,
+  DEFAULT_NIVEL,
+  type OrigemNegocio,
+  type NivelCorretor,
+} from "@/lib/comissaoHR";
 
 export type VendaRow = any;
 
