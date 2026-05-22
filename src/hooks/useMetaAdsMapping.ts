@@ -70,7 +70,7 @@ export function useMetaAdsMapping() {
     return { data };
   };
 
-  const updateMapping = async (id: string, patch: Partial<MetaAdMapping>) => {
+  const updateMapping = async (id: string, patch: { ad_id?: string; imovel_id?: string; nome_anuncio?: string | null; ativo?: boolean }) => {
     const { data, error } = await supabase.from("meta_ads_imoveis").update(patch).eq("id", id).select().single();
     if (error) { toast.error("Erro ao atualizar: " + error.message); return { error }; }
     await fetchAll();
