@@ -240,7 +240,7 @@ export default function NovaVendaDialog({
       proposta_id: form.proposta_id || null,
       cliente_nome: form.cliente_nome,
       valor_venda: parseFloat(form.valor_venda) || 0,
-      valor_comissao: parseFloat(form.valor_comissao) || 0,
+      valor_comissao: calculateCommissionValue(parseFloat(form.valor_venda) || 0, splitFromForm(form)),
       percentual_comissao: form.percentual_comissao ? parseFloat(form.percentual_comissao) : null,
       percent_vendedor: parseFloat(form.percent_vendedor) || 0,
       percent_captador: parseFloat(form.percent_captador) || 0,
@@ -406,10 +406,11 @@ export default function NovaVendaDialog({
           </div>
           <div>
             <Label>Comissão R$ (auto)</Label>
-            <CurrencyInput value={form.valor_comissao} onChange={(v) => setForm({ ...form, valor_comissao: v })} />
+            <CurrencyInput value={form.valor_comissao} onChange={(v) => setForm({ ...form, valor_comissao: v })} readOnly />
           </div>
           {(() => {
-            const sum = (parseFloat(form.percent_vendedor) || 0) + (parseFloat(form.percent_captador) || 0) + (parseFloat(form.percent_hr) || 0);
+            const split = splitFromForm(form);
+            const sum = getPercentTotal(split);
             const vgv = parseFloat(form.valor_venda) || 0;
             const fmt = (n: number) => formatBRL(n, { dash: false });
             const matriz = getSplit(form.origem_negocio as OrigemNegocio, form.nivel_corretor as NivelCorretor);
@@ -449,7 +450,7 @@ export default function NovaVendaDialog({
                   <Label className="text-xs uppercase tracking-wide text-muted-foreground">Divisão da comissão (% do VGV)</Label>
                   <div className="flex items-center gap-2">
                     {foraDaTabela && <span className="text-[10px] text-amber-600">fora da tabela</span>}
-                    <span className="text-xs text-muted-foreground">Total: {sum.toFixed(2)}% ({fmt(vgv * sum / 100)})</span>
+                    <span className="text-xs text-muted-foreground">Total: {sum.toFixed(2)}% ({fmt(calculateCommissionValue(vgv, split))})</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
