@@ -8,7 +8,8 @@ export type EtapaFunil =
   | "visita"
   | "proposta"
   | "fechado"
-  | "perdido";
+  | "perdido"
+  | "parceiros";
 
 export const ETAPAS: { id: EtapaFunil; label: string; color: string }[] = [
   { id: "a_contatar", label: "A contatar", color: "bg-slate-500/15 text-slate-700 border-slate-500/30" },
@@ -21,6 +22,7 @@ export const ETAPAS: { id: EtapaFunil; label: string; color: string }[] = [
   { id: "proposta", label: "Proposta", color: "bg-sky-500/15 text-sky-700 border-sky-500/30" },
   { id: "fechado", label: "Fechado", color: "bg-success/15 text-success border-success/30" },
   { id: "perdido", label: "Followup", color: "bg-destructive/15 text-destructive border-destructive/30" },
+  { id: "parceiros", label: "Parceiros", color: "bg-accent/15 text-accent-foreground border-accent/30" },
 ];
 
 export const etapaLabel = (id: string) => ETAPAS.find((e) => e.id === id)?.label ?? "A contatar";
