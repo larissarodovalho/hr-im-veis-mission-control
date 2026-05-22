@@ -257,6 +257,26 @@ export default function FaturamentoReport() {
           </Select>
         </div>
         <div>
+          <Label className="text-xs">Origem</Label>
+          <Select value={origem} onValueChange={(v) => setOrigem(v as any)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todas</SelectItem>
+              {ORIGENS.map((o) => <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs">Nível</Label>
+          <Select value={nivel} onValueChange={(v) => setNivel(v as any)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              {NIVEIS.map((n) => <SelectItem key={n.id} value={n.id}>{n.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
           <Label className="text-xs">Corretor</Label>
           <SearchableSelect
             value={corretorId}
