@@ -135,6 +135,13 @@ export default function Accounts() {
   const [typeFilter, setTypeFilter] = useState<"todas" | "cliente" | "parceiro">("todas");
   const [tempFilter, setTempFilter] = useState<string>("todos");
   const [ownerFilter, setOwnerFilter] = useState<string>("todos");
+  // Rascunho — não filtra até clicar em Aplicar
+  const [draftSearch, setDraftSearch] = useState("");
+  const [draftStatus, setDraftStatus] = useState<"todos" | Status>("todos");
+  const [draftInterest, setDraftInterest] = useState<string>("todos");
+  const [draftType, setDraftType] = useState<"todas" | "cliente" | "parceiro">("todas");
+  const [draftTemp, setDraftTemp] = useState<string>("todos");
+  const [draftOwner, setDraftOwner] = useState<string>("todos");
   const [loading, setLoading] = useState(true);
   const [novaOpen, setNovaOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
