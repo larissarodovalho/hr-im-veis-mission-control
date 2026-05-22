@@ -1,37 +1,21 @@
-## Objetivo
-Criar um novo perfil de usuário **Marketing** que só consegue acessar a aba **Imóveis** do CRM (listar, criar, editar e subir fotos/descrições de imóveis). Sem acesso a Leads, Contas, WhatsApp, Relatórios, Configurações etc.
+# Plano — Opção A: Aceitar finding de Realtime
 
-## Mudanças
+## O que será feito
 
-### 1. Banco de dados (migration)
-- Adicionar valor `'marketing'` ao enum `app_role`.
-- Atualizar função `is_staff()` para incluir `marketing` (assim ele passa nas policies de INSERT/UPDATE de `imoveis` e storage).
-- **Policies de `imoveis`**: hoje qualquer staff vê tudo. Marketing também precisa ver/criar/editar imóveis — as policies atuais já cobrem `corretor`, vou estender para incluir `marketing` (SELECT, INSERT, UPDATE).
-- **Bloquear marketing nas demais tabelas sensíveis**: as policies atuais usam `has_role('admin')`, `has_role('gestor')` ou `corretor_id = auth.uid()` — marketing automaticamente não terá acesso a leads, contas, contratos, ligações etc., pois não é nenhum desses papéis.
-- Storage bucket `imoveis` já é público para leitura; marketing precisa poder fazer upload — verificar/ajustar policy de storage se necessário.
+1. **Marcar finding como ignorado** (`realtime_channel_topic_not_scoped`) com justificativa técnica:
+   > Todos os 22 canais Realtime do projeto usam `postgres_changes` (não Broadcast). O Postgres reaplica RLS de cada tabela base antes de entregar eventos ao cliente, então os dados já são protegidos no nível da tabela (signed_documents, document_signers, whatsapp_messages, leads, contas, etc). A policy ampla em `realtime.messages` apenas permite a inscrição no canal — não vaza dados que o usuário já não possa ler.
 
-### 2. Frontend — controle de acesso
-- **`AuthContext.tsx`**: adicionar `isMarketing` (derivado de `roles.includes('marketing')`).
-- **Novo `MarketingRoute.tsx`** (ou ampliar `StaffRoute`): redireciona marketing para `/crm/imoveis` se tentar acessar outra rota do CRM.
-- **`App.tsx`**: rota índice do `/crm` redireciona marketing direto para `/crm/imoveis`.
-- **`AppSidebar.tsx`**:
-  - Marketing vê apenas o item "CRM — Comercial" com **apenas a sub-aba Imóveis** visível.
-  - Esconder Marketing/Integrações/Operacional/Saúde/Administração para esse perfil.
-- **`ProtectedRoute` / guards de página**: bloquear Leads, Contas, WhatsApp etc. para marketing (redirect para `/crm/imoveis`).
+2. **Atualizar `@security-memory`** registrando:
+   - Arquitetura: todos os canais Realtime usam `postgres_changes` + RLS na tabela base.
+   - Decisão aceita: não exigir scoping por tópico em `realtime.messages` enquanto não houver uso de Broadcast.
+   - Regra futura: se algum dia introduzirmos `broadcast` ou `presence`, refatorar nomes de canais para incluir IDs e criar policy com regex.
 
-### 3. Tela de Usuários (`UsuariosAdminPage`)
-- Incluir `marketing` como opção ao criar/editar papel de um usuário (dropdown de roles).
-- Badge visual para o novo papel.
+## O que NÃO será feito
 
-### 4. Edge function `admin-create-user`
-- Permitir `role: 'marketing'` no payload (validação do enum).
+- Nenhuma alteração de código (frontend ou backend).
+- Nenhuma migração SQL.
+- Nenhum canal Realtime será renomeado.
 
-## Detalhes técnicos
+## Risco
 
-- Enum update: `ALTER TYPE public.app_role ADD VALUE 'marketing';` (precisa ser commitado antes de ser usado em policies — fazer em migration única com transação adequada ou em duas migrations, conforme requerido pelo Postgres).
-- Comportamento da tela `Imoveis.tsx`: já permite criar/editar via `NovoImovelDialog` e `EditarImovelDialog`; nenhuma mudança de UI necessária além do guard de rota.
-- Marketing **não** verá: dashboard, leads, contas, WhatsApp, ligações, visitas, agenda, tarefas, documentos, contratos, relatórios, usuários, configurações, newsletter, meta-ads.
-
-## Pergunta antes de implementar
-1. Marketing deve poder **excluir** imóveis ou só criar/editar? (hoje só admin deleta — manter assim?)
-2. Marketing deve aparecer como **corretor captador** dos imóveis que sobe, ou ficar sem vínculo de corretor?
+Zero risco de regressão. Apenas metadados de segurança e documentação.
