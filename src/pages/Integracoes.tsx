@@ -123,9 +123,14 @@ export default function Integracoes() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold font-display">Integrações</h2>
-        <p className="text-sm text-muted-foreground">Gerencie todas as conexões com plataformas e APIs externas</p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h2 className="text-2xl font-bold font-display">Integrações</h2>
+          <p className="text-sm text-muted-foreground">Gerencie todas as conexões com plataformas e APIs externas</p>
+        </div>
+        <Button asChild className="gap-2">
+          <a href="/crm/meta-ads"><Facebook className="h-4 w-4" /> Anúncios Meta → Imóveis</a>
+        </Button>
       </div>
 
       {/* Resumo */}
