@@ -134,7 +134,7 @@ export default function ContatoPage() {
           <img
             src="/logo-hr-branco.png"
             alt="HR Imóveis"
-            className="h-10 md:h-12 w-auto mx-auto mb-8 opacity-90"
+            className="h-28 md:h-40 w-auto mx-auto mb-10"
           />
           <h3 className="text-3xl md:text-5xl font-extralight text-white/90 tracking-tight mb-4 leading-[1.05]">
             Não perca mais tempo,
