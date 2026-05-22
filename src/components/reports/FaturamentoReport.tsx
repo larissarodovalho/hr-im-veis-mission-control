@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchableSelect from "@/components/SearchableSelect";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Download, TrendingUp, Coins, Building2, BarChart3 } from "lucide-react";
+import { ORIGENS, NIVEIS, origemLabel, nivelLabel, type OrigemNegocio, type NivelCorretor } from "@/lib/comissaoHR";
 import * as XLSX from "xlsx";
 
 type Venda = {
@@ -25,6 +26,8 @@ type Venda = {
   percent_hr: number | null;
   status_pagamento: string | null;
   cliente_nome: string | null;
+  origem_negocio: string | null;
+  nivel_corretor: string | null;
 };
 
 const fmtBRL = (n: number) =>
