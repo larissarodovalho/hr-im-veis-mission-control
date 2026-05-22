@@ -545,6 +545,32 @@ export default function NovaVendaDialog({
           <div className="md:col-span-2">
             <Label>Observações</Label>
             <Textarea rows={2} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+          <div className="md:col-span-2">
+            <Label>Contrato (PDF)</Label>
+            {contratoPath && !removeContrato && !contratoFile && (
+              <div className="flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2 mb-2">
+                <a href={contratoUrl ?? "#"} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline truncate">
+                  Ver contrato atual
+                </a>
+                <button type="button" className="text-xs text-rose-600 hover:underline" onClick={() => setRemoveContrato(true)}>
+                  Remover
+                </button>
+              </div>
+            )}
+            {removeContrato && (
+              <div className="flex items-center justify-between rounded-md border border-dashed px-3 py-2 mb-2 text-xs text-muted-foreground">
+                <span>Contrato será removido ao salvar.</span>
+                <button type="button" className="text-primary hover:underline" onClick={() => setRemoveContrato(false)}>Desfazer</button>
+              </div>
+            )}
+            <Input
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => { setContratoFile(e.target.files?.[0] ?? null); setRemoveContrato(false); }}
+            />
+            {contratoFile && (
+              <p className="text-xs text-muted-foreground mt-1">{contratoFile.name}</p>
+            )}
           </div>
           {form.imovel_id !== "none" && (
             <div className="md:col-span-2 flex items-center gap-2">
