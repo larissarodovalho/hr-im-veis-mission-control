@@ -90,11 +90,8 @@ export default function VendidosTab() {
     return Object.entries(m).map(([name, value]) => ({ name, value }));
   }, [atual]);
 
-  const origemPie = useMemo(() => {
-    const m: Record<string, number> = {};
-    atual.forEach((v) => { const k = v.origem || "Não informado"; m[k] = (m[k] || 0) + 1; });
-    return Object.entries(m).map(([name, value]) => ({ name, value }));
-  }, [atual]);
+
+
 
   const onDelete = async (v: any) => {
     if (!confirm(`Excluir venda de "${v.cliente_nome}"?`)) return;
