@@ -105,7 +105,8 @@ Deno.serve(async (req) => {
     }
 
     const allowedKinds = ["videochamada", "presencial", "ligacao"];
-    const effectiveKind = allowedKinds.includes(kindOverride) ? kindOverride : link.kind;
+    const kindOverrideNormalized = (kindOverride === "reuniao" || kindOverride === "reunião") ? "presencial" : kindOverride;
+    const effectiveKind = allowedKinds.includes(kindOverrideNormalized) ? kindOverrideNormalized : link.kind;
     const dur = durationMin(effectiveKind);
 
     // Janela: agora -> +21 dias
