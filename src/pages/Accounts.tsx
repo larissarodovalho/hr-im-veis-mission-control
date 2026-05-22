@@ -138,6 +138,7 @@ export default function Accounts() {
   const [importOpen, setImportOpen] = useState(false);
 
   const [ownerMap, setOwnerMap] = useState<Record<string, string>>({});
+  const [owners, setOwners] = useState<{ id: string; nome: string }[]>([]);
 
   const fetchAllContas = async () => {
     const PAGE = 1000;
@@ -169,8 +170,16 @@ export default function Accounts() {
       setAccounts((accs ?? []) as Account[]);
       setProperties(((props as any) ?? []) as Property[]);
       const map: Record<string, string> = {};
-      ((profs as any) ?? []).forEach((p: any) => { if (p.user_id) map[p.user_id] = p.nome || "—"; });
+      const list: { id: string; nome: string }[] = [];
+      ((profs as any) ?? []).forEach((p: any) => {
+        if (p.user_id) {
+          map[p.user_id] = p.nome || "—";
+          list.push({ id: p.user_id, nome: p.nome || "—" });
+        }
+      });
+      list.sort((a, b) => a.nome.localeCompare(b.nome));
       setOwnerMap(map);
+      setOwners(list);
     } catch (e: any) {
       toast.error(e?.message ?? "Erro ao carregar contas");
     } finally {
@@ -271,6 +280,18 @@ export default function Accounts() {
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast.success("Arquivo CSV gerado");
+  };
+
+  const changeOwner = async (id: string, userId: string | null) => {
+    const prev = accounts;
+    setAccounts((cur) => cur.map((a) => (a.id === id ? { ...a, responsavel_id: userId } : a)));
+    const { error } = await supabase.from("contas").update({ responsavel_id: userId } as any).eq("id", id);
+    if (error) {
+      setAccounts(prev);
+      toast.error("Não foi possível alterar responsável: " + error.message);
+    } else {
+      toast.success("Responsável atualizado");
+    }
   };
 
   const moveStage = async (id: string, etapa: EtapaFunil) => {
@@ -409,7 +430,7 @@ export default function Accounts() {
           <Card className="p-6 text-center text-muted-foreground hidden md:block">Carregando…</Card>
         ) : (
           <div className="hidden md:block">
-            <ContasKanban accounts={filtered as any} propsByAccount={propsByAccount} onMoveStage={moveStage} ownerMap={ownerMap} />
+            <ContasKanban accounts={filtered as any} propsByAccount={propsByAccount} onMoveStage={moveStage} onChangeOwner={changeOwner} ownerMap={ownerMap} owners={owners} />
           </div>
         )
       ) : null}

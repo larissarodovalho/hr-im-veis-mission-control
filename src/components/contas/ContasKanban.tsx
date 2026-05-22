@@ -10,8 +10,21 @@ import {
 } from "@dnd-kit/core";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
+} from "@/components/ui/dropdown-menu";
 import { ETAPAS, EtapaFunil } from "@/lib/contasFunil";
-import { Handshake, Target, User } from "lucide-react";
+import { Handshake, Target, User, MoreVertical, Check, UserX } from "lucide-react";
 import { tempInfo } from "@/lib/contasTemperatura";
 
 type Account = {
@@ -32,18 +45,37 @@ interface Props {
   accounts: Account[];
   propsByAccount: Record<string, Property[]>;
   onMoveStage: (contaId: string, etapa: EtapaFunil) => void;
+  onChangeOwner?: (contaId: string, userId: string | null) => void;
   ownerMap?: Record<string, string>;
+  owners?: { id: string; nome: string }[];
 }
 
 const fmt = (v: number) =>
   v ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }) : "—";
 
-function ContaCard({ a, total, responsavelNome }: { a: Account; total: number; responsavelNome?: string | null }) {
+function ContaCard({
+  a,
+  total,
+  responsavelNome,
+  owners,
+  onMoveStage,
+  onChangeOwner,
+}: {
+  a: Account;
+  total: number;
+  responsavelNome?: string | null;
+  owners?: { id: string; nome: string }[];
+  onMoveStage: (id: string, etapa: EtapaFunil) => void;
+  onChangeOwner?: (id: string, userId: string | null) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: a.id });
   const style: React.CSSProperties = {
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     opacity: isDragging ? 0.5 : 1,
   };
+  const stop = (e: React.SyntheticEvent) => e.stopPropagation();
+  const currentEtapa = (a.etapa_funil ?? "a_contatar") as EtapaFunil;
+
   return (
     <Card
       ref={setNodeRef}
@@ -55,17 +87,86 @@ function ContaCard({ a, total, responsavelNome }: { a: Account; total: number; r
       <div className="flex items-start justify-between gap-2">
         <Link
           to={`/crm/contas/${a.id}`}
-          onClick={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
+          onClick={stop}
+          onPointerDown={stop}
           className="font-medium text-sm hover:underline truncate flex-1"
         >
           {a.nome}
         </Link>
-        {a.is_partner && (
-          <Badge className="bg-accent/20 text-accent-foreground border-accent/40 border text-[10px] shrink-0">
-            <Handshake className="h-3 w-3 mr-1" /> Parceiro
-          </Badge>
-        )}
+        <div className="flex items-center gap-1 shrink-0">
+          {a.is_partner && (
+            <Badge className="bg-accent/20 text-accent-foreground border-accent/40 border text-[10px]">
+              <Handshake className="h-3 w-3 mr-1" /> Parceiro
+            </Badge>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6"
+                onPointerDown={stop}
+                onClick={stop}
+                aria-label="Ações"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56" onPointerDown={stop} onClick={stop}>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Mover para etapa</DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent className="max-h-72 overflow-y-auto">
+                    {ETAPAS.map((et) => (
+                      <DropdownMenuItem
+                        key={et.id}
+                        onSelect={() => onMoveStage(a.id, et.id)}
+                      >
+                        {et.id === currentEtapa ? (
+                          <Check className="h-3.5 w-3.5 mr-2" />
+                        ) : (
+                          <span className="w-3.5 mr-2" />
+                        )}
+                        {et.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+
+              {onChangeOwner && (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>Responsável</DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent className="max-h-72 overflow-y-auto w-56">
+                      <DropdownMenuLabel className="text-xs text-muted-foreground">
+                        Atribuir a
+                      </DropdownMenuLabel>
+                      <DropdownMenuItem onSelect={() => onChangeOwner(a.id, null)}>
+                        <UserX className="h-3.5 w-3.5 mr-2" />
+                        Sem responsável
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {(owners ?? []).map((o) => (
+                        <DropdownMenuItem
+                          key={o.id}
+                          onSelect={() => onChangeOwner(a.id, o.id)}
+                        >
+                          {o.id === a.responsavel_id ? (
+                            <Check className="h-3.5 w-3.5 mr-2" />
+                          ) : (
+                            <span className="w-3.5 mr-2" />
+                          )}
+                          {o.nome}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       <div className="text-xs text-muted-foreground truncate">{a.telefone || a.email || "—"}</div>
       <div className="flex flex-wrap gap-1">
@@ -123,7 +224,7 @@ function Column({
   );
 }
 
-export default function ContasKanban({ accounts, propsByAccount, onMoveStage, ownerMap }: Props) {
+export default function ContasKanban({ accounts, propsByAccount, onMoveStage, onChangeOwner, ownerMap, owners }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const onDragEnd = (e: DragEndEvent) => {
@@ -146,7 +247,17 @@ export default function ContasKanban({ accounts, propsByAccount, onMoveStage, ow
               {cards.map((a) => {
                 const total = (propsByAccount[a.id] ?? []).reduce((s, p) => s + (p.valor_negocio ?? 0), 0);
                 const responsavelNome = a.responsavel_id ? ownerMap?.[a.responsavel_id] : null;
-                return <ContaCard key={a.id} a={a} total={total} responsavelNome={responsavelNome} />;
+                return (
+                  <ContaCard
+                    key={a.id}
+                    a={a}
+                    total={total}
+                    responsavelNome={responsavelNome}
+                    owners={owners}
+                    onMoveStage={onMoveStage}
+                    onChangeOwner={onChangeOwner}
+                  />
+                );
               })}
               {cards.length === 0 && (
                 <div className="text-xs text-muted-foreground text-center py-6">Vazio</div>

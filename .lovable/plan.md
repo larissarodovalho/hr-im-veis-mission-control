@@ -1,34 +1,29 @@
-# Imóveis não aparecem no iPhone — correção
+## Objetivo
+Adicionar um menu de três pontinhos (⋮) em cada card do Kanban de Contas (aba "A Contatar" e demais etapas) permitindo alterar rapidamente:
+1. **Responsável** pelo contato
+2. **Etapa do funil** (qualificação no Kanban)
 
-## Diagnóstico
+## Mudanças
 
-No preview mobile (390×844) os cards aparecem normalmente, mas no Safari real do iPhone eles ficam invisíveis. A causa provável é o padrão de animação usado nos cards:
+### `src/components/contas/ContasKanban.tsx`
+- Adicionar botão `MoreVertical` (lucide) no canto superior direito do `ContaCard`, ao lado do badge "Parceiro".
+- Envolver em `DropdownMenu` (shadcn) com dois submenus:
+  - **"Mover para etapa"** → lista todas as `ETAPAS` de `contasFunil.ts`; ao clicar chama `onMoveStage(conta.id, etapa)` (já existe).
+  - **"Responsável"** → lista de usuários (corretores/gestores/admins) vinda de uma nova prop `owners: { id: string; nome: string }[]`; ao clicar chama nova prop `onChangeOwner(contaId, userId)`.
+- Impedir propagação de pointer/click no trigger pra não disparar o drag do `useDraggable`.
 
-- Cada card é um `motion.div` com `initial={{ opacity: 0, y: ... }}` + `whileInView={{ opacity: 1, y: 0 }}`.
-- Os cards são montados **depois** da resposta assíncrona do Supabase. No Safari iOS, quando um elemento já nasce dentro da viewport, o `IntersectionObserver` do framer-motion às vezes não dispara o callback inicial — principalmente combinado com `margin: "-60px"` (rootMargin negativo).
-- Resultado: o card fica preso em `opacity: 0` para sempre no iPhone.
+### `src/pages/Accounts.tsx` (página que renderiza o Kanban)
+- Já carrega `ownerMap`; carregar também a lista bruta `owners` (id + nome) — provavelmente já existe; reusar.
+- Implementar `handleChangeOwner(contaId, userId)`:
+  - `supabase.from("contas").update({ responsavel_id: userId }).eq("id", contaId)`
+  - Toast + refetch (mesmo padrão de `onMoveStage`).
+- Passar `owners` e `onChangeOwner` para `<ContasKanban />`.
 
-Pontos afetados:
-- `src/pages/site/HomePage.tsx` → cards de "Imóveis em destaque" (linha ~291). Sem `once: true`, com `margin: "-60px"`.
-- `src/pages/site/ImoveisPage.tsx` → cards do grid (linha ~373) e badges/preço dentro do card (linhas ~412, ~432).
+## Detalhes técnicos
+- Usar `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuSub`, `DropdownMenuSubTrigger`, `DropdownMenuSubContent`, `DropdownMenuItem`, `DropdownMenuLabel`, `DropdownMenuSeparator` (já disponíveis em `@/components/ui/dropdown-menu`).
+- No trigger do menu: `onPointerDown={(e) => e.stopPropagation()}` e `onClick={(e) => e.stopPropagation()}` pra não conflitar com `useDraggable`.
+- Marcar a etapa atual e o responsável atual com check (`Check` icon) pra feedback visual.
+- Nenhuma alteração de schema necessária — coluna `responsavel_id` e `etapa_funil` já existem em `contas`.
 
-## Plano
-
-1. **HomePage.tsx — cards de destaque (≈ linha 291–330)**
-   - Trocar `initial={{ opacity: 0, y: 50 }}` + `whileInView` pelo padrão usado nos outros lugares: `viewport={{ once: true, amount: 0.1 }}` (sem `margin` negativo). Isso garante disparo no Safari iOS mesmo quando o card já nasce dentro da viewport.
-
-2. **ImoveisPage.tsx — card principal do grid (≈ linha 373)**
-   - Substituir `viewport={{ once: true, margin: "-60px" }}` por `viewport={{ once: true, amount: 0.05 }}`.
-
-3. **ImoveisPage.tsx — animações internas (status, preço, linhas 412 e 432)**
-   - Essas dependem do mesmo observer do pai. Manter `once: true` mas adicionar `amount: 0` para garantir disparo imediato em iOS mesmo se a animação do pai falhar (defensivo).
-
-4. **Fallback de segurança (CSS)**
-   - Adicionar uma classe utilitária no card raiz garantindo `opacity: 1` após ~1.2s via animação CSS, independente do observer. Assim, mesmo que o framer-motion não dispare por algum motivo no Safari iOS, o conteúdo nunca fica invisível.
-
-## Verificação
-
-Depois da mudança:
-- Abrir a home no preview mobile e confirmar que o card "Sobrado Alameda das Cores" aparece.
-- Abrir `/imoveis` e confirmar idem.
-- Pedir para você testar no iPhone real (com refresh forçado) para validar.
+## Fora de escopo
+- Não mexer em outras visualizações (lista/tabela) nem na lógica do drag-and-drop existente.
