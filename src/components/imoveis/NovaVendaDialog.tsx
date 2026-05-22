@@ -70,6 +70,7 @@ export default function NovaVendaDialog({
   });
   const [marcarVendido, setMarcarVendido] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [manualCliente, setManualCliente] = useState(false);
 
   useEffect(() => {
     if (!open) return;
