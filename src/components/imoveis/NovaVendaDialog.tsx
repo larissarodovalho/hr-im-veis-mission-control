@@ -296,10 +296,6 @@ export default function NovaVendaDialog({
             <SearchableSelect value={form.lead_id} onChange={(v) => setForm({ ...form, lead_id: v })} options={leads} placeholder="Buscar lead…" emptyLabel="—" />
           </div>
           <div>
-            <Label>Conta (opcional)</Label>
-            <SearchableSelect value={form.conta_id} onChange={(v) => setForm({ ...form, conta_id: v })} options={contas} placeholder="Buscar conta…" emptyLabel="—" />
-          </div>
-          <div>
             <Label>Valor da venda (R$) *</Label>
             <Input type="number" step="0.01" value={form.valor_venda} onChange={(e) => onValor(e.target.value)} />
           </div>
