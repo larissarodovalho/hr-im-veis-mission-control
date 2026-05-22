@@ -115,10 +115,9 @@ export default function FaturamentoReport() {
     let vgv = 0, comissao = 0, hr = 0;
     filtered.forEach((v) => {
       const val = v.valor_venda || 0;
-      const com = v.valor_comissao || 0;
       vgv += val;
-      comissao += com;
-      hr += (v.valor_venda || 0) * ((v.percent_hr ?? 0) / 100);
+      comissao += getVendaComissaoTotal(v);
+      hr += calculateCommissionPart(val, v.percent_hr ?? 0);
     });
     return { vgv, comissao, hr, count: filtered.length };
   }, [filtered]);
@@ -143,17 +142,16 @@ export default function FaturamentoReport() {
     };
     filtered.forEach((v) => {
       const val = v.valor_venda || 0;
-      const com = v.valor_comissao || 0;
       if (v.corretor_vendedor_id && (papel === "todos" || papel === "vendedor")) {
         const r = ensure(v.corretor_vendedor_id);
         r.vgv_vendedor += val;
-        r.com_vendedor += val * ((v.percent_vendedor ?? 0) / 100);
+        r.com_vendedor += calculateCommissionPart(val, v.percent_vendedor ?? 0);
         r.vendas_vendedor++;
       }
       if (v.corretor_captador_id && (papel === "todos" || papel === "captador")) {
         const r = ensure(v.corretor_captador_id);
         r.vgv_captador += val;
-        r.com_captador += val * ((v.percent_captador ?? 0) / 100);
+        r.com_captador += calculateCommissionPart(val, v.percent_captador ?? 0);
         r.vendas_captador++;
       }
     });
