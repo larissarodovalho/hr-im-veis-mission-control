@@ -51,8 +51,8 @@ interface Props {
   owners?: { id: string; nome: string }[];
 }
 
-const fmt = (v: number) =>
-  v ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }) : "—";
+import { formatBRL } from "@/lib/format";
+const fmt = (v: number) => (v ? formatBRL(v) : "—");
 
 const OWNER_PALETTE = [
   "bg-indigo-500/15 text-indigo-700 border-indigo-500/30",

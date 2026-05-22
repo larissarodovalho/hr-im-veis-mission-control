@@ -6,6 +6,7 @@
 // (`imoveis_public`) filtra por status = 'Disponível', então o imóvel continua visível
 // no site durante todo o ciclo de proposta/fechamento.
 import { useEffect, useMemo, useState } from "react";
+import { formatBRL } from "@/lib/format";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -71,7 +72,7 @@ export default function Imoveis() {
     });
   }, []);
 
-  const fmt = (n: number | null | undefined) => n == null ? "—" : Number(n).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+  const fmt = (n: number | null | undefined) => formatBRL(n);
 
   const matchesSearch = (i: Imovel) =>
     !search ||

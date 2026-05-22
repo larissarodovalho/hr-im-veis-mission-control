@@ -109,8 +109,8 @@ const APT_BADGE: Record<Aptitude, string> = {
   outro: "bg-muted text-muted-foreground",
 };
 
-const fmt = (v: number | null) =>
-  v == null || v === 0 ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+import { formatBRL } from "@/lib/format";
+const fmt = (v: number | null) => (v == null || v === 0 ? "—" : formatBRL(v));
 
 export default function Accounts() {
   const { isAdmin, isGestor } = useRole();

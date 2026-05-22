@@ -25,7 +25,8 @@ type Item = {
   documento_url?: string | null;
 };
 
-const fmtBRL = (n?: number | null) => n == null ? "—" : Number(n).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+import { formatBRL } from "@/lib/format";
+const fmtBRL = (n?: number | null) => formatBRL(n);
 
 export default function ImovelHistoricoDrawer({ open, onOpenChange, imovel }: Props) {
   const [items, setItems] = useState<Item[]>([]);

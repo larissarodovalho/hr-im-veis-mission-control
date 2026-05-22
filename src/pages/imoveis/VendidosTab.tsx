@@ -12,13 +12,9 @@ import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
 import NovaVendaDialog from "@/components/imoveis/NovaVendaDialog";
 
-const fmt = (n: number) =>
-  n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
-const fmtShort = (n: number) => {
-  if (n >= 1_000_000) return `R$ ${(n / 1_000_000).toFixed(2)} mi`;
-  if (n >= 1_000) return `R$ ${(n / 1_000).toFixed(1)} mil`;
-  return fmt(n);
-};
+import { formatBRL } from "@/lib/format";
+const fmt = (n: number) => formatBRL(n, { dash: false });
+const fmtShort = fmt;
 
 type Periodo = "30" | "90" | "365" | "all";
 
