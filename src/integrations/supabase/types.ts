@@ -1246,6 +1246,111 @@ export type Database = {
         }
         Relationships: []
       }
+      meta_ads_imoveis: {
+        Row: {
+          ad_id: string
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          imovel_id: string
+          nome_anuncio: string | null
+          updated_at: string
+        }
+        Insert: {
+          ad_id: string
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          imovel_id: string
+          nome_anuncio?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ad_id?: string
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          imovel_id?: string
+          nome_anuncio?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_ads_imoveis_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_ads_imoveis_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meta_ads_referrals: {
+        Row: {
+          ad_id: string | null
+          body: string | null
+          conversation_id: string | null
+          created_at: string
+          id: string
+          imovel_id_resolvido: string | null
+          lead_id: string | null
+          raw: Json | null
+          source_url: string | null
+          thumbnail_url: string | null
+          title: string | null
+        }
+        Insert: {
+          ad_id?: string | null
+          body?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          imovel_id_resolvido?: string | null
+          lead_id?: string | null
+          raw?: Json | null
+          source_url?: string | null
+          thumbnail_url?: string | null
+          title?: string | null
+        }
+        Update: {
+          ad_id?: string | null
+          body?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          imovel_id_resolvido?: string | null
+          lead_id?: string | null
+          raw?: Json | null
+          source_url?: string | null
+          thumbnail_url?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_ads_referrals_imovel_id_resolvido_fkey"
+            columns: ["imovel_id_resolvido"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_ads_referrals_imovel_id_resolvido_fkey"
+            columns: ["imovel_id_resolvido"]
+            isOneToOne: false
+            referencedRelation: "imoveis_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newsletter_subscribers: {
         Row: {
           created_at: string

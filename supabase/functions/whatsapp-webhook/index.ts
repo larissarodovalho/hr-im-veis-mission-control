@@ -459,6 +459,90 @@ async function sendToProvider(phone: string, content: string): Promise<boolean> 
   return true;
 }
 
+async function sendImageToProvider(phone: string, imageUrl: string, caption: string): Promise<boolean> {
+  const url = Deno.env.get("EVOLUTION_API_URL");
+  const key = Deno.env.get("EVOLUTION_API_KEY");
+  const instance = getEvolutionInstance();
+  if (!url || !key || !instance) return false;
+  const baseUrl = normalizeEvolutionBaseUrl(url);
+  const cap = toWhatsAppMarkdown(caption || "");
+  try {
+    const r = await fetch(`${baseUrl}/message/sendMedia/${instance}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: key },
+      body: JSON.stringify({
+        number: phone,
+        mediatype: "image",
+        mimetype: "image/jpeg",
+        media: imageUrl,
+        caption: cap,
+        fileName: "imovel.jpg",
+      }),
+    });
+    if (!r.ok) {
+      const t = await r.text().catch(() => "");
+      console.error("Evolution sendMedia fail", r.status, t.slice(0, 200));
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("sendImageToProvider error", e);
+    return false;
+  }
+}
+
+// Extrai dados do referral de Click-to-WhatsApp (Meta Ads) da estrutura Baileys/Evolution.
+function extractAdReferral(message: any): {
+  ad_id: string | null; title: string | null; body: string | null;
+  source_url: string | null; thumbnail_url: string | null;
+} | null {
+  if (!message || typeof message !== "object") return null;
+  const candidates = [
+    message?.contextInfo?.externalAdReply,
+    message?.extendedTextMessage?.contextInfo?.externalAdReply,
+    message?.imageMessage?.contextInfo?.externalAdReply,
+    message?.videoMessage?.contextInfo?.externalAdReply,
+    message?.conversation?.contextInfo?.externalAdReply,
+  ];
+  const ext = candidates.find((c) => c && (c.sourceId || c.sourceUrl || c.title));
+  if (!ext) return null;
+  return {
+    ad_id: ext.sourceId ? String(ext.sourceId) : null,
+    title: ext.title ? String(ext.title) : null,
+    body: ext.body ? String(ext.body) : null,
+    source_url: ext.sourceUrl ? String(ext.sourceUrl) : null,
+    thumbnail_url: ext.thumbnailUrl ? String(ext.thumbnailUrl) : null,
+  };
+}
+
+// Carrega o imóvel completo, formata bloco de contexto para a Sofia
+function formatImovelContext(im: any, anuncioNome: string | null): string {
+  const lines: string[] = [];
+  lines.push(`[CONTEXTO_ANUNCIO]`);
+  if (anuncioNome) lines.push(`Anúncio: "${anuncioNome}"`);
+  lines.push(`Este lead chegou clicando num anúncio do Meta sobre o imóvel abaixo. Use estes dados (e somente estes) para responder com a ficha resumida na primeira resposta:`);
+  if (im.codigo) lines.push(`- Código: ${im.codigo}`);
+  if (im.titulo) lines.push(`- Título: ${im.titulo}`);
+  if (im.tipo) lines.push(`- Tipo: ${im.tipo}`);
+  if (im.finalidade) lines.push(`- Finalidade: ${im.finalidade}`);
+  if (im.valor != null) lines.push(`- Valor: ${formatBRL(im.valor)}`);
+  const local = [im.bairro, im.cidade, im.estado].filter(Boolean).join(", ");
+  if (local) lines.push(`- Localização: ${local}`);
+  if (im.quartos) lines.push(`- Quartos: ${im.quartos}${im.suites ? ` (${im.suites} suíte${im.suites > 1 ? "s" : ""})` : ""}`);
+  if (im.banheiros) lines.push(`- Banheiros: ${im.banheiros}`);
+  if (im.vagas) lines.push(`- Vagas: ${im.vagas}`);
+  if (im.area_util) lines.push(`- Área útil: ${im.area_util} m²`);
+  if (im.area_total) lines.push(`- Área total: ${im.area_total} m²`);
+  if (im.valor_condominio) lines.push(`- Condomínio: ${formatBRL(im.valor_condominio)}`);
+  if (Array.isArray(im.caracteristicas) && im.caracteristicas.length) {
+    lines.push(`- Diferenciais: ${im.caracteristicas.slice(0, 6).join(", ")}`);
+  }
+  lines.push(`[/CONTEXTO_ANUNCIO]`);
+  lines.push(``);
+  lines.push(`REGRA: Se esta é a primeira resposta da Sofia nesta conversa, o sistema JÁ enviou a foto principal do imóvel + ficha + link ANTES do seu texto. NÃO repita a ficha; apenas cumprimente pelo nome, confirme que viu o interesse neste imóvel específico (cite o nome/código), pergunte o nome+sobrenome se ainda não tiver, e siga o fluxo normal. NUNCA invente outros dados além dos listados acima.`);
+  return lines.join("\n");
+}
+
 function normalizeBr(raw: string): string {
   const digits = (raw || "").replace(/\D/g, "");
   const noDdi = digits.length > 10 && digits.startsWith("55") ? digits.slice(2) : digits;
@@ -541,6 +625,7 @@ Deno.serve(async (req) => {
     let content: string | null = null;
     let externalId: string | null = null;
     let pushName: string | null = null;
+    let adReferral: ReturnType<typeof extractAdReferral> = null;
 
     if (body?.data?.key) {
       const fromMe = body.data.key.fromMe;
@@ -558,6 +643,11 @@ Deno.serve(async (req) => {
         body.data.message?.imageMessage?.caption ||
         body.data.message?.videoMessage?.caption ||
         null;
+
+      adReferral = extractAdReferral(body.data.message);
+      if (adReferral) {
+        console.log("[whatsapp-webhook] referral Meta Ads detectado", { ad_id: adReferral.ad_id, title: adReferral.title?.slice(0, 60) });
+      }
 
       if (!content && (body.data.message?.audioMessage || body.data.message?.pttMessage)) {
         const mimetype = body.data.message?.audioMessage?.mimetype || "audio/ogg";
@@ -653,6 +743,141 @@ Deno.serve(async (req) => {
       timestamp: ts,
     });
     if (inboundErr) console.error("inbound insert failed", inboundErr);
+
+    // ============= Click-to-WhatsApp do Meta Ads =============
+    // Se a mensagem veio de um clique em anúncio, registra referral + envia ficha do imóvel mapeado.
+    let imovelAnunciado: any = null;
+    if (adReferral) {
+      // Resolve mapeamento ad_id → imóvel
+      let resolvedImovelId: string | null = null;
+      let nomeAnuncio: string | null = adReferral.title;
+      if (adReferral.ad_id) {
+        const { data: mapRow } = await supabase
+          .from("meta_ads_imoveis")
+          .select("imovel_id, nome_anuncio, ativo")
+          .eq("ad_id", adReferral.ad_id)
+          .maybeSingle();
+        if (mapRow?.ativo && mapRow.imovel_id) {
+          resolvedImovelId = mapRow.imovel_id;
+          if (mapRow.nome_anuncio) nomeAnuncio = mapRow.nome_anuncio;
+        }
+      }
+
+      // Registra o referral pra auditoria/UI
+      await supabase.from("meta_ads_referrals").insert({
+        ad_id: adReferral.ad_id,
+        title: adReferral.title,
+        body: adReferral.body,
+        source_url: adReferral.source_url,
+        thumbnail_url: adReferral.thumbnail_url,
+        conversation_id: conv.id,
+        lead_id: leadUuid,
+        imovel_id_resolvido: resolvedImovelId,
+        raw: adReferral as any,
+      });
+
+      // Se temos imóvel mapeado, carrega ficha + atualiza lead + envia card
+      if (resolvedImovelId) {
+        const { data: imovel } = await supabase
+          .from("imoveis")
+          .select("id, codigo, titulo, tipo, finalidade, valor, valor_condominio, bairro, cidade, estado, quartos, suites, banheiros, vagas, area_util, area_total, caracteristicas, fotos, descricao")
+          .eq("id", resolvedImovelId)
+          .maybeSingle();
+        if (imovel) {
+          imovelAnunciado = { ...imovel, _nomeAnuncio: nomeAnuncio };
+
+          // Atualiza lead: origem + imóvel de interesse
+          if (leadUuid) {
+            const codigoLabel = imovel.codigo ? `${imovel.codigo} — ${imovel.titulo ?? ""}`.trim() : (imovel.titulo ?? "");
+            const { data: curLead } = await supabase.from("leads").select("observacoes").eq("id", leadUuid).maybeSingle();
+            const adNote = `🎯 Veio do anúncio Meta${nomeAnuncio ? ` "${nomeAnuncio}"` : ""} → imóvel ${codigoLabel}`;
+            const obs = curLead?.observacoes
+              ? (curLead.observacoes.includes("Veio do anúncio Meta") ? curLead.observacoes : `${curLead.observacoes}\n${adNote}`)
+              : adNote;
+            await supabase.from("leads").update({
+              origem: "Meta Ads",
+              imovel_interesse: codigoLabel || null,
+              observacoes: obs,
+              ultima_interacao: new Date().toISOString(),
+            }).eq("id", leadUuid);
+          }
+
+          // Envia ficha + foto + link UMA VEZ (só na 1ª mensagem com referral).
+          // Verifica se ainda não enviamos card para este imóvel nesta conversa.
+          const { data: histPrev } = await supabase
+            .from("whatsapp_messages")
+            .select("content")
+            .eq("conversation_id", conv.id)
+            .eq("direction", "outbound")
+            .limit(50);
+          const alreadySentCard = (histPrev ?? []).some((m: any) =>
+            imovel.codigo && (m.content || "").includes(imovel.codigo)
+          );
+
+          if (!alreadySentCard) {
+            const local = [imovel.bairro, imovel.cidade].filter(Boolean).join(", ");
+            const baseUrl = (Deno.env.get("PUBLIC_APP_URL") || "https://www.hrimoveis.com").trim().replace(/\/$/, "");
+            const link = `${baseUrl}/imovel/${imovel.id}`;
+            const lines: string[] = [];
+            lines.push(`*${imovel.titulo ?? imovel.tipo ?? "Imóvel"}*${imovel.codigo ? ` (${imovel.codigo})` : ""}`);
+            if (imovel.valor != null) lines.push(`💰 ${formatBRL(imovel.valor)}`);
+            if (local) lines.push(`📍 ${local}`);
+            const specs: string[] = [];
+            if (imovel.quartos) specs.push(`${imovel.quartos} quarto${imovel.quartos > 1 ? "s" : ""}${imovel.suites ? ` (${imovel.suites} suíte${imovel.suites > 1 ? "s" : ""})` : ""}`);
+            if (imovel.banheiros) specs.push(`${imovel.banheiros} banh.`);
+            if (imovel.vagas) specs.push(`${imovel.vagas} vaga${imovel.vagas > 1 ? "s" : ""}`);
+            if (imovel.area_util) specs.push(`${imovel.area_util}m² úteis`);
+            if (specs.length) lines.push(`🏠 ${specs.join(" • ")}`);
+            lines.push(``);
+            lines.push(`Mais detalhes: ${link}`);
+            const caption = lines.join("\n");
+
+            const fotoUrl = Array.isArray(imovel.fotos) && imovel.fotos[0] ? imovel.fotos[0] : (adReferral.thumbnail_url || null);
+            let sent = false;
+            if (fotoUrl) {
+              sent = await sendImageToProvider(phone, fotoUrl, caption);
+            }
+            if (!sent) {
+              // fallback: só texto
+              sent = await sendToProvider(phone, caption);
+            }
+            if (sent) {
+              await supabase.from("whatsapp_messages").insert({
+                conversation_id: conv.id,
+                direction: "outbound",
+                author: "ia",
+                content: caption,
+                status: "sent",
+                timestamp: new Date().toISOString(),
+              });
+            }
+          }
+        }
+      } else {
+        console.log("[whatsapp-webhook] referral sem mapeamento", { ad_id: adReferral.ad_id });
+      }
+    }
+
+    // Se não houve referral nesta msg, busca o último referral resolvido da conversa
+    // (pra manter o contexto do imóvel ao longo de toda a conversa).
+    if (!imovelAnunciado) {
+      const { data: lastRef } = await supabase
+        .from("meta_ads_referrals")
+        .select("imovel_id_resolvido, title")
+        .eq("conversation_id", conv.id)
+        .not("imovel_id_resolvido", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (lastRef?.imovel_id_resolvido) {
+        const { data: im } = await supabase
+          .from("imoveis")
+          .select("id, codigo, titulo, tipo, finalidade, valor, valor_condominio, bairro, cidade, estado, quartos, suites, banheiros, vagas, area_util, area_total, caracteristicas, fotos")
+          .eq("id", lastRef.imovel_id_resolvido)
+          .maybeSingle();
+        if (im) imovelAnunciado = { ...im, _nomeAnuncio: lastRef.title };
+      }
+    }
 
     // Auto-move lead de "Novo Lead" para "Em Contato" assim que ele responde
     if (leadUuid) {
@@ -805,6 +1030,13 @@ Deno.serve(async (req) => {
 - Corretor já acionado nesta conversa? ${alreadyNotified || alreadyBooked ? "SIM (não chame send_booking_link nem request_immediate_contact de novo)" : "não"}
 - Pode chamar send_booking_link/request_immediate_contact agora? ${canTriggerHandoff ? "SIM" : "NÃO — colete primeiro nome e interesse"}`,
     });
+
+    if (imovelAnunciado) {
+      aiMessages.unshift({
+        role: "system",
+        content: formatImovelContext(imovelAnunciado, imovelAnunciado._nomeAnuncio ?? null),
+      });
+    }
 
     // Cascata + loop de tool calls
     let result: { text: string; toolCalls: ToolCall[]; raw?: any } = { text: "", toolCalls: [] };

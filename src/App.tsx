@@ -37,6 +37,7 @@ import Reports from "@/pages/Reports";
 import Users from "@/pages/UsuariosAdminPage";
 import ConfiguracoesPage from "@/pages/ConfiguracoesPage";
 import Newsletter from "@/pages/Newsletter";
+import MetaAdsMapping from "@/pages/MetaAdsMapping";
 import NotFound from "@/pages/NotFound";
 import AgendarPage from "@/pages/AgendarPage";
 import AgendarErrorBoundary from "@/components/AgendarErrorBoundary";
@@ -113,6 +114,7 @@ const App = () => (
               <Route path="usuarios" element={<StaffRoute><Users /></StaffRoute>} />
               <Route path="configuracoes" element={<StaffRoute><ConfiguracoesPage /></StaffRoute>} />
               <Route path="newsletter" element={<StaffRoute><Newsletter /></StaffRoute>} />
+              <Route path="meta-ads" element={<StaffRoute><MetaAdsMapping /></StaffRoute>} />
             </Route>
 
             {/* Redirect das URLs antigas do CRM */}
