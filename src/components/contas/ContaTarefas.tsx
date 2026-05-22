@@ -154,12 +154,12 @@ export default function ContaTarefas({ contaId, responsavelId }: Props) {
           </div>
           {t.descricao && <p className="text-sm mt-1 whitespace-pre-wrap text-muted-foreground">{t.descricao}</p>}
         </div>
-        {(isAdmin || t.created_by === userId) && (
-          <div className="flex gap-1">
-            <Button size="sm" variant="ghost" onClick={() => editar(t)}><Pencil className="h-4 w-4" /></Button>
+        <div className="flex gap-1">
+          <Button size="sm" variant="ghost" onClick={() => editar(t)}><Pencil className="h-4 w-4" /></Button>
+          {(isAdmin || t.created_by === userId) && (
             <Button size="sm" variant="ghost" onClick={() => excluir(t.id)}><Trash2 className="h-4 w-4" /></Button>
-          </div>
-        )}
+          )}
+        </div>
       </li>
     );
   };
