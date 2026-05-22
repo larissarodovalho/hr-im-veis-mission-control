@@ -237,7 +237,7 @@ export default function ContaTarefas({ contaId, responsavelId }: Props) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button onClick={salvar} disabled={saving}>{saving ? "Salvando…" : "Criar tarefa"}</Button>
+            <Button onClick={salvar} disabled={saving}>{saving ? "Salvando…" : editingId ? "Salvar alterações" : "Criar tarefa"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
