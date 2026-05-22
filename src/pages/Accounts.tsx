@@ -457,24 +457,24 @@ export default function Accounts() {
             <Button variant="outline" onClick={() => setNovaOpen(true)}>
               <Plus className="h-4 w-4 mr-1" /> Nova conta
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button><Download className="h-4 w-4 mr-1" /> Exportar</Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={exportXlsx}><FileSpreadsheet className="h-4 w-4 mr-2" /> Excel (.xlsx)</DropdownMenuItem>
-                <DropdownMenuItem onClick={exportCsv}><FileText className="h-4 w-4 mr-2" /> CSV</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button onClick={() => setExportOpen(true)}>
+              <Download className="h-4 w-4 mr-1" /> Exportar
+            </Button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
           <div className="relative lg:col-span-1 sm:col-span-2 lg:col-start-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar nome, tag, interesse, profissão…" className="pl-8 w-full" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input
+              placeholder="Buscar nome, tag, interesse, profissão…"
+              className="pl-8 w-full"
+              value={draftSearch}
+              onChange={(e) => setDraftSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") applyFilters(); }}
+            />
           </div>
-          <Select value={typeFilter} onValueChange={(v: any) => setTypeFilter(v)}>
+          <Select value={draftType} onValueChange={(v: any) => setDraftType(v)}>
             <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todas">Todos os tipos</SelectItem>
@@ -482,7 +482,7 @@ export default function Accounts() {
               <SelectItem value="parceiro">Apenas parceiros</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={interestFilter} onValueChange={(v: any) => setInterestFilter(v)}>
+          <Select value={draftInterest} onValueChange={(v: any) => setDraftInterest(v)}>
             <SelectTrigger><SelectValue placeholder="Interesse" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os interesses</SelectItem>
@@ -499,7 +499,7 @@ export default function Accounts() {
               <SelectItem value="Corretor parceiro">Corretor parceiro</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
+          <Select value={draftStatus} onValueChange={(v: any) => setDraftStatus(v)}>
             <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os status</SelectItem>
@@ -507,7 +507,7 @@ export default function Accounts() {
               <SelectItem value="inativo">Inativos</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={tempFilter} onValueChange={(v) => setTempFilter(v)}>
+          <Select value={draftTemp} onValueChange={(v) => setDraftTemp(v)}>
             <SelectTrigger><SelectValue placeholder="Temperatura" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todas temperaturas</SelectItem>
@@ -516,7 +516,7 @@ export default function Accounts() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={ownerFilter} onValueChange={(v) => setOwnerFilter(v)}>
+          <Select value={draftOwner} onValueChange={(v) => setDraftOwner(v)}>
             <SelectTrigger><SelectValue placeholder="Responsável" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os responsáveis</SelectItem>
@@ -526,6 +526,34 @@ export default function Accounts() {
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" onClick={applyFilters} disabled={!isDirty}>
+            <Check className="h-4 w-4 mr-1" /> Aplicar filtros
+          </Button>
+          <Button size="sm" variant="outline" onClick={clearFilters}>
+            <X className="h-4 w-4 mr-1" /> Limpar
+          </Button>
+          {isDirty && (
+            <span className="text-xs text-amber-600">Filtros não aplicados — clique em Aplicar</span>
+          )}
+          {/* Chips de filtros ativos */}
+          {[
+            typeFilter !== "todas" && { label: `Tipo: ${typeFilter === "cliente" ? "Clientes" : "Parceiros"}`, clear: () => { setTypeFilter("todas"); setDraftType("todas"); } },
+            interestFilter !== "todos" && { label: `Interesse: ${interestFilter === "none" ? "Não definido" : interestFilter}`, clear: () => { setInterestFilter("todos"); setDraftInterest("todos"); } },
+            statusFilter !== "todos" && { label: `Status: ${statusFilter === "ativo" ? "Ativos" : "Inativos"}`, clear: () => { setStatusFilter("todos"); setDraftStatus("todos"); } },
+            tempFilter !== "todos" && { label: `Temperatura: ${tempLabel(tempFilter)}`, clear: () => { setTempFilter("todos"); setDraftTemp("todos"); } },
+            ownerFilter !== "todos" && { label: `Responsável: ${ownerLabel(ownerFilter)}`, clear: () => { setOwnerFilter("todos"); setDraftOwner("todos"); } },
+            search && { label: `Busca: "${search}"`, clear: () => { setSearch(""); setDraftSearch(""); } },
+          ].filter(Boolean).map((chip: any, i) => (
+            <Badge key={i} variant="outline" className="gap-1 pl-2 pr-1 py-1">
+              {chip.label}
+              <button onClick={chip.clear} className="ml-1 rounded-sm hover:bg-muted p-0.5" aria-label="Remover">
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
         </div>
       </header>
 
