@@ -459,6 +459,90 @@ async function sendToProvider(phone: string, content: string): Promise<boolean> 
   return true;
 }
 
+async function sendImageToProvider(phone: string, imageUrl: string, caption: string): Promise<boolean> {
+  const url = Deno.env.get("EVOLUTION_API_URL");
+  const key = Deno.env.get("EVOLUTION_API_KEY");
+  const instance = getEvolutionInstance();
+  if (!url || !key || !instance) return false;
+  const baseUrl = normalizeEvolutionBaseUrl(url);
+  const cap = toWhatsAppMarkdown(caption || "");
+  try {
+    const r = await fetch(`${baseUrl}/message/sendMedia/${instance}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: key },
+      body: JSON.stringify({
+        number: phone,
+        mediatype: "image",
+        mimetype: "image/jpeg",
+        media: imageUrl,
+        caption: cap,
+        fileName: "imovel.jpg",
+      }),
+    });
+    if (!r.ok) {
+      const t = await r.text().catch(() => "");
+      console.error("Evolution sendMedia fail", r.status, t.slice(0, 200));
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("sendImageToProvider error", e);
+    return false;
+  }
+}
+
+// Extrai dados do referral de Click-to-WhatsApp (Meta Ads) da estrutura Baileys/Evolution.
+function extractAdReferral(message: any): {
+  ad_id: string | null; title: string | null; body: string | null;
+  source_url: string | null; thumbnail_url: string | null;
+} | null {
+  if (!message || typeof message !== "object") return null;
+  const candidates = [
+    message?.contextInfo?.externalAdReply,
+    message?.extendedTextMessage?.contextInfo?.externalAdReply,
+    message?.imageMessage?.contextInfo?.externalAdReply,
+    message?.videoMessage?.contextInfo?.externalAdReply,
+    message?.conversation?.contextInfo?.externalAdReply,
+  ];
+  const ext = candidates.find((c) => c && (c.sourceId || c.sourceUrl || c.title));
+  if (!ext) return null;
+  return {
+    ad_id: ext.sourceId ? String(ext.sourceId) : null,
+    title: ext.title ? String(ext.title) : null,
+    body: ext.body ? String(ext.body) : null,
+    source_url: ext.sourceUrl ? String(ext.sourceUrl) : null,
+    thumbnail_url: ext.thumbnailUrl ? String(ext.thumbnailUrl) : null,
+  };
+}
+
+// Carrega o imóvel completo, formata bloco de contexto para a Sofia
+function formatImovelContext(im: any, anuncioNome: string | null): string {
+  const lines: string[] = [];
+  lines.push(`[CONTEXTO_ANUNCIO]`);
+  if (anuncioNome) lines.push(`Anúncio: "${anuncioNome}"`);
+  lines.push(`Este lead chegou clicando num anúncio do Meta sobre o imóvel abaixo. Use estes dados (e somente estes) para responder com a ficha resumida na primeira resposta:`);
+  if (im.codigo) lines.push(`- Código: ${im.codigo}`);
+  if (im.titulo) lines.push(`- Título: ${im.titulo}`);
+  if (im.tipo) lines.push(`- Tipo: ${im.tipo}`);
+  if (im.finalidade) lines.push(`- Finalidade: ${im.finalidade}`);
+  if (im.valor != null) lines.push(`- Valor: ${formatBRL(im.valor)}`);
+  const local = [im.bairro, im.cidade, im.estado].filter(Boolean).join(", ");
+  if (local) lines.push(`- Localização: ${local}`);
+  if (im.quartos) lines.push(`- Quartos: ${im.quartos}${im.suites ? ` (${im.suites} suíte${im.suites > 1 ? "s" : ""})` : ""}`);
+  if (im.banheiros) lines.push(`- Banheiros: ${im.banheiros}`);
+  if (im.vagas) lines.push(`- Vagas: ${im.vagas}`);
+  if (im.area_util) lines.push(`- Área útil: ${im.area_util} m²`);
+  if (im.area_total) lines.push(`- Área total: ${im.area_total} m²`);
+  if (im.valor_condominio) lines.push(`- Condomínio: ${formatBRL(im.valor_condominio)}`);
+  if (Array.isArray(im.caracteristicas) && im.caracteristicas.length) {
+    lines.push(`- Diferenciais: ${im.caracteristicas.slice(0, 6).join(", ")}`);
+  }
+  lines.push(`[/CONTEXTO_ANUNCIO]`);
+  lines.push(``);
+  lines.push(`REGRA: Se esta é a primeira resposta da Sofia nesta conversa, o sistema JÁ enviou a foto principal do imóvel + ficha + link ANTES do seu texto. NÃO repita a ficha; apenas cumprimente pelo nome, confirme que viu o interesse neste imóvel específico (cite o nome/código), pergunte o nome+sobrenome se ainda não tiver, e siga o fluxo normal. NUNCA invente outros dados além dos listados acima.`);
+  return lines.join("\n");
+}
+
 function normalizeBr(raw: string): string {
   const digits = (raw || "").replace(/\D/g, "");
   const noDdi = digits.length > 10 && digits.startsWith("55") ? digits.slice(2) : digits;
