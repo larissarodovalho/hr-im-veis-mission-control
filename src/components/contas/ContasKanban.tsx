@@ -46,8 +46,10 @@ interface Props {
   propsByAccount: Record<string, Property[]>;
   onMoveStage: (contaId: string, etapa: EtapaFunil) => void;
   onChangeOwner?: (contaId: string, userId: string | null) => void;
+  onChangeTemperatura?: (contaId: string, temp: string | null) => void;
   ownerMap?: Record<string, string>;
   owners?: { id: string; nome: string }[];
+}
 }
 
 const fmt = (v: number) =>
