@@ -185,17 +185,6 @@ export default function VendidosTab() {
             </LineChart>
           </ResponsiveContainer>
         </KPI>
-        <KPI title="Origem das vendas" value={origemPie.length ? `${origemPie.length} fontes` : "—"} color="border-l-teal-500">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie data={origemPie.length ? origemPie : [{ name: "—", value: 1 }]} dataKey="value" innerRadius={16} outerRadius={26}>
-                {(origemPie.length ? origemPie : [{ name: "—", value: 1 }]).map((_, idx) => (
-                  <Cell key={idx} fill={PIE[idx % PIE.length]} />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-        </KPI>
       </div>
 
       <Card className="overflow-hidden">
