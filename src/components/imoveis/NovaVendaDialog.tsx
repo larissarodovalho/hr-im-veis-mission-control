@@ -221,6 +221,36 @@ export default function NovaVendaDialog({
               <Input type="number" step="0.01" value={form.valor_comissao} onChange={(e) => setForm({ ...form, valor_comissao: e.target.value })} />
             </div>
           </div>
+          {(() => {
+            const sum = (parseFloat(form.percent_vendedor) || 0) + (parseFloat(form.percent_captador) || 0) + (parseFloat(form.percent_hr) || 0);
+            const comissao = parseFloat(form.valor_comissao) || 0;
+            const fmt = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+            return (
+              <div className="md:col-span-2 rounded-md border bg-muted/30 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Divisão da comissão (%)</Label>
+                  <span className={`text-xs ${Math.abs(sum - 100) < 0.01 ? "text-emerald-600" : "text-destructive"}`}>Soma: {sum.toFixed(1)}%</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <Label className="text-xs">Vendedor</Label>
+                    <Input type="number" step="0.1" value={form.percent_vendedor} onChange={(e) => setForm({ ...form, percent_vendedor: e.target.value })} />
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(comissao * (parseFloat(form.percent_vendedor) || 0) / 100)}</div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Captador</Label>
+                    <Input type="number" step="0.1" value={form.percent_captador} onChange={(e) => setForm({ ...form, percent_captador: e.target.value })} />
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(comissao * (parseFloat(form.percent_captador) || 0) / 100)}</div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">HR Imóveis</Label>
+                    <Input type="number" step="0.1" value={form.percent_hr} onChange={(e) => setForm({ ...form, percent_hr: e.target.value })} />
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(comissao * (parseFloat(form.percent_hr) || 0) / 100)}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
           <div>
             <Label>Tipo</Label>
             <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
