@@ -375,7 +375,7 @@ export default function ImoveisPage() {
                   key={im.id}
                   initial={{ opacity: 0, y: 60 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-60px" }}
+                  viewport={{ once: true, amount: 0.05 }}
                   transition={{ duration: 0.9, delay: (i % 3) * 0.12, ease }}
                   className="group"
                 >
