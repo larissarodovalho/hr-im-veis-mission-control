@@ -73,8 +73,8 @@ const CRM_SUBTAB_ROUTES: Record<string, string> = { tarefas: "/crm/tarefas" };
 
 export function AppSidebar() {
   const { state } = useSidebar();
-  const { isAdmin, isGestor } = useAuth();
-  const isCorretorOnly = !isAdmin && !isGestor;
+  const { isAdmin, isGestor, isMarketingOnly } = useAuth();
+  const isCorretorOnly = !isAdmin && !isGestor && !isMarketingOnly;
   const collapsed = state === "collapsed";
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -84,11 +84,17 @@ export function AppSidebar() {
   const activeTab =
     searchParams.get("tab") ||
     (isCRM
-      ? Object.entries(CRM_SUBTAB_ROUTES).find(([, r]) => location.pathname === r)?.[0] || "leads"
+      ? Object.entries(CRM_SUBTAB_ROUTES).find(([, r]) => location.pathname === r)?.[0] || (isMarketingOnly ? "imoveis" : "leads")
       : "geral");
 
-  const items = ALL_ITEMS.filter((i) => !isCorretorOnly || !i.restricted);
-  const visibleCrmSubtabs = isCorretorOnly
+  const items = ALL_ITEMS.filter((i) => {
+    if (isMarketingOnly) return i.url === "/crm";
+    if (isCorretorOnly && i.restricted) return false;
+    return true;
+  });
+  const visibleCrmSubtabs = isMarketingOnly
+    ? CRM_SUBTABS.filter((s) => s.value === "imoveis")
+    : isCorretorOnly
     ? CRM_SUBTABS.filter((s) => CORRETOR_ALLOWED_CRM.has(s.value))
     : CRM_SUBTABS;
 
@@ -122,7 +128,7 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild>
                         <NavLink
-                          to={item.url === "/crm" ? "/crm?tab=leads" : item.url === "/marketing" ? "/marketing?tab=geral" : item.url}
+                          to={item.url === "/crm" ? (isMarketingOnly ? "/crm/imoveis" : "/crm?tab=leads") : item.url === "/marketing" ? "/marketing?tab=geral" : item.url}
                           end={item.url === "/"}
                           className={`transition-all duration-200 ${isActive ? "bg-sidebar-accent text-sidebar-primary" : "hover:bg-sidebar-accent/50"}`}
                         >

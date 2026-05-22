@@ -11,6 +11,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import StaffRoute from "@/components/StaffRoute";
+import MarketingRoute from "@/components/MarketingRoute";
 import AppLayout from "@/components/AppLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import SiteLayout from "@/components/site/SiteLayout";
@@ -95,21 +96,21 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Dashboard />} />
-              <Route path="leads" element={<Leads />} />
-              <Route path="leads/:id" element={<LeadDetail />} />
-              <Route path="contas" element={<Accounts />} />
-              <Route path="contas/:id" element={<AccountDetail />} />
+              <Route index element={<MarketingRoute><Dashboard /></MarketingRoute>} />
+              <Route path="leads" element={<MarketingRoute><Leads /></MarketingRoute>} />
+              <Route path="leads/:id" element={<MarketingRoute><LeadDetail /></MarketingRoute>} />
+              <Route path="contas" element={<MarketingRoute><Accounts /></MarketingRoute>} />
+              <Route path="contas/:id" element={<MarketingRoute><AccountDetail /></MarketingRoute>} />
               <Route path="imoveis" element={<Imoveis />} />
-              <Route path="whatsapp" element={<WhatsApp />} />
-              <Route path="reunioes" element={<Meetings />} />
-              <Route path="ligacoes" element={<Calls />} />
-              <Route path="visitas" element={<Visits />} />
-              <Route path="agenda" element={<Schedule />} />
-              <Route path="tarefas" element={<Tasks />} />
-              <Route path="documentos" element={<Documents />} />
-              <Route path="documentos/:id" element={<DocumentDetail />} />
-              <Route path="contratos" element={<Contratos />} />
+              <Route path="whatsapp" element={<MarketingRoute><WhatsApp /></MarketingRoute>} />
+              <Route path="reunioes" element={<MarketingRoute><Meetings /></MarketingRoute>} />
+              <Route path="ligacoes" element={<MarketingRoute><Calls /></MarketingRoute>} />
+              <Route path="visitas" element={<MarketingRoute><Visits /></MarketingRoute>} />
+              <Route path="agenda" element={<MarketingRoute><Schedule /></MarketingRoute>} />
+              <Route path="tarefas" element={<MarketingRoute><Tasks /></MarketingRoute>} />
+              <Route path="documentos" element={<MarketingRoute><Documents /></MarketingRoute>} />
+              <Route path="documentos/:id" element={<MarketingRoute><DocumentDetail /></MarketingRoute>} />
+              <Route path="contratos" element={<MarketingRoute><Contratos /></MarketingRoute>} />
               <Route path="relatorios" element={<StaffRoute><Reports /></StaffRoute>} />
               <Route path="usuarios" element={<StaffRoute><Users /></StaffRoute>} />
               <Route path="configuracoes" element={<StaffRoute><ConfiguracoesPage /></StaffRoute>} />

@@ -19,6 +19,7 @@ const ROLE_LABELS: Record<UiRole, string> = {
   gestor: "Gestor",
   corretor: "Corretor",
   gestor_corretor: "Gestor + Corretor",
+  marketing: "Marketing",
 };
 
 type Row = {
@@ -75,6 +76,7 @@ export default function UsuariosAdminPage() {
       if (set.has("admin")) return "admin";
       if (set.has("gestor") && set.has("corretor")) return "gestor_corretor";
       if (set.has("gestor")) return "gestor";
+      if (set.has("marketing")) return "marketing";
       return "corretor";
     };
     setRows(((profs ?? []) as any[]).map((p) => ({ ...p, nivel: p.nivel || "senior", role: resolve(rolesByUser.get(p.user_id)) })));
@@ -226,6 +228,7 @@ export default function UsuariosAdminPage() {
                       <SelectItem value="gestor">Gestor</SelectItem>
                       <SelectItem value="corretor">Corretor</SelectItem>
                       <SelectItem value="gestor_corretor">Gestor + Corretor</SelectItem>
+                      <SelectItem value="marketing">Marketing</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -277,6 +280,7 @@ export default function UsuariosAdminPage() {
                           <SelectItem value="gestor">Gestor</SelectItem>
                           <SelectItem value="corretor">Corretor</SelectItem>
                           <SelectItem value="gestor_corretor">Gestor + Corretor</SelectItem>
+                          <SelectItem value="marketing">Marketing</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -373,6 +377,7 @@ export default function UsuariosAdminPage() {
                     <SelectItem value="gestor">Gestor</SelectItem>
                     <SelectItem value="corretor">Corretor</SelectItem>
                     <SelectItem value="gestor_corretor">Gestor + Corretor</SelectItem>
+                    <SelectItem value="marketing">Marketing</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

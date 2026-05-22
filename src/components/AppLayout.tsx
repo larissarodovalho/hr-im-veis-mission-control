@@ -51,7 +51,7 @@ const adminNav: NavItem[] = [
 ];
 
 export default function AppLayout() {
-  const { signOut, user } = useAuth();
+  const { signOut, user, isMarketingOnly } = useAuth();
   const { isAdmin, isGestor } = useRole();
   const navigate = useNavigate();
   const { unread: waUnread } = useWhatsAppUnread();
@@ -63,7 +63,11 @@ export default function AppLayout() {
     navigate("/auth");
   };
 
-  const nav = isAdmin || isGestor ? [...baseNav, ...adminNav] : baseNav;
+  const nav = isMarketingOnly
+    ? baseNav.filter((n) => n.to === "/crm/imoveis")
+    : isAdmin || isGestor
+    ? [...baseNav, ...adminNav]
+    : baseNav;
 
   const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => (
     <>
