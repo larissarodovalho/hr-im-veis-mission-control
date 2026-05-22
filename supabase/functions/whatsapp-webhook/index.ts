@@ -258,15 +258,20 @@ const TOOLS = [
     type: "function",
     function: {
       name: "update_lead_info",
-      description: "Salva nome completo e/ou intenção do lead.",
+      description: "Salva nome completo, intenção, região e notas do lead.",
       parameters: {
         type: "object",
         properties: {
           full_name: { type: "string", description: "Nome completo (nome + sobrenome)" },
           interest: {
             type: "string",
-            enum: ["compra", "venda", "aluguel", "incorporacao", "investimento_ocasiao"],
+            enum: [
+              "compra", "venda", "alto_padrao", "investimento", "parceria", "propriedade", "outro",
+              "aluguel", "incorporacao", "investimento_ocasiao",
+            ],
           },
+          regiao: { type: "string", description: "Cidade, bairro ou região de interesse do lead" },
+          notes: { type: "string", description: "Resumo breve do que o lead falou (perfil, finalidade, faixa de valor etc.)" },
         },
       },
     },
@@ -275,13 +280,14 @@ const TOOLS = [
     type: "function",
     function: {
       name: "send_booking_link",
-      description: "Envia link de agendamento com o Hans no formato escolhido. Use SOMENTE quando o lead quer AGENDAR um horário (não agora).",
+      description: "Envia link de agendamento com um corretor da HR Imóveis no formato escolhido. Use quando o lead escolhe ligação, reunião presencial ou videochamada.",
       parameters: {
         type: "object",
         properties: {
           kind: {
             type: "string",
-            enum: ["videochamada", "presencial", "ligacao", "whatsapp"],
+            enum: ["videochamada", "presencial", "reuniao", "ligacao", "whatsapp"],
+            description: "'presencial' e 'reuniao' são equivalentes (ambos viram reunião presencial).",
           },
         },
         required: ["kind"],
@@ -292,13 +298,13 @@ const TOOLS = [
     type: "function",
     function: {
       name: "request_immediate_contact",
-      description: "Marca o lead como contato imediato e dispara notificação por email para o Hans. Use SOMENTE quando o lead quer falar AGORA.",
+      description: "Marca o lead como contato imediato e dispara notificação por email ao corretor. Use quando o lead escolhe WhatsApp no menu de atendimento (kind='whatsapp'), ou pede pra falar AGORA.",
       parameters: {
         type: "object",
         properties: {
           kind: {
             type: "string",
-            enum: ["videochamada", "presencial", "ligacao", "whatsapp"],
+            enum: ["videochamada", "presencial", "reuniao", "ligacao", "whatsapp"],
           },
         },
         required: ["kind"],
@@ -309,17 +315,28 @@ const TOOLS = [
 
 type ToolCall = { name: string; args: any; id?: string };
 
-// Remove vazamentos de tool-call/parametros técnicos que o LLM às vezes coloca como texto
+// Normaliza 'reuniao' (do prompt novo) para 'presencial' (esquema do banco)
+function normalizeKind(k: any): string | null {
+  const s = String(k || "").toLowerCase().trim();
+  if (s === "reuniao" || s === "reunião") return "presencial";
+  if (["videochamada", "presencial", "ligacao", "whatsapp"].includes(s)) return s;
+  return null;
+}
+
+// Remove vazamentos de tool-call/parametros/placeholders que o LLM às vezes coloca como texto
 function sanitizeReply(s: string): string {
   if (!s) return "";
   return s
+    .replace(/\[LEAD_DADOS\][\s\S]*?\[\/LEAD_DADOS\]/gi, "")
+    .replace(/\[LEAD_DADOS\][^\n]*/gi, "")
+    .replace(/\[DADOS_IMOVEL_ANUNCIADO\][\s\S]*?\[\/DADOS_IMOVEL_ANUNCIADO\]/gi, "")
+    .replace(/\[LINK_DE_AGENDAMENTO\]/gi, "")
     .replace(/https?:\/\/\S+/gi, "")
     .replace(/\bwww\.\S+/gi, "")
     .replace(/\S*\b(?:kind|uuid|token|lead_id|conversation_id|reuniao_id)\s*=\s*\S+/gi, "")
     .replace(/\b(send_booking_link|request_immediate_contact|update_lead_info)\s*\([^)]*\)/gi, "")
     .replace(/\b(send_booking_link|request_immediate_contact|update_lead_info)\b/gi, "")
     .replace(/```[\s\S]*?```/g, "")
-    .replace(/(^|\s)[A-Za-z0-9_-]{8,}\?(\s|$)/g, (m, pre, post) => /[0-9_-]/.test(m) ? `${pre}${post}` : m)
     .replace(/[ \t]{2,}/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
