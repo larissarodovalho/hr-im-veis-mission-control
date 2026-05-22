@@ -43,6 +43,7 @@ type Account = {
   tags: string[] | null;
   etapa_funil: string | null;
   temperatura: string | null;
+  ramo_atividade: string | null;
 };
 
 const formatDoc = (doc: string | null, tipo: string | null) => {
