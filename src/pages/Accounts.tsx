@@ -43,6 +43,7 @@ type Account = {
   tags: string[] | null;
   etapa_funil: string | null;
   temperatura: string | null;
+  ramo_atividade: string | null;
 };
 
 const formatDoc = (doc: string | null, tipo: string | null) => {
@@ -133,6 +134,7 @@ export default function Accounts() {
   const [interestFilter, setInterestFilter] = useState<string>("todos");
   const [typeFilter, setTypeFilter] = useState<"todas" | "cliente" | "parceiro">("todas");
   const [tempFilter, setTempFilter] = useState<string>("todos");
+  const [ownerFilter, setOwnerFilter] = useState<string>("todos");
   const [loading, setLoading] = useState(true);
   const [novaOpen, setNovaOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -147,7 +149,7 @@ export default function Accounts() {
     while (true) {
       const { data, error } = await supabase
         .from("contas")
-        .select("id, nome, email, telefone, documento, tipo, responsavel_id, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil, temperatura")
+        .select("id, nome, email, telefone, documento, tipo, responsavel_id, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil, temperatura, ramo_atividade")
         .order("nome", { ascending: true })
         .range(from, from + PAGE - 1);
       if (error) throw error;
@@ -215,6 +217,11 @@ export default function Accounts() {
       } else if (a.interesse !== interestFilter) return false;
     }
     if (tempFilter !== "todos" && (a.temperatura || "") !== tempFilter) return false;
+    if (ownerFilter !== "todos") {
+      if (ownerFilter === "none") {
+        if (a.responsavel_id) return false;
+      } else if (a.responsavel_id !== ownerFilter) return false;
+    }
     if (typeFilter === "cliente" && a.is_partner) return false;
     if (typeFilter === "parceiro" && !a.is_partner) return false;
     const accProps = propsByAccount[a.id] ?? [];
@@ -223,10 +230,14 @@ export default function Accounts() {
     const propMatch = accProps.some(
       (p) => (p.nome_fazenda?.toLowerCase().includes(s) ?? false) || (p.regiao?.toLowerCase().includes(s) ?? false)
     );
+    const tagMatch = (a.tags ?? []).some((t) => t.toLowerCase().includes(s));
     return (
       a.nome.toLowerCase().includes(s) ||
       (a.email?.toLowerCase().includes(s) ?? false) ||
       (a.telefone?.includes(search) ?? false) ||
+      (a.interesse?.toLowerCase().includes(s) ?? false) ||
+      (a.ramo_atividade?.toLowerCase().includes(s) ?? false) ||
+      tagMatch ||
       propMatch
     );
   });
@@ -294,6 +305,18 @@ export default function Accounts() {
     }
   };
 
+  const changeTemperatura = async (id: string, temp: string | null) => {
+    const prev = accounts;
+    setAccounts((cur) => cur.map((a) => (a.id === id ? { ...a, temperatura: temp } : a)));
+    const { error } = await supabase.from("contas").update({ temperatura: temp } as any).eq("id", id);
+    if (error) {
+      setAccounts(prev);
+      toast.error("Não foi possível alterar temperatura: " + error.message);
+    } else {
+      toast.success("Temperatura atualizada");
+    }
+  };
+
   const moveStage = async (id: string, etapa: EtapaFunil) => {
     const prev = accounts;
     setAccounts((cur) => cur.map((a) => (a.id === id ? { ...a, etapa_funil: etapa } : a)));
@@ -342,10 +365,10 @@ export default function Accounts() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
           <div className="relative lg:col-span-1 sm:col-span-2 lg:col-start-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar nome, fazenda, região…" className="pl-8 w-full" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input placeholder="Buscar nome, tag, interesse, profissão…" className="pl-8 w-full" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
           <Select value={typeFilter} onValueChange={(v: any) => setTypeFilter(v)}>
             <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
@@ -386,6 +409,16 @@ export default function Accounts() {
               <SelectItem value="todos">Todas temperaturas</SelectItem>
               {TEMPERATURAS.map(t => (
                 <SelectItem key={t.id} value={t.id}>{t.emoji} {t.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={ownerFilter} onValueChange={(v) => setOwnerFilter(v)}>
+            <SelectTrigger><SelectValue placeholder="Responsável" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os responsáveis</SelectItem>
+              <SelectItem value="none">Sem responsável</SelectItem>
+              {owners.map((o) => (
+                <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -430,7 +463,7 @@ export default function Accounts() {
           <Card className="p-6 text-center text-muted-foreground hidden md:block">Carregando…</Card>
         ) : (
           <div className="hidden md:block">
-            <ContasKanban accounts={filtered as any} propsByAccount={propsByAccount} onMoveStage={moveStage} onChangeOwner={changeOwner} ownerMap={ownerMap} owners={owners} />
+            <ContasKanban accounts={filtered as any} propsByAccount={propsByAccount} onMoveStage={moveStage} onChangeOwner={changeOwner} onChangeTemperatura={changeTemperatura} ownerMap={ownerMap} owners={owners} />
           </div>
         )
       ) : null}

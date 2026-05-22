@@ -24,8 +24,8 @@ import {
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { ETAPAS, EtapaFunil } from "@/lib/contasFunil";
-import { Handshake, Target, User, MoreVertical, Check, UserX } from "lucide-react";
-import { tempInfo } from "@/lib/contasTemperatura";
+import { Handshake, Target, User, MoreVertical, Check, UserX, Thermometer } from "lucide-react";
+import { tempInfo, TEMPERATURAS } from "@/lib/contasTemperatura";
 
 type Account = {
   id: string;
@@ -46,6 +46,7 @@ interface Props {
   propsByAccount: Record<string, Property[]>;
   onMoveStage: (contaId: string, etapa: EtapaFunil) => void;
   onChangeOwner?: (contaId: string, userId: string | null) => void;
+  onChangeTemperatura?: (contaId: string, temp: string | null) => void;
   ownerMap?: Record<string, string>;
   owners?: { id: string; nome: string }[];
 }
@@ -80,6 +81,7 @@ function ContaCard({
   owners,
   onMoveStage,
   onChangeOwner,
+  onChangeTemperatura,
 }: {
   a: Account;
   total: number;
@@ -87,6 +89,7 @@ function ContaCard({
   owners?: { id: string; nome: string }[];
   onMoveStage: (id: string, etapa: EtapaFunil) => void;
   onChangeOwner?: (id: string, userId: string | null) => void;
+  onChangeTemperatura?: (id: string, temp: string | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: a.id });
   const style: React.CSSProperties = {
@@ -184,6 +187,38 @@ function ContaCard({
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
               )}
+
+              {onChangeTemperatura && (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>Temperatura</DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent className="w-48">
+                      <DropdownMenuItem onSelect={() => onChangeTemperatura(a.id, null)}>
+                        {!a.temperatura ? (
+                          <Check className="h-3.5 w-3.5 mr-2" />
+                        ) : (
+                          <Thermometer className="h-3.5 w-3.5 mr-2" />
+                        )}
+                        Sem temperatura
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {TEMPERATURAS.map((t) => (
+                        <DropdownMenuItem
+                          key={t.id}
+                          onSelect={() => onChangeTemperatura(a.id, t.id)}
+                        >
+                          {a.temperatura === t.id ? (
+                            <Check className="h-3.5 w-3.5 mr-2" />
+                          ) : (
+                            <span className="w-3.5 mr-2" />
+                          )}
+                          {t.emoji} {t.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -244,7 +279,7 @@ function Column({
   );
 }
 
-export default function ContasKanban({ accounts, propsByAccount, onMoveStage, onChangeOwner, ownerMap, owners }: Props) {
+export default function ContasKanban({ accounts, propsByAccount, onMoveStage, onChangeOwner, onChangeTemperatura, ownerMap, owners }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const onDragEnd = (e: DragEndEvent) => {
@@ -276,6 +311,7 @@ export default function ContasKanban({ accounts, propsByAccount, onMoveStage, on
                     owners={owners}
                     onMoveStage={onMoveStage}
                     onChangeOwner={onChangeOwner}
+                    onChangeTemperatura={onChangeTemperatura}
                   />
                 );
               })}
