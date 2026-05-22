@@ -293,7 +293,7 @@ export default function HomePage() {
                 key={imovel.id}
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ margin: "-60px" }}
+                viewport={{ once: true, amount: 0.1 }}
                 transition={{ duration: 1, delay: i * 0.15, ease }}
               >
                 <Link
