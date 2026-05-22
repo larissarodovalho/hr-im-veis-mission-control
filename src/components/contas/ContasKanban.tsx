@@ -24,8 +24,8 @@ import {
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { ETAPAS, EtapaFunil } from "@/lib/contasFunil";
-import { Handshake, Target, User, MoreVertical, Check, UserX } from "lucide-react";
-import { tempInfo } from "@/lib/contasTemperatura";
+import { Handshake, Target, User, MoreVertical, Check, UserX, Thermometer } from "lucide-react";
+import { tempInfo, TEMPERATURAS } from "@/lib/contasTemperatura";
 
 type Account = {
   id: string;
