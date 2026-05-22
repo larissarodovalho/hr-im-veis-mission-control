@@ -15,9 +15,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   ORIGENS as ORIGENS_NEGOCIO,
   NIVEIS,
+  calculateCommissionValue,
   getSplit,
+  getPercentTotal,
   DEFAULT_ORIGEM,
   DEFAULT_NIVEL,
+  type ComissaoSplit,
   type OrigemNegocio,
   type NivelCorretor,
 } from "@/lib/comissaoHR";
@@ -27,6 +30,12 @@ export type VendaRow = any;
 const STATUS = ["Pagamento pendente", "Finalizada", "Cancelada"] as const;
 const TIPOS = ["Venda", "Aluguel"] as const;
 const ORIGENS = ["Site", "Indicação", "Tráfego pago", "WhatsApp", "Portal", "Outra"];
+
+const splitFromForm = (f: any): ComissaoSplit => ({
+  captador: parseFloat(f.percent_captador) || 0,
+  vendedor: parseFloat(f.percent_vendedor) || 0,
+  hr: parseFloat(f.percent_hr) || 0,
+});
 
 export default function NovaVendaDialog({
   open,
