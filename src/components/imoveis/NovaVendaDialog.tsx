@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { formatBRL } from "@/lib/format";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -365,7 +366,7 @@ export default function NovaVendaDialog({
                 </div>
                 <div>
                   <Label className="text-xs">Valor do imóvel (opcional)</Label>
-                  <Input type="number" step="0.01" value={imovelManual.valor} onChange={(e) => setImovelManual({ ...imovelManual, valor: e.target.value })} placeholder="Se vazio, usa o valor da venda" />
+                  <CurrencyInput value={imovelManual.valor} onChange={(v) => setImovelManual({ ...imovelManual, valor: v })} placeholder="Se vazio, usa o valor da venda" />
                 </div>
               </div>
             ) : (
@@ -401,11 +402,11 @@ export default function NovaVendaDialog({
           </div>
           <div>
             <Label>Valor da venda (R$) *</Label>
-            <Input type="number" step="0.01" value={form.valor_venda} onChange={(e) => onValor(e.target.value)} />
+            <CurrencyInput value={form.valor_venda} onChange={(v) => onValor(v)} />
           </div>
           <div>
             <Label>Comissão R$ (auto)</Label>
-            <Input type="number" step="0.01" value={form.valor_comissao} onChange={(e) => setForm({ ...form, valor_comissao: e.target.value })} />
+            <CurrencyInput value={form.valor_comissao} onChange={(v) => setForm({ ...form, valor_comissao: v })} />
           </div>
           {(() => {
             const sum = (parseFloat(form.percent_vendedor) || 0) + (parseFloat(form.percent_captador) || 0) + (parseFloat(form.percent_hr) || 0);
