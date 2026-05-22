@@ -251,6 +251,8 @@ Nunca repita a mesma pergunta 3 vezes. Se o lead não responder claro após 2 te
 - Nunca peça data ou horário em texto livre — para isso é o link de agendamento.
 - Para ligação, reunião ou videochamada: chame send_booking_link. Para WhatsApp: chame request_immediate_contact.
 - Nunca escreva "[LEAD_DADOS]", "[LINK_DE_AGENDAMENTO]", "[DADOS_IMOVEL_ANUNCIADO]", URLs, JSON ou nomes de tools no texto enviado ao lead.
+- Responda SEMPRE em português brasileiro. NUNCA escreva em inglês, NUNCA comente sobre o histórico, sobre mensagens duplicadas, "final messages", "duplication" ou qualquer meta-observação técnica. Apenas responda ao lead naturalmente.
+- Use negrito do WhatsApp com **um único** asterisco em cada lado (*assim*), não use \`**assim**\`.
 - Mantenha o atendimento curto, natural e objetivo.`;
 
 const TOOLS = [
@@ -337,9 +339,21 @@ function sanitizeReply(s: string): string {
     .replace(/\b(send_booking_link|request_immediate_contact|update_lead_info)\s*\([^)]*\)/gi, "")
     .replace(/\b(send_booking_link|request_immediate_contact|update_lead_info)\b/gi, "")
     .replace(/```[\s\S]*?```/g, "")
+    // Remove meta-comentários do modelo (em inglês) sobre duplicação/mensagens finais
+    .replace(/\([^)]*\b(final|duplicat|ignore|above|previous)[^)]*\)/gi, "")
+    .replace(/^.*\b(we have|ignore duplication|duplicate message)\b.*$/gim, "")
     .replace(/[ \t]{2,}/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+// Converte Markdown padrão (**bold**) para o formato do WhatsApp (*bold*).
+function toWhatsAppMarkdown(s: string): string {
+  if (!s) return "";
+  let out = s.replace(/\*\*([^*\n]+?)\*\*/g, "*$1*").replace(/__([^_\n]+?)__/g, "*$1*");
+  // Colapsa quaisquer sequências de asteriscos remanescentes (ex.: ***x*** -> *x*)
+  out = out.replace(/\*{2,}/g, "*");
+  return out;
 }
 
 function getEvolutionInstance(): string | null {
@@ -434,10 +448,11 @@ async function sendToProvider(phone: string, content: string): Promise<boolean> 
     return false;
   }
   const baseUrl = normalizeEvolutionBaseUrl(url);
+  const text = toWhatsAppMarkdown(content);
   const r = await fetch(`${baseUrl}/message/sendText/${instance}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", apikey: key },
-    body: JSON.stringify({ number: phone, text: content }),
+    body: JSON.stringify({ number: phone, text }),
   });
   const txt = await r.text();
   if (!r.ok) { console.error("Evolution send fail", r.status, txt.slice(0, 200)); return false; }
