@@ -334,9 +334,9 @@ export default function FaturamentoReport() {
                 <YAxis tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v))} />
                 <Tooltip formatter={(v: any) => fmtBRL(Number(v))} />
                 <Legend />
-                <Bar dataKey="Vendedor" stackId="a" fill="hsl(var(--primary))" />
-                <Bar dataKey="Captador" stackId="a" fill="hsl(var(--accent))" />
-                <Bar dataKey="HR" stackId="a" fill="hsl(var(--muted-foreground))" />
+                <Bar dataKey="Vendedor" fill="hsl(var(--primary))" />
+                <Bar dataKey="Captador" fill="hsl(var(--accent))" />
+                <Bar dataKey="HR" fill="hsl(var(--muted-foreground))" />
               </BarChart>
             </ResponsiveContainer>
           )}
