@@ -71,6 +71,16 @@ export default function NovaVendaDialog({
   const [marcarVendido, setMarcarVendido] = useState(true);
   const [saving, setSaving] = useState(false);
   const [manualCliente, setManualCliente] = useState(false);
+  const [manualImovel, setManualImovel] = useState(false);
+  const [imovelManual, setImovelManual] = useState({
+    titulo: "",
+    tipo: "Casa",
+    finalidade: "Venda",
+    endereco: "",
+    bairro: "",
+    cidade: "",
+    valor: "",
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -125,6 +135,8 @@ export default function NovaVendaDialog({
     if (!open) return;
     // Em edição: se já existe nome de cliente mas sem conta vinculada, abre em modo manual
     setManualCliente(!!initial?.cliente_nome && (!initial?.conta_id || initial.conta_id === "none"));
+    setManualImovel(false);
+    setImovelManual({ titulo: "", tipo: "Casa", finalidade: "Venda", endereco: "", bairro: "", cidade: "", valor: "" });
   }, [open, initial]);
 
   // Auto-preenche nível a partir do nível do corretor vendedor selecionado
@@ -187,9 +199,36 @@ export default function NovaVendaDialog({
   const handleSave = async () => {
     if (!form.cliente_nome) return toast.error("Informe o nome do cliente");
     if (!form.valor_venda) return toast.error("Informe o valor");
+    if (manualImovel && !imovelManual.titulo.trim()) return toast.error("Informe o título do imóvel manual");
     setSaving(true);
+
+    let imovelIdFinal: string | null = form.imovel_id !== "none" ? form.imovel_id : null;
+
+    // Cria imóvel não divulgado quando em modo manual
+    if (manualImovel) {
+      const valorImv = parseFloat(imovelManual.valor) || parseFloat(form.valor_venda) || null;
+      const { data: imvIns, error: imvErr } = await supabase
+        .from("imoveis")
+        .insert({
+          titulo: imovelManual.titulo.trim(),
+          tipo: imovelManual.tipo,
+          finalidade: imovelManual.finalidade,
+          endereco: imovelManual.endereco || null,
+          bairro: imovelManual.bairro || null,
+          cidade: imovelManual.cidade || null,
+          valor: valorImv,
+          status: "Não divulgado",
+          created_by: user?.id,
+          corretor_id: form.corretor_vendedor_id !== "none" ? form.corretor_vendedor_id : null,
+        })
+        .select("id")
+        .single();
+      if (imvErr || !imvIns) { setSaving(false); return toast.error("Erro ao criar imóvel: " + (imvErr?.message || "")); }
+      imovelIdFinal = imvIns.id;
+    }
+
     const payload: any = {
-      imovel_id: form.imovel_id !== "none" ? form.imovel_id : null,
+      imovel_id: imovelIdFinal,
       lead_id: form.lead_id !== "none" ? form.lead_id : null,
       conta_id: form.conta_id !== "none" ? form.conta_id : null,
       corretor_id: form.corretor_id !== "none" ? form.corretor_id : null,
@@ -275,9 +314,73 @@ export default function NovaVendaDialog({
               </>
             )}
           </div>
-          <div>
+          <div className="md:col-span-2">
             <Label>Imóvel</Label>
-            <SearchableSelect value={form.imovel_id} onChange={(v) => setForm({ ...form, imovel_id: v })} options={imoveis} placeholder="Buscar imóvel…" emptyLabel="—" />
+            {manualImovel ? (
+              <div className="rounded-md border bg-muted/30 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Novo imóvel (não divulgado) — será criado ao salvar</span>
+                  <button type="button" className="text-xs text-primary hover:underline" onClick={() => setManualImovel(false)}>
+                    Selecionar imóvel cadastrado
+                  </button>
+                </div>
+                <div>
+                  <Label className="text-xs">Título *</Label>
+                  <Input value={imovelManual.titulo} onChange={(e) => setImovelManual({ ...imovelManual, titulo: e.target.value })} placeholder="Ex.: Casa Jardim Europa" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Tipo</Label>
+                    <Select value={imovelManual.tipo} onValueChange={(v) => setImovelManual({ ...imovelManual, tipo: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {["Casa", "Apartamento", "Terreno", "Comercial", "Rural", "Outro"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Finalidade</Label>
+                    <Select value={imovelManual.finalidade} onValueChange={(v) => setImovelManual({ ...imovelManual, finalidade: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {["Venda", "Aluguel"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs">Endereço</Label>
+                  <Input value={imovelManual.endereco} onChange={(e) => setImovelManual({ ...imovelManual, endereco: e.target.value })} placeholder="Rua, número" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Bairro</Label>
+                    <Input value={imovelManual.bairro} onChange={(e) => setImovelManual({ ...imovelManual, bairro: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Cidade</Label>
+                    <Input value={imovelManual.cidade} onChange={(e) => setImovelManual({ ...imovelManual, cidade: e.target.value })} />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs">Valor do imóvel (opcional)</Label>
+                  <Input type="number" step="0.01" value={imovelManual.valor} onChange={(e) => setImovelManual({ ...imovelManual, valor: e.target.value })} placeholder="Se vazio, usa o valor da venda" />
+                </div>
+              </div>
+            ) : (
+              <>
+                <SearchableSelect value={form.imovel_id} onChange={(v) => setForm({ ...form, imovel_id: v })} options={imoveis} placeholder="Buscar imóvel…" emptyLabel="—" />
+                {!initial?.id && (
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground hover:text-primary hover:underline mt-1"
+                    onClick={() => { setManualImovel(true); setForm((f: any) => ({ ...f, imovel_id: "none" })); }}
+                  >
+                    Imóvel não cadastrado? Adicionar manualmente
+                  </button>
+                )}
+              </>
+            )}
           </div>
           <div>
             <Label>Corretor vendedor</Label>
