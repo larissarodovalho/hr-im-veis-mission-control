@@ -857,19 +857,35 @@ Deno.serve(async (req) => {
           const fullName = String(tc.args?.full_name || "").trim();
           const altPhone = String(tc.args?.phone || "").trim();
           const interest = tc.args?.interest as string | undefined;
+          const regiao = String(tc.args?.regiao || "").trim();
+          const notes = String(tc.args?.notes || "").trim();
           const update: any = { ultima_interacao: new Date().toISOString() };
           if (fullName) update.nome = fullName;
           if (altPhone && altPhone.replace(/\D/g, "").length >= 10) {
             update.telefone = altPhone;
           }
-          const VALID_INTERESTS = ["compra", "venda", "aluguel", "incorporacao", "investimento_ocasiao"];
-          if (interest && VALID_INTERESTS.includes(interest)) {
+          const VALID_INTERESTS = [
+            "compra", "venda", "alto_padrao", "investimento", "parceria", "propriedade", "outro",
+            "aluguel", "incorporacao", "investimento_ocasiao",
+          ];
+          // Monta/atualiza observações preservando o histórico
+          if (interest && VALID_INTERESTS.includes(interest) || regiao || notes) {
             const { data: cur } = await supabase.from("leads").select("observacoes").eq("id", leadUuid).maybeSingle();
-            const note = `Intenção: ${interest}`;
-            update.observacoes = cur?.observacoes
-              ? (/Intenção:/i.test(cur.observacoes) ? cur.observacoes.replace(/Intenção:.*/i, note) : `${cur.observacoes}\n${note}`)
-              : note;
-            update.etapa_funil = "Em Contato";
+            let obs = cur?.observacoes || "";
+            if (interest && VALID_INTERESTS.includes(interest)) {
+              const noteInt = `Intenção: ${interest}`;
+              obs = /Intenção:/i.test(obs) ? obs.replace(/Intenção:.*/i, noteInt) : (obs ? `${obs}\n${noteInt}` : noteInt);
+              update.etapa_funil = "Em Contato";
+            }
+            if (regiao) {
+              const noteReg = `Região: ${regiao}`;
+              obs = /Região:/i.test(obs) ? obs.replace(/Região:.*/i, noteReg) : (obs ? `${obs}\n${noteReg}` : noteReg);
+            }
+            if (notes) {
+              const noteN = `Notas Sofia: ${notes}`;
+              obs = /Notas Sofia:/i.test(obs) ? obs.replace(/Notas Sofia:.*/i, noteN) : (obs ? `${obs}\n${noteN}` : noteN);
+            }
+            update.observacoes = obs;
           }
           if (Object.keys(update).length > 1) {
             if (update.etapa_funil === "Em Atendimento") update.etapa_funil = "Em Contato";
@@ -878,26 +894,22 @@ Deno.serve(async (req) => {
           toolResult = { ok: true, saved: Object.keys(update).filter(k => k !== "ultima_interacao") };
           needAnotherRound = true;
         } else if (tc.name === "send_booking_link") {
-          const k = tc.args?.kind;
-          if (canTriggerHandoff && ["videochamada", "presencial", "ligacao", "whatsapp"].includes(k)) {
+          const k = normalizeKind(tc.args?.kind);
+          if (canTriggerHandoff && k) {
             bookingKind = k;
             toolResult = { ok: true, scheduled: bookingKind, link_will_be_appended: true };
           } else {
-            console.warn("[whatsapp-webhook] send_booking_link BLOQUEADO", { k, hasName, hasInterest, alreadyNotified, alreadyBooked });
+            console.warn("[whatsapp-webhook] send_booking_link BLOQUEADO", { k, raw: tc.args?.kind, hasName, hasInterest, alreadyNotified, alreadyBooked });
             toolResult = { ok: false, blocked: "missing_name_or_interest_or_already_handed_off" };
           }
           needAnotherRound = true;
         } else if (tc.name === "request_immediate_contact") {
-          const k = tc.args?.kind;
+          const k = normalizeKind(tc.args?.kind);
           if (canTriggerHandoff) {
-            if (["videochamada", "presencial", "ligacao", "whatsapp"].includes(k)) {
-              immediateKind = k;
-            } else {
-              immediateKind = "whatsapp";
-            }
+            immediateKind = k || "whatsapp";
             toolResult = { ok: true, immediate: immediateKind, broker_will_be_notified: true };
           } else {
-            console.warn("[whatsapp-webhook] request_immediate_contact BLOQUEADO", { k, hasName, hasInterest, alreadyNotified, alreadyBooked });
+            console.warn("[whatsapp-webhook] request_immediate_contact BLOQUEADO", { k, raw: tc.args?.kind, hasName, hasInterest, alreadyNotified, alreadyBooked });
             toolResult = { ok: false, blocked: "missing_name_or_interest_or_already_handed_off" };
           }
           needAnotherRound = true;
