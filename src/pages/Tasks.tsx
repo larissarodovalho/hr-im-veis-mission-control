@@ -73,6 +73,7 @@ export default function Tasks() {
 
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<any>({});
 
   const load = async () => {
