@@ -1,18 +1,16 @@
-## Adicionar botão de editar tarefa
+## Permitir que corretores editem tarefas
 
-Adicionar ação de edição (ícone de lápis) em cada item de tarefa, reutilizando o mesmo dialog usado para criação.
+Hoje o botão de editar (e excluir) só aparece para `isAdmin || t.created_by === userId`. O usuário quer que qualquer corretor possa editar tarefas.
 
-### Arquivos
+### Mudanças
 
-**`src/pages/Tasks.tsx`** (aba Tarefas)
-- Adicionar estado `editingId` e função `editar(t)` que preenche `form` com os dados da tarefa e abre o dialog.
-- Botão `Pencil` ao lado do `Trash2` em cada item (visível para admin ou criador).
-- `salvar()` passa a fazer `update` quando `editingId` está setado, senão `insert` (comportamento atual).
-- Título do Dialog muda entre "Nova tarefa" / "Editar tarefa"; botão muda para "Salvar alterações".
-- Resetar `editingId` ao fechar o dialog.
+**`src/pages/Tasks.tsx`**
+- Remover a condição `(isAdmin || t.created_by === userId)` ao redor do botão `Pencil`, mostrando-o sempre.
+- Manter o botão `Trash2` restrito a admin/criador (excluir continua sensível).
+- Separar os dois botões em condicionais distintas.
 
-**`src/components/contas/ContaTarefas.tsx`** (aba do contato/conta)
-- Mesma lógica: `editingId`, função `editar`, botão `Pencil` em `renderItem`, `salvar()` faz insert ou update conforme o caso, título e botão dinâmicos.
+**`src/components/contas/ContaTarefas.tsx`**
+- Mesma alteração: `Pencil` sempre visível, `Trash2` permanece restrito.
 
-### Permissão
-Mesma regra já usada para excluir: `isAdmin || t.created_by === userId`.
+### Permissões no banco
+Verificar se as policies de UPDATE na tabela `tarefas` já permitem a qualquer staff/corretor atualizar. Se estiverem restritas a criador/admin, criar migration ajustando a policy para `is_staff()` (ou equivalente) no UPDATE. Caso contrário, apenas a mudança de UI basta.
