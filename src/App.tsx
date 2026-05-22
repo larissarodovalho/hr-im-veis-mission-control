@@ -114,6 +114,7 @@ const App = () => (
               <Route path="usuarios" element={<StaffRoute><Users /></StaffRoute>} />
               <Route path="configuracoes" element={<StaffRoute><ConfiguracoesPage /></StaffRoute>} />
               <Route path="newsletter" element={<StaffRoute><Newsletter /></StaffRoute>} />
+              <Route path="meta-ads" element={<StaffRoute><MetaAdsMapping /></StaffRoute>} />
             </Route>
 
             {/* Redirect das URLs antigas do CRM */}
