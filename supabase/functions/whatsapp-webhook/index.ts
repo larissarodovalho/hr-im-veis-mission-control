@@ -1031,6 +1031,13 @@ Deno.serve(async (req) => {
 - Pode chamar send_booking_link/request_immediate_contact agora? ${canTriggerHandoff ? "SIM" : "NÃO — colete primeiro nome e interesse"}`,
     });
 
+    if (imovelAnunciado) {
+      aiMessages.unshift({
+        role: "system",
+        content: formatImovelContext(imovelAnunciado, imovelAnunciado._nomeAnuncio ?? null),
+      });
+    }
+
     // Cascata + loop de tool calls
     let result: { text: string; toolCalls: ToolCall[]; raw?: any } = { text: "", toolCalls: [] };
     let bookingKind: string | null = forcedBookingKind;
