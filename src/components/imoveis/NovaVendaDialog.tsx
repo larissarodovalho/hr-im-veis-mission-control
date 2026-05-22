@@ -84,6 +84,10 @@ export default function NovaVendaDialog({
   const [saving, setSaving] = useState(false);
   const [manualCliente, setManualCliente] = useState(false);
   const [manualImovel, setManualImovel] = useState(false);
+  const [contratoFile, setContratoFile] = useState<File | null>(null);
+  const [contratoPath, setContratoPath] = useState<string | null>(null);
+  const [contratoUrl, setContratoUrl] = useState<string | null>(null);
+  const [removeContrato, setRemoveContrato] = useState(false);
   const [imovelManual, setImovelManual] = useState({
     titulo: "",
     tipo: "Casa",
