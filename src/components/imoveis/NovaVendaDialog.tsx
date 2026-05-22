@@ -117,24 +117,59 @@ export default function NovaVendaDialog({
     }
   }, [form.conta_id, contas]);
 
-  // Auto-cálculo comissão
+  // Auto-preenche nível a partir do nível do corretor vendedor selecionado
+  useEffect(() => {
+    if (form.corretor_vendedor_id && form.corretor_vendedor_id !== "none") {
+      const v = profiles.find((p) => p.id === form.corretor_vendedor_id);
+      if (v?.nivel && (v.nivel === "junior" || v.nivel === "senior")) {
+        setForm((f: any) => (f.nivel_corretor === v.nivel ? f : { ...f, nivel_corretor: v.nivel }));
+      }
+    }
+  }, [form.corretor_vendedor_id, profiles]);
+
+  // Aplica matriz HR quando origem/nível mudam
+  const applyMatriz = (origem: OrigemNegocio, nivel: NivelCorretor) => {
+    const s = getSplit(origem, nivel);
+    setForm((f: any) => {
+      const next = {
+        ...f,
+        origem_negocio: origem,
+        nivel_corretor: nivel,
+        percent_captador: String(s.captador),
+        percent_vendedor: String(s.vendedor),
+        percent_hr: String(s.hr),
+      };
+      const n = parseFloat(f.valor_venda);
+      const soma = s.captador + s.vendedor + s.hr;
+      if (!isNaN(n)) next.valor_comissao = ((n * soma) / 100).toFixed(2);
+      return next;
+    });
+  };
+
+  // Recalcula comissão R$ ao mudar valor da venda (com base na soma dos % do VGV)
   const onValor = (v: string) => {
     const n = parseFloat(v);
     setForm((f: any) => {
       const next = { ...f, valor_venda: v };
-      if (!isNaN(n) && f.percentual_comissao) {
-        const pct = parseFloat(f.percentual_comissao);
-        if (!isNaN(pct)) next.valor_comissao = ((n * pct) / 100).toFixed(2);
-      }
+      const soma =
+        (parseFloat(f.percent_captador) || 0) +
+        (parseFloat(f.percent_vendedor) || 0) +
+        (parseFloat(f.percent_hr) || 0);
+      if (!isNaN(n)) next.valor_comissao = ((n * soma) / 100).toFixed(2);
       return next;
     });
   };
-  const onPct = (v: string) => {
-    const pct = parseFloat(v);
+
+  // Edição manual de algum % → recalcula comissão R$
+  const onPctPapel = (papel: "captador" | "vendedor" | "hr", v: string) => {
     setForm((f: any) => {
-      const next = { ...f, percentual_comissao: v };
+      const next = { ...f, [`percent_${papel}`]: v };
+      const soma =
+        (parseFloat(papel === "captador" ? v : f.percent_captador) || 0) +
+        (parseFloat(papel === "vendedor" ? v : f.percent_vendedor) || 0) +
+        (parseFloat(papel === "hr" ? v : f.percent_hr) || 0);
       const n = parseFloat(f.valor_venda);
-      if (!isNaN(n) && !isNaN(pct)) next.valor_comissao = ((n * pct) / 100).toFixed(2);
+      if (!isNaN(n)) next.valor_comissao = ((n * soma) / 100).toFixed(2);
       return next;
     });
   };
