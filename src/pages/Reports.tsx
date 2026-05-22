@@ -8,6 +8,8 @@ import Papa from "papaparse";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
 import FunilContasReport from "@/components/reports/FunilContasReport";
+import FaturamentoReport from "@/components/reports/FaturamentoReport";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Reports() {
   const { isAdmin, isGestor, loading: roleLoading } = useRole();
