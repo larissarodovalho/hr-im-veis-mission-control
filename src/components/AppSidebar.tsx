@@ -128,7 +128,7 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild>
                         <NavLink
-                          to={item.url === "/crm" ? "/crm?tab=leads" : item.url === "/marketing" ? "/marketing?tab=geral" : item.url}
+                          to={item.url === "/crm" ? (isMarketingOnly ? "/crm/imoveis" : "/crm?tab=leads") : item.url === "/marketing" ? "/marketing?tab=geral" : item.url}
                           end={item.url === "/"}
                           className={`transition-all duration-200 ${isActive ? "bg-sidebar-accent text-sidebar-primary" : "hover:bg-sidebar-accent/50"}`}
                         >
