@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ListTodo, Plus, Trash2, AlertCircle, Search, Building2, User } from "lucide-react";
+import { ListTodo, Plus, Trash2, AlertCircle, Search, Building2, User, Pencil } from "lucide-react";
 import { format, isPast, isToday, isTomorrow, isThisWeek, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -73,6 +73,7 @@ export default function Tasks() {
 
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<any>({});
 
   const load = async () => {
@@ -143,6 +144,7 @@ export default function Tasks() {
   };
 
   const nova = () => {
+    setEditingId(null);
     setForm({
       titulo: "",
       descricao: "",
@@ -153,22 +155,36 @@ export default function Tasks() {
     setOpen(true);
   };
 
+  const editar = (t: Tarefa) => {
+    setEditingId(t.id);
+    setForm({
+      titulo: t.titulo,
+      descricao: t.descricao ?? "",
+      prazo: t.prazo ? new Date(new Date(t.prazo).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "",
+      prioridade: t.prioridade,
+      responsavel_id: t.responsavel_id ?? "",
+    });
+    setOpen(true);
+  };
+
   const salvar = async () => {
     if (!form.titulo?.trim()) return toast.error("Informe um título");
     setSaving(true);
-    const { error } = await supabase.from("tarefas").insert({
+    const payload = {
       titulo: form.titulo.trim(),
       descricao: form.descricao?.trim() || null,
       prazo: form.prazo ? new Date(form.prazo).toISOString() : null,
       prioridade: form.prioridade || "Média",
-      status: "A fazer",
       responsavel_id: form.responsavel_id || null,
-      created_by: userId,
-    });
+    };
+    const { error } = editingId
+      ? await supabase.from("tarefas").update(payload).eq("id", editingId)
+      : await supabase.from("tarefas").insert({ ...payload, status: "A fazer", created_by: userId });
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success("Tarefa criada");
+    toast.success(editingId ? "Tarefa atualizada" : "Tarefa criada");
     setOpen(false);
+    setEditingId(null);
     load();
   };
 
@@ -257,7 +273,10 @@ export default function Tasks() {
                           {t.descricao && <p className="text-sm mt-2 whitespace-pre-wrap text-muted-foreground">{t.descricao}</p>}
                         </div>
                         {(isAdmin || t.created_by === userId) && (
-                          <Button size="sm" variant="ghost" onClick={() => excluir(t.id)}><Trash2 className="h-4 w-4" /></Button>
+                          <div className="flex gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => editar(t)}><Pencil className="h-4 w-4" /></Button>
+                            <Button size="sm" variant="ghost" onClick={() => excluir(t.id)}><Trash2 className="h-4 w-4" /></Button>
+                          </div>
                         )}
                       </li>
                     );
@@ -269,9 +288,9 @@ export default function Tasks() {
         </div>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditingId(null); }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Nova tarefa</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingId ? "Editar tarefa" : "Nova tarefa"}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div>
               <Label>Título*</Label>
@@ -312,7 +331,7 @@ export default function Tasks() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button onClick={salvar} disabled={saving}>{saving ? "Salvando…" : "Criar tarefa"}</Button>
+            <Button onClick={salvar} disabled={saving}>{saving ? "Salvando…" : editingId ? "Salvar alterações" : "Criar tarefa"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
