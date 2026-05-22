@@ -47,6 +47,9 @@ export default function NovaVendaDialog({
     valor_venda: "",
     valor_comissao: "",
     percentual_comissao: "",
+    percent_vendedor: "40",
+    percent_captador: "30",
+    percent_hr: "30",
     tipo: "Venda",
     status_pagamento: "Pagamento pendente",
     origem: "",
@@ -80,6 +83,9 @@ export default function NovaVendaDialog({
       corretor_vendedor_id: initial?.corretor_vendedor_id || "none",
       corretor_captador_id: initial?.corretor_captador_id || "none",
       corretor_parceiro_id: initial?.corretor_parceiro_id || "none",
+      percent_vendedor: initial?.percent_vendedor != null ? String(initial.percent_vendedor) : "40",
+      percent_captador: initial?.percent_captador != null ? String(initial.percent_captador) : "30",
+      percent_hr: initial?.percent_hr != null ? String(initial.percent_hr) : "30",
       data_venda: initial?.data_venda ? new Date(initial.data_venda).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
     }));
   }, [open, initial]);
@@ -137,6 +143,9 @@ export default function NovaVendaDialog({
       valor_venda: parseFloat(form.valor_venda) || 0,
       valor_comissao: parseFloat(form.valor_comissao) || 0,
       percentual_comissao: form.percentual_comissao ? parseFloat(form.percentual_comissao) : null,
+      percent_vendedor: parseFloat(form.percent_vendedor) || 0,
+      percent_captador: parseFloat(form.percent_captador) || 0,
+      percent_hr: parseFloat(form.percent_hr) || 0,
       tipo: form.tipo,
       status_pagamento: form.status_pagamento,
       origem: form.origem || null,
@@ -212,6 +221,36 @@ export default function NovaVendaDialog({
               <Input type="number" step="0.01" value={form.valor_comissao} onChange={(e) => setForm({ ...form, valor_comissao: e.target.value })} />
             </div>
           </div>
+          {(() => {
+            const sum = (parseFloat(form.percent_vendedor) || 0) + (parseFloat(form.percent_captador) || 0) + (parseFloat(form.percent_hr) || 0);
+            const comissao = parseFloat(form.valor_comissao) || 0;
+            const fmt = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+            return (
+              <div className="md:col-span-2 rounded-md border bg-muted/30 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Divisão da comissão (%)</Label>
+                  <span className={`text-xs ${Math.abs(sum - 100) < 0.01 ? "text-emerald-600" : "text-destructive"}`}>Soma: {sum.toFixed(1)}%</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <Label className="text-xs">Vendedor</Label>
+                    <Input type="number" step="0.1" value={form.percent_vendedor} onChange={(e) => setForm({ ...form, percent_vendedor: e.target.value })} />
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(comissao * (parseFloat(form.percent_vendedor) || 0) / 100)}</div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Captador</Label>
+                    <Input type="number" step="0.1" value={form.percent_captador} onChange={(e) => setForm({ ...form, percent_captador: e.target.value })} />
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(comissao * (parseFloat(form.percent_captador) || 0) / 100)}</div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">HR Imóveis</Label>
+                    <Input type="number" step="0.1" value={form.percent_hr} onChange={(e) => setForm({ ...form, percent_hr: e.target.value })} />
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(comissao * (parseFloat(form.percent_hr) || 0) / 100)}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
           <div>
             <Label>Tipo</Label>
             <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
