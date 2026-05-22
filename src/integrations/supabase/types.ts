@@ -1889,6 +1889,7 @@ export type Database = {
         Row: {
           cliente_nome: string
           conta_id: string | null
+          contrato_pdf_path: string | null
           corretor_captador_id: string | null
           corretor_id: string | null
           corretor_parceiro_id: string | null
@@ -1917,6 +1918,7 @@ export type Database = {
         Insert: {
           cliente_nome: string
           conta_id?: string | null
+          contrato_pdf_path?: string | null
           corretor_captador_id?: string | null
           corretor_id?: string | null
           corretor_parceiro_id?: string | null
@@ -1945,6 +1947,7 @@ export type Database = {
         Update: {
           cliente_nome?: string
           conta_id?: string | null
+          contrato_pdf_path?: string | null
           corretor_captador_id?: string | null
           corretor_id?: string | null
           corretor_parceiro_id?: string | null
