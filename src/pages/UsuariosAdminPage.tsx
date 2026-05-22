@@ -259,6 +259,7 @@ export default function UsuariosAdminPage() {
                   <TableHead>Email</TableHead>
                   <TableHead>Cargo</TableHead>
                   <TableHead>Papel</TableHead>
+                  <TableHead>Nível</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -279,6 +280,23 @@ export default function UsuariosAdminPage() {
                         </SelectContent>
                       </Select>
                     </TableCell>
+                    <TableCell>
+                      <Select
+                        value={r.nivel}
+                        onValueChange={async (v) => {
+                          const { error } = await supabase.from("profiles").update({ nivel: v } as any).eq("user_id", r.user_id);
+                          if (error) return toast.error(error.message);
+                          setRows((rs) => rs.map((x) => x.user_id === r.user_id ? { ...x, nivel: v as any } : x));
+                        }}
+                        disabled={busy}
+                      >
+                        <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="junior">Júnior</SelectItem>
+                          <SelectItem value="senior">Sênior</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
                     <TableCell className="text-right space-x-1">
                       <Button size="icon" variant="ghost" onClick={() => openEdit(r)} title="Editar">
                         <Pencil className="h-4 w-4" />
@@ -293,7 +311,7 @@ export default function UsuariosAdminPage() {
                   </TableRow>
                 ))}
                 {rows.length === 0 && (
-                  <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum usuário cadastrado</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum usuário cadastrado</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
