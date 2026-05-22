@@ -32,7 +32,7 @@ export default function VendidosTab() {
   const [vendas, setVendas] = useState<any[]>([]);
   const [imoveis, setImoveis] = useState<Record<string, any>>({});
   const [profiles, setProfiles] = useState<Record<string, any>>({});
-  const [periodo, setPeriodo] = useState<Periodo>("90");
+  const [periodo, setPeriodo] = useState<Periodo>("365");
   const [openDialog, setOpenDialog] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
 
