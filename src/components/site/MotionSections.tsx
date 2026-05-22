@@ -86,7 +86,7 @@ export function ScrollSection({
   };
 
   return (
-    <motion.section ref={ref} style={style} className={`relative ${className}`}>
+    <motion.section ref={ref} initial={{ opacity: 1 }} style={style} className={`relative ${className}`}>
       {fadeEdges && (
         <div
           className={`absolute top-0 left-0 right-0 ${strong ? "h-24" : "h-12"} bg-gradient-to-b from-[#050505] to-transparent z-10 pointer-events-none`}
