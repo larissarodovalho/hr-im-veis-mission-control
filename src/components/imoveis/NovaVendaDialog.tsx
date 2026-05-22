@@ -15,9 +15,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   ORIGENS as ORIGENS_NEGOCIO,
   NIVEIS,
+  calculateCommissionPart,
+  calculateCommissionValue,
   getSplit,
+  getPercentTotal,
   DEFAULT_ORIGEM,
   DEFAULT_NIVEL,
+  type ComissaoSplit,
   type OrigemNegocio,
   type NivelCorretor,
 } from "@/lib/comissaoHR";
@@ -27,6 +31,12 @@ export type VendaRow = any;
 const STATUS = ["Pagamento pendente", "Finalizada", "Cancelada"] as const;
 const TIPOS = ["Venda", "Aluguel"] as const;
 const ORIGENS = ["Site", "Indicação", "Tráfego pago", "WhatsApp", "Portal", "Outra"];
+
+const splitFromForm = (f: any): ComissaoSplit => ({
+  captador: parseFloat(f.percent_captador) || 0,
+  vendedor: parseFloat(f.percent_vendedor) || 0,
+  hr: parseFloat(f.percent_hr) || 0,
+});
 
 export default function NovaVendaDialog({
   open,
@@ -164,8 +174,7 @@ export default function NovaVendaDialog({
         percent_hr: String(s.hr),
       };
       const n = parseFloat(f.valor_venda);
-      const soma = s.captador + s.vendedor + s.hr;
-      if (!isNaN(n)) next.valor_comissao = ((n * soma) / 100).toFixed(2);
+      if (!isNaN(n)) next.valor_comissao = calculateCommissionValue(n, s).toFixed(2);
       return next;
     });
   };
@@ -175,11 +184,7 @@ export default function NovaVendaDialog({
     const n = parseFloat(v);
     setForm((f: any) => {
       const next = { ...f, valor_venda: v };
-      const soma =
-        (parseFloat(f.percent_captador) || 0) +
-        (parseFloat(f.percent_vendedor) || 0) +
-        (parseFloat(f.percent_hr) || 0);
-      if (!isNaN(n)) next.valor_comissao = ((n * soma) / 100).toFixed(2);
+      if (!isNaN(n)) next.valor_comissao = calculateCommissionValue(n, splitFromForm(f)).toFixed(2);
       return next;
     });
   };
@@ -188,12 +193,8 @@ export default function NovaVendaDialog({
   const onPctPapel = (papel: "captador" | "vendedor" | "hr", v: string) => {
     setForm((f: any) => {
       const next = { ...f, [`percent_${papel}`]: v };
-      const soma =
-        (parseFloat(papel === "captador" ? v : f.percent_captador) || 0) +
-        (parseFloat(papel === "vendedor" ? v : f.percent_vendedor) || 0) +
-        (parseFloat(papel === "hr" ? v : f.percent_hr) || 0);
       const n = parseFloat(f.valor_venda);
-      if (!isNaN(n)) next.valor_comissao = ((n * soma) / 100).toFixed(2);
+      if (!isNaN(n)) next.valor_comissao = calculateCommissionValue(n, splitFromForm(next)).toFixed(2);
       return next;
     });
   };
@@ -240,7 +241,7 @@ export default function NovaVendaDialog({
       proposta_id: form.proposta_id || null,
       cliente_nome: form.cliente_nome,
       valor_venda: parseFloat(form.valor_venda) || 0,
-      valor_comissao: parseFloat(form.valor_comissao) || 0,
+      valor_comissao: calculateCommissionValue(parseFloat(form.valor_venda) || 0, splitFromForm(form)),
       percentual_comissao: form.percentual_comissao ? parseFloat(form.percentual_comissao) : null,
       percent_vendedor: parseFloat(form.percent_vendedor) || 0,
       percent_captador: parseFloat(form.percent_captador) || 0,
@@ -406,10 +407,11 @@ export default function NovaVendaDialog({
           </div>
           <div>
             <Label>Comissão R$ (auto)</Label>
-            <CurrencyInput value={form.valor_comissao} onChange={(v) => setForm({ ...form, valor_comissao: v })} />
+            <CurrencyInput value={form.valor_comissao} onChange={(v) => setForm({ ...form, valor_comissao: v })} readOnly />
           </div>
           {(() => {
-            const sum = (parseFloat(form.percent_vendedor) || 0) + (parseFloat(form.percent_captador) || 0) + (parseFloat(form.percent_hr) || 0);
+            const split = splitFromForm(form);
+            const sum = getPercentTotal(split);
             const vgv = parseFloat(form.valor_venda) || 0;
             const fmt = (n: number) => formatBRL(n, { dash: false });
             const matriz = getSplit(form.origem_negocio as OrigemNegocio, form.nivel_corretor as NivelCorretor);
@@ -449,24 +451,24 @@ export default function NovaVendaDialog({
                   <Label className="text-xs uppercase tracking-wide text-muted-foreground">Divisão da comissão (% do VGV)</Label>
                   <div className="flex items-center gap-2">
                     {foraDaTabela && <span className="text-[10px] text-amber-600">fora da tabela</span>}
-                    <span className="text-xs text-muted-foreground">Total: {sum.toFixed(2)}% ({fmt(vgv * sum / 100)})</span>
+                    <span className="text-xs text-muted-foreground">Total: {sum.toFixed(2)}% ({fmt(calculateCommissionValue(vgv, split))})</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div>
                     <Label className="text-xs">Captador</Label>
                     <Input type="number" step="0.1" value={form.percent_captador} onChange={(e) => onPctPapel("captador", e.target.value)} />
-                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(vgv * (parseFloat(form.percent_captador) || 0) / 100)}</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(calculateCommissionPart(vgv, split.captador))}</div>
                   </div>
                   <div>
                     <Label className="text-xs">Vendedor</Label>
                     <Input type="number" step="0.1" value={form.percent_vendedor} onChange={(e) => onPctPapel("vendedor", e.target.value)} />
-                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(vgv * (parseFloat(form.percent_vendedor) || 0) / 100)}</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(calculateCommissionPart(vgv, split.vendedor))}</div>
                   </div>
                   <div>
                     <Label className="text-xs">HR Imóveis</Label>
                     <Input type="number" step="0.1" value={form.percent_hr} onChange={(e) => onPctPapel("hr", e.target.value)} />
-                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(vgv * (parseFloat(form.percent_hr) || 0) / 100)}</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{fmt(calculateCommissionPart(vgv, split.hr))}</div>
                   </div>
                 </div>
               </div>

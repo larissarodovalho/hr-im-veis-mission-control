@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchableSelect from "@/components/SearchableSelect";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Download, TrendingUp, Coins, Building2, BarChart3 } from "lucide-react";
-import { ORIGENS, NIVEIS, origemLabel, nivelLabel, type OrigemNegocio, type NivelCorretor } from "@/lib/comissaoHR";
+import { ORIGENS, NIVEIS, calculateCommissionPart, calculateCommissionValue, origemLabel, nivelLabel, type OrigemNegocio, type NivelCorretor } from "@/lib/comissaoHR";
 import * as XLSX from "xlsx";
 
 type Venda = {
@@ -32,6 +32,13 @@ type Venda = {
 
 import { formatBRL } from "@/lib/format";
 const fmtBRL = (n: number) => formatBRL(n || 0, { dash: false });
+
+const getVendaComissaoTotal = (v: Venda) =>
+  calculateCommissionValue(v.valor_venda || 0, {
+    vendedor: v.percent_vendedor ?? 0,
+    captador: v.percent_captador ?? 0,
+    hr: v.percent_hr ?? 0,
+  });
 
 type Preset = "mes" | "trimestre" | "ano" | "custom";
 
@@ -108,10 +115,9 @@ export default function FaturamentoReport() {
     let vgv = 0, comissao = 0, hr = 0;
     filtered.forEach((v) => {
       const val = v.valor_venda || 0;
-      const com = v.valor_comissao || 0;
       vgv += val;
-      comissao += com;
-      hr += (v.valor_venda || 0) * ((v.percent_hr ?? 0) / 100);
+      comissao += getVendaComissaoTotal(v);
+      hr += calculateCommissionPart(val, v.percent_hr ?? 0);
     });
     return { vgv, comissao, hr, count: filtered.length };
   }, [filtered]);
@@ -136,17 +142,16 @@ export default function FaturamentoReport() {
     };
     filtered.forEach((v) => {
       const val = v.valor_venda || 0;
-      const com = v.valor_comissao || 0;
       if (v.corretor_vendedor_id && (papel === "todos" || papel === "vendedor")) {
         const r = ensure(v.corretor_vendedor_id);
         r.vgv_vendedor += val;
-        r.com_vendedor += val * ((v.percent_vendedor ?? 0) / 100);
+        r.com_vendedor += calculateCommissionPart(val, v.percent_vendedor ?? 0);
         r.vendas_vendedor++;
       }
       if (v.corretor_captador_id && (papel === "todos" || papel === "captador")) {
         const r = ensure(v.corretor_captador_id);
         r.vgv_captador += val;
-        r.com_captador += val * ((v.percent_captador ?? 0) / 100);
+        r.com_captador += calculateCommissionPart(val, v.percent_captador ?? 0);
         r.vendas_captador++;
       }
     });
@@ -165,15 +170,14 @@ export default function FaturamentoReport() {
       let b = buckets.get(key);
       if (!b) { b = { mes: key, Vendedor: 0, Captador: 0, HR: 0 }; buckets.set(key, b); }
       const val = v.valor_venda || 0;
-      const com = v.valor_comissao || 0;
       if (chartMode === "vgv") {
         if (v.corretor_vendedor_id) b.Vendedor += val;
         if (v.corretor_captador_id) b.Captador += val;
         b.HR += val; // a casa participa de toda venda
       } else {
-        b.Vendedor += val * ((v.percent_vendedor ?? 0) / 100);
-        b.Captador += val * ((v.percent_captador ?? 0) / 100);
-        b.HR += val * ((v.percent_hr ?? 0) / 100);
+        b.Vendedor += calculateCommissionPart(val, v.percent_vendedor ?? 0);
+        b.Captador += calculateCommissionPart(val, v.percent_captador ?? 0);
+        b.HR += calculateCommissionPart(val, v.percent_hr ?? 0);
       }
     });
     return [...buckets.values()].sort((a, b) => a.mes.localeCompare(b.mes));
