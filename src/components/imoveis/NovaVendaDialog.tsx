@@ -409,7 +409,7 @@ export default function NovaVendaDialog({
           {(() => {
             const sum = (parseFloat(form.percent_vendedor) || 0) + (parseFloat(form.percent_captador) || 0) + (parseFloat(form.percent_hr) || 0);
             const vgv = parseFloat(form.valor_venda) || 0;
-            const fmt = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+            const fmt = (n: number) => formatBRL(n, { dash: false });
             const matriz = getSplit(form.origem_negocio as OrigemNegocio, form.nivel_corretor as NivelCorretor);
             const foraDaTabela =
               Math.abs((parseFloat(form.percent_captador) || 0) - matriz.captador) > 0.001 ||

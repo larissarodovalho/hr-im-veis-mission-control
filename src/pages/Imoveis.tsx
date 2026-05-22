@@ -71,7 +71,7 @@ export default function Imoveis() {
     });
   }, []);
 
-  const fmt = (n: number | null | undefined) => n == null ? "—" : Number(n).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+  const fmt = (n: number | null | undefined) => formatBRL(n);
 
   const matchesSearch = (i: Imovel) =>
     !search ||

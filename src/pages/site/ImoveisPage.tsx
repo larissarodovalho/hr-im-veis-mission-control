@@ -59,8 +59,9 @@ function getImageForImovel(id: string, tipo: string): string {
   return casaImages[numId % casaImages.length];
 }
 
+import { formatBRL } from "@/lib/format";
 function formatPrice(valor: number) {
-  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+  return formatBRL(valor, { dash: false });
 }
 
 const TIPOS = ["Todos", "Casa", "Sobrado", "Apartamento"] as const;

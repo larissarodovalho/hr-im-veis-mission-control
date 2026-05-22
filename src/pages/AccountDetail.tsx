@@ -38,8 +38,8 @@ type Propriedade = {
 const OPERACOES = ["Compra", "Venda", "Permuta", "Co-corretagem", "Outro"];
 const APTIDOES = ["Agricultura", "Pecuária", "Mista", "Reflorestamento", "Outro"];
 
-const fmtMoney = (v: number | null) =>
-  v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+import { formatBRL } from "@/lib/format";
+const fmtMoney = (v: number | null) => formatBRL(v);
 
 export default function AccountDetail() {
   const { id } = useParams();

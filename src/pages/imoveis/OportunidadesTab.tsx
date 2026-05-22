@@ -27,7 +27,8 @@ const PRIO_COLORS: Record<string, string> = {
   baixa: "bg-slate-500/15 text-slate-500 border-slate-500/30",
 };
 
-const fmt = (n: number | null | undefined) => n == null ? "—" : Number(n).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+import { formatBRL } from "@/lib/format";
+const fmt = (n: number | null | undefined) => formatBRL(n);
 
 function OportunidadeCard({ op, clienteNome, corretorNome, qtdImoveis, onClick }: { op: Oportunidade; clienteNome: string; corretorNome: string; qtdImoveis: number; onClick: () => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: op.id });

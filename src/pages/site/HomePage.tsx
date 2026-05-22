@@ -18,8 +18,9 @@ import { ScrollSection, ParallaxImage } from "@/components/site/MotionSections";
 
 const propertyImages = [property1, property2, property3];
 
+import { formatBRL } from "@/lib/format";
 function formatPrice(valor: number) {
-  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+  return formatBRL(valor, { dash: false });
 }
 
 const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];

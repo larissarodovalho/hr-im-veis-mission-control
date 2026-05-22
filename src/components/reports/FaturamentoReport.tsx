@@ -30,8 +30,8 @@ type Venda = {
   nivel_corretor: string | null;
 };
 
-const fmtBRL = (n: number) =>
-  (n || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+import { formatBRL } from "@/lib/format";
+const fmtBRL = (n: number) => formatBRL(n || 0, { dash: false });
 
 type Preset = "mes" | "trimestre" | "ano" | "custom";
 
