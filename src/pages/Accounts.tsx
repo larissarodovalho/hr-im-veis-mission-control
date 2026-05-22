@@ -296,47 +296,106 @@ export default function Accounts() {
     0
   );
 
-  const buildExportRows = () => {
+  type ColKey =
+    | "nome" | "telefone" | "email" | "documento" | "responsavel" | "tipo" | "status" | "criado_em"
+    | "interesse" | "temperatura" | "tags" | "ramo" | "etapa" | "observacoes" | "endereco"
+    | "valor_negocio" | "valor_comissao";
+  const COLUMNS: { key: ColKey; label: string; default?: boolean }[] = [
+    { key: "nome", label: "Nome", default: true },
+    { key: "telefone", label: "Telefone", default: true },
+    { key: "email", label: "Email", default: true },
+    { key: "documento", label: "CPF/CNPJ", default: true },
+    { key: "responsavel", label: "Responsável", default: true },
+    { key: "tipo", label: "Tipo", default: true },
+    { key: "status", label: "Status", default: true },
+    { key: "criado_em", label: "Criado em", default: true },
+    { key: "interesse", label: "Interesse" },
+    { key: "temperatura", label: "Temperatura" },
+    { key: "tags", label: "Tags" },
+    { key: "ramo", label: "Ramo de atividade" },
+    { key: "etapa", label: "Etapa do funil" },
+    { key: "observacoes", label: "Observações" },
+    { key: "endereco", label: "Endereço" },
+    { key: "valor_negocio", label: "Valor total negócios" },
+    { key: "valor_comissao", label: "Valor total comissão" },
+  ];
+  const COLS_KEY = "contas:export:cols";
+  const FMT_KEY = "contas:export:format";
+  const [exportCols, setExportCols] = useState<ColKey[]>(() => {
+    try {
+      const raw = localStorage.getItem(COLS_KEY);
+      if (raw) return JSON.parse(raw) as ColKey[];
+    } catch {}
+    return COLUMNS.filter((c) => c.default).map((c) => c.key);
+  });
+  const [exportFormat, setExportFormat] = useState<"xlsx" | "csv">(() => {
+    try { return (localStorage.getItem(FMT_KEY) as any) || "xlsx"; } catch { return "xlsx"; }
+  });
+  const toggleExportCol = (k: ColKey) =>
+    setExportCols((cur) => (cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k]));
+
+  const buildExportRows = (cols: ColKey[]) => {
     return filtered.map((a) => {
       const status = (a.status ?? "ativo") as Status;
-      return {
-        Nome: a.nome,
-        Telefone: a.telefone ?? "",
-        Email: a.email ?? "",
-        "CPF/CNPJ": a.documento ? formatDoc(a.documento, a.tipo) : "",
-        Proprietário: a.responsavel_id ? (ownerMap[a.responsavel_id] ?? "") : "",
-        Tipo: a.is_partner ? "Parceiro" : "Cliente",
-        Status: status === "ativo" ? "Ativo" : "Inativo",
-        "Criado em": format(new Date(a.created_at), "dd/MM/yyyy", { locale: ptBR }),
+      const accProps = propsByAccount[a.id] ?? [];
+      const totalNeg = accProps.reduce((s, p) => s + (p.valor_negocio ?? 0), 0);
+      const totalCom = accProps.reduce((s, p) => s + (p.valor_comissao ?? 0), 0);
+      const full: Record<ColKey, any> = {
+        nome: a.nome,
+        telefone: a.telefone ?? "",
+        email: a.email ?? "",
+        documento: a.documento ? formatDoc(a.documento, a.tipo) : "",
+        responsavel: a.responsavel_id ? (ownerMap[a.responsavel_id] ?? "") : "",
+        tipo: a.is_partner ? "Parceiro" : "Cliente",
+        status: status === "ativo" ? "Ativo" : "Inativo",
+        criado_em: format(new Date(a.created_at), "dd/MM/yyyy", { locale: ptBR }),
+        interesse: a.interesse ?? "",
+        temperatura: tempInfo(a.temperatura)?.label ?? "",
+        tags: (a.tags ?? []).join(", "),
+        ramo: a.ramo_atividade ?? "",
+        etapa: a.etapa_funil ?? "",
+        observacoes: a.observacoes ?? "",
+        endereco: (a as any).endereco ?? "",
+        valor_negocio: totalNeg || "",
+        valor_comissao: totalCom || "",
       };
+      const out: Record<string, any> = {};
+      cols.forEach((k) => {
+        const label = COLUMNS.find((c) => c.key === k)?.label ?? k;
+        out[label] = full[k];
+      });
+      return out;
     });
   };
 
-  const exportXlsx = () => {
+  const runExport = () => {
     if (!filtered.length) return toast.error("Nenhuma conta para exportar");
-    const rows = buildExportRows();
+    if (!exportCols.length) return toast.error("Selecione ao menos uma coluna");
+    try { localStorage.setItem(COLS_KEY, JSON.stringify(exportCols)); } catch {}
+    try { localStorage.setItem(FMT_KEY, exportFormat); } catch {}
+    const rows = buildExportRows(exportCols);
     const ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = Array(Object.keys(rows[0] || {}).length).fill({ wch: 18 });
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Contas");
-    XLSX.writeFile(wb, `contas-${format(new Date(), "yyyy-MM-dd")}.xlsx`);
-    toast.success("Arquivo Excel gerado");
+    ws["!cols"] = Array(Object.keys(rows[0] || {}).length).fill({ wch: 20 });
+    if (exportFormat === "xlsx") {
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Contas");
+      XLSX.writeFile(wb, `contas-${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+      toast.success("Arquivo Excel gerado");
+    } else {
+      const csv = XLSX.utils.sheet_to_csv(ws, { FS: ";" });
+      const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `contas-${format(new Date(), "yyyy-MM-dd")}.csv`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Arquivo CSV gerado");
+    }
+    setExportOpen(false);
   };
 
-  const exportCsv = () => {
-    if (!filtered.length) return toast.error("Nenhuma conta para exportar");
-    const rows = buildExportRows();
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const csv = XLSX.utils.sheet_to_csv(ws, { FS: ";" });
-    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `contas-${format(new Date(), "yyyy-MM-dd")}.csv`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success("Arquivo CSV gerado");
-  };
+
 
   const changeOwner = async (id: string, userId: string | null) => {
     const prev = accounts;
