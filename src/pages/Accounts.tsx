@@ -590,6 +590,60 @@ export default function Accounts() {
       <NovaContaDialog open={novaOpen} onOpenChange={setNovaOpen} onCreated={load} defaultTags={lista === "todos" ? [] : [lista]} />
       <ImportarContasDialog open={importOpen} onOpenChange={setImportOpen} onImported={load} defaultTags={lista === "todos" ? [] : [lista]} />
 
+      <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Exportar relatório</DialogTitle>
+            <DialogDescription>
+              Escolha as colunas que devem aparecer no arquivo. Serão exportadas <strong>{filtered.length}</strong> contas (resultado atual dos filtros).
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">Colunas ({exportCols.length})</span>
+                <div className="flex gap-2 text-xs">
+                  <button className="text-primary hover:underline" onClick={() => setExportCols(COLUMNS.map((c) => c.key))}>Todas</button>
+                  <button className="text-muted-foreground hover:underline" onClick={() => setExportCols(COLUMNS.filter((c) => c.default).map((c) => c.key))}>Padrão</button>
+                  <button className="text-muted-foreground hover:underline" onClick={() => setExportCols([])}>Nenhuma</button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto border rounded-md p-3">
+                {COLUMNS.map((c) => (
+                  <label key={c.key} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <Checkbox
+                      checked={exportCols.includes(c.key)}
+                      onCheckedChange={() => toggleExportCol(c.key)}
+                    />
+                    {c.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Formato</Label>
+              <RadioGroup value={exportFormat} onValueChange={(v: any) => setExportFormat(v)} className="flex gap-4">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <RadioGroupItem value="xlsx" /> Excel (.xlsx)
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <RadioGroupItem value="csv" /> CSV
+                </label>
+              </RadioGroup>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExportOpen(false)}>Cancelar</Button>
+            <Button onClick={runExport} disabled={!exportCols.length || !filtered.length}>
+              <Download className="h-4 w-4 mr-1" /> Baixar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {view === "kanban" && lista !== "todos" ? (
         loading ? (
           <Card className="p-6 text-center text-muted-foreground hidden md:block">Carregando…</Card>
