@@ -1,11 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Mail, Download, Search } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Mail, Download, Search, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -20,9 +31,13 @@ type Subscriber = {
 };
 
 export default function Newsletter() {
+  const { isAdmin, isGestor } = useAuth();
+  const canDelete = isAdmin || isGestor;
   const [items, setItems] = useState<Subscriber[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [toDelete, setToDelete] = useState<Subscriber | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -53,6 +68,23 @@ export default function Newsletter() {
         (i.telefone ?? "").toLowerCase().includes(q),
     );
   }, [items, query]);
+
+  const handleDelete = async () => {
+    if (!toDelete) return;
+    setDeleting(true);
+    const { error } = await supabase
+      .from("newsletter_subscribers")
+      .delete()
+      .eq("id", toDelete.id);
+    setDeleting(false);
+    if (error) {
+      toast.error("Erro ao remover: " + error.message);
+      return;
+    }
+    toast.success("Inscrito removido");
+    setItems((prev) => prev.filter((i) => i.id !== toDelete.id));
+    setToDelete(null);
+  };
 
   const exportCsv = () => {
     const header = ["Nome", "Email", "Telefone", "Status", "Data de inscrição"];
@@ -135,18 +167,19 @@ export default function Newsletter() {
               <TableHead>Telefone</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Inscrição</TableHead>
+              {canDelete && <TableHead className="w-16 text-right">Ações</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={canDelete ? 6 : 5} className="text-center text-muted-foreground py-8">
                   Carregando...
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={canDelete ? 6 : 5} className="text-center text-muted-foreground py-8">
                   Nenhum inscrito encontrado.
                 </TableCell>
               </TableRow>
@@ -164,12 +197,48 @@ export default function Newsletter() {
                   <TableCell className="text-sm text-muted-foreground">
                     {format(new Date(i.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                   </TableCell>
+                  {canDelete && (
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setToDelete(i)}
+                        aria-label={`Remover ${i.email}`}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
       </Card>
+
+      <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover inscrito?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {toDelete?.email} será removido da newsletter. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Removendo..." : "Remover"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
