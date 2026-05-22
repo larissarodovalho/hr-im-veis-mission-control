@@ -187,6 +187,38 @@ function ContaCard({
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
               )}
+
+              {onChangeTemperatura && (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>Temperatura</DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent className="w-48">
+                      <DropdownMenuItem onSelect={() => onChangeTemperatura(a.id, null)}>
+                        {!a.temperatura ? (
+                          <Check className="h-3.5 w-3.5 mr-2" />
+                        ) : (
+                          <Thermometer className="h-3.5 w-3.5 mr-2" />
+                        )}
+                        Sem temperatura
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {TEMPERATURAS.map((t) => (
+                        <DropdownMenuItem
+                          key={t.id}
+                          onSelect={() => onChangeTemperatura(a.id, t.id)}
+                        >
+                          {a.temperatura === t.id ? (
+                            <Check className="h-3.5 w-3.5 mr-2" />
+                          ) : (
+                            <span className="w-3.5 mr-2" />
+                          )}
+                          {t.emoji} {t.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
