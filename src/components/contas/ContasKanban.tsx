@@ -311,6 +311,7 @@ export default function ContasKanban({ accounts, propsByAccount, onMoveStage, on
                     owners={owners}
                     onMoveStage={onMoveStage}
                     onChangeOwner={onChangeOwner}
+                    onChangeTemperatura={onChangeTemperatura}
                   />
                 );
               })}
