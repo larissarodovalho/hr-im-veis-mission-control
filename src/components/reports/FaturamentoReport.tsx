@@ -170,15 +170,14 @@ export default function FaturamentoReport() {
       let b = buckets.get(key);
       if (!b) { b = { mes: key, Vendedor: 0, Captador: 0, HR: 0 }; buckets.set(key, b); }
       const val = v.valor_venda || 0;
-      const com = v.valor_comissao || 0;
       if (chartMode === "vgv") {
         if (v.corretor_vendedor_id) b.Vendedor += val;
         if (v.corretor_captador_id) b.Captador += val;
         b.HR += val; // a casa participa de toda venda
       } else {
-        b.Vendedor += val * ((v.percent_vendedor ?? 0) / 100);
-        b.Captador += val * ((v.percent_captador ?? 0) / 100);
-        b.HR += val * ((v.percent_hr ?? 0) / 100);
+        b.Vendedor += calculateCommissionPart(val, v.percent_vendedor ?? 0);
+        b.Captador += calculateCommissionPart(val, v.percent_captador ?? 0);
+        b.HR += calculateCommissionPart(val, v.percent_hr ?? 0);
       }
     });
     return [...buckets.values()].sort((a, b) => a.mes.localeCompare(b.mes));
