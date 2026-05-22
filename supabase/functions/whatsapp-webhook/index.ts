@@ -933,19 +933,17 @@ Deno.serve(async (req) => {
     let reply = sanitizeReply(result.text || "");
 
     if (!reply && !bookingKind && !immediateKind) {
-      // Rede de segurança: se a última mensagem da Sofia já foi a saudação do Passo 1,
-      // não repete — pede pra reconfirmar o nome de outra forma.
       const lastWasGreeting = /sou a sofia.*hr im[óo]veis.*nome e sobrenome/i.test(lastAssistantMsg);
       if (!hasName && lastWasGreeting) {
-        reply = "Desculpa, não entendi direito. Pode me confirmar seu nome completo (nome e sobrenome)?";
+        reply = "Desculpa, não entendi direito. Pode me confirmar seu **nome e sobrenome**?";
       } else if (!hasName) {
-        reply = "Olá! Sou a Sofia, da HR Imóveis. É um prazer falar com você! Para que eu possa te atender da melhor forma, pode me dizer seu nome e sobrenome?";
+        reply = "Olá! Eu sou a **Sofia**, assistente virtual da **HR Imóveis**. Estou aqui para fazer um **pré-atendimento rápido**, entender seu interesse e agilizar o processo para que um corretor consiga te atender da melhor forma.\n\nPara começar, pode me informar seu **nome e sobrenome**, por favor?";
       } else if (!hasInterest) {
-        reply = `Prazer, ${firstName}! E me diz: você quer comprar, vender, alugar, incorporar, ou está em busca de algum investimento de ocasião?`;
+        reply = `Prazer, ${firstName}! Para agilizar seu atendimento com um corretor, vou fazer um **pré-atendimento rápido**.\n\nEscolha uma das opções abaixo:\n\n1️⃣ **Comprar um imóvel**\n2️⃣ **Vender um imóvel**\n3️⃣ **Imóvel de alto padrão**\n4️⃣ **Investir em imóveis urbanos**\n5️⃣ **Parceria com a HR Imóveis**\n6️⃣ **Saber mais sobre o imóvel anunciado**\n\nPode digitar o número da opção ou escrever o que você procura.`;
       } else if (!alreadyNotified && !alreadyBooked) {
-        reply = `Perfeito, ${firstName}! Posso te conectar com nosso corretor especialista. Você prefere agendar uma conversa (videochamada, presencial, ligação ou WhatsApp) ou falar agora mesmo com ele?`;
+        reply = `Perfeito, ${firstName}! Com essas informações, já consigo agilizar seu atendimento com um corretor da **HR Imóveis**. Como prefere seguir?\n\n1️⃣ **Ligação**\n2️⃣ **Reunião presencial**\n3️⃣ **Videochamada**\n4️⃣ **WhatsApp**\n\nPode digitar o número da opção.`;
       } else {
-        reply = `Combinado, ${firstName}! Em que mais posso te ajudar?`;
+        reply = `Perfeito, ${firstName}! Obrigada pelo contato. Um corretor da **HR Imóveis** entrará em contato em breve para confirmar os detalhes. 👋`;
       }
     }
 
