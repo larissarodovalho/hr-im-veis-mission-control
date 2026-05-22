@@ -1017,12 +1017,12 @@ Deno.serve(async (req) => {
         reply = `Claro${firstName ? `, ${firstName}` : ""}! Aqui está o link de novo:`;
       } else if (!reply) {
         const BOOKING_INSTRUCTIONS: Record<string, string> = {
-          presencial: "Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para você vir até o nosso escritório conversar pessoalmente com o Hans.",
-          videochamada: "Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para sua videochamada com o Hans. No horário marcado você recebe o link da chamada.",
-          ligacao: "Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para o Hans te ligar.",
-          whatsapp: "Vou te enviar agora um link. Quando clicar, é só escolher o melhor dia e horário para o Hans te chamar aqui no WhatsApp.",
+          presencial: "Você pode escolher o melhor dia e horário para a **reunião presencial** com um corretor da **HR Imóveis** pelo link abaixo.",
+          videochamada: "Você pode escolher o melhor dia e horário para a **videochamada** com um corretor da **HR Imóveis** pelo link abaixo. No horário marcado você recebe o link da chamada.",
+          ligacao: "Você pode escolher o melhor dia e horário para um corretor da **HR Imóveis** te ligar pelo link abaixo.",
+          whatsapp: "Você pode escolher o melhor dia e horário para um corretor da **HR Imóveis** te chamar pelo WhatsApp pelo link abaixo.",
         };
-        reply = `Perfeito! ${BOOKING_INSTRUCTIONS[bookingKind] ?? "Clique no link abaixo e escolha o melhor dia e horário para sua reunião com o Hans."}`;
+        reply = `Ótimo${firstName ? `, ${firstName}` : ""}! Já registrei seu pré-atendimento. ${BOOKING_INSTRUCTIONS[bookingKind] ?? "Escolha o melhor dia e horário pelo link abaixo."}\n\nDepois do agendamento, um corretor da **HR Imóveis** entrará em contato para dar continuidade e confirmar os detalhes.`;
       }
       // Link sempre em linha separada e sem nada após, para o WhatsApp gerar preview corretamente
       reply = `${reply.trim()}\n\n${link}`;
