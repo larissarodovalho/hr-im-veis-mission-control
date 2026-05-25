@@ -427,7 +427,96 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
               </div>
             )}
           </section>
-        </div>
+          </TabsContent>
+
+          <TabsContent value="documentos" className="pt-4">
+            {imovel?.id ? (
+              <ImovelDocumentosTab imovelId={imovel.id} />
+            ) : (
+              <p className="text-sm text-muted-foreground">Salve o imóvel para anexar documentos.</p>
+            )}
+          </TabsContent>
+
+          <TabsContent value="exclusividade" className="pt-4 space-y-4">
+            {(() => {
+              const status = calcExclusividade(form.exclusividade_fim);
+              if (status.kind === "none") {
+                return (
+                  <div className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
+                    Nenhum período de exclusividade definido.
+                  </div>
+                );
+              }
+              if (status.kind === "ativa") {
+                const cls = status.alerta
+                  ? "bg-yellow-500/10 border-yellow-500/40 text-yellow-700 dark:text-yellow-300"
+                  : "bg-emerald-500/10 border-emerald-500/40 text-emerald-700 dark:text-emerald-300";
+                return (
+                  <div className={`rounded-lg border p-3 text-sm font-medium ${cls}`}>
+                    Exclusividade ativa — vence em {status.diasRestantes} dia(s) ({formatDate(form.exclusividade_fim)})
+                  </div>
+                );
+              }
+              return (
+                <div className="rounded-lg border border-destructive/40 bg-destructive/10 text-destructive p-3 text-sm font-medium">
+                  Exclusividade vencida há {status.diasAtras} dia(s) ({formatDate(form.exclusividade_fim)})
+                </div>
+              );
+            })()}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Data de início</Label>
+                <Input
+                  type="date"
+                  value={form.exclusividade_inicio}
+                  onChange={(e) => upd("exclusividade_inicio", e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Data de vencimento</Label>
+                <Input
+                  type="date"
+                  value={form.exclusividade_fim}
+                  onChange={(e) => upd("exclusividade_fim", e.target.value)}
+                />
+              </div>
+            </div>
+
+            {form.exclusividade_inicio && form.exclusividade_fim &&
+              form.exclusividade_fim < form.exclusividade_inicio && (
+                <p className="text-xs text-destructive">
+                  A data de vencimento deve ser posterior à data de início.
+                </p>
+              )}
+
+            <div>
+              <Label>Observações</Label>
+              <Textarea
+                rows={3}
+                value={form.exclusividade_observacoes}
+                onChange={(e) => upd("exclusividade_observacoes", e.target.value)}
+                placeholder="Ex.: contrato assinado, condições especiais..."
+              />
+            </div>
+
+            {(form.exclusividade_inicio || form.exclusividade_fim) && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  upd("exclusividade_inicio", "");
+                  upd("exclusividade_fim", "");
+                  upd("exclusividade_observacoes", "");
+                }}
+              >
+                Limpar exclusividade
+              </Button>
+            )}
+          </TabsContent>
+        </Tabs>
+
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
