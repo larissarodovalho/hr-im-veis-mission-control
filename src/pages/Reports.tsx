@@ -74,6 +74,7 @@ export default function Reports() {
       <Tabs defaultValue="performance" className="w-full">
         <TabsList>
           <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="imoveis">Imóveis</TabsTrigger>
           <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
         </TabsList>
 
