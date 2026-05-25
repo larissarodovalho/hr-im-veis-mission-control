@@ -7,12 +7,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload, X, Trash2, Droplet } from "lucide-react";
+import { Loader2, Upload, X, Trash2, Droplet, FileText, ShieldCheck } from "lucide-react";
 import { applyWatermark } from "@/lib/watermark";
 import ResponsavelProprietarioSection from "./ResponsavelProprietarioSection";
+import ImovelDocumentosTab from "./ImovelDocumentosTab";
+import { calcExclusividade, formatDate } from "@/lib/exclusividade";
 import { TIPOS_IMOVEL, FINALIDADES, STATUS_OPTIONS, CARACTERISTICAS } from "./NovoImovelDialog";
+
 
 interface Props {
   open: boolean;
