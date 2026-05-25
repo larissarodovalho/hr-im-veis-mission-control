@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
 import FunilContasReport from "@/components/reports/FunilContasReport";
 import FaturamentoReport from "@/components/reports/FaturamentoReport";
+import ImoveisReport from "@/components/reports/ImoveisReport";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Reports() {
@@ -73,6 +74,7 @@ export default function Reports() {
       <Tabs defaultValue="performance" className="w-full">
         <TabsList>
           <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="imoveis">Imóveis</TabsTrigger>
           <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
         </TabsList>
 
@@ -117,6 +119,10 @@ export default function Reports() {
               </Table>
             )}
           </Card>
+        </TabsContent>
+
+        <TabsContent value="imoveis" className="mt-4">
+          <ImoveisReport />
         </TabsContent>
 
         <TabsContent value="faturamento" className="mt-4">
