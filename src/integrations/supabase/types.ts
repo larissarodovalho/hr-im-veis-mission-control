@@ -362,9 +362,12 @@ export type Database = {
           created_by: string | null
           data_agendada: string | null
           estagio: string
+          google_owner_user_id: string | null
           id: string
           imovel_id: string | null
           observacoes: string | null
+          origem: string
+          publicado_no_crm: boolean
           responsavel_id: string | null
           updated_at: string
         }
@@ -376,9 +379,12 @@ export type Database = {
           created_by?: string | null
           data_agendada?: string | null
           estagio?: string
+          google_owner_user_id?: string | null
           id?: string
           imovel_id?: string | null
           observacoes?: string | null
+          origem?: string
+          publicado_no_crm?: boolean
           responsavel_id?: string | null
           updated_at?: string
         }
@@ -390,9 +396,12 @@ export type Database = {
           created_by?: string | null
           data_agendada?: string | null
           estagio?: string
+          google_owner_user_id?: string | null
           id?: string
           imovel_id?: string | null
           observacoes?: string | null
+          origem?: string
+          publicado_no_crm?: boolean
           responsavel_id?: string | null
           updated_at?: string
         }
@@ -992,6 +1001,42 @@ export type Database = {
         }
         Relationships: []
       }
+      google_calendar_sync: {
+        Row: {
+          created_at: string
+          entity_id: string
+          entity_type: string
+          etag: string | null
+          google_event_id: string
+          html_link: string | null
+          id: string
+          last_synced_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          etag?: string | null
+          google_event_id: string
+          html_link?: string | null
+          id?: string
+          last_synced_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          etag?: string | null
+          google_event_id?: string
+          html_link?: string | null
+          id?: string
+          last_synced_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       imoveis: {
         Row: {
           area_construida: number | null
@@ -1299,10 +1344,13 @@ export type Database = {
           created_by: string | null
           data: string
           duracao_seg: number | null
+          google_owner_user_id: string | null
           gravacao_url: string | null
           id: string
           lead_id: string | null
           notas: string | null
+          origem: string
+          publicado_no_crm: boolean
           resultado: string | null
         }
         Insert: {
@@ -1312,10 +1360,13 @@ export type Database = {
           created_by?: string | null
           data?: string
           duracao_seg?: number | null
+          google_owner_user_id?: string | null
           gravacao_url?: string | null
           id?: string
           lead_id?: string | null
           notas?: string | null
+          origem?: string
+          publicado_no_crm?: boolean
           resultado?: string | null
         }
         Update: {
@@ -1325,10 +1376,13 @@ export type Database = {
           created_by?: string | null
           data?: string
           duracao_seg?: number | null
+          google_owner_user_id?: string | null
           gravacao_url?: string | null
           id?: string
           lead_id?: string | null
           notas?: string | null
+          origem?: string
+          publicado_no_crm?: boolean
           resultado?: string | null
         }
         Relationships: []
@@ -1703,12 +1757,15 @@ export type Database = {
           created_by: string | null
           criado_por_ia: boolean
           duracao_min: number
+          google_owner_user_id: string | null
           id: string
           imovel_id: string | null
           lead_id: string | null
           link: string | null
           local: string | null
           notas: string | null
+          origem: string
+          publicado_no_crm: boolean
           status: string
           tipo: string
           titulo: string | null
@@ -1722,12 +1779,15 @@ export type Database = {
           created_by?: string | null
           criado_por_ia?: boolean
           duracao_min?: number
+          google_owner_user_id?: string | null
           id?: string
           imovel_id?: string | null
           lead_id?: string | null
           link?: string | null
           local?: string | null
           notas?: string | null
+          origem?: string
+          publicado_no_crm?: boolean
           status?: string
           tipo?: string
           titulo?: string | null
@@ -1741,12 +1801,15 @@ export type Database = {
           created_by?: string | null
           criado_por_ia?: boolean
           duracao_min?: number
+          google_owner_user_id?: string | null
           id?: string
           imovel_id?: string | null
           lead_id?: string | null
           link?: string | null
           local?: string | null
           notas?: string | null
+          origem?: string
+          publicado_no_crm?: boolean
           status?: string
           tipo?: string
           titulo?: string | null
@@ -2056,6 +2119,57 @@ export type Database = {
           },
         ]
       }
+      user_google_calendar: {
+        Row: {
+          access_token: string
+          calendar_id: string
+          connected_at: string
+          created_at: string
+          google_email: string
+          id: string
+          last_sync_at: string | null
+          last_sync_error: string | null
+          refresh_token: string
+          scope: string | null
+          sync_token: string | null
+          token_expires_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          calendar_id?: string
+          connected_at?: string
+          created_at?: string
+          google_email: string
+          id?: string
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          refresh_token: string
+          scope?: string | null
+          sync_token?: string | null
+          token_expires_at: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          calendar_id?: string
+          connected_at?: string
+          created_at?: string
+          google_email?: string
+          id?: string
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          refresh_token?: string
+          scope?: string | null
+          sync_token?: string | null
+          token_expires_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -2210,10 +2324,13 @@ export type Database = {
           created_at: string
           created_by: string | null
           data_visita: string
+          google_owner_user_id: string | null
           id: string
           imovel_id: string | null
           lead_id: string | null
           observacoes: string | null
+          origem: string
+          publicado_no_crm: boolean
           status: string
           updated_at: string
         }
@@ -2223,10 +2340,13 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_visita: string
+          google_owner_user_id?: string | null
           id?: string
           imovel_id?: string | null
           lead_id?: string | null
           observacoes?: string | null
+          origem?: string
+          publicado_no_crm?: boolean
           status?: string
           updated_at?: string
         }
@@ -2236,10 +2356,13 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_visita?: string
+          google_owner_user_id?: string | null
           id?: string
           imovel_id?: string | null
           lead_id?: string | null
           observacoes?: string | null
+          origem?: string
+          publicado_no_crm?: boolean
           status?: string
           updated_at?: string
         }
