@@ -29,7 +29,7 @@ export default function ResponsavelProprietarioSection({
   const [openNovaConta, setOpenNovaConta] = useState(false);
 
   const loadContas = () =>
-    supabase.from("contas").select("id,nome,documento,telefone").order("nome").then(({ data }) => setContas(data ?? []));
+    supabase.from("contas").select("id,nome,documento,telefone").order("nome").range(0, 1999).then(({ data }) => setContas(data ?? []));
 
   useEffect(() => {
     supabase.from("profiles").select("user_id,nome").eq("ativo", true).order("nome")
@@ -38,6 +38,17 @@ export default function ResponsavelProprietarioSection({
     supabase.from("corretores_parceiros").select("id,nome").eq("ativo", true).order("nome")
       .then(({ data }) => setParceiros((data ?? []) as any));
   }, []);
+
+  // Garantir que o proprietário selecionado esteja sempre presente na lista,
+  // mesmo se cair fora do range carregado.
+  useEffect(() => {
+    if (!proprietarioId) return;
+    if (contas.some((c) => c.id === proprietarioId)) return;
+    supabase.from("contas").select("id,nome,documento,telefone").eq("id", proprietarioId).maybeSingle()
+      .then(({ data }) => {
+        if (data) setContas((prev) => (prev.some((c) => c.id === data.id) ? prev : [...prev, data as any]));
+      });
+  }, [proprietarioId, contas]);
 
   const contaOptions = contas.map((c) => ({ id: c.id, nome: c.documento ? `${c.nome} · ${c.documento}` : c.nome }));
   const parceiroOptions = parceiros.map((p) => ({ id: p.id, nome: p.nome }));

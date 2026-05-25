@@ -1,21 +1,20 @@
-# Plano — Opção A: Aceitar finding de Realtime
+## Problema
 
-## O que será feito
+O dialog "Editar imóvel" mostra "Sem proprietário" mesmo quando o imóvel tem `proprietario_id` salvo. Na listagem da aba Imóveis o nome aparece normalmente.
 
-1. **Marcar finding como ignorado** (`realtime_channel_topic_not_scoped`) com justificativa técnica:
-   > Todos os 22 canais Realtime do projeto usam `postgres_changes` (não Broadcast). O Postgres reaplica RLS de cada tabela base antes de entregar eventos ao cliente, então os dados já são protegidos no nível da tabela (signed_documents, document_signers, whatsapp_messages, leads, contas, etc). A policy ampla em `realtime.messages` apenas permite a inscrição no canal — não vaza dados que o usuário já não possa ler.
+**Causa:** a tabela `contas` tem 1.358 registros e o Supabase corta em 1.000 por padrão. O `ResponsavelProprietarioSection` busca `contas` ordenadas por nome — contas no fim do alfabeto ficam fora. Quando o `proprietario_id` salvo não está na lista, o `SearchableSelect` exibe o `emptyLabel` ("Sem proprietário").
 
-2. **Atualizar `@security-memory`** registrando:
-   - Arquitetura: todos os canais Realtime usam `postgres_changes` + RLS na tabela base.
-   - Decisão aceita: não exigir scoping por tópico em `realtime.messages` enquanto não houver uso de Broadcast.
-   - Regra futura: se algum dia introduzirmos `broadcast` ou `presence`, refatorar nomes de canais para incluir IDs e criar policy com regex.
+## Mudanças
 
-## O que NÃO será feito
+Apenas em `src/components/imoveis/ResponsavelProprietarioSection.tsx`:
 
-- Nenhuma alteração de código (frontend ou backend).
-- Nenhuma migração SQL.
-- Nenhum canal Realtime será renomeado.
+1. Após carregar a lista (`loadContas`), verificar se o `proprietarioId` atual já está presente.
+2. Se não estiver, fazer uma busca pontual pelo id e mesclar essa conta no estado `contas`.
+3. Repetir o mesmo check sempre que `proprietarioId` mudar (via `useEffect` dependente).
+4. Como salvaguarda, aumentar o `range` da listagem principal para `0..1999` para cobrir a base atual (1.358 contas) sem mudar o comportamento de busca do `SearchableSelect`.
 
-## Risco
+Sem mudanças de banco, sem mudanças no Imoveis.tsx, sem alterar `NovoImovelDialog`.
 
-Zero risco de regressão. Apenas metadados de segurança e documentação.
+## Resultado esperado
+
+Ao abrir o editor, o proprietário salvo aparece selecionado e com nome/telefone visíveis abaixo do campo, independentemente da posição alfabética da conta.
