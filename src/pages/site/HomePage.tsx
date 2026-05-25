@@ -296,11 +296,11 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.1 }}
                 transition={{ duration: 1, delay: i * 0.15, ease }}
-                className="hr-card-safety"
+                className="hr-card-safety h-full"
               >
                 <Link
                   to={`/imovel/${imovel.id}`}
-                  className="group block bg-[#050505] hover:bg-white/[0.02] transition-all duration-700"
+                  className="group flex flex-col h-full bg-[#050505] hover:bg-white/[0.02] transition-all duration-700"
                 >
                   <div className="aspect-[4/3] overflow-hidden">
                     <motion.img
@@ -312,7 +312,7 @@ export default function HomePage() {
                       loading="lazy"
                     />
                   </div>
-                  <div className="p-8 sm:p-10">
+                  <div className="p-8 sm:p-10 flex flex-col flex-1">
                     <div className="flex items-center justify-between mb-5">
                       <span className="text-[10px] uppercase tracking-[0.4em] text-white/45 font-light">{imovel.tipo}</span>
                       <ArrowUpRight className="h-3.5 w-3.5 text-white/50 group-hover:text-amber-300/50 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-500" />
@@ -323,10 +323,11 @@ export default function HomePage() {
                     <p className="flex items-center gap-1.5 text-[11px] text-white/45 mb-6 font-light tracking-[0.15em]">
                       <MapPin className="h-2.5 w-2.5" /> {imovel.cidade || "Sinop, MT"}
                     </p>
-                    <p className="text-xl font-extralight text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 tracking-wide">
+                    <p className="mt-auto text-xl font-extralight text-transparent bg-clip-text bg-gradient-to-r from-amber-200/80 to-amber-100/60 tracking-wide">
                       {formatPrice(imovel.valor || 0)}
                     </p>
                   </div>
+
                 </Link>
               </motion.div>
             ))}
