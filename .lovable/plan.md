@@ -1,65 +1,78 @@
-# Funil de Captação de Imóveis
+# Relatório de Imóveis
 
-Criar um novo funil Kanban dentro da aba **Imóveis** chamado **"Captação"**, que recebe automaticamente os clientes movidos para a etapa **Captação/Imóvel** do funil de Contas. O marketing (e corretores/gestores) acompanha a captação até a publicação do imóvel no sistema.
+Adicionar uma nova subaba **"Imóveis"** dentro de Relatórios, com métricas consolidadas de todo o módulo de Imóveis.
 
-## Etapas do novo funil (Imóveis › Captação)
+## Estrutura
 
-```
-Novo (recebido)  →  Agendar captação  →  Detalhamento enviado  →  Captação agendada  →  Concluído (imóvel publicado)
-```
+Nova aba ao lado de Performance e Faturamento, renderizando o componente `src/components/reports/ImoveisReport.tsx`.
 
-- **Novo**: criado automaticamente quando a conta entra na etapa Captação/Imóvel no funil de Contas.
-- **Agendar captação**: corretor/marketing entra em contato e marca data da visita técnica.
-- **Detalhamento enviado**: envio ao cliente do checklist (casa arrumada, documentos, etc.) antes da captação.
-- **Captação agendada**: visita confirmada com data/hora.
-- **Concluído**: imóvel já cadastrado e publicado; link enviado ao cliente.
+## Filtros no topo
 
-## Sincronização com Contas
+- Período (data inicial / data final, baseado em `imoveis.created_at` para imóveis e `created_at` para os demais).
+- Cidade (select com cidades distintas existentes).
+- Finalidade (Venda / Aluguel / Todas).
 
-- Quando uma conta entra em **Captação/Imóvel**, é criado automaticamente um card de captação (estágio "Novo") vinculado à conta. Se já existir um card ativo para aquela conta, não duplica.
-- Se a conta sair da etapa Captação/Imóvel, o card permanece (não é apagado) — apenas a criação é automática.
-- Ao concluir a captação e vincular um imóvel cadastrado, o card é marcado como Concluído e o imóvel é referenciado.
+## Seções do relatório
 
-## Visibilidade e permissões
+### 1. Cards-resumo (KPIs)
+- Total de imóveis cadastrados
+- Disponíveis
+- Em Proposta (derivado de propostas em análise)
+- Em Fechamento (proposta aceita)
+- Vendidos
+- VGV disponível (soma de `valor` dos disponíveis)
+- VGV vendido (soma do valor das propostas aceitas/vendas)
+- Ticket médio dos vendidos
 
-- **Marketing**: pode visualizar e editar o funil de captação (mesma permissão atual de imóveis para marketing).
-- **Admin/Gestor**: acesso total.
-- **Corretor**: vê os cards que criou ou em que é responsável.
-- RLS reaproveita o padrão já usado em `imoveis` / `oportunidades`.
+### 2. Distribuição por faixa de valor
+Gráfico de barras (Recharts) com contagem de imóveis disponíveis por faixa:
+- Até R$ 500 mil
+- R$ 500 mil – R$ 1 mi
+- R$ 1 mi – R$ 2 mi
+- R$ 2 mi – R$ 5 mi
+- Acima de R$ 5 mi
 
-## Notificações
+### 3. Por tipo e finalidade
+Tabela: Tipo (Casa, Apartamento, Terreno, Fazenda…) × Quantidade × Valor médio × VGV.
 
-- Toast no app + entrada em `activity_log` quando um novo card chega ao estágio "Novo" (criado pela sincronização).
-- Toast ao mover etapas.
-- (Notificação por e-mail/WhatsApp fica fora do escopo desta primeira versão — pode ser adicionada depois.)
+### 4. Oportunidades de Negócio
+- Total ativas
+- Distribuição por estágio (Nova, Buscando, Visita, Proposta, Ganha, Perdida)
+- Valor-alvo total e ticket médio
+- Taxa de conversão (ganhas ÷ total fechadas)
 
-## UI
+### 5. Captação de Imóveis
+- Total de cards no funil
+- Distribuição por etapa (Novo, Agendar, Detalhamento, Agendada, Concluído)
+- Tempo médio de Novo → Concluído (em dias)
+- Taxa de conclusão
 
-- Nova aba **"Captação"** dentro de `src/pages/Imoveis.tsx` (ao lado de Disponíveis, Em Proposta, Vendidos, Parceiros, Oportunidades).
-- Componente `CaptacaoTab.tsx` com Kanban drag-and-drop (mesmo padrão visual de `OportunidadesTab` e `ContasKanban`).
-- Card mostra: nome da conta, telefone, responsável, data prevista, badge da etapa, link para a conta.
-- Dialog de detalhes do card: data de agendamento, checklist enviado (texto livre), observações, vincular imóvel cadastrado (quando concluído).
+### 6. Corretores Parceiros
+- Total de parceiros (ativos / inativos)
+- Top parceiros por nº de imóveis captados (via `imoveis.corretor_parceiro_id`)
+- Distribuição por cidade/estado
+
+### 7. Top corretores captadores (internos)
+Tabela com nº de imóveis captados por corretor (via `imoveis.corretor_captador_id`/`corretor_id`).
+
+## Exportação
+
+Botão **"Exportar CSV"** que baixa o snapshot atual do relatório (KPIs + tabelas) em um único arquivo `relatorio-imoveis-YYYY-MM-DD.csv`.
+
+## Permissões
+
+Mesma regra atual de Relatórios: apenas admin/gestor acessam.
 
 ## Detalhes técnicos
 
-- Nova tabela `captacoes_imovel`:
-  - `conta_id` (uuid, refer. contas)
-  - `estagio` (text: `novo`, `agendar`, `detalhamento`, `agendada`, `concluido`)
-  - `data_agendada` (timestamptz, opcional)
-  - `checklist_enviado` (bool) + `checklist_observacoes` (text)
-  - `imovel_id` (uuid, opcional — preenchido no Concluído)
-  - `responsavel_id`, `created_by`, `created_at`, `updated_at`, `observacoes`
-- Trigger `AFTER UPDATE ON contas`: quando `etapa_funil` muda para `captacao_imovel` e não existe captação ativa para a conta, insere `captacoes_imovel` com estágio `novo`.
-- RLS: SELECT para staff (admin/gestor/marketing/corretor responsável/criador), INSERT para staff, UPDATE para admin/gestor/marketing/responsável/criador, DELETE só admin.
-- Frontend:
-  - `src/lib/captacaoFunil.ts` com tipos e etapas.
-  - `src/pages/imoveis/CaptacaoTab.tsx` (Kanban + DnD com `@dnd-kit/core`, igual ao padrão de Oportunidades).
-  - Dialog `CaptacaoDetalheDialog.tsx` para editar card.
-  - Registrar aba em `src/pages/Imoveis.tsx`.
-- Backfill opcional: ao rodar a migração, criar cards "novo" para todas as contas atualmente em `captacao_imovel` que ainda não têm captação.
-
-## Fora de escopo (confirmar depois)
-
-- Notificação por e-mail/WhatsApp ao responsável quando chega um novo card.
-- Templates pré-definidos do checklist de detalhamento (por ora é texto livre).
-- Automação ao concluir: criar rascunho do imóvel a partir dos dados da conta (por ora o usuário cria pelo botão "Novo Imóvel" e vincula).
+- Novo componente `src/components/reports/ImoveisReport.tsx`.
+- Queries em paralelo a:
+  - `imoveis` (todos os campos relevantes)
+  - `propostas` (status, valor, imovel_id)
+  - `oportunidades` (estagio, valor_alvo)
+  - `captacoes_imovel` (estagio, created_at, updated_at)
+  - `corretores_parceiros` (ativo, cidade, estado)
+  - `profiles` (nome para mapping)
+- Cálculos no cliente (filtros, agrupamento, faixas).
+- Gráficos com Recharts (já usado em FunilContasReport/FaturamentoReport).
+- Registrar a aba em `src/pages/Reports.tsx`.
