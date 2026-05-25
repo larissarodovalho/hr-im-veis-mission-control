@@ -23,6 +23,7 @@ import ImovelHistoricoDrawer from "@/components/imoveis/ImovelHistoricoDrawer";
 import VendidosTab from "@/pages/imoveis/VendidosTab";
 import ParceirosTab from "@/pages/imoveis/ParceirosTab";
 import OportunidadesTab from "@/pages/imoveis/OportunidadesTab";
+import CaptacaoTab from "@/pages/imoveis/CaptacaoTab";
 
 type Imovel = any;
 type Proposta = any;
