@@ -1,65 +1,55 @@
-# PDFs e Exclusividade no Editar Imóvel
+## Integração Google Calendar (Workspace) — Conta única da empresa, bidirecional
 
-Reorganizar o dialog **Editar Imóvel** com abas e adicionar duas novas seções: anexos PDF e período de exclusividade.
+### Como vai funcionar
 
-## UI
+- Conecta **uma única conta Google Workspace** da HR Imóveis via connector oficial (`google_calendar`). Todos os corretores compartilham essa agenda.
+- Sincronização **bidirecional**:
+  - **HR → Google**: ao criar/editar/cancelar reuniões, ligações, visitas e captações no sistema, o evento é criado/atualizado/removido na agenda Google.
+  - **Google → HR**: eventos criados direto no Google Calendar são importados periodicamente como reuniões no sistema (com tag "Origem: Google").
+- Cada evento no Google leva no título o tipo + nome do cliente/imóvel, e na descrição o link de volta pro registro no CRM.
+- Convidados: e-mail do responsável + e-mail do cliente (quando houver) são adicionados como participantes — o Google envia o convite/lembrete automaticamente, resolvendo o lado de "notificação".
 
-Envolver o conteúdo atual em `Tabs` com três abas:
+### Etapas
 
-1. **Dados** — todo o conteúdo atual (Identificação, Responsável, Valores, Áreas, Localização, Características, Fotos).
-2. **Documentos (PDF)** — nova aba para anexar PDFs (matrícula, contrato, documentos diversos).
-3. **Exclusividade** — nova aba para definir o período de exclusividade.
+**1. Conectar a conta Google da empresa**
+- Usar `standard_connectors--connect` com `google_calendar`. O usuário escolhe/loga uma vez na conta corporativa.
+- Em **Configurações → Integrações**, adicionar um card "Google Calendar" mostrando status conectado, e-mail da conta e botão "Reconectar".
+- Campo de configuração: ID do calendário a usar (padrão `primary`) salvo em nova tabela `integrations_config`.
 
-### Aba Documentos
-- Upload múltiplo restrito a `application/pdf` (máx. 10 MB por arquivo).
-- Lista dos PDFs já anexados com: nome do arquivo, data de upload, tamanho, botão "Abrir" (signed URL) e botão "Remover".
-- Os PDFs ficam no bucket privado `imoveis-docs` (novo), em `{imovel_id}/{uuid}-{nome}.pdf`.
+**2. Tabela de mapeamento**
+- Nova tabela `google_calendar_sync` (id, entity_type ∈ reuniao/ligacao/visita/captacao, entity_id, google_event_id, etag, last_synced_at, direction).
+- Coluna opcional `google_event_id` nas tabelas `reunioes`, `ligacoes`, `visitas`, `captacoes_imovel` para lookup rápido.
+- RLS: leitura para staff, escrita só por edge functions (service role).
 
-### Aba Exclusividade
-- Campo **Data de início** (date).
-- Campo **Data de vencimento** (date) — validação: deve ser posterior ao início.
-- Campo opcional **Observações**.
-- Banner com status calculado:
-  - **Sem exclusividade** (vazio)
-  - **Ativa — vence em N dias** (verde/amarelo se ≤ 30 dias)
-  - **Vencida há N dias** (vermelho)
-- Botão "Limpar exclusividade" para remover datas.
+**3. Edge functions**
+- `gcal-push` (POST): recebe `{entity_type, entity_id, action: create|update|delete}`, monta o payload e chama o gateway `POST/PUT/DELETE /calendars/{calId}/events`. Grava `google_event_id` na tabela de mapeamento.
+- `gcal-pull` (cron a cada 5 min via `pg_cron` + `pg_net`): usa `syncToken` do Google para puxar mudanças incrementais. Para cada evento novo/alterado vindo do Google sem mapping HR, cria uma `reunioes` com `origem='google'`. Para eventos já mapeados, atualiza data/título/notas no HR.
+- `gcal-disconnect`: limpa tokens e mappings.
+- Todas validam JWT do usuário staff e usam Zod nos inputs.
 
-## Banco de dados
+**4. Disparar push automaticamente**
+- Triggers no Postgres em `reunioes`, `ligacoes`, `visitas`, `captacoes_imovel` que chamam `pg_net.http_post` para `gcal-push` em INSERT/UPDATE/DELETE (apenas quando integração está ativa).
+- Loop de eco evitado por flag `skip_gcal_sync` no payload quando o pull cria/atualiza um registro.
 
-### Tabela `imoveis` (alterações)
-- `exclusividade_inicio` date
-- `exclusividade_fim` date
-- `exclusividade_observacoes` text
+**5. UI**
+- **Configurações → Integrações**: card Google Calendar (conectar, status, última sync, calendário alvo, botão "Sincronizar agora").
+- Nos diálogos de Reunião/Ligação/Visita/Captação: badge "🗓️ Na agenda Google" quando sincronizado, com link "Abrir no Google".
+- Em **Agenda geral** (`/agenda`): filtro "Origem" (HR / Google / Todos) e ícone Google nos eventos importados.
 
-### Nova tabela `imovel_documentos`
-- `imovel_id` uuid (FK lógica)
-- `nome` text (nome original do arquivo)
-- `storage_path` text (caminho no bucket)
-- `tamanho_bytes` int
-- `mime_type` text (default `application/pdf`)
-- `created_by` uuid
-- `created_at` timestamptz
-- RLS: SELECT/INSERT/UPDATE/DELETE seguindo o padrão atual de `imoveis` (staff vê tudo; corretor/criador do imóvel acessa os seus; admin apaga).
+### Detalhes técnicos
 
-### Storage
-- Novo bucket privado **`imoveis-docs`** (não público).
-- Policies em `storage.objects`:
-  - SELECT/INSERT/UPDATE/DELETE para staff (admin/gestor/marketing/corretor), apenas em arquivos cujo `imovel_id` (1ª pasta) é acessível segundo as policies de `imoveis`.
-- Frontend usa `createSignedUrl` (60 min) ao abrir.
+- Connector: `google_calendar` via gateway `https://connector-gateway.lovable.dev/google_calendar/calendar/v3` (token refresh automático).
+- Escopo OAuth necessário: `https://www.googleapis.com/auth/calendar` (leitura+escrita). Verificar com `get_connection_configuration` após conectar e, se faltar, pedir reconnect.
+- `syncToken` armazenado em `integrations_config.gcal_sync_token`; em caso de 410 GONE, full resync.
+- Datas: usar `dateTime` + `timeZone: 'America/Cuiaba'`.
+- Mapeamento de campos:
+  - Reunião → summary "Reunião — {conta}", location/local, conferenceData se link, attendees: responsavel + conta.
+  - Ligação → summary "Ligação — {conta}", duração de `duracao_seg`.
+  - Visita → summary "Visita — {imóvel}", location: endereço do imóvel.
+  - Captação → summary "Captação — {imóvel}", attendees: corretor captador + proprietário.
 
-## Card "Em Exclusividade" (bônus pequeno)
-- Na lista de Disponíveis, mostrar um badge "Exclusivo até dd/mm" quando houver exclusividade vigente. (Apenas badge; sem mexer em filtros.)
+### Fora de escopo
 
-## Detalhes técnicos
-
-- Migração para colunas + tabela `imovel_documentos` + bucket `imoveis-docs` + policies.
-- `EditarImovelDialog.tsx` reorganizado com `Tabs/TabsList/TabsContent`.
-- Novo subcomponente `ImovelDocumentosTab.tsx` para isolar a lógica de upload/listagem.
-- Validação de tipo (`application/pdf`) e tamanho no upload, com `toast` de erro.
-- Helpers: cálculo de status da exclusividade num util pequeno reutilizável.
-
-## Fora de escopo
-- Versionamento ou OCR dos PDFs.
-- Notificação automática de vencimento da exclusividade (pode ser próxima iteração).
-- Edição em massa de PDFs.
+- Sincronizar agendas pessoais de cada corretor (ficou descartado pela escolha "conta única").
+- Google Meet automático (pode ser adicionado depois via `conferenceData.createRequest`).
+- Notificações push/in-app dentro do HR — esta entrega usa os lembretes nativos do Google Calendar como mecanismo de notificação. Se quiser depois notificações dentro do sistema/WhatsApp avise, faço como segunda fase.
