@@ -450,7 +450,7 @@ export default function ImoveisPage() {
                     </div>
 
                     {/* Content */}
-                    <div className="p-5 pb-7 sm:p-6 sm:pb-8">
+                    <div className="p-5 pb-7 sm:p-6 sm:pb-8 flex flex-col flex-1">
                       <motion.h3
                         className="text-lg font-medium leading-snug text-white/90 group-hover:text-white transition-colors duration-500 mb-2"
                       >
