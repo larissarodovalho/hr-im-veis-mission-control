@@ -378,7 +378,7 @@ export default function ImoveisPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.05 }}
                   transition={{ duration: 0.9, delay: (i % 3) * 0.12, ease }}
-                  className="group hr-card-safety"
+                  className="group hr-card-safety h-full"
                 >
                   <motion.div
                     role="link"
@@ -392,7 +392,7 @@ export default function ImoveisPage() {
                     }}
                     whileHover={{ y: -8 }}
                     transition={{ duration: 0.4, ease: smoothEase }}
-                    className="block cursor-pointer bg-white/[0.02] border border-white/[0.05] rounded-2xl overflow-hidden hover:border-white/[0.12] hover:bg-white/[0.04] transition-all duration-700 hover:shadow-2xl hover:shadow-white/[0.03]"
+                    className="h-full flex flex-col cursor-pointer bg-white/[0.02] border border-white/[0.05] rounded-2xl overflow-hidden hover:border-white/[0.12] hover:bg-white/[0.04] transition-all duration-700 hover:shadow-2xl hover:shadow-white/[0.03]"
                   >
                     {/* Image */}
                     <div className="aspect-[16/10] relative overflow-hidden">
@@ -450,7 +450,7 @@ export default function ImoveisPage() {
                     </div>
 
                     {/* Content */}
-                    <div className="p-5 pb-7 sm:p-6 sm:pb-8">
+                    <div className="p-5 pb-7 sm:p-6 sm:pb-8 flex flex-col flex-1">
                       <motion.h3
                         className="text-lg font-medium leading-snug text-white/90 group-hover:text-white transition-colors duration-500 mb-2"
                       >
@@ -526,7 +526,7 @@ export default function ImoveisPage() {
                       )}
 
                       {/* CTAs */}
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 mt-auto">
                         <motion.button
                           type="button"
                           onClick={(event) => { event.stopPropagation(); openWhatsApp(event, `Olá! Tenho interesse no imóvel ${im.codigo} - ${im.nome}`); }}
