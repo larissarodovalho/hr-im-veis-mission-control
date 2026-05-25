@@ -1,55 +1,62 @@
-## Integração Google Calendar (Workspace) — Conta única da empresa, bidirecional
+## Integração Google Calendar — Cada usuário conecta a própria conta
+
+Ajuste do plano anterior: em vez de uma única conta da empresa, **cada corretor/usuário conecta o próprio Google** e a sincronização acontece com a agenda pessoal dele. A agenda do CRM continua única e compartilhada entre todos (já é assim hoje).
 
 ### Como vai funcionar
 
-- Conecta **uma única conta Google Workspace** da HR Imóveis via connector oficial (`google_calendar`). Todos os corretores compartilham essa agenda.
-- Sincronização **bidirecional**:
-  - **HR → Google**: ao criar/editar/cancelar reuniões, ligações, visitas e captações no sistema, o evento é criado/atualizado/removido na agenda Google.
-  - **Google → HR**: eventos criados direto no Google Calendar são importados periodicamente como reuniões no sistema (com tag "Origem: Google").
-- Cada evento no Google leva no título o tipo + nome do cliente/imóvel, e na descrição o link de volta pro registro no CRM.
-- Convidados: e-mail do responsável + e-mail do cliente (quando houver) são adicionados como participantes — o Google envia o convite/lembrete automaticamente, resolvendo o lado de "notificação".
+- Em **Configurações → Minha conta**, cada usuário vê um botão **"Conectar Google Calendar"**. O login é individual com o e-mail Google de cada um.
+- Quando alguém cria um evento (reunião, ligação, visita, captação) no CRM:
+  - O evento aparece pra **todos** na agenda do CRM (comportamento atual, sem mudança).
+  - O evento é replicado **na agenda Google pessoal do responsável** daquele evento.
+  - Se o evento tiver outros usuários do CRM como convidados (ex.: corretor + gestor), eles entram como `attendees` pelo e-mail Google — o Google envia o convite e o evento cai na agenda deles também.
+- Quando o usuário cria um evento direto no Google Calendar dele, ele aparece **só pra ele** na agenda do CRM (com badge "📅 Google pessoal"), não vira evento público do CRM — para evitar poluir a agenda compartilhada com compromissos pessoais. Se ele quiser que vire evento do CRM, marca um checkbox "Publicar no CRM" no item.
 
-### Etapas
+### Por que precisa de OAuth próprio (não connector)
 
-**1. Conectar a conta Google da empresa**
-- Usar `standard_connectors--connect` com `google_calendar`. O usuário escolhe/loga uma vez na conta corporativa.
-- Em **Configurações → Integrações**, adicionar um card "Google Calendar" mostrando status conectado, e-mail da conta e botão "Reconectar".
-- Campo de configuração: ID do calendário a usar (padrão `primary`) salvo em nova tabela `integrations_config`.
+O connector do Lovable autentica **uma conta só** (a do dev). Para cada usuário ter a própria, precisamos implementar OAuth do Google direto no app, com credenciais do Google Cloud da HR Imóveis.
 
-**2. Tabela de mapeamento**
-- Nova tabela `google_calendar_sync` (id, entity_type ∈ reuniao/ligacao/visita/captacao, entity_id, google_event_id, etag, last_synced_at, direction).
-- Coluna opcional `google_event_id` nas tabelas `reunioes`, `ligacoes`, `visitas`, `captacoes_imovel` para lookup rápido.
-- RLS: leitura para staff, escrita só por edge functions (service role).
+**O que você precisa fornecer** (eu te guio passo a passo na hora):
+1. Criar um projeto no Google Cloud Console.
+2. Ativar a **Google Calendar API**.
+3. Criar credenciais **OAuth 2.0 Client ID** tipo Web Application.
+4. Adicionar a URL de callback que eu vou te dar.
+5. Me passar o **Client ID** e **Client Secret** — vou salvar como secrets seguros (`GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`).
 
-**3. Edge functions**
-- `gcal-push` (POST): recebe `{entity_type, entity_id, action: create|update|delete}`, monta o payload e chama o gateway `POST/PUT/DELETE /calendars/{calId}/events`. Grava `google_event_id` na tabela de mapeamento.
-- `gcal-pull` (cron a cada 5 min via `pg_cron` + `pg_net`): usa `syncToken` do Google para puxar mudanças incrementais. Para cada evento novo/alterado vindo do Google sem mapping HR, cria uma `reunioes` com `origem='google'`. Para eventos já mapeados, atualiza data/título/notas no HR.
-- `gcal-disconnect`: limpa tokens e mappings.
-- Todas validam JWT do usuário staff e usam Zod nos inputs.
+Enquanto isso não estiver pronto, monto a UI/banco/edge functions e deixo o botão "Conectar" sinalizando "Aguardando configuração do admin".
 
-**4. Disparar push automaticamente**
-- Triggers no Postgres em `reunioes`, `ligacoes`, `visitas`, `captacoes_imovel` que chamam `pg_net.http_post` para `gcal-push` em INSERT/UPDATE/DELETE (apenas quando integração está ativa).
-- Loop de eco evitado por flag `skip_gcal_sync` no payload quando o pull cria/atualiza um registro.
+### Etapas técnicas
 
-**5. UI**
-- **Configurações → Integrações**: card Google Calendar (conectar, status, última sync, calendário alvo, botão "Sincronizar agora").
-- Nos diálogos de Reunião/Ligação/Visita/Captação: badge "🗓️ Na agenda Google" quando sincronizado, com link "Abrir no Google".
-- Em **Agenda geral** (`/agenda`): filtro "Origem" (HR / Google / Todos) e ícone Google nos eventos importados.
+**1. Banco**
+- `user_google_calendar` (user_id, google_email, access_token, refresh_token, token_expires_at, calendar_id default `primary`, sync_token, connected_at). RLS: cada usuário só vê/edita o próprio registro. Tokens criptografados/protegidos só lidos por edge function via service role.
+- `google_calendar_sync` (entity_type, entity_id, user_id, google_event_id, etag, last_synced_at) — mapeia evento CRM ↔ evento Google por usuário (porque o mesmo evento do CRM pode estar replicado em várias contas Google de convidados).
+- Colunas em `reunioes/ligacoes/visitas/captacoes_imovel`: `origem` ∈ ('crm','google'), `google_owner_user_id` (quando importado de Google pessoal).
+
+**2. Edge functions**
+- `google-oauth-start` — gera URL de consentimento com escopo `https://www.googleapis.com/auth/calendar`.
+- `google-oauth-callback` — troca `code` por tokens, grava em `user_google_calendar`.
+- `google-oauth-disconnect` — revoga e apaga tokens.
+- `gcal-push` — recebe `{entity_type, entity_id, action}`. Busca o responsável + convidados que têm Google conectado. Chama `events.insert/patch/delete` na Calendar API com refresh automático do token. Salva mapping por usuário.
+- `gcal-pull` — cron 5 min: pra cada usuário conectado, faz `events.list` com `syncToken`. Importa eventos novos como reuniões privadas do usuário (`origem='google'`, visíveis só pra ele) até ele marcar "Publicar no CRM".
+
+**3. Triggers**
+- Triggers em `reunioes/ligacoes/visitas/captacoes_imovel` (INSERT/UPDATE/DELETE) chamam `pg_net.http_post` pra `gcal-push`. Flag `_skip_gcal` no payload evita loop quando o pull cria o registro.
+
+**4. UI**
+- **Configurações → Minha conta → Google Calendar**: botão Conectar/Desconectar, mostra e-mail Google vinculado, última sync, link "Abrir minha agenda Google".
+- Diálogos de Reunião/Visita/Ligação/Captação: badge "📅 Sincronizado no Google" + linkzinho pra abrir, e um pequeno seletor de convidados (responsável já vai por padrão).
+- Agenda geral (`/agenda`): filtro "Origem" (CRM / Minha agenda Google / Todos). Eventos importados do Google ficam com ícone próprio e só são visíveis pro dono até serem "publicados".
 
 ### Detalhes técnicos
 
-- Connector: `google_calendar` via gateway `https://connector-gateway.lovable.dev/google_calendar/calendar/v3` (token refresh automático).
-- Escopo OAuth necessário: `https://www.googleapis.com/auth/calendar` (leitura+escrita). Verificar com `get_connection_configuration` após conectar e, se faltar, pedir reconnect.
-- `syncToken` armazenado em `integrations_config.gcal_sync_token`; em caso de 410 GONE, full resync.
-- Datas: usar `dateTime` + `timeZone: 'America/Cuiaba'`.
-- Mapeamento de campos:
-  - Reunião → summary "Reunião — {conta}", location/local, conferenceData se link, attendees: responsavel + conta.
-  - Ligação → summary "Ligação — {conta}", duração de `duracao_seg`.
-  - Visita → summary "Visita — {imóvel}", location: endereço do imóvel.
-  - Captação → summary "Captação — {imóvel}", attendees: corretor captador + proprietário.
+- Endpoint Google: `https://www.googleapis.com/calendar/v3/calendars/primary/events`.
+- Refresh de token: edge function detecta 401 → usa `refresh_token` no endpoint `https://oauth2.googleapis.com/token` → atualiza `user_google_calendar`.
+- Timezone: `America/Cuiaba` por padrão (pegando do `profiles` se existir).
+- Para revogar: `https://oauth2.googleapis.com/revoke?token=...`.
 
-### Fora de escopo
+### Fora de escopo desta entrega
 
-- Sincronizar agendas pessoais de cada corretor (ficou descartado pela escolha "conta única").
-- Google Meet automático (pode ser adicionado depois via `conferenceData.createRequest`).
-- Notificações push/in-app dentro do HR — esta entrega usa os lembretes nativos do Google Calendar como mecanismo de notificação. Se quiser depois notificações dentro do sistema/WhatsApp avise, faço como segunda fase.
+- Sincronizar agendas compartilhadas/secundárias do Workspace (só `primary` por enquanto).
+- Google Meet automático nos eventos (posso adicionar depois com `conferenceData.createRequest`).
+- Importar histórico inteiro da agenda Google antes da conexão — só eventos a partir do momento que conectar.
+
+Confirma que devo seguir por aqui? Quando confirmar, já começo pelo banco + UI do botão de conectar, e depois te peço o Client ID/Secret do Google quando chegar a hora do OAuth funcionar de verdade.
