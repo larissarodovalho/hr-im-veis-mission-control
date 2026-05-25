@@ -69,9 +69,13 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
       cep: s(imovel.cep), endereco: s(imovel.endereco), numero: s(imovel.numero),
       complemento: s(imovel.complemento), bairro: s(imovel.bairro), cidade: s(imovel.cidade), estado: s(imovel.estado),
       destaque: !!imovel.destaque, matricula: s(imovel.matricula),
+      exclusividade_inicio: s(imovel.exclusividade_inicio),
+      exclusividade_fim: s(imovel.exclusividade_fim),
+      exclusividade_observacoes: s(imovel.exclusividade_observacoes),
     });
     setCaracs(Array.isArray(imovel.caracteristicas) ? imovel.caracteristicas : []);
     setFotosExistentes(Array.isArray(imovel.fotos) ? imovel.fotos : []);
+
     setNovasFotos([]);
     setRemoverPaths([]);
     setCorretorId(imovel.corretor_id || "");
