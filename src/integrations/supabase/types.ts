@@ -353,6 +353,51 @@ export type Database = {
         }
         Relationships: []
       }
+      captacoes_imovel: {
+        Row: {
+          checklist_enviado: boolean
+          checklist_observacoes: string | null
+          conta_id: string
+          created_at: string
+          created_by: string | null
+          data_agendada: string | null
+          estagio: string
+          id: string
+          imovel_id: string | null
+          observacoes: string | null
+          responsavel_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          checklist_enviado?: boolean
+          checklist_observacoes?: string | null
+          conta_id: string
+          created_at?: string
+          created_by?: string | null
+          data_agendada?: string | null
+          estagio?: string
+          id?: string
+          imovel_id?: string | null
+          observacoes?: string | null
+          responsavel_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          checklist_enviado?: boolean
+          checklist_observacoes?: string | null
+          conta_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_agendada?: string | null
+          estagio?: string
+          id?: string
+          imovel_id?: string | null
+          observacoes?: string | null
+          responsavel_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       conta_propriedades: {
         Row: {
           aptidao: string | null

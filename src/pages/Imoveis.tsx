@@ -23,6 +23,7 @@ import ImovelHistoricoDrawer from "@/components/imoveis/ImovelHistoricoDrawer";
 import VendidosTab from "@/pages/imoveis/VendidosTab";
 import ParceirosTab from "@/pages/imoveis/ParceirosTab";
 import OportunidadesTab from "@/pages/imoveis/OportunidadesTab";
+import CaptacaoTab from "@/pages/imoveis/CaptacaoTab";
 
 type Imovel = any;
 type Proposta = any;
@@ -351,6 +352,7 @@ export default function Imoveis() {
           <TabsTrigger value="fechamento">Em Fechamento <Badge variant="secondary" className="ml-2 text-[10px]">{counts.f}</Badge></TabsTrigger>
           <TabsTrigger value="vendidos">Vendidos <Badge variant="secondary" className="ml-2 text-[10px]">{counts.v}</Badge></TabsTrigger>
           <TabsTrigger value="oportunidades">Oportunidades de Negócio</TabsTrigger>
+          <TabsTrigger value="captacao">Captação</TabsTrigger>
           <TabsTrigger value="parceiros">Parceiros</TabsTrigger>
         </TabsList>
 
@@ -381,6 +383,10 @@ export default function Imoveis() {
 
         <TabsContent value="oportunidades" className="mt-4">
           <OportunidadesTab />
+        </TabsContent>
+
+        <TabsContent value="captacao" className="mt-4">
+          <CaptacaoTab />
         </TabsContent>
 
         <TabsContent value="parceiros" className="mt-4">
