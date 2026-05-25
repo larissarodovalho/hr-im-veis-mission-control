@@ -526,7 +526,7 @@ export default function ImoveisPage() {
                       )}
 
                       {/* CTAs */}
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 mt-auto">
                         <motion.button
                           type="button"
                           onClick={(event) => { event.stopPropagation(); openWhatsApp(event, `Olá! Tenho interesse no imóvel ${im.codigo} - ${im.nome}`); }}
