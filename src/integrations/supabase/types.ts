@@ -1013,6 +1013,9 @@ export type Database = {
           destaque: boolean
           endereco: string | null
           estado: string | null
+          exclusividade_fim: string | null
+          exclusividade_inicio: string | null
+          exclusividade_observacoes: string | null
           finalidade: string
           fotos: string[] | null
           id: string
@@ -1050,6 +1053,9 @@ export type Database = {
           destaque?: boolean
           endereco?: string | null
           estado?: string | null
+          exclusividade_fim?: string | null
+          exclusividade_inicio?: string | null
+          exclusividade_observacoes?: string | null
           finalidade?: string
           fotos?: string[] | null
           id?: string
@@ -1087,6 +1093,9 @@ export type Database = {
           destaque?: boolean
           endereco?: string | null
           estado?: string | null
+          exclusividade_fim?: string | null
+          exclusividade_inicio?: string | null
+          exclusividade_observacoes?: string | null
           finalidade?: string
           fotos?: string[] | null
           id?: string
@@ -1103,6 +1112,39 @@ export type Database = {
           valor?: number | null
           valor_condominio?: number | null
           valor_iptu?: number | null
+        }
+        Relationships: []
+      }
+      imovel_documentos: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          imovel_id: string
+          mime_type: string
+          nome: string
+          storage_path: string
+          tamanho_bytes: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          imovel_id: string
+          mime_type?: string
+          nome: string
+          storage_path: string
+          tamanho_bytes?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          imovel_id?: string
+          mime_type?: string
+          nome?: string
+          storage_path?: string
+          tamanho_bytes?: number | null
         }
         Relationships: []
       }
