@@ -208,7 +208,11 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
         proprietario_id: proprietarioId || null,
         corretor_captador_id: captadorId || null,
         corretor_parceiro_id: parceiroId || null,
+        exclusividade_inicio: form.exclusividade_inicio || null,
+        exclusividade_fim: form.exclusividade_fim || null,
+        exclusividade_observacoes: form.exclusividade_observacoes || null,
       }).eq("id", imovel.id);
+
 
 
       if (error) throw error;
