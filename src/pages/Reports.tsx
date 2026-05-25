@@ -121,6 +121,10 @@ export default function Reports() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="imoveis" className="mt-4">
+          <ImoveisReport />
+        </TabsContent>
+
         <TabsContent value="faturamento" className="mt-4">
           <FaturamentoReport />
         </TabsContent>
