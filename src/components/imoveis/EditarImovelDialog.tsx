@@ -32,7 +32,9 @@ const empty = {
   quartos: "", suites: "", banheiros: "", vagas: "",
   cep: "", endereco: "", numero: "", complemento: "", bairro: "", cidade: "", estado: "",
   destaque: false, matricula: "",
+  exclusividade_inicio: "", exclusividade_fim: "", exclusividade_observacoes: "",
 };
+
 
 
 const s = (v: any) => (v == null ? "" : String(v));
