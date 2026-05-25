@@ -241,7 +241,15 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
           <DialogDescription>Atualize as informações e fotos do imóvel.</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-2">
+        <Tabs defaultValue="dados" className="py-2">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="dados">Dados</TabsTrigger>
+            <TabsTrigger value="documentos"><FileText className="h-4 w-4 mr-1" />Documentos</TabsTrigger>
+            <TabsTrigger value="exclusividade"><ShieldCheck className="h-4 w-4 mr-1" />Exclusividade</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dados" className="space-y-6 pt-4">
+
           <section className="space-y-3">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Identificação</h3>
             <div>
