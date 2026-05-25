@@ -7,12 +7,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload, X, Trash2, Droplet } from "lucide-react";
+import { Loader2, Upload, X, Trash2, Droplet, FileText, ShieldCheck } from "lucide-react";
 import { applyWatermark } from "@/lib/watermark";
 import ResponsavelProprietarioSection from "./ResponsavelProprietarioSection";
+import ImovelDocumentosTab from "./ImovelDocumentosTab";
+import { calcExclusividade, formatDate } from "@/lib/exclusividade";
 import { TIPOS_IMOVEL, FINALIDADES, STATUS_OPTIONS, CARACTERISTICAS } from "./NovoImovelDialog";
+
 
 interface Props {
   open: boolean;
@@ -28,7 +32,9 @@ const empty = {
   quartos: "", suites: "", banheiros: "", vagas: "",
   cep: "", endereco: "", numero: "", complemento: "", bairro: "", cidade: "", estado: "",
   destaque: false, matricula: "",
+  exclusividade_inicio: "", exclusividade_fim: "", exclusividade_observacoes: "",
 };
+
 
 
 const s = (v: any) => (v == null ? "" : String(v));
@@ -63,9 +69,13 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
       cep: s(imovel.cep), endereco: s(imovel.endereco), numero: s(imovel.numero),
       complemento: s(imovel.complemento), bairro: s(imovel.bairro), cidade: s(imovel.cidade), estado: s(imovel.estado),
       destaque: !!imovel.destaque, matricula: s(imovel.matricula),
+      exclusividade_inicio: s(imovel.exclusividade_inicio),
+      exclusividade_fim: s(imovel.exclusividade_fim),
+      exclusividade_observacoes: s(imovel.exclusividade_observacoes),
     });
     setCaracs(Array.isArray(imovel.caracteristicas) ? imovel.caracteristicas : []);
     setFotosExistentes(Array.isArray(imovel.fotos) ? imovel.fotos : []);
+
     setNovasFotos([]);
     setRemoverPaths([]);
     setCorretorId(imovel.corretor_id || "");
@@ -198,7 +208,11 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
         proprietario_id: proprietarioId || null,
         corretor_captador_id: captadorId || null,
         corretor_parceiro_id: parceiroId || null,
+        exclusividade_inicio: form.exclusividade_inicio || null,
+        exclusividade_fim: form.exclusividade_fim || null,
+        exclusividade_observacoes: form.exclusividade_observacoes || null,
       }).eq("id", imovel.id);
+
 
 
       if (error) throw error;
@@ -227,7 +241,15 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
           <DialogDescription>Atualize as informações e fotos do imóvel.</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-2">
+        <Tabs defaultValue="dados" className="py-2">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="dados">Dados</TabsTrigger>
+            <TabsTrigger value="documentos"><FileText className="h-4 w-4 mr-1" />Documentos</TabsTrigger>
+            <TabsTrigger value="exclusividade"><ShieldCheck className="h-4 w-4 mr-1" />Exclusividade</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dados" className="space-y-6 pt-4">
+
           <section className="space-y-3">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Identificação</h3>
             <div>
@@ -405,7 +427,96 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
               </div>
             )}
           </section>
-        </div>
+          </TabsContent>
+
+          <TabsContent value="documentos" className="pt-4">
+            {imovel?.id ? (
+              <ImovelDocumentosTab imovelId={imovel.id} />
+            ) : (
+              <p className="text-sm text-muted-foreground">Salve o imóvel para anexar documentos.</p>
+            )}
+          </TabsContent>
+
+          <TabsContent value="exclusividade" className="pt-4 space-y-4">
+            {(() => {
+              const status = calcExclusividade(form.exclusividade_fim);
+              if (status.kind === "none") {
+                return (
+                  <div className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
+                    Nenhum período de exclusividade definido.
+                  </div>
+                );
+              }
+              if (status.kind === "ativa") {
+                const cls = status.alerta
+                  ? "bg-yellow-500/10 border-yellow-500/40 text-yellow-700 dark:text-yellow-300"
+                  : "bg-emerald-500/10 border-emerald-500/40 text-emerald-700 dark:text-emerald-300";
+                return (
+                  <div className={`rounded-lg border p-3 text-sm font-medium ${cls}`}>
+                    Exclusividade ativa — vence em {status.diasRestantes} dia(s) ({formatDate(form.exclusividade_fim)})
+                  </div>
+                );
+              }
+              return (
+                <div className="rounded-lg border border-destructive/40 bg-destructive/10 text-destructive p-3 text-sm font-medium">
+                  Exclusividade vencida há {status.diasAtras} dia(s) ({formatDate(form.exclusividade_fim)})
+                </div>
+              );
+            })()}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Data de início</Label>
+                <Input
+                  type="date"
+                  value={form.exclusividade_inicio}
+                  onChange={(e) => upd("exclusividade_inicio", e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Data de vencimento</Label>
+                <Input
+                  type="date"
+                  value={form.exclusividade_fim}
+                  onChange={(e) => upd("exclusividade_fim", e.target.value)}
+                />
+              </div>
+            </div>
+
+            {form.exclusividade_inicio && form.exclusividade_fim &&
+              form.exclusividade_fim < form.exclusividade_inicio && (
+                <p className="text-xs text-destructive">
+                  A data de vencimento deve ser posterior à data de início.
+                </p>
+              )}
+
+            <div>
+              <Label>Observações</Label>
+              <Textarea
+                rows={3}
+                value={form.exclusividade_observacoes}
+                onChange={(e) => upd("exclusividade_observacoes", e.target.value)}
+                placeholder="Ex.: contrato assinado, condições especiais..."
+              />
+            </div>
+
+            {(form.exclusividade_inicio || form.exclusividade_fim) && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  upd("exclusividade_inicio", "");
+                  upd("exclusividade_fim", "");
+                  upd("exclusividade_observacoes", "");
+                }}
+              >
+                Limpar exclusividade
+              </Button>
+            )}
+          </TabsContent>
+        </Tabs>
+
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
