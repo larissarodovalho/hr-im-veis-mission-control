@@ -1,78 +1,65 @@
-# Relatório de Imóveis
+# PDFs e Exclusividade no Editar Imóvel
 
-Adicionar uma nova subaba **"Imóveis"** dentro de Relatórios, com métricas consolidadas de todo o módulo de Imóveis.
+Reorganizar o dialog **Editar Imóvel** com abas e adicionar duas novas seções: anexos PDF e período de exclusividade.
 
-## Estrutura
+## UI
 
-Nova aba ao lado de Performance e Faturamento, renderizando o componente `src/components/reports/ImoveisReport.tsx`.
+Envolver o conteúdo atual em `Tabs` com três abas:
 
-## Filtros no topo
+1. **Dados** — todo o conteúdo atual (Identificação, Responsável, Valores, Áreas, Localização, Características, Fotos).
+2. **Documentos (PDF)** — nova aba para anexar PDFs (matrícula, contrato, documentos diversos).
+3. **Exclusividade** — nova aba para definir o período de exclusividade.
 
-- Período (data inicial / data final, baseado em `imoveis.created_at` para imóveis e `created_at` para os demais).
-- Cidade (select com cidades distintas existentes).
-- Finalidade (Venda / Aluguel / Todas).
+### Aba Documentos
+- Upload múltiplo restrito a `application/pdf` (máx. 10 MB por arquivo).
+- Lista dos PDFs já anexados com: nome do arquivo, data de upload, tamanho, botão "Abrir" (signed URL) e botão "Remover".
+- Os PDFs ficam no bucket privado `imoveis-docs` (novo), em `{imovel_id}/{uuid}-{nome}.pdf`.
 
-## Seções do relatório
+### Aba Exclusividade
+- Campo **Data de início** (date).
+- Campo **Data de vencimento** (date) — validação: deve ser posterior ao início.
+- Campo opcional **Observações**.
+- Banner com status calculado:
+  - **Sem exclusividade** (vazio)
+  - **Ativa — vence em N dias** (verde/amarelo se ≤ 30 dias)
+  - **Vencida há N dias** (vermelho)
+- Botão "Limpar exclusividade" para remover datas.
 
-### 1. Cards-resumo (KPIs)
-- Total de imóveis cadastrados
-- Disponíveis
-- Em Proposta (derivado de propostas em análise)
-- Em Fechamento (proposta aceita)
-- Vendidos
-- VGV disponível (soma de `valor` dos disponíveis)
-- VGV vendido (soma do valor das propostas aceitas/vendas)
-- Ticket médio dos vendidos
+## Banco de dados
 
-### 2. Distribuição por faixa de valor
-Gráfico de barras (Recharts) com contagem de imóveis disponíveis por faixa:
-- Até R$ 500 mil
-- R$ 500 mil – R$ 1 mi
-- R$ 1 mi – R$ 2 mi
-- R$ 2 mi – R$ 5 mi
-- Acima de R$ 5 mi
+### Tabela `imoveis` (alterações)
+- `exclusividade_inicio` date
+- `exclusividade_fim` date
+- `exclusividade_observacoes` text
 
-### 3. Por tipo e finalidade
-Tabela: Tipo (Casa, Apartamento, Terreno, Fazenda…) × Quantidade × Valor médio × VGV.
+### Nova tabela `imovel_documentos`
+- `imovel_id` uuid (FK lógica)
+- `nome` text (nome original do arquivo)
+- `storage_path` text (caminho no bucket)
+- `tamanho_bytes` int
+- `mime_type` text (default `application/pdf`)
+- `created_by` uuid
+- `created_at` timestamptz
+- RLS: SELECT/INSERT/UPDATE/DELETE seguindo o padrão atual de `imoveis` (staff vê tudo; corretor/criador do imóvel acessa os seus; admin apaga).
 
-### 4. Oportunidades de Negócio
-- Total ativas
-- Distribuição por estágio (Nova, Buscando, Visita, Proposta, Ganha, Perdida)
-- Valor-alvo total e ticket médio
-- Taxa de conversão (ganhas ÷ total fechadas)
+### Storage
+- Novo bucket privado **`imoveis-docs`** (não público).
+- Policies em `storage.objects`:
+  - SELECT/INSERT/UPDATE/DELETE para staff (admin/gestor/marketing/corretor), apenas em arquivos cujo `imovel_id` (1ª pasta) é acessível segundo as policies de `imoveis`.
+- Frontend usa `createSignedUrl` (60 min) ao abrir.
 
-### 5. Captação de Imóveis
-- Total de cards no funil
-- Distribuição por etapa (Novo, Agendar, Detalhamento, Agendada, Concluído)
-- Tempo médio de Novo → Concluído (em dias)
-- Taxa de conclusão
-
-### 6. Corretores Parceiros
-- Total de parceiros (ativos / inativos)
-- Top parceiros por nº de imóveis captados (via `imoveis.corretor_parceiro_id`)
-- Distribuição por cidade/estado
-
-### 7. Top corretores captadores (internos)
-Tabela com nº de imóveis captados por corretor (via `imoveis.corretor_captador_id`/`corretor_id`).
-
-## Exportação
-
-Botão **"Exportar CSV"** que baixa o snapshot atual do relatório (KPIs + tabelas) em um único arquivo `relatorio-imoveis-YYYY-MM-DD.csv`.
-
-## Permissões
-
-Mesma regra atual de Relatórios: apenas admin/gestor acessam.
+## Card "Em Exclusividade" (bônus pequeno)
+- Na lista de Disponíveis, mostrar um badge "Exclusivo até dd/mm" quando houver exclusividade vigente. (Apenas badge; sem mexer em filtros.)
 
 ## Detalhes técnicos
 
-- Novo componente `src/components/reports/ImoveisReport.tsx`.
-- Queries em paralelo a:
-  - `imoveis` (todos os campos relevantes)
-  - `propostas` (status, valor, imovel_id)
-  - `oportunidades` (estagio, valor_alvo)
-  - `captacoes_imovel` (estagio, created_at, updated_at)
-  - `corretores_parceiros` (ativo, cidade, estado)
-  - `profiles` (nome para mapping)
-- Cálculos no cliente (filtros, agrupamento, faixas).
-- Gráficos com Recharts (já usado em FunilContasReport/FaturamentoReport).
-- Registrar a aba em `src/pages/Reports.tsx`.
+- Migração para colunas + tabela `imovel_documentos` + bucket `imoveis-docs` + policies.
+- `EditarImovelDialog.tsx` reorganizado com `Tabs/TabsList/TabsContent`.
+- Novo subcomponente `ImovelDocumentosTab.tsx` para isolar a lógica de upload/listagem.
+- Validação de tipo (`application/pdf`) e tamanho no upload, com `toast` de erro.
+- Helpers: cálculo de status da exclusividade num util pequeno reutilizável.
+
+## Fora de escopo
+- Versionamento ou OCR dos PDFs.
+- Notificação automática de vencimento da exclusividade (pode ser próxima iteração).
+- Edição em massa de PDFs.
