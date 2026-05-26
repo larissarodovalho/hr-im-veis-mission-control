@@ -132,6 +132,9 @@ export default function EditarOportunidadeDialog({ open, onOpenChange, oportunid
                 emptyLabel="Selecione"
               />
             </div>
+          </div>
+
+
 
           <div>
             <Label>O que o cliente busca</Label>
