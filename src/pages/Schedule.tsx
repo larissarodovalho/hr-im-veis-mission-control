@@ -670,7 +670,7 @@ export default function Schedule() {
                       <div className="border border-border rounded-lg overflow-x-auto shadow-sm bg-card">
                        <div className="min-w-[720px]">
                         {/* Header */}
-                        <div className="grid border-b border-border bg-muted/30" style={{ gridTemplateColumns: "60px repeat(7, 1fr)" }}>
+                        <div className="grid border-b border-border bg-muted/30" style={{ gridTemplateColumns: "60px repeat(7, minmax(0, 1fr))" }}>
                           <div />
                           {days.map((d) => {
                             const today = isToday(d);
@@ -681,13 +681,13 @@ export default function Schedule() {
                                 type="button"
                                 onClick={() => setSelected(d)}
                                 className={cn(
-                                  "py-2 px-2 text-center border-l border-border hover:bg-accent/20 transition-colors flex items-center justify-center gap-2",
+                                  "py-2 px-1 min-w-0 text-center border-l border-border hover:bg-accent/20 transition-colors flex items-center justify-center gap-1.5",
                                   isSelected && "bg-primary/5",
                                 )}
                               >
-                                <span className="text-xs uppercase tracking-wide text-muted-foreground">{format(d, "EEE", { locale: ptBR })}</span>
+                                <span className="text-[10px] uppercase tracking-wide text-muted-foreground truncate">{format(d, "EEE", { locale: ptBR })}</span>
                                 <span className={cn(
-                                  "text-sm font-semibold h-7 w-7 inline-flex items-center justify-center rounded-full",
+                                  "text-xs font-semibold h-6 w-6 shrink-0 inline-flex items-center justify-center rounded-full",
                                   today && "bg-destructive text-destructive-foreground",
                                 )}>
                                   {format(d, "d")}
@@ -699,7 +699,7 @@ export default function Schedule() {
 
                         {/* All-day / blocked row */}
                         {days.some((d) => blockedDays.has(dayKey(d))) && (
-                          <div className="grid border-b border-border" style={{ gridTemplateColumns: "60px repeat(7, 1fr)" }}>
+                          <div className="grid border-b border-border" style={{ gridTemplateColumns: "60px repeat(7, minmax(0, 1fr))" }}>
                             <div className="text-[10px] uppercase text-muted-foreground py-1.5 pr-2 text-right">dia inteiro</div>
                             {days.map((d) => (
                               <div key={dayKey(d) + "-all"} className={cn("border-l border-border min-h-[28px] py-1 px-1", blockedDays.has(dayKey(d)) && "bg-destructive/10")}>
@@ -714,7 +714,7 @@ export default function Schedule() {
                         )}
 
                         {/* Time grid */}
-                        <div className="grid relative" style={{ gridTemplateColumns: "60px repeat(7, 1fr)", height: totalHeight }}>
+                        <div className="grid relative" style={{ gridTemplateColumns: "60px repeat(7, minmax(0, 1fr))", height: totalHeight }}>
                           {/* Hour labels */}
                           <div className="relative">
                             {hours.map((h) => (
