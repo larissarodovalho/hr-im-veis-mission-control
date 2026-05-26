@@ -35,6 +35,8 @@ const isEmAnalise = (p: Proposta) => ["em análise", "em analise"].includes(stat
 const isAceita = (p: Proposta) => statusLower(p.status) === "aceita";
 
 export default function Imoveis() {
+  const { isAdmin, isGestor, isMarketing } = useAuth();
+  const canEdit = isAdmin || isGestor || isMarketing;
   const [items, setItems] = useState<Imovel[]>([]);
   const [propostas, setPropostas] = useState<Proposta[]>([]);
   const [leads, setLeads] = useState<Record<string, Lead>>({});
