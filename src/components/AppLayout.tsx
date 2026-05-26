@@ -23,43 +23,45 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
 import { useWhatsAppUnread } from "@/hooks/useWhatsAppUnread";
+import { useMenuAccess, MenuKey } from "@/hooks/useMenuAccess";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import logoWhite from "@/assets/brand/hr-imoveis-logo-white.png";
 import logoBlack from "@/assets/brand/hr-imoveis-logo.png";
 
-type NavItem = { to: string; icon: any; label: string; end?: boolean };
+type NavItem = { to: string; icon: any; label: string; end?: boolean; key: MenuKey };
 const baseNav: NavItem[] = [
-  { to: "/crm", icon: LayoutDashboard, label: "Dashboard", end: true },
-  { to: "/crm/leads", icon: UsersIcon, label: "Leads" },
-  { to: "/crm/contas", icon: Building2, label: "Contas" },
-  { to: "/crm/imoveis", icon: Home, label: "Imóveis" },
-  { to: "/crm/whatsapp", icon: MessageSquare, label: "WhatsApp" },
-  { to: "/crm/reunioes", icon: Calendar, label: "Reuniões" },
-  { to: "/crm/ligacoes", icon: Phone, label: "Ligações" },
-  { to: "/crm/visitas", icon: MapPin, label: "Visitas" },
-  { to: "/crm/agenda", icon: CalendarRange, label: "Agenda" },
-  { to: "/crm/tarefas", icon: ListTodo, label: "Tarefas" },
-  { to: "/crm/documentos", icon: FileSignature, label: "Documentos" },
-  { to: "/crm/contratos", icon: FileSignature, label: "Contratos" },
+  { to: "/crm", icon: LayoutDashboard, label: "Dashboard", end: true, key: "dashboard" },
+  { to: "/crm/leads", icon: UsersIcon, label: "Leads", key: "leads" },
+  { to: "/crm/contas", icon: Building2, label: "Contas", key: "contas" },
+  { to: "/crm/imoveis", icon: Home, label: "Imóveis", key: "imoveis" },
+  { to: "/crm/whatsapp", icon: MessageSquare, label: "WhatsApp", key: "whatsapp" },
+  { to: "/crm/reunioes", icon: Calendar, label: "Reuniões", key: "reunioes" },
+  { to: "/crm/ligacoes", icon: Phone, label: "Ligações", key: "ligacoes" },
+  { to: "/crm/visitas", icon: MapPin, label: "Visitas", key: "visitas" },
+  { to: "/crm/agenda", icon: CalendarRange, label: "Agenda", key: "agenda" },
+  { to: "/crm/tarefas", icon: ListTodo, label: "Tarefas", key: "tarefas" },
+  { to: "/crm/documentos", icon: FileSignature, label: "Documentos", key: "documentos" },
+  { to: "/crm/contratos", icon: FileSignature, label: "Contratos", key: "contratos" },
 ];
 const adminNav: NavItem[] = [
-  { to: "/crm/relatorios", icon: BarChart3, label: "Relatórios" },
-  { to: "/crm/newsletter", icon: Mail, label: "Newsletter" },
-  { to: "/crm/usuarios", icon: UserCog, label: "Usuários" },
-  { to: "/crm/configuracoes", icon: Settings, label: "Configurações" },
+  { to: "/crm/relatorios", icon: BarChart3, label: "Relatórios", key: "relatorios" },
+  { to: "/crm/newsletter", icon: Mail, label: "Newsletter", key: "newsletter" },
+  { to: "/crm/usuarios", icon: UserCog, label: "Usuários", key: "usuarios" },
+  { to: "/crm/configuracoes", icon: Settings, label: "Configurações", key: "configuracoes" },
 ];
 const personalNav: NavItem[] = [
-  { to: "/crm/minha-conta", icon: UserCircle, label: "Minha conta" },
+  { to: "/crm/minha-conta", icon: UserCircle, label: "Minha conta", key: "minha-conta" },
 ];
 
 export default function AppLayout() {
-  const { signOut, user, isMarketingOnly, isSecretariaOnly } = useAuth();
-  const { isAdmin, isGestor } = useRole();
+  const { signOut, user, isSecretariaOnly } = useAuth();
+  const { isAdmin } = useRole();
   const navigate = useNavigate();
   const location = useLocation();
   const { unread: waUnread } = useWhatsAppUnread();
+  const { canAccess } = useMenuAccess();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [desktopOpen, setDesktopOpen] = useState(true);
 
@@ -74,13 +76,11 @@ export default function AppLayout() {
     navigate("/auth");
   };
 
-  const nav = isSecretariaOnly
-    ? baseNav.filter((n) => n.to === "/crm/agenda" || n.to === "/crm/minha-conta").concat(personalNav.filter(n => !baseNav.some(b => b.to === n.to)))
-    : isMarketingOnly
-    ? baseNav.filter((n) => n.to === "/crm/imoveis" || n.to === "/crm/agenda")
-    : isAdmin || isGestor
-    ? [...baseNav, ...adminNav, ...personalNav]
-    : [...baseNav, ...personalNav];
+  const allItems = [...baseNav, ...adminNav, ...personalNav];
+  const nav = allItems.filter((item) => {
+    if ((item.key === "usuarios" || item.key === "configuracoes") && !isAdmin) return false;
+    return canAccess(item.key);
+  });
 
   const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => (
     <>
