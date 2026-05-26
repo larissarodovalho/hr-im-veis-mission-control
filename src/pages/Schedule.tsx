@@ -882,6 +882,7 @@ export default function Schedule() {
                         </button>
                       );
                     })}
+                   </div>
                   </div>
                 )}
               </div>
