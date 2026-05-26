@@ -1,14 +1,12 @@
-Tornar os três cards do Dashboard ("Reuniões", "Ligações (30d)" e "Visitas (4 semanas)") clicáveis, navegando para as páginas de listagem já existentes.
+As 2 ligações que aparecem no Dashboard estão armazenadas em `interacoes` (tipo='ligacao'), mas a página Ligações lê apenas da tabela `ligacoes` (que está vazia). Por isso a lista fica vazia.
 
-## Mudanças em `src/pages/Dashboard.tsx`
+## Correção
 
-1. Importar `useNavigate` de `react-router-dom`.
-2. Envolver cada um dos três `<Card>` (linhas 150, 170, 188) com `onClick` + classes `cursor-pointer hover:shadow-md transition-shadow`:
-   - Reuniões → `navigate("/crm/reunioes")`
-   - Ligações → `navigate("/crm/ligacoes")`
-   - Visitas → `navigate("/crm/visitas")`
-3. Adicionar `role="button"` e `tabIndex={0}` + handler `onKeyDown` para acessibilidade (Enter/Space).
+Em `src/pages/Calls.tsx`, no `load()`:
 
-As rotas `/crm/reunioes`, `/crm/ligacoes` e `/crm/visitas` já existem em `src/App.tsx` (componentes `Meetings`, `Calls`, `Visits`) e exibem a relação completa.
+1. Buscar em paralelo também `supabase.from("interacoes").select("id,lead_id,conta_id,resultado,descricao,created_at,created_by").eq("tipo","ligacao")`.
+2. Normalizar cada `interacao` para o mesmo formato usado pela tabela: `{ id, data: created_at, lead_id, conta_id, resultado, notas: descricao, duracao_seg: 0, _source: "interacao" }`. Itens de `ligacoes` recebem `_source: "ligacao"`.
+3. Mesclar ambos arrays, hidratar `leads`/`contas` (já existe lógica) e ordenar por `data` desc.
+4. No clique para editar (`openEdit`) e em `quickResult`/`saveEdit`/`remove`, usar `_source` para decidir a tabela: `interacoes` ou `ligacoes`. Campos mapeados: `data ↔ created_at`, `notas ↔ descricao`. Exclusão e update vão para a tabela de origem.
 
-Observação: hoje a barra lateral do CRM mostra apenas "Visitas" entre essas três. Se quiser que "Reuniões" e "Ligações" também apareçam como itens da sidebar para ficarem totalmente sincronizadas, posso adicioná-las em seguida — confirme se deseja.
+Assim a aba Ligações passa a listar tanto registros antigos (interacoes) quanto novos (ligacoes), e edição/exclusão preservam a origem.
