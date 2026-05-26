@@ -7,10 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { CalendarPlus, Phone, MapPin, Save } from "lucide-react";
+import { CalendarPlus, Phone, MapPin, Save, Sprout } from "lucide-react";
 import { toast } from "sonner";
 
-type Kind = "reuniao" | "ligacao" | "visita";
+type Kind = "reuniao" | "ligacao" | "visita" | "captacao";
 
 interface Props {
   contaId: string;
@@ -53,7 +53,7 @@ export default function ContaAgendaQuickAdd({ contaId, responsavelId, onCreated 
     const whenISO = new Date(form.when).toISOString();
     let error: any;
     let createdId: string | null = null;
-    let entityType: "reuniao" | "ligacao" | "visita" | null = null;
+    let entityType: "reuniao" | "ligacao" | "visita" | "captacao" | null = null;
 
     if (open === "reuniao") {
       const res = await supabase.from("reunioes").insert({
@@ -90,6 +90,52 @@ export default function ContaAgendaQuickAdd({ contaId, responsavelId, onCreated 
         corretor_id: corretor,
       } as any).select("id").maybeSingle();
       error = res.error; createdId = res.data?.id ?? null; entityType = "visita";
+    } else if (open === "captacao") {
+      // Procurar captação aberta para a conta
+      const { data: existente } = await supabase
+        .from("captacoes_imovel")
+        .select("id, responsavel_id")
+        .eq("conta_id", contaId)
+        .neq("estagio", "concluido")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existente?.id) {
+        const upd: any = {
+          data_agendada: whenISO,
+          estagio: "agendada",
+          observacoes: form.notas?.trim() || null,
+        };
+        if (!existente.responsavel_id && corretor) upd.responsavel_id = corretor;
+        const res = await supabase
+          .from("captacoes_imovel")
+          .update(upd)
+          .eq("id", existente.id)
+          .select("id")
+          .maybeSingle();
+        error = res.error; createdId = res.data?.id ?? existente.id;
+      } else {
+        const res = await supabase.from("captacoes_imovel").insert({
+          conta_id: contaId,
+          data_agendada: whenISO,
+          estagio: "agendada",
+          observacoes: form.notas?.trim() || null,
+          responsavel_id: corretor,
+          created_by: uid,
+        } as any).select("id").maybeSingle();
+        error = res.error; createdId = res.data?.id ?? null;
+      }
+      entityType = "captacao";
+
+      // Move a conta para o funil de captação (se ainda não estiver)
+      if (!error) {
+        await supabase
+          .from("contas")
+          .update({ etapa_funil: "captacao_imovel" })
+          .eq("id", contaId)
+          .neq("etapa_funil", "captacao_imovel");
+      }
     }
 
     setSaving(false);
@@ -107,7 +153,11 @@ export default function ContaAgendaQuickAdd({ contaId, responsavelId, onCreated 
     onCreated?.();
   };
 
-  const title = open === "reuniao" ? "Nova reunião" : open === "ligacao" ? "Nova ligação" : "Nova visita";
+  const title =
+    open === "reuniao" ? "Nova reunião" :
+    open === "ligacao" ? "Nova ligação" :
+    open === "captacao" ? "Agendar captação" :
+    "Nova visita";
 
   return (
     <Card className="p-5">
@@ -126,6 +176,9 @@ export default function ContaAgendaQuickAdd({ contaId, responsavelId, onCreated 
           <Button variant="outline" onClick={() => openDialog("visita")}>
             <MapPin className="h-4 w-4 mr-1" /> Visita
           </Button>
+          <Button variant="outline" onClick={() => openDialog("captacao")}>
+            <Sprout className="h-4 w-4 mr-1" /> Captação
+          </Button>
         </div>
       </div>
 
@@ -138,10 +191,12 @@ export default function ContaAgendaQuickAdd({ contaId, responsavelId, onCreated 
                 <Label>Data e hora</Label>
                 <Input type="datetime-local" value={form.when ?? ""} onChange={e => setForm({ ...form, when: e.target.value })} />
               </div>
-              <div>
-                <Label>Duração (min)</Label>
-                <Input type="number" min={5} step={5} value={form.duracao ?? ""} onChange={e => setForm({ ...form, duracao: e.target.value })} />
-              </div>
+              {open !== "captacao" && (
+                <div>
+                  <Label>Duração (min)</Label>
+                  <Input type="number" min={5} step={5} value={form.duracao ?? ""} onChange={e => setForm({ ...form, duracao: e.target.value })} />
+                </div>
+              )}
             </div>
 
             {open === "reuniao" && (
@@ -165,7 +220,7 @@ export default function ContaAgendaQuickAdd({ contaId, responsavelId, onCreated 
             )}
 
             <div>
-              <Label>{open === "visita" ? "Observações" : "Notas"}</Label>
+              <Label>{open === "visita" || open === "captacao" ? "Observações" : "Notas"}</Label>
               <Textarea rows={3} value={form.notas ?? ""} onChange={e => setForm({ ...form, notas: e.target.value })} />
             </div>
           </div>
