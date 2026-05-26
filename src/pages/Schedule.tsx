@@ -405,6 +405,7 @@ export default function Schedule() {
       duracao_min: novo.duracao_min,
       titulo: novo.titulo,
       lead_id: novo.lead_id === "none" ? null : novo.lead_id,
+      conta_id: novo.conta_id === "none" ? null : novo.conta_id,
       imovel_id: novo.imovel_id === "none" ? null : novo.imovel_id,
       local: novo.tipo === "presencial" ? novo.local || null : null,
       link: novo.tipo === "videochamada" ? novo.link || null : null,
