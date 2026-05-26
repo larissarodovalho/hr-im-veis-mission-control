@@ -68,7 +68,7 @@ export default function AppLayout() {
   };
 
   const nav = isMarketingOnly
-    ? baseNav.filter((n) => n.to === "/crm/imoveis")
+    ? baseNav.filter((n) => n.to === "/crm/imoveis" || n.to === "/crm/agenda")
     : isAdmin || isGestor
     ? [...baseNav, ...adminNav, ...personalNav]
     : [...baseNav, ...personalNav];
