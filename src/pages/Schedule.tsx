@@ -563,10 +563,13 @@ export default function Schedule() {
       <div className="space-y-6">
         <Card className="p-4 md:p-6">
           {(() => {
-            const monthStart = startOfMonth(currentMonth);
-            const monthEnd = endOfMonth(currentMonth);
-            const gridStart = startOfWeek(monthStart, { locale: ptBR });
-            const gridEnd = endOfWeek(monthEnd, { locale: ptBR });
+            const anchor = viewMode === "week" ? (selected ?? currentMonth) : currentMonth;
+            const gridStart = viewMode === "week"
+              ? startOfWeek(anchor, { locale: ptBR })
+              : startOfWeek(startOfMonth(currentMonth), { locale: ptBR });
+            const gridEnd = viewMode === "week"
+              ? endOfWeek(anchor, { locale: ptBR })
+              : endOfWeek(endOfMonth(currentMonth), { locale: ptBR });
 
             const days: Date[] = [];
             for (let d = gridStart; d <= gridEnd; d = addDays(d, 1)) days.push(d);
@@ -594,24 +597,64 @@ export default function Schedule() {
             };
             const weekDays = ["dom.", "seg.", "ter.", "qua.", "qui.", "sex.", "sáb."];
 
+            const headerLabel = viewMode === "week"
+              ? `${format(gridStart, "d 'de' MMM", { locale: ptBR })} – ${format(gridEnd, "d 'de' MMM 'de' yyyy", { locale: ptBR })}`
+              : format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR });
+
+            const goPrev = () => {
+              if (viewMode === "week") {
+                const next = addDays(anchor, -7);
+                setSelected(next);
+                setCurrentMonth(next);
+              } else {
+                setCurrentMonth(subMonths(currentMonth, 1));
+              }
+            };
+            const goNext = () => {
+              if (viewMode === "week") {
+                const next = addDays(anchor, 7);
+                setSelected(next);
+                setCurrentMonth(next);
+              } else {
+                setCurrentMonth(addMonths(currentMonth, 1));
+              }
+            };
+
             return (
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-light capitalize">
-                    {format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR })}
-                  </h2>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => { const t = new Date(); setCurrentMonth(t); setSelected(t); }}>
-                      Hoje
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                  <h2 className="text-2xl font-light capitalize">{headerLabel}</h2>
+                  <div className="flex items-center gap-2">
+                    <div className="inline-flex rounded-md border border-border overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setViewMode("month")}
+                        className={cn("px-3 py-1.5 text-sm transition-colors", viewMode === "month" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-accent/30")}
+                      >
+                        Mês
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewMode("week")}
+                        className={cn("px-3 py-1.5 text-sm transition-colors border-l border-border", viewMode === "week" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-accent/30")}
+                      >
+                        Semana
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="icon" onClick={goPrev}>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => { const t = new Date(); setCurrentMonth(t); setSelected(t); }}>
+                        Hoje
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={goNext}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
+
 
                 <div className="grid grid-cols-7 border-t border-l border-border rounded-md overflow-hidden">
                   {weekDays.map((wd) => (
