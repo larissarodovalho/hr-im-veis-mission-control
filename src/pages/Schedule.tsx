@@ -454,6 +454,11 @@ export default function Schedule() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {canManage && (<></>)}
+          {canManage && <></>}
+        </div>
+        {canManage && (
+        <div className="flex flex-wrap gap-2">
           <Dialog open={openBloqueio} onOpenChange={setOpenBloqueio}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm"><Ban className="h-4 w-4 mr-1" />Bloquear horário</Button>
