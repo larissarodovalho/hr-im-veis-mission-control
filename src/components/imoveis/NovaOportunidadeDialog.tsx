@@ -36,8 +36,24 @@ export default function NovaOportunidadeDialog({ open, onOpenChange, onCreated }
 
   useEffect(() => {
     if (!open) return;
-    supabase.from("leads").select("id,nome").order("nome").then(({ data }) => setLeads((data ?? []) as any));
-    supabase.from("contas").select("id,nome").order("nome").then(({ data }) => setContas((data ?? []) as any));
+    const fetchAll = async (table: "contas" | "leads") => {
+      const rows: { id: string; nome: string }[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { data, error } = await supabase
+          .from(table).select("id,nome").order("nome")
+          .range(from, from + pageSize - 1);
+        if (error || !data?.length) break;
+        rows.push(...(data as any));
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      return rows;
+    };
+    fetchAll("leads").then((r) => setLeads(r));
+    fetchAll("contas").then((r) => setContas(r));
     supabase.from("imoveis").select("id,titulo,codigo").order("created_at", { ascending: false }).then(({ data }) => {
       setImoveis((data ?? []).map((i: any) => ({ id: i.id, nome: `${i.codigo ? i.codigo + " · " : ""}${i.titulo}` })));
     });

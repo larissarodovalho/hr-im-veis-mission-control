@@ -1,15 +1,31 @@
-Habilitar correção ortográfica em pt-BR nos campos de texto do CRM.
+A causa do problema é o limite padrão do Supabase de 1000 linhas por consulta. Há 1.360 contas no banco, então o `select("id,nome")` no diálogo "Nova oportunidade" trunca em 1000 e ~360 contas ficam invisíveis no seletor.
 
-O `index.html` já está com `lang="pt-BR"`, então o navegador usa o dicionário PT-BR quando o spellcheck está ativo. Vou garantir que os componentes base do shadcn (`Input` e `Textarea`) ativem spellcheck por padrão e forcem `lang="pt-BR"` no elemento — isso cobre automaticamente todos os formulários do CRM (Leads, Contas, Visitas, Reuniões, Ligações, Imóveis, Contratos, etc.) sem precisar editar cada página.
+## Correção
 
-## Mudanças
+Em `src/components/imoveis/NovaOportunidadeDialog.tsx`, no `useEffect` (linha 37):
 
-1. `src/components/ui/textarea.tsx`: adicionar defaults `spellCheck` e `lang` que podem ser sobrescritos por props:
-   ```tsx
-   <textarea spellCheck lang="pt-BR" {...props} />
-   ```
-   (props vêm depois para permitir override, mas como `spellCheck`/`lang` raramente são passados, ficam como default — uso a forma `spellCheck={props.spellCheck ?? true}` e `lang={props.lang ?? "pt-BR"}`).
+1. Substituir o `supabase.from("contas").select(...)` direto por uma função de paginação que faz `.range(start, start+999)` em loop até esgotar (mesmo padrão para `leads` por segurança).
+2. Manter `order("nome")` e mapear para `{ id, nome }`.
 
-2. `src/components/ui/input.tsx`: mesmo tratamento, mas apenas para tipos textuais (`text`, `search`, undefined). Para `email`, `password`, `number`, `url`, `tel`, `date`, etc. não faz sentido — manter spellcheck apenas quando `type` for textual.
+Exemplo:
+```ts
+async function fetchAll(table: "contas" | "leads") {
+  const rows: { id: string; nome: string }[] = [];
+  const pageSize = 1000;
+  let from = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from(table).select("id,nome").order("nome")
+      .range(from, from + pageSize - 1);
+    if (error || !data?.length) break;
+    rows.push(...data);
+    if (data.length < pageSize) break;
+    from += pageSize;
+  }
+  return rows;
+}
+```
 
-Resultado: todos os `<Input>` e `<Textarea>` do app passam a mostrar sublinhado vermelho e sugestões em português do navegador, sem precisar tocar nas dezenas de formulários existentes.
+Usar `fetchAll("contas")` e `fetchAll("leads")` no `useEffect`. Resto do componente fica igual.
+
+Assim todas as contas (e leads) aparecem no SearchableSelect ao criar a oportunidade.
