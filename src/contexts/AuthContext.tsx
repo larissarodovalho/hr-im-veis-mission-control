@@ -103,6 +103,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           !roles.includes("admin") &&
           !roles.includes("gestor") &&
           !roles.includes("corretor"),
+        isSecretariaOnly:
+          roles.includes("secretaria") &&
+          !roles.includes("admin") &&
+          !roles.includes("gestor") &&
+          !roles.includes("corretor") &&
+          !roles.includes("marketing"),
         signOut, refreshProfile,
       }}
     >
