@@ -586,7 +586,7 @@ export default function Schedule() {
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="h-4 w-4 mr-1" />Novo compromisso</Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>Novo compromisso</DialogTitle></DialogHeader>
               <form onSubmit={criarCompromisso} className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
@@ -1211,7 +1211,7 @@ export default function Schedule() {
       </div>
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Editar compromisso</DialogTitle></DialogHeader>
           {editing && (() => {
             const { entity } = parseId(editing.id);
