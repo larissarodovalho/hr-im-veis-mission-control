@@ -102,21 +102,33 @@ async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string
   return { user_id, imported, updated, deleted };
 }
 
+async function runSync(supa: ReturnType<typeof adminClient>, users: { user_id: string }[]) {
+  for (const u of users) {
+    try { await pullForUser(supa, u.user_id); }
+    catch (e) {
+      await supa.from("user_google_calendar")
+        .update({ last_sync_error: (e as Error).message })
+        .eq("user_id", u.user_id);
+    }
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const supa = adminClient();
     const url = new URL(req.url);
     let bodyUserId: string | null = null;
+    let waitFlag = false;
     if (req.method !== "GET") {
       try {
         const body = await req.json();
         bodyUserId = typeof body?.user_id === "string" ? body.user_id : null;
-      } catch {
-        bodyUserId = null;
-      }
+        waitFlag = body?.wait === true;
+      } catch { /* ignore */ }
     }
     const single = url.searchParams.get("user_id") ?? bodyUserId;
+    const wait = waitFlag || url.searchParams.get("wait") === "1";
 
     let users: { user_id: string }[];
     if (single) users = [{ user_id: single }];
@@ -125,16 +137,27 @@ Deno.serve(async (req) => {
       users = data ?? [];
     }
 
-    const results = [];
-    for (const u of users) {
-      try { results.push(await pullForUser(supa, u.user_id)); }
-      catch (e) {
-        await supa.from("user_google_calendar").update({ last_sync_error: (e as Error).message }).eq("user_id", u.user_id);
-        results.push({ user_id: u.user_id, error: (e as Error).message });
+    // Modo síncrono apenas se solicitado explicitamente (uso por cron com poucos users).
+    if (wait) {
+      const results = [];
+      for (const u of users) {
+        try { results.push(await pullForUser(supa, u.user_id)); }
+        catch (e) {
+          await supa.from("user_google_calendar").update({ last_sync_error: (e as Error).message }).eq("user_id", u.user_id);
+          results.push({ user_id: u.user_id, error: (e as Error).message });
+        }
       }
+      return new Response(JSON.stringify({ ok: true, results }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
-    return new Response(JSON.stringify({ ok: true, results }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+
+    // Background: retorna 202 imediatamente para evitar IDLE_TIMEOUT (150s).
+    // Cliente faz polling em user_google_calendar.last_sync_at / last_sync_error.
+    // @ts-ignore EdgeRuntime global
+    EdgeRuntime.waitUntil(runSync(supa, users));
+    return new Response(JSON.stringify({ ok: true, queued: users.length }), {
+      status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     return new Response(JSON.stringify({ error: (e as Error).message }), {
