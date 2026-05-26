@@ -106,8 +106,11 @@ export default function AccountDetail() {
 
   if (!acc) return <div className="p-4 sm:p-6 lg:p-8 text-muted-foreground">Carregando…</div>;
 
-  const totalValor = props.reduce((s, p) => s + (Number(p.valor_negocio) || 0), 0);
+  const totalValorProps = props.reduce((s, p) => s + (Number(p.valor_negocio) || 0), 0);
+  const totalValorImoveis = imoveisPortfolio.reduce((s, i: any) => s + (Number(i.valor) || 0), 0);
+  const totalValor = totalValorProps + totalValorImoveis;
   const totalComissao = props.reduce((s, p) => s + (Number(p.valor_comissao) || 0), 0);
+  const totalPropriedades = imoveisPortfolio.length + props.length;
 
   const listaAtual: "carteira" | "marketing" | "nenhuma" = (() => {
     const tags = ((acc?.tags ?? []) as string[]).map((t) => t.toLowerCase());
