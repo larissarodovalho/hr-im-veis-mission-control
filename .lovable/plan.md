@@ -1,12 +1,15 @@
-As 2 ligações que aparecem no Dashboard estão armazenadas em `interacoes` (tipo='ligacao'), mas a página Ligações lê apenas da tabela `ligacoes` (que está vazia). Por isso a lista fica vazia.
+Habilitar correção ortográfica em pt-BR nos campos de texto do CRM.
 
-## Correção
+O `index.html` já está com `lang="pt-BR"`, então o navegador usa o dicionário PT-BR quando o spellcheck está ativo. Vou garantir que os componentes base do shadcn (`Input` e `Textarea`) ativem spellcheck por padrão e forcem `lang="pt-BR"` no elemento — isso cobre automaticamente todos os formulários do CRM (Leads, Contas, Visitas, Reuniões, Ligações, Imóveis, Contratos, etc.) sem precisar editar cada página.
 
-Em `src/pages/Calls.tsx`, no `load()`:
+## Mudanças
 
-1. Buscar em paralelo também `supabase.from("interacoes").select("id,lead_id,conta_id,resultado,descricao,created_at,created_by").eq("tipo","ligacao")`.
-2. Normalizar cada `interacao` para o mesmo formato usado pela tabela: `{ id, data: created_at, lead_id, conta_id, resultado, notas: descricao, duracao_seg: 0, _source: "interacao" }`. Itens de `ligacoes` recebem `_source: "ligacao"`.
-3. Mesclar ambos arrays, hidratar `leads`/`contas` (já existe lógica) e ordenar por `data` desc.
-4. No clique para editar (`openEdit`) e em `quickResult`/`saveEdit`/`remove`, usar `_source` para decidir a tabela: `interacoes` ou `ligacoes`. Campos mapeados: `data ↔ created_at`, `notas ↔ descricao`. Exclusão e update vão para a tabela de origem.
+1. `src/components/ui/textarea.tsx`: adicionar defaults `spellCheck` e `lang` que podem ser sobrescritos por props:
+   ```tsx
+   <textarea spellCheck lang="pt-BR" {...props} />
+   ```
+   (props vêm depois para permitir override, mas como `spellCheck`/`lang` raramente são passados, ficam como default — uso a forma `spellCheck={props.spellCheck ?? true}` e `lang={props.lang ?? "pt-BR"}`).
 
-Assim a aba Ligações passa a listar tanto registros antigos (interacoes) quanto novos (ligacoes), e edição/exclusão preservam a origem.
+2. `src/components/ui/input.tsx`: mesmo tratamento, mas apenas para tipos textuais (`text`, `search`, undefined). Para `email`, `password`, `number`, `url`, `tel`, `date`, etc. não faz sentido — manter spellcheck apenas quando `type` for textual.
+
+Resultado: todos os `<Input>` e `<Textarea>` do app passam a mostrar sublinhado vermelho e sugestões em português do navegador, sem precisar tocar nas dezenas de formulários existentes.
