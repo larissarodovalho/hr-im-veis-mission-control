@@ -92,6 +92,7 @@ export default function Schedule() {
       { data: l },
       { data: ligs, error: lErr },
       { data: vis, error: vErr },
+      { data: capts, error: cErr },
     ] = await Promise.all([
       supabase.from("reunioes")
         .select("id, agendada_para, status, local, link, notas, tipo, duracao_min, titulo, criado_por_ia, lead_id, conta_id")
@@ -104,10 +105,15 @@ export default function Schedule() {
       supabase.from("visitas")
         .select("id, data_visita, status, observacoes, lead_id, imovel_id, conta_id")
         .order("data_visita"),
+      supabase.from("captacoes_imovel")
+        .select("id, data_agendada, estagio, observacoes, conta_id, imovel_id, responsavel_id")
+        .not("data_agendada", "is", null)
+        .order("data_agendada"),
     ]);
     if (rErr) console.error("[Schedule] reunioes", rErr);
     if (lErr) console.error("[Schedule] ligacoes", lErr);
     if (vErr) console.error("[Schedule] visitas", vErr);
+    if (cErr) console.error("[Schedule] captacoes", cErr);
 
     const leadIds = [
       ...new Set([
