@@ -1,32 +1,45 @@
-## Objetivo
+# Permissões por usuário (acesso ao menu lateral)
 
-Permitir que **qualquer usuário autenticado** visualize os agendamentos em `/crm/agenda`, mantendo criação/edição/exclusão restritas aos papéis staff (admin, gestor, corretor, secretaria).
+Adiciona uma seção "Permissões" em cada usuário na página `/crm/usuarios` para liberar/bloquear itens do menu lateral individualmente, sobrescrevendo o padrão do papel.
 
-## Mudanças
+## 1. Banco de dados
 
-### 1. Banco — RLS
+Nova tabela `user_menu_access`:
+- `user_id` (uuid)
+- `menu_key` (text) — ex.: `dashboard`, `leads`, `contas`, `whatsapp`, `reunioes`, `agenda`, `tarefas`, `documentos`, `contratos`, `relatorios`, `newsletter`, `imoveis`, `captacoes`, `parceiros`, `usuarios`, `configuracoes`, `minha-conta`
+- `allowed` (boolean)
+- Único `(user_id, menu_key)`
 
-**`reunioes`**: substituir a policy de SELECT atual por uma que libere leitura a qualquer `authenticated`.
+RLS:
+- admin/gestor leem e escrevem para qualquer usuário
+- usuário lê os próprios registros
 
-**`agenda_bloqueios`**: mesmo ajuste, para que bloqueios apareçam no calendário compartilhado.
+Regra: se não houver registro → usa o padrão do papel. Se `allowed = true` → libera. Se `allowed = false` → bloqueia.
 
-Policies de INSERT/UPDATE/DELETE permanecem inalteradas (continuam exigindo staff).
+## 2. Hook `src/hooks/useMenuAccess.tsx`
 
-### 2. Sidebar (`src/components/AppSidebar.tsx`)
+- Carrega os overrides do usuário logado uma vez
+- Expõe `canAccess(menuKey)` que combina papel + override
+- `usuarios` e `configuracoes` continuam restritos a admin no nível de rota mesmo se liberados na UI
 
-- Mostrar o item "CRM → Agenda" para todos os papéis autenticados (hoje fica oculto para `marketing` e futuros papéis sem acesso ao CRM).
-- Demais subtabs do CRM continuam respeitando os papéis atuais.
+## 3. Sidebar (`src/components/AppLayout.tsx`)
 
-### 3. Guardas de rota
+- Adiciona `key` estável em cada item de `baseNav`, `adminNav`, `personalNav`
+- Filtra cada lista por `canAccess(item.key)`
+- Redirect: se a rota atual estiver bloqueada, manda para o primeiro item permitido
 
-- `StaffRoute.tsx` / `MarketingRoute.tsx` / `AppLayout.tsx`: liberar acesso à rota `/crm/agenda` para qualquer usuário autenticado (sem exigir staff). Outras rotas do CRM seguem protegidas.
+## 4. UI em `src/pages/UsuariosAdminPage.tsx`
 
-### 4. Página `Schedule.tsx`
+- Novo botão "Permissões" (ícone cadeado) em cada linha de usuário
+- Abre um Dialog grande com os itens agrupados por seção (CRM, Administração, Pessoal)
+- Cada item tem um Switch **Liberado / Bloqueado**
+- Estado inicial reflete o padrão do papel; mudar grava override via upsert
+- Botão "Restaurar padrão do papel" (apaga todos os overrides do usuário)
 
-- Ocultar/desabilitar botões de ação (novo agendamento, confirmar, editar, bloquear horário) para usuários que não são staff — eles só verão o calendário em modo leitura. As RLS de escrita já bloqueiam no backend; isso evita confusão na UI.
+## Detalhes técnicos
 
-## O que NÃO muda
+- Acesso a dados (RLS das tabelas) **não muda** — o override só controla o que aparece no menu e o guard de rota
+- Liberar "Relatórios" para um corretor mostra o link, mas as queries continuam respeitando as policies existentes (pode aparecer vazio se o papel não tiver acesso aos dados)
+- Sem níveis "editar próprio/editar todos" por enquanto — só Liberado/Bloqueado
 
-- Leads, contas, imóveis, contratos, captações: permissões intactas.
-- Apenas staff pode criar/confirmar/editar/excluir reuniões e bloqueios.
-- Acesso continua exigindo login (não é público sem autenticação).
+Posso prosseguir?
