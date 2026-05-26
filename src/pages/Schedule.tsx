@@ -539,6 +539,38 @@ export default function Schedule() {
     load();
   };
 
+  const excluirCompromisso = async () => {
+    if (!editing) return;
+    const { table, realId, entity } = parseId(editing.id);
+    const isRecorrente = !!editing.recorrencia_id;
+    const msg = isRecorrente
+      ? "Este é um compromisso recorrente. Excluir apenas esta ocorrência?\n\nClique em OK para excluir SÓ esta ocorrência, ou Cancelar para abortar."
+      : "Excluir este compromisso? Esta ação não pode ser desfeita.";
+    if (!window.confirm(msg)) return;
+    setSavingEdit(true);
+    const { error } = await supabase.from(table).delete().eq("id", realId);
+    setSavingEdit(false);
+    if (error) return toast.error(error.message);
+    toast.success("Compromisso excluído");
+    supabase.functions.invoke("gcal-push", {
+      body: { entity_type: entity, entity_id: realId, action: "delete" },
+    }).catch(() => {});
+    setEditing(null);
+    load();
+  };
+
+  const excluirSerie = async () => {
+    if (!editing?.recorrencia_id) return;
+    if (!window.confirm("Excluir TODAS as ocorrências desta série? Esta ação não pode ser desfeita.")) return;
+    setSavingEdit(true);
+    const { error } = await supabase.from("reunioes").delete().eq("recorrencia_id", editing.recorrencia_id);
+    setSavingEdit(false);
+    if (error) return toast.error(error.message);
+    toast.success("Série excluída");
+    setEditing(null);
+    load();
+  };
+
 
   return (
     <div className="p-4 md:p-8 space-y-6">
@@ -1268,9 +1300,21 @@ export default function Schedule() {
               </div>
             );
           })()}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
-            <Button onClick={salvarEdicao} disabled={savingEdit}><Save className="h-4 w-4 mr-1" />Salvar</Button>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="destructive" onClick={excluirCompromisso} disabled={savingEdit}>
+                <Trash2 className="h-4 w-4 mr-1" />Excluir
+              </Button>
+              {editing?.recorrencia_id && (
+                <Button variant="outline" onClick={excluirSerie} disabled={savingEdit} className="text-destructive border-destructive/40 hover:bg-destructive/10">
+                  <Trash2 className="h-4 w-4 mr-1" />Excluir série
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
+              <Button onClick={salvarEdicao} disabled={savingEdit}><Save className="h-4 w-4 mr-1" />Salvar</Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
