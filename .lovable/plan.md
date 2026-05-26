@@ -1,22 +1,20 @@
-## Ajustes na aba Oportunidades de Negócio (`src/pages/imoveis/OportunidadesTab.tsx`)
+## Mostrar nome da conta/cliente nas captações da agenda
 
-### 1. Badge de prioridade saindo do card
-Hoje o título + badge de prioridade ficam num `flex justify-between` sem proteção. Em colunas estreitas (xl:grid-cols-6) o badge "alta/média/baixa" estoura para fora do card.
+### Causa
+Em `src/pages/Schedule.tsx`, os compromissos de captação (`captacoes_imovel`) já são carregados, mas:
+- O nome da conta entra apenas como sufixo no `titulo` (ex.: "Captação — João"). Se o título tem código do imóvel, o nome do cliente fica escondido entre parênteses.
+- O tipo `Compromisso` não tem `conta_id` / `conta_nome`, então o card da agenda renderiza só o campo `Lead:` (que é `null` para captação) e o usuário marketing vê o card "sem cliente".
 
-**Correção:**
-- Adicionar `shrink-0` no badge de prioridade e `min-w-0` no título para evitar overflow.
-- Reduzir padding do badge (`px-1.5 py-0`) e usar `whitespace-nowrap`.
-- Garantir `overflow-hidden` no card para conter qualquer transbordo.
+### Mudanças (apenas em `src/pages/Schedule.tsx`)
 
-### 2. Colunas do funil mais compridas (altas)
-Atualmente: `min-h-[200px]`. Vamos deixar as colunas ocuparem a altura útil da tela, como no Kanban de Contas.
+1. **Tipo `Compromisso`**: adicionar `conta_id?: string|null` e `conta_nome?: string|null`.
+2. **Loaders** (`reus`, `ligsAgendadas`, `visitasAgendadas`, `captacoesAgendadas`): popular `conta_id` e `conta_nome` a partir de `contasById`. Para captação, garantir `conta_id` = `c.conta_id` e `conta_nome` = `contaNome`.
+3. **Captação**: simplificar o título para `"Captação"` (ou "Captação: {imovel.titulo}") e deixar o nome do cliente vir do campo dedicado, evitando duplicar.
+4. **Render do card de compromisso** (linha ~958): exibir uma linha `Cliente:` com link para `/crm/contas/{conta_id}` quando `c.conta_nome` existir e não houver `lead_nome`. Mantém `Lead:` quando aplicável.
+5. **Visual da captação**: adicionar um `Badge variant="outline"` "Captação" (cor accent) ao lado do título quando o compromisso vier de `captacoes_imovel` para destacar a origem do funil. Para isso, adicionar `origem?: "captacao"` no tipo `Compromisso`.
 
-**Correção:**
-- Trocar `min-h-[200px]` por `min-h-[calc(100vh-280px)]` na `Coluna`.
-- Adicionar `overflow-y-auto` para permitir rolagem interna quando houver muitos cards.
-- Manter o grid responsivo atual.
+### Escopo / RLS
+Nenhuma mudança de banco. Marketing já tem acesso de leitura via `is_staff()` em `captacoes_imovel` e via "Marketing sees all contas" em `contas`. O ajuste é puramente de UI/dados no front-end.
 
-### Arquivos afetados
-- `src/pages/imoveis/OportunidadesTab.tsx` (somente CSS/Tailwind nos componentes `OportunidadeCard` e `Coluna`)
-
-Nenhuma mudança de lógica ou dados.
+### Arquivos
+- `src/pages/Schedule.tsx` (tipo, loaders dos 4 grupos, render do item da lista do dia).

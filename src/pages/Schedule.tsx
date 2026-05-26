@@ -32,6 +32,9 @@ type Compromisso = {
   lead_nome?: string | null;
   lead_telefone?: string | null;
   lead_email?: string | null;
+  conta_id?: string | null;
+  conta_nome?: string | null;
+  origem?: "captacao";
   criado_por_ia?: boolean;
 };
 
@@ -180,6 +183,8 @@ export default function Schedule() {
         lead_nome: leadNome,
         lead_telefone: lead?.telefone ?? null,
         lead_email: lead?.email ?? null,
+        conta_id: m.conta_id ?? null,
+        conta_nome: contaNome ?? null,
         criado_por_ia: m.criado_por_ia,
       };
     });
@@ -207,6 +212,8 @@ export default function Schedule() {
           lead_nome: leadNome,
           lead_telefone: lead?.telefone ?? null,
           lead_email: lead?.email ?? null,
+          conta_id: c.conta_id ?? null,
+          conta_nome: contaNome ?? null,
           criado_por_ia: false,
         };
       });
@@ -234,6 +241,8 @@ export default function Schedule() {
         lead_nome: leadNome,
         lead_telefone: lead?.telefone ?? null,
         lead_email: lead?.email ?? null,
+        conta_id: v.conta_id ?? null,
+        conta_nome: contaNome ?? null,
         criado_por_ia: false,
       };
     });
@@ -241,9 +250,7 @@ export default function Schedule() {
       const start = new Date(c.data_agendada);
       const contaNome = c.conta_id ? contasById.get(c.conta_id)?.nome : null;
       const imovel = c.imovel_id ? imoveisById.get(c.imovel_id) : null;
-      const titulo = imovel?.titulo
-        ? `Captação: ${imovel.titulo}${contaNome ? ` (${contaNome})` : ""}`
-        : contaNome ? `Captação — ${contaNome}` : "Captação";
+      const titulo = imovel?.titulo ? `Captação: ${imovel.titulo}` : "Captação";
       return {
         id: `cap:${c.id}`,
         date: start,
@@ -256,6 +263,9 @@ export default function Schedule() {
         notas: c.observacoes,
         lead_id: null,
         lead_nome: null,
+        conta_id: c.conta_id ?? null,
+        conta_nome: contaNome ?? null,
+        origem: "captacao",
         criado_por_ia: false,
       };
     });
@@ -949,6 +959,11 @@ export default function Schedule() {
                         <div className="text-sm font-medium flex items-center gap-2">
                           <TipoIcon tipo={c.tipo} />
                           {format(c.date, "HH:mm", { locale: ptBR })} — {c.titulo}
+                          {c.origem === "captacao" && (
+                            <Badge variant="outline" className="bg-accent/20 text-accent-foreground border-accent/40">
+                              Captação
+                            </Badge>
+                          )}
                           {c.criado_por_ia && (
                             <Badge variant="secondary" className="gap-1">
                               <Sparkles className="h-3 w-3" /> IA
@@ -956,6 +971,7 @@ export default function Schedule() {
                           )}
                         </div>
                         {c.lead_nome && <div className="text-xs text-muted-foreground mt-0.5">Lead: {c.lead_id ? <Link to={`/crm/leads/${c.lead_id}`} className="text-primary hover:underline">{c.lead_nome}</Link> : c.lead_nome}</div>}
+                        {!c.lead_nome && c.conta_nome && <div className="text-xs text-muted-foreground mt-0.5">Cliente: {c.conta_id ? <Link to={`/crm/contas/${c.conta_id}`} className="text-primary hover:underline">{c.conta_nome}</Link> : c.conta_nome}</div>}
                         {(c.lead_telefone || c.lead_email) && (
                           <div className="text-xs text-muted-foreground mt-0.5">
                             {c.lead_telefone && <span>📞 {c.lead_telefone}</span>}
