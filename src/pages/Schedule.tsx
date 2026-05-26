@@ -678,7 +678,8 @@ export default function Schedule() {
                         onClick={() => setSelected(d)}
                         aria-label={format(d, "PPPP", { locale: ptBR })}
                         className={cn(
-                          "text-left min-h-[110px] p-1.5 border-r border-b border-border align-top transition-colors",
+                          "text-left p-1.5 border-r border-b border-border align-top transition-colors",
+                          viewMode === "week" ? "min-h-[280px]" : "min-h-[110px]",
                           "hover:bg-accent/20",
                           !inMonth && "bg-muted/20 text-muted-foreground",
                           blocked && "bg-destructive/10",
