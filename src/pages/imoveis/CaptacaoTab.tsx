@@ -331,6 +331,14 @@ function CaptacaoDialog({
     setSaving(false);
     if (error) { toast.error("Erro ao salvar"); return; }
     toast.success("Captação atualizada");
+
+    // Sincroniza com Google Calendar quando há data agendada
+    if (dataAgendada) {
+      supabase.functions.invoke("gcal-push", {
+        body: { entity_type: "captacao", entity_id: captacao.id, action: "create" },
+      }).catch(() => {});
+    }
+
     onSaved();
   };
 
