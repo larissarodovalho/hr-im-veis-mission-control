@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users as UsersIcon,
@@ -55,19 +55,28 @@ const personalNav: NavItem[] = [
 ];
 
 export default function AppLayout() {
-  const { signOut, user, isMarketingOnly } = useAuth();
+  const { signOut, user, isMarketingOnly, isSecretariaOnly } = useAuth();
   const { isAdmin, isGestor } = useRole();
   const navigate = useNavigate();
+  const location = useLocation();
   const { unread: waUnread } = useWhatsAppUnread();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [desktopOpen, setDesktopOpen] = useState(true);
+
+  useEffect(() => {
+    if (isSecretariaOnly && location.pathname !== "/crm/agenda" && location.pathname !== "/crm/minha-conta") {
+      navigate("/crm/agenda", { replace: true });
+    }
+  }, [isSecretariaOnly, location.pathname, navigate]);
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/auth");
   };
 
-  const nav = isMarketingOnly
+  const nav = isSecretariaOnly
+    ? baseNav.filter((n) => n.to === "/crm/agenda" || n.to === "/crm/minha-conta").concat(personalNav.filter(n => !baseNav.some(b => b.to === n.to)))
+    : isMarketingOnly
     ? baseNav.filter((n) => n.to === "/crm/imoveis" || n.to === "/crm/agenda")
     : isAdmin || isGestor
     ? [...baseNav, ...adminNav, ...personalNav]

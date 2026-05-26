@@ -6,10 +6,10 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-type Role = "admin" | "gestor" | "corretor" | "marketing";
+type Role = "admin" | "gestor" | "corretor" | "marketing" | "secretaria";
 type UiRole = Role | "gestor_corretor";
 
-const VALID_UI_ROLES: UiRole[] = ["admin", "gestor", "corretor", "gestor_corretor", "marketing"];
+const VALID_UI_ROLES: UiRole[] = ["admin", "gestor", "corretor", "gestor_corretor", "marketing", "secretaria"];
 
 async function applyRoles(admin: ReturnType<typeof createClient>, userId: string, role: UiRole) {
   await admin.from("user_roles").delete().eq("user_id", userId);

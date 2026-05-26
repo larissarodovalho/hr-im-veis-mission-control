@@ -20,6 +20,7 @@ const ROLE_LABELS: Record<UiRole, string> = {
   corretor: "Corretor",
   gestor_corretor: "Gestor + Corretor",
   marketing: "Marketing",
+  secretaria: "Secretaria",
 };
 
 type Row = {
@@ -77,6 +78,7 @@ export default function UsuariosAdminPage() {
       if (set.has("gestor") && set.has("corretor")) return "gestor_corretor";
       if (set.has("gestor")) return "gestor";
       if (set.has("marketing")) return "marketing";
+      if (set.has("secretaria")) return "secretaria";
       return "corretor";
     };
     setRows(((profs ?? []) as any[]).map((p) => ({ ...p, nivel: p.nivel || "senior", role: resolve(rolesByUser.get(p.user_id)) })));
@@ -229,6 +231,7 @@ export default function UsuariosAdminPage() {
                       <SelectItem value="corretor">Corretor</SelectItem>
                       <SelectItem value="gestor_corretor">Gestor + Corretor</SelectItem>
                       <SelectItem value="marketing">Marketing</SelectItem>
+                      <SelectItem value="secretaria">Secretaria</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -281,6 +284,7 @@ export default function UsuariosAdminPage() {
                           <SelectItem value="corretor">Corretor</SelectItem>
                           <SelectItem value="gestor_corretor">Gestor + Corretor</SelectItem>
                           <SelectItem value="marketing">Marketing</SelectItem>
+                      <SelectItem value="secretaria">Secretaria</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -378,6 +382,7 @@ export default function UsuariosAdminPage() {
                     <SelectItem value="corretor">Corretor</SelectItem>
                     <SelectItem value="gestor_corretor">Gestor + Corretor</SelectItem>
                     <SelectItem value="marketing">Marketing</SelectItem>
+                      <SelectItem value="secretaria">Secretaria</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

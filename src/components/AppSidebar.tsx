@@ -21,6 +21,7 @@ import {
   MessageCircle,
   Shield,
   UserCircle,
+  Calendar,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { NavLink, useLocation, useSearchParams, useNavigate } from "react-router-dom";
@@ -49,6 +50,7 @@ const CRM_SUBTABS = [
   { label: "Análise de Leads", value: "analise", icon: BarChart2 },
   { label: "Oportunidades", value: "oportunidades", icon: HandCoins },
   { label: "Visitas", value: "visitas", icon: CalendarCheck },
+  { label: "Agenda", value: "agenda", icon: Calendar },
   { label: "Tarefas", value: "tarefas", icon: CheckCircle2 },
   { label: "Relatórios", value: "relatorios", icon: FileDown },
   { label: "Propostas", value: "propostas", icon: FileTextIcon },
@@ -72,13 +74,13 @@ const ALL_ITEMS = [
   { title: "Saúde do Sistema", url: "/saude", icon: Activity, restricted: true },
 ];
 
-const CORRETOR_ALLOWED_CRM = new Set(["leads", "contatos", "whatsapp", "tarefas"]);
-const CRM_SUBTAB_ROUTES: Record<string, string> = { tarefas: "/crm/tarefas" };
+const CORRETOR_ALLOWED_CRM = new Set(["leads", "contatos", "whatsapp", "tarefas", "agenda"]);
+const CRM_SUBTAB_ROUTES: Record<string, string> = { tarefas: "/crm/tarefas", agenda: "/crm/agenda" };
 
 export function AppSidebar() {
   const { state } = useSidebar();
-  const { isAdmin, isGestor, isMarketingOnly, user } = useAuth();
-  const isCorretorOnly = !isAdmin && !isGestor && !isMarketingOnly;
+  const { isAdmin, isGestor, isMarketingOnly, isSecretariaOnly, user } = useAuth();
+  const isCorretorOnly = !isAdmin && !isGestor && !isMarketingOnly && !isSecretariaOnly;
   const collapsed = state === "collapsed";
   const [gcalConnected, setGcalConnected] = useState<boolean | null>(null);
   useEffect(() => {
@@ -98,15 +100,18 @@ export function AppSidebar() {
   const activeTab =
     searchParams.get("tab") ||
     (isCRM
-      ? Object.entries(CRM_SUBTAB_ROUTES).find(([, r]) => location.pathname === r)?.[0] || (isMarketingOnly ? "imoveis" : "leads")
+      ? Object.entries(CRM_SUBTAB_ROUTES).find(([, r]) => location.pathname === r)?.[0] || (isMarketingOnly ? "imoveis" : isSecretariaOnly ? "agenda" : "leads")
       : "geral");
 
   const items = ALL_ITEMS.filter((i) => {
+    if (isSecretariaOnly) return i.url === "/crm" || i.url === "/crm/minha-conta";
     if (isMarketingOnly) return i.url === "/crm";
     if (isCorretorOnly && i.restricted) return false;
     return true;
   });
-  const visibleCrmSubtabs = isMarketingOnly
+  const visibleCrmSubtabs = isSecretariaOnly
+    ? CRM_SUBTABS.filter((s) => s.value === "agenda")
+    : isMarketingOnly
     ? CRM_SUBTABS.filter((s) => s.value === "imoveis")
     : isCorretorOnly
     ? CRM_SUBTABS.filter((s) => CORRETOR_ALLOWED_CRM.has(s.value))
@@ -142,7 +147,7 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild>
                         <NavLink
-                          to={item.url === "/crm" ? (isMarketingOnly ? "/crm/imoveis" : "/crm?tab=leads") : item.url === "/marketing" ? "/marketing?tab=geral" : item.url}
+                          to={item.url === "/crm" ? (isSecretariaOnly ? "/crm/agenda" : isMarketingOnly ? "/crm/imoveis" : "/crm?tab=leads") : item.url === "/marketing" ? "/marketing?tab=geral" : item.url}
                           end={item.url === "/"}
                           className={`transition-all duration-200 ${isActive ? "bg-sidebar-accent text-sidebar-primary" : "hover:bg-sidebar-accent/50"}`}
                         >
