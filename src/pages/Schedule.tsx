@@ -673,7 +673,12 @@ export default function Schedule() {
                         {TIPO_LABEL[c.tipo]} · {c.lead_id && c.lead_nome ? <Link to={`/crm/leads/${c.lead_id}`} className="text-primary hover:underline">{c.lead_nome}</Link> : (c.lead_nome || "sem lead")}{c.local || c.link ? ` · ${c.local || c.link}` : ""}
                       </div>
                     </div>
-                    <Badge variant="outline">{c.status}</Badge>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Badge variant="outline">{c.status}</Badge>
+                      <Button size="icon" variant="ghost" onClick={() => openEdit(c)} title="Editar">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
             </TabsContent>
