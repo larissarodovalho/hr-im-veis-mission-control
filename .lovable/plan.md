@@ -1,19 +1,19 @@
-# Toggle Publicado / Não publicado nos cards de imóveis
+# Sincronizar imóveis do portfólio na ficha da conta
 
-Hoje todo imóvel com `status = 'Disponível'` aparece automaticamente no site público (a view `imoveis_public` filtra só por status). Não há jeito de manter um imóvel no CRM sem expor no site.
+Hoje, quando um imóvel é cadastrado com um proprietário (conta), essa relação fica salva em `imoveis.proprietario_id`, mas a ficha da conta (em **CRM › Contas › [cliente]**) só mostra a seção "Propriedades / Negócios" que é preenchida manualmente (`conta_propriedades`). O imóvel cadastrado no portfólio não aparece automaticamente lá.
 
-## Mudanças
+## Mudança
 
-### Banco
-- Adicionar coluna `publicado boolean NOT NULL DEFAULT true` em `public.imoveis` (default `true` preserva o comportamento atual de todos os imóveis existentes).
-- Recriar a view `public.imoveis_public` adicionando `AND publicado = true` na cláusula `WHERE`.
+Em `src/pages/AccountDetail.tsx`, adicionar uma nova seção **"Imóveis no portfólio"** logo acima de "Propriedades / Negócios":
 
-### Frontend (`src/pages/Imoveis.tsx`)
-- No "bannerzinho" (canto superior da foto) de cada card, ao lado do badge de status, adicionar um segundo badge clicável:
-  - **Publicado** — verde, ícone `Eye`
-  - **Não publicado** — cinza, ícone `EyeOff`
-- Clique alterna o campo `publicado` no banco via `supabase.from('imoveis').update({ publicado: !i.publicado })` e atualiza o estado local otimista. Toast de confirmação.
-- Aplicar no card de "Disponível" e também no de "Em proposta" (mesmo padrão visual).
+- Buscar no `load()`: `supabase.from("imoveis").select("id, codigo, titulo, tipo, finalidade, status, valor, cidade, estado, fotos, publicado").eq("proprietario_id", id).order("created_at", { ascending: false })`
+- Renderizar lista de cards compactos com foto (thumb), código, título, cidade, badge de status (Disponível / Vendido / etc.), badge "Publicado" ou "Não publicado", finalidade · tipo e valor formatado.
+- Cada card é um link para `/crm/imoveis` (e abre o histórico/edição daquele imóvel ao clicar — por ora, link simples para a aba de imóveis, já que não há rota individual).
+- Estado vazio: card cinza "Nenhum imóvel deste cliente no portfólio. Cadastre em Imóveis selecionando este cliente como proprietário."
+- Também incluir no contador do card "Propriedades" no topo: somar `imoveisDoCliente.length + conta_propriedades.length` (ou separar em dois cards: "Imóveis no portfólio" e "Propriedades cadastradas").
 
-### Fora de escopo
-- Não mexer em outras abas (Captação, Parceiros, Vendidos), nem em filtros, nem no formulário de novo/editar imóvel — só o toggle no card.
+## Fora de escopo
+
+- Não criar rota individual de imóvel.
+- Não alterar `conta_propriedades` nem o cadastro de imóveis — só leitura cruzada.
+- Sem mudanças no banco (a coluna `proprietario_id` já existe).
