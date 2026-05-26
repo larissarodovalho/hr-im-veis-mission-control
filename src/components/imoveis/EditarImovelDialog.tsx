@@ -68,7 +68,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
       quartos: s(imovel.quartos), suites: s(imovel.suites), banheiros: s(imovel.banheiros), vagas: s(imovel.vagas),
       cep: s(imovel.cep), endereco: s(imovel.endereco), numero: s(imovel.numero),
       complemento: s(imovel.complemento), bairro: s(imovel.bairro), cidade: s(imovel.cidade), estado: s(imovel.estado),
-      destaque: !!imovel.destaque, matricula: s(imovel.matricula),
+      destaque: !!imovel.destaque, publicado: imovel.publicado ?? true, matricula: s(imovel.matricula),
       exclusividade_inicio: s(imovel.exclusividade_inicio),
       exclusividade_fim: s(imovel.exclusividade_fim),
       exclusividade_observacoes: s(imovel.exclusividade_observacoes),
