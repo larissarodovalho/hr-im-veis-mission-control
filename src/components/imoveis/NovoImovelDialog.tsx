@@ -108,6 +108,7 @@ const empty = {
   cidade: "",
   estado: "",
   destaque: false,
+  publicado: true,
   matricula: "",
 };
 
