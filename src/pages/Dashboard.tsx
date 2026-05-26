@@ -214,7 +214,7 @@ export default function Dashboard() {
           className="p-4 md:p-6 cursor-pointer hover:shadow-md transition-shadow"
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display text-lg font-semibold flex items-center gap-2"><MapPin className="h-4 w-4 text-accent" /> Visitas (4 semanas)</h2>
+            <h2 className="font-display text-lg font-semibold flex items-center gap-2"><MapPin className="h-4 w-4 text-accent" /> Visitas (mês)</h2>
             <Badge variant="secondary">{visitsTotal}</Badge>
           </div>
           {visitsTotal === 0 ? <p className="text-sm text-muted-foreground py-12 text-center">Sem visitas.</p> : (
