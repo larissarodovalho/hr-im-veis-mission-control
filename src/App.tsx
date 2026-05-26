@@ -37,6 +37,7 @@ import DocumentDetail from "@/pages/DocumentDetail";
 import Reports from "@/pages/Reports";
 import Users from "@/pages/UsuariosAdminPage";
 import ConfiguracoesPage from "@/pages/ConfiguracoesPage";
+import MinhaContaPage from "@/pages/MinhaContaPage";
 import Newsletter from "@/pages/Newsletter";
 import MetaAdsMapping from "@/pages/MetaAdsMapping";
 import NotFound from "@/pages/NotFound";
@@ -114,6 +115,7 @@ const App = () => (
               <Route path="relatorios" element={<StaffRoute><Reports /></StaffRoute>} />
               <Route path="usuarios" element={<StaffRoute><Users /></StaffRoute>} />
               <Route path="configuracoes" element={<StaffRoute><ConfiguracoesPage /></StaffRoute>} />
+              <Route path="minha-conta" element={<MinhaContaPage />} />
               <Route path="newsletter" element={<StaffRoute><Newsletter /></StaffRoute>} />
               <Route path="meta-ads" element={<StaffRoute><MetaAdsMapping /></StaffRoute>} />
             </Route>

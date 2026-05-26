@@ -26,3 +26,12 @@ verify_jwt = false
 
 [functions.notify-immediate-contact]
 verify_jwt = false
+
+[functions.google-oauth-callback]
+verify_jwt = false
+
+[functions.gcal-push]
+verify_jwt = false
+
+[functions.gcal-pull]
+verify_jwt = false

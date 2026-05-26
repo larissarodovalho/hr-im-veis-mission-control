@@ -52,9 +52,11 @@ export default function ContaAgendaQuickAdd({ contaId, responsavelId, onCreated 
     const corretor = responsavelId || uid;
     const whenISO = new Date(form.when).toISOString();
     let error: any;
+    let createdId: string | null = null;
+    let entityType: "reuniao" | "ligacao" | "visita" | null = null;
 
     if (open === "reuniao") {
-      ({ error } = await supabase.from("reunioes").insert({
+      const res = await supabase.from("reunioes").insert({
         conta_id: contaId,
         agendada_para: whenISO,
         duracao_min: Number(form.duracao) || 60,
@@ -65,9 +67,10 @@ export default function ContaAgendaQuickAdd({ contaId, responsavelId, onCreated 
         status: "agendada",
         created_by: uid,
         corretor_id: corretor,
-      }));
+      }).select("id").maybeSingle();
+      error = res.error; createdId = res.data?.id ?? null; entityType = "reuniao";
     } else if (open === "ligacao") {
-      ({ error } = await supabase.from("ligacoes").insert({
+      const res = await supabase.from("ligacoes").insert({
         conta_id: contaId,
         data: whenISO,
         duracao_seg: (Number(form.duracao) || 30) * 60,
@@ -75,21 +78,31 @@ export default function ContaAgendaQuickAdd({ contaId, responsavelId, onCreated 
         resultado: "agendada",
         created_by: uid,
         corretor_id: corretor,
-      }));
+      }).select("id").maybeSingle();
+      error = res.error; createdId = res.data?.id ?? null; entityType = "ligacao";
     } else if (open === "visita") {
-      ({ error } = await supabase.from("visitas").insert({
+      const res = await supabase.from("visitas").insert({
         conta_id: contaId,
         data_visita: whenISO,
         observacoes: form.notas?.trim() || null,
         status: "Agendada",
         created_by: uid,
         corretor_id: corretor,
-      } as any));
+      } as any).select("id").maybeSingle();
+      error = res.error; createdId = res.data?.id ?? null; entityType = "visita";
     }
 
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Agendado com sucesso");
+
+    // Sincroniza com Google Calendar (silencioso se falhar)
+    if (createdId && entityType) {
+      supabase.functions.invoke("gcal-push", {
+        body: { entity_type: entityType, entity_id: createdId, action: "create" },
+      }).catch(() => {});
+    }
+
     close();
     onCreated?.();
   };
