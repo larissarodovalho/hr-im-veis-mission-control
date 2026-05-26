@@ -111,6 +111,28 @@ export default function EditarOportunidadeDialog({ open, onOpenChange, oportunid
             <Input value={form.titulo || ""} onChange={(e) => setForm({ ...form, titulo: e.target.value })} />
           </div>
 
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label>Tipo de cliente</Label>
+              <Select value={clienteTipo} onValueChange={(v: any) => { setClienteTipo(v); setClienteId("none"); }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="lead">Lead</SelectItem>
+                  <SelectItem value="conta">Conta</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="col-span-2">
+              <Label>Cliente</Label>
+              <SearchableSelect
+                value={clienteId}
+                onChange={setClienteId}
+                options={clienteTipo === "lead" ? leads : contas}
+                placeholder="Buscar..."
+                emptyLabel="Selecione"
+              />
+            </div>
+
           <div>
             <Label>O que o cliente busca</Label>
             <Textarea value={form.descricao_busca || ""} onChange={(e) => setForm({ ...form, descricao_busca: e.target.value })} rows={3} />
