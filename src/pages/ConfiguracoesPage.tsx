@@ -14,8 +14,10 @@ import {
   ShieldAlert, Settings, Building2, MessageCircle, Bell, Database, ExternalLink,
   Loader2, Send, Copy,
   Webhook, Bot, Globe, Check, ShieldCheck, History, Trash2, HardDrive, Image as ImageIcon,
+  UserCircle,
 } from "lucide-react";
 import SiteSettingsTab from "@/components/configuracoes/SiteSettingsTab";
+import GoogleCalendarConnect from "@/components/configuracoes/GoogleCalendarConnect";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
