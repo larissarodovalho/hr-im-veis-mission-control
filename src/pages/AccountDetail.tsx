@@ -279,8 +279,6 @@ export default function AccountDetail() {
 
       <div>
         <div className="flex items-center justify-between mb-3">
-      <div>
-        <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-xl font-semibold flex items-center gap-2">
             <HomeIcon className="h-5 w-5 text-primary" /> Imóveis no portfólio
             <Badge variant="secondary" className="ml-1 text-[10px]">{imoveisPortfolio.length}</Badge>
