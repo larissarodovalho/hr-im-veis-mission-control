@@ -18,6 +18,7 @@ import {
   FileSignature,
   Mail,
   ListTodo,
+  UserCircle,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
@@ -49,6 +50,9 @@ const adminNav: NavItem[] = [
   { to: "/crm/usuarios", icon: UserCog, label: "Usuários" },
   { to: "/crm/configuracoes", icon: Settings, label: "Configurações" },
 ];
+const personalNav: NavItem[] = [
+  { to: "/crm/minha-conta", icon: UserCircle, label: "Minha conta" },
+];
 
 export default function AppLayout() {
   const { signOut, user, isMarketingOnly } = useAuth();
@@ -66,8 +70,8 @@ export default function AppLayout() {
   const nav = isMarketingOnly
     ? baseNav.filter((n) => n.to === "/crm/imoveis")
     : isAdmin || isGestor
-    ? [...baseNav, ...adminNav]
-    : baseNav;
+    ? [...baseNav, ...adminNav, ...personalNav]
+    : [...baseNav, ...personalNav];
 
   const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => (
     <>
