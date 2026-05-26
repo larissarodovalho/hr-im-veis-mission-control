@@ -1067,6 +1067,7 @@ export type Database = {
           matricula: string | null
           numero: string | null
           proprietario_id: string | null
+          publicado: boolean
           quartos: number | null
           status: string
           suites: number | null
@@ -1107,6 +1108,7 @@ export type Database = {
           matricula?: string | null
           numero?: string | null
           proprietario_id?: string | null
+          publicado?: boolean
           quartos?: number | null
           status?: string
           suites?: number | null
@@ -1147,6 +1149,7 @@ export type Database = {
           matricula?: string | null
           numero?: string | null
           proprietario_id?: string | null
+          publicado?: boolean
           quartos?: number | null
           status?: string
           suites?: number | null
