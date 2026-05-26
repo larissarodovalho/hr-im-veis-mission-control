@@ -21,7 +21,9 @@ Deno.serve(async (req) => {
     });
     if (!client_id) throw new Error("GOOGLE_OAUTH_CLIENT_ID não configurado");
     if (!/^[a-zA-Z0-9_-]+\.apps\.googleusercontent\.com$/.test(client_id)) {
-      throw new Error("O Client ID do Google Calendar está inválido. Cole o OAuth Client ID do tipo Web application, ou o JSON baixado do Google Cloud, em GOOGLE_OAUTH_CLIENT_ID.");
+      const idHasClientId = /[a-zA-Z0-9_-]+\.apps\.googleusercontent\.com/.test(Deno.env.get("GOOGLE_OAUTH_CLIENT_ID") ?? "");
+      const secretHasClientId = /[a-zA-Z0-9_-]+\.apps\.googleusercontent\.com/.test(Deno.env.get("GOOGLE_OAUTH_CLIENT_SECRET") ?? "");
+      throw new Error(`O Client ID do Google Calendar está inválido. O segredo GOOGLE_OAUTH_CLIENT_ID ${idHasClientId ? "contém" : "não contém"} um OAuth Client ID válido e GOOGLE_OAUTH_CLIENT_SECRET ${secretHasClientId ? "contém" : "não contém"} um OAuth Client ID válido. Use o Client ID do tipo Web application que termina com .apps.googleusercontent.com.`);
     }
 
     const state = btoa(JSON.stringify({ user_id: u.user.id, ts: Date.now() }));
