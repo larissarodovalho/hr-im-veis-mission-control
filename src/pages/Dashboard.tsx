@@ -148,7 +148,13 @@ export default function Dashboard() {
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="p-4 md:p-6">
+        <Card
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate("/crm/reunioes")}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/crm/reunioes"); } }}
+          className="p-4 md:p-6 cursor-pointer hover:shadow-md transition-shadow"
+        >
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display text-lg font-semibold flex items-center gap-2"><Calendar className="h-4 w-4 text-accent" /> Reuniões</h2>
             <Badge variant="secondary">{reunioes.length}</Badge>
