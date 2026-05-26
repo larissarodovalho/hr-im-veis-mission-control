@@ -22,7 +22,7 @@ type Compromisso = {
   id: string;
   date: Date;
   end?: Date;
-  tipo: "ligacao" | "presencial" | "videochamada";
+  tipo: "ligacao" | "presencial" | "videochamada" | "mensagem";
   titulo: string;
   status: string;
   local?: string | null;
