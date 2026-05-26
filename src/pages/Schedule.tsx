@@ -120,6 +120,8 @@ export default function Schedule() {
     local: "",
     link: "",
     notas: "",
+    recorrencia: "nenhuma" as RecorrenciaRegra,
+    recorrencia_ate: "",
   });
 
   const [bloq, setBloq] = useState({
