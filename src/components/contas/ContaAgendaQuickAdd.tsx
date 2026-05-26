@@ -177,7 +177,7 @@ export default function ContaAgendaQuickAdd({ contaId, responsavelId, onCreated 
             <MapPin className="h-4 w-4 mr-1" /> Visita
           </Button>
           <Button variant="outline" onClick={() => openDialog("captacao")}>
-            <Sprout className="h-4 w-4 mr-1" /> Captação
+            <Camera className="h-4 w-4 mr-1" /> Captação
           </Button>
         </div>
       </div>
