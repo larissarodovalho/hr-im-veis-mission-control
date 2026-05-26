@@ -29,17 +29,31 @@ export default function Calls() {
   const [editForm, setEditForm] = useState({ lead_id: "none", conta_id: "none", data: "", duracao_seg: 0, resultado: "atendeu", notas: "" });
 
   const load = async () => {
-    const { data: calls, error } = await supabase
-      .from("ligacoes")
-      .select("*")
-      .order("data", { ascending: false });
-    if (error) {
-      console.error("[Calls] load error", error);
-      setItems([]);
-      return;
-    }
-    const leadIds = [...new Set((calls ?? []).map((c: any) => c.lead_id).filter(Boolean))];
-    const contaIds = [...new Set((calls ?? []).map((c: any) => c.conta_id).filter(Boolean))];
+    const [{ data: calls, error }, { data: inter, error: ie }] = await Promise.all([
+      supabase.from("ligacoes").select("*").order("data", { ascending: false }),
+      supabase.from("interacoes").select("id,lead_id,conta_id,resultado,descricao,created_at,created_by").eq("tipo", "ligacao"),
+    ]);
+    if (error) console.error("[Calls] ligacoes error", error);
+    if (ie) console.error("[Calls] interacoes error", ie);
+
+    const fromLigacoes = (calls ?? []).map((c: any) => ({ ...c, _source: "ligacao" as const }));
+    const fromInteracoes = (inter ?? []).map((i: any) => ({
+      id: i.id,
+      data: i.created_at,
+      lead_id: i.lead_id,
+      conta_id: i.conta_id,
+      resultado: i.resultado,
+      notas: i.descricao,
+      duracao_seg: 0,
+      created_by: i.created_by,
+      _source: "interacao" as const,
+    }));
+    const merged = [...fromLigacoes, ...fromInteracoes].sort(
+      (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()
+    );
+
+    const leadIds = [...new Set(merged.map((c: any) => c.lead_id).filter(Boolean))];
+    const contaIds = [...new Set(merged.map((c: any) => c.conta_id).filter(Boolean))];
     let leadsById = new Map<string, any>();
     let contasById = new Map<string, any>();
     if (leadIds.length) {
@@ -50,7 +64,7 @@ export default function Calls() {
       const { data: cs } = await supabase.from("contas").select("id,nome").in("id", contaIds);
       contasById = new Map((cs ?? []).map((c: any) => [c.id, c]));
     }
-    setItems((calls ?? []).map((c: any) => ({
+    setItems(merged.map((c: any) => ({
       ...c,
       leads: c.lead_id ? leadsById.get(c.lead_id) ?? null : null,
       conta: c.conta_id ? contasById.get(c.conta_id) ?? null : null,
@@ -96,14 +110,24 @@ export default function Calls() {
   const saveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editing) return;
-    const { error } = await supabase.from("ligacoes").update({
-      lead_id: editForm.lead_id === "none" ? null : editForm.lead_id,
-      conta_id: editForm.conta_id === "none" ? null : editForm.conta_id,
-      data: new Date(editForm.data).toISOString(),
-      duracao_seg: Number(editForm.duracao_seg) || 0,
-      resultado: editForm.resultado,
-      notas: editForm.notas || null,
-    }).eq("id", editing.id);
+    let error;
+    if (editing._source === "interacao") {
+      ({ error } = await supabase.from("interacoes").update({
+        lead_id: editForm.lead_id === "none" ? null : editForm.lead_id,
+        conta_id: editForm.conta_id === "none" ? null : editForm.conta_id,
+        resultado: editForm.resultado,
+        descricao: editForm.notas || null,
+      }).eq("id", editing.id));
+    } else {
+      ({ error } = await supabase.from("ligacoes").update({
+        lead_id: editForm.lead_id === "none" ? null : editForm.lead_id,
+        conta_id: editForm.conta_id === "none" ? null : editForm.conta_id,
+        data: new Date(editForm.data).toISOString(),
+        duracao_seg: Number(editForm.duracao_seg) || 0,
+        resultado: editForm.resultado,
+        notas: editForm.notas || null,
+      }).eq("id", editing.id));
+    }
     if (error) return toast.error(error.message);
     toast.success("Ligação atualizada");
     setEditing(null);
@@ -111,7 +135,8 @@ export default function Calls() {
   };
 
   const quickResult = async (c: any, resultado: string) => {
-    const { error } = await supabase.from("ligacoes").update({ resultado }).eq("id", c.id);
+    const table = c._source === "interacao" ? "interacoes" : "ligacoes";
+    const { error } = await supabase.from(table).update({ resultado }).eq("id", c.id);
     if (error) return toast.error(error.message);
     toast.success(`Resultado: ${resultado}`);
     load();
@@ -120,7 +145,8 @@ export default function Calls() {
   const remove = async () => {
     if (!editing) return;
     if (!confirm("Excluir esta ligação?")) return;
-    const { error } = await supabase.from("ligacoes").delete().eq("id", editing.id);
+    const table = editing._source === "interacao" ? "interacoes" : "ligacoes";
+    const { error } = await supabase.from(table).delete().eq("id", editing.id);
     if (error) return toast.error(error.message);
     toast.success("Ligação excluída");
     setEditing(null);
