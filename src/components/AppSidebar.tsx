@@ -21,6 +21,7 @@ import {
   MessageCircle,
   Shield,
   UserCircle,
+  Calendar,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { NavLink, useLocation, useSearchParams, useNavigate } from "react-router-dom";
