@@ -64,6 +64,7 @@ export default function EditarOportunidadeDialog({ open, onOpenChange, oportunid
   };
 
   const submit = async () => {
+    if (clienteId === "none") { toast.error("Selecione o cliente"); return; }
     setSaving(true);
     const { error } = await supabase.from("oportunidades").update({
       titulo: form.titulo,
@@ -76,6 +77,8 @@ export default function EditarOportunidadeDialog({ open, onOpenChange, oportunid
       estagio: form.estagio,
       corretor_id: form.corretor_id || null,
       observacoes: form.observacoes,
+      cliente_tipo: clienteTipo,
+      cliente_id: clienteId,
     }).eq("id", oportunidade.id);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
