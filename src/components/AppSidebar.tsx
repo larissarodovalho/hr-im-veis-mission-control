@@ -136,7 +136,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
-                const isActive = item.url === "/crm" ? isCRM : item.url === "/marketing" ? isMarketing : location.pathname === item.url;
+                const isActive = item.url === "/crm" ? (isCRM && location.pathname !== "/crm/minha-conta") : item.url === "/marketing" ? isMarketing : location.pathname === item.url;
                 return (
                   <div key={item.title}>
                     <SidebarMenuItem>
