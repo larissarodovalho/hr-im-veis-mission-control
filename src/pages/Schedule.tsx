@@ -667,7 +667,8 @@ export default function Schedule() {
                     const totalHeight = (HOUR_END - HOUR_START) * HOUR_PX;
 
                     return (
-                      <div className="border border-border rounded-lg overflow-hidden shadow-sm bg-card">
+                      <div className="border border-border rounded-lg overflow-x-auto shadow-sm bg-card">
+                       <div className="min-w-[720px]">
                         {/* Header */}
                         <div className="grid border-b border-border bg-muted/30" style={{ gridTemplateColumns: "60px repeat(7, 1fr)" }}>
                           <div />
