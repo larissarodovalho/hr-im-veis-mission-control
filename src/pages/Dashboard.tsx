@@ -42,9 +42,9 @@ export default function Dashboard() {
     const d = daysSince(l.ultima_interacao ?? l.created_at);
     return d !== null && d > 3 && !["Fechado", "Perdido"].includes(l.etapa_funil);
   });
-  const weekStart = new Date(); weekStart.setHours(0, 0, 0, 0);
-  const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 7);
-  const reunioesWeek = reunioes.filter(m => { const d = new Date(m.agendada_para); return d >= weekStart && d < weekEnd; }).length;
+  const monthStart = new Date(); monthStart.setHours(0,0,0,0); monthStart.setDate(1);
+  const monthEnd = new Date(monthStart); monthEnd.setMonth(monthEnd.getMonth() + 1);
+  const reunioesMes = reunioes.filter(m => { const d = new Date(m.agendada_para); return d >= monthStart && d < monthEnd; }).length;
   const bySource = leads.reduce<Record<string, number>>((acc, l) => { const k = l.origem || "manual"; acc[k] = (acc[k] || 0) + 1; return acc; }, {});
 
   const leadsTrend = useMemo(() => {
@@ -94,7 +94,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPI icon={Users} label="Total de leads" value={total} />
         <KPI icon={TrendingUp} label="Taxa de conversão" value={`${rate}%`} />
-        <KPI icon={Calendar} label="Reuniões esta semana" value={reunioesWeek} />
+        <KPI icon={Calendar} label="Reuniões este mês" value={reunioesMes} />
         <KPI icon={Clock} label="Sem atendimento (3d+)" value={overdue.length} accent={overdue.length > 0} />
       </div>
 
