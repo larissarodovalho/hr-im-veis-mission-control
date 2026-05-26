@@ -70,7 +70,8 @@ function OportunidadeCard({ op, clienteNome, corretorNome, qtdImoveis, onClick }
 function Coluna({ estagio, children, count }: { estagio: typeof ESTAGIOS[number]; children: React.ReactNode; count: number }) {
   const { setNodeRef, isOver } = useDroppable({ id: estagio.key });
   return (
-    <div ref={setNodeRef} className={`rounded-md border-2 border-dashed ${estagio.color} p-2 min-h-[calc(100vh-280px)] overflow-y-auto transition ${isOver ? "ring-2 ring-primary" : ""}`}>
+    <div ref={setNodeRef} className={`rounded-md border-2 border-dashed ${estagio.color} p-2 min-w-[260px] sm:min-w-0 snap-start min-h-[60vh] md:min-h-[calc(100vh-280px)] overflow-y-auto transition ${isOver ? "ring-2 ring-primary" : ""}`}>
+
       <div className="flex items-center justify-between mb-2 px-1">
         <div className="flex items-center gap-2">
           {estagio.key === "ganha" && <Trophy className="h-3.5 w-3.5 text-emerald-600" />}
@@ -174,29 +175,30 @@ export default function OportunidadesTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2">
-          <div className="relative">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar oportunidade..." className="pl-8 w-64" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input placeholder="Buscar oportunidade..." className="pl-8 w-full" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
           <select
             value={corretorFilter}
             onChange={(e) => setCorretorFilter(e.target.value)}
-            className="h-9 rounded-md border bg-background px-2 text-sm"
+            className="h-9 rounded-md border bg-background px-2 text-sm w-full sm:w-auto"
           >
             <option value="all">Todos os corretores</option>
             {corretoresList.map((c) => <option key={c.id} value={c.id as string}>{c.nome}</option>)}
           </select>
-          <Badge variant="secondary">{ativas} ativas</Badge>
+          <Badge variant="secondary" className="self-start sm:self-auto">{ativas} ativas</Badge>
         </div>
-        <Button onClick={() => setOpenNew(true)}>
+        <Button onClick={() => setOpenNew(true)} className="w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-1" /> Nova oportunidade
         </Button>
       </div>
 
+
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+        <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 overflow-x-auto md:overflow-visible snap-x pb-2 -mx-4 px-4 md:mx-0 md:px-0">
           {ESTAGIOS.map((est) => (
             <Coluna key={est.key} estagio={est} count={byEstagio[est.key].length}>
               {byEstagio[est.key].map((op) => (

@@ -381,18 +381,18 @@ export default function Imoveis() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      <header className="flex items-center justify-between gap-4 flex-wrap">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-semibold flex items-center gap-2"><HomeIcon className="h-7 w-7 text-primary" /> Imóveis</h1>
-          <p className="text-muted-foreground mt-1">{counts.d} disponíveis · {counts.p} em proposta · {counts.f} em fechamento · {counts.v} vendidos</p>
+          <h1 className="font-display text-2xl sm:text-3xl font-semibold flex items-center gap-2"><HomeIcon className="h-6 w-6 sm:h-7 sm:w-7 text-primary" /> Imóveis</h1>
+          <p className="text-muted-foreground mt-1 text-sm">{counts.d} disponíveis · {counts.p} em proposta · {counts.f} em fechamento · {counts.v} vendidos</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar…" className="pl-8 w-64" value={search} onChange={e => setSearch(e.target.value)} />
+            <Input placeholder="Buscar…" className="pl-8 w-full" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           {canEdit && (
-            <Button onClick={() => setOpenNew(true)}>
+            <Button onClick={() => setOpenNew(true)} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-1" /> Cadastrar imóvel
             </Button>
           )}
@@ -400,7 +400,7 @@ export default function Imoveis() {
       </header>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="flex flex-wrap h-auto w-full justify-start gap-1">
+        <TabsList className="flex h-auto w-full justify-start gap-1 overflow-x-auto whitespace-nowrap">
           <TabsTrigger value="disponiveis">Disponíveis <Badge variant="secondary" className="ml-2 text-[10px]">{counts.d}</Badge></TabsTrigger>
           <TabsTrigger value="proposta">Em Proposta <Badge variant="secondary" className="ml-2 text-[10px]">{counts.p}</Badge></TabsTrigger>
           <TabsTrigger value="fechamento">Em Fechamento <Badge variant="secondary" className="ml-2 text-[10px]">{counts.f}</Badge></TabsTrigger>
@@ -409,6 +409,7 @@ export default function Imoveis() {
           <TabsTrigger value="captacao">Captação</TabsTrigger>
           <TabsTrigger value="parceiros">Parceiros</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="disponiveis" className="mt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
