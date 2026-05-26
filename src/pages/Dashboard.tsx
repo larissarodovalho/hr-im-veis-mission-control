@@ -18,21 +18,27 @@ export default function Dashboard() {
   const [reunioes, setReunioes] = useState<any[]>([]);
   const [interacoes, setInteracoes] = useState<any[]>([]);
 
+  const monthStart = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); d.setDate(1); return d; }, []);
+  const monthEnd = useMemo(() => { const d = new Date(monthStart); d.setMonth(d.getMonth() + 1); return d; }, [monthStart]);
+
   useEffect(() => {
     (async () => {
-      const since = new Date(); since.setDate(since.getDate() - 30);
       const [l, r, i] = await Promise.all([
         supabase.from("leads").select("id,nome,etapa_funil,origem,ultima_interacao,created_at").order("created_at", { ascending: false }),
         supabase.from("reunioes").select("id,status,agendada_para,lead_id"),
-        supabase.from("interacoes").select("id,tipo,resultado,created_at").gte("created_at", since.toISOString()),
+        supabase.from("interacoes").select("id,tipo,resultado,created_at").gte("created_at", monthStart.toISOString()).lt("created_at", monthEnd.toISOString()),
       ]);
       setLeads(l.data ?? []); setReunioes(r.data ?? []); setInteracoes(i.data ?? []);
     })();
-  }, []);
+  }, [monthStart, monthEnd]);
 
   const total = leads.length;
+  const reunioesMesList = useMemo(
+    () => reunioes.filter(m => { const d = new Date(m.agendada_para); return d >= monthStart && d < monthEnd; }),
+    [reunioes, monthStart, monthEnd]
+  );
   const leadsComReuniao = new Set(
-    reunioes
+    reunioesMesList
       .filter((m: any) => ["agendada", "realizada", "confirmada"].includes((m.status || "agendada").toLowerCase()))
       .map((m: any) => m.lead_id)
       .filter(Boolean)
@@ -42,9 +48,7 @@ export default function Dashboard() {
     const d = daysSince(l.ultima_interacao ?? l.created_at);
     return d !== null && d > 3 && !["Fechado", "Perdido"].includes(l.etapa_funil);
   });
-  const monthStart = new Date(); monthStart.setHours(0,0,0,0); monthStart.setDate(1);
-  const monthEnd = new Date(monthStart); monthEnd.setMonth(monthEnd.getMonth() + 1);
-  const reunioesMes = reunioes.filter(m => { const d = new Date(m.agendada_para); return d >= monthStart && d < monthEnd; }).length;
+  const reunioesMes = reunioesMesList.length;
   const bySource = leads.reduce<Record<string, number>>((acc, l) => { const k = l.origem || "manual"; acc[k] = (acc[k] || 0) + 1; return acc; }, {});
 
   const leadsTrend = useMemo(() => {
@@ -59,9 +63,9 @@ export default function Dashboard() {
 
   const reunioesByStatus = useMemo(() => {
     const counts: Record<string, number> = {};
-    reunioes.forEach(m => { const s = m.status || "agendada"; counts[s] = (counts[s] || 0) + 1; });
+    reunioesMesList.forEach(m => { const s = m.status || "agendada"; counts[s] = (counts[s] || 0) + 1; });
     return Object.entries(counts).map(([k, v]) => ({ name: k, value: v }));
-  }, [reunioes]);
+  }, [reunioesMesList]);
 
   const callsByResult = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -75,14 +79,18 @@ export default function Dashboard() {
   const visitsTrend = useMemo(() => {
     const visits = interacoes.filter(i => i.tipo === "visita");
     const buckets: any[] = [];
-    for (let w = 3; w >= 0; w--) {
-      const end = new Date(); end.setHours(23,59,59,999); end.setDate(end.getDate() - w * 7);
-      const start = new Date(end); start.setDate(start.getDate() - 6); start.setHours(0,0,0,0);
-      const total = visits.filter(v => { const d = new Date(v.created_at); return d >= start && d <= end; }).length;
-      buckets.push({ label: `${start.getDate()}/${start.getMonth() + 1}`, total });
+    let weekStart = new Date(monthStart);
+    let idx = 1;
+    while (weekStart < monthEnd) {
+      const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 7);
+      const cap = weekEnd > monthEnd ? monthEnd : weekEnd;
+      const total = visits.filter(v => { const d = new Date(v.created_at); return d >= weekStart && d < cap; }).length;
+      buckets.push({ label: `Sem ${idx}`, total });
+      weekStart = weekEnd;
+      idx++;
     }
     return buckets;
-  }, [interacoes]);
+  }, [interacoes, monthStart, monthEnd]);
 
   return (
     <div className="p-4 md:p-8 pb-12 space-y-6">
