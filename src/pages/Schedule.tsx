@@ -323,6 +323,8 @@ export default function Schedule() {
     setLeads(l ?? []);
     const { data: ims } = await supabase.from("imoveis").select("id, titulo, codigo").order("created_at", { ascending: false });
     setImoveisList((ims ?? []).map((i: any) => ({ id: i.id, nome: i.codigo ? `${i.titulo} · ${i.codigo}` : i.titulo })));
+    const { data: ctsAll } = await supabase.from("contas").select("id, nome").order("nome");
+    setContasList(ctsAll ?? []);
   };
 
   useEffect(() => {
