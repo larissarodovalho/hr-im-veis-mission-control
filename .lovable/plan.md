@@ -1,43 +1,32 @@
-# Agenda visível para todos os papéis
+# Mostrar contato do lead nas abas Reuniões e Agenda
 
-Hoje a página `/crm/agenda` (Schedule.tsx) consulta `reunioes`, `ligacoes`, `visitas`, `captacoes_imovel` e `agenda_bloqueios`. As políticas atuais de SELECT limitam o que cada papel vê:
+Hoje, em `Meetings.tsx` e `Schedule.tsx`, buscamos só `id, nome` da tabela `leads` e exibimos o nome. O usuário quer que **todos** vejam o **contato** (telefone + email) do lead vinculado a cada reunião/agendamento.
 
-| Tabela | Quem vê hoje |
-|---|---|
-| reunioes | todos autenticados ✅ |
-| agenda_bloqueios | todos autenticados ✅ |
-| ligacoes | admin, gestor, secretaria, dono (corretor/created_by) |
-| visitas | admin, gestor, secretaria, dono (corretor/created_by) |
-| captacoes_imovel | admin, gestor, marketing, secretaria, dono |
+Duas frentes:
 
-Resultado: **corretor e marketing** veem só os próprios itens (e marketing não vê ligações/visitas alheias). O usuário quer que **admin, gestor, corretor, marketing e secretaria** vejam **tudo** na agenda.
+## 1. RLS — liberar SELECT amplo em `leads` para staff
 
-## Mudança (migration única)
-
-Adicionar uma política SELECT ampla `is_staff()` em cada tabela faltante. As políticas existentes ficam (são apenas mais restritivas, RLS é OR).
+Hoje corretor/marketing só veem leads próprios. Para o lead vinculado à reunião aparecer para todos, espelhar o padrão que já aplicamos em `ligacoes/visitas/captacoes`:
 
 ```sql
-CREATE POLICY "Staff sees all ligacoes (agenda)"
-ON public.ligacoes FOR SELECT TO authenticated
-USING (public.is_staff());
-
-CREATE POLICY "Staff sees all visitas (agenda)"
-ON public.visitas FOR SELECT TO authenticated
-USING (public.is_staff());
-
-CREATE POLICY "Staff sees all captacoes (agenda)"
-ON public.captacoes_imovel FOR SELECT TO authenticated
+CREATE POLICY "Staff sees all leads (agenda)"
+ON public.leads FOR SELECT TO authenticated
 USING (public.is_staff());
 ```
 
-`is_staff()` já cobre admin + gestor + corretor + marketing + secretaria.
+Políticas de UPDATE/DELETE permanecem inalteradas — corretor continua editando só os próprios.
 
-## Sem mudanças de UI/código
+## 2. UI — buscar telefone/email e exibir
 
-Schedule.tsx continua igual — só passa a receber mais linhas. Políticas de UPDATE/DELETE/INSERT permanecem inalteradas (corretor continua não editando o que não é dele).
+### `src/pages/Meetings.tsx`
+- Linha 43: `.select("id,nome,telefone,email")` (em vez de só `id,nome`).
+- Linha 209 (coluna da tabela): logo abaixo do nome do lead/conta, mostrar `telefone` e `email` em texto pequeno (`text-xs text-muted-foreground`) quando houver.
 
-## Impacto colateral
+### `src/pages/Schedule.tsx`
+- Linha 147: `.select("id, nome, telefone, email")`.
+- Onde `leadNome` é montado (linhas 164, 189, 207), guardar também `leadTelefone`/`leadEmail` no item agregado (`lead_telefone`, `lead_email`).
+- Nos cards/lista onde aparece `c.lead_nome` (linhas 947 e 985), adicionar em segunda linha: `📞 telefone · ✉ email` (só renderizar o que existir).
 
-Essas tabelas também aparecem em Leads (`ligacoes`), Visits (`visitas`) e Contas/Imóveis (`captacoes_imovel`). Corretor/marketing passarão a ver itens de outros usuários nessas telas também. Se isso for indesejado, precisaríamos filtrar no client por tela — confirme se está ok ampliar para essas telas também, ou se devo manter a restrição lá e duplicar leitura só na agenda via RPC.
+Sem mudança no select de leads do formulário (continua só nome).
 
 Confirmo?
