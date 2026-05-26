@@ -386,9 +386,11 @@ export default function Imoveis() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Buscar…" className="pl-8 w-64" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <Button onClick={() => setOpenNew(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Cadastrar imóvel
-          </Button>
+          {canEdit && (
+            <Button onClick={() => setOpenNew(true)}>
+              <Plus className="h-4 w-4 mr-1" /> Cadastrar imóvel
+            </Button>
+          )}
         </div>
       </header>
 
