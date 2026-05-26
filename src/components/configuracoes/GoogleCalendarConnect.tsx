@@ -35,7 +35,7 @@ export default function GoogleCalendarConnect() {
 
   useEffect(() => { load(); }, [user?.id]);
 
-  // recebe postMessage da janela do OAuth
+  // recebe postMessage da janela do OAuth (caso o popup mantenha opener)
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.source === "google-oauth") {
@@ -43,8 +43,13 @@ export default function GoogleCalendarConnect() {
         else toast.error(e.data.message || "Falha ao conectar");
       }
     };
+    const onFocus = () => { load(); };
     window.addEventListener("message", handler);
-    return () => window.removeEventListener("message", handler);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.removeEventListener("message", handler);
+      window.removeEventListener("focus", onFocus);
+    };
   }, []);
 
   const connect = async () => {
@@ -54,7 +59,15 @@ export default function GoogleCalendarConnect() {
       if (error) throw error;
       const url = (data as any)?.url;
       if (!url) throw new Error("URL não recebida");
-      window.open(url, "google-oauth", "width=520,height=680");
+      // Abre em nova aba como contexto top-level (noopener) para evitar COOP/COEP do iframe da preview
+      const win = window.open(url, "_blank", "noopener,noreferrer");
+      if (!win) {
+        // Fallback: navega a janela topo
+        try { (window.top || window).location.href = url; }
+        catch { window.location.href = url; }
+      } else {
+        toast.info("Conclua o login do Google na nova aba. Volte aqui em seguida.");
+      }
     } catch (e) {
       toast.error((e as Error).message);
     } finally { setBusy(false); }
