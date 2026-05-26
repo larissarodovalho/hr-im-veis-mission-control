@@ -16,19 +16,21 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [leads, setLeads] = useState<any[]>([]);
   const [reunioes, setReunioes] = useState<any[]>([]);
-  const [interacoes, setInteracoes] = useState<any[]>([]);
+  const [visitas, setVisitas] = useState<any[]>([]);
+  const [ligacoes, setLigacoes] = useState<any[]>([]);
 
   const monthStart = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); d.setDate(1); return d; }, []);
   const monthEnd = useMemo(() => { const d = new Date(monthStart); d.setMonth(d.getMonth() + 1); return d; }, [monthStart]);
 
   useEffect(() => {
     (async () => {
-      const [l, r, i] = await Promise.all([
+      const [l, r, v, c] = await Promise.all([
         supabase.from("leads").select("id,nome,etapa_funil,origem,ultima_interacao,created_at").order("created_at", { ascending: false }),
         supabase.from("reunioes").select("id,status,agendada_para,lead_id"),
-        supabase.from("interacoes").select("id,tipo,resultado,created_at").gte("created_at", monthStart.toISOString()).lt("created_at", monthEnd.toISOString()),
+        supabase.from("visitas").select("id,status,data_visita").gte("data_visita", monthStart.toISOString()).lt("data_visita", monthEnd.toISOString()),
+        supabase.from("ligacoes").select("id,resultado,data").gte("data", monthStart.toISOString()).lt("data", monthEnd.toISOString()),
       ]);
-      setLeads(l.data ?? []); setReunioes(r.data ?? []); setInteracoes(i.data ?? []);
+      setLeads(l.data ?? []); setReunioes(r.data ?? []); setVisitas(v.data ?? []); setLigacoes(c.data ?? []);
     })();
   }, [monthStart, monthEnd]);
 
@@ -69,28 +71,27 @@ export default function Dashboard() {
 
   const callsByResult = useMemo(() => {
     const counts: Record<string, number> = {};
-    interacoes.filter(i => i.tipo === "ligacao").forEach(i => { const k = i.resultado || "outro"; counts[k] = (counts[k] || 0) + 1; });
+    ligacoes.forEach(c => { const k = c.resultado || "outro"; counts[k] = (counts[k] || 0) + 1; });
     return Object.entries(counts).map(([k, v]) => ({ name: k, total: v }));
-  }, [interacoes]);
+  }, [ligacoes]);
 
-  const callsTotal = interacoes.filter(i => i.tipo === "ligacao").length;
-  const visitsTotal = interacoes.filter(i => i.tipo === "visita").length;
+  const callsTotal = ligacoes.length;
+  const visitsTotal = visitas.length;
 
   const visitsTrend = useMemo(() => {
-    const visits = interacoes.filter(i => i.tipo === "visita");
     const buckets: any[] = [];
     let weekStart = new Date(monthStart);
     let idx = 1;
     while (weekStart < monthEnd) {
       const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 7);
       const cap = weekEnd > monthEnd ? monthEnd : weekEnd;
-      const total = visits.filter(v => { const d = new Date(v.created_at); return d >= weekStart && d < cap; }).length;
+      const total = visitas.filter(v => { const d = new Date(v.data_visita); return d >= weekStart && d < cap; }).length;
       buckets.push({ label: `Sem ${idx}`, total });
       weekStart = weekEnd;
       idx++;
     }
     return buckets;
-  }, [interacoes, monthStart, monthEnd]);
+  }, [visitas, monthStart, monthEnd]);
 
   return (
     <div className="p-4 md:p-8 pb-12 space-y-6">
