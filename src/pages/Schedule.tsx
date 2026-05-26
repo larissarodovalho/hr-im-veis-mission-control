@@ -681,13 +681,13 @@ export default function Schedule() {
                                 type="button"
                                 onClick={() => setSelected(d)}
                                 className={cn(
-                                  "py-2 px-2 text-center border-l border-border hover:bg-accent/20 transition-colors flex items-center justify-center gap-2",
+                                  "py-2 px-1 min-w-0 text-center border-l border-border hover:bg-accent/20 transition-colors flex items-center justify-center gap-1.5",
                                   isSelected && "bg-primary/5",
                                 )}
                               >
-                                <span className="text-xs uppercase tracking-wide text-muted-foreground">{format(d, "EEE", { locale: ptBR })}</span>
+                                <span className="text-[10px] uppercase tracking-wide text-muted-foreground truncate">{format(d, "EEE", { locale: ptBR })}</span>
                                 <span className={cn(
-                                  "text-sm font-semibold h-7 w-7 inline-flex items-center justify-center rounded-full",
+                                  "text-xs font-semibold h-6 w-6 shrink-0 inline-flex items-center justify-center rounded-full",
                                   today && "bg-destructive text-destructive-foreground",
                                 )}>
                                   {format(d, "d")}
