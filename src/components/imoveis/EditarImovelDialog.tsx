@@ -31,7 +31,7 @@ const empty = {
   area_total: "", area_construida: "", area_util: "",
   quartos: "", suites: "", banheiros: "", vagas: "",
   cep: "", endereco: "", numero: "", complemento: "", bairro: "", cidade: "", estado: "",
-  destaque: false, matricula: "",
+  destaque: false, publicado: true, matricula: "",
   exclusividade_inicio: "", exclusividade_fim: "", exclusividade_observacoes: "",
 };
 
