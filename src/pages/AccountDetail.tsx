@@ -410,7 +410,7 @@ export default function AccountDetail() {
       </Card>
 
       <Dialog open={!!editing} onOpenChange={o => !o && setEditing(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Editar conta</DialogTitle></DialogHeader>
           {editing && (
             <div className="space-y-3">
