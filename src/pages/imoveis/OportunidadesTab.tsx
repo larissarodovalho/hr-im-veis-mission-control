@@ -38,11 +38,11 @@ function OportunidadeCard({ op, clienteNome, corretorNome, qtdImoveis, onClick }
       {...attributes}
       {...listeners}
       onClick={onClick}
-      className={`p-3 space-y-2 cursor-grab active:cursor-grabbing hover:border-primary/40 transition ${isDragging ? "opacity-40" : ""}`}
+      className={`p-3 space-y-2 cursor-grab active:cursor-grabbing hover:border-primary/40 transition overflow-hidden ${isDragging ? "opacity-40" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
-        <h4 className="font-medium text-sm leading-tight">{op.titulo}</h4>
-        <Badge variant="outline" className={`text-[10px] ${PRIO_COLORS[op.prioridade] || ""}`}>
+        <h4 className="font-medium text-sm leading-tight min-w-0 flex-1 break-words">{op.titulo}</h4>
+        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 shrink-0 whitespace-nowrap ${PRIO_COLORS[op.prioridade] || ""}`}>
           {op.prioridade === "alta" && <Flame className="h-3 w-3 mr-0.5" />}
           {op.prioridade}
         </Badge>
@@ -70,7 +70,7 @@ function OportunidadeCard({ op, clienteNome, corretorNome, qtdImoveis, onClick }
 function Coluna({ estagio, children, count }: { estagio: typeof ESTAGIOS[number]; children: React.ReactNode; count: number }) {
   const { setNodeRef, isOver } = useDroppable({ id: estagio.key });
   return (
-    <div ref={setNodeRef} className={`rounded-md border-2 border-dashed ${estagio.color} p-2 min-h-[200px] transition ${isOver ? "ring-2 ring-primary" : ""}`}>
+    <div ref={setNodeRef} className={`rounded-md border-2 border-dashed ${estagio.color} p-2 min-h-[calc(100vh-280px)] overflow-y-auto transition ${isOver ? "ring-2 ring-primary" : ""}`}>
       <div className="flex items-center justify-between mb-2 px-1">
         <div className="flex items-center gap-2">
           {estagio.key === "ganha" && <Trophy className="h-3.5 w-3.5 text-emerald-600" />}

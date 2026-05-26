@@ -1,23 +1,22 @@
-## Dashboard não mostra visita agendada
+## Ajustes na aba Oportunidades de Negócio (`src/pages/imoveis/OportunidadesTab.tsx`)
 
-### Causa
-O card de Visitas (e Ligações) no Dashboard usa a tabela `interacoes` filtrando por `tipo='visita'`/`'ligacao'`. Mas as visitas e ligações agendadas ficam nas tabelas dedicadas `visitas` (campo `data_visita`) e `ligacoes` (campo `data`) — mesma fonte usada pela aba Agenda. Por isso uma visita agendada não aparece.
+### 1. Badge de prioridade saindo do card
+Hoje o título + badge de prioridade ficam num `flex justify-between` sem proteção. Em colunas estreitas (xl:grid-cols-6) o badge "alta/média/baixa" estoura para fora do card.
 
-### Mudanças em `src/pages/Dashboard.tsx`
+**Correção:**
+- Adicionar `shrink-0` no badge de prioridade e `min-w-0` no título para evitar overflow.
+- Reduzir padding do badge (`px-1.5 py-0`) e usar `whitespace-nowrap`.
+- Garantir `overflow-hidden` no card para conter qualquer transbordo.
 
-1. **Carregar dados certos**
-   - Substituir a query única em `interacoes` por duas queries:
-     - `visitas`: `select id,status,data_visita` filtrando `data_visita` no mês atual.
-     - `ligacoes`: `select id,resultado,data` filtrando `data` no mês atual.
+### 2. Colunas do funil mais compridas (altas)
+Atualmente: `min-h-[200px]`. Vamos deixar as colunas ocuparem a altura útil da tela, como no Kanban de Contas.
 
-2. **Card "Visitas (mês)"**
-   - `visitsTotal` = quantidade de registros em `visitas` do mês.
-   - `visitsTrend` agrupa por semana do mês usando `data_visita`.
+**Correção:**
+- Trocar `min-h-[200px]` por `min-h-[calc(100vh-280px)]` na `Coluna`.
+- Adicionar `overflow-y-auto` para permitir rolagem interna quando houver muitos cards.
+- Manter o grid responsivo atual.
 
-3. **Card "Ligações (mês)"**
-   - `callsTotal` = quantidade de registros em `ligacoes` do mês.
-   - `callsByResult` agrupa por `resultado` (mantendo "outro" para nulos).
+### Arquivos afetados
+- `src/pages/imoveis/OportunidadesTab.tsx` (somente CSS/Tailwind nos componentes `OportunidadeCard` e `Coluna`)
 
-4. Remover o estado `interacoes` (não usado em mais nada na tela).
-
-Sem mudanças de banco, RLS, ou outras telas.
+Nenhuma mudança de lógica ou dados.
