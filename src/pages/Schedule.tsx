@@ -656,84 +656,231 @@ export default function Schedule() {
                 </div>
 
 
-                <div className="grid grid-cols-7 border-t border-l border-border rounded-lg overflow-hidden shadow-sm">
-                  {weekDays.map((wd, i) => (
-                    <div
-                      key={wd}
-                      className={cn(
-                        "text-xs font-medium uppercase tracking-wide text-muted-foreground py-2.5 px-3 border-r border-b border-border bg-muted/40 text-center",
-                        (i === 0 || i === 6) && "text-primary/70",
-                      )}
-                    >
-                      {wd}
-                    </div>
-                  ))}
-                  {days.map((d) => {
-                    const k = dayKey(d);
-                    const events = (eventsByDay.get(k) ?? []).sort((a, b) => +a.date - +b.date);
-                    const inMonth = isSameMonth(d, currentMonth);
-                    const today = isToday(d);
-                    const isSelected = selected && isSameDay(d, selected);
-                    const blocked = blockedDays.has(k);
-                    const weekend = d.getDay() === 0 || d.getDay() === 6;
-                    const visible = events.slice(0, viewMode === "week" ? 12 : 3);
-                    const extra = events.length - visible.length;
+                {viewMode === "week" ? (
+                  (() => {
+                    const HOUR_START = 7;
+                    const HOUR_END = 22; // exclusive
+                    const HOUR_PX = 56;
+                    const hours = Array.from({ length: HOUR_END - HOUR_START }, (_, i) => HOUR_START + i);
+                    const now = new Date();
+                    const nowOffset = (now.getHours() + now.getMinutes() / 60 - HOUR_START) * HOUR_PX;
+                    const totalHeight = (HOUR_END - HOUR_START) * HOUR_PX;
+
                     return (
-                      <button
-                        key={k}
-                        type="button"
-                        onClick={() => setSelected(d)}
-                        aria-label={format(d, "PPPP", { locale: ptBR })}
+                      <div className="border border-border rounded-lg overflow-hidden shadow-sm bg-card">
+                        {/* Header */}
+                        <div className="grid border-b border-border bg-muted/30" style={{ gridTemplateColumns: "60px repeat(7, 1fr)" }}>
+                          <div />
+                          {days.map((d) => {
+                            const today = isToday(d);
+                            const isSelected = selected && isSameDay(d, selected);
+                            return (
+                              <button
+                                key={dayKey(d)}
+                                type="button"
+                                onClick={() => setSelected(d)}
+                                className={cn(
+                                  "py-2 px-2 text-center border-l border-border hover:bg-accent/20 transition-colors flex items-center justify-center gap-2",
+                                  isSelected && "bg-primary/5",
+                                )}
+                              >
+                                <span className="text-xs uppercase tracking-wide text-muted-foreground">{format(d, "EEE", { locale: ptBR })}</span>
+                                <span className={cn(
+                                  "text-sm font-semibold h-7 w-7 inline-flex items-center justify-center rounded-full",
+                                  today && "bg-destructive text-destructive-foreground",
+                                )}>
+                                  {format(d, "d")}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* All-day / blocked row */}
+                        {days.some((d) => blockedDays.has(dayKey(d))) && (
+                          <div className="grid border-b border-border" style={{ gridTemplateColumns: "60px repeat(7, 1fr)" }}>
+                            <div className="text-[10px] uppercase text-muted-foreground py-1.5 pr-2 text-right">dia inteiro</div>
+                            {days.map((d) => (
+                              <div key={dayKey(d) + "-all"} className={cn("border-l border-border min-h-[28px] py-1 px-1", blockedDays.has(dayKey(d)) && "bg-destructive/10")}>
+                                {blockedDays.has(dayKey(d)) && (
+                                  <div className="text-[11px] text-destructive font-medium px-1.5 py-0.5 rounded-sm flex items-center gap-1">
+                                    <Ban className="h-3 w-3" /> Bloqueio
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Time grid */}
+                        <div className="grid relative" style={{ gridTemplateColumns: "60px repeat(7, 1fr)", height: totalHeight }}>
+                          {/* Hour labels */}
+                          <div className="relative">
+                            {hours.map((h) => (
+                              <div
+                                key={h}
+                                className="absolute right-2 text-[10px] text-muted-foreground tabular-nums"
+                                style={{ top: (h - HOUR_START) * HOUR_PX - 6 }}
+                              >
+                                {String(h).padStart(2, "0")}:00
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Day columns */}
+                          {days.map((d) => {
+                            const k = dayKey(d);
+                            const events = eventsByDay.get(k) ?? [];
+                            const today = isToday(d);
+                            const isSelected = selected && isSameDay(d, selected);
+                            return (
+                              <div
+                                key={k}
+                                onClick={() => setSelected(d)}
+                                className={cn(
+                                  "relative border-l border-border cursor-pointer",
+                                  today && "bg-warning/5",
+                                  isSelected && !today && "bg-primary/5",
+                                )}
+                              >
+                                {/* hour lines */}
+                                {hours.map((h) => (
+                                  <div
+                                    key={h}
+                                    className="absolute left-0 right-0 border-t border-border/60"
+                                    style={{ top: (h - HOUR_START) * HOUR_PX }}
+                                  />
+                                ))}
+                                {/* half-hour subtle lines */}
+                                {hours.map((h) => (
+                                  <div
+                                    key={`half-${h}`}
+                                    className="absolute left-0 right-0 border-t border-dashed border-border/30"
+                                    style={{ top: (h - HOUR_START) * HOUR_PX + HOUR_PX / 2 }}
+                                  />
+                                ))}
+
+                                {/* Events */}
+                                {events.map((c) => {
+                                  const startH = c.date.getHours() + c.date.getMinutes() / 60;
+                                  const endDate = c.end ?? new Date(c.date.getTime() + 60 * 60000);
+                                  const endH = endDate.getHours() + endDate.getMinutes() / 60;
+                                  const top = Math.max(0, (startH - HOUR_START) * HOUR_PX);
+                                  const height = Math.max(22, (Math.min(endH, HOUR_END) - Math.max(startH, HOUR_START)) * HOUR_PX - 2);
+                                  if (endH <= HOUR_START || startH >= HOUR_END) return null;
+                                  return (
+                                    <div
+                                      key={c.id}
+                                      onClick={(e) => { e.stopPropagation(); setSelected(d); openEdit(c); }}
+                                      className={cn(
+                                        "absolute left-1 right-1 rounded-md px-1.5 py-1 overflow-hidden cursor-pointer hover:brightness-95 shadow-sm",
+                                        tipoChip[c.tipo],
+                                      )}
+                                      style={{ top, height }}
+                                      title={`${format(c.date, "HH:mm")} – ${format(endDate, "HH:mm")} · ${c.titulo}`}
+                                    >
+                                      <div className="text-[11px] font-semibold leading-tight truncate">{c.titulo}</div>
+                                      <div className="text-[10px] tabular-nums opacity-80 leading-tight">
+                                        {format(c.date, "HH:mm")} – {format(endDate, "HH:mm")}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+
+                                {/* Now line */}
+                                {today && nowOffset >= 0 && nowOffset <= totalHeight && (
+                                  <div className="absolute left-0 right-0 z-10 pointer-events-none" style={{ top: nowOffset }}>
+                                    <div className="relative h-px bg-destructive">
+                                      <div className="absolute -left-1 -top-[3px] h-2 w-2 rounded-full bg-destructive" />
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <div className="grid grid-cols-7 border-t border-l border-border rounded-lg overflow-hidden shadow-sm">
+                    {weekDays.map((wd, i) => (
+                      <div
+                        key={wd}
                         className={cn(
-                          "text-left p-2 border-r border-b border-border align-top transition-all relative group",
-                          viewMode === "week" ? "min-h-[300px]" : "min-h-[130px]",
-                          "hover:bg-accent/15 hover:z-10",
-                          weekend && inMonth && "bg-muted/20",
-                          !inMonth && "bg-muted/30 text-muted-foreground/50",
-                          blocked && "bg-destructive/10",
-                          isSelected && "ring-2 ring-primary ring-inset bg-primary/5",
+                          "text-xs font-medium uppercase tracking-wide text-muted-foreground py-2.5 px-3 border-r border-b border-border bg-muted/40 text-center",
+                          (i === 0 || i === 6) && "text-primary/70",
                         )}
                       >
-                        <div className="flex items-center justify-between mb-1.5">
-                          {events.length > 0 && inMonth && (
-                            <span className="text-[10px] font-medium text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-full">
-                              {events.length}
+                        {wd}
+                      </div>
+                    ))}
+                    {days.map((d) => {
+                      const k = dayKey(d);
+                      const events = (eventsByDay.get(k) ?? []).sort((a, b) => +a.date - +b.date);
+                      const inMonth = isSameMonth(d, currentMonth);
+                      const today = isToday(d);
+                      const isSelected = selected && isSameDay(d, selected);
+                      const blocked = blockedDays.has(k);
+                      const weekend = d.getDay() === 0 || d.getDay() === 6;
+                      const visible = events.slice(0, 3);
+                      const extra = events.length - visible.length;
+                      return (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => setSelected(d)}
+                          aria-label={format(d, "PPPP", { locale: ptBR })}
+                          className={cn(
+                            "text-left p-2 border-r border-b border-border align-top transition-all relative group min-h-[130px]",
+                            "hover:bg-accent/15 hover:z-10",
+                            weekend && inMonth && "bg-muted/20",
+                            !inMonth && "bg-muted/30 text-muted-foreground/50",
+                            blocked && "bg-destructive/10",
+                            isSelected && "ring-2 ring-primary ring-inset bg-primary/5",
+                          )}
+                        >
+                          <div className="flex items-center justify-between mb-1.5">
+                            {events.length > 0 && inMonth && (
+                              <span className="text-[10px] font-medium text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-full">
+                                {events.length}
+                              </span>
+                            )}
+                            <span className={cn(
+                              "text-sm font-semibold h-7 w-7 flex items-center justify-center rounded-full ml-auto transition-colors",
+                              today && "bg-destructive text-destructive-foreground shadow-sm",
+                              !today && isSelected && "bg-primary text-primary-foreground",
+                              !today && !isSelected && inMonth && "text-foreground",
+                            )}>
+                              {format(d, "d")}
                             </span>
-                          )}
-                          <span className={cn(
-                            "text-sm font-semibold h-7 w-7 flex items-center justify-center rounded-full ml-auto transition-colors",
-                            today && "bg-destructive text-destructive-foreground shadow-sm",
-                            !today && isSelected && "bg-primary text-primary-foreground",
-                            !today && !isSelected && inMonth && "text-foreground",
-                          )}>
-                            {format(d, "d")}
-                          </span>
-                        </div>
-                        <div className="space-y-1">
-                          {visible.map((c) => (
-                            <div
-                              key={c.id}
-                              onClick={(e) => { e.stopPropagation(); setSelected(d); openEdit(c); }}
-                              className={cn(
-                                "flex items-center gap-1.5 text-[11px] leading-tight rounded-sm pl-1.5 pr-1 py-1 cursor-pointer overflow-hidden font-medium hover:brightness-95 transition-all",
-                                tipoChip[c.tipo],
-                              )}
-                              title={`${format(c.date, "HH:mm")} ${c.titulo}`}
-                            >
-                              <span className="shrink-0 text-[10px] tabular-nums opacity-80">{format(c.date, "HH:mm")}</span>
-                              <span className="truncate flex-1 min-w-0">{c.titulo}</span>
-                            </div>
-                          ))}
-                          {extra > 0 && (
-                            <div className="text-[10px] text-muted-foreground pl-1.5 font-medium hover:text-foreground">
-                              + {extra} mais
-                            </div>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                          </div>
+                          <div className="space-y-1">
+                            {visible.map((c) => (
+                              <div
+                                key={c.id}
+                                onClick={(e) => { e.stopPropagation(); setSelected(d); openEdit(c); }}
+                                className={cn(
+                                  "flex items-center gap-1.5 text-[11px] leading-tight rounded-sm pl-1.5 pr-1 py-1 cursor-pointer overflow-hidden font-medium hover:brightness-95 transition-all",
+                                  tipoChip[c.tipo],
+                                )}
+                                title={`${format(c.date, "HH:mm")} ${c.titulo}`}
+                              >
+                                <span className="shrink-0 text-[10px] tabular-nums opacity-80">{format(c.date, "HH:mm")}</span>
+                                <span className="truncate flex-1 min-w-0">{c.titulo}</span>
+                              </div>
+                            ))}
+                            {extra > 0 && (
+                              <div className="text-[10px] text-muted-foreground pl-1.5 font-medium hover:text-foreground">
+                                + {extra} mais
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })()}
