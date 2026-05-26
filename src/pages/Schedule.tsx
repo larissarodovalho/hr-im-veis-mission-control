@@ -119,6 +119,7 @@ export default function Schedule() {
     agendada_para: "",
     duracao_min: 60,
     lead_id: "none",
+    conta_id: "none",
     imovel_id: "none",
     local: "",
     link: "",
