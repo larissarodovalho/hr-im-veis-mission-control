@@ -206,6 +206,9 @@ export default function Imoveis() {
           </span>
         )}
         <div className="absolute top-2 right-2 flex gap-1">
+          <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setViewing(i)} title="Ver detalhes">
+            <Info className="h-4 w-4" />
+          </Button>
           <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setHistFor(i)} title="Histórico do imóvel">
             <History className="h-4 w-4" />
           </Button>
