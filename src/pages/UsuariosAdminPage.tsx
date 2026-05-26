@@ -399,6 +399,23 @@ export default function UsuariosAdminPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <UserPermissionsDialog
+        target={
+          permTarget
+            ? {
+                user_id: permTarget.user_id,
+                nome: permTarget.nome,
+                email: permTarget.email,
+                roles:
+                  permTarget.role === "gestor_corretor"
+                    ? (["gestor", "corretor"] as AppRole[])
+                    : ([permTarget.role] as AppRole[]),
+              }
+            : null
+        }
+        onClose={() => setPermTarget(null)}
+      />
     </div>
   );
 }
