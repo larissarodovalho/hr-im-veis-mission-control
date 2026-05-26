@@ -959,6 +959,11 @@ export default function Schedule() {
                         <div className="text-sm font-medium flex items-center gap-2">
                           <TipoIcon tipo={c.tipo} />
                           {format(c.date, "HH:mm", { locale: ptBR })} — {c.titulo}
+                          {c.origem === "captacao" && (
+                            <Badge variant="outline" className="bg-accent/20 text-accent-foreground border-accent/40">
+                              Captação
+                            </Badge>
+                          )}
                           {c.criado_por_ia && (
                             <Badge variant="secondary" className="gap-1">
                               <Sparkles className="h-3 w-3" /> IA
@@ -966,6 +971,7 @@ export default function Schedule() {
                           )}
                         </div>
                         {c.lead_nome && <div className="text-xs text-muted-foreground mt-0.5">Lead: {c.lead_id ? <Link to={`/crm/leads/${c.lead_id}`} className="text-primary hover:underline">{c.lead_nome}</Link> : c.lead_nome}</div>}
+                        {!c.lead_nome && c.conta_nome && <div className="text-xs text-muted-foreground mt-0.5">Cliente: {c.conta_id ? <Link to={`/crm/contas/${c.conta_id}`} className="text-primary hover:underline">{c.conta_nome}</Link> : c.conta_nome}</div>}
                         {(c.lead_telefone || c.lead_email) && (
                           <div className="text-xs text-muted-foreground mt-0.5">
                             {c.lead_telefone && <span>📞 {c.lead_telefone}</span>}
