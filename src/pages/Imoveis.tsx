@@ -177,26 +177,41 @@ export default function Imoveis() {
           </div>
         )}
         {badge}
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); togglePublicado(i); }}
-          title={publicado ? "Publicado no site — clique para ocultar" : "Não publicado — clique para publicar"}
-          className={`absolute top-9 left-2 inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition ${
-            publicado
-              ? "bg-emerald-500/90 text-white border-emerald-600 hover:bg-emerald-600"
-              : "bg-zinc-700/90 text-white border-zinc-800 hover:bg-zinc-800"
-          }`}
-        >
-          {publicado ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-          {publicado ? "Publicado" : "Não publicado"}
-        </button>
+        {canEdit ? (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); togglePublicado(i); }}
+            title={publicado ? "Publicado no site — clique para ocultar" : "Não publicado — clique para publicar"}
+            className={`absolute top-9 left-2 inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition ${
+              publicado
+                ? "bg-emerald-500/90 text-white border-emerald-600 hover:bg-emerald-600"
+                : "bg-zinc-700/90 text-white border-zinc-800 hover:bg-zinc-800"
+            }`}
+          >
+            {publicado ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+            {publicado ? "Publicado" : "Não publicado"}
+          </button>
+        ) : (
+          <span
+            className={`absolute top-9 left-2 inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${
+              publicado
+                ? "bg-emerald-500/90 text-white border-emerald-600"
+                : "bg-zinc-700/90 text-white border-zinc-800"
+            }`}
+          >
+            {publicado ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+            {publicado ? "Publicado" : "Não publicado"}
+          </span>
+        )}
         <div className="absolute top-2 right-2 flex gap-1">
           <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setHistFor(i)} title="Histórico do imóvel">
             <History className="h-4 w-4" />
           </Button>
-          <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setEditing(i)} title="Editar imóvel">
-            <Pencil className="h-4 w-4" />
-          </Button>
+          {canEdit && (
+            <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setEditing(i)} title="Editar imóvel">
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
     );
