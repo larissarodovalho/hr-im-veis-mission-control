@@ -13,6 +13,7 @@ import {
 const CHART_COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--success))", "hsl(var(--warning))", "hsl(var(--danger))", "hsl(var(--muted-foreground))"];
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [leads, setLeads] = useState<any[]>([]);
   const [reunioes, setReunioes] = useState<any[]>([]);
   const [interacoes, setInteracoes] = useState<any[]>([]);
