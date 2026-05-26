@@ -1769,6 +1769,8 @@ export type Database = {
           notas: string | null
           origem: string
           publicado_no_crm: boolean
+          recorrencia_id: string | null
+          recorrencia_regra: string | null
           status: string
           tipo: string
           titulo: string | null
@@ -1791,6 +1793,8 @@ export type Database = {
           notas?: string | null
           origem?: string
           publicado_no_crm?: boolean
+          recorrencia_id?: string | null
+          recorrencia_regra?: string | null
           status?: string
           tipo?: string
           titulo?: string | null
@@ -1813,6 +1817,8 @@ export type Database = {
           notas?: string | null
           origem?: string
           publicado_no_crm?: boolean
+          recorrencia_id?: string | null
+          recorrencia_regra?: string | null
           status?: string
           tipo?: string
           titulo?: string | null
