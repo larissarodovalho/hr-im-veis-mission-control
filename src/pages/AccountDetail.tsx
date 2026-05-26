@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ArrowLeft, Pencil, Building2, Phone, Save, FileSignature, Plus, Trash2, MapPin, Target } from "lucide-react";
+import { ArrowLeft, Pencil, Building2, Phone, Save, FileSignature, Plus, Trash2, MapPin, Target, Home as HomeIcon, Eye, EyeOff } from "lucide-react";
 import EntityDocumentsTab from "@/components/EntityDocumentsTab";
 import ContaInteracoesTimeline from "@/components/contas/ContaInteracoesTimeline";
 import ContaAgendaQuickAdd from "@/components/contas/ContaAgendaQuickAdd";
