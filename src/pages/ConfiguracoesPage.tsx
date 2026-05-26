@@ -146,12 +146,30 @@ export default function ConfiguracoesPage() {
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="empresa"><Building2 className="h-4 w-4 mr-1" />Empresa</TabsTrigger>
           <TabsTrigger value="site"><ImageIcon className="h-4 w-4 mr-1" />Site</TabsTrigger>
+          <TabsTrigger value="minha-conta"><UserCircle className="h-4 w-4 mr-1" />Minha conta</TabsTrigger>
           <TabsTrigger value="notificacoes"><Bell className="h-4 w-4 mr-1" />Notificações</TabsTrigger>
           <TabsTrigger value="sistema"><Database className="h-4 w-4 mr-1" />Sistema</TabsTrigger>
         </TabsList>
 
         <TabsContent value="site">
           <SiteSettingsTab />
+        </TabsContent>
+
+        <TabsContent value="minha-conta" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><UserCircle className="h-5 w-5" /> Minha conta</CardTitle>
+              <CardDescription>
+                Preferências pessoais e integrações individuais.{" "}
+                <Link to="/crm/minha-conta" className="text-primary underline">Abrir página completa</Link>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm space-y-1">
+              <p><strong>Nome:</strong> {profile?.nome || "—"}</p>
+              <p><strong>E-mail:</strong> {user?.email}</p>
+            </CardContent>
+          </Card>
+          <GoogleCalendarConnect />
         </TabsContent>
 
         <TabsContent value="empresa">
