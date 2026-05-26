@@ -1130,7 +1130,7 @@ export default function Schedule() {
                       <div className="min-w-0">
                         <div className="text-sm font-medium flex items-center gap-2">
                           <TipoIcon tipo={c.tipo} />
-                          {format(c.date, "HH:mm", { locale: ptBR })} — {c.titulo}
+                          <span className="capitalize">{format(c.date, "EEEE, dd/MM", { locale: ptBR })}</span> às {format(c.date, "HH:mm", { locale: ptBR })} — {c.titulo}
                           {c.origem === "captacao" && (
                             <Badge variant="outline" className="bg-accent/20 text-accent-foreground border-accent/40">
                               Captação
