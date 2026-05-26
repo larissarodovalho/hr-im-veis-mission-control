@@ -740,6 +740,7 @@ export default function Schedule() {
               ligacao: "bg-warning/15 text-warning border-l-2 border-warning",
               presencial: "bg-success/15 text-success border-l-2 border-success",
               videochamada: "bg-accent/20 text-accent-foreground border-l-2 border-accent",
+              mensagem: "bg-primary/15 text-primary border-l-2 border-primary",
             };
             const weekDays = ["dom.", "seg.", "ter.", "qua.", "qui.", "sex.", "sáb."];
 
