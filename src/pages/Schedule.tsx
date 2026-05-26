@@ -92,6 +92,7 @@ export default function Schedule() {
       { data: l },
       { data: ligs, error: lErr },
       { data: vis, error: vErr },
+      { data: capts, error: cErr },
     ] = await Promise.all([
       supabase.from("reunioes")
         .select("id, agendada_para, status, local, link, notas, tipo, duracao_min, titulo, criado_por_ia, lead_id, conta_id")
@@ -104,10 +105,15 @@ export default function Schedule() {
       supabase.from("visitas")
         .select("id, data_visita, status, observacoes, lead_id, imovel_id, conta_id")
         .order("data_visita"),
+      supabase.from("captacoes_imovel")
+        .select("id, data_agendada, estagio, observacoes, conta_id, imovel_id, responsavel_id")
+        .not("data_agendada", "is", null)
+        .order("data_agendada"),
     ]);
     if (rErr) console.error("[Schedule] reunioes", rErr);
     if (lErr) console.error("[Schedule] ligacoes", lErr);
     if (vErr) console.error("[Schedule] visitas", vErr);
+    if (cErr) console.error("[Schedule] captacoes", cErr);
 
     const leadIds = [
       ...new Set([
@@ -121,9 +127,15 @@ export default function Schedule() {
         ...((r ?? []) as any[]).map((m) => m.conta_id).filter(Boolean),
         ...((ligs ?? []) as any[]).map((c) => c.conta_id).filter(Boolean),
         ...((vis ?? []) as any[]).map((v) => v.conta_id).filter(Boolean),
+        ...((capts ?? []) as any[]).map((c) => c.conta_id).filter(Boolean),
       ]),
     ];
-    const imovelIds = [...new Set(((vis ?? []) as any[]).map((v) => v.imovel_id).filter(Boolean))];
+    const imovelIds = [
+      ...new Set([
+        ...((vis ?? []) as any[]).map((v) => v.imovel_id).filter(Boolean),
+        ...((capts ?? []) as any[]).map((c) => c.imovel_id).filter(Boolean),
+      ]),
+    ];
 
     let leadsById = new Map<string, any>();
     if (leadIds.length) {
@@ -209,7 +221,29 @@ export default function Schedule() {
         criado_por_ia: false,
       };
     });
-    setReunioes([...reus, ...ligsAgendadas, ...visitasAgendadas].sort((a, b) => +a.date - +b.date));
+    const captacoesAgendadas: Compromisso[] = ((capts ?? []) as any[]).map((c) => {
+      const start = new Date(c.data_agendada);
+      const contaNome = c.conta_id ? contasById.get(c.conta_id)?.nome : null;
+      const imovel = c.imovel_id ? imoveisById.get(c.imovel_id) : null;
+      const titulo = imovel?.titulo
+        ? `Captação: ${imovel.titulo}${contaNome ? ` (${contaNome})` : ""}`
+        : contaNome ? `Captação — ${contaNome}` : "Captação";
+      return {
+        id: `cap:${c.id}`,
+        date: start,
+        end: new Date(start.getTime() + 60 * 60000),
+        tipo: "presencial" as const,
+        titulo,
+        status: c.estagio || "agendada",
+        local: imovel?.endereco ?? null,
+        link: null,
+        notas: c.observacoes,
+        lead_id: null,
+        lead_nome: null,
+        criado_por_ia: false,
+      };
+    });
+    setReunioes([...reus, ...ligsAgendadas, ...visitasAgendadas, ...captacoesAgendadas].sort((a, b) => +a.date - +b.date));
     setBloqueios(((b ?? []) as any[]).map((x) => ({
       id: x.id,
       inicio: new Date(x.inicio),
@@ -231,6 +265,7 @@ export default function Schedule() {
       .on("postgres_changes", { event: "*", schema: "public", table: "ligacoes" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "agenda_bloqueios" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "visitas" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "captacoes_imovel" }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
