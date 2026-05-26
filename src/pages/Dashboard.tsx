@@ -198,7 +198,13 @@ export default function Dashboard() {
           )}
         </Card>
 
-        <Card className="p-4 md:p-6">
+        <Card
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate("/crm/visitas")}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/crm/visitas"); } }}
+          className="p-4 md:p-6 cursor-pointer hover:shadow-md transition-shadow"
+        >
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display text-lg font-semibold flex items-center gap-2"><MapPin className="h-4 w-4 text-accent" /> Visitas (4 semanas)</h2>
             <Badge variant="secondary">{visitsTotal}</Badge>
