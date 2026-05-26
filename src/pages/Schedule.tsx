@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { Calendar as CalendarIcon, Phone, Video, MapPin, MessageCircle, Plus, Ban, Sparkles, Trash2, Pencil, Save, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { SearchableSelect } from "@/components/SearchableSelect";
 
 type Compromisso = {
   id: string;
