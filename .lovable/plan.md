@@ -1,34 +1,43 @@
-# Permitir corretor visualizar detalhes do imóvel
+# Agenda visível para todos os papéis
 
-Hoje os cards da aba Imóveis mostram só título, cidade, código, finalidade/tipo e valor. Descrição, área, quartos, banheiros, vagas, características, endereço completo e fotos extras só aparecem dentro do **EditarImovelDialog**, que está escondido para corretor.
+Hoje a página `/crm/agenda` (Schedule.tsx) consulta `reunioes`, `ligacoes`, `visitas`, `captacoes_imovel` e `agenda_bloqueios`. As políticas atuais de SELECT limitam o que cada papel vê:
 
-## Mudança
+| Tabela | Quem vê hoje |
+|---|---|
+| reunioes | todos autenticados ✅ |
+| agenda_bloqueios | todos autenticados ✅ |
+| ligacoes | admin, gestor, secretaria, dono (corretor/created_by) |
+| visitas | admin, gestor, secretaria, dono (corretor/created_by) |
+| captacoes_imovel | admin, gestor, marketing, secretaria, dono |
 
-Adicionar um botão **"Ver detalhes"** (ícone `Eye`) no canto superior direito do card, **visível para todos** (inclusive corretor). Ele abre um novo dialog read-only `DetalhesImovelDialog`.
+Resultado: **corretor e marketing** veem só os próprios itens (e marketing não vê ligações/visitas alheias). O usuário quer que **admin, gestor, corretor, marketing e secretaria** vejam **tudo** na agenda.
 
-### `src/components/imoveis/DetalhesImovelDialog.tsx` (novo)
+## Mudança (migration única)
 
-Dialog somente leitura, exibindo:
-- Galeria de fotos (todas as `fotos`)
-- Título, código, status, finalidade, tipo
-- Endereço completo (logradouro, número, complemento, bairro, cidade/UF, CEP)
-- Valor, condomínio, IPTU
-- Áreas (útil, total, construída) · quartos · suítes · banheiros · vagas
-- Características (chips)
-- Descrição completa
-- Matrícula, exclusividade (datas + observações)
-- Corretor, proprietário (já mapeados na página)
+Adicionar uma política SELECT ampla `is_staff()` em cada tabela faltante. As políticas existentes ficam (são apenas mais restritivas, RLS é OR).
 
-Sem botões de edição. Apenas "Fechar".
+```sql
+CREATE POLICY "Staff sees all ligacoes (agenda)"
+ON public.ligacoes FOR SELECT TO authenticated
+USING (public.is_staff());
 
-### `src/pages/Imoveis.tsx`
+CREATE POLICY "Staff sees all visitas (agenda)"
+ON public.visitas FOR SELECT TO authenticated
+USING (public.is_staff());
 
-- Importar `DetalhesImovelDialog` e adicionar estado `viewing`.
-- No `Header`, adicionar `<Button … onClick={() => setViewing(i)} title="Ver detalhes"><Eye /></Button>` ao lado do botão de histórico, **sem condicional** (todos veem).
-- Renderizar `<DetalhesImovelDialog imovel={viewing} … />` no final.
+CREATE POLICY "Staff sees all captacoes (agenda)"
+ON public.captacoes_imovel FOR SELECT TO authenticated
+USING (public.is_staff());
+```
 
-## Sem mudanças de banco
+`is_staff()` já cobre admin + gestor + corretor + marketing + secretaria.
 
-RLS atual já permite corretor ler todos os imóveis (`Staff sees all imoveis`). É só UI.
+## Sem mudanças de UI/código
+
+Schedule.tsx continua igual — só passa a receber mais linhas. Políticas de UPDATE/DELETE/INSERT permanecem inalteradas (corretor continua não editando o que não é dele).
+
+## Impacto colateral
+
+Essas tabelas também aparecem em Leads (`ligacoes`), Visits (`visitas`) e Contas/Imóveis (`captacoes_imovel`). Corretor/marketing passarão a ver itens de outros usuários nessas telas também. Se isso for indesejado, precisaríamos filtrar no client por tela — confirme se está ok ampliar para essas telas também, ou se devo manter a restrição lá e duplicar leitura só na agenda via RPC.
 
 Confirmo?
