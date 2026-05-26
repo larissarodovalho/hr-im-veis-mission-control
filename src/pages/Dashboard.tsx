@@ -164,10 +164,10 @@ export default function Dashboard() {
           className="p-4 md:p-6 cursor-pointer hover:shadow-md transition-shadow"
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display text-lg font-semibold flex items-center gap-2"><Calendar className="h-4 w-4 text-accent" /> Reuniões</h2>
-            <Badge variant="secondary">{reunioes.length}</Badge>
+            <h2 className="font-display text-lg font-semibold flex items-center gap-2"><Calendar className="h-4 w-4 text-accent" /> Reuniões (mês)</h2>
+            <Badge variant="secondary">{reunioesMes}</Badge>
           </div>
-          {reunioes.length === 0 ? <p className="text-sm text-muted-foreground py-12 text-center">Sem reuniões.</p> : (
+          {reunioesMes === 0 ? <p className="text-sm text-muted-foreground py-12 text-center">Sem reuniões.</p> : (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={reunioesByStatus} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
