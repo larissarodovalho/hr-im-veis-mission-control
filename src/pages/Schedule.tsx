@@ -183,6 +183,8 @@ export default function Schedule() {
         lead_nome: leadNome,
         lead_telefone: lead?.telefone ?? null,
         lead_email: lead?.email ?? null,
+        conta_id: m.conta_id ?? null,
+        conta_nome: contaNome ?? null,
         criado_por_ia: m.criado_por_ia,
       };
     });
@@ -210,6 +212,8 @@ export default function Schedule() {
           lead_nome: leadNome,
           lead_telefone: lead?.telefone ?? null,
           lead_email: lead?.email ?? null,
+          conta_id: c.conta_id ?? null,
+          conta_nome: contaNome ?? null,
           criado_por_ia: false,
         };
       });
@@ -237,6 +241,8 @@ export default function Schedule() {
         lead_nome: leadNome,
         lead_telefone: lead?.telefone ?? null,
         lead_email: lead?.email ?? null,
+        conta_id: v.conta_id ?? null,
+        conta_nome: contaNome ?? null,
         criado_por_ia: false,
       };
     });
@@ -244,9 +250,7 @@ export default function Schedule() {
       const start = new Date(c.data_agendada);
       const contaNome = c.conta_id ? contasById.get(c.conta_id)?.nome : null;
       const imovel = c.imovel_id ? imoveisById.get(c.imovel_id) : null;
-      const titulo = imovel?.titulo
-        ? `Captação: ${imovel.titulo}${contaNome ? ` (${contaNome})` : ""}`
-        : contaNome ? `Captação — ${contaNome}` : "Captação";
+      const titulo = imovel?.titulo ? `Captação: ${imovel.titulo}` : "Captação";
       return {
         id: `cap:${c.id}`,
         date: start,
@@ -259,6 +263,9 @@ export default function Schedule() {
         notas: c.observacoes,
         lead_id: null,
         lead_nome: null,
+        conta_id: c.conta_id ?? null,
+        conta_nome: contaNome ?? null,
+        origem: "captacao",
         criado_por_ia: false,
       };
     });
