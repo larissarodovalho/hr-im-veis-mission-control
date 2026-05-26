@@ -107,7 +107,7 @@ const App = () => (
               <Route path="reunioes" element={<MarketingRoute><Meetings /></MarketingRoute>} />
               <Route path="ligacoes" element={<MarketingRoute><Calls /></MarketingRoute>} />
               <Route path="visitas" element={<MarketingRoute><Visits /></MarketingRoute>} />
-              <Route path="agenda" element={<MarketingRoute><Schedule /></MarketingRoute>} />
+              <Route path="agenda" element={<Schedule />} />
               <Route path="tarefas" element={<MarketingRoute><Tasks /></MarketingRoute>} />
               <Route path="documentos" element={<MarketingRoute><Documents /></MarketingRoute>} />
               <Route path="documentos/:id" element={<MarketingRoute><DocumentDetail /></MarketingRoute>} />
