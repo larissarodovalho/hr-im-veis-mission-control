@@ -1089,6 +1089,11 @@ export default function Schedule() {
                               <Sparkles className="h-3 w-3" /> IA
                             </Badge>
                           )}
+                          {c.recorrencia_id && (
+                            <Badge variant="outline" title={c.recorrencia_regra ? RECORRENCIA_LABEL[c.recorrencia_regra as Exclude<RecorrenciaRegra, "nenhuma">] ?? "Recorrente" : "Recorrente"}>
+                              Recorrente
+                            </Badge>
+                          )}
                         </div>
                         {c.lead_nome && <div className="text-xs text-muted-foreground mt-0.5">Lead: {c.lead_id ? <Link to={`/crm/leads/${c.lead_id}`} className="text-primary hover:underline">{c.lead_nome}</Link> : c.lead_nome}</div>}
                         {!c.lead_nome && c.conta_nome && <div className="text-xs text-muted-foreground mt-0.5">Cliente: {c.conta_id ? <Link to={`/crm/contas/${c.conta_id}`} className="text-primary hover:underline">{c.conta_nome}</Link> : c.conta_nome}</div>}
