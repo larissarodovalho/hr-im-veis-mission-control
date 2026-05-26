@@ -370,7 +370,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
             {fotosExistentes.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs text-muted-foreground">Fotos atuais</p>
+                  <p className="text-xs text-muted-foreground">Fotos atuais — arraste para reordenar. A primeira é a capa.</p>
                   <Button
                     type="button"
                     size="sm"
@@ -384,9 +384,43 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
                   </Button>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
-                  {fotosExistentes.map((url) => (
-                    <div key={url} className="relative group">
-                      <img src={url} alt="" className="w-full h-20 object-cover rounded" />
+                  {fotosExistentes.map((url, idx) => (
+                    <div
+                      key={url}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.effectAllowed = "move";
+                        e.dataTransfer.setData("text/plain", String(idx));
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = "move";
+                        e.currentTarget.classList.add("ring-2", "ring-primary");
+                      }}
+                      onDragLeave={(e) => {
+                        e.currentTarget.classList.remove("ring-2", "ring-primary");
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.remove("ring-2", "ring-primary");
+                        const from = Number(e.dataTransfer.getData("text/plain"));
+                        const to = idx;
+                        if (Number.isNaN(from) || from === to) return;
+                        setFotosExistentes((prev) => {
+                          const next = [...prev];
+                          const [moved] = next.splice(from, 1);
+                          next.splice(to, 0, moved);
+                          return next;
+                        });
+                      }}
+                      className="relative group rounded cursor-move"
+                    >
+                      <img src={url} alt="" className="w-full h-20 object-cover rounded pointer-events-none" />
+                      {idx === 0 && (
+                        <span className="absolute bottom-1 left-1 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded">
+                          Capa
+                        </span>
+                      )}
                       <button
                         type="button"
                         onClick={() => removerFotoExistente(url)}
@@ -400,6 +434,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
                 </div>
               </div>
             )}
+
 
             <label className="flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-lg p-6 cursor-pointer hover:border-primary transition-colors">
               <Upload className="h-5 w-5 text-muted-foreground" />
