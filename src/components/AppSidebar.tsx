@@ -203,37 +203,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup className="mt-2">
-          {!collapsed && <SidebarGroupLabel>Pessoal</SidebarGroupLabel>}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink
-                    to="/crm/minha-conta"
-                    className={`transition-all duration-200 ${location.pathname === "/crm/minha-conta" ? "bg-sidebar-accent text-sidebar-primary" : "hover:bg-sidebar-accent/50"}`}
-                  >
-                    <div className="relative mr-2">
-                      <UserCircle className={`h-4 w-4 ${location.pathname === "/crm/minha-conta" ? "text-sidebar-primary" : ""}`} />
-                      {gcalConnected === false && (
-                        <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-sidebar" />
-                      )}
-                    </div>
-                    {!collapsed && (
-                      <span className="flex-1 flex items-center justify-between">
-                        Minha conta
-                        {gcalConnected === false && (
-                          <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-destructive/15 text-destructive">conectar</span>
-                        )}
-                      </span>
-                    )}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
         {isAdmin && (
           <SidebarGroup className="mt-2">
             {!collapsed && <SidebarGroupLabel>Administração</SidebarGroupLabel>}
