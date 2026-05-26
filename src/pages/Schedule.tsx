@@ -368,12 +368,33 @@ export default function Schedule() {
     e.preventDefault();
     if (!novo.titulo || !novo.agendada_para) return toast.error("Preencha título e data/hora");
     const start = new Date(novo.agendada_para);
-    const end = new Date(start.getTime() + novo.duracao_min * 60000);
-    const c = checkConflito(start, end);
-    if (c.conflito) return toast.error(c.razao!);
 
-    const { error } = await supabase.from("reunioes").insert({
-      agendada_para: start.toISOString(),
+    // Calcular ocorrências (única ou recorrente)
+    let datas: Date[] = [start];
+    if (novo.recorrencia !== "nenhuma") {
+      if (!novo.recorrencia_ate) return toast.error("Informe a data final da repetição");
+      const ate = new Date(novo.recorrencia_ate + "T23:59:59");
+      if (ate < start) return toast.error("A data final deve ser posterior à inicial");
+      datas = gerarOcorrencias(start, novo.recorrencia, ate);
+      if (datas.length === 0) return toast.error("Nenhuma ocorrência gerada no intervalo");
+    }
+
+    // Conflitos
+    const conflitos: string[] = [];
+    for (const d of datas) {
+      const e2 = new Date(d.getTime() + novo.duracao_min * 60000);
+      const c = checkConflito(d, e2);
+      if (c.conflito) conflitos.push(`${format(d, "dd/MM HH:mm", { locale: ptBR })} — ${c.razao}`);
+    }
+    if (conflitos.length === datas.length) return toast.error("Todas as ocorrências conflitam: " + conflitos[0]);
+    const datasOk = datas.filter((d) => {
+      const e2 = new Date(d.getTime() + novo.duracao_min * 60000);
+      return !checkConflito(d, e2).conflito;
+    });
+
+    const recorrenciaId = novo.recorrencia !== "nenhuma" ? crypto.randomUUID() : null;
+    const rows = datasOk.map((d) => ({
+      agendada_para: d.toISOString(),
       tipo: novo.tipo,
       duracao_min: novo.duracao_min,
       titulo: novo.titulo,
@@ -385,10 +406,21 @@ export default function Schedule() {
       created_by: user?.id,
       corretor_id: user?.id,
       status: "agendada",
-    } as any);
+      recorrencia_id: recorrenciaId,
+      recorrencia_regra: novo.recorrencia !== "nenhuma" ? novo.recorrencia : null,
+    }));
+
+    const { error } = await supabase.from("reunioes").insert(rows as any);
     if (error) return toast.error(error.message);
-    toast.success("Compromisso criado");
-    setNovo({ tipo: "presencial", titulo: "", agendada_para: "", duracao_min: 60, lead_id: "none", imovel_id: "none", local: "", link: "", notas: "" });
+
+    if (conflitos.length > 0) {
+      toast.success(`${rows.length} criado(s). ${conflitos.length} pulado(s) por conflito.`);
+    } else if (rows.length > 1) {
+      toast.success(`${rows.length} compromissos criados`);
+    } else {
+      toast.success("Compromisso criado");
+    }
+    setNovo({ tipo: "presencial", titulo: "", agendada_para: "", duracao_min: 60, lead_id: "none", imovel_id: "none", local: "", link: "", notas: "", recorrencia: "nenhuma", recorrencia_ate: "" });
     setOpenNovo(false);
     load();
   };
