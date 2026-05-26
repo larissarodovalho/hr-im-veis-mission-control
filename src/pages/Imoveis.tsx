@@ -46,6 +46,7 @@ export default function Imoveis() {
   const [editing, setEditing] = useState<Imovel | null>(null);
   const [propostaFor, setPropostaFor] = useState<Imovel | null>(null);
   const [histFor, setHistFor] = useState<Imovel | null>(null);
+  const [viewing, setViewing] = useState<Imovel | null>(null);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [contas, setContas] = useState<Record<string, string>>({});
   const [tab, setTab] = useState("disponiveis");
