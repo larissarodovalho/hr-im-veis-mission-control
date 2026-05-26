@@ -573,13 +573,14 @@ export default function Accounts() {
           )}
           {/* Chips de filtros ativos */}
           {[
-            typeFilter !== "todas" && { label: `Tipo: ${typeFilter === "cliente" ? "Clientes" : "Parceiros"}`, clear: () => { setTypeFilter("todas"); setDraftType("todas"); } },
-            interestFilter !== "todos" && { label: `Interesse: ${interestFilter === "none" ? "Não definido" : interestFilter}`, clear: () => { setInterestFilter("todos"); setDraftInterest("todos"); } },
-            statusFilter !== "todos" && { label: `Status: ${statusFilter === "ativo" ? "Ativos" : "Inativos"}`, clear: () => { setStatusFilter("todos"); setDraftStatus("todos"); } },
-            tempFilter !== "todos" && { label: `Temperatura: ${tempLabel(tempFilter)}`, clear: () => { setTempFilter("todos"); setDraftTemp("todos"); } },
-            ownerFilter !== "todos" && { label: `Responsável: ${ownerLabel(ownerFilter)}`, clear: () => { setOwnerFilter("todos"); setDraftOwner("todos"); } },
-            search && { label: `Busca: "${search}"`, clear: () => { setSearch(""); setDraftSearch(""); } },
+            typeFilter !== "todas" && { label: `Tipo: ${typeFilter === "cliente" ? "Clientes" : "Parceiros"}`, clear: () => { setTypeFilter("todas"); setDraftType("todas"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: "todas", temp: tempFilter, responsavel: ownerFilter }); } },
+            interestFilter !== "todos" && { label: `Interesse: ${interestFilter === "none" ? "Não definido" : interestFilter}`, clear: () => { setInterestFilter("todos"); setDraftInterest("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: "todos", tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter }); } },
+            statusFilter !== "todos" && { label: `Status: ${statusFilter === "ativo" ? "Ativos" : "Inativos"}`, clear: () => { setStatusFilter("todos"); setDraftStatus("todos"); syncFiltersToUrl({ q: search, status: "todos", interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter }); } },
+            tempFilter !== "todos" && { label: `Temperatura: ${tempLabel(tempFilter)}`, clear: () => { setTempFilter("todos"); setDraftTemp("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: "todos", responsavel: ownerFilter }); } },
+            ownerFilter !== "todos" && { label: `Responsável: ${ownerLabel(ownerFilter)}`, clear: () => { setOwnerFilter("todos"); setDraftOwner("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: "todos" }); } },
+            search && { label: `Busca: "${search}"`, clear: () => { setSearch(""); setDraftSearch(""); syncFiltersToUrl({ q: "", status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter }); } },
           ].filter(Boolean).map((chip: any, i) => (
+
             <Badge key={i} variant="outline" className="gap-1 pl-2 pr-1 py-1">
               {chip.label}
               <button onClick={chip.clear} className="ml-1 rounded-sm hover:bg-muted p-0.5" aria-label="Remover">
