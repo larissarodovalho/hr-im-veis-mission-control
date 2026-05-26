@@ -18,6 +18,7 @@ import {
   FileSignature,
   Mail,
   ListTodo,
+  UserCircle,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
