@@ -426,7 +426,7 @@ export default function Schedule() {
     } else {
       toast.success("Compromisso criado");
     }
-    setNovo({ tipo: "presencial", titulo: "", agendada_para: "", duracao_min: 60, lead_id: "none", imovel_id: "none", local: "", link: "", notas: "", recorrencia: "nenhuma", recorrencia_ate: "" });
+    setNovo({ tipo: "presencial", titulo: "", agendada_para: "", duracao_min: 60, lead_id: "none", conta_id: "none", imovel_id: "none", local: "", link: "", notas: "", recorrencia: "nenhuma", recorrencia_ate: "" });
     setOpenNovo(false);
     load();
   };
