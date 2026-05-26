@@ -1,16 +1,22 @@
-## Reordenar fotos por arrastar — Editar imóvel
+# Manter filtros aplicados ao voltar do detalhe da conta
 
-Adicionar drag-and-drop nas "Fotos atuais" do diálogo de edição de imóveis para que você defina a ordem de exibição (a primeira foto é a capa).
+Hoje na página `Contas` os filtros (Responsável, Status, Interesse, Tipo, Temperatura, Busca) ficam apenas em `useState`. Ao clicar num cliente e navegar para `/crm/contas/:id`, o componente é desmontado e o estado é perdido — quando o usuário volta, tudo reseta para "Todos".
 
-### O que muda
-- Em `src/components/imoveis/EditarImovelDialog.tsx`, na grade de fotos existentes:
-  - Cada miniatura passa a ser arrastável (HTML5 drag-and-drop nativo, sem nova dependência).
-  - Ao soltar uma foto sobre outra, a ordem do array `fotosExistentes` é reorganizada.
-  - Indicador visual durante o arraste (opacidade + borda destacada no alvo) e um pequeno selo "Capa" na primeira foto.
-  - Um texto curto de ajuda: "Arraste para reordenar. A primeira foto é a capa."
-- Ao salvar, a nova ordem é persistida (já acontece hoje — o `update` envia `fotos: [...fotosExistentes, ...novasUrls]`).
+## Solução
 
-### Fora do escopo
-- Reordenar "Novas fotos" antes do upload (posso incluir depois se quiser).
-- Mudanças na aba de cadastro de novo imóvel.
-- Mudanças no backend / banco — apenas frontend.
+Persistir os filtros aplicados na URL via `useSearchParams` (a página já usa para `lista` e `view`). Assim:
+
+- O React Router preserva a URL quando o usuário usa o botão "voltar".
+- O usuário pode também compartilhar/recarregar a URL e manter a mesma visão.
+- Não precisa de storage extra nem mudanças no backend.
+
+## Mudanças (apenas em `src/pages/Accounts.tsx`)
+
+1. Ao montar a página, hidratar os estados `search`, `statusFilter`, `interestFilter`, `typeFilter`, `tempFilter`, `ownerFilter` (e seus respectivos `draft*`) a partir de `searchParams` (`q`, `status`, `interesse`, `tipo`, `temp`, `responsavel`).
+2. Sempre que um filtro for **aplicado** (no handler "Aplicar filtros" / chips de limpar / busca enviada), atualizar `searchParams` via `setSearchParams(..., { replace: true })` mantendo os params existentes (`lista`, `view`).
+3. Quando o filtro voltar para o valor padrão (`todos` / vazio), remover a chave correspondente da URL para mantê-la limpa.
+4. Não alterar UI, estilos, dados ou outras abas — somente sincronização de estado ↔ URL.
+
+## Resultado
+
+Filtrando por "Responsável: João" e clicando num cliente, a URL fica `/crm/contas?lista=carteira&responsavel=<id>`. Ao voltar, a aba reabre já com o filtro aplicado.
