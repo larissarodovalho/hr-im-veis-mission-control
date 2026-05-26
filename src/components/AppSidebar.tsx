@@ -79,8 +79,8 @@ const CRM_SUBTAB_ROUTES: Record<string, string> = { tarefas: "/crm/tarefas", age
 
 export function AppSidebar() {
   const { state } = useSidebar();
-  const { isAdmin, isGestor, isMarketingOnly, user } = useAuth();
-  const isCorretorOnly = !isAdmin && !isGestor && !isMarketingOnly;
+  const { isAdmin, isGestor, isMarketingOnly, isSecretariaOnly, user } = useAuth();
+  const isCorretorOnly = !isAdmin && !isGestor && !isMarketingOnly && !isSecretariaOnly;
   const collapsed = state === "collapsed";
   const [gcalConnected, setGcalConnected] = useState<boolean | null>(null);
   useEffect(() => {
