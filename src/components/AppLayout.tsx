@@ -58,9 +58,16 @@ export default function AppLayout() {
   const { signOut, user, isMarketingOnly, isSecretariaOnly } = useAuth();
   const { isAdmin, isGestor } = useRole();
   const navigate = useNavigate();
+  const location = useLocation();
   const { unread: waUnread } = useWhatsAppUnread();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [desktopOpen, setDesktopOpen] = useState(true);
+
+  useEffect(() => {
+    if (isSecretariaOnly && location.pathname !== "/crm/agenda" && location.pathname !== "/crm/minha-conta") {
+      navigate("/crm/agenda", { replace: true });
+    }
+  }, [isSecretariaOnly, location.pathname, navigate]);
 
   const handleSignOut = async () => {
     await signOut();
