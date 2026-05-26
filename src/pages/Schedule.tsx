@@ -590,10 +590,10 @@ export default function Schedule() {
               while (cur <= end) { blockedDays.add(dayKey(cur)); cur.setDate(cur.getDate()+1); }
             });
 
-            const tipoBar: Record<Compromisso["tipo"], string> = {
-              ligacao: "bg-warning",
-              presencial: "bg-success",
-              videochamada: "bg-accent",
+            const tipoChip: Record<Compromisso["tipo"], string> = {
+              ligacao: "bg-warning/15 text-warning border-l-2 border-warning",
+              presencial: "bg-success/15 text-success border-l-2 border-success",
+              videochamada: "bg-accent/20 text-accent-foreground border-l-2 border-accent",
             };
             const weekDays = ["dom.", "seg.", "ter.", "qua.", "qui.", "sex.", "sáb."];
 
