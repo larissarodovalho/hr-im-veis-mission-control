@@ -78,6 +78,7 @@ export default function UsuariosAdminPage() {
       if (set.has("gestor") && set.has("corretor")) return "gestor_corretor";
       if (set.has("gestor")) return "gestor";
       if (set.has("marketing")) return "marketing";
+      if (set.has("secretaria")) return "secretaria";
       return "corretor";
     };
     setRows(((profs ?? []) as any[]).map((p) => ({ ...p, nivel: p.nivel || "senior", role: resolve(rolesByUser.get(p.user_id)) })));
