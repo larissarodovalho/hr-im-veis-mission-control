@@ -110,14 +110,24 @@ export default function Calls() {
   const saveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editing) return;
-    const { error } = await supabase.from("ligacoes").update({
-      lead_id: editForm.lead_id === "none" ? null : editForm.lead_id,
-      conta_id: editForm.conta_id === "none" ? null : editForm.conta_id,
-      data: new Date(editForm.data).toISOString(),
-      duracao_seg: Number(editForm.duracao_seg) || 0,
-      resultado: editForm.resultado,
-      notas: editForm.notas || null,
-    }).eq("id", editing.id);
+    let error;
+    if (editing._source === "interacao") {
+      ({ error } = await supabase.from("interacoes").update({
+        lead_id: editForm.lead_id === "none" ? null : editForm.lead_id,
+        conta_id: editForm.conta_id === "none" ? null : editForm.conta_id,
+        resultado: editForm.resultado,
+        descricao: editForm.notas || null,
+      }).eq("id", editing.id));
+    } else {
+      ({ error } = await supabase.from("ligacoes").update({
+        lead_id: editForm.lead_id === "none" ? null : editForm.lead_id,
+        conta_id: editForm.conta_id === "none" ? null : editForm.conta_id,
+        data: new Date(editForm.data).toISOString(),
+        duracao_seg: Number(editForm.duracao_seg) || 0,
+        resultado: editForm.resultado,
+        notas: editForm.notas || null,
+      }).eq("id", editing.id));
+    }
     if (error) return toast.error(error.message);
     toast.success("Ligação atualizada");
     setEditing(null);
@@ -125,7 +135,8 @@ export default function Calls() {
   };
 
   const quickResult = async (c: any, resultado: string) => {
-    const { error } = await supabase.from("ligacoes").update({ resultado }).eq("id", c.id);
+    const table = c._source === "interacao" ? "interacoes" : "ligacoes";
+    const { error } = await supabase.from(table).update({ resultado }).eq("id", c.id);
     if (error) return toast.error(error.message);
     toast.success(`Resultado: ${resultado}`);
     load();
@@ -134,7 +145,8 @@ export default function Calls() {
   const remove = async () => {
     if (!editing) return;
     if (!confirm("Excluir esta ligação?")) return;
-    const { error } = await supabase.from("ligacoes").delete().eq("id", editing.id);
+    const table = editing._source === "interacao" ? "interacoes" : "ligacoes";
+    const { error } = await supabase.from(table).delete().eq("id", editing.id);
     if (error) return toast.error(error.message);
     toast.success("Ligação excluída");
     setEditing(null);
