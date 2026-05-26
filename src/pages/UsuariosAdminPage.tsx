@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, ShieldAlert, UserPlus, KeyRound, Trash2, Copy, Pencil } from "lucide-react";
+import { Loader2, ShieldAlert, UserPlus, KeyRound, Trash2, Copy, Pencil, Lock } from "lucide-react";
 import { toast } from "sonner";
+import { UserPermissionsDialog } from "@/components/UserPermissionsDialog";
 
 type UiRole = AppRole | "gestor_corretor";
 
@@ -60,6 +61,7 @@ export default function UsuariosAdminPage() {
 
   const [editTarget, setEditTarget] = useState<Row | null>(null);
   const [editForm, setEditForm] = useState({ nome: "", email: "", telefone: "", cargo: "", role: "corretor" as UiRole });
+  const [permTarget, setPermTarget] = useState<Row | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -309,6 +311,9 @@ export default function UsuariosAdminPage() {
                       <Button size="icon" variant="ghost" onClick={() => openEdit(r)} title="Editar">
                         <Pencil className="h-4 w-4" />
                       </Button>
+                      <Button size="icon" variant="ghost" onClick={() => setPermTarget(r)} title="Permissões de menu">
+                        <Lock className="h-4 w-4" />
+                      </Button>
                       <Button size="icon" variant="ghost" onClick={() => { setResetTarget(r); setNewPass(genPassword()); }} title="Redefinir senha">
                         <KeyRound className="h-4 w-4" />
                       </Button>
@@ -394,6 +399,23 @@ export default function UsuariosAdminPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <UserPermissionsDialog
+        target={
+          permTarget
+            ? {
+                user_id: permTarget.user_id,
+                nome: permTarget.nome,
+                email: permTarget.email,
+                roles:
+                  permTarget.role === "gestor_corretor"
+                    ? (["gestor", "corretor"] as AppRole[])
+                    : ([permTarget.role] as AppRole[]),
+              }
+            : null
+        }
+        onClose={() => setPermTarget(null)}
+      />
     </div>
   );
 }
