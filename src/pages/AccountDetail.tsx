@@ -62,17 +62,20 @@ export default function AccountDetail() {
     if (!id) return;
     setLoadError(null);
     try {
-      const [{ data: a, error: e1 }, { data: p, error: e2 }, { data: c, error: e3 }, { data: pa }] = await Promise.all([
+      const [{ data: a, error: e1 }, { data: p, error: e2 }, { data: c, error: e3 }, { data: pa }, { data: im, error: e5 }] = await Promise.all([
         supabase.from("contas").select("*").eq("id", id).maybeSingle(),
         supabase.from("conta_propriedades").select("*").eq("conta_id", id).order("created_at", { ascending: false }),
         supabase.from("profiles").select("user_id, nome").eq("ativo", true).order("nome"),
         supabase.from("corretores_parceiros").select("id, nome").eq("ativo", true).order("nome"),
+        supabase.from("imoveis").select("id, codigo, titulo, tipo, finalidade, status, valor, cidade, estado, fotos, publicado").eq("proprietario_id", id).order("created_at", { ascending: false }),
       ]);
       if (e1) throw e1;
       if (e2) console.warn("[AccountDetail] propriedades:", e2);
       if (e3) console.warn("[AccountDetail] corretores:", e3);
+      if (e5) console.warn("[AccountDetail] imoveis portfolio:", e5);
       setAcc(a);
       setProps((p as Propriedade[]) || []);
+      setImoveisPortfolio((im as any) || []);
       setCorretores((c as any) || []);
       setParceiros((pa as any) || []);
     } catch (err: any) {
