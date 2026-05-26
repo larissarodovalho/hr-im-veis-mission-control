@@ -28,13 +28,21 @@ export function redirectUri(req: Request) {
   return `${Deno.env.get("SUPABASE_URL")}/functions/v1/google-oauth-callback`;
 }
 
+export function googleOAuthClientId() {
+  return Deno.env.get("GOOGLE_OAUTH_CLIENT_ID")?.trim() ?? "";
+}
+
+export function googleOAuthClientSecret() {
+  return Deno.env.get("GOOGLE_OAUTH_CLIENT_SECRET")?.trim() ?? "";
+}
+
 export async function refreshAccessToken(refresh_token: string) {
   const r = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
-      client_id: Deno.env.get("GOOGLE_OAUTH_CLIENT_ID")!,
-      client_secret: Deno.env.get("GOOGLE_OAUTH_CLIENT_SECRET")!,
+      client_id: googleOAuthClientId(),
+      client_secret: googleOAuthClientSecret(),
       refresh_token,
       grant_type: "refresh_token",
     }),
