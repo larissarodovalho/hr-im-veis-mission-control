@@ -1,0 +1,1 @@
+ALTER VIEW public.imoveis_public SET (security_invoker = true);
