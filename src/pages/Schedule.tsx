@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { format, isSameDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths, isSameMonth, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { Calendar as CalendarIcon, Phone, Video, MapPin, MessageCircle, Plus, Ban, Sparkles, Trash2, Pencil, Save, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar as CalendarIcon, Phone, Video, MapPin, MessageCircle, Plus, Ban, Sparkles, Trash2, Pencil, Save, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { SearchableSelect } from "@/components/SearchableSelect";
@@ -537,6 +537,19 @@ export default function Schedule() {
       body: { entity_type: entity, entity_id: realId, action: "update" },
     }).catch(() => {});
     setEditing(null);
+    load();
+  };
+
+  const marcarConcluido = async (c: Compromisso) => {
+    const { table, realId, entity } = parseId(c.id);
+    let res;
+    if (table === "reunioes") res = await supabase.from("reunioes").update({ status: "realizada" } as any).eq("id", realId);
+    else if (table === "ligacoes") res = await supabase.from("ligacoes").update({ resultado: "realizada" } as any).eq("id", realId);
+    else if (table === "visitas") res = await supabase.from("visitas").update({ status: "Realizada" } as any).eq("id", realId);
+    else res = await supabase.from("captacoes_imovel").update({ estagio: "concluido" } as any).eq("id", realId);
+    if (res?.error) return toast.error(res.error.message);
+    toast.success("Marcado como concluído");
+    supabase.functions.invoke("gcal-push", { body: { entity_type: entity, entity_id: realId, action: "update" } }).catch(() => {});
     load();
   };
 
@@ -1161,6 +1174,11 @@ export default function Schedule() {
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <Badge variant="outline">{c.status}</Badge>
+                        {canManage && !["realizada","Realizada","concluido"].includes(c.status) && (
+                          <Button size="icon" variant="ghost" onClick={() => marcarConcluido(c)} title="Marcar como concluído" className="text-emerald-600 hover:text-emerald-700">
+                            <CheckCircle2 className="h-4 w-4" />
+                          </Button>
+                        )}
                         {canManage && (
                           <Button size="icon" variant="ghost" onClick={() => openEdit(c)} title="Editar">
                             <Pencil className="h-4 w-4" />
@@ -1205,6 +1223,11 @@ export default function Schedule() {
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <Badge variant="outline">{c.status}</Badge>
+                      {canManage && !["realizada","Realizada","concluido"].includes(c.status) && (
+                        <Button size="icon" variant="ghost" onClick={() => marcarConcluido(c)} title="Marcar como concluído" className="text-emerald-600 hover:text-emerald-700">
+                          <CheckCircle2 className="h-4 w-4" />
+                        </Button>
+                      )}
                       {canManage && (
                         <Button size="icon" variant="ghost" onClick={() => openEdit(c)} title="Editar">
                           <Pencil className="h-4 w-4" />
