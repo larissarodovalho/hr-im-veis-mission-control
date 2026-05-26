@@ -68,6 +68,7 @@ const ALL_ITEMS = [
   { title: "Marketing", url: "/marketing", icon: TrendingUp, restricted: true },
   { title: "Integrações", url: "/integracoes", icon: Plug, restricted: true },
   { title: "Operacional", url: "/operacional", icon: Settings, restricted: true },
+  { title: "Minha conta", url: "/crm/minha-conta", icon: UserCircle, restricted: false },
   { title: "Saúde do Sistema", url: "/saude", icon: Activity, restricted: true },
 ];
 
@@ -135,7 +136,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
-                const isActive = item.url === "/crm" ? isCRM : item.url === "/marketing" ? isMarketing : location.pathname === item.url;
+                const isActive = item.url === "/crm" ? (isCRM && location.pathname !== "/crm/minha-conta") : item.url === "/marketing" ? isMarketing : location.pathname === item.url;
                 return (
                   <div key={item.title}>
                     <SidebarMenuItem>
@@ -198,37 +199,6 @@ export function AppSidebar() {
                   </div>
                 );
               })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup className="mt-2">
-          {!collapsed && <SidebarGroupLabel>Pessoal</SidebarGroupLabel>}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink
-                    to="/crm/minha-conta"
-                    className={`transition-all duration-200 ${location.pathname === "/crm/minha-conta" ? "bg-sidebar-accent text-sidebar-primary" : "hover:bg-sidebar-accent/50"}`}
-                  >
-                    <div className="relative mr-2">
-                      <UserCircle className={`h-4 w-4 ${location.pathname === "/crm/minha-conta" ? "text-sidebar-primary" : ""}`} />
-                      {gcalConnected === false && (
-                        <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-sidebar" />
-                      )}
-                    </div>
-                    {!collapsed && (
-                      <span className="flex-1 flex items-center justify-between">
-                        Minha conta
-                        {gcalConnected === false && (
-                          <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-destructive/15 text-destructive">conectar</span>
-                        )}
-                      </span>
-                    )}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
