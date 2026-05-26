@@ -311,6 +311,9 @@ export default function UsuariosAdminPage() {
                       <Button size="icon" variant="ghost" onClick={() => openEdit(r)} title="Editar">
                         <Pencil className="h-4 w-4" />
                       </Button>
+                      <Button size="icon" variant="ghost" onClick={() => setPermTarget(r)} title="Permissões de menu">
+                        <Lock className="h-4 w-4" />
+                      </Button>
                       <Button size="icon" variant="ghost" onClick={() => { setResetTarget(r); setNewPass(genPassword()); }} title="Redefinir senha">
                         <KeyRound className="h-4 w-4" />
                       </Button>
