@@ -1174,6 +1174,11 @@ export default function Schedule() {
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <Badge variant="outline">{c.status}</Badge>
+                        {canManage && !["realizada","Realizada","concluido"].includes(c.status) && (
+                          <Button size="icon" variant="ghost" onClick={() => marcarConcluido(c)} title="Marcar como concluído" className="text-emerald-600 hover:text-emerald-700">
+                            <CheckCircle2 className="h-4 w-4" />
+                          </Button>
+                        )}
                         {canManage && (
                           <Button size="icon" variant="ghost" onClick={() => openEdit(c)} title="Editar">
                             <Pencil className="h-4 w-4" />
