@@ -197,7 +197,7 @@ export default function OportunidadesTab() {
       </div>
 
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+        <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 overflow-x-auto md:overflow-visible snap-x pb-2 -mx-4 px-4 md:mx-0 md:px-0">
           {ESTAGIOS.map((est) => (
             <Coluna key={est.key} estagio={est} count={byEstagio[est.key].length}>
               {byEstagio[est.key].map((op) => (
