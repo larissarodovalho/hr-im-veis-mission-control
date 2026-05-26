@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarClock, Calendar, Phone, MapPin, ExternalLink, Sprout } from "lucide-react";
+import { CalendarClock, Calendar, Phone, MapPin, ExternalLink, Camera } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -20,7 +20,7 @@ const META = {
   reuniao: { label: "Reunião", icon: Calendar, color: "bg-violet-500/15 text-violet-700 border-violet-500/30", path: "/crm/reunioes" },
   ligacao: { label: "Ligação", icon: Phone, color: "bg-blue-500/15 text-blue-700 border-blue-500/30", path: "/crm/ligacoes" },
   visita: { label: "Visita", icon: MapPin, color: "bg-teal-500/15 text-teal-700 border-teal-500/30", path: "/crm/visitas" },
-  captacao: { label: "Captação", icon: Sprout, color: "bg-amber-500/15 text-amber-700 border-amber-500/30", path: "/crm/imoveis" },
+  captacao: { label: "Captação", icon: Camera, color: "bg-amber-500/15 text-amber-700 border-amber-500/30", path: "/crm/imoveis" },
 } as const;
 
 export default function ContaAgendamentosList({ contaId }: { contaId: string }) {
