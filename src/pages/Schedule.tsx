@@ -950,9 +950,11 @@ export default function Schedule() {
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <Badge variant="outline">{c.status}</Badge>
-                        <Button size="icon" variant="ghost" onClick={() => openEdit(c)} title="Editar">
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                        {canManage && (
+                          <Button size="icon" variant="ghost" onClick={() => openEdit(c)} title="Editar">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </li>
