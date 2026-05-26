@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { STAGES, daysSince, slaColor, slaLabel, SOURCES } from "@/lib/leads";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { TrendingUp, Users, Clock, Calendar, AlertTriangle, Phone, MapPin } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -13,6 +13,7 @@ import {
 const CHART_COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--success))", "hsl(var(--warning))", "hsl(var(--danger))", "hsl(var(--muted-foreground))"];
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [leads, setLeads] = useState<any[]>([]);
   const [reunioes, setReunioes] = useState<any[]>([]);
   const [interacoes, setInteracoes] = useState<any[]>([]);
@@ -147,7 +148,13 @@ export default function Dashboard() {
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="p-4 md:p-6">
+        <Card
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate("/crm/reunioes")}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/crm/reunioes"); } }}
+          className="p-4 md:p-6 cursor-pointer hover:shadow-md transition-shadow"
+        >
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display text-lg font-semibold flex items-center gap-2"><Calendar className="h-4 w-4 text-accent" /> Reuniões</h2>
             <Badge variant="secondary">{reunioes.length}</Badge>
@@ -167,7 +174,13 @@ export default function Dashboard() {
           )}
         </Card>
 
-        <Card className="p-4 md:p-6">
+        <Card
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate("/crm/ligacoes")}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/crm/ligacoes"); } }}
+          className="p-4 md:p-6 cursor-pointer hover:shadow-md transition-shadow"
+        >
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display text-lg font-semibold flex items-center gap-2"><Phone className="h-4 w-4 text-primary" /> Ligações (30d)</h2>
             <Badge variant="secondary">{callsTotal}</Badge>
@@ -185,7 +198,13 @@ export default function Dashboard() {
           )}
         </Card>
 
-        <Card className="p-4 md:p-6">
+        <Card
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate("/crm/visitas")}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/crm/visitas"); } }}
+          className="p-4 md:p-6 cursor-pointer hover:shadow-md transition-shadow"
+        >
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display text-lg font-semibold flex items-center gap-2"><MapPin className="h-4 w-4 text-accent" /> Visitas (4 semanas)</h2>
             <Badge variant="secondary">{visitsTotal}</Badge>
