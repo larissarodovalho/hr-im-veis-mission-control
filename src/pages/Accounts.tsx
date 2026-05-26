@@ -238,6 +238,23 @@ export default function Accounts() {
     draftTemp !== tempFilter ||
     draftOwner !== ownerFilter;
 
+  const syncFiltersToUrl = (vals: {
+    q: string; status: string; interesse: string; tipo: string; temp: string; responsavel: string;
+  }) => {
+    const sp = new URLSearchParams(searchParams);
+    const set = (key: string, value: string, def: string) => {
+      if (value && value !== def) sp.set(key, value);
+      else sp.delete(key);
+    };
+    set("q", vals.q, "");
+    set("status", vals.status, "todos");
+    set("interesse", vals.interesse, "todos");
+    set("tipo", vals.tipo, "todas");
+    set("temp", vals.temp, "todos");
+    set("responsavel", vals.responsavel, "todos");
+    setSearchParams(sp, { replace: true });
+  };
+
   const applyFilters = () => {
     setSearch(draftSearch);
     setStatusFilter(draftStatus);
@@ -245,6 +262,10 @@ export default function Accounts() {
     setTypeFilter(draftType);
     setTempFilter(draftTemp);
     setOwnerFilter(draftOwner);
+    syncFiltersToUrl({
+      q: draftSearch, status: draftStatus, interesse: draftInterest,
+      tipo: draftType, temp: draftTemp, responsavel: draftOwner,
+    });
   };
 
   const clearFilters = () => {
@@ -252,7 +273,9 @@ export default function Accounts() {
     setDraftType("todas"); setDraftTemp("todos"); setDraftOwner("todos");
     setSearch(""); setStatusFilter("todos"); setInterestFilter("todos");
     setTypeFilter("todas"); setTempFilter("todos"); setOwnerFilter("todos");
+    syncFiltersToUrl({ q: "", status: "todos", interesse: "todos", tipo: "todas", temp: "todos", responsavel: "todos" });
   };
+
 
   const propsByAccount = properties.reduce<Record<string, Property[]>>((acc, p) => {
     (acc[p.conta_id] ??= []).push(p);
