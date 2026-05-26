@@ -590,10 +590,10 @@ export default function Schedule() {
               while (cur <= end) { blockedDays.add(dayKey(cur)); cur.setDate(cur.getDate()+1); }
             });
 
-            const tipoBar: Record<Compromisso["tipo"], string> = {
-              ligacao: "bg-warning",
-              presencial: "bg-success",
-              videochamada: "bg-accent",
+            const tipoChip: Record<Compromisso["tipo"], string> = {
+              ligacao: "bg-warning/15 text-warning border-l-2 border-warning",
+              presencial: "bg-success/15 text-success border-l-2 border-success",
+              videochamada: "bg-accent/20 text-accent-foreground border-l-2 border-accent",
             };
             const weekDays = ["dom.", "seg.", "ter.", "qua.", "qui.", "sex.", "sáb."];
 
@@ -656,9 +656,15 @@ export default function Schedule() {
                 </div>
 
 
-                <div className="grid grid-cols-7 border-t border-l border-border rounded-md overflow-hidden">
-                  {weekDays.map((wd) => (
-                    <div key={wd} className="text-xs text-muted-foreground py-2 px-2 border-r border-b border-border bg-muted/30">
+                <div className="grid grid-cols-7 border-t border-l border-border rounded-lg overflow-hidden shadow-sm">
+                  {weekDays.map((wd, i) => (
+                    <div
+                      key={wd}
+                      className={cn(
+                        "text-xs font-medium uppercase tracking-wide text-muted-foreground py-2.5 px-3 border-r border-b border-border bg-muted/40 text-center",
+                        (i === 0 || i === 6) && "text-primary/70",
+                      )}
+                    >
                       {wd}
                     </div>
                   ))}
@@ -669,6 +675,7 @@ export default function Schedule() {
                     const today = isToday(d);
                     const isSelected = selected && isSameDay(d, selected);
                     const blocked = blockedDays.has(k);
+                    const weekend = d.getDay() === 0 || d.getDay() === 6;
                     const visible = events.slice(0, viewMode === "week" ? 12 : 3);
                     const extra = events.length - visible.length;
                     return (
@@ -678,37 +685,49 @@ export default function Schedule() {
                         onClick={() => setSelected(d)}
                         aria-label={format(d, "PPPP", { locale: ptBR })}
                         className={cn(
-                          "text-left p-1.5 border-r border-b border-border align-top transition-colors",
-                          viewMode === "week" ? "min-h-[280px]" : "min-h-[110px]",
-                          "hover:bg-accent/20",
-                          !inMonth && "bg-muted/20 text-muted-foreground",
+                          "text-left p-2 border-r border-b border-border align-top transition-all relative group",
+                          viewMode === "week" ? "min-h-[300px]" : "min-h-[130px]",
+                          "hover:bg-accent/15 hover:z-10",
+                          weekend && inMonth && "bg-muted/20",
+                          !inMonth && "bg-muted/30 text-muted-foreground/50",
                           blocked && "bg-destructive/10",
-                          isSelected && "ring-1 ring-primary/50 ring-inset",
+                          isSelected && "ring-2 ring-primary ring-inset bg-primary/5",
                         )}
                       >
-                        <div className="flex items-center justify-end mb-1">
+                        <div className="flex items-center justify-between mb-1.5">
+                          {events.length > 0 && inMonth && (
+                            <span className="text-[10px] font-medium text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-full">
+                              {events.length}
+                            </span>
+                          )}
                           <span className={cn(
-                            "text-xs font-medium h-6 w-6 flex items-center justify-center rounded-full",
-                            today && "bg-destructive text-destructive-foreground",
+                            "text-sm font-semibold h-7 w-7 flex items-center justify-center rounded-full ml-auto transition-colors",
+                            today && "bg-destructive text-destructive-foreground shadow-sm",
+                            !today && isSelected && "bg-primary text-primary-foreground",
+                            !today && !isSelected && inMonth && "text-foreground",
                           )}>
                             {format(d, "d")}
                           </span>
                         </div>
-                        <div className="space-y-0.5">
+                        <div className="space-y-1">
                           {visible.map((c) => (
                             <div
                               key={c.id}
                               onClick={(e) => { e.stopPropagation(); setSelected(d); openEdit(c); }}
-                              className="flex items-center gap-1 text-[11px] leading-tight rounded-sm pl-1 pr-0.5 py-0.5 hover:bg-accent/40 cursor-pointer overflow-hidden"
+                              className={cn(
+                                "flex items-center gap-1.5 text-[11px] leading-tight rounded-sm pl-1.5 pr-1 py-1 cursor-pointer overflow-hidden font-medium hover:brightness-95 transition-all",
+                                tipoChip[c.tipo],
+                              )}
                               title={`${format(c.date, "HH:mm")} ${c.titulo}`}
                             >
-                              <span className={cn("inline-block h-2 w-0.5 rounded-sm shrink-0", tipoBar[c.tipo])} />
+                              <span className="shrink-0 text-[10px] tabular-nums opacity-80">{format(c.date, "HH:mm")}</span>
                               <span className="truncate flex-1 min-w-0">{c.titulo}</span>
-                              <span className="text-muted-foreground shrink-0 text-[10px]">{format(c.date, "HH:mm")}</span>
                             </div>
                           ))}
                           {extra > 0 && (
-                            <div className="text-[10px] text-muted-foreground pl-1">e mais {extra}</div>
+                            <div className="text-[10px] text-muted-foreground pl-1.5 font-medium hover:text-foreground">
+                              + {extra} mais
+                            </div>
                           )}
                         </div>
                       </button>
