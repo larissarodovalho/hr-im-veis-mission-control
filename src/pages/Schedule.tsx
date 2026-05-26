@@ -626,6 +626,16 @@ export default function Schedule() {
                   </Select>
                 </div>
                 <div>
+                  <Label>Conta (cliente) vinculada</Label>
+                  <Select value={novo.conta_id} onValueChange={(v) => setNovo({ ...novo, conta_id: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sem conta vinculada</SelectItem>
+                      {contasList.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label>Imóvel visitado</Label>
                   <Select value={novo.imovel_id} onValueChange={(v) => setNovo({ ...novo, imovel_id: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
