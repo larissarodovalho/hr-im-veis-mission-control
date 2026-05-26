@@ -85,11 +85,13 @@ const TIPO_LABEL: Record<Compromisso["tipo"], string> = {
   ligacao: "Ligação",
   presencial: "Presencial",
   videochamada: "Videochamada",
+  mensagem: "Mensagem",
 };
 
 const TipoIcon = ({ tipo }: { tipo: Compromisso["tipo"] }) => {
   if (tipo === "ligacao") return <Phone className="h-4 w-4" />;
   if (tipo === "videochamada") return <Video className="h-4 w-4" />;
+  if (tipo === "mensagem") return <MessageCircle className="h-4 w-4" />;
   return <MapPin className="h-4 w-4" />;
 };
 
