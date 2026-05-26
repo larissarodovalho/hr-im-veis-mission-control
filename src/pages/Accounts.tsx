@@ -133,19 +133,29 @@ export default function Accounts() {
   };
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"todos" | Status>("todos");
-  const [interestFilter, setInterestFilter] = useState<string>("todos");
-  const [typeFilter, setTypeFilter] = useState<"todas" | "cliente" | "parceiro">("todas");
-  const [tempFilter, setTempFilter] = useState<string>("todos");
-  const [ownerFilter, setOwnerFilter] = useState<string>("todos");
+  // Hidratação inicial dos filtros a partir da URL (mantém ao voltar do detalhe)
+  const initialStatus = (() => {
+    const v = searchParams.get("status");
+    return (v === "ativo" || v === "inativo" || v === "lead") ? (v as Status) : "todos";
+  })();
+  const initialType = (() => {
+    const v = searchParams.get("tipo");
+    return (v === "cliente" || v === "parceiro") ? v : "todas";
+  })();
+  const [search, setSearch] = useState(searchParams.get("q") ?? "");
+  const [statusFilter, setStatusFilter] = useState<"todos" | Status>(initialStatus as any);
+  const [interestFilter, setInterestFilter] = useState<string>(searchParams.get("interesse") ?? "todos");
+  const [typeFilter, setTypeFilter] = useState<"todas" | "cliente" | "parceiro">(initialType as any);
+  const [tempFilter, setTempFilter] = useState<string>(searchParams.get("temp") ?? "todos");
+  const [ownerFilter, setOwnerFilter] = useState<string>(searchParams.get("responsavel") ?? "todos");
   // Rascunho — não filtra até clicar em Aplicar
-  const [draftSearch, setDraftSearch] = useState("");
-  const [draftStatus, setDraftStatus] = useState<"todos" | Status>("todos");
-  const [draftInterest, setDraftInterest] = useState<string>("todos");
-  const [draftType, setDraftType] = useState<"todas" | "cliente" | "parceiro">("todas");
-  const [draftTemp, setDraftTemp] = useState<string>("todos");
-  const [draftOwner, setDraftOwner] = useState<string>("todos");
+  const [draftSearch, setDraftSearch] = useState(searchParams.get("q") ?? "");
+  const [draftStatus, setDraftStatus] = useState<"todos" | Status>(initialStatus as any);
+  const [draftInterest, setDraftInterest] = useState<string>(searchParams.get("interesse") ?? "todos");
+  const [draftType, setDraftType] = useState<"todas" | "cliente" | "parceiro">(initialType as any);
+  const [draftTemp, setDraftTemp] = useState<string>(searchParams.get("temp") ?? "todos");
+  const [draftOwner, setDraftOwner] = useState<string>(searchParams.get("responsavel") ?? "todos");
+
   const [loading, setLoading] = useState(true);
   const [novaOpen, setNovaOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
