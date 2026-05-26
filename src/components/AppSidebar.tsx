@@ -68,6 +68,7 @@ const ALL_ITEMS = [
   { title: "Marketing", url: "/marketing", icon: TrendingUp, restricted: true },
   { title: "Integrações", url: "/integracoes", icon: Plug, restricted: true },
   { title: "Operacional", url: "/operacional", icon: Settings, restricted: true },
+  { title: "Minha conta", url: "/crm/minha-conta", icon: UserCircle, restricted: false },
   { title: "Saúde do Sistema", url: "/saude", icon: Activity, restricted: true },
 ];
 
