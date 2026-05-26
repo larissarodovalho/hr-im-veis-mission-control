@@ -133,19 +133,29 @@ export default function Accounts() {
   };
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"todos" | Status>("todos");
-  const [interestFilter, setInterestFilter] = useState<string>("todos");
-  const [typeFilter, setTypeFilter] = useState<"todas" | "cliente" | "parceiro">("todas");
-  const [tempFilter, setTempFilter] = useState<string>("todos");
-  const [ownerFilter, setOwnerFilter] = useState<string>("todos");
+  // Hidratação inicial dos filtros a partir da URL (mantém ao voltar do detalhe)
+  const initialStatus = (() => {
+    const v = searchParams.get("status");
+    return (v === "ativo" || v === "inativo" || v === "lead") ? (v as Status) : "todos";
+  })();
+  const initialType = (() => {
+    const v = searchParams.get("tipo");
+    return (v === "cliente" || v === "parceiro") ? v : "todas";
+  })();
+  const [search, setSearch] = useState(searchParams.get("q") ?? "");
+  const [statusFilter, setStatusFilter] = useState<"todos" | Status>(initialStatus as any);
+  const [interestFilter, setInterestFilter] = useState<string>(searchParams.get("interesse") ?? "todos");
+  const [typeFilter, setTypeFilter] = useState<"todas" | "cliente" | "parceiro">(initialType as any);
+  const [tempFilter, setTempFilter] = useState<string>(searchParams.get("temp") ?? "todos");
+  const [ownerFilter, setOwnerFilter] = useState<string>(searchParams.get("responsavel") ?? "todos");
   // Rascunho — não filtra até clicar em Aplicar
-  const [draftSearch, setDraftSearch] = useState("");
-  const [draftStatus, setDraftStatus] = useState<"todos" | Status>("todos");
-  const [draftInterest, setDraftInterest] = useState<string>("todos");
-  const [draftType, setDraftType] = useState<"todas" | "cliente" | "parceiro">("todas");
-  const [draftTemp, setDraftTemp] = useState<string>("todos");
-  const [draftOwner, setDraftOwner] = useState<string>("todos");
+  const [draftSearch, setDraftSearch] = useState(searchParams.get("q") ?? "");
+  const [draftStatus, setDraftStatus] = useState<"todos" | Status>(initialStatus as any);
+  const [draftInterest, setDraftInterest] = useState<string>(searchParams.get("interesse") ?? "todos");
+  const [draftType, setDraftType] = useState<"todas" | "cliente" | "parceiro">(initialType as any);
+  const [draftTemp, setDraftTemp] = useState<string>(searchParams.get("temp") ?? "todos");
+  const [draftOwner, setDraftOwner] = useState<string>(searchParams.get("responsavel") ?? "todos");
+
   const [loading, setLoading] = useState(true);
   const [novaOpen, setNovaOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -228,6 +238,23 @@ export default function Accounts() {
     draftTemp !== tempFilter ||
     draftOwner !== ownerFilter;
 
+  const syncFiltersToUrl = (vals: {
+    q: string; status: string; interesse: string; tipo: string; temp: string; responsavel: string;
+  }) => {
+    const sp = new URLSearchParams(searchParams);
+    const set = (key: string, value: string, def: string) => {
+      if (value && value !== def) sp.set(key, value);
+      else sp.delete(key);
+    };
+    set("q", vals.q, "");
+    set("status", vals.status, "todos");
+    set("interesse", vals.interesse, "todos");
+    set("tipo", vals.tipo, "todas");
+    set("temp", vals.temp, "todos");
+    set("responsavel", vals.responsavel, "todos");
+    setSearchParams(sp, { replace: true });
+  };
+
   const applyFilters = () => {
     setSearch(draftSearch);
     setStatusFilter(draftStatus);
@@ -235,6 +262,10 @@ export default function Accounts() {
     setTypeFilter(draftType);
     setTempFilter(draftTemp);
     setOwnerFilter(draftOwner);
+    syncFiltersToUrl({
+      q: draftSearch, status: draftStatus, interesse: draftInterest,
+      tipo: draftType, temp: draftTemp, responsavel: draftOwner,
+    });
   };
 
   const clearFilters = () => {
@@ -242,7 +273,9 @@ export default function Accounts() {
     setDraftType("todas"); setDraftTemp("todos"); setDraftOwner("todos");
     setSearch(""); setStatusFilter("todos"); setInterestFilter("todos");
     setTypeFilter("todas"); setTempFilter("todos"); setOwnerFilter("todos");
+    syncFiltersToUrl({ q: "", status: "todos", interesse: "todos", tipo: "todas", temp: "todos", responsavel: "todos" });
   };
+
 
   const propsByAccount = properties.reduce<Record<string, Property[]>>((acc, p) => {
     (acc[p.conta_id] ??= []).push(p);
@@ -540,13 +573,14 @@ export default function Accounts() {
           )}
           {/* Chips de filtros ativos */}
           {[
-            typeFilter !== "todas" && { label: `Tipo: ${typeFilter === "cliente" ? "Clientes" : "Parceiros"}`, clear: () => { setTypeFilter("todas"); setDraftType("todas"); } },
-            interestFilter !== "todos" && { label: `Interesse: ${interestFilter === "none" ? "Não definido" : interestFilter}`, clear: () => { setInterestFilter("todos"); setDraftInterest("todos"); } },
-            statusFilter !== "todos" && { label: `Status: ${statusFilter === "ativo" ? "Ativos" : "Inativos"}`, clear: () => { setStatusFilter("todos"); setDraftStatus("todos"); } },
-            tempFilter !== "todos" && { label: `Temperatura: ${tempLabel(tempFilter)}`, clear: () => { setTempFilter("todos"); setDraftTemp("todos"); } },
-            ownerFilter !== "todos" && { label: `Responsável: ${ownerLabel(ownerFilter)}`, clear: () => { setOwnerFilter("todos"); setDraftOwner("todos"); } },
-            search && { label: `Busca: "${search}"`, clear: () => { setSearch(""); setDraftSearch(""); } },
+            typeFilter !== "todas" && { label: `Tipo: ${typeFilter === "cliente" ? "Clientes" : "Parceiros"}`, clear: () => { setTypeFilter("todas"); setDraftType("todas"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: "todas", temp: tempFilter, responsavel: ownerFilter }); } },
+            interestFilter !== "todos" && { label: `Interesse: ${interestFilter === "none" ? "Não definido" : interestFilter}`, clear: () => { setInterestFilter("todos"); setDraftInterest("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: "todos", tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter }); } },
+            statusFilter !== "todos" && { label: `Status: ${statusFilter === "ativo" ? "Ativos" : "Inativos"}`, clear: () => { setStatusFilter("todos"); setDraftStatus("todos"); syncFiltersToUrl({ q: search, status: "todos", interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter }); } },
+            tempFilter !== "todos" && { label: `Temperatura: ${tempLabel(tempFilter)}`, clear: () => { setTempFilter("todos"); setDraftTemp("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: "todos", responsavel: ownerFilter }); } },
+            ownerFilter !== "todos" && { label: `Responsável: ${ownerLabel(ownerFilter)}`, clear: () => { setOwnerFilter("todos"); setDraftOwner("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: "todos" }); } },
+            search && { label: `Busca: "${search}"`, clear: () => { setSearch(""); setDraftSearch(""); syncFiltersToUrl({ q: "", status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter }); } },
           ].filter(Boolean).map((chip: any, i) => (
+
             <Badge key={i} variant="outline" className="gap-1 pl-2 pr-1 py-1">
               {chip.label}
               <button onClick={chip.clear} className="ml-1 rounded-sm hover:bg-muted p-0.5" aria-label="Remover">
