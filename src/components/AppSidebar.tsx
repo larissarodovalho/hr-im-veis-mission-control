@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { NavLink, useLocation, useSearchParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import hrLogo from "@/assets/hr-imoveis-logo.png";
 import {
   Sidebar,
