@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, Home } from "lucide-react";
 import { toast } from "sonner";
 import { EventsCalendar } from "@/components/EventsCalendar";
 import { SearchableSelect } from "@/components/SearchableSelect";
@@ -191,9 +191,19 @@ export default function Visits() {
                 <td className="p-3 text-muted-foreground">{v.imoveis?.titulo || "—"}</td>
                 <td className="p-3"><Badge variant="outline">{v.status}</Badge></td>
                 <td className="p-3" onClick={(e) => e.stopPropagation()}>
-                  {v.status === "Agendada" && (
-                    <Button size="sm" variant="outline" onClick={() => quickStatus(v, "Confirmada")}>Aprovar</Button>
-                  )}
+                  <div className="flex flex-wrap gap-1">
+                    {v.status === "Agendada" && (
+                      <Button size="sm" variant="outline" onClick={() => quickStatus(v, "Confirmada")}>Aprovar</Button>
+                    )}
+                    <Button size="sm" variant="ghost" onClick={() => openEdit(v)} title="Editar visita">
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    {!v.imovel_id && (
+                      <Button size="sm" variant="ghost" onClick={() => openEdit(v)} title="Adicionar imóvel">
+                        <Home className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
