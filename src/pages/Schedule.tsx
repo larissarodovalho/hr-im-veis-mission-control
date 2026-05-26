@@ -560,6 +560,7 @@ export default function Schedule() {
             </DialogContent>
           </Dialog>
         </div>
+        )}
       </div>
 
       <div className="space-y-6">
