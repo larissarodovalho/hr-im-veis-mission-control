@@ -623,7 +623,7 @@ export default function Schedule() {
             return (
               <div>
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                  <h2 className="text-2xl font-light capitalize">{headerLabel}</h2>
+                  <h2 className="text-lg md:text-2xl font-light capitalize">{headerLabel}</h2>
                   <div className="flex items-center gap-2">
                     <div className="inline-flex rounded-md border border-border overflow-hidden">
                       <button
