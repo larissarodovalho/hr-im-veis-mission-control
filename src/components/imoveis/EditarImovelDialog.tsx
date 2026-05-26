@@ -288,10 +288,19 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
               <Label>Matrícula (uso interno)</Label>
               <Input value={form.matricula} onChange={(e) => upd("matricula", e.target.value)} placeholder="Nº da matrícula no cartório" />
             </div>
-            <div className="flex items-center gap-2">
-              <Switch id="edit-destaque" checked={form.destaque} onCheckedChange={(v) => upd("destaque", v)} />
-              <Label htmlFor="edit-destaque" className="cursor-pointer">Imóvel em destaque</Label>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
+              <div className="flex items-center gap-2">
+                <Switch id="edit-destaque" checked={form.destaque} onCheckedChange={(v) => upd("destaque", v)} />
+                <Label htmlFor="edit-destaque" className="cursor-pointer">Imóvel em destaque</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch id="edit-publicado" checked={form.publicado} onCheckedChange={(v) => upd("publicado", v)} />
+                <Label htmlFor="edit-publicado" className="cursor-pointer">
+                  Publicado no site {form.publicado ? "" : "(oculto)"}
+                </Label>
+              </div>
             </div>
+
           </section>
 
           <ResponsavelProprietarioSection
