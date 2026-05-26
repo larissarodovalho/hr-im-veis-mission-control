@@ -279,6 +279,65 @@ export default function AccountDetail() {
 
       <div>
         <div className="flex items-center justify-between mb-3">
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-display text-xl font-semibold flex items-center gap-2">
+            <HomeIcon className="h-5 w-5 text-primary" /> Imóveis no portfólio
+            <Badge variant="secondary" className="ml-1 text-[10px]">{imoveisPortfolio.length}</Badge>
+          </h2>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/crm/imoveis"><Plus className="h-4 w-4 mr-1" /> Cadastrar imóvel</Link>
+          </Button>
+        </div>
+        {imoveisPortfolio.length === 0 ? (
+          <Card className="p-6 text-center text-sm text-muted-foreground">
+            Nenhum imóvel deste cliente no portfólio. Cadastre em <Link to="/crm/imoveis" className="text-primary underline">Imóveis</Link> selecionando este cliente como proprietário.
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {imoveisPortfolio.map((i) => {
+              const publicado = i.publicado ?? true;
+              return (
+                <Link key={i.id} to="/crm/imoveis" className="block group">
+                  <Card className="overflow-hidden transition hover:border-primary/50 hover:shadow-md">
+                    <div className="relative">
+                      {i.fotos?.[0] ? (
+                        <img src={i.fotos[0]} alt={i.titulo} className="w-full h-28 object-cover" />
+                      ) : (
+                        <div className="w-full h-28 bg-muted flex items-center justify-center text-muted-foreground">
+                          <HomeIcon className="h-8 w-8 opacity-30" />
+                        </div>
+                      )}
+                      <Badge className="absolute top-1.5 left-1.5 text-[10px]" variant="outline">{i.status}</Badge>
+                      <span className={`absolute top-1.5 right-1.5 inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${
+                        publicado
+                          ? "bg-emerald-500/90 text-white border-emerald-600"
+                          : "bg-zinc-700/90 text-white border-zinc-800"
+                      }`}>
+                        {publicado ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                        {publicado ? "Publicado" : "Oculto"}
+                      </span>
+                    </div>
+                    <div className="p-3 space-y-1">
+                      <div className="font-semibold text-sm leading-tight truncate group-hover:text-primary">{i.titulo}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {i.cidade}{i.estado && ` · ${i.estado}`}{i.codigo && ` · ${i.codigo}`}
+                      </div>
+                      <div className="flex items-center justify-between pt-1">
+                        <Badge variant="secondary" className="text-[10px]">{i.finalidade} · {i.tipo}</Badge>
+                        <span className="font-semibold text-primary text-sm">{fmtMoney(i.valor)}</span>
+                      </div>
+                    </div>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-xl font-semibold">Propriedades / Negócios</h2>
           <Button onClick={() => setPropEditing({})}><Plus className="h-4 w-4 mr-1" /> Adicionar propriedade</Button>
         </div>
