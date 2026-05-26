@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2, FileDown, History } from "lucide-react";
+import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2, FileDown, History, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import NovoImovelDialog from "@/components/imoveis/NovoImovelDialog";
 import EditarImovelDialog from "@/components/imoveis/EditarImovelDialog";
@@ -150,26 +150,55 @@ export default function Imoveis() {
   };
 
   // ---------- Cards ----------
-  const Header = ({ i, badge }: { i: Imovel; badge?: React.ReactNode }) => (
-    <div className="relative">
-      {i.fotos?.[0] ? (
-        <img src={i.fotos[0]} alt={i.titulo} className="w-full h-36 object-cover" />
-      ) : (
-        <div className="w-full h-36 bg-muted flex items-center justify-center text-muted-foreground">
-          <HomeIcon className="h-10 w-10 opacity-30" />
+  const togglePublicado = async (i: Imovel) => {
+    const novo = !(i.publicado ?? true);
+    setItems((prev) => prev.map((x) => (x.id === i.id ? { ...x, publicado: novo } : x)));
+    const { error } = await supabase.from("imoveis").update({ publicado: novo } as any).eq("id", i.id);
+    if (error) {
+      setItems((prev) => prev.map((x) => (x.id === i.id ? { ...x, publicado: !novo } : x)));
+      toast.error("Erro ao alterar publicação");
+      return;
+    }
+    toast.success(novo ? "Imóvel publicado no site" : "Imóvel oculto do site");
+  };
+
+  const Header = ({ i, badge }: { i: Imovel; badge?: React.ReactNode }) => {
+    const publicado = i.publicado ?? true;
+    return (
+      <div className="relative">
+        {i.fotos?.[0] ? (
+          <img src={i.fotos[0]} alt={i.titulo} className="w-full h-36 object-cover" />
+        ) : (
+          <div className="w-full h-36 bg-muted flex items-center justify-center text-muted-foreground">
+            <HomeIcon className="h-10 w-10 opacity-30" />
+          </div>
+        )}
+        {badge}
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); togglePublicado(i); }}
+          title={publicado ? "Publicado no site — clique para ocultar" : "Não publicado — clique para publicar"}
+          className={`absolute top-9 left-2 inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition ${
+            publicado
+              ? "bg-emerald-500/90 text-white border-emerald-600 hover:bg-emerald-600"
+              : "bg-zinc-700/90 text-white border-zinc-800 hover:bg-zinc-800"
+          }`}
+        >
+          {publicado ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+          {publicado ? "Publicado" : "Não publicado"}
+        </button>
+        <div className="absolute top-2 right-2 flex gap-1">
+          <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setHistFor(i)} title="Histórico do imóvel">
+            <History className="h-4 w-4" />
+          </Button>
+          <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setEditing(i)} title="Editar imóvel">
+            <Pencil className="h-4 w-4" />
+          </Button>
         </div>
-      )}
-      {badge}
-      <div className="absolute top-2 right-2 flex gap-1">
-        <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setHistFor(i)} title="Histórico do imóvel">
-          <History className="h-4 w-4" />
-        </Button>
-        <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setEditing(i)} title="Editar imóvel">
-          <Pencil className="h-4 w-4" />
-        </Button>
       </div>
-    </div>
-  );
+    );
+  };
+
 
   const Title = ({ i }: { i: Imovel }) => (
     <div>

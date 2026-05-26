@@ -1,22 +1,19 @@
-# Manter filtros aplicados ao voltar do detalhe da conta
+# Toggle Publicado / Não publicado nos cards de imóveis
 
-Hoje na página `Contas` os filtros (Responsável, Status, Interesse, Tipo, Temperatura, Busca) ficam apenas em `useState`. Ao clicar num cliente e navegar para `/crm/contas/:id`, o componente é desmontado e o estado é perdido — quando o usuário volta, tudo reseta para "Todos".
+Hoje todo imóvel com `status = 'Disponível'` aparece automaticamente no site público (a view `imoveis_public` filtra só por status). Não há jeito de manter um imóvel no CRM sem expor no site.
 
-## Solução
+## Mudanças
 
-Persistir os filtros aplicados na URL via `useSearchParams` (a página já usa para `lista` e `view`). Assim:
+### Banco
+- Adicionar coluna `publicado boolean NOT NULL DEFAULT true` em `public.imoveis` (default `true` preserva o comportamento atual de todos os imóveis existentes).
+- Recriar a view `public.imoveis_public` adicionando `AND publicado = true` na cláusula `WHERE`.
 
-- O React Router preserva a URL quando o usuário usa o botão "voltar".
-- O usuário pode também compartilhar/recarregar a URL e manter a mesma visão.
-- Não precisa de storage extra nem mudanças no backend.
+### Frontend (`src/pages/Imoveis.tsx`)
+- No "bannerzinho" (canto superior da foto) de cada card, ao lado do badge de status, adicionar um segundo badge clicável:
+  - **Publicado** — verde, ícone `Eye`
+  - **Não publicado** — cinza, ícone `EyeOff`
+- Clique alterna o campo `publicado` no banco via `supabase.from('imoveis').update({ publicado: !i.publicado })` e atualiza o estado local otimista. Toast de confirmação.
+- Aplicar no card de "Disponível" e também no de "Em proposta" (mesmo padrão visual).
 
-## Mudanças (apenas em `src/pages/Accounts.tsx`)
-
-1. Ao montar a página, hidratar os estados `search`, `statusFilter`, `interestFilter`, `typeFilter`, `tempFilter`, `ownerFilter` (e seus respectivos `draft*`) a partir de `searchParams` (`q`, `status`, `interesse`, `tipo`, `temp`, `responsavel`).
-2. Sempre que um filtro for **aplicado** (no handler "Aplicar filtros" / chips de limpar / busca enviada), atualizar `searchParams` via `setSearchParams(..., { replace: true })` mantendo os params existentes (`lista`, `view`).
-3. Quando o filtro voltar para o valor padrão (`todos` / vazio), remover a chave correspondente da URL para mantê-la limpa.
-4. Não alterar UI, estilos, dados ou outras abas — somente sincronização de estado ↔ URL.
-
-## Resultado
-
-Filtrando por "Responsável: João" e clicando num cliente, a URL fica `/crm/contas?lista=carteira&responsavel=<id>`. Ao voltar, a aba reabre já com o filtro aplicado.
+### Fora de escopo
+- Não mexer em outras abas (Captação, Parceiros, Vendidos), nem em filtros, nem no formulário de novo/editar imóvel — só o toggle no card.
