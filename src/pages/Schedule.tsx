@@ -32,6 +32,9 @@ type Compromisso = {
   lead_nome?: string | null;
   lead_telefone?: string | null;
   lead_email?: string | null;
+  conta_id?: string | null;
+  conta_nome?: string | null;
+  origem?: "captacao";
   criado_por_ia?: boolean;
 };
 
