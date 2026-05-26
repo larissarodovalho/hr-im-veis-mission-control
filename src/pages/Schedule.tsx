@@ -36,7 +36,41 @@ type Compromisso = {
   conta_nome?: string | null;
   origem?: "captacao";
   criado_por_ia?: boolean;
+  recorrencia_id?: string | null;
+  recorrencia_regra?: string | null;
 };
+
+type RecorrenciaRegra = "nenhuma" | "diaria_util" | "semanal" | "quinzenal" | "mensal";
+
+const RECORRENCIA_LABEL: Record<Exclude<RecorrenciaRegra, "nenhuma">, string> = {
+  diaria_util: "Diariamente (seg–sex)",
+  semanal: "Semanalmente",
+  quinzenal: "Quinzenalmente",
+  mensal: "Mensalmente",
+};
+
+function gerarOcorrencias(inicio: Date, regra: RecorrenciaRegra, ate: Date, maxN = 60): Date[] {
+  if (regra === "nenhuma") return [inicio];
+  const out: Date[] = [];
+  let cursor = new Date(inicio);
+  while (cursor <= ate && out.length < maxN) {
+    if (regra === "diaria_util") {
+      const dow = cursor.getDay();
+      if (dow !== 0 && dow !== 6) out.push(new Date(cursor));
+      cursor = addDays(cursor, 1);
+    } else if (regra === "semanal") {
+      out.push(new Date(cursor));
+      cursor = addDays(cursor, 7);
+    } else if (regra === "quinzenal") {
+      out.push(new Date(cursor));
+      cursor = addDays(cursor, 14);
+    } else if (regra === "mensal") {
+      out.push(new Date(cursor));
+      cursor = addMonths(cursor, 1);
+    }
+  }
+  return out;
+}
 
 type Bloqueio = {
   id: string;
@@ -86,6 +120,8 @@ export default function Schedule() {
     local: "",
     link: "",
     notas: "",
+    recorrencia: "nenhuma" as RecorrenciaRegra,
+    recorrencia_ate: "",
   });
 
   const [bloq, setBloq] = useState({
@@ -186,6 +222,8 @@ export default function Schedule() {
         conta_id: m.conta_id ?? null,
         conta_nome: contaNome ?? null,
         criado_por_ia: m.criado_por_ia,
+        recorrencia_id: m.recorrencia_id ?? null,
+        recorrencia_regra: m.recorrencia_regra ?? null,
       };
     });
     const ligsAgendadas: Compromisso[] = ((ligs ?? []) as any[])
@@ -332,12 +370,33 @@ export default function Schedule() {
     e.preventDefault();
     if (!novo.titulo || !novo.agendada_para) return toast.error("Preencha título e data/hora");
     const start = new Date(novo.agendada_para);
-    const end = new Date(start.getTime() + novo.duracao_min * 60000);
-    const c = checkConflito(start, end);
-    if (c.conflito) return toast.error(c.razao!);
 
-    const { error } = await supabase.from("reunioes").insert({
-      agendada_para: start.toISOString(),
+    // Calcular ocorrências (única ou recorrente)
+    let datas: Date[] = [start];
+    if (novo.recorrencia !== "nenhuma") {
+      if (!novo.recorrencia_ate) return toast.error("Informe a data final da repetição");
+      const ate = new Date(novo.recorrencia_ate + "T23:59:59");
+      if (ate < start) return toast.error("A data final deve ser posterior à inicial");
+      datas = gerarOcorrencias(start, novo.recorrencia, ate);
+      if (datas.length === 0) return toast.error("Nenhuma ocorrência gerada no intervalo");
+    }
+
+    // Conflitos
+    const conflitos: string[] = [];
+    for (const d of datas) {
+      const e2 = new Date(d.getTime() + novo.duracao_min * 60000);
+      const c = checkConflito(d, e2);
+      if (c.conflito) conflitos.push(`${format(d, "dd/MM HH:mm", { locale: ptBR })} — ${c.razao}`);
+    }
+    if (conflitos.length === datas.length) return toast.error("Todas as ocorrências conflitam: " + conflitos[0]);
+    const datasOk = datas.filter((d) => {
+      const e2 = new Date(d.getTime() + novo.duracao_min * 60000);
+      return !checkConflito(d, e2).conflito;
+    });
+
+    const recorrenciaId = novo.recorrencia !== "nenhuma" ? crypto.randomUUID() : null;
+    const rows = datasOk.map((d) => ({
+      agendada_para: d.toISOString(),
       tipo: novo.tipo,
       duracao_min: novo.duracao_min,
       titulo: novo.titulo,
@@ -349,10 +408,21 @@ export default function Schedule() {
       created_by: user?.id,
       corretor_id: user?.id,
       status: "agendada",
-    } as any);
+      recorrencia_id: recorrenciaId,
+      recorrencia_regra: novo.recorrencia !== "nenhuma" ? novo.recorrencia : null,
+    }));
+
+    const { error } = await supabase.from("reunioes").insert(rows as any);
     if (error) return toast.error(error.message);
-    toast.success("Compromisso criado");
-    setNovo({ tipo: "presencial", titulo: "", agendada_para: "", duracao_min: 60, lead_id: "none", imovel_id: "none", local: "", link: "", notas: "" });
+
+    if (conflitos.length > 0) {
+      toast.success(`${rows.length} criado(s). ${conflitos.length} pulado(s) por conflito.`);
+    } else if (rows.length > 1) {
+      toast.success(`${rows.length} compromissos criados`);
+    } else {
+      toast.success("Compromisso criado");
+    }
+    setNovo({ tipo: "presencial", titulo: "", agendada_para: "", duracao_min: 60, lead_id: "none", imovel_id: "none", local: "", link: "", notas: "", recorrencia: "nenhuma", recorrencia_ate: "" });
     setOpenNovo(false);
     load();
   };
@@ -572,6 +642,56 @@ export default function Schedule() {
                 <div>
                   <Label>Notas</Label>
                   <Textarea value={novo.notas} onChange={(e) => setNovo({ ...novo, notas: e.target.value })} />
+                </div>
+
+                <div className="rounded-md border p-3 space-y-3 bg-muted/30">
+                  <div className="text-sm font-medium">Repetição</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Frequência</Label>
+                      <Select
+                        value={novo.recorrencia}
+                        onValueChange={(v) => {
+                          const reg = v as RecorrenciaRegra;
+                          let ate = novo.recorrencia_ate;
+                          if (reg !== "nenhuma" && !ate && novo.agendada_para) {
+                            ate = addMonths(new Date(novo.agendada_para), 3).toISOString().slice(0, 10);
+                          }
+                          setNovo({ ...novo, recorrencia: reg, recorrencia_ate: ate });
+                        }}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="nenhuma">Não repete</SelectItem>
+                          <SelectItem value="diaria_util">Diariamente (seg–sex) — fixo</SelectItem>
+                          <SelectItem value="semanal">Semanalmente</SelectItem>
+                          <SelectItem value="quinzenal">Quinzenalmente</SelectItem>
+                          <SelectItem value="mensal">Mensalmente</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {novo.recorrencia !== "nenhuma" && (
+                      <div>
+                        <Label>Termina em</Label>
+                        <Input
+                          type="date"
+                          value={novo.recorrencia_ate}
+                          onChange={(e) => setNovo({ ...novo, recorrencia_ate: e.target.value })}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  {novo.recorrencia !== "nenhuma" && novo.agendada_para && novo.recorrencia_ate && (() => {
+                    const start = new Date(novo.agendada_para);
+                    const ate = new Date(novo.recorrencia_ate + "T23:59:59");
+                    if (Number.isNaN(+start) || Number.isNaN(+ate) || ate < start) return null;
+                    const n = gerarOcorrencias(start, novo.recorrencia, ate).length;
+                    return (
+                      <p className="text-xs text-muted-foreground">
+                        {RECORRENCIA_LABEL[novo.recorrencia as Exclude<RecorrenciaRegra, "nenhuma">]} • {n} compromisso{n !== 1 ? "s" : ""} ser{n !== 1 ? "ão" : "á"} criado{n !== 1 ? "s" : ""} (máx. 60).
+                      </p>
+                    );
+                  })()}
                 </div>
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setOpenNovo(false)}>Cancelar</Button>
@@ -967,6 +1087,11 @@ export default function Schedule() {
                           {c.criado_por_ia && (
                             <Badge variant="secondary" className="gap-1">
                               <Sparkles className="h-3 w-3" /> IA
+                            </Badge>
+                          )}
+                          {c.recorrencia_id && (
+                            <Badge variant="outline" title={c.recorrencia_regra ? RECORRENCIA_LABEL[c.recorrencia_regra as Exclude<RecorrenciaRegra, "nenhuma">] ?? "Recorrente" : "Recorrente"}>
+                              Recorrente
                             </Badge>
                           )}
                         </div>

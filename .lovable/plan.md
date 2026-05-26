@@ -1,20 +1,46 @@
-## Mostrar nome da conta/cliente nas captações da agenda
+## Recorrência no Novo compromisso
 
-### Causa
-Em `src/pages/Schedule.tsx`, os compromissos de captação (`captacoes_imovel`) já são carregados, mas:
-- O nome da conta entra apenas como sufixo no `titulo` (ex.: "Captação — João"). Se o título tem código do imóvel, o nome do cliente fica escondido entre parênteses.
-- O tipo `Compromisso` não tem `conta_id` / `conta_nome`, então o card da agenda renderiza só o campo `Lead:` (que é `null` para captação) e o usuário marketing vê o card "sem cliente".
+Adicionar opção de recorrência no formulário "Novo compromisso" em `/crm/agenda`, permitindo lançar compromissos únicos, semanais, quinzenais, mensais ou fixos (todo dia útil).
 
-### Mudanças (apenas em `src/pages/Schedule.tsx`)
+### Mudanças de UI (`src/pages/Schedule.tsx`)
 
-1. **Tipo `Compromisso`**: adicionar `conta_id?: string|null` e `conta_nome?: string|null`.
-2. **Loaders** (`reus`, `ligsAgendadas`, `visitasAgendadas`, `captacoesAgendadas`): popular `conta_id` e `conta_nome` a partir de `contasById`. Para captação, garantir `conta_id` = `c.conta_id` e `conta_nome` = `contaNome`.
-3. **Captação**: simplificar o título para `"Captação"` (ou "Captação: {imovel.titulo}") e deixar o nome do cliente vir do campo dedicado, evitando duplicar.
-4. **Render do card de compromisso** (linha ~958): exibir uma linha `Cliente:` com link para `/crm/contas/{conta_id}` quando `c.conta_nome` existir e não houver `lead_nome`. Mantém `Lead:` quando aplicável.
-5. **Visual da captação**: adicionar um `Badge variant="outline"` "Captação" (cor accent) ao lado do título quando o compromisso vier de `captacoes_imovel` para destacar a origem do funil. Para isso, adicionar `origem?: "captacao"` no tipo `Compromisso`.
+No diálogo "Novo compromisso", adicionar uma seção "Repetição" com:
 
-### Escopo / RLS
-Nenhuma mudança de banco. Marketing já tem acesso de leitura via `is_staff()` em `captacoes_imovel` e via "Marketing sees all contas" em `contas`. O ajuste é puramente de UI/dados no front-end.
+- **Frequência** (Select):
+  - Não repete (padrão)
+  - Diariamente (seg–sex) — "compromisso fixo"
+  - Semanalmente — "uma vez por semana"
+  - Quinzenalmente — a cada 2 semanas
+  - Mensalmente — mesmo dia do mês
+- **Termina em** (Input date) — visível só quando frequência ≠ "Não repete". Default: 3 meses à frente.
+- Texto auxiliar mostrando quantas ocorrências serão criadas (ex.: "Serão criados 12 compromissos").
+
+Limite de segurança: máx. 60 ocorrências por série.
+
+### Lógica de criação
+
+No `criarCompromisso`:
+
+1. Calcular as datas da série a partir da frequência + data final.
+2. Para cada data, rodar o `checkConflito` existente; se algum conflitar, abortar com aviso listando datas problemáticas (ou pular as conflitantes — confirmar via toast).
+3. Gerar um `recorrencia_id` (`crypto.randomUUID()`) e inserir todas as `reunioes` em batch com o mesmo `recorrencia_id` e `recorrencia_regra` (`"diaria_util" | "semanal" | "quinzenal" | "mensal"`).
+4. Disparar `gcal-push` para cada ocorrência criada (best effort).
+
+### Mudanças de banco
+
+Migração na tabela `reunioes`:
+
+- `recorrencia_id uuid null` — agrupa as ocorrências da mesma série.
+- `recorrencia_regra text null` — guarda a regra ("semanal" etc.) para exibir/editar futuramente.
+- Índice em `recorrencia_id`.
+
+Sem alteração de RLS (já cobre por `is_staff()` / corretor).
+
+### Edição/exclusão (escopo mínimo)
+
+Nesta entrega o diálogo de edição segue atuando só na ocorrência selecionada. Mostrar um pequeno badge "Recorrente" no card quando `recorrencia_id` existir, sem ação de "editar série" — isso fica para um próximo passo se o usuário pedir.
 
 ### Arquivos
-- `src/pages/Schedule.tsx` (tipo, loaders dos 4 grupos, render do item da lista do dia).
+
+- `src/pages/Schedule.tsx` — estado `novo` ganha `recorrencia` e `recorrencia_ate`; novos campos no formulário; expansão da série na função de criação; badge "Recorrente" no render do dia.
+- Migração nova adicionando `recorrencia_id` e `recorrencia_regra` em `reunioes`.
