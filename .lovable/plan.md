@@ -1,10 +1,10 @@
-Restringir os botões "Importar" e "Exportar" da aba Contas apenas para administradores.
+Filtrar a tabela "Performance por corretor" em `src/pages/Reports.tsx` para incluir apenas usuários com role `corretor`, excluindo admin/gestor/marketing puros.
 
-## Mudanças
+## Mudança
 
-Em `src/pages/Accounts.tsx`:
+No `load()`:
+1. Buscar `user_roles` em paralelo com os demais selects: `supabase.from("user_roles").select("user_id, role")`.
+2. Montar `Set<string>` com `user_id` que possuam role `corretor`.
+3. Ao construir o `map` a partir de `profiles`, incluir apenas os user_ids presentes nesse set.
 
-1. Já existe `useRole` importado. Garantir que `isAdmin` está sendo desestruturado do hook.
-2. Envolver os botões "Importar" (linha 487-489) e "Exportar" (linha 493-495) com `{isAdmin && (...)}`, ocultando-os para corretores, gestores e marketing.
-
-Resultado: somente admin vê e usa Importar/Exportar. Demais papéis continuam vendo "Nova conta" e o restante da página normalmente.
+Resto da lógica (contagem de leads/reuniões/ligações/conversões) permanece igual.

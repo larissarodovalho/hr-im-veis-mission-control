@@ -22,14 +22,19 @@ export default function Reports() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: profiles }, { data: leads }, { data: reunioes }, { data: ligacoes }] = await Promise.all([
+    const [{ data: profiles }, { data: roles }, { data: leads }, { data: reunioes }, { data: ligacoes }] = await Promise.all([
       supabase.from("profiles").select("user_id, nome"),
+      supabase.from("user_roles").select("user_id, role"),
       supabase.from("leads").select("corretor_id, etapa_funil"),
       supabase.from("reunioes").select("corretor_id, status"),
       supabase.from("ligacoes").select("corretor_id, resultado"),
     ]);
+    const corretorIds = new Set<string>(
+      (roles ?? []).filter((r: any) => r.role === "corretor").map((r: any) => r.user_id)
+    );
     const map = new Map<string, any>();
     (profiles ?? []).forEach((p: any) => {
+      if (!corretorIds.has(p.user_id)) return;
       map.set(p.user_id, { user_id: p.user_id, name: p.nome || "Sem nome", leads: 0, reunioes: 0, ligacoes: 0, conversoes: 0 });
     });
     (leads ?? []).forEach((l: any) => {
