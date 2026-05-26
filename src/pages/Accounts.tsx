@@ -484,15 +484,19 @@ export default function Accounts() {
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" onClick={() => setImportOpen(true)}>
-              <FileSpreadsheet className="h-4 w-4 mr-1" /> Importar
-            </Button>
+            {isAdmin && (
+              <Button variant="outline" onClick={() => setImportOpen(true)}>
+                <FileSpreadsheet className="h-4 w-4 mr-1" /> Importar
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setNovaOpen(true)}>
               <Plus className="h-4 w-4 mr-1" /> Nova conta
             </Button>
-            <Button onClick={() => setExportOpen(true)}>
-              <Download className="h-4 w-4 mr-1" /> Exportar
-            </Button>
+            {isAdmin && (
+              <Button onClick={() => setExportOpen(true)}>
+                <Download className="h-4 w-4 mr-1" /> Exportar
+              </Button>
+            )}
           </div>
         </div>
 
