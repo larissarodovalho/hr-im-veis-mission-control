@@ -7,8 +7,9 @@ import { useAuth } from "@/contexts/AuthContext";
  * Corretores get redirected to /crm (their workspace).
  */
 export default function StaffRoute({ children }: { children: ReactNode }) {
-  const { isAdmin, isGestor, loading } = useAuth();
+  const { isAdmin, isGestor, isSecretariaOnly, loading } = useAuth();
   if (loading) return null;
+  if (isSecretariaOnly) return <Navigate to="/crm/agenda" replace />;
   if (!isAdmin && !isGestor) return <Navigate to="/crm?tab=leads" replace />;
   return <>{children}</>;
 }
