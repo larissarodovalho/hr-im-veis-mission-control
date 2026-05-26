@@ -74,8 +74,8 @@ const ALL_ITEMS = [
   { title: "Saúde do Sistema", url: "/saude", icon: Activity, restricted: true },
 ];
 
-const CORRETOR_ALLOWED_CRM = new Set(["leads", "contatos", "whatsapp", "tarefas"]);
-const CRM_SUBTAB_ROUTES: Record<string, string> = { tarefas: "/crm/tarefas" };
+const CORRETOR_ALLOWED_CRM = new Set(["leads", "contatos", "whatsapp", "tarefas", "agenda"]);
+const CRM_SUBTAB_ROUTES: Record<string, string> = { tarefas: "/crm/tarefas", agenda: "/crm/agenda" };
 
 export function AppSidebar() {
   const { state } = useSidebar();
