@@ -62,6 +62,7 @@ export default function Schedule() {
   const [leads, setLeads] = useState<any[]>([]);
   const [imoveisList, setImoveisList] = useState<any[]>([]);
   const [selected, setSelected] = useState<Date | undefined>(new Date());
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [openNovo, setOpenNovo] = useState(false);
   const [openBloqueio, setOpenBloqueio] = useState(false);
   const [editing, setEditing] = useState<Compromisso | null>(null);
