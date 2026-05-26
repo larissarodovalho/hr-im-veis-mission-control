@@ -57,6 +57,10 @@ export default function GoogleCalendarConnect() {
     try {
       const { data, error } = await supabase.functions.invoke("google-oauth-start");
       if (error) throw error;
+      if ((data as any)?.setupRequired) {
+        toast.error((data as any).error || "Configuração do Google Calendar pendente.");
+        return;
+      }
       const url = (data as any)?.url;
       if (!url) throw new Error("URL não recebida");
       // Abre em nova aba como contexto top-level (noopener) para evitar COOP/COEP do iframe da preview
