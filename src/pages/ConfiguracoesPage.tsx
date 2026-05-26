@@ -54,7 +54,7 @@ const DEFAULTS: SystemSettings = {
 };
 
 export default function ConfiguracoesPage() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, profile, user } = useAuth();
   const [s, setS] = useState<SystemSettings>(DEFAULTS);
   const [busy, setBusy] = useState(false);
   const [stats, setStats] = useState<{ leads: number; contatos: number; conversas: number; usuarios: number } | null>(null);
