@@ -95,11 +95,31 @@ export default function GoogleCalendarConnect() {
   const syncNow = async () => {
     if (!user) return;
     setBusy(true);
+    const startedAt = conn?.last_sync_at ?? null;
     try {
       const { error } = await supabase.functions.invoke("gcal-pull", { body: { user_id: user.id } });
       if (error) throw error;
-      toast.success("Sincronizado");
-      load();
+      toast.info("Sincronização iniciada. Isso pode levar alguns segundos...");
+
+      // Polling: aguarda last_sync_at mudar ou um erro aparecer (até ~2min)
+      const deadline = Date.now() + 120_000;
+      const poll = async (): Promise<void> => {
+        const { data } = await supabase
+          .from("user_google_calendar")
+          .select("google_email, connected_at, last_sync_at, last_sync_error, calendar_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        const next = (data as Conn) ?? null;
+        setConn(next);
+        if (next?.last_sync_error && next.last_sync_at !== startedAt) {
+          toast.error("Falha na sincronização. Veja o detalhe abaixo."); return;
+        }
+        if (next && next.last_sync_at !== startedAt) { toast.success("Sincronizado"); return; }
+        if (Date.now() > deadline) { toast.warning("Sincronização ainda em andamento. Atualize em instantes."); return; }
+        await new Promise(r => setTimeout(r, 3000));
+        return poll();
+      };
+      await poll();
     } catch (e) { toast.error((e as Error).message); }
     finally { setBusy(false); }
   };
