@@ -55,8 +55,9 @@ const TipoIcon = ({ tipo }: { tipo: Compromisso["tipo"] }) => {
 };
 
 export default function Schedule() {
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
   const { isAdmin } = useRole();
+  const canManage = roles.some((r) => r === "admin" || r === "gestor" || r === "corretor" || r === "secretaria");
   const [reunioes, setReunioes] = useState<Compromisso[]>([]);
   const [bloqueios, setBloqueios] = useState<Bloqueio[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
@@ -452,6 +453,7 @@ export default function Schedule() {
             Compartilhada com a equipe • integrada ao WhatsApp e à captação automática com IA.
           </p>
         </div>
+        {canManage && (
         <div className="flex flex-wrap gap-2">
           <Dialog open={openBloqueio} onOpenChange={setOpenBloqueio}>
             <DialogTrigger asChild>
@@ -558,6 +560,7 @@ export default function Schedule() {
             </DialogContent>
           </Dialog>
         </div>
+        )}
       </div>
 
       <div className="space-y-6">
@@ -947,9 +950,11 @@ export default function Schedule() {
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <Badge variant="outline">{c.status}</Badge>
-                        <Button size="icon" variant="ghost" onClick={() => openEdit(c)} title="Editar">
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                        {canManage && (
+                          <Button size="icon" variant="ghost" onClick={() => openEdit(c)} title="Editar">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </li>
@@ -982,9 +987,11 @@ export default function Schedule() {
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <Badge variant="outline">{c.status}</Badge>
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(c)} title="Editar">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
+                      {canManage && (
+                        <Button size="icon" variant="ghost" onClick={() => openEdit(c)} title="Editar">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ))}

@@ -1,33 +1,32 @@
-## Novo papel: Secretaria
+## Objetivo
 
-Cria o papel **Secretaria** com acesso restrito apenas à aba **Agenda** do CRM, com autonomia para agendar e confirmar reuniões.
+Permitir que **qualquer usuário autenticado** visualize os agendamentos em `/crm/agenda`, mantendo criação/edição/exclusão restritas aos papéis staff (admin, gestor, corretor, secretaria).
 
-### 1. Banco de dados (migração)
-- Adicionar `'secretaria'` ao enum `public.app_role`.
-- Atualizar `public.is_staff()` para incluir `secretaria` (assim as policies existentes de `reunioes`, `leads`, `bloqueios_agenda` etc. liberam SELECT/INSERT/UPDATE de reuniões para a secretaria).
+## Mudanças
 
-### 2. Auth / contexto (`src/contexts/AuthContext.tsx`)
-- Adicionar `"secretaria"` ao tipo `AppRole`.
-- Expor `isSecretariaOnly` (true quando o usuário tem só a role `secretaria`).
+### 1. Banco — RLS
 
-### 3. Tela de Usuários (`src/pages/UsuariosAdminPage.tsx`)
-- Adicionar `secretaria: "Secretaria"` em `ROLE_LABELS`.
-- Adicionar opção "Secretaria" nos 3 `<Select>` de papel (criação, edição, filtro).
-- Atualizar `resolve()` para mapear a role `secretaria`.
+**`reunioes`**: substituir a policy de SELECT atual por uma que libere leitura a qualquer `authenticated`.
 
-### 4. Sidebar (`src/components/AppSidebar.tsx`)
-- Adicionar item de subtab **"Agenda"** em `CRM_SUBTABS` (rota `/crm/agenda`) e mapear em `CRM_SUBTAB_ROUTES`.
-- Para `isSecretariaOnly`:
-  - Esconder todos os itens de menu superiores exceto **CRM — Comercial** e **Minha conta**.
-  - Na sublista do CRM, mostrar apenas **Agenda**.
-  - Link do CRM redireciona direto para `/crm/agenda`.
+**`agenda_bloqueios`**: mesmo ajuste, para que bloqueios apareçam no calendário compartilhado.
 
-### 5. Guard de rotas (`src/App.tsx` + redirect)
-- Quando `isSecretariaOnly`, qualquer rota fora de `/crm/agenda` e `/crm/minha-conta` redireciona para `/crm/agenda` (guarda leve dentro do layout do CRM).
+Policies de INSERT/UPDATE/DELETE permanecem inalteradas (continuam exigindo staff).
 
-### 6. Página Agenda (`src/pages/Schedule.tsx`)
-- Sem mudança funcional: secretaria já consegue criar/editar reuniões via RLS de staff. Confirmar = alterar o campo `status` para `confirmada` no formulário existente (já suportado).
+### 2. Sidebar (`src/components/AppSidebar.tsx`)
 
-### Considerações
-- O papel é **somente leitura** para o resto do sistema porque as rotas estão escondidas e o redirect leva sempre para a Agenda; as policies de outras tabelas continuam exigindo admin/gestor/corretor para escrita sensível.
-- Não altera papéis existentes nem dados.
+- Mostrar o item "CRM → Agenda" para todos os papéis autenticados (hoje fica oculto para `marketing` e futuros papéis sem acesso ao CRM).
+- Demais subtabs do CRM continuam respeitando os papéis atuais.
+
+### 3. Guardas de rota
+
+- `StaffRoute.tsx` / `MarketingRoute.tsx` / `AppLayout.tsx`: liberar acesso à rota `/crm/agenda` para qualquer usuário autenticado (sem exigir staff). Outras rotas do CRM seguem protegidas.
+
+### 4. Página `Schedule.tsx`
+
+- Ocultar/desabilitar botões de ação (novo agendamento, confirmar, editar, bloquear horário) para usuários que não são staff — eles só verão o calendário em modo leitura. As RLS de escrita já bloqueiam no backend; isso evita confusão na UI.
+
+## O que NÃO muda
+
+- Leads, contas, imóveis, contratos, captações: permissões intactas.
+- Apenas staff pode criar/confirmar/editar/excluir reuniões e bloqueios.
+- Acesso continua exigindo login (não é público sem autenticação).
