@@ -106,8 +106,11 @@ export default function AccountDetail() {
 
   if (!acc) return <div className="p-4 sm:p-6 lg:p-8 text-muted-foreground">Carregando…</div>;
 
-  const totalValor = props.reduce((s, p) => s + (Number(p.valor_negocio) || 0), 0);
+  const totalValorProps = props.reduce((s, p) => s + (Number(p.valor_negocio) || 0), 0);
+  const totalValorImoveis = imoveisPortfolio.reduce((s, i: any) => s + (Number(i.valor) || 0), 0);
+  const totalValor = totalValorProps + totalValorImoveis;
   const totalComissao = props.reduce((s, p) => s + (Number(p.valor_comissao) || 0), 0);
+  const totalPropriedades = imoveisPortfolio.length + props.length;
 
   const listaAtual: "carteira" | "marketing" | "nenhuma" = (() => {
     const tags = ((acc?.tags ?? []) as string[]).map((t) => t.toLowerCase());
@@ -256,7 +259,10 @@ export default function AccountDetail() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-5">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Propriedades</p>
-          <p className="text-3xl font-semibold mt-1">{props.length}</p>
+          <p className="text-3xl font-semibold mt-1">{totalPropriedades}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {imoveisPortfolio.length} no portfólio · {props.length} cadastrada{props.length === 1 ? "" : "s"}
+          </p>
         </Card>
         <Card className="p-5">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Valor total dos negócios</p>
