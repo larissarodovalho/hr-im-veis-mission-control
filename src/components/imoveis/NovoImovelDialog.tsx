@@ -210,6 +210,7 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
         cidade: form.cidade || null,
         estado: form.estado || null,
         destaque: form.destaque,
+        publicado: form.publicado,
         matricula: form.matricula || null,
         caracteristicas: caracs,
         fotos: urls,
