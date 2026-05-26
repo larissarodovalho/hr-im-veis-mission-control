@@ -11,6 +11,14 @@ Deno.serve(async (req) => {
     if (ue || !u.user) throw new Error("Sessão inválida");
 
     const client_id = googleOAuthClientId();
+    console.log("google-oauth-start config", {
+      hasClientIdSecret: Boolean(Deno.env.get("GOOGLE_OAUTH_CLIENT_ID")),
+      hasClientSecretSecret: Boolean(Deno.env.get("GOOGLE_OAUTH_CLIENT_SECRET")),
+      parsedClientIdLooksValid: /^[a-zA-Z0-9_-]+\.apps\.googleusercontent\.com$/.test(client_id),
+      parsedClientIdLength: client_id.length,
+      clientIdSecretContainsGoogleClientId: /[a-zA-Z0-9_-]+\.apps\.googleusercontent\.com/.test(Deno.env.get("GOOGLE_OAUTH_CLIENT_ID") ?? ""),
+      clientSecretContainsGoogleClientId: /[a-zA-Z0-9_-]+\.apps\.googleusercontent\.com/.test(Deno.env.get("GOOGLE_OAUTH_CLIENT_SECRET") ?? ""),
+    });
     if (!client_id) throw new Error("GOOGLE_OAUTH_CLIENT_ID não configurado");
     if (!/^[a-zA-Z0-9_-]+\.apps\.googleusercontent\.com$/.test(client_id)) {
       throw new Error("O Client ID do Google Calendar está inválido. Cole o OAuth Client ID do tipo Web application, ou o JSON baixado do Google Cloud, em GOOGLE_OAUTH_CLIENT_ID.");
