@@ -36,7 +36,41 @@ type Compromisso = {
   conta_nome?: string | null;
   origem?: "captacao";
   criado_por_ia?: boolean;
+  recorrencia_id?: string | null;
+  recorrencia_regra?: string | null;
 };
+
+type RecorrenciaRegra = "nenhuma" | "diaria_util" | "semanal" | "quinzenal" | "mensal";
+
+const RECORRENCIA_LABEL: Record<Exclude<RecorrenciaRegra, "nenhuma">, string> = {
+  diaria_util: "Diariamente (seg–sex)",
+  semanal: "Semanalmente",
+  quinzenal: "Quinzenalmente",
+  mensal: "Mensalmente",
+};
+
+function gerarOcorrencias(inicio: Date, regra: RecorrenciaRegra, ate: Date, maxN = 60): Date[] {
+  if (regra === "nenhuma") return [inicio];
+  const out: Date[] = [];
+  let cursor = new Date(inicio);
+  while (cursor <= ate && out.length < maxN) {
+    if (regra === "diaria_util") {
+      const dow = cursor.getDay();
+      if (dow !== 0 && dow !== 6) out.push(new Date(cursor));
+      cursor = addDays(cursor, 1);
+    } else if (regra === "semanal") {
+      out.push(new Date(cursor));
+      cursor = addDays(cursor, 7);
+    } else if (regra === "quinzenal") {
+      out.push(new Date(cursor));
+      cursor = addDays(cursor, 14);
+    } else if (regra === "mensal") {
+      out.push(new Date(cursor));
+      cursor = addMonths(cursor, 1);
+    }
+  }
+  return out;
+}
 
 type Bloqueio = {
   id: string;
