@@ -1,31 +1,37 @@
-A causa do problema é o limite padrão do Supabase de 1000 linhas por consulta. Há 1.360 contas no banco, então o `select("id,nome")` no diálogo "Nova oportunidade" trunca em 1000 e ~360 contas ficam invisíveis no seletor.
+A entidade `captacoes_imovel` já existe e o gcal-push já suporta `entity_type: "captacao"`. Faltam dois pontos: o botão de agendar captação nos detalhes da conta e a inclusão das captações na aba Agenda.
 
-## Correção
+## 1. Botão "Captação" em `ContaAgendaQuickAdd.tsx`
 
-Em `src/components/imoveis/NovaOportunidadeDialog.tsx`, no `useEffect` (linha 37):
+Adicionar um quarto botão ao lado de Reunião / Ligação / Visita:
 
-1. Substituir o `supabase.from("contas").select(...)` direto por uma função de paginação que faz `.range(start, start+999)` em loop até esgotar (mesmo padrão para `leads` por segurança).
-2. Manter `order("nome")` e mapear para `{ id, nome }`.
+- Novo `Kind` `"captacao"`.
+- Diálogo com: data e hora, observações (sem duração/local/link).
+- Ao salvar:
+  - Procurar captação aberta da conta (`estagio <> 'concluido'`). Se existir, fazer `update` com `data_agendada`, `estagio: 'agendada'`, `observacoes` e `responsavel_id` (se vazio).
+  - Se não existir, fazer `insert` em `captacoes_imovel` com `conta_id`, `data_agendada`, `estagio: 'agendada'`, `responsavel_id`, `created_by`, `observacoes`.
+  - Também mover a conta para o funil de captação: `update contas set etapa_funil = 'captacao_imovel'` (apenas se ainda não estiver).
+- Chamar `supabase.functions.invoke("gcal-push", { body: { entity_type: "captacao", entity_id, action: "create" } })` — já implementado.
 
-Exemplo:
+Isso atualiza automaticamente o funil de captação (kanban em Imóveis) via realtime e empurra para o Google Calendar de todos os membros conectados.
+
+## 2. Mostrar captações em `src/pages/Schedule.tsx`
+
+No `load()`, adicionar fetch paralelo:
+
 ```ts
-async function fetchAll(table: "contas" | "leads") {
-  const rows: { id: string; nome: string }[] = [];
-  const pageSize = 1000;
-  let from = 0;
-  while (true) {
-    const { data, error } = await supabase
-      .from(table).select("id,nome").order("nome")
-      .range(from, from + pageSize - 1);
-    if (error || !data?.length) break;
-    rows.push(...data);
-    if (data.length < pageSize) break;
-    from += pageSize;
-  }
-  return rows;
-}
+supabase.from("captacoes_imovel")
+  .select("id, data_agendada, observacoes, conta_id, responsavel_id, imovel_id")
+  .not("data_agendada", "is", null)
+  .order("data_agendada"),
 ```
 
-Usar `fetchAll("contas")` e `fetchAll("leads")` no `useEffect`. Resto do componente fica igual.
+- Incluir `conta_id` / `imovel_id` na hidratação de contas e imóveis.
+- Mapear para `Compromisso` com `tipo: "presencial"`, título `"Captação: <nome conta>"` (mais nome do imóvel se houver), duração padrão 60min, `status: "Agendada"`.
+- Concatenar no `setReunioes([...reus, ...ligsAgendadas, ...visitasAgendadas, ...captacoes])`.
+- Adicionar subscription realtime para a tabela `captacoes_imovel` (`.on("postgres_changes", { table: "captacoes_imovel" }, load)`).
 
-Assim todas as contas (e leads) aparecem no SearchableSelect ao criar a oportunidade.
+## 3. (Opcional) `ContaAgendamentosList.tsx`
+
+Incluir captações agendadas da conta também na timeline de "Próximos compromissos" do detalhe (mesmo padrão de reuniões/ligações/visitas) — buscar de `captacoes_imovel` filtrando por `conta_id` e `data_agendada is not null`, rótulo "Captação".
+
+Sem mudanças de schema: a tabela `captacoes_imovel` já tem `data_agendada`, `estagio`, `responsavel_id`, `observacoes` e `conta_id`. RLS atual já permite ao staff/responsável criar e ler.
