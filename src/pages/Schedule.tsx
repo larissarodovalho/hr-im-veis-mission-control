@@ -1130,7 +1130,7 @@ export default function Schedule() {
                       <div className="min-w-0">
                         <div className="text-sm font-medium flex items-center gap-2">
                           <TipoIcon tipo={c.tipo} />
-                          {format(c.date, "HH:mm", { locale: ptBR })} — {c.titulo}
+                          <span className="capitalize">{format(c.date, "EEEE, dd/MM", { locale: ptBR })}</span> às {format(c.date, "HH:mm", { locale: ptBR })} — {c.titulo}
                           {c.origem === "captacao" && (
                             <Badge variant="outline" className="bg-accent/20 text-accent-foreground border-accent/40">
                               Captação
@@ -1189,7 +1189,7 @@ export default function Schedule() {
                     <div>
                       <div className="font-medium flex items-center gap-2">
                         <TipoIcon tipo={c.tipo} />
-                        {format(c.date, "Pp", { locale: ptBR })} — {c.titulo}
+                        <span className="capitalize">{format(c.date, "EEEE, dd/MM", { locale: ptBR })}</span> às {format(c.date, "HH:mm", { locale: ptBR })} — {c.titulo}
                         {c.criado_por_ia && <Badge variant="secondary" className="gap-1"><Sparkles className="h-3 w-3" />IA</Badge>}
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5">
