@@ -50,6 +50,7 @@ export default function AccountDetail() {
   };
   const [acc, setAcc] = useState<any>(null);
   const [props, setProps] = useState<Propriedade[]>([]);
+  const [imoveisPortfolio, setImoveisPortfolio] = useState<any[]>([]);
   const [editing, setEditing] = useState<any>(null);
   const [propEditing, setPropEditing] = useState<Partial<Propriedade> | null>(null);
   const [corretores, setCorretores] = useState<{ user_id: string; nome: string | null }[]>([]);
