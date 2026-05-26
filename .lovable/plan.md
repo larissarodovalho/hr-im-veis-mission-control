@@ -1,20 +1,36 @@
-# Restringir edição de imóveis para corretor
+# Liberar agenda completa para secretaria
 
-Corretores só podem **buscar/visualizar** imóveis. Admin/gestor/marketing mantêm acesso total.
+A página `/crm/agenda` lê 4 tabelas. Hoje as políticas RLS estão assim:
 
-## Mudanças em `src/pages/Imoveis.tsx`
+- `reunioes` → todos autenticados podem ver (OK)
+- `ligacoes` → só admin/gestor/corretor dono
+- `visitas` → só admin/gestor/corretor dono
+- `captacoes_imovel` → só admin/gestor/marketing/responsável
 
-- Adicionar `const { isAdmin, isGestor, isMarketing } = useAuth(); const canEdit = isAdmin || isGestor || isMarketing;`
-- Esconder quando `!canEdit`:
-  - Botão "Cadastrar imóvel" (header)
-  - Botão lápis "Editar imóvel" no card (linha 194)
-  - Toggle Publicado/Não publicado (linha 177–189) — vira badge somente leitura
-- Manter visíveis: busca, abas, histórico, propostas e demais ações de negociação (essas são ações de venda, não de cadastro).
+Resultado: secretaria só vê reuniões — falta ligações, visitas e captações.
 
-## Observações
+## Migration
 
-- O acesso ao **menu lateral** continua o mesmo (corretor já vê "Imóveis").
-- RLS do banco já permite UPDATE para corretor dono (`corretor_id = auth.uid()`); não vou mexer no banco — restrição é só de UI.
-- Se quiser bloquear também no banco (corretor nunca atualiza imóveis, nem os próprios), me avise que faço a migration separada.
+Adicionar uma policy de SELECT para `secretaria` em cada uma das 3 tabelas:
+
+```sql
+CREATE POLICY "Secretaria sees ligacoes" ON public.ligacoes
+  FOR SELECT TO authenticated
+  USING (has_role(auth.uid(), 'secretaria'::app_role));
+
+CREATE POLICY "Secretaria sees visitas" ON public.visitas
+  FOR SELECT TO authenticated
+  USING (has_role(auth.uid(), 'secretaria'::app_role));
+
+CREATE POLICY "Secretaria sees captacoes" ON public.captacoes_imovel
+  FOR SELECT TO authenticated
+  USING (has_role(auth.uid(), 'secretaria'::app_role));
+```
+
+Também precisa ver os nomes referenciados (leads, contas, imóveis) para montar os títulos — vou conferir e adicionar policies de SELECT para secretaria nessas tabelas se necessário (provavelmente sim em `leads` e `contas`, `imoveis` já é público).
+
+## Sem mudanças de código
+
+A `Schedule.tsx` não filtra por role na leitura, então liberar RLS é suficiente. Nenhum arquivo `.tsx` precisa ser editado.
 
 Confirmo?
