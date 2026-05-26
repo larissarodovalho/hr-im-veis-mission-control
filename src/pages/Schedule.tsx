@@ -539,6 +539,38 @@ export default function Schedule() {
     load();
   };
 
+  const excluirCompromisso = async () => {
+    if (!editing) return;
+    const { table, realId, entity } = parseId(editing.id);
+    const isRecorrente = !!editing.recorrencia_id;
+    const msg = isRecorrente
+      ? "Este é um compromisso recorrente. Excluir apenas esta ocorrência?\n\nClique em OK para excluir SÓ esta ocorrência, ou Cancelar para abortar."
+      : "Excluir este compromisso? Esta ação não pode ser desfeita.";
+    if (!window.confirm(msg)) return;
+    setSavingEdit(true);
+    const { error } = await supabase.from(table).delete().eq("id", realId);
+    setSavingEdit(false);
+    if (error) return toast.error(error.message);
+    toast.success("Compromisso excluído");
+    supabase.functions.invoke("gcal-push", {
+      body: { entity_type: entity, entity_id: realId, action: "delete" },
+    }).catch(() => {});
+    setEditing(null);
+    load();
+  };
+
+  const excluirSerie = async () => {
+    if (!editing?.recorrencia_id) return;
+    if (!window.confirm("Excluir TODAS as ocorrências desta série? Esta ação não pode ser desfeita.")) return;
+    setSavingEdit(true);
+    const { error } = await supabase.from("reunioes").delete().eq("recorrencia_id", editing.recorrencia_id);
+    setSavingEdit(false);
+    if (error) return toast.error(error.message);
+    toast.success("Série excluída");
+    setEditing(null);
+    load();
+  };
+
 
   return (
     <div className="p-4 md:p-8 space-y-6">
