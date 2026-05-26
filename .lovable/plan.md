@@ -1,46 +1,29 @@
-## Recorrência no Novo compromisso
+## Ajustes no Novo compromisso: tipo "Mensagem" e vínculo com Conta
 
-Adicionar opção de recorrência no formulário "Novo compromisso" em `/crm/agenda`, permitindo lançar compromissos únicos, semanais, quinzenais, mensais ou fixos (todo dia útil).
+### 1. Adicionar tipo "Mensagem"
 
-### Mudanças de UI (`src/pages/Schedule.tsx`)
+Hoje o `Compromisso.tipo` aceita `ligacao | presencial | videochamada`. Vou adicionar `mensagem` (ex.: WhatsApp/SMS) como mais uma opção.
 
-No diálogo "Novo compromisso", adicionar uma seção "Repetição" com:
+Mudanças em `src/pages/Schedule.tsx`:
+- Tipo `Compromisso["tipo"]` ganha `"mensagem"`.
+- `TIPO_LABEL` ganha `mensagem: "Mensagem"`.
+- `TipoIcon` retorna `MessageCircle` (lucide) para mensagem.
+- Select do "Novo compromisso" ganha `<SelectItem value="mensagem">💬 Mensagem</SelectItem>`.
+- `tipoChip` (mapa de cores no grid) ganha entrada para `mensagem`.
+- Persistência: a coluna `reunioes.tipo` é text livre, então não precisa de migração.
 
-- **Frequência** (Select):
-  - Não repete (padrão)
-  - Diariamente (seg–sex) — "compromisso fixo"
-  - Semanalmente — "uma vez por semana"
-  - Quinzenalmente — a cada 2 semanas
-  - Mensalmente — mesmo dia do mês
-- **Termina em** (Input date) — visível só quando frequência ≠ "Não repete". Default: 3 meses à frente.
-- Texto auxiliar mostrando quantas ocorrências serão criadas (ex.: "Serão criados 12 compromissos").
+### 2. Vínculo com Conta no formulário
 
-Limite de segurança: máx. 60 ocorrências por série.
+Hoje o diálogo só permite vincular Lead e Imóvel. Vou adicionar um Select "Conta vinculada" (clientes do funil), salvando em `reunioes.conta_id` (coluna já existe e já é lida no loader).
 
-### Lógica de criação
+Mudanças em `src/pages/Schedule.tsx`:
+- Novo estado `contasList` carregado no `load()` via `supabase.from("contas").select("id, nome").order("nome")`.
+- `novo` ganha `conta_id: "none"`.
+- Novo `<Select>` "Conta vinculada" abaixo do "Lead vinculado", com `SearchableSelect` se a lista crescer — manter `Select` padrão por consistência com o resto do diálogo.
+- `criarCompromisso` envia `conta_id: novo.conta_id === "none" ? null : novo.conta_id` em cada linha (inclusive nas ocorrências recorrentes).
+- Reset do `setNovo` inclui `conta_id: "none"`.
 
-No `criarCompromisso`:
-
-1. Calcular as datas da série a partir da frequência + data final.
-2. Para cada data, rodar o `checkConflito` existente; se algum conflitar, abortar com aviso listando datas problemáticas (ou pular as conflitantes — confirmar via toast).
-3. Gerar um `recorrencia_id` (`crypto.randomUUID()`) e inserir todas as `reunioes` em batch com o mesmo `recorrencia_id` e `recorrencia_regra` (`"diaria_util" | "semanal" | "quinzenal" | "mensal"`).
-4. Disparar `gcal-push` para cada ocorrência criada (best effort).
-
-### Mudanças de banco
-
-Migração na tabela `reunioes`:
-
-- `recorrencia_id uuid null` — agrupa as ocorrências da mesma série.
-- `recorrencia_regra text null` — guarda a regra ("semanal" etc.) para exibir/editar futuramente.
-- Índice em `recorrencia_id`.
-
-Sem alteração de RLS (já cobre por `is_staff()` / corretor).
-
-### Edição/exclusão (escopo mínimo)
-
-Nesta entrega o diálogo de edição segue atuando só na ocorrência selecionada. Mostrar um pequeno badge "Recorrente" no card quando `recorrencia_id` existir, sem ação de "editar série" — isso fica para um próximo passo se o usuário pedir.
+Sem alteração de banco — `reunioes.conta_id` já existe e o card do dia já mostra "Cliente:" quando `conta_nome` está presente.
 
 ### Arquivos
-
-- `src/pages/Schedule.tsx` — estado `novo` ganha `recorrencia` e `recorrencia_ate`; novos campos no formulário; expansão da série na função de criação; badge "Recorrente" no render do dia.
-- Migração nova adicionando `recorrencia_id` e `recorrencia_regra` em `reunioes`.
+- `src/pages/Schedule.tsx` — tipo, label, ícone, chip de cor, carga de contas, novo campo no diálogo e na inserção.
