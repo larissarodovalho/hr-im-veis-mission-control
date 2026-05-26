@@ -30,33 +30,50 @@ export function redirectUri(req: Request) {
 
 const GOOGLE_CLIENT_ID_RE = /[a-zA-Z0-9_-]+\.apps\.googleusercontent\.com/;
 
-function extractGoogleClientId(raw: string) {
-  const directMatch = raw.match(GOOGLE_CLIENT_ID_RE);
-  if (directMatch) return directMatch[0];
+function secretVariants(raw: string) {
+  const trimmed = raw.trim();
+  const variants = new Set([trimmed]);
 
-  try {
-    const parsed = JSON.parse(raw);
-    if (typeof parsed === "string") return extractGoogleClientId(parsed.trim());
-    const candidate = parsed?.web?.client_id ?? parsed?.installed?.client_id ?? parsed?.client_id;
-    if (typeof candidate === "string") return candidate.trim();
-  } catch {
-    // Secret is not JSON.
+  try { variants.add(decodeURIComponent(trimmed)); } catch { /* ignore malformed URI encoding */ }
+  try { variants.add(atob(trimmed)); } catch { /* ignore non-base64 secrets */ }
+  try { variants.add(JSON.parse(trimmed)); } catch { /* ignore non-JSON string wrapper */ }
+
+  return [...variants].filter((value): value is string => typeof value === "string" && value.length > 0);
+}
+
+function extractGoogleClientId(raw: string) {
+  for (const variant of secretVariants(raw)) {
+    const directMatch = variant.match(GOOGLE_CLIENT_ID_RE);
+    if (directMatch) return directMatch[0];
+
+    try {
+      const parsed = JSON.parse(variant);
+      if (typeof parsed === "string") return extractGoogleClientId(parsed.trim());
+      const candidate = parsed?.web?.client_id ?? parsed?.installed?.client_id ?? parsed?.client_id ?? parsed?.clientId;
+      if (typeof candidate === "string") return extractGoogleClientId(candidate) || candidate.trim();
+    } catch {
+      // Secret variant is not JSON.
+    }
   }
 
   return "";
 }
 
 function extractGoogleClientSecret(raw: string) {
-  try {
-    const parsed = JSON.parse(raw);
-    if (typeof parsed === "string") return extractGoogleClientSecret(parsed.trim());
-    const candidate = parsed?.web?.client_secret ?? parsed?.installed?.client_secret ?? parsed?.client_secret;
-    if (typeof candidate === "string") return candidate.trim();
-  } catch {
-    // Secret is not JSON.
+  for (const variant of secretVariants(raw)) {
+    try {
+      const parsed = JSON.parse(variant);
+      if (typeof parsed === "string") return extractGoogleClientSecret(parsed.trim());
+      const candidate = parsed?.web?.client_secret ?? parsed?.installed?.client_secret ?? parsed?.client_secret ?? parsed?.clientSecret;
+      if (typeof candidate === "string") return candidate.trim();
+    } catch {
+      // Secret variant is not JSON.
+    }
+
+    if (!variant.match(GOOGLE_CLIENT_ID_RE)) return variant.trim();
   }
 
-  return raw.match(GOOGLE_CLIENT_ID_RE) ? "" : raw.trim();
+  return "";
 }
 
 export function googleOAuthClientId() {
