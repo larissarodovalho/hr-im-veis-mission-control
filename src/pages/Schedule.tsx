@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { Calendar as CalendarIcon, Phone, Video, MapPin, MessageCircle, Plus, Ban, Sparkles, Trash2, Pencil, Save, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { SearchableSelect } from "@/components/SearchableSelect";
 
 type Compromisso = {
   id: string;
@@ -649,33 +650,33 @@ export default function Schedule() {
                 </div>
                 <div>
                   <Label>Lead vinculado</Label>
-                  <Select value={novo.lead_id} onValueChange={(v) => setNovo({ ...novo, lead_id: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sem lead vinculado</SelectItem>
-                      {leads.map((l) => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    value={novo.lead_id}
+                    onChange={(v) => setNovo({ ...novo, lead_id: v })}
+                    options={leads.map((l: any) => ({ id: l.id, nome: l.nome }))}
+                    placeholder="Buscar lead..."
+                    emptyLabel="Sem lead vinculado"
+                  />
                 </div>
                 <div>
                   <Label>Conta (cliente) vinculada</Label>
-                  <Select value={novo.conta_id} onValueChange={(v) => setNovo({ ...novo, conta_id: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sem conta vinculada</SelectItem>
-                      {contasList.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    value={novo.conta_id}
+                    onChange={(v) => setNovo({ ...novo, conta_id: v })}
+                    options={contasList.map((c: any) => ({ id: c.id, nome: c.nome }))}
+                    placeholder="Buscar conta..."
+                    emptyLabel="Sem conta vinculada"
+                  />
                 </div>
                 <div>
                   <Label>Imóvel visitado</Label>
-                  <Select value={novo.imovel_id} onValueChange={(v) => setNovo({ ...novo, imovel_id: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sem imóvel vinculado</SelectItem>
-                      {imoveisList.map((i) => <SelectItem key={i.id} value={i.id}>{i.nome}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    value={novo.imovel_id}
+                    onChange={(v) => setNovo({ ...novo, imovel_id: v })}
+                    options={imoveisList.map((i: any) => ({ id: i.id, nome: i.nome }))}
+                    placeholder="Buscar imóvel..."
+                    emptyLabel="Sem imóvel vinculado"
+                  />
                 </div>
                 {novo.tipo === "presencial" && (
                   <div>
