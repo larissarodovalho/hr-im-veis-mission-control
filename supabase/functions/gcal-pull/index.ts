@@ -63,28 +63,11 @@ async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string
         }).eq("id", map.id);
         updated++;
       } else {
-        const { data: nova, error: insErr } = await supa.from("reunioes").insert({
-          titulo: ev.summary || "Evento Google",
-          agendada_para: startISO,
-          duracao_min,
-          local: ev.location ?? null,
-          notas: ev.description ?? null,
-          status: "agendada",
-          tipo: "presencial",
-          corretor_id: user_id,
-          created_by: user_id,
-          origem: "google",
-          google_owner_user_id: user_id,
-          publicado_no_crm: false,
-        }).select("id").maybeSingle();
-        if (!insErr && nova) {
-          await supa.from("google_calendar_sync").insert({
-            user_id, entity_type: "reuniao", entity_id: nova.id,
-            google_event_id: ev.id, etag: ev.etag, html_link: ev.htmlLink,
-          });
-          imported++;
-        }
+        // Não importa mais eventos do Google que não foram criados pelo CRM.
+        // Apenas eventos com mapeamento existente (criados via gcal-push) são atualizados.
+        continue;
       }
+
     }
     pageToken = j.nextPageToken;
     if (!pageToken && j.nextSyncToken) nextSyncToken = j.nextSyncToken;
