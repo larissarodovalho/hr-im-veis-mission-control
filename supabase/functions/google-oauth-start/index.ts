@@ -10,8 +10,11 @@ Deno.serve(async (req) => {
     const { data: u, error: ue } = await supa.auth.getUser();
     if (ue || !u.user) throw new Error("Sessão inválida");
 
-    const client_id = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
+    const client_id = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID")?.trim();
     if (!client_id) throw new Error("GOOGLE_OAUTH_CLIENT_ID não configurado");
+    if (!client_id.endsWith(".apps.googleusercontent.com")) {
+      throw new Error("O Client ID do Google Calendar está inválido. Use o OAuth Client ID do Google Cloud que termina com .apps.googleusercontent.com, não um e-mail.");
+    }
 
     const state = btoa(JSON.stringify({ user_id: u.user.id, ts: Date.now() }));
     const params = new URLSearchParams({
