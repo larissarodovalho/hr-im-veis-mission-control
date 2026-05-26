@@ -35,12 +35,22 @@ export default function EditarOportunidadeDialog({ open, onOpenChange, oportunid
     supabase.from("profiles").select("user_id,nome").then(({ data }) => {
       setCorretores((data ?? []).map((p: any) => ({ id: p.user_id, nome: p.nome || "Sem nome" })));
     });
-    supabase.from("leads").select("id,nome").order("nome").then(({ data }) => {
-      setLeads((data ?? []).map((l: any) => ({ id: l.id, nome: l.nome || "Sem nome" })));
-    });
-    supabase.from("contas").select("id,nome").order("nome").then(({ data }) => {
-      setContas((data ?? []).map((c: any) => ({ id: c.id, nome: c.nome || "Sem nome" })));
-    });
+    const fetchAll = async (table: "leads" | "contas") => {
+      const rows: { id: string; nome: string }[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { data, error } = await supabase.from(table).select("id,nome").order("nome").range(from, from + pageSize - 1);
+        if (error || !data?.length) break;
+        rows.push(...(data as any).map((r: any) => ({ id: r.id, nome: r.nome || "Sem nome" })));
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      return rows;
+    };
+    fetchAll("leads").then(setLeads);
+    fetchAll("contas").then(setContas);
     supabase.from("oportunidade_imoveis").select("*").eq("oportunidade_id", oportunidade.id).then(({ data }) => {
       setVinculos(data ?? []);
     });
