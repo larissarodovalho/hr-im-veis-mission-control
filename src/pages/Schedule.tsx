@@ -670,7 +670,7 @@ export default function Schedule() {
                       <div className="border border-border rounded-lg overflow-x-auto shadow-sm bg-card">
                        <div className="min-w-[720px]">
                         {/* Header */}
-                        <div className="grid border-b border-border bg-muted/30" style={{ gridTemplateColumns: "60px repeat(7, 1fr)" }}>
+                        <div className="grid border-b border-border bg-muted/30" style={{ gridTemplateColumns: "60px repeat(7, minmax(0, 1fr))" }}>
                           <div />
                           {days.map((d) => {
                             const today = isToday(d);
@@ -699,7 +699,7 @@ export default function Schedule() {
 
                         {/* All-day / blocked row */}
                         {days.some((d) => blockedDays.has(dayKey(d))) && (
-                          <div className="grid border-b border-border" style={{ gridTemplateColumns: "60px repeat(7, 1fr)" }}>
+                          <div className="grid border-b border-border" style={{ gridTemplateColumns: "60px repeat(7, minmax(0, 1fr))" }}>
                             <div className="text-[10px] uppercase text-muted-foreground py-1.5 pr-2 text-right">dia inteiro</div>
                             {days.map((d) => (
                               <div key={dayKey(d) + "-all"} className={cn("border-l border-border min-h-[28px] py-1 px-1", blockedDays.has(dayKey(d)) && "bg-destructive/10")}>
@@ -714,7 +714,7 @@ export default function Schedule() {
                         )}
 
                         {/* Time grid */}
-                        <div className="grid relative" style={{ gridTemplateColumns: "60px repeat(7, 1fr)", height: totalHeight }}>
+                        <div className="grid relative" style={{ gridTemplateColumns: "60px repeat(7, minmax(0, 1fr))", height: totalHeight }}>
                           {/* Hour labels */}
                           <div className="relative">
                             {hours.map((h) => (
