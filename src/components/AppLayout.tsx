@@ -70,8 +70,8 @@ export default function AppLayout() {
   const nav = isMarketingOnly
     ? baseNav.filter((n) => n.to === "/crm/imoveis")
     : isAdmin || isGestor
-    ? [...baseNav, ...adminNav]
-    : baseNav;
+    ? [...baseNav, ...adminNav, ...personalNav]
+    : [...baseNav, ...personalNav];
 
   const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => (
     <>
