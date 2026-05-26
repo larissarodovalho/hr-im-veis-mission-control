@@ -61,6 +61,7 @@ export default function UsuariosAdminPage() {
 
   const [editTarget, setEditTarget] = useState<Row | null>(null);
   const [editForm, setEditForm] = useState({ nome: "", email: "", telefone: "", cargo: "", role: "corretor" as UiRole });
+  const [permTarget, setPermTarget] = useState<Row | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
