@@ -76,9 +76,19 @@ const CRM_SUBTAB_ROUTES: Record<string, string> = { tarefas: "/crm/tarefas" };
 
 export function AppSidebar() {
   const { state } = useSidebar();
-  const { isAdmin, isGestor, isMarketingOnly } = useAuth();
+  const { isAdmin, isGestor, isMarketingOnly, user } = useAuth();
   const isCorretorOnly = !isAdmin && !isGestor && !isMarketingOnly;
   const collapsed = state === "collapsed";
+  const [gcalConnected, setGcalConnected] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from("user_google_calendar")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => setGcalConnected(!!data));
+  }, [user?.id]);
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
