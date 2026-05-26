@@ -50,6 +50,7 @@ const CRM_SUBTABS = [
   { label: "Análise de Leads", value: "analise", icon: BarChart2 },
   { label: "Oportunidades", value: "oportunidades", icon: HandCoins },
   { label: "Visitas", value: "visitas", icon: CalendarCheck },
+  { label: "Agenda", value: "agenda", icon: Calendar },
   { label: "Tarefas", value: "tarefas", icon: CheckCircle2 },
   { label: "Relatórios", value: "relatorios", icon: FileDown },
   { label: "Propostas", value: "propostas", icon: FileTextIcon },
