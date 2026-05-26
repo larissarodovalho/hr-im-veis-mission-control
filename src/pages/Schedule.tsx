@@ -452,11 +452,6 @@ export default function Schedule() {
           <p className="text-sm text-muted-foreground mt-1">
             Compartilhada com a equipe • integrada ao WhatsApp e à captação automática com IA.
           </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {canManage && (<></>)}
-          {canManage && <></>}
-        </div>
         {canManage && (
         <div className="flex flex-wrap gap-2">
           <Dialog open={openBloqueio} onOpenChange={setOpenBloqueio}>
