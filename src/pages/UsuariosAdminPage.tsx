@@ -231,6 +231,7 @@ export default function UsuariosAdminPage() {
                       <SelectItem value="corretor">Corretor</SelectItem>
                       <SelectItem value="gestor_corretor">Gestor + Corretor</SelectItem>
                       <SelectItem value="marketing">Marketing</SelectItem>
+                      <SelectItem value="secretaria">Secretaria</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -283,6 +284,7 @@ export default function UsuariosAdminPage() {
                           <SelectItem value="corretor">Corretor</SelectItem>
                           <SelectItem value="gestor_corretor">Gestor + Corretor</SelectItem>
                           <SelectItem value="marketing">Marketing</SelectItem>
+                      <SelectItem value="secretaria">Secretaria</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -380,6 +382,7 @@ export default function UsuariosAdminPage() {
                     <SelectItem value="corretor">Corretor</SelectItem>
                     <SelectItem value="gestor_corretor">Gestor + Corretor</SelectItem>
                     <SelectItem value="marketing">Marketing</SelectItem>
+                      <SelectItem value="secretaria">Secretaria</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
