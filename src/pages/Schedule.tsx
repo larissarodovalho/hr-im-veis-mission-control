@@ -643,6 +643,56 @@ export default function Schedule() {
                   <Label>Notas</Label>
                   <Textarea value={novo.notas} onChange={(e) => setNovo({ ...novo, notas: e.target.value })} />
                 </div>
+
+                <div className="rounded-md border p-3 space-y-3 bg-muted/30">
+                  <div className="text-sm font-medium">Repetição</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Frequência</Label>
+                      <Select
+                        value={novo.recorrencia}
+                        onValueChange={(v) => {
+                          const reg = v as RecorrenciaRegra;
+                          let ate = novo.recorrencia_ate;
+                          if (reg !== "nenhuma" && !ate && novo.agendada_para) {
+                            ate = addMonths(new Date(novo.agendada_para), 3).toISOString().slice(0, 10);
+                          }
+                          setNovo({ ...novo, recorrencia: reg, recorrencia_ate: ate });
+                        }}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="nenhuma">Não repete</SelectItem>
+                          <SelectItem value="diaria_util">Diariamente (seg–sex) — fixo</SelectItem>
+                          <SelectItem value="semanal">Semanalmente</SelectItem>
+                          <SelectItem value="quinzenal">Quinzenalmente</SelectItem>
+                          <SelectItem value="mensal">Mensalmente</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {novo.recorrencia !== "nenhuma" && (
+                      <div>
+                        <Label>Termina em</Label>
+                        <Input
+                          type="date"
+                          value={novo.recorrencia_ate}
+                          onChange={(e) => setNovo({ ...novo, recorrencia_ate: e.target.value })}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  {novo.recorrencia !== "nenhuma" && novo.agendada_para && novo.recorrencia_ate && (() => {
+                    const start = new Date(novo.agendada_para);
+                    const ate = new Date(novo.recorrencia_ate + "T23:59:59");
+                    if (Number.isNaN(+start) || Number.isNaN(+ate) || ate < start) return null;
+                    const n = gerarOcorrencias(start, novo.recorrencia, ate).length;
+                    return (
+                      <p className="text-xs text-muted-foreground">
+                        {RECORRENCIA_LABEL[novo.recorrencia as Exclude<RecorrenciaRegra, "nenhuma">]} • {n} compromisso{n !== 1 ? "s" : ""} ser{n !== 1 ? "ão" : "á"} criado{n !== 1 ? "s" : ""} (máx. 60).
+                      </p>
+                    );
+                  })()}
+                </div>
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setOpenNovo(false)}>Cancelar</Button>
                   <Button type="submit">Agendar</Button>
