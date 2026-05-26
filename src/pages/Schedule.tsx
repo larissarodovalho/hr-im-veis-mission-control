@@ -805,7 +805,8 @@ export default function Schedule() {
                     );
                   })()
                 ) : (
-                  <div className="grid grid-cols-7 border-t border-l border-border rounded-lg overflow-hidden shadow-sm">
+                  <div className="overflow-x-auto -mx-2 px-2">
+                   <div className="grid grid-cols-7 border-t border-l border-border rounded-lg overflow-hidden shadow-sm min-w-[640px]">
                     {weekDays.map((wd, i) => (
                       <div
                         key={wd}
