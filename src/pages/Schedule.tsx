@@ -623,7 +623,7 @@ export default function Schedule() {
             return (
               <div>
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                  <h2 className="text-2xl font-light capitalize">{headerLabel}</h2>
+                  <h2 className="text-lg md:text-2xl font-light capitalize">{headerLabel}</h2>
                   <div className="flex items-center gap-2">
                     <div className="inline-flex rounded-md border border-border overflow-hidden">
                       <button
@@ -667,7 +667,8 @@ export default function Schedule() {
                     const totalHeight = (HOUR_END - HOUR_START) * HOUR_PX;
 
                     return (
-                      <div className="border border-border rounded-lg overflow-hidden shadow-sm bg-card">
+                      <div className="border border-border rounded-lg overflow-x-auto shadow-sm bg-card">
+                       <div className="min-w-[720px]">
                         {/* Header */}
                         <div className="grid border-b border-border bg-muted/30" style={{ gridTemplateColumns: "60px repeat(7, 1fr)" }}>
                           <div />
@@ -799,11 +800,13 @@ export default function Schedule() {
                             );
                           })}
                         </div>
+                       </div>
                       </div>
                     );
                   })()
                 ) : (
-                  <div className="grid grid-cols-7 border-t border-l border-border rounded-lg overflow-hidden shadow-sm">
+                  <div className="overflow-x-auto -mx-2 px-2">
+                   <div className="grid grid-cols-7 border-t border-l border-border rounded-lg overflow-hidden shadow-sm min-w-[640px]">
                     {weekDays.map((wd, i) => (
                       <div
                         key={wd}
@@ -879,6 +882,7 @@ export default function Schedule() {
                         </button>
                       );
                     })}
+                   </div>
                   </div>
                 )}
               </div>
