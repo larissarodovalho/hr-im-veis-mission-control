@@ -1,5 +1,5 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { adminClient, redirectUri } from "../_shared/google-calendar.ts";
+import { adminClient, redirectUri, googleOAuthClientId, googleOAuthClientSecret } from "../_shared/google-calendar.ts";
 
 const APP_ORIGIN = "https://id-preview--9ba329fa-bc86-4fa7-8521-f11e9da54abe.lovable.app";
 
@@ -29,8 +29,8 @@ Deno.serve(async (req) => {
     let parsed: { user_id: string; ts: number };
     try { parsed = JSON.parse(atob(state)); } catch { return htmlResponse(false, "State inválido"); }
 
-    const client_id = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID")!;
-    const client_secret = Deno.env.get("GOOGLE_OAUTH_CLIENT_SECRET")!;
+    const client_id = googleOAuthClientId();
+    const client_secret = googleOAuthClientSecret();
 
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
