@@ -20,6 +20,7 @@ import {
   FileText as FileTextIcon,
   MessageCircle,
   Shield,
+  UserCircle,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { NavLink, useLocation, useSearchParams, useNavigate } from "react-router-dom";
@@ -214,6 +215,25 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+
+        <SidebarGroup className="mt-2">
+          {!collapsed && <SidebarGroupLabel>Pessoal</SidebarGroupLabel>}
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/minha-conta"
+                    className={`transition-all duration-200 ${location.pathname === "/minha-conta" ? "bg-sidebar-accent text-sidebar-primary" : "hover:bg-sidebar-accent/50"}`}
+                  >
+                    <UserCircle className={`mr-2 h-4 w-4 ${location.pathname === "/minha-conta" ? "text-sidebar-primary" : ""}`} />
+                    {!collapsed && <span>Minha conta</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
     </Sidebar>
   );
