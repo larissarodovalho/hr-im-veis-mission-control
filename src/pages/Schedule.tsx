@@ -361,6 +361,85 @@ export default function Schedule() {
     load();
   };
 
+  const parseId = (id: string): { table: "reunioes" | "ligacoes" | "visitas" | "captacoes_imovel"; realId: string; entity: "reuniao" | "ligacao" | "visita" | "captacao" } => {
+    if (id.startsWith("lig:")) return { table: "ligacoes", realId: id.slice(4), entity: "ligacao" };
+    if (id.startsWith("vis:")) return { table: "visitas", realId: id.slice(4), entity: "visita" };
+    if (id.startsWith("cap:")) return { table: "captacoes_imovel", realId: id.slice(4), entity: "captacao" };
+    return { table: "reunioes", realId: id, entity: "reuniao" };
+  };
+
+  const toLocalInput = (d: Date) => {
+    const x = new Date(d);
+    x.setMinutes(x.getMinutes() - x.getTimezoneOffset());
+    return x.toISOString().slice(0, 16);
+  };
+
+  const openEdit = (c: Compromisso) => {
+    const durMin = c.end ? Math.round((+c.end - +c.date) / 60000) : 60;
+    setEditing(c);
+    setEditForm({
+      when: toLocalInput(c.date),
+      duracao: durMin,
+      titulo: c.titulo ?? "",
+      local: c.local ?? "",
+      link: c.link ?? "",
+      notas: c.notas ?? "",
+      status: c.status ?? "",
+    });
+  };
+
+  const salvarEdicao = async () => {
+    if (!editing) return;
+    if (!editForm.when) return toast.error("Informe data e hora");
+    setSavingEdit(true);
+    const { table, realId, entity } = parseId(editing.id);
+    const whenISO = new Date(editForm.when).toISOString();
+    let error: any = null;
+    if (table === "reunioes") {
+      const res = await supabase.from("reunioes").update({
+        agendada_para: whenISO,
+        duracao_min: Number(editForm.duracao) || 60,
+        titulo: editForm.titulo?.trim() || null,
+        local: editForm.local?.trim() || null,
+        link: editForm.link?.trim() || null,
+        notas: editForm.notas?.trim() || null,
+        status: editForm.status || "agendada",
+      } as any).eq("id", realId);
+      error = res.error;
+    } else if (table === "ligacoes") {
+      const res = await supabase.from("ligacoes").update({
+        data: whenISO,
+        duracao_seg: (Number(editForm.duracao) || 30) * 60,
+        notas: editForm.notas?.trim() || null,
+        resultado: editForm.status || "agendada",
+      } as any).eq("id", realId);
+      error = res.error;
+    } else if (table === "visitas") {
+      const res = await supabase.from("visitas").update({
+        data_visita: whenISO,
+        observacoes: editForm.notas?.trim() || null,
+        status: editForm.status || "Agendada",
+      } as any).eq("id", realId);
+      error = res.error;
+    } else if (table === "captacoes_imovel") {
+      const res = await supabase.from("captacoes_imovel").update({
+        data_agendada: whenISO,
+        observacoes: editForm.notas?.trim() || null,
+        estagio: editForm.status || "agendada",
+      } as any).eq("id", realId);
+      error = res.error;
+    }
+    setSavingEdit(false);
+    if (error) return toast.error(error.message);
+    toast.success("Compromisso atualizado");
+    supabase.functions.invoke("gcal-push", {
+      body: { entity_type: entity, entity_id: realId, action: "update" },
+    }).catch(() => {});
+    setEditing(null);
+    load();
+  };
+
+
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
