@@ -1,36 +1,34 @@
-# Liberar agenda completa para secretaria
+# Permitir corretor visualizar detalhes do imóvel
 
-A página `/crm/agenda` lê 4 tabelas. Hoje as políticas RLS estão assim:
+Hoje os cards da aba Imóveis mostram só título, cidade, código, finalidade/tipo e valor. Descrição, área, quartos, banheiros, vagas, características, endereço completo e fotos extras só aparecem dentro do **EditarImovelDialog**, que está escondido para corretor.
 
-- `reunioes` → todos autenticados podem ver (OK)
-- `ligacoes` → só admin/gestor/corretor dono
-- `visitas` → só admin/gestor/corretor dono
-- `captacoes_imovel` → só admin/gestor/marketing/responsável
+## Mudança
 
-Resultado: secretaria só vê reuniões — falta ligações, visitas e captações.
+Adicionar um botão **"Ver detalhes"** (ícone `Eye`) no canto superior direito do card, **visível para todos** (inclusive corretor). Ele abre um novo dialog read-only `DetalhesImovelDialog`.
 
-## Migration
+### `src/components/imoveis/DetalhesImovelDialog.tsx` (novo)
 
-Adicionar uma policy de SELECT para `secretaria` em cada uma das 3 tabelas:
+Dialog somente leitura, exibindo:
+- Galeria de fotos (todas as `fotos`)
+- Título, código, status, finalidade, tipo
+- Endereço completo (logradouro, número, complemento, bairro, cidade/UF, CEP)
+- Valor, condomínio, IPTU
+- Áreas (útil, total, construída) · quartos · suítes · banheiros · vagas
+- Características (chips)
+- Descrição completa
+- Matrícula, exclusividade (datas + observações)
+- Corretor, proprietário (já mapeados na página)
 
-```sql
-CREATE POLICY "Secretaria sees ligacoes" ON public.ligacoes
-  FOR SELECT TO authenticated
-  USING (has_role(auth.uid(), 'secretaria'::app_role));
+Sem botões de edição. Apenas "Fechar".
 
-CREATE POLICY "Secretaria sees visitas" ON public.visitas
-  FOR SELECT TO authenticated
-  USING (has_role(auth.uid(), 'secretaria'::app_role));
+### `src/pages/Imoveis.tsx`
 
-CREATE POLICY "Secretaria sees captacoes" ON public.captacoes_imovel
-  FOR SELECT TO authenticated
-  USING (has_role(auth.uid(), 'secretaria'::app_role));
-```
+- Importar `DetalhesImovelDialog` e adicionar estado `viewing`.
+- No `Header`, adicionar `<Button … onClick={() => setViewing(i)} title="Ver detalhes"><Eye /></Button>` ao lado do botão de histórico, **sem condicional** (todos veem).
+- Renderizar `<DetalhesImovelDialog imovel={viewing} … />` no final.
 
-Também precisa ver os nomes referenciados (leads, contas, imóveis) para montar os títulos — vou conferir e adicionar policies de SELECT para secretaria nessas tabelas se necessário (provavelmente sim em `leads` e `contas`, `imoveis` já é público).
+## Sem mudanças de banco
 
-## Sem mudanças de código
-
-A `Schedule.tsx` não filtra por role na leitura, então liberar RLS é suficiente. Nenhum arquivo `.tsx` precisa ser editado.
+RLS atual já permite corretor ler todos os imóveis (`Staff sees all imoveis`). É só UI.
 
 Confirmo?

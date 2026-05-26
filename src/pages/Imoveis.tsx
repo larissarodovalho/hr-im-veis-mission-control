@@ -14,13 +14,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2, FileDown, History, Eye, EyeOff } from "lucide-react";
+import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2, FileDown, History, Eye, EyeOff, Info } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import NovoImovelDialog from "@/components/imoveis/NovoImovelDialog";
 import EditarImovelDialog from "@/components/imoveis/EditarImovelDialog";
 import NovaPropostaDialog from "@/components/imoveis/NovaPropostaDialog";
 import ImovelHistoricoDrawer from "@/components/imoveis/ImovelHistoricoDrawer";
+import DetalhesImovelDialog from "@/components/imoveis/DetalhesImovelDialog";
 import VendidosTab from "@/pages/imoveis/VendidosTab";
 import ParceirosTab from "@/pages/imoveis/ParceirosTab";
 import OportunidadesTab from "@/pages/imoveis/OportunidadesTab";
@@ -45,6 +46,7 @@ export default function Imoveis() {
   const [editing, setEditing] = useState<Imovel | null>(null);
   const [propostaFor, setPropostaFor] = useState<Imovel | null>(null);
   const [histFor, setHistFor] = useState<Imovel | null>(null);
+  const [viewing, setViewing] = useState<Imovel | null>(null);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [contas, setContas] = useState<Record<string, string>>({});
   const [tab, setTab] = useState("disponiveis");
@@ -204,6 +206,9 @@ export default function Imoveis() {
           </span>
         )}
         <div className="absolute top-2 right-2 flex gap-1">
+          <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setViewing(i)} title="Ver detalhes">
+            <Info className="h-4 w-4" />
+          </Button>
           <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setHistFor(i)} title="Histórico do imóvel">
             <History className="h-4 w-4" />
           </Button>
@@ -460,6 +465,13 @@ export default function Imoveis() {
         open={!!histFor}
         onOpenChange={(v) => { if (!v) setHistFor(null); }}
         imovel={histFor}
+      />
+      <DetalhesImovelDialog
+        open={!!viewing}
+        onOpenChange={(v) => { if (!v) setViewing(null); }}
+        imovel={viewing}
+        corretorNome={viewing ? profiles[viewing.corretor_id] : undefined}
+        proprietarioNome={viewing ? contas[viewing.proprietario_id] : undefined}
       />
     </div>
   );
