@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { format, isSameDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths, isSameMonth, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { Calendar as CalendarIcon, Phone, Video, MapPin, Plus, Ban, Sparkles, Trash2, Pencil, Save, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar as CalendarIcon, Phone, Video, MapPin, MessageCircle, Plus, Ban, Sparkles, Trash2, Pencil, Save, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 
@@ -22,7 +22,7 @@ type Compromisso = {
   id: string;
   date: Date;
   end?: Date;
-  tipo: "ligacao" | "presencial" | "videochamada";
+  tipo: "ligacao" | "presencial" | "videochamada" | "mensagem";
   titulo: string;
   status: string;
   local?: string | null;
@@ -85,11 +85,13 @@ const TIPO_LABEL: Record<Compromisso["tipo"], string> = {
   ligacao: "Ligação",
   presencial: "Presencial",
   videochamada: "Videochamada",
+  mensagem: "Mensagem",
 };
 
 const TipoIcon = ({ tipo }: { tipo: Compromisso["tipo"] }) => {
   if (tipo === "ligacao") return <Phone className="h-4 w-4" />;
   if (tipo === "videochamada") return <Video className="h-4 w-4" />;
+  if (tipo === "mensagem") return <MessageCircle className="h-4 w-4" />;
   return <MapPin className="h-4 w-4" />;
 };
 
@@ -100,6 +102,7 @@ export default function Schedule() {
   const [reunioes, setReunioes] = useState<Compromisso[]>([]);
   const [bloqueios, setBloqueios] = useState<Bloqueio[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
+  const [contasList, setContasList] = useState<any[]>([]);
   const [imoveisList, setImoveisList] = useState<any[]>([]);
   const [selected, setSelected] = useState<Date | undefined>(new Date());
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
@@ -116,6 +119,7 @@ export default function Schedule() {
     agendada_para: "",
     duracao_min: 60,
     lead_id: "none",
+    conta_id: "none",
     imovel_id: "none",
     local: "",
     link: "",
@@ -141,7 +145,7 @@ export default function Schedule() {
       { data: capts, error: cErr },
     ] = await Promise.all([
       supabase.from("reunioes")
-        .select("id, agendada_para, status, local, link, notas, tipo, duracao_min, titulo, criado_por_ia, lead_id, conta_id")
+        .select("id, agendada_para, status, local, link, notas, tipo, duracao_min, titulo, criado_por_ia, lead_id, conta_id, recorrencia_id, recorrencia_regra")
         .order("agendada_para"),
       supabase.from("agenda_bloqueios" as any).select("*").order("inicio"),
       supabase.from("leads").select("id, nome").order("nome"),
@@ -319,6 +323,8 @@ export default function Schedule() {
     setLeads(l ?? []);
     const { data: ims } = await supabase.from("imoveis").select("id, titulo, codigo").order("created_at", { ascending: false });
     setImoveisList((ims ?? []).map((i: any) => ({ id: i.id, nome: i.codigo ? `${i.titulo} · ${i.codigo}` : i.titulo })));
+    const { data: ctsAll } = await supabase.from("contas").select("id, nome").order("nome");
+    setContasList(ctsAll ?? []);
   };
 
   useEffect(() => {
@@ -401,6 +407,7 @@ export default function Schedule() {
       duracao_min: novo.duracao_min,
       titulo: novo.titulo,
       lead_id: novo.lead_id === "none" ? null : novo.lead_id,
+      conta_id: novo.conta_id === "none" ? null : novo.conta_id,
       imovel_id: novo.imovel_id === "none" ? null : novo.imovel_id,
       local: novo.tipo === "presencial" ? novo.local || null : null,
       link: novo.tipo === "videochamada" ? novo.link || null : null,
@@ -422,7 +429,7 @@ export default function Schedule() {
     } else {
       toast.success("Compromisso criado");
     }
-    setNovo({ tipo: "presencial", titulo: "", agendada_para: "", duracao_min: 60, lead_id: "none", imovel_id: "none", local: "", link: "", notas: "", recorrencia: "nenhuma", recorrencia_ate: "" });
+    setNovo({ tipo: "presencial", titulo: "", agendada_para: "", duracao_min: 60, lead_id: "none", conta_id: "none", imovel_id: "none", local: "", link: "", notas: "", recorrencia: "nenhuma", recorrencia_ate: "" });
     setOpenNovo(false);
     load();
   };
@@ -589,6 +596,7 @@ export default function Schedule() {
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="ligacao">📞 Ligação</SelectItem>
+                        <SelectItem value="mensagem">💬 Mensagem</SelectItem>
                         <SelectItem value="presencial">📍 Presencial</SelectItem>
                         <SelectItem value="videochamada">🎥 Videochamada</SelectItem>
                       </SelectContent>
@@ -614,6 +622,16 @@ export default function Schedule() {
                     <SelectContent>
                       <SelectItem value="none">Sem lead vinculado</SelectItem>
                       {leads.map((l) => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Conta (cliente) vinculada</Label>
+                  <Select value={novo.conta_id} onValueChange={(v) => setNovo({ ...novo, conta_id: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sem conta vinculada</SelectItem>
+                      {contasList.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -738,6 +756,7 @@ export default function Schedule() {
               ligacao: "bg-warning/15 text-warning border-l-2 border-warning",
               presencial: "bg-success/15 text-success border-l-2 border-success",
               videochamada: "bg-accent/20 text-accent-foreground border-l-2 border-accent",
+              mensagem: "bg-primary/15 text-primary border-l-2 border-primary",
             };
             const weekDays = ["dom.", "seg.", "ter.", "qua.", "qui.", "sex.", "sáb."];
 
