@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { Calendar as CalendarIcon, Phone, Video, MapPin, Plus, Ban, Sparkles, Trash2 } from "lucide-react";
+import { Calendar as CalendarIcon, Phone, Video, MapPin, Plus, Ban, Sparkles, Trash2, Pencil, Save } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
@@ -65,6 +65,9 @@ export default function Schedule() {
   const [selected, setSelected] = useState<Date | undefined>(new Date());
   const [openNovo, setOpenNovo] = useState(false);
   const [openBloqueio, setOpenBloqueio] = useState(false);
+  const [editing, setEditing] = useState<Compromisso | null>(null);
+  const [editForm, setEditForm] = useState<{ when: string; duracao: number; titulo: string; local: string; link: string; notas: string; status: string }>({ when: "", duracao: 60, titulo: "", local: "", link: "", notas: "", status: "" });
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const [novo, setNovo] = useState({
     tipo: "presencial" as Compromisso["tipo"],
@@ -358,6 +361,85 @@ export default function Schedule() {
     load();
   };
 
+  const parseId = (id: string): { table: "reunioes" | "ligacoes" | "visitas" | "captacoes_imovel"; realId: string; entity: "reuniao" | "ligacao" | "visita" | "captacao" } => {
+    if (id.startsWith("lig:")) return { table: "ligacoes", realId: id.slice(4), entity: "ligacao" };
+    if (id.startsWith("vis:")) return { table: "visitas", realId: id.slice(4), entity: "visita" };
+    if (id.startsWith("cap:")) return { table: "captacoes_imovel", realId: id.slice(4), entity: "captacao" };
+    return { table: "reunioes", realId: id, entity: "reuniao" };
+  };
+
+  const toLocalInput = (d: Date) => {
+    const x = new Date(d);
+    x.setMinutes(x.getMinutes() - x.getTimezoneOffset());
+    return x.toISOString().slice(0, 16);
+  };
+
+  const openEdit = (c: Compromisso) => {
+    const durMin = c.end ? Math.round((+c.end - +c.date) / 60000) : 60;
+    setEditing(c);
+    setEditForm({
+      when: toLocalInput(c.date),
+      duracao: durMin,
+      titulo: c.titulo ?? "",
+      local: c.local ?? "",
+      link: c.link ?? "",
+      notas: c.notas ?? "",
+      status: c.status ?? "",
+    });
+  };
+
+  const salvarEdicao = async () => {
+    if (!editing) return;
+    if (!editForm.when) return toast.error("Informe data e hora");
+    setSavingEdit(true);
+    const { table, realId, entity } = parseId(editing.id);
+    const whenISO = new Date(editForm.when).toISOString();
+    let error: any = null;
+    if (table === "reunioes") {
+      const res = await supabase.from("reunioes").update({
+        agendada_para: whenISO,
+        duracao_min: Number(editForm.duracao) || 60,
+        titulo: editForm.titulo?.trim() || null,
+        local: editForm.local?.trim() || null,
+        link: editForm.link?.trim() || null,
+        notas: editForm.notas?.trim() || null,
+        status: editForm.status || "agendada",
+      } as any).eq("id", realId);
+      error = res.error;
+    } else if (table === "ligacoes") {
+      const res = await supabase.from("ligacoes").update({
+        data: whenISO,
+        duracao_seg: (Number(editForm.duracao) || 30) * 60,
+        notas: editForm.notas?.trim() || null,
+        resultado: editForm.status || "agendada",
+      } as any).eq("id", realId);
+      error = res.error;
+    } else if (table === "visitas") {
+      const res = await supabase.from("visitas").update({
+        data_visita: whenISO,
+        observacoes: editForm.notas?.trim() || null,
+        status: editForm.status || "Agendada",
+      } as any).eq("id", realId);
+      error = res.error;
+    } else if (table === "captacoes_imovel") {
+      const res = await supabase.from("captacoes_imovel").update({
+        data_agendada: whenISO,
+        observacoes: editForm.notas?.trim() || null,
+        estagio: editForm.status || "agendada",
+      } as any).eq("id", realId);
+      error = res.error;
+    }
+    setSavingEdit(false);
+    if (error) return toast.error(error.message);
+    toast.success("Compromisso atualizado");
+    supabase.functions.invoke("gcal-push", {
+      body: { entity_type: entity, entity_id: realId, action: "update" },
+    }).catch(() => {});
+    setEditing(null);
+    load();
+  };
+
+
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -561,7 +643,12 @@ export default function Schedule() {
                           {(c.local || c.link) && <div className="text-xs text-muted-foreground mt-0.5">{c.local || c.link}</div>}
                           {c.notas && <div className="text-xs text-muted-foreground mt-1">{c.notas}</div>}
                         </div>
-                        <Badge variant="outline">{c.status}</Badge>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Badge variant="outline">{c.status}</Badge>
+                          <Button size="icon" variant="ghost" onClick={() => openEdit(c)} title="Editar">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </li>
                   ))}
@@ -586,7 +673,12 @@ export default function Schedule() {
                         {TIPO_LABEL[c.tipo]} · {c.lead_id && c.lead_nome ? <Link to={`/crm/leads/${c.lead_id}`} className="text-primary hover:underline">{c.lead_nome}</Link> : (c.lead_nome || "sem lead")}{c.local || c.link ? ` · ${c.local || c.link}` : ""}
                       </div>
                     </div>
-                    <Badge variant="outline">{c.status}</Badge>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Badge variant="outline">{c.status}</Badge>
+                      <Button size="icon" variant="ghost" onClick={() => openEdit(c)} title="Editar">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
             </TabsContent>
@@ -612,6 +704,71 @@ export default function Schedule() {
           </Tabs>
         </Card>
       </div>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Editar compromisso</DialogTitle></DialogHeader>
+          {editing && (() => {
+            const { entity } = parseId(editing.id);
+            const showDuracao = entity === "reuniao" || entity === "ligacao";
+            const showLocalLink = entity === "reuniao";
+            const showTitulo = entity === "reuniao";
+            const statusOptions =
+              entity === "captacao"
+                ? ["novo", "agendada", "em_andamento", "concluido", "cancelada"]
+                : entity === "visita"
+                ? ["Agendada", "Realizada", "Cancelada", "Remarcada"]
+                : entity === "ligacao"
+                ? ["agendada", "realizada", "nao_atendeu", "cancelada"]
+                : ["agendada", "realizada", "cancelada", "remarcada"];
+            return (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Data e hora</Label>
+                    <Input type="datetime-local" value={editForm.when} onChange={(e) => setEditForm({ ...editForm, when: e.target.value })} />
+                  </div>
+                  {showDuracao && (
+                    <div>
+                      <Label>Duração (min)</Label>
+                      <Input type="number" min={5} step={5} value={editForm.duracao} onChange={(e) => setEditForm({ ...editForm, duracao: Number(e.target.value) })} />
+                    </div>
+                  )}
+                </div>
+                {showTitulo && (
+                  <div>
+                    <Label>Título</Label>
+                    <Input value={editForm.titulo} onChange={(e) => setEditForm({ ...editForm, titulo: e.target.value })} />
+                  </div>
+                )}
+                {showLocalLink && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><Label>Local</Label><Input value={editForm.local} onChange={(e) => setEditForm({ ...editForm, local: e.target.value })} /></div>
+                    <div><Label>Link</Label><Input value={editForm.link} onChange={(e) => setEditForm({ ...editForm, link: e.target.value })} /></div>
+                  </div>
+                )}
+                <div>
+                  <Label>Status</Label>
+                  <Select value={editForm.status} onValueChange={(v) => setEditForm({ ...editForm, status: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>{entity === "visita" || entity === "captacao" ? "Observações" : "Notas"}</Label>
+                  <Textarea rows={3} value={editForm.notas} onChange={(e) => setEditForm({ ...editForm, notas: e.target.value })} />
+                </div>
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
+            <Button onClick={salvarEdicao} disabled={savingEdit}><Save className="h-4 w-4 mr-1" />Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
