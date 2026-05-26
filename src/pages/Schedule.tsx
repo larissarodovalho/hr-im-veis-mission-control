@@ -221,7 +221,29 @@ export default function Schedule() {
         criado_por_ia: false,
       };
     });
-    setReunioes([...reus, ...ligsAgendadas, ...visitasAgendadas].sort((a, b) => +a.date - +b.date));
+    const captacoesAgendadas: Compromisso[] = ((capts ?? []) as any[]).map((c) => {
+      const start = new Date(c.data_agendada);
+      const contaNome = c.conta_id ? contasById.get(c.conta_id)?.nome : null;
+      const imovel = c.imovel_id ? imoveisById.get(c.imovel_id) : null;
+      const titulo = imovel?.titulo
+        ? `Captação: ${imovel.titulo}${contaNome ? ` (${contaNome})` : ""}`
+        : contaNome ? `Captação — ${contaNome}` : "Captação";
+      return {
+        id: `cap:${c.id}`,
+        date: start,
+        end: new Date(start.getTime() + 60 * 60000),
+        tipo: "presencial" as const,
+        titulo,
+        status: c.estagio || "agendada",
+        local: imovel?.endereco ?? null,
+        link: null,
+        notas: c.observacoes,
+        lead_id: null,
+        lead_nome: null,
+        criado_por_ia: false,
+      };
+    });
+    setReunioes([...reus, ...ligsAgendadas, ...visitasAgendadas, ...captacoesAgendadas].sort((a, b) => +a.date - +b.date));
     setBloqueios(((b ?? []) as any[]).map((x) => ({
       id: x.id,
       inicio: new Date(x.inicio),
