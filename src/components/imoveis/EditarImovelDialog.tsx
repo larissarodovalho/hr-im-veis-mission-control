@@ -201,6 +201,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
         cidade: form.cidade || null,
         estado: form.estado || null,
         destaque: form.destaque,
+        publicado: form.publicado,
         matricula: form.matricula || null,
         caracteristicas: caracs,
         fotos: [...fotosExistentes, ...novasUrls],
