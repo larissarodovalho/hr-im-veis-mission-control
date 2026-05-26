@@ -1,6 +1,6 @@
 // Publica/atualiza/remove um evento do CRM na agenda Google do responsável.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { adminClient, getValidAccessToken, gcalFetch, TIMEZONE } from "../_shared/google-calendar.ts";
+import { adminClient, formatGoogleCalendarApiError, getValidAccessToken, gcalFetch, TIMEZONE } from "../_shared/google-calendar.ts";
 
 type EntityType = "reuniao" | "ligacao" | "visita" | "captacao";
 type Action = "create" | "update" | "delete";
@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
       });
     }
     const ev = await r.json();
-    if (!r.ok) throw new Error(`gcal ${r.status}: ${JSON.stringify(ev)}`);
+    if (!r.ok) throw new Error(formatGoogleCalendarApiError(r.status, ev));
 
     await supa.from("google_calendar_sync").upsert({
       user_id: built.ownerUserId,

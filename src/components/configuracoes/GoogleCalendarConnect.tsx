@@ -15,6 +15,9 @@ type Conn = {
   calendar_id: string;
 };
 
+const activationUrlFromError = (message: string) =>
+  message.match(/https:\/\/console\.developers\.google\.com\/apis\/api\/calendar-json\.googleapis\.com\/overview\?project=[^\s]+/)?.[0];
+
 export default function GoogleCalendarConnect() {
   const { user } = useAuth();
   const [conn, setConn] = useState<Conn | null>(null);
@@ -127,7 +130,16 @@ export default function GoogleCalendarConnect() {
                 Última sincronização: {conn.last_sync_at ? new Date(conn.last_sync_at).toLocaleString("pt-BR") : "—"}
               </p>
               {conn.last_sync_error && (
-                <p className="text-xs text-destructive">Erro: {conn.last_sync_error}</p>
+                <div className="space-y-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+                  <p>{conn.last_sync_error}</p>
+                  {activationUrlFromError(conn.last_sync_error) && (
+                    <Button size="sm" variant="outline" asChild className="h-8">
+                      <a href={activationUrlFromError(conn.last_sync_error)} target="_blank" rel="noreferrer">
+                        <ExternalLink className="h-3 w-3 mr-1" /> Ativar Google Calendar API
+                      </a>
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
             <div className="flex flex-wrap gap-2">

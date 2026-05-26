@@ -134,3 +134,27 @@ export async function gcalFetch(token: string, path: string, init: RequestInit =
   });
   return r;
 }
+
+function getGoogleErrorMessage(payload: unknown) {
+  if (payload && typeof payload === "object" && "error" in payload) {
+    const error = (payload as { error?: { message?: unknown } }).error;
+    if (typeof error?.message === "string") return error.message;
+  }
+  if (typeof payload === "string") return payload;
+  return JSON.stringify(payload);
+}
+
+export function formatGoogleCalendarApiError(status: number, payload: unknown) {
+  const raw = getGoogleErrorMessage(payload);
+  const serialized = typeof payload === "string" ? payload : JSON.stringify(payload);
+  const activationUrl = serialized.match(/https:\/\/console\.developers\.google\.com\/apis\/api\/calendar-json\.googleapis\.com\/overview\?project=[^"\\\s]+/)?.[0];
+
+  if (
+    status === 403 &&
+    (serialized.includes("SERVICE_DISABLED") || serialized.includes("accessNotConfigured") || serialized.includes("calendar-json.googleapis.com"))
+  ) {
+    return `A Google Calendar API ainda não está ativada no projeto do OAuth.${activationUrl ? ` Ative em: ${activationUrl}` : ""} Depois, aguarde alguns minutos e sincronize novamente.`;
+  }
+
+  return `Google Calendar retornou erro ${status}: ${raw.slice(0, 500)}`;
+}

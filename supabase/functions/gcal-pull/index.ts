@@ -1,7 +1,7 @@
 // Importa eventos novos da agenda Google pessoal de cada usuário conectado.
 // Pode ser chamada manualmente ou via cron.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { adminClient, getValidAccessToken, gcalFetch } from "../_shared/google-calendar.ts";
+import { adminClient, formatGoogleCalendarApiError, getValidAccessToken, gcalFetch } from "../_shared/google-calendar.ts";
 
 async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string) {
   const conn = await getValidAccessToken(supa, user_id);
@@ -29,7 +29,7 @@ async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string
       return { user_id, reset: true };
     }
     const j = await r.json();
-    if (!r.ok) throw new Error(`gcal list ${r.status}: ${JSON.stringify(j)}`);
+    if (!r.ok) throw new Error(formatGoogleCalendarApiError(r.status, j));
 
     for (const ev of j.items ?? []) {
       // procura mapping existente
@@ -107,7 +107,16 @@ Deno.serve(async (req) => {
   try {
     const supa = adminClient();
     const url = new URL(req.url);
-    const single = url.searchParams.get("user_id");
+    let bodyUserId: string | null = null;
+    if (req.method !== "GET") {
+      try {
+        const body = await req.json();
+        bodyUserId = typeof body?.user_id === "string" ? body.user_id : null;
+      } catch {
+        bodyUserId = null;
+      }
+    }
+    const single = url.searchParams.get("user_id") ?? bodyUserId;
 
     let users: { user_id: string }[];
     if (single) users = [{ user_id: single }];
