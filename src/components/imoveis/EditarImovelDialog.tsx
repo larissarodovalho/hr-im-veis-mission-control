@@ -31,7 +31,7 @@ const empty = {
   area_total: "", area_construida: "", area_util: "",
   quartos: "", suites: "", banheiros: "", vagas: "",
   cep: "", endereco: "", numero: "", complemento: "", bairro: "", cidade: "", estado: "",
-  destaque: false, matricula: "",
+  destaque: false, publicado: true, matricula: "",
   exclusividade_inicio: "", exclusividade_fim: "", exclusividade_observacoes: "",
 };
 
@@ -68,7 +68,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
       quartos: s(imovel.quartos), suites: s(imovel.suites), banheiros: s(imovel.banheiros), vagas: s(imovel.vagas),
       cep: s(imovel.cep), endereco: s(imovel.endereco), numero: s(imovel.numero),
       complemento: s(imovel.complemento), bairro: s(imovel.bairro), cidade: s(imovel.cidade), estado: s(imovel.estado),
-      destaque: !!imovel.destaque, matricula: s(imovel.matricula),
+      destaque: !!imovel.destaque, publicado: imovel.publicado ?? true, matricula: s(imovel.matricula),
       exclusividade_inicio: s(imovel.exclusividade_inicio),
       exclusividade_fim: s(imovel.exclusividade_fim),
       exclusividade_observacoes: s(imovel.exclusividade_observacoes),
@@ -201,6 +201,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
         cidade: form.cidade || null,
         estado: form.estado || null,
         destaque: form.destaque,
+        publicado: form.publicado,
         matricula: form.matricula || null,
         caracteristicas: caracs,
         fotos: [...fotosExistentes, ...novasUrls],
@@ -287,10 +288,19 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
               <Label>Matrícula (uso interno)</Label>
               <Input value={form.matricula} onChange={(e) => upd("matricula", e.target.value)} placeholder="Nº da matrícula no cartório" />
             </div>
-            <div className="flex items-center gap-2">
-              <Switch id="edit-destaque" checked={form.destaque} onCheckedChange={(v) => upd("destaque", v)} />
-              <Label htmlFor="edit-destaque" className="cursor-pointer">Imóvel em destaque</Label>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
+              <div className="flex items-center gap-2">
+                <Switch id="edit-destaque" checked={form.destaque} onCheckedChange={(v) => upd("destaque", v)} />
+                <Label htmlFor="edit-destaque" className="cursor-pointer">Imóvel em destaque</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch id="edit-publicado" checked={form.publicado} onCheckedChange={(v) => upd("publicado", v)} />
+                <Label htmlFor="edit-publicado" className="cursor-pointer">
+                  Publicado no site {form.publicado ? "" : "(oculto)"}
+                </Label>
+              </div>
             </div>
+
           </section>
 
           <ResponsavelProprietarioSection

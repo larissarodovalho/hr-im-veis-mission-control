@@ -108,6 +108,7 @@ const empty = {
   cidade: "",
   estado: "",
   destaque: false,
+  publicado: true,
   matricula: "",
 };
 
@@ -209,6 +210,7 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
         cidade: form.cidade || null,
         estado: form.estado || null,
         destaque: form.destaque,
+        publicado: form.publicado,
         matricula: form.matricula || null,
         caracteristicas: caracs,
         fotos: urls,
@@ -285,9 +287,17 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
               <Label>Matrícula (uso interno)</Label>
               <Input value={form.matricula} onChange={(e) => upd("matricula", e.target.value)} placeholder="Nº da matrícula no cartório" />
             </div>
-            <div className="flex items-center gap-2">
-              <Switch id="destaque" checked={form.destaque} onCheckedChange={(v) => upd("destaque", v)} />
-              <Label htmlFor="destaque" className="cursor-pointer">Imóvel em destaque</Label>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
+              <div className="flex items-center gap-2">
+                <Switch id="destaque" checked={form.destaque} onCheckedChange={(v) => upd("destaque", v)} />
+                <Label htmlFor="destaque" className="cursor-pointer">Imóvel em destaque</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch id="publicado" checked={form.publicado} onCheckedChange={(v) => upd("publicado", v)} />
+                <Label htmlFor="publicado" className="cursor-pointer">
+                  Publicado no site {form.publicado ? "" : "(oculto)"}
+                </Label>
+              </div>
             </div>
           </section>
 
