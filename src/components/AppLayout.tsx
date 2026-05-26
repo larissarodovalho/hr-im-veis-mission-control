@@ -49,6 +49,8 @@ const adminNav: NavItem[] = [
   { to: "/crm/newsletter", icon: Mail, label: "Newsletter" },
   { to: "/crm/usuarios", icon: UserCog, label: "Usuários" },
   { to: "/crm/configuracoes", icon: Settings, label: "Configurações" },
+];
+const personalNav: NavItem[] = [
   { to: "/crm/minha-conta", icon: UserCircle, label: "Minha conta" },
 ];
 
