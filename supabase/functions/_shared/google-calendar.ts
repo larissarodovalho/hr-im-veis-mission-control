@@ -29,11 +29,32 @@ export function redirectUri(req: Request) {
 }
 
 export function googleOAuthClientId() {
-  return Deno.env.get("GOOGLE_OAUTH_CLIENT_ID")?.trim() ?? "";
+  const raw = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID")?.trim() ?? "";
+  const directMatch = raw.match(/[a-zA-Z0-9_-]+\.apps\.googleusercontent\.com/);
+  if (directMatch) return directMatch[0];
+
+  try {
+    const parsed = JSON.parse(raw);
+    const candidate = parsed?.web?.client_id ?? parsed?.installed?.client_id ?? parsed?.client_id;
+    if (typeof candidate === "string") return candidate.trim();
+  } catch {
+    // Secret is not JSON; fall through to the raw value so callers can show a clear setup error.
+  }
+
+  return raw;
 }
 
 export function googleOAuthClientSecret() {
-  return Deno.env.get("GOOGLE_OAUTH_CLIENT_SECRET")?.trim() ?? "";
+  const raw = Deno.env.get("GOOGLE_OAUTH_CLIENT_SECRET")?.trim() ?? "";
+  try {
+    const parsed = JSON.parse(raw);
+    const candidate = parsed?.web?.client_secret ?? parsed?.installed?.client_secret ?? parsed?.client_secret;
+    if (typeof candidate === "string") return candidate.trim();
+  } catch {
+    // Secret is not JSON; use it as-is.
+  }
+
+  return raw;
 }
 
 export async function refreshAccessToken(refresh_token: string) {
