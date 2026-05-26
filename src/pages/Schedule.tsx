@@ -596,6 +596,7 @@ export default function Schedule() {
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="ligacao">📞 Ligação</SelectItem>
+                        <SelectItem value="mensagem">💬 Mensagem</SelectItem>
                         <SelectItem value="presencial">📍 Presencial</SelectItem>
                         <SelectItem value="videochamada">🎥 Videochamada</SelectItem>
                       </SelectContent>
