@@ -24,6 +24,7 @@ interface AuthContextType {
   isGestor: boolean;
   isMarketing: boolean;
   isMarketingOnly: boolean;
+  isSecretariaOnly: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
