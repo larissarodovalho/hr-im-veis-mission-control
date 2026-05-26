@@ -11,11 +11,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { format, isSameDay } from "date-fns";
+import { format, isSameDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths, isSameMonth, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { Calendar as CalendarIcon, Phone, Video, MapPin, Plus, Ban, Sparkles, Trash2, Pencil, Save } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar as CalendarIcon, Phone, Video, MapPin, Plus, Ban, Sparkles, Trash2, Pencil, Save, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 
@@ -63,6 +62,7 @@ export default function Schedule() {
   const [leads, setLeads] = useState<any[]>([]);
   const [imoveisList, setImoveisList] = useState<any[]>([]);
   const [selected, setSelected] = useState<Date | undefined>(new Date());
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [openNovo, setOpenNovo] = useState(false);
   const [openBloqueio, setOpenBloqueio] = useState(false);
   const [editing, setEditing] = useState<Compromisso | null>(null);
@@ -561,41 +561,118 @@ export default function Schedule() {
 
       <div className="space-y-6">
         <Card className="p-4 md:p-6">
-          <Calendar
-            mode="single"
-            selected={selected}
-            onSelect={setSelected}
-            locale={ptBR}
-            numberOfMonths={typeof window !== "undefined" && window.innerWidth >= 1024 ? 2 : 1}
-            modifiers={{
-              hasEvent: reunioes.map((r) => r.date),
-              blocked: bloqueios.flatMap((b) => {
-                const days: Date[] = [];
-                const cur = new Date(b.inicio); cur.setHours(0,0,0,0);
-                const end = new Date(b.fim);
-                while (cur <= end) { days.push(new Date(cur)); cur.setDate(cur.getDate()+1); }
-                return days;
-              }),
-            }}
-            modifiersClassNames={{
-              hasEvent: "relative font-semibold text-primary after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:h-1.5 after:w-1.5 after:rounded-full after:bg-primary",
-              blocked: "line-through opacity-60 bg-destructive/10",
-            }}
-            className={cn("pointer-events-auto w-full")}
-            classNames={{
-              months: "flex flex-col lg:flex-row gap-8 w-full justify-center",
-              month: "space-y-4 flex-1",
-              caption_label: "text-base font-medium capitalize",
-              table: "w-full border-collapse",
-              head_cell: "text-muted-foreground rounded-md flex-1 font-normal text-sm py-2",
-              head_row: "flex w-full",
-              row: "flex w-full mt-2",
-              cell: "flex-1 h-14 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent/40 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md",
-              day: "h-14 w-full p-0 font-normal text-base hover:bg-accent rounded-md aria-selected:opacity-100",
-              day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-              day_today: "bg-accent text-accent-foreground",
-            }}
-          />
+          {(() => {
+            const monthStart = startOfMonth(currentMonth);
+            const monthEnd = endOfMonth(currentMonth);
+            const gridStart = startOfWeek(monthStart, { locale: ptBR });
+            const gridEnd = endOfWeek(monthEnd, { locale: ptBR });
+
+            const days: Date[] = [];
+            for (let d = gridStart; d <= gridEnd; d = addDays(d, 1)) days.push(d);
+
+            const dayKey = (d: Date) => format(d, "yyyy-MM-dd");
+            const eventsByDay = new Map<string, Compromisso[]>();
+            reunioes.forEach((r) => {
+              const k = dayKey(r.date);
+              const arr = eventsByDay.get(k) ?? [];
+              arr.push(r);
+              eventsByDay.set(k, arr);
+            });
+
+            const blockedDays = new Set<string>();
+            bloqueios.forEach((b) => {
+              const cur = new Date(b.inicio); cur.setHours(0,0,0,0);
+              const end = new Date(b.fim);
+              while (cur <= end) { blockedDays.add(dayKey(cur)); cur.setDate(cur.getDate()+1); }
+            });
+
+            const tipoBar: Record<Compromisso["tipo"], string> = {
+              ligacao: "bg-warning",
+              presencial: "bg-success",
+              videochamada: "bg-accent",
+            };
+            const weekDays = ["dom.", "seg.", "ter.", "qua.", "qui.", "sex.", "sáb."];
+
+            return (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-light capitalize">
+                    {format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR })}
+                  </h2>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => { const t = new Date(); setCurrentMonth(t); setSelected(t); }}>
+                      Hoje
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-7 border-t border-l border-border rounded-md overflow-hidden">
+                  {weekDays.map((wd) => (
+                    <div key={wd} className="text-xs text-muted-foreground py-2 px-2 border-r border-b border-border bg-muted/30">
+                      {wd}
+                    </div>
+                  ))}
+                  {days.map((d) => {
+                    const k = dayKey(d);
+                    const events = (eventsByDay.get(k) ?? []).sort((a, b) => +a.date - +b.date);
+                    const inMonth = isSameMonth(d, currentMonth);
+                    const today = isToday(d);
+                    const isSelected = selected && isSameDay(d, selected);
+                    const blocked = blockedDays.has(k);
+                    const visible = events.slice(0, 3);
+                    const extra = events.length - visible.length;
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => setSelected(d)}
+                        aria-label={format(d, "PPPP", { locale: ptBR })}
+                        className={cn(
+                          "text-left min-h-[110px] p-1.5 border-r border-b border-border align-top transition-colors",
+                          "hover:bg-accent/20",
+                          !inMonth && "bg-muted/20 text-muted-foreground",
+                          blocked && "bg-destructive/10",
+                          isSelected && "ring-1 ring-primary/50 ring-inset",
+                        )}
+                      >
+                        <div className="flex items-center justify-end mb-1">
+                          <span className={cn(
+                            "text-xs font-medium h-6 w-6 flex items-center justify-center rounded-full",
+                            today && "bg-destructive text-destructive-foreground",
+                          )}>
+                            {format(d, "d")}
+                          </span>
+                        </div>
+                        <div className="space-y-0.5">
+                          {visible.map((c) => (
+                            <div
+                              key={c.id}
+                              onClick={(e) => { e.stopPropagation(); setSelected(d); openEdit(c); }}
+                              className="flex items-center gap-1 text-[11px] leading-tight rounded-sm pl-1 pr-0.5 py-0.5 hover:bg-accent/40 cursor-pointer overflow-hidden"
+                              title={`${format(c.date, "HH:mm")} ${c.titulo}`}
+                            >
+                              <span className={cn("inline-block h-2 w-0.5 rounded-sm shrink-0", tipoBar[c.tipo])} />
+                              <span className="truncate flex-1 min-w-0">{c.titulo}</span>
+                              <span className="text-muted-foreground shrink-0 text-[10px]">{format(c.date, "HH:mm")}</span>
+                            </div>
+                          ))}
+                          {extra > 0 && (
+                            <div className="text-[10px] text-muted-foreground pl-1">e mais {extra}</div>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
