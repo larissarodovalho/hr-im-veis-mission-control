@@ -20,6 +20,7 @@ const ROLE_LABELS: Record<UiRole, string> = {
   corretor: "Corretor",
   gestor_corretor: "Gestor + Corretor",
   marketing: "Marketing",
+  secretaria: "Secretaria",
 };
 
 type Row = {
