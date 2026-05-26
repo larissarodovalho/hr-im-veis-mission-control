@@ -143,7 +143,7 @@ export default function Schedule() {
       { data: capts, error: cErr },
     ] = await Promise.all([
       supabase.from("reunioes")
-        .select("id, agendada_para, status, local, link, notas, tipo, duracao_min, titulo, criado_por_ia, lead_id, conta_id")
+        .select("id, agendada_para, status, local, link, notas, tipo, duracao_min, titulo, criado_por_ia, lead_id, conta_id, recorrencia_id, recorrencia_regra")
         .order("agendada_para"),
       supabase.from("agenda_bloqueios" as any).select("*").order("inicio"),
       supabase.from("leads").select("id, nome").order("nome"),
