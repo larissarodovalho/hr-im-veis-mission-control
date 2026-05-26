@@ -38,11 +38,11 @@ function OportunidadeCard({ op, clienteNome, corretorNome, qtdImoveis, onClick }
       {...attributes}
       {...listeners}
       onClick={onClick}
-      className={`p-3 space-y-2 cursor-grab active:cursor-grabbing hover:border-primary/40 transition ${isDragging ? "opacity-40" : ""}`}
+      className={`p-3 space-y-2 cursor-grab active:cursor-grabbing hover:border-primary/40 transition overflow-hidden ${isDragging ? "opacity-40" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
-        <h4 className="font-medium text-sm leading-tight">{op.titulo}</h4>
-        <Badge variant="outline" className={`text-[10px] ${PRIO_COLORS[op.prioridade] || ""}`}>
+        <h4 className="font-medium text-sm leading-tight min-w-0 flex-1 break-words">{op.titulo}</h4>
+        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 shrink-0 whitespace-nowrap ${PRIO_COLORS[op.prioridade] || ""}`}>
           {op.prioridade === "alta" && <Flame className="h-3 w-3 mr-0.5" />}
           {op.prioridade}
         </Badge>
