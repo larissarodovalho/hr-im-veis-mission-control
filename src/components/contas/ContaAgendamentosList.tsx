@@ -3,13 +3,13 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarClock, Calendar, Phone, MapPin, ExternalLink } from "lucide-react";
+import { CalendarClock, Calendar, Phone, MapPin, ExternalLink, Sprout } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 type Item = {
   id: string;
-  kind: "reuniao" | "ligacao" | "visita";
+  kind: "reuniao" | "ligacao" | "visita" | "captacao";
   when: string;
   status?: string | null;
   subtitle?: string | null;
@@ -20,6 +20,7 @@ const META = {
   reuniao: { label: "Reunião", icon: Calendar, color: "bg-violet-500/15 text-violet-700 border-violet-500/30", path: "/crm/reunioes" },
   ligacao: { label: "Ligação", icon: Phone, color: "bg-blue-500/15 text-blue-700 border-blue-500/30", path: "/crm/ligacoes" },
   visita: { label: "Visita", icon: MapPin, color: "bg-teal-500/15 text-teal-700 border-teal-500/30", path: "/crm/visitas" },
+  captacao: { label: "Captação", icon: Sprout, color: "bg-amber-500/15 text-amber-700 border-amber-500/30", path: "/crm/imoveis" },
 } as const;
 
 export default function ContaAgendamentosList({ contaId }: { contaId: string }) {
@@ -27,10 +28,11 @@ export default function ContaAgendamentosList({ contaId }: { contaId: string }) 
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
-    const [{ data: reunioes }, { data: ligacoes }, { data: visitas }] = await Promise.all([
+    const [{ data: reunioes }, { data: ligacoes }, { data: visitas }, { data: captacoes }] = await Promise.all([
       supabase.from("reunioes").select("id, agendada_para, duracao_min, tipo, local, link, status, notas").eq("conta_id", contaId),
       supabase.from("ligacoes").select("id, data, duracao_seg, resultado, notas").eq("conta_id", contaId),
       supabase.from("visitas").select("id, data_visita, status, observacoes").eq("conta_id", contaId),
+      supabase.from("captacoes_imovel").select("id, data_agendada, estagio, observacoes").eq("conta_id", contaId).not("data_agendada", "is", null),
     ]);
 
     const all: Item[] = [
@@ -58,6 +60,14 @@ export default function ContaAgendamentosList({ contaId }: { contaId: string }) 
         subtitle: null,
         notes: v.observacoes,
       })),
+      ...((captacoes as any[]) ?? []).map((c) => ({
+        id: c.id,
+        kind: "captacao" as const,
+        when: c.data_agendada,
+        status: c.estagio,
+        subtitle: null,
+        notes: c.observacoes,
+      })),
     ].sort((a, b) => new Date(b.when).getTime() - new Date(a.when).getTime());
 
     setItems(all);
@@ -71,6 +81,7 @@ export default function ContaAgendamentosList({ contaId }: { contaId: string }) 
       .on("postgres_changes", { event: "*", schema: "public", table: "reunioes", filter: `conta_id=eq.${contaId}` }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "ligacoes", filter: `conta_id=eq.${contaId}` }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "visitas", filter: `conta_id=eq.${contaId}` }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "captacoes_imovel", filter: `conta_id=eq.${contaId}` }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
