@@ -222,6 +222,8 @@ export default function Schedule() {
         conta_id: m.conta_id ?? null,
         conta_nome: contaNome ?? null,
         criado_por_ia: m.criado_por_ia,
+        recorrencia_id: m.recorrencia_id ?? null,
+        recorrencia_regra: m.recorrencia_regra ?? null,
       };
     });
     const ligsAgendadas: Compromisso[] = ((ligs ?? []) as any[])
