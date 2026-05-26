@@ -466,6 +466,13 @@ export default function Imoveis() {
         onOpenChange={(v) => { if (!v) setHistFor(null); }}
         imovel={histFor}
       />
+      <DetalhesImovelDialog
+        open={!!viewing}
+        onOpenChange={(v) => { if (!v) setViewing(null); }}
+        imovel={viewing}
+        corretorNome={viewing ? profiles[viewing.corretor_id] : undefined}
+        proprietarioNome={viewing ? contas[viewing.proprietario_id] : undefined}
+      />
     </div>
   );
 }
