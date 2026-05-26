@@ -30,6 +30,8 @@ type Compromisso = {
   notas?: string | null;
   lead_id?: string | null;
   lead_nome?: string | null;
+  lead_telefone?: string | null;
+  lead_email?: string | null;
   criado_por_ia?: boolean;
 };
 
@@ -144,7 +146,7 @@ export default function Schedule() {
 
     let leadsById = new Map<string, any>();
     if (leadIds.length) {
-      const { data: ls } = await supabase.from("leads").select("id, nome").in("id", leadIds);
+      const { data: ls } = await supabase.from("leads").select("id, nome, telefone, email").in("id", leadIds);
       leadsById = new Map((ls ?? []).map((x: any) => [x.id, x]));
     }
     let contasById = new Map<string, any>();
@@ -161,7 +163,8 @@ export default function Schedule() {
     const reus: Compromisso[] = ((r ?? []) as any[]).map((m) => {
       const start = new Date(m.agendada_para);
       const end = new Date(start.getTime() + (m.duracao_min ?? 60) * 60000);
-      const leadNome = m.lead_id ? leadsById.get(m.lead_id)?.nome : null;
+      const lead = m.lead_id ? leadsById.get(m.lead_id) : null;
+      const leadNome = lead?.nome ?? null;
       const contaNome = m.conta_id ? contasById.get(m.conta_id)?.nome : null;
       return {
         id: m.id,
@@ -175,6 +178,8 @@ export default function Schedule() {
         notas: m.notas,
         lead_id: m.lead_id,
         lead_nome: leadNome,
+        lead_telefone: lead?.telefone ?? null,
+        lead_email: lead?.email ?? null,
         criado_por_ia: m.criado_por_ia,
       };
     });
@@ -186,7 +191,8 @@ export default function Schedule() {
       .map((c) => {
         const start = new Date(c.data);
         const dur = c.duracao_seg ? Math.round(c.duracao_seg / 60) : 30;
-        const leadNome = c.lead_id ? leadsById.get(c.lead_id)?.nome : null;
+        const lead = c.lead_id ? leadsById.get(c.lead_id) : null;
+        const leadNome = lead?.nome ?? null;
         const contaNome = c.conta_id ? contasById.get(c.conta_id)?.nome : null;
         const alvo = leadNome || contaNome;
         return {
@@ -199,12 +205,15 @@ export default function Schedule() {
           notas: c.notas,
           lead_id: c.lead_id,
           lead_nome: leadNome,
+          lead_telefone: lead?.telefone ?? null,
+          lead_email: lead?.email ?? null,
           criado_por_ia: false,
         };
       });
     const visitasAgendadas: Compromisso[] = ((vis ?? []) as any[]).map((v) => {
       const start = new Date(v.data_visita);
-      const leadNome = v.lead_id ? leadsById.get(v.lead_id)?.nome : null;
+      const lead = v.lead_id ? leadsById.get(v.lead_id) : null;
+      const leadNome = lead?.nome ?? null;
       const contaNome = v.conta_id ? contasById.get(v.conta_id)?.nome : null;
       const imovel = v.imovel_id ? imoveisById.get(v.imovel_id) : null;
       const alvo = leadNome || contaNome;
@@ -223,6 +232,8 @@ export default function Schedule() {
         notas: v.observacoes,
         lead_id: v.lead_id,
         lead_nome: leadNome,
+        lead_telefone: lead?.telefone ?? null,
+        lead_email: lead?.email ?? null,
         criado_por_ia: false,
       };
     });
@@ -945,6 +956,13 @@ export default function Schedule() {
                           )}
                         </div>
                         {c.lead_nome && <div className="text-xs text-muted-foreground mt-0.5">Lead: {c.lead_id ? <Link to={`/crm/leads/${c.lead_id}`} className="text-primary hover:underline">{c.lead_nome}</Link> : c.lead_nome}</div>}
+                        {(c.lead_telefone || c.lead_email) && (
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            {c.lead_telefone && <span>📞 {c.lead_telefone}</span>}
+                            {c.lead_telefone && c.lead_email && <span> · </span>}
+                            {c.lead_email && <span>✉ {c.lead_email}</span>}
+                          </div>
+                        )}
                         {(c.local || c.link) && <div className="text-xs text-muted-foreground mt-0.5">{c.local || c.link}</div>}
                         {c.notas && <div className="text-xs text-muted-foreground mt-1">{c.notas}</div>}
                       </div>
@@ -984,6 +1002,13 @@ export default function Schedule() {
                       <div className="text-xs text-muted-foreground mt-0.5">
                         {TIPO_LABEL[c.tipo]} · {c.lead_id && c.lead_nome ? <Link to={`/crm/leads/${c.lead_id}`} className="text-primary hover:underline">{c.lead_nome}</Link> : (c.lead_nome || "sem lead")}{c.local || c.link ? ` · ${c.local || c.link}` : ""}
                       </div>
+                      {(c.lead_telefone || c.lead_email) && (
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {c.lead_telefone && <span>📞 {c.lead_telefone}</span>}
+                          {c.lead_telefone && c.lead_email && <span> · </span>}
+                          {c.lead_email && <span>✉ {c.lead_email}</span>}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <Badge variant="outline">{c.status}</Badge>

@@ -40,7 +40,7 @@ export default function Meetings() {
 
     const leadIds = [...new Set((meetings ?? []).map((m) => m.lead_id).filter(Boolean))];
     const { data: meetingLeads } = leadIds.length
-      ? await supabase.from("leads").select("id,nome").in("id", leadIds)
+      ? await supabase.from("leads").select("id,nome,telefone,email").in("id", leadIds)
       : { data: [] };
     const leadsById = new Map((meetingLeads ?? []).map((lead) => [lead.id, lead]));
 
@@ -206,7 +206,13 @@ export default function Meetings() {
               return (
               <tr key={m.id} className="border-t hover:bg-muted/40 cursor-pointer" onClick={() => openEdit(m)}>
                 <td className="p-3 whitespace-nowrap">{format(new Date(m.agendada_para), "Pp", { locale: ptBR })}</td>
-                <td className="p-3" onClick={(e) => e.stopPropagation()}>{m.leads?.id ? <Link to={`/crm/leads/${m.lead_id}`} className="font-medium text-primary underline-offset-2 hover:underline">{m.leads.nome}</Link> : m.conta?.id ? <Link to={`/crm/contas/${m.conta_id}`} className="font-medium text-primary underline-offset-2 hover:underline">{m.conta.nome}</Link> : (m.titulo || "Sem lead")}</td>
+                <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex flex-col gap-0.5">
+                    {m.leads?.id ? <Link to={`/crm/leads/${m.lead_id}`} className="font-medium text-primary underline-offset-2 hover:underline">{m.leads.nome}</Link> : m.conta?.id ? <Link to={`/crm/contas/${m.conta_id}`} className="font-medium text-primary underline-offset-2 hover:underline">{m.conta.nome}</Link> : <span>{m.titulo || "Sem lead"}</span>}
+                    {m.leads?.telefone && <span className="text-xs text-muted-foreground">📞 {m.leads.telefone}</span>}
+                    {m.leads?.email && <span className="text-xs text-muted-foreground truncate max-w-[240px]">✉ {m.leads.email}</span>}
+                  </div>
+                </td>
                 <td className="p-3">
                   <div className="flex flex-col gap-1">
                     <Badge variant="secondary" className="w-fit">{t.emoji} {t.label}</Badge>
