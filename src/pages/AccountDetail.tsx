@@ -259,7 +259,10 @@ export default function AccountDetail() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-5">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Propriedades</p>
-          <p className="text-3xl font-semibold mt-1">{props.length}</p>
+          <p className="text-3xl font-semibold mt-1">{totalPropriedades}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {imoveisPortfolio.length} no portfólio · {props.length} cadastrada{props.length === 1 ? "" : "s"}
+          </p>
         </Card>
         <Card className="p-5">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Valor total dos negócios</p>
