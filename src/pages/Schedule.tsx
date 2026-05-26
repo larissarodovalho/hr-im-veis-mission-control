@@ -1300,9 +1300,21 @@ export default function Schedule() {
               </div>
             );
           })()}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
-            <Button onClick={salvarEdicao} disabled={savingEdit}><Save className="h-4 w-4 mr-1" />Salvar</Button>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="destructive" onClick={excluirCompromisso} disabled={savingEdit}>
+                <Trash2 className="h-4 w-4 mr-1" />Excluir
+              </Button>
+              {editing?.recorrencia_id && (
+                <Button variant="outline" onClick={excluirSerie} disabled={savingEdit} className="text-destructive border-destructive/40 hover:bg-destructive/10">
+                  <Trash2 className="h-4 w-4 mr-1" />Excluir série
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
+              <Button onClick={salvarEdicao} disabled={savingEdit}><Save className="h-4 w-4 mr-1" />Salvar</Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
