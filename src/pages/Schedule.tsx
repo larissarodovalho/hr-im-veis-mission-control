@@ -540,6 +540,19 @@ export default function Schedule() {
     load();
   };
 
+  const marcarConcluido = async (c: Compromisso) => {
+    const { table, realId, entity } = parseId(c.id);
+    let res;
+    if (table === "reunioes") res = await supabase.from("reunioes").update({ status: "realizada" } as any).eq("id", realId);
+    else if (table === "ligacoes") res = await supabase.from("ligacoes").update({ resultado: "realizada" } as any).eq("id", realId);
+    else if (table === "visitas") res = await supabase.from("visitas").update({ status: "Realizada" } as any).eq("id", realId);
+    else res = await supabase.from("captacoes_imovel").update({ estagio: "concluido" } as any).eq("id", realId);
+    if (res?.error) return toast.error(res.error.message);
+    toast.success("Marcado como concluído");
+    supabase.functions.invoke("gcal-push", { body: { entity_type: entity, entity_id: realId, action: "update" } }).catch(() => {});
+    load();
+  };
+
   const excluirCompromisso = async () => {
     if (!editing) return;
     const { table, realId, entity } = parseId(editing.id);
