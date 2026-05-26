@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ArrowLeft, Pencil, Building2, Phone, Save, FileSignature, Plus, Trash2, MapPin, Target } from "lucide-react";
+import { ArrowLeft, Pencil, Building2, Phone, Save, FileSignature, Plus, Trash2, MapPin, Target, Home as HomeIcon, Eye, EyeOff } from "lucide-react";
 import EntityDocumentsTab from "@/components/EntityDocumentsTab";
 import ContaInteracoesTimeline from "@/components/contas/ContaInteracoesTimeline";
 import ContaAgendaQuickAdd from "@/components/contas/ContaAgendaQuickAdd";
@@ -50,6 +50,7 @@ export default function AccountDetail() {
   };
   const [acc, setAcc] = useState<any>(null);
   const [props, setProps] = useState<Propriedade[]>([]);
+  const [imoveisPortfolio, setImoveisPortfolio] = useState<any[]>([]);
   const [editing, setEditing] = useState<any>(null);
   const [propEditing, setPropEditing] = useState<Partial<Propriedade> | null>(null);
   const [corretores, setCorretores] = useState<{ user_id: string; nome: string | null }[]>([]);
@@ -61,17 +62,20 @@ export default function AccountDetail() {
     if (!id) return;
     setLoadError(null);
     try {
-      const [{ data: a, error: e1 }, { data: p, error: e2 }, { data: c, error: e3 }, { data: pa }] = await Promise.all([
+      const [{ data: a, error: e1 }, { data: p, error: e2 }, { data: c, error: e3 }, { data: pa }, { data: im, error: e5 }] = await Promise.all([
         supabase.from("contas").select("*").eq("id", id).maybeSingle(),
         supabase.from("conta_propriedades").select("*").eq("conta_id", id).order("created_at", { ascending: false }),
         supabase.from("profiles").select("user_id, nome").eq("ativo", true).order("nome"),
         supabase.from("corretores_parceiros").select("id, nome").eq("ativo", true).order("nome"),
+        supabase.from("imoveis").select("id, codigo, titulo, tipo, finalidade, status, valor, cidade, estado, fotos, publicado").eq("proprietario_id", id).order("created_at", { ascending: false }),
       ]);
       if (e1) throw e1;
       if (e2) console.warn("[AccountDetail] propriedades:", e2);
       if (e3) console.warn("[AccountDetail] corretores:", e3);
+      if (e5) console.warn("[AccountDetail] imoveis portfolio:", e5);
       setAcc(a);
       setProps((p as Propriedade[]) || []);
+      setImoveisPortfolio((im as any) || []);
       setCorretores((c as any) || []);
       setParceiros((pa as any) || []);
     } catch (err: any) {
@@ -272,6 +276,63 @@ export default function AccountDetail() {
       <Card className="p-5">
         <ContaTarefas contaId={acc.id} responsavelId={acc.responsavel_id} />
       </Card>
+
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-display text-xl font-semibold flex items-center gap-2">
+            <HomeIcon className="h-5 w-5 text-primary" /> Imóveis no portfólio
+            <Badge variant="secondary" className="ml-1 text-[10px]">{imoveisPortfolio.length}</Badge>
+          </h2>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/crm/imoveis"><Plus className="h-4 w-4 mr-1" /> Cadastrar imóvel</Link>
+          </Button>
+        </div>
+        {imoveisPortfolio.length === 0 ? (
+          <Card className="p-6 text-center text-sm text-muted-foreground">
+            Nenhum imóvel deste cliente no portfólio. Cadastre em <Link to="/crm/imoveis" className="text-primary underline">Imóveis</Link> selecionando este cliente como proprietário.
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {imoveisPortfolio.map((i) => {
+              const publicado = i.publicado ?? true;
+              return (
+                <Link key={i.id} to="/crm/imoveis" className="block group">
+                  <Card className="overflow-hidden transition hover:border-primary/50 hover:shadow-md">
+                    <div className="relative">
+                      {i.fotos?.[0] ? (
+                        <img src={i.fotos[0]} alt={i.titulo} className="w-full h-28 object-cover" />
+                      ) : (
+                        <div className="w-full h-28 bg-muted flex items-center justify-center text-muted-foreground">
+                          <HomeIcon className="h-8 w-8 opacity-30" />
+                        </div>
+                      )}
+                      <Badge className="absolute top-1.5 left-1.5 text-[10px]" variant="outline">{i.status}</Badge>
+                      <span className={`absolute top-1.5 right-1.5 inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${
+                        publicado
+                          ? "bg-emerald-500/90 text-white border-emerald-600"
+                          : "bg-zinc-700/90 text-white border-zinc-800"
+                      }`}>
+                        {publicado ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                        {publicado ? "Publicado" : "Oculto"}
+                      </span>
+                    </div>
+                    <div className="p-3 space-y-1">
+                      <div className="font-semibold text-sm leading-tight truncate group-hover:text-primary">{i.titulo}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {i.cidade}{i.estado && ` · ${i.estado}`}{i.codigo && ` · ${i.codigo}`}
+                      </div>
+                      <div className="flex items-center justify-between pt-1">
+                        <Badge variant="secondary" className="text-[10px]">{i.finalidade} · {i.tipo}</Badge>
+                        <span className="font-semibold text-primary text-sm">{fmtMoney(i.valor)}</span>
+                      </div>
+                    </div>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       <div>
         <div className="flex items-center justify-between mb-3">
