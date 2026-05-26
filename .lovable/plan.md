@@ -1,29 +1,19 @@
-## Ajustes no Novo compromisso: tipo "Mensagem" e vínculo com Conta
+## Tornar o diálogo "Novo compromisso" rolável
 
-### 1. Adicionar tipo "Mensagem"
+### Problema
+O diálogo "Novo compromisso" agora tem muitos campos (tipo, duração, título, data, lead, conta, imóvel, local/link, notas, recorrência). Em telas menores, a parte de cima (cabeçalho) e a de baixo (botões Cancelar/Agendar) ficam cortadas porque o `DialogContent` não rola — todo o conteúdo cresce além da viewport.
 
-Hoje o `Compromisso.tipo` aceita `ligacao | presencial | videochamada`. Vou adicionar `mensagem` (ex.: WhatsApp/SMS) como mais uma opção.
+### Mudança
+Em `src/pages/Schedule.tsx`, no `<DialogContent>` do "Novo compromisso":
 
-Mudanças em `src/pages/Schedule.tsx`:
-- Tipo `Compromisso["tipo"]` ganha `"mensagem"`.
-- `TIPO_LABEL` ganha `mensagem: "Mensagem"`.
-- `TipoIcon` retorna `MessageCircle` (lucide) para mensagem.
-- Select do "Novo compromisso" ganha `<SelectItem value="mensagem">💬 Mensagem</SelectItem>`.
-- `tipoChip` (mapa de cores no grid) ganha entrada para `mensagem`.
-- Persistência: a coluna `reunioes.tipo` é text livre, então não precisa de migração.
+- Adicionar `className="max-w-lg max-h-[90vh] flex flex-col p-0"`.
+- Envolver o `<form>` em um wrapper com:
+  - Header fixo (`DialogHeader` com padding próprio, `shrink-0`).
+  - Corpo do formulário em um `<div className="overflow-y-auto px-6 py-4 flex-1 min-h-0">` contendo todos os campos.
+  - `DialogFooter` fixo no rodapé (`shrink-0 px-6 py-4 border-t`).
+- Manter o `<form>` em volta de tudo para que o submit continue funcionando; o footer fica dentro do form.
 
-### 2. Vínculo com Conta no formulário
-
-Hoje o diálogo só permite vincular Lead e Imóvel. Vou adicionar um Select "Conta vinculada" (clientes do funil), salvando em `reunioes.conta_id` (coluna já existe e já é lida no loader).
-
-Mudanças em `src/pages/Schedule.tsx`:
-- Novo estado `contasList` carregado no `load()` via `supabase.from("contas").select("id, nome").order("nome")`.
-- `novo` ganha `conta_id: "none"`.
-- Novo `<Select>` "Conta vinculada" abaixo do "Lead vinculado", com `SearchableSelect` se a lista crescer — manter `Select` padrão por consistência com o resto do diálogo.
-- `criarCompromisso` envia `conta_id: novo.conta_id === "none" ? null : novo.conta_id` em cada linha (inclusive nas ocorrências recorrentes).
-- Reset do `setNovo` inclui `conta_id: "none"`.
-
-Sem alteração de banco — `reunioes.conta_id` já existe e o card do dia já mostra "Cliente:" quando `conta_nome` está presente.
+Aplicar o mesmo padrão ao diálogo "Editar compromisso" para consistência (também ficou alto).
 
 ### Arquivos
-- `src/pages/Schedule.tsx` — tipo, label, ícone, chip de cor, carga de contas, novo campo no diálogo e na inserção.
+- `src/pages/Schedule.tsx` — ajuste de layout dos dois diálogos (novo e editar). Sem mudança de lógica.
