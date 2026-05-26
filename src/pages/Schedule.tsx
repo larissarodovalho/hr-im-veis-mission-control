@@ -265,6 +265,7 @@ export default function Schedule() {
       .on("postgres_changes", { event: "*", schema: "public", table: "ligacoes" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "agenda_bloqueios" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "visitas" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "captacoes_imovel" }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
