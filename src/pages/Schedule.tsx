@@ -559,13 +559,14 @@ export default function Schedule() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-6">
-        <Card className="p-4">
+      <div className="space-y-6">
+        <Card className="p-4 md:p-6">
           <Calendar
             mode="single"
             selected={selected}
             onSelect={setSelected}
             locale={ptBR}
+            numberOfMonths={typeof window !== "undefined" && window.innerWidth >= 1024 ? 2 : 1}
             modifiers={{
               hasEvent: reunioes.map((r) => r.date),
               blocked: bloqueios.flatMap((b) => {
@@ -577,85 +578,99 @@ export default function Schedule() {
               }),
             }}
             modifiersClassNames={{
-              hasEvent: "relative font-semibold text-primary after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:h-1 after:w-1 after:rounded-full after:bg-primary",
+              hasEvent: "relative font-semibold text-primary after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:h-1.5 after:w-1.5 after:rounded-full after:bg-primary",
               blocked: "line-through opacity-60 bg-destructive/10",
             }}
-            className={cn("p-3 pointer-events-auto rounded-md border")}
+            className={cn("pointer-events-auto w-full")}
+            classNames={{
+              months: "flex flex-col lg:flex-row gap-8 w-full justify-center",
+              month: "space-y-4 flex-1",
+              caption_label: "text-base font-medium capitalize",
+              table: "w-full border-collapse",
+              head_cell: "text-muted-foreground rounded-md flex-1 font-normal text-sm py-2",
+              head_row: "flex w-full",
+              row: "flex w-full mt-2",
+              cell: "flex-1 h-14 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent/40 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md",
+              day: "h-14 w-full p-0 font-normal text-base hover:bg-accent rounded-md aria-selected:opacity-100",
+              day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+              day_today: "bg-accent text-accent-foreground",
+            }}
           />
         </Card>
 
-        <Card className="p-4 md:p-6 min-w-0">
-          <Tabs defaultValue="dia">
-            <TabsList>
-              <TabsTrigger value="dia">Dia selecionado</TabsTrigger>
-              <TabsTrigger value="proximos">Próximos</TabsTrigger>
-              <TabsTrigger value="bloqueios">Bloqueios ({bloqueios.length})</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="dia" className="space-y-3 mt-4">
-              <div className="text-sm text-muted-foreground">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="p-4 md:p-6 min-w-0">
+            <div className="mb-4">
+              <h3 className="text-lg font-medium">Dia selecionado</h3>
+              <div className="text-sm text-muted-foreground capitalize">
                 {selected ? format(selected, "PPPP", { locale: ptBR }) : "Selecione um dia"}
               </div>
+            </div>
 
-              {eventosDoDia.bloqueios.length > 0 && (
-                <div className="space-y-2">
-                  {eventosDoDia.bloqueios.map((b) => (
-                    <div key={b.id} className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm flex items-start justify-between gap-2">
-                      <div>
-                        <div className="font-medium flex items-center gap-2"><Ban className="h-4 w-4" />{b.motivo || "Indisponível"}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5">
-                          {format(b.inicio, "Pp", { locale: ptBR })} → {format(b.fim, "Pp", { locale: ptBR })}
-                        </div>
+            {eventosDoDia.bloqueios.length > 0 && (
+              <div className="space-y-2 mb-3">
+                {eventosDoDia.bloqueios.map((b) => (
+                  <div key={b.id} className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm flex items-start justify-between gap-2">
+                    <div>
+                      <div className="font-medium flex items-center gap-2"><Ban className="h-4 w-4" />{b.motivo || "Indisponível"}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {format(b.inicio, "Pp", { locale: ptBR })} → {format(b.fim, "Pp", { locale: ptBR })}
                       </div>
-                      {isAdmin && (
-                        <Button size="icon" variant="ghost" onClick={() => removerBloqueio(b.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
                     </div>
-                  ))}
-                </div>
-              )}
+                    {isAdmin && (
+                      <Button size="icon" variant="ghost" onClick={() => removerBloqueio(b.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
 
-              {eventosDoDia.compromissos.length === 0 && eventosDoDia.bloqueios.length === 0 && (
-                <div className="text-sm text-muted-foreground py-6 text-center border border-dashed rounded-md">
-                  Nada agendado neste dia.
-                </div>
-              )}
+            {eventosDoDia.compromissos.length === 0 && eventosDoDia.bloqueios.length === 0 && (
+              <div className="text-sm text-muted-foreground py-6 text-center border border-dashed rounded-md">
+                Nada agendado neste dia.
+              </div>
+            )}
 
-              <ul className="space-y-2">
-                {eventosDoDia.compromissos
-                  .sort((a, b) => +a.date - +b.date)
-                  .map((c) => (
-                    <li key={c.id} className="rounded-md border bg-card p-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium flex items-center gap-2">
-                            <TipoIcon tipo={c.tipo} />
-                            {format(c.date, "HH:mm", { locale: ptBR })} — {c.titulo}
-                            {c.criado_por_ia && (
-                              <Badge variant="secondary" className="gap-1">
-                                <Sparkles className="h-3 w-3" /> IA
-                              </Badge>
-                            )}
-                          </div>
-                          {c.lead_nome && <div className="text-xs text-muted-foreground mt-0.5">Lead: {c.lead_id ? <Link to={`/crm/leads/${c.lead_id}`} className="text-primary hover:underline">{c.lead_nome}</Link> : c.lead_nome}</div>}
-                          {(c.local || c.link) && <div className="text-xs text-muted-foreground mt-0.5">{c.local || c.link}</div>}
-                          {c.notas && <div className="text-xs text-muted-foreground mt-1">{c.notas}</div>}
+            <ul className="space-y-2">
+              {eventosDoDia.compromissos
+                .sort((a, b) => +a.date - +b.date)
+                .map((c) => (
+                  <li key={c.id} className="rounded-md border bg-card p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium flex items-center gap-2">
+                          <TipoIcon tipo={c.tipo} />
+                          {format(c.date, "HH:mm", { locale: ptBR })} — {c.titulo}
+                          {c.criado_por_ia && (
+                            <Badge variant="secondary" className="gap-1">
+                              <Sparkles className="h-3 w-3" /> IA
+                            </Badge>
+                          )}
                         </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <Badge variant="outline">{c.status}</Badge>
-                          <Button size="icon" variant="ghost" onClick={() => openEdit(c)} title="Editar">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        {c.lead_nome && <div className="text-xs text-muted-foreground mt-0.5">Lead: {c.lead_id ? <Link to={`/crm/leads/${c.lead_id}`} className="text-primary hover:underline">{c.lead_nome}</Link> : c.lead_nome}</div>}
+                        {(c.local || c.link) && <div className="text-xs text-muted-foreground mt-0.5">{c.local || c.link}</div>}
+                        {c.notas && <div className="text-xs text-muted-foreground mt-1">{c.notas}</div>}
                       </div>
-                    </li>
-                  ))}
-              </ul>
-            </TabsContent>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Badge variant="outline">{c.status}</Badge>
+                        <Button size="icon" variant="ghost" onClick={() => openEdit(c)} title="Editar">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+            </ul>
+          </Card>
 
-            <TabsContent value="proximos" className="space-y-2 max-h-[36rem] overflow-auto mt-4">
+          <Card className="p-4 md:p-6 min-w-0">
+            <div className="mb-4">
+              <h3 className="text-lg font-medium">Próximos compromissos</h3>
+              <div className="text-sm text-muted-foreground">Agendamentos futuros</div>
+            </div>
+            <div className="space-y-2 max-h-[36rem] overflow-auto">
               {reunioes.filter((r) => r.date >= new Date()).length === 0 && (
                 <p className="text-sm text-muted-foreground">Nenhum compromisso futuro.</p>
               )}
@@ -681,10 +696,16 @@ export default function Schedule() {
                     </div>
                   </div>
                 ))}
-            </TabsContent>
+            </div>
+          </Card>
+        </div>
 
-            <TabsContent value="bloqueios" className="space-y-2 mt-4">
-              {bloqueios.length === 0 && <p className="text-sm text-muted-foreground">Nenhum bloqueio cadastrado.</p>}
+        {bloqueios.length > 0 && (
+          <Card className="p-4 md:p-6">
+            <div className="mb-4">
+              <h3 className="text-lg font-medium">Bloqueios cadastrados ({bloqueios.length})</h3>
+            </div>
+            <div className="space-y-2">
               {bloqueios.map((b) => (
                 <div key={b.id} className="rounded-md border p-3 text-sm flex items-start justify-between gap-2">
                   <div>
@@ -700,9 +721,9 @@ export default function Schedule() {
                   )}
                 </div>
               ))}
-            </TabsContent>
-          </Tabs>
-        </Card>
+            </div>
+          </Card>
+        )}
       </div>
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
