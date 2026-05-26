@@ -94,7 +94,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPI icon={Users} label="Total de leads" value={total} />
         <KPI icon={TrendingUp} label="Taxa de conversão" value={`${rate}%`} />
-        <KPI icon={Calendar} label="Reuniões esta semana" value={reunioesWeek} />
+        <KPI icon={Calendar} label="Reuniões este mês" value={reunioesMes} />
         <KPI icon={Clock} label="Sem atendimento (3d+)" value={overdue.length} accent={overdue.length > 0} />
       </div>
 
