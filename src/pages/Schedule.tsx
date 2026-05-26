@@ -704,6 +704,71 @@ export default function Schedule() {
           </Tabs>
         </Card>
       </div>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Editar compromisso</DialogTitle></DialogHeader>
+          {editing && (() => {
+            const { entity } = parseId(editing.id);
+            const showDuracao = entity === "reuniao" || entity === "ligacao";
+            const showLocalLink = entity === "reuniao";
+            const showTitulo = entity === "reuniao";
+            const statusOptions =
+              entity === "captacao"
+                ? ["novo", "agendada", "em_andamento", "concluido", "cancelada"]
+                : entity === "visita"
+                ? ["Agendada", "Realizada", "Cancelada", "Remarcada"]
+                : entity === "ligacao"
+                ? ["agendada", "realizada", "nao_atendeu", "cancelada"]
+                : ["agendada", "realizada", "cancelada", "remarcada"];
+            return (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Data e hora</Label>
+                    <Input type="datetime-local" value={editForm.when} onChange={(e) => setEditForm({ ...editForm, when: e.target.value })} />
+                  </div>
+                  {showDuracao && (
+                    <div>
+                      <Label>Duração (min)</Label>
+                      <Input type="number" min={5} step={5} value={editForm.duracao} onChange={(e) => setEditForm({ ...editForm, duracao: Number(e.target.value) })} />
+                    </div>
+                  )}
+                </div>
+                {showTitulo && (
+                  <div>
+                    <Label>Título</Label>
+                    <Input value={editForm.titulo} onChange={(e) => setEditForm({ ...editForm, titulo: e.target.value })} />
+                  </div>
+                )}
+                {showLocalLink && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><Label>Local</Label><Input value={editForm.local} onChange={(e) => setEditForm({ ...editForm, local: e.target.value })} /></div>
+                    <div><Label>Link</Label><Input value={editForm.link} onChange={(e) => setEditForm({ ...editForm, link: e.target.value })} /></div>
+                  </div>
+                )}
+                <div>
+                  <Label>Status</Label>
+                  <Select value={editForm.status} onValueChange={(v) => setEditForm({ ...editForm, status: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>{entity === "visita" || entity === "captacao" ? "Observações" : "Notas"}</Label>
+                  <Textarea rows={3} value={editForm.notas} onChange={(e) => setEditForm({ ...editForm, notas: e.target.value })} />
+                </div>
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
+            <Button onClick={salvarEdicao} disabled={savingEdit}><Save className="h-4 w-4 mr-1" />Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
