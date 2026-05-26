@@ -107,7 +107,16 @@ Deno.serve(async (req) => {
   try {
     const supa = adminClient();
     const url = new URL(req.url);
-    const single = url.searchParams.get("user_id");
+    let bodyUserId: string | null = null;
+    if (req.method !== "GET") {
+      try {
+        const body = await req.json();
+        bodyUserId = typeof body?.user_id === "string" ? body.user_id : null;
+      } catch {
+        bodyUserId = null;
+      }
+    }
+    const single = url.searchParams.get("user_id") ?? bodyUserId;
 
     let users: { user_id: string }[];
     if (single) users = [{ user_id: single }];
