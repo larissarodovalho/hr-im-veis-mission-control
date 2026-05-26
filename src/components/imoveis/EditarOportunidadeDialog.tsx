@@ -14,6 +14,10 @@ import { toast } from "sonner";
 export default function EditarOportunidadeDialog({ open, onOpenChange, oportunidade, onSaved }: { open: boolean; onOpenChange: (v: boolean) => void; oportunidade: any; onSaved: () => void }) {
   const [imoveis, setImoveis] = useState<{ id: string; nome: string }[]>([]);
   const [corretores, setCorretores] = useState<{ id: string; nome: string }[]>([]);
+  const [leads, setLeads] = useState<{ id: string; nome: string }[]>([]);
+  const [contas, setContas] = useState<{ id: string; nome: string }[]>([]);
+  const [clienteTipo, setClienteTipo] = useState<"lead" | "conta">("lead");
+  const [clienteId, setClienteId] = useState("none");
   const [vinculos, setVinculos] = useState<any[]>([]);
   const [novoImovel, setNovoImovel] = useState("none");
 
@@ -23,11 +27,19 @@ export default function EditarOportunidadeDialog({ open, onOpenChange, oportunid
   useEffect(() => {
     if (!open || !oportunidade) return;
     setForm({ ...oportunidade });
+    setClienteTipo((oportunidade.cliente_tipo as "lead" | "conta") || "lead");
+    setClienteId(oportunidade.cliente_id || "none");
     supabase.from("imoveis").select("id,titulo,codigo").order("created_at", { ascending: false }).then(({ data }) => {
       setImoveis((data ?? []).map((i: any) => ({ id: i.id, nome: `${i.codigo ? i.codigo + " · " : ""}${i.titulo}` })));
     });
     supabase.from("profiles").select("user_id,nome").then(({ data }) => {
       setCorretores((data ?? []).map((p: any) => ({ id: p.user_id, nome: p.nome || "Sem nome" })));
+    });
+    supabase.from("leads").select("id,nome").order("nome").then(({ data }) => {
+      setLeads((data ?? []).map((l: any) => ({ id: l.id, nome: l.nome || "Sem nome" })));
+    });
+    supabase.from("contas").select("id,nome").order("nome").then(({ data }) => {
+      setContas((data ?? []).map((c: any) => ({ id: c.id, nome: c.nome || "Sem nome" })));
     });
     supabase.from("oportunidade_imoveis").select("*").eq("oportunidade_id", oportunidade.id).then(({ data }) => {
       setVinculos(data ?? []);

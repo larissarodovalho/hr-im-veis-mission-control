@@ -1,19 +1,15 @@
-## Tornar o diálogo "Novo compromisso" rolável
+## Adicionar edição de cliente na oportunidade
 
 ### Problema
-O diálogo "Novo compromisso" agora tem muitos campos (tipo, duração, título, data, lead, conta, imóvel, local/link, notas, recorrência). Em telas menores, a parte de cima (cabeçalho) e a de baixo (botões Cancelar/Agendar) ficam cortadas porque o `DialogContent` não rola — todo o conteúdo cresce além da viewport.
+Em `EditarOportunidadeDialog`, ao reabrir uma oportunidade já criada, não existe campo para alterar o cliente vinculado (lead ou conta). Só dá pra trocar título, valor, estágio, corretor, imóveis e observações. Quem vinculou o cliente errado precisa excluir e recriar.
 
-### Mudança
-Em `src/pages/Schedule.tsx`, no `<DialogContent>` do "Novo compromisso":
+### Mudança em `src/components/imoveis/EditarOportunidadeDialog.tsx`
 
-- Adicionar `className="max-w-lg max-h-[90vh] flex flex-col p-0"`.
-- Envolver o `<form>` em um wrapper com:
-  - Header fixo (`DialogHeader` com padding próprio, `shrink-0`).
-  - Corpo do formulário em um `<div className="overflow-y-auto px-6 py-4 flex-1 min-h-0">` contendo todos os campos.
-  - `DialogFooter` fixo no rodapé (`shrink-0 px-6 py-4 border-t`).
-- Manter o `<form>` em volta de tudo para que o submit continue funcionando; o footer fica dentro do form.
+1. Adicionar estados `clienteTipo` ("lead" | "conta") e `clienteId`, inicializados a partir de `oportunidade.cliente_tipo` e `oportunidade.cliente_id` no `useEffect`.
+2. Carregar listas `leads` (id, nome) e `contas` (id, nome) junto com imoveis/corretores.
+3. Renderizar logo abaixo do "Título", em duas colunas:
+   - `Select` "Tipo de cliente" (Lead / Conta) — ao trocar, reseta `clienteId` para `"none"`.
+   - `SearchableSelect` "Cliente" usando a lista correspondente ao tipo selecionado.
+4. No `submit`, validar que `clienteId !== "none"` e incluir `cliente_tipo` e `cliente_id` no `update` da tabela `oportunidades`.
 
-Aplicar o mesmo padrão ao diálogo "Editar compromisso" para consistência (também ficou alto).
-
-### Arquivos
-- `src/pages/Schedule.tsx` — ajuste de layout dos dois diálogos (novo e editar). Sem mudança de lógica.
+Sem mudanças de schema, sem mexer em outros arquivos.
