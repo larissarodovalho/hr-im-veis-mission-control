@@ -669,7 +669,7 @@ export default function Schedule() {
                     const today = isToday(d);
                     const isSelected = selected && isSameDay(d, selected);
                     const blocked = blockedDays.has(k);
-                    const visible = events.slice(0, 3);
+                    const visible = events.slice(0, viewMode === "week" ? 12 : 3);
                     const extra = events.length - visible.length;
                     return (
                       <button
