@@ -24,13 +24,23 @@ export default function Dashboard() {
 
   useEffect(() => {
     (async () => {
-      const [l, r, v, c] = await Promise.all([
+      const [l, r, v, c, iv, ic] = await Promise.all([
         supabase.from("leads").select("id,nome,etapa_funil,origem,ultima_interacao,created_at").order("created_at", { ascending: false }),
         supabase.from("reunioes").select("id,status,agendada_para,lead_id"),
         supabase.from("visitas").select("id,status,data_visita").gte("data_visita", monthStart.toISOString()).lt("data_visita", monthEnd.toISOString()),
         supabase.from("ligacoes").select("id,resultado,data").gte("data", monthStart.toISOString()).lt("data", monthEnd.toISOString()),
+        supabase.from("interacoes").select("id,resultado,agendado_para,created_at").eq("tipo", "visita").gte("created_at", monthStart.toISOString()).lt("created_at", monthEnd.toISOString()),
+        supabase.from("interacoes").select("id,resultado,agendado_para,created_at").eq("tipo", "ligacao").gte("created_at", monthStart.toISOString()).lt("created_at", monthEnd.toISOString()),
       ]);
-      setLeads(l.data ?? []); setReunioes(r.data ?? []); setVisitas(v.data ?? []); setLigacoes(c.data ?? []);
+      const vMerged = [
+        ...((v.data ?? []).map((x: any) => ({ id: `v-${x.id}`, status: x.status, data_visita: x.data_visita }))),
+        ...((iv.data ?? []).map((x: any) => ({ id: `iv-${x.id}`, status: null, data_visita: x.agendado_para ?? x.created_at }))),
+      ];
+      const cMerged = [
+        ...((c.data ?? []).map((x: any) => ({ id: `c-${x.id}`, resultado: x.resultado, data: x.data }))),
+        ...((ic.data ?? []).map((x: any) => ({ id: `ic-${x.id}`, resultado: x.resultado, data: x.agendado_para ?? x.created_at }))),
+      ];
+      setLeads(l.data ?? []); setReunioes(r.data ?? []); setVisitas(vMerged); setLigacoes(cMerged);
     })();
   }, [monthStart, monthEnd]);
 
