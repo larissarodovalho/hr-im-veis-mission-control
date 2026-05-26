@@ -643,7 +643,12 @@ export default function Schedule() {
                           {(c.local || c.link) && <div className="text-xs text-muted-foreground mt-0.5">{c.local || c.link}</div>}
                           {c.notas && <div className="text-xs text-muted-foreground mt-1">{c.notas}</div>}
                         </div>
-                        <Badge variant="outline">{c.status}</Badge>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Badge variant="outline">{c.status}</Badge>
+                          <Button size="icon" variant="ghost" onClick={() => openEdit(c)} title="Editar">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </li>
                   ))}
