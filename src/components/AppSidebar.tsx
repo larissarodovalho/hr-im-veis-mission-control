@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { NavLink, useLocation, useSearchParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import hrLogo from "@/assets/hr-imoveis-logo.png";
 import {
   Sidebar,
@@ -74,9 +76,19 @@ const CRM_SUBTAB_ROUTES: Record<string, string> = { tarefas: "/crm/tarefas" };
 
 export function AppSidebar() {
   const { state } = useSidebar();
-  const { isAdmin, isGestor, isMarketingOnly } = useAuth();
+  const { isAdmin, isGestor, isMarketingOnly, user } = useAuth();
   const isCorretorOnly = !isAdmin && !isGestor && !isMarketingOnly;
   const collapsed = state === "collapsed";
+  const [gcalConnected, setGcalConnected] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from("user_google_calendar")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => setGcalConnected(!!data));
+  }, [user?.id]);
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -190,6 +202,37 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        <SidebarGroup className="mt-2">
+          {!collapsed && <SidebarGroupLabel>Pessoal</SidebarGroupLabel>}
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/crm/minha-conta"
+                    className={`transition-all duration-200 ${location.pathname === "/crm/minha-conta" ? "bg-sidebar-accent text-sidebar-primary" : "hover:bg-sidebar-accent/50"}`}
+                  >
+                    <div className="relative mr-2">
+                      <UserCircle className={`h-4 w-4 ${location.pathname === "/crm/minha-conta" ? "text-sidebar-primary" : ""}`} />
+                      {gcalConnected === false && (
+                        <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-sidebar" />
+                      )}
+                    </div>
+                    {!collapsed && (
+                      <span className="flex-1 flex items-center justify-between">
+                        Minha conta
+                        {gcalConnected === false && (
+                          <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-destructive/15 text-destructive">conectar</span>
+                        )}
+                      </span>
+                    )}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         {isAdmin && (
           <SidebarGroup className="mt-2">
             {!collapsed && <SidebarGroupLabel>Administração</SidebarGroupLabel>}
@@ -215,25 +258,6 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
-
-        <SidebarGroup className="mt-2">
-          {!collapsed && <SidebarGroupLabel>Pessoal</SidebarGroupLabel>}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink
-                    to="/crm/minha-conta"
-                    className={`transition-all duration-200 ${location.pathname === "/crm/minha-conta" ? "bg-sidebar-accent text-sidebar-primary" : "hover:bg-sidebar-accent/50"}`}
-                  >
-                    <UserCircle className={`mr-2 h-4 w-4 ${location.pathname === "/crm/minha-conta" ? "text-sidebar-primary" : ""}`} />
-                    {!collapsed && <span>Minha conta</span>}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
     </Sidebar>
   );
