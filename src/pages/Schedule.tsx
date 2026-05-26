@@ -127,9 +127,15 @@ export default function Schedule() {
         ...((r ?? []) as any[]).map((m) => m.conta_id).filter(Boolean),
         ...((ligs ?? []) as any[]).map((c) => c.conta_id).filter(Boolean),
         ...((vis ?? []) as any[]).map((v) => v.conta_id).filter(Boolean),
+        ...((capts ?? []) as any[]).map((c) => c.conta_id).filter(Boolean),
       ]),
     ];
-    const imovelIds = [...new Set(((vis ?? []) as any[]).map((v) => v.imovel_id).filter(Boolean))];
+    const imovelIds = [
+      ...new Set([
+        ...((vis ?? []) as any[]).map((v) => v.imovel_id).filter(Boolean),
+        ...((capts ?? []) as any[]).map((c) => c.imovel_id).filter(Boolean),
+      ]),
+    ];
 
     let leadsById = new Map<string, any>();
     if (leadIds.length) {
