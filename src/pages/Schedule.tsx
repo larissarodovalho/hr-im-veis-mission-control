@@ -65,6 +65,9 @@ export default function Schedule() {
   const [selected, setSelected] = useState<Date | undefined>(new Date());
   const [openNovo, setOpenNovo] = useState(false);
   const [openBloqueio, setOpenBloqueio] = useState(false);
+  const [editing, setEditing] = useState<Compromisso | null>(null);
+  const [editForm, setEditForm] = useState<{ when: string; duracao: number; titulo: string; local: string; link: string; notas: string; status: string }>({ when: "", duracao: 60, titulo: "", local: "", link: "", notas: "", status: "" });
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const [novo, setNovo] = useState({
     tipo: "presencial" as Compromisso["tipo"],
