@@ -1,32 +1,33 @@
-# Mostrar contato do lead nas abas Reuniões e Agenda
+## Ajustar Dashboard para mês atual
 
-Hoje, em `Meetings.tsx` e `Schedule.tsx`, buscamos só `id, nome` da tabela `leads` e exibimos o nome. O usuário quer que **todos** vejam o **contato** (telefone + email) do lead vinculado a cada reunião/agendamento.
+Atualmente o Dashboard mostra:
+- **Reuniões**: card "Reuniões" usa todas as reuniões já cadastradas (sem filtro de data) no gráfico por status e no badge total.
+- **Ligações**: filtra interações dos **últimos 30 dias corridos** (`since = hoje - 30 dias`).
+- **Visitas**: gráfico em **4 semanas corridas** a partir de hoje, usando a mesma janela de 30 dias.
 
-Duas frentes:
+### Mudanças
 
-## 1. RLS — liberar SELECT amplo em `leads` para staff
+1. **Reuniões (card + KPI)**
+   - Filtrar `reunioes` por `agendada_para` dentro do **mês atual** (do dia 1 às 00:00 até o 1º do próximo mês).
+   - Badge passa a mostrar o total do mês.
+   - Gráfico por status considera apenas as reuniões do mês.
+   - O KPI "Reuniões este mês" continua igual (já está correto).
 
-Hoje corretor/marketing só veem leads próprios. Para o lead vinculado à reunião aparecer para todos, espelhar o padrão que já aplicamos em `ligacoes/visitas/captacoes`:
+2. **Ligações (card)**
+   - Trocar janela de "últimos 30 dias" para **mês atual** (filtro por `created_at` em interações do tipo `ligacao`).
+   - Label do card: "Ligações (mês)".
+   - Badge e gráfico por resultado refletem só o mês.
 
-```sql
-CREATE POLICY "Staff sees all leads (agenda)"
-ON public.leads FOR SELECT TO authenticated
-USING (public.is_staff());
-```
+3. **Visitas (card)**
+   - Trocar janela de "4 semanas" para **mês atual** (filtro por `created_at` em interações do tipo `visita`).
+   - Label do card: "Visitas (mês)".
+   - Gráfico passa a mostrar **visitas por semana dentro do mês atual** (semanas 1..N do mês), em vez das últimas 4 semanas corridas.
+   - Badge mostra total do mês.
 
-Políticas de UPDATE/DELETE permanecem inalteradas — corretor continua editando só os próprios.
+4. **Query de interações**
+   - Mudar o `.gte("created_at", since)` para usar o início do mês atual em vez de hoje-30, para evitar trazer dados fora do escopo.
 
-## 2. UI — buscar telefone/email e exibir
+### Arquivo afetado
+- `src/pages/Dashboard.tsx` (única alteração; apenas lógica de filtro/agrupamento e labels).
 
-### `src/pages/Meetings.tsx`
-- Linha 43: `.select("id,nome,telefone,email")` (em vez de só `id,nome`).
-- Linha 209 (coluna da tabela): logo abaixo do nome do lead/conta, mostrar `telefone` e `email` em texto pequeno (`text-xs text-muted-foreground`) quando houver.
-
-### `src/pages/Schedule.tsx`
-- Linha 147: `.select("id, nome, telefone, email")`.
-- Onde `leadNome` é montado (linhas 164, 189, 207), guardar também `leadTelefone`/`leadEmail` no item agregado (`lead_telefone`, `lead_email`).
-- Nos cards/lista onde aparece `c.lead_nome` (linhas 947 e 985), adicionar em segunda linha: `📞 telefone · ✉ email` (só renderizar o que existir).
-
-Sem mudança no select de leads do formulário (continua só nome).
-
-Confirmo?
+Sem mudanças de banco de dados, RLS, ou outros componentes.
