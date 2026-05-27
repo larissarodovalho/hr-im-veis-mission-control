@@ -128,7 +128,7 @@ export default function Visits() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button size="sm"><Plus className="mr-1 h-4 w-4" />Adicionar</Button></DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto w-[calc(100vw-2rem)] max-w-lg">
             <DialogHeader><DialogTitle>Nova visita</DialogTitle></DialogHeader>
             <form onSubmit={add} className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
