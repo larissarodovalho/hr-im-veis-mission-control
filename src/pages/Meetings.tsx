@@ -146,7 +146,8 @@ export default function Meetings() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" />Adicionar</Button></DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
+
             <DialogHeader><DialogTitle>Nova reunião</DialogTitle></DialogHeader>
             <form onSubmit={add} className="space-y-3">
               <div>
@@ -303,7 +304,7 @@ export default function Meetings() {
 
 
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Editar reunião</DialogTitle></DialogHeader>
           {editing?.leads?.id && (
             <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm flex items-center justify-between gap-2">
