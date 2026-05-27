@@ -146,7 +146,7 @@ export default function Meetings() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" />Adicionar</Button></DialogTrigger>
-          <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-h-[90vh] overflow-y-auto w-[calc(100vw-1rem)] sm:w-full p-4 sm:p-6">
 
             <DialogHeader><DialogTitle>Nova reunião</DialogTitle></DialogHeader>
             <form onSubmit={add} className="space-y-3">
