@@ -868,7 +868,7 @@ export default function Schedule() {
                 {viewMode === "week" ? (
                   (() => {
                     const HOUR_START = 7;
-                    const HOUR_END = 22; // exclusive
+                    const HOUR_END = 19; // exclusive (mostra até 18h)
                     const HOUR_PX = 56;
                     const hours = Array.from({ length: HOUR_END - HOUR_START }, (_, i) => HOUR_START + i);
                     const now = new Date();
