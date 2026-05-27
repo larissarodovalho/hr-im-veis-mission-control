@@ -295,21 +295,21 @@ export default function FaturamentoReport() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="p-4">
-          <div className="text-xs text-muted-foreground flex items-center gap-1"><TrendingUp className="h-3 w-3" /> VGV total</div>
-          <div className="text-2xl font-semibold mt-1">{fmtBRL(kpis.vgv)}</div>
+        <Card className="p-3 sm:p-4 min-w-0">
+          <div className="text-xs text-muted-foreground flex items-center gap-1"><TrendingUp className="h-3 w-3 shrink-0" /> VGV total</div>
+          <div className="text-base sm:text-xl md:text-2xl font-semibold mt-1 break-words">{fmtBRL(kpis.vgv)}</div>
         </Card>
-        <Card className="p-4">
-          <div className="text-xs text-muted-foreground flex items-center gap-1"><Coins className="h-3 w-3" /> Comissão total</div>
-          <div className="text-2xl font-semibold mt-1">{fmtBRL(kpis.comissao)}</div>
+        <Card className="p-3 sm:p-4 min-w-0">
+          <div className="text-xs text-muted-foreground flex items-center gap-1"><Coins className="h-3 w-3 shrink-0" /> Comissão total</div>
+          <div className="text-base sm:text-xl md:text-2xl font-semibold mt-1 break-words">{fmtBRL(kpis.comissao)}</div>
         </Card>
-        <Card className="p-4">
-          <div className="text-xs text-muted-foreground flex items-center gap-1"><Building2 className="h-3 w-3" /> HR Imóveis (casa)</div>
-          <div className="text-2xl font-semibold mt-1">{fmtBRL(kpis.hr)}</div>
+        <Card className="p-3 sm:p-4 min-w-0">
+          <div className="text-xs text-muted-foreground flex items-center gap-1"><Building2 className="h-3 w-3 shrink-0" /> HR Imóveis (casa)</div>
+          <div className="text-base sm:text-xl md:text-2xl font-semibold mt-1 break-words">{fmtBRL(kpis.hr)}</div>
         </Card>
-        <Card className="p-4">
-          <div className="text-xs text-muted-foreground flex items-center gap-1"><BarChart3 className="h-3 w-3" /> Nº de vendas</div>
-          <div className="text-2xl font-semibold mt-1">{kpis.count}</div>
+        <Card className="p-3 sm:p-4 min-w-0">
+          <div className="text-xs text-muted-foreground flex items-center gap-1"><BarChart3 className="h-3 w-3 shrink-0" /> Nº de vendas</div>
+          <div className="text-base sm:text-xl md:text-2xl font-semibold mt-1">{kpis.count}</div>
         </Card>
       </div>
 
