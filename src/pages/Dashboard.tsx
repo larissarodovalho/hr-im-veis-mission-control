@@ -86,9 +86,10 @@ export default function Dashboard() {
       const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - i);
       days.push({ date: d.toISOString().slice(0,10), label: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }), novos: 0 });
     }
-    leads.forEach(l => { const k = new Date(l.created_at).toISOString().slice(0,10); const day = days.find(d => d.date === k); if (day) day.novos += 1; });
+    campaignLeads.forEach(l => { const k = new Date(l.created_at).toISOString().slice(0,10); const day = days.find(d => d.date === k); if (day) day.novos += 1; });
     return days;
-  }, [leads]);
+  }, [campaignLeads]);
+
 
   const reunioesByStatus = useMemo(() => {
     const counts: Record<string, number> = {};
