@@ -211,16 +211,17 @@ export default function FaturamentoReport() {
   const showCaptador = papel === "todos" || papel === "captador";
 
   return (
-    <Card className="p-4 md:p-6 space-y-5">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h2 className="font-display text-xl font-semibold flex items-center gap-2"><Coins className="h-5 w-5 text-primary" /> Faturamento</h2>
+    <Card className="p-3 sm:p-4 md:p-6 space-y-4 md:space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="font-display text-lg md:text-xl font-semibold flex items-center gap-2"><Coins className="h-5 w-5 text-primary shrink-0" /> Faturamento</h2>
           <p className="text-sm text-muted-foreground">VGV e comissão por corretor responsável.</p>
         </div>
-        <Button variant="outline" onClick={exportRanking} disabled={loading}>
+        <Button size="sm" variant="outline" onClick={exportRanking} disabled={loading} className="w-full sm:w-auto">
           <Download className="h-4 w-4 mr-2" /> Exportar ranking
         </Button>
       </div>
+
 
       {/* Filtros */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
