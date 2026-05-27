@@ -154,17 +154,17 @@ export default function FunilContasReport() {
   const listaQuery = lista === "todas" ? "carteira" : lista;
 
   return (
-    <Card className="p-6 space-y-6">
+    <Card className="p-3 sm:p-4 md:p-6 space-y-4 md:space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-          <h2 className="font-display text-xl font-semibold">Funil de Contas</h2>
+          <h2 className="font-display text-lg md:text-xl font-semibold">Funil de Contas</h2>
           <p className="text-sm text-muted-foreground">
             Distribuição por etapa, taxas de conversão e comparação entre listas.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Select value={corretor} onValueChange={setCorretor}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full sm:w-[200px]">
               <SelectValue placeholder="Corretor" />
             </SelectTrigger>
             <SelectContent>
@@ -180,12 +180,13 @@ export default function FunilContasReport() {
       </div>
 
       <Tabs value={lista} onValueChange={(v) => setLista(v as Lista)}>
-        <TabsList>
+        <TabsList className="w-full justify-start overflow-x-auto whitespace-nowrap">
           <TabsTrigger value="carteira">Carteira</TabsTrigger>
           <TabsTrigger value="marketing">Marketing</TabsTrigger>
           <TabsTrigger value="todas">Todas</TabsTrigger>
         </TabsList>
       </Tabs>
+
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">

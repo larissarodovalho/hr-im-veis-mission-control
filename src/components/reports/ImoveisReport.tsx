@@ -283,8 +283,8 @@ export default function ImoveisReport() {
   return (
     <div className="space-y-6">
       {/* Filtros */}
-      <Card className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+      <Card className="p-3 sm:p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
           <div>
             <Label>De</Label>
             <Input type="date" value={dataIni} onChange={(e) => setDataIni(e.target.value)} />
@@ -314,9 +314,10 @@ export default function ImoveisReport() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={exportCsv}><Download className="h-4 w-4 mr-2" /> Exportar CSV</Button>
+          <Button onClick={exportCsv} className="w-full sm:col-span-2 md:col-span-1"><Download className="h-4 w-4 mr-2" /> Exportar CSV</Button>
         </div>
       </Card>
+
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -345,30 +346,33 @@ export default function ImoveisReport() {
       </Card>
 
       {/* Por tipo */}
-      <Card className="p-4">
+      <Card className="p-3 sm:p-4">
         <h3 className="font-semibold mb-3">Por tipo de imóvel</h3>
-        <Table>
-          <TableHeader><TableRow>
-            <TableHead>Tipo</TableHead>
-            <TableHead className="text-right">Quantidade</TableHead>
-            <TableHead className="text-right">Valor médio</TableHead>
-            <TableHead className="text-right">VGV</TableHead>
-          </TableRow></TableHeader>
-          <TableBody>
-            {porTipoData.map((t) => (
-              <TableRow key={t.tipo}>
-                <TableCell>{t.tipo}</TableCell>
-                <TableCell className="text-right">{t.qtd}</TableCell>
-                <TableCell className="text-right">{formatBRL(t.media)}</TableCell>
-                <TableCell className="text-right font-semibold">{formatBRL(t.vgv)}</TableCell>
-              </TableRow>
-            ))}
-            {porTipoData.length === 0 && (
-              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">Sem dados</TableCell></TableRow>
-            )}
-          </TableBody>
-        </Table>
+        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
+          <Table>
+            <TableHeader><TableRow>
+              <TableHead>Tipo</TableHead>
+              <TableHead className="text-right">Quantidade</TableHead>
+              <TableHead className="text-right">Valor médio</TableHead>
+              <TableHead className="text-right">VGV</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {porTipoData.map((t) => (
+                <TableRow key={t.tipo}>
+                  <TableCell className="whitespace-nowrap">{t.tipo}</TableCell>
+                  <TableCell className="text-right">{t.qtd}</TableCell>
+                  <TableCell className="text-right whitespace-nowrap">{formatBRL(t.media)}</TableCell>
+                  <TableCell className="text-right font-semibold whitespace-nowrap">{formatBRL(t.vgv)}</TableCell>
+                </TableRow>
+              ))}
+              {porTipoData.length === 0 && (
+                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">Sem dados</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </Card>
+
 
       {/* Oportunidades */}
       <Card className="p-4 space-y-4">
