@@ -377,7 +377,33 @@ export default function Meetings() {
                 </Select>
               </div>
             </div>
-            <div><Label>Data e hora</Label><Input type="datetime-local" value={editForm.agendada_para} onChange={e => setEditForm({ ...editForm, agendada_para: e.target.value })} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Data</Label>
+                <Input
+                  type="date"
+                  className="w-full"
+                  value={editForm.agendada_para.slice(0, 10)}
+                  onChange={e => {
+                    const time = editForm.agendada_para.slice(11, 16) || "09:00";
+                    setEditForm({ ...editForm, agendada_para: `${e.target.value}T${time}` });
+                  }}
+                />
+              </div>
+              <div>
+                <Label>Hora</Label>
+                <Input
+                  type="time"
+                  className="w-full"
+                  value={editForm.agendada_para.slice(11, 16)}
+                  onChange={e => {
+                    const date = editForm.agendada_para.slice(0, 10) || new Date().toISOString().slice(0, 10);
+                    setEditForm({ ...editForm, agendada_para: `${date}T${e.target.value}` });
+                  }}
+                />
+              </div>
+            </div>
+
             <div><Label>Local</Label><Input value={editForm.local} onChange={e => setEditForm({ ...editForm, local: e.target.value })} /></div>
             <div><Label>Link</Label><Input value={editForm.link} onChange={e => setEditForm({ ...editForm, link: e.target.value })} /></div>
             <div><Label>Notas</Label><Textarea value={editForm.notas} onChange={e => setEditForm({ ...editForm, notas: e.target.value })} /></div>
