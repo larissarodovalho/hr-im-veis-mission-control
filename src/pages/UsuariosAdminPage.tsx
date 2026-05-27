@@ -405,7 +405,7 @@ export default function UsuariosAdminPage() {
 
 
       <Dialog open={!!resetTarget} onOpenChange={(o) => !o && setResetTarget(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto w-[calc(100vw-2rem)] max-w-lg">
           <DialogHeader>
             <DialogTitle>Redefinir senha</DialogTitle>
             <DialogDescription>Nova senha para {resetTarget?.email}</DialogDescription>
