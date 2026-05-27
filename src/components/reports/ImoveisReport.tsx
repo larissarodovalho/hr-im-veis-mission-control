@@ -284,16 +284,16 @@ export default function ImoveisReport() {
     <div className="space-y-6">
       {/* Filtros */}
       <Card className="p-3 sm:p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
-          <div>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
+          <div className="min-w-0">
             <Label>De</Label>
-            <Input type="date" value={dataIni} onChange={(e) => setDataIni(e.target.value)} />
+            <Input type="date" value={dataIni} onChange={(e) => setDataIni(e.target.value)} className="w-full" />
           </div>
-          <div>
+          <div className="min-w-0">
             <Label>Até</Label>
-            <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+            <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-full" />
           </div>
-          <div>
+          <div className="col-span-2 sm:col-span-1 min-w-0">
             <Label>Cidade</Label>
             <Select value={cidade} onValueChange={setCidade}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -303,7 +303,7 @@ export default function ImoveisReport() {
               </SelectContent>
             </Select>
           </div>
-          <div>
+          <div className="col-span-2 sm:col-span-1 min-w-0">
             <Label>Finalidade</Label>
             <Select value={finalidade} onValueChange={setFinalidade}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -314,7 +314,7 @@ export default function ImoveisReport() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={exportCsv} className="w-full sm:col-span-2 md:col-span-1"><Download className="h-4 w-4 mr-2" /> Exportar CSV</Button>
+          <Button onClick={exportCsv} className="col-span-2 md:col-span-1 w-full"><Download className="h-4 w-4 mr-2" /> Exportar CSV</Button>
         </div>
       </Card>
 
@@ -489,9 +489,9 @@ export default function ImoveisReport() {
 
 function Kpi({ label, value, small, icon }: { label: string; value: any; small?: boolean; icon?: React.ReactNode }) {
   return (
-    <Card className="p-3">
-      <div className="text-xs text-muted-foreground flex items-center gap-1">{icon}{label}</div>
-      <div className={`font-semibold mt-1 ${small ? "text-base" : "text-2xl"}`}>{value}</div>
+    <Card className="p-3 min-w-0">
+      <div className="text-xs text-muted-foreground flex items-center gap-1 min-w-0"><span className="shrink-0">{icon}</span><span className="truncate">{label}</span></div>
+      <div className={`font-semibold mt-1 break-words ${small ? "text-sm sm:text-base" : "text-lg sm:text-xl md:text-2xl"}`}>{value}</div>
     </Card>
   );
 }
