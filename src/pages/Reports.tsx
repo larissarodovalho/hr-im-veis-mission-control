@@ -70,61 +70,64 @@ export default function Reports() {
   };
 
   return (
-    <div className="p-4 md:p-8 space-y-6">
+    <div className="p-4 md:p-8 space-y-4 md:space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-semibold">Relatórios</h1>
+        <h1 className="font-display text-2xl md:text-3xl font-semibold">Relatórios</h1>
         <p className="text-sm text-muted-foreground mt-1">Performance da equipe.</p>
       </div>
 
       <Tabs defaultValue="performance" className="w-full">
-        <TabsList>
+        <TabsList className="w-full justify-start overflow-x-auto whitespace-nowrap">
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="imoveis">Imóveis</TabsTrigger>
           <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="performance" className="space-y-6 mt-4">
+        <TabsContent value="performance" className="space-y-4 md:space-y-6 mt-4">
           <FunilContasReport />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="p-6">
+            <Card className="p-4 md:p-6">
               <FileSpreadsheet className="h-8 w-8 text-primary mb-2" />
               <h3 className="font-semibold">Exportar leads</h3>
               <p className="text-sm text-muted-foreground mb-4">Baixe a base completa em CSV.</p>
-              <Button onClick={exportLeads}><Download className="h-4 w-4 mr-2" /> Baixar leads.csv</Button>
+              <Button onClick={exportLeads} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-2" /> Baixar leads.csv</Button>
             </Card>
-            <Card className="p-6">
+            <Card className="p-4 md:p-6">
               <BarChart3 className="h-8 w-8 text-primary mb-2" />
               <h3 className="font-semibold">Performance da equipe</h3>
               <p className="text-sm text-muted-foreground mb-4">Resumo por corretor.</p>
             </Card>
           </div>
 
-          <Card className="p-6">
+          <Card className="p-4 md:p-6">
             <h2 className="font-semibold mb-4">Performance por corretor</h2>
             {loading ? <p className="text-muted-foreground">Carregando…</p> : (
-              <Table>
-                <TableHeader><TableRow>
-                  <TableHead>Corretor</TableHead><TableHead className="text-right">Leads</TableHead>
-                  <TableHead className="text-right">Reuniões</TableHead><TableHead className="text-right">Ligações</TableHead>
-                  <TableHead className="text-right">Conversões</TableHead><TableHead className="text-right">Taxa</TableHead>
-                </TableRow></TableHeader>
-                <TableBody>
-                  {stats.map(s => (
-                    <TableRow key={s.user_id}>
-                      <TableCell className="font-medium">{s.name}</TableCell>
-                      <TableCell className="text-right">{s.leads}</TableCell>
-                      <TableCell className="text-right">{s.reunioes}</TableCell>
-                      <TableCell className="text-right">{s.ligacoes}</TableCell>
-                      <TableCell className="text-right">{s.conversoes}</TableCell>
-                      <TableCell className="text-right font-semibold">{s.leads ? ((s.conversoes / s.leads) * 100).toFixed(1) : "0.0"}%</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+                <Table>
+                  <TableHeader><TableRow>
+                    <TableHead>Corretor</TableHead><TableHead className="text-right">Leads</TableHead>
+                    <TableHead className="text-right">Reuniões</TableHead><TableHead className="text-right">Ligações</TableHead>
+                    <TableHead className="text-right">Conversões</TableHead><TableHead className="text-right">Taxa</TableHead>
+                  </TableRow></TableHeader>
+                  <TableBody>
+                    {stats.map(s => (
+                      <TableRow key={s.user_id}>
+                        <TableCell className="font-medium whitespace-nowrap">{s.name}</TableCell>
+                        <TableCell className="text-right">{s.leads}</TableCell>
+                        <TableCell className="text-right">{s.reunioes}</TableCell>
+                        <TableCell className="text-right">{s.ligacoes}</TableCell>
+                        <TableCell className="text-right">{s.conversoes}</TableCell>
+                        <TableCell className="text-right font-semibold">{s.leads ? ((s.conversoes / s.leads) * 100).toFixed(1) : "0.0"}%</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </Card>
         </TabsContent>
+
 
         <TabsContent value="imoveis" className="mt-4">
           <ImoveisReport />
