@@ -314,8 +314,8 @@ export default function FaturamentoReport() {
       </div>
 
       {/* Gráfico */}
-      <Card className="p-4">
-        <div className="flex items-center justify-between mb-3">
+      <Card className="p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
           <h3 className="font-semibold text-sm">Evolução mensal</h3>
           <Tabs value={chartMode} onValueChange={(v) => setChartMode(v as any)}>
             <TabsList className="h-8">
@@ -324,17 +324,17 @@ export default function FaturamentoReport() {
             </TabsList>
           </Tabs>
         </div>
-        <div className="h-72">
+        <div className="h-64 sm:h-72 -mx-2 sm:mx-0">
           {chartData.length === 0 ? (
             <div className="h-full grid place-items-center text-muted-foreground text-sm">Sem dados no período.</div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
+              <BarChart data={chartData} margin={{ top: 5, right: 8, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis dataKey="mes" />
-                <YAxis tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v))} />
+                <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} width={48} tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v))} />
                 <Tooltip formatter={(v: any) => fmtBRL(Number(v))} />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Bar dataKey="Vendedor" fill="hsl(var(--primary))" />
                 <Bar dataKey="Captador" fill="hsl(var(--accent))" />
                 <Bar dataKey="HR" fill="hsl(var(--muted-foreground))" />
@@ -352,7 +352,7 @@ export default function FaturamentoReport() {
         ) : ranking.length === 0 ? (
           <p className="text-muted-foreground text-sm">Sem vendas no período.</p>
         ) : (
-          <Table>
+          <Table className="[&_th]:whitespace-nowrap [&_td]:whitespace-nowrap">
             <TableHeader>
               <TableRow>
                 <TableHead>Corretor</TableHead>
