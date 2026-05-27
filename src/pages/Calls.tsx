@@ -162,7 +162,7 @@ export default function Calls() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" />Registrar</Button></DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto w-[calc(100vw-2rem)] max-w-lg">
             <DialogHeader><DialogTitle>Nova ligação</DialogTitle></DialogHeader>
             <form onSubmit={add} className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
