@@ -144,23 +144,23 @@ export default function ContratosTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <FileSignature className="h-6 w-6" /> Contratos
+            <FileSignature className="h-6 w-6 shrink-0" /> Contratos
           </h1>
           <p className="text-sm text-muted-foreground">Autorização de venda com exclusividade</p>
         </div>
-        <Button onClick={() => setOpenNew(true)}><Plus className="h-4 w-4 mr-1" /> Novo contrato</Button>
+        <Button size="sm" onClick={() => setOpenNew(true)}><Plus className="h-4 w-4 mr-1" /> Novo contrato</Button>
       </div>
 
-      <Card className="p-4">
-        <div className="flex gap-3 flex-wrap mb-4">
-          <div className="relative flex-1 min-w-[220px]">
+      <Card className="p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:flex-wrap mb-4">
+          <div className="relative flex-1 min-w-0 sm:min-w-[220px]">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por cliente ou imóvel" className="pl-9" />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-[200px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os status</SelectItem>
               {Object.entries(CONTRATO_STATUS).map(([k, v]) => (
@@ -170,71 +170,128 @@ export default function ContratosTab() {
           </Select>
         </div>
 
+
         {loading ? (
           <div className="py-12 text-center text-muted-foreground">Carregando...</div>
         ) : filtered.length === 0 ? (
           <div className="py-12 text-center text-muted-foreground">Nenhum contrato encontrado.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-muted-foreground border-b">
-                <tr>
-                  <th className="py-2 pr-3">Cliente</th>
-                  <th className="py-2 pr-3">Imóvel</th>
-                  <th className="py-2 pr-3">Valor</th>
-                  <th className="py-2 pr-3">Status</th>
-                  <th className="py-2 pr-3">Criado</th>
-                  <th className="py-2 pr-3 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((c) => {
-                  const st = CONTRATO_STATUS[c.status] || { label: c.status, color: "bg-muted text-muted-foreground" };
-                  return (
-                    <tr key={c.id} className="border-b last:border-0">
-                      <td className="py-2 pr-3 font-medium">{c.cliente_nome || "—"}</td>
-                      <td className="py-2 pr-3">{c.imovel_id ? imoveisMap[c.imovel_id] || "—" : "—"}</td>
-                      <td className="py-2 pr-3">{formatCurrency(c.valor) || "—"}</td>
-                      <td className="py-2 pr-3"><Badge variant="secondary" className={st.color}>{st.label}</Badge></td>
-                      <td className="py-2 pr-3">{format(new Date(c.created_at), "dd/MM/yyyy", { locale: ptBR })}</td>
-                      <td className="py-2 pr-3 text-right">
-                        <div className="inline-flex gap-1">
-                          <Button size="sm" variant="ghost" onClick={() => handleDownload(c)} title="Baixar/Ver PDF">
-                            <Download className="h-4 w-4" />
-                          </Button>
-                          {(c.status === "rascunho" || c.status === "gerado") && (
-                            <Button size="sm" variant="ghost" onClick={() => setEditCtx(c)} title="Editar contrato">
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          )}
-                          <Button size="sm" variant="ghost" onClick={() => handleSendClick(c)} title="Enviar para assinatura" disabled={preparingSend === c.id}>
-                            <Send className="h-4 w-4" />
-                          </Button>
-                          {isAdmin && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button size="sm" variant="ghost"><Trash2 className="h-4 w-4 text-red-500" /></Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Excluir contrato?</AlertDialogTitle>
-                                  <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDelete(c.id)}>Excluir</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
+          <>
+            {/* Mobile: cards */}
+            <div className="md:hidden space-y-2">
+              {filtered.map((c) => {
+                const st = CONTRATO_STATUS[c.status] || { label: c.status, color: "bg-muted text-muted-foreground" };
+                return (
+                  <Card key={c.id} className="p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium truncate">{c.cliente_nome || "—"}</div>
+                        <div className="text-xs text-muted-foreground truncate mt-0.5">{c.imovel_id ? imoveisMap[c.imovel_id] || "—" : "—"}</div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                          <span>{formatCurrency(c.valor) || "—"}</span>
+                          <span>•</span>
+                          <span>{format(new Date(c.created_at), "dd/MM/yyyy", { locale: ptBR })}</span>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                      <Badge variant="secondary" className={`${st.color} shrink-0`}>{st.label}</Badge>
+                    </div>
+                    <div className="flex gap-1 mt-3 flex-wrap">
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => handleDownload(c)}>
+                        <Download className="h-4 w-4 mr-1" /> PDF
+                      </Button>
+                      {(c.status === "rascunho" || c.status === "gerado") && (
+                        <Button size="sm" variant="outline" className="flex-1" onClick={() => setEditCtx(c)}>
+                          <Pencil className="h-4 w-4 mr-1" /> Editar
+                        </Button>
+                      )}
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => handleSendClick(c)} disabled={preparingSend === c.id}>
+                        <Send className="h-4 w-4 mr-1" /> Enviar
+                      </Button>
+                      {isAdmin && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="outline"><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir contrato?</AlertDialogTitle>
+                              <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(c.id)}>Excluir</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-left text-muted-foreground border-b">
+                  <tr>
+                    <th className="py-2 pr-3">Cliente</th>
+                    <th className="py-2 pr-3">Imóvel</th>
+                    <th className="py-2 pr-3">Valor</th>
+                    <th className="py-2 pr-3">Status</th>
+                    <th className="py-2 pr-3">Criado</th>
+                    <th className="py-2 pr-3 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((c) => {
+                    const st = CONTRATO_STATUS[c.status] || { label: c.status, color: "bg-muted text-muted-foreground" };
+                    return (
+                      <tr key={c.id} className="border-b last:border-0">
+                        <td className="py-2 pr-3 font-medium">{c.cliente_nome || "—"}</td>
+                        <td className="py-2 pr-3">{c.imovel_id ? imoveisMap[c.imovel_id] || "—" : "—"}</td>
+                        <td className="py-2 pr-3">{formatCurrency(c.valor) || "—"}</td>
+                        <td className="py-2 pr-3"><Badge variant="secondary" className={st.color}>{st.label}</Badge></td>
+                        <td className="py-2 pr-3">{format(new Date(c.created_at), "dd/MM/yyyy", { locale: ptBR })}</td>
+                        <td className="py-2 pr-3 text-right">
+                          <div className="inline-flex gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => handleDownload(c)} title="Baixar/Ver PDF">
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            {(c.status === "rascunho" || c.status === "gerado") && (
+                              <Button size="sm" variant="ghost" onClick={() => setEditCtx(c)} title="Editar contrato">
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button size="sm" variant="ghost" onClick={() => handleSendClick(c)} title="Enviar para assinatura" disabled={preparingSend === c.id}>
+                              <Send className="h-4 w-4" />
+                            </Button>
+                            {isAdmin && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button size="sm" variant="ghost"><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Excluir contrato?</AlertDialogTitle>
+                                    <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDelete(c.id)}>Excluir</AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </Card>
 
