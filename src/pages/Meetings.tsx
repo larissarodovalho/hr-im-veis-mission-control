@@ -318,7 +318,7 @@ export default function Meetings() {
             </div>
           )}
           <form onSubmit={saveEdit} className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label>Lead</Label>
                 <SearchableSelect
@@ -350,7 +350,7 @@ export default function Meetings() {
                 emptyLabel="Sem imóvel vinculado"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label>Tipo</Label>
                 <Select value={editForm.tipo} onValueChange={v => setEditForm({ ...editForm, tipo: v })}>
