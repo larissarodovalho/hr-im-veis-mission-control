@@ -242,7 +242,7 @@ export default function Visits() {
       </Card>
 
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto w-[calc(100vw-2rem)] max-w-lg">
           <DialogHeader><DialogTitle>Editar visita</DialogTitle></DialogHeader>
           <form onSubmit={saveEdit} className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
