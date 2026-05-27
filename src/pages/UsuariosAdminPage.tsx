@@ -422,7 +422,7 @@ export default function UsuariosAdminPage() {
       </Dialog>
 
       <Dialog open={!!editTarget} onOpenChange={(o) => !o && setEditTarget(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto w-[calc(100vw-2rem)] max-w-lg">
           <DialogHeader>
             <DialogTitle>Editar usuário</DialogTitle>
             <DialogDescription>Atualize dados e papel de {editTarget?.email}</DialogDescription>
