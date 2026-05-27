@@ -896,6 +896,21 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Global kill-switch para a Sofia (Configurações → Sistema)
+    {
+      const { data: aiSetting } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "ai_assistant")
+        .maybeSingle();
+      const v = (aiSetting as any)?.value;
+      if (v && typeof v === "object" && v.whatsapp_enabled === false) {
+        return new Response(JSON.stringify({ ok: true, ai: "globally_disabled" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Debounce: aguarda alguns segundos para agrupar balões enviados em sequência pelo lead.
     // Se chegar uma mensagem nova dentro da janela, esta execução encerra silenciosamente e
     // só a mais recente (que verá o histórico completo) responderá.
