@@ -162,7 +162,7 @@ export default function Calls() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" />Registrar</Button></DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto w-[calc(100vw-2rem)] max-w-lg">
             <DialogHeader><DialogTitle>Nova ligação</DialogTitle></DialogHeader>
             <form onSubmit={add} className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -213,7 +213,42 @@ export default function Calls() {
         </Dialog>
       </div>
 
-      <Card className="overflow-x-auto">
+      {/* Mobile: card list */}
+      <div className="md:hidden space-y-2">
+        {items.map(c => (
+          <Card key={c.id} className="p-3 cursor-pointer hover:bg-muted/40" onClick={() => openEdit(c)}>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="text-xs text-muted-foreground">{format(new Date(c.data), "Pp", { locale: ptBR })}</div>
+                <div className="font-medium truncate mt-0.5" onClick={(e) => e.stopPropagation()}>
+                  {c.leads?.id ? (
+                    <Link to={`/crm/leads/${c.lead_id}`} className="hover:underline">{c.leads.nome}</Link>
+                  ) : c.conta?.id ? (
+                    <Link to={`/crm/contas/${c.conta_id}`} className="hover:underline">{c.conta.nome}</Link>
+                  ) : c.lead_id ? (
+                    <span className="text-muted-foreground font-normal">Lead removido</span>
+                  ) : (
+                    <span className="text-muted-foreground font-normal">Sem vínculo</span>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {c.duracao_seg ? `${Math.floor(c.duracao_seg/60)}m ${c.duracao_seg%60}s` : "—"}
+                </div>
+              </div>
+              <Badge variant="outline" className="shrink-0">{c.resultado || "—"}</Badge>
+            </div>
+            {(c.resultado === "agendada" || c.resultado === "agendou") && (
+              <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                <Button size="sm" variant="outline" className="w-full" onClick={() => quickResult(c, "atendeu")}>Aprovar</Button>
+              </div>
+            )}
+          </Card>
+        ))}
+        {items.length === 0 && <Card className="p-6 text-center text-muted-foreground text-sm">Nenhuma ligação.</Card>}
+      </div>
+
+      {/* Desktop: table */}
+      <Card className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left"><tr><th className="p-3">Quando</th><th className="p-3">Vínculo</th><th className="p-3">Duração</th><th className="p-3">Resultado</th><th className="p-3 w-32">Ações</th></tr></thead>
           <tbody>
@@ -246,7 +281,7 @@ export default function Calls() {
       </Card>
 
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto w-[calc(100vw-2rem)] max-w-lg">
           <DialogHeader><DialogTitle>Editar ligação</DialogTitle></DialogHeader>
           <form onSubmit={saveEdit} className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
