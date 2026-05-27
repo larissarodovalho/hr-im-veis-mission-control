@@ -304,7 +304,8 @@ export default function Meetings() {
 
 
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] overflow-y-auto w-[calc(100vw-1rem)] sm:w-full p-4 sm:p-6">
+
           <DialogHeader><DialogTitle>Editar reunião</DialogTitle></DialogHeader>
           {editing?.leads?.id && (
             <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm flex items-center justify-between gap-2">
