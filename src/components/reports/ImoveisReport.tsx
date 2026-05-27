@@ -283,15 +283,15 @@ export default function ImoveisReport() {
   return (
     <div className="space-y-6">
       {/* Filtros */}
-      <Card className="p-3 sm:p-4">
+      <Card className="p-3 sm:p-4 overflow-hidden">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
           <div className="min-w-0">
             <Label>De</Label>
-            <Input type="date" value={dataIni} onChange={(e) => setDataIni(e.target.value)} className="w-full" />
+            <Input type="date" value={dataIni} onChange={(e) => setDataIni(e.target.value)} className="w-full max-w-full block" />
           </div>
           <div className="min-w-0">
             <Label>Até</Label>
-            <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-full" />
+            <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-full max-w-full block" />
           </div>
           <div className="min-w-0">
             <Label>Cidade</Label>
