@@ -256,82 +256,153 @@ export default function UsuariosAdminPage() {
         </Dialog>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="p-8 flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Cargo</TableHead>
-                  <TableHead>Papel</TableHead>
-                  <TableHead>Nível</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((r) => (
-                  <TableRow key={r.user_id}>
-                    <TableCell className="font-medium">{r.nome ?? "—"}{r.user_id === user?.id && <Badge variant="secondary" className="ml-2 text-[10px]">você</Badge>}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{r.email}</TableCell>
-                    <TableCell className="text-sm">{r.cargo ?? "—"}</TableCell>
-                    <TableCell>
-                      <Select value={r.role} onValueChange={(v) => handleRoleChange(r, v as UiRole)} disabled={busy || r.user_id === user?.id}>
-                        <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="gestor">Gestor</SelectItem>
-                          <SelectItem value="corretor">Corretor</SelectItem>
-                          <SelectItem value="gestor_corretor">Gestor + Corretor</SelectItem>
-                          <SelectItem value="marketing">Marketing</SelectItem>
-                      <SelectItem value="secretaria">Secretaria</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={r.nivel}
-                        onValueChange={async (v) => {
-                          const { error } = await supabase.from("profiles").update({ nivel: v } as any).eq("user_id", r.user_id);
-                          if (error) return toast.error(error.message);
-                          setRows((rs) => rs.map((x) => x.user_id === r.user_id ? { ...x, nivel: v as any } : x));
-                        }}
-                        disabled={busy}
-                      >
-                        <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="junior">Júnior</SelectItem>
-                          <SelectItem value="senior">Sênior</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell className="text-right space-x-1">
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(r)} title="Editar">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => setPermTarget(r)} title="Permissões de menu">
-                        <Lock className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => { setResetTarget(r); setNewPass(genPassword()); }} title="Redefinir senha">
-                        <KeyRound className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => handleDelete(r)} disabled={r.user_id === user?.id} title="Remover">
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </TableCell>
+      {loading ? (
+        <Card><CardContent className="p-8 flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></CardContent></Card>
+      ) : (
+        <>
+          {/* Mobile: cards */}
+          <div className="md:hidden space-y-2">
+            {rows.map((r) => (
+              <Card key={r.user_id} className="p-3 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium truncate">
+                      {r.nome ?? "—"}
+                      {r.user_id === user?.id && <Badge variant="secondary" className="ml-2 text-[10px]">você</Badge>}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">{r.email}</div>
+                    {r.cargo && <div className="text-xs text-muted-foreground mt-0.5">{r.cargo}</div>}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-[10px] uppercase text-muted-foreground">Papel</Label>
+                    <Select value={r.role} onValueChange={(v) => handleRoleChange(r, v as UiRole)} disabled={busy || r.user_id === user?.id}>
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="gestor">Gestor</SelectItem>
+                        <SelectItem value="corretor">Corretor</SelectItem>
+                        <SelectItem value="gestor_corretor">Gestor + Corretor</SelectItem>
+                        <SelectItem value="marketing">Marketing</SelectItem>
+                        <SelectItem value="secretaria">Secretaria</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-[10px] uppercase text-muted-foreground">Nível</Label>
+                    <Select
+                      value={r.nivel}
+                      onValueChange={async (v) => {
+                        const { error } = await supabase.from("profiles").update({ nivel: v } as any).eq("user_id", r.user_id);
+                        if (error) return toast.error(error.message);
+                        setRows((rs) => rs.map((x) => x.user_id === r.user_id ? { ...x, nivel: v as any } : x));
+                      }}
+                      disabled={busy}
+                    >
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="junior">Júnior</SelectItem>
+                        <SelectItem value="senior">Sênior</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="flex gap-1 pt-1 border-t">
+                  <Button size="sm" variant="ghost" className="flex-1" onClick={() => openEdit(r)}>
+                    <Pencil className="h-4 w-4 mr-1" /> Editar
+                  </Button>
+                  <Button size="sm" variant="ghost" className="flex-1" onClick={() => setPermTarget(r)}>
+                    <Lock className="h-4 w-4 mr-1" /> Permissões
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => { setResetTarget(r); setNewPass(genPassword()); }} title="Redefinir senha">
+                    <KeyRound className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => handleDelete(r)} disabled={r.user_id === user?.id} title="Remover">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              </Card>
+            ))}
+            {rows.length === 0 && <Card className="p-6 text-center text-muted-foreground text-sm">Nenhum usuário cadastrado</Card>}
+          </div>
+
+          {/* Desktop: table */}
+          <Card className="hidden md:block">
+            <CardContent className="p-0 overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Cargo</TableHead>
+                    <TableHead>Papel</TableHead>
+                    <TableHead>Nível</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                ))}
-                {rows.length === 0 && (
-                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum usuário cadastrado</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((r) => (
+                    <TableRow key={r.user_id}>
+                      <TableCell className="font-medium">{r.nome ?? "—"}{r.user_id === user?.id && <Badge variant="secondary" className="ml-2 text-[10px]">você</Badge>}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{r.email}</TableCell>
+                      <TableCell className="text-sm">{r.cargo ?? "—"}</TableCell>
+                      <TableCell>
+                        <Select value={r.role} onValueChange={(v) => handleRoleChange(r, v as UiRole)} disabled={busy || r.user_id === user?.id}>
+                          <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="gestor">Gestor</SelectItem>
+                            <SelectItem value="corretor">Corretor</SelectItem>
+                            <SelectItem value="gestor_corretor">Gestor + Corretor</SelectItem>
+                            <SelectItem value="marketing">Marketing</SelectItem>
+                            <SelectItem value="secretaria">Secretaria</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={r.nivel}
+                          onValueChange={async (v) => {
+                            const { error } = await supabase.from("profiles").update({ nivel: v } as any).eq("user_id", r.user_id);
+                            if (error) return toast.error(error.message);
+                            setRows((rs) => rs.map((x) => x.user_id === r.user_id ? { ...x, nivel: v as any } : x));
+                          }}
+                          disabled={busy}
+                        >
+                          <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="junior">Júnior</SelectItem>
+                            <SelectItem value="senior">Sênior</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="text-right space-x-1">
+                        <Button size="icon" variant="ghost" onClick={() => openEdit(r)} title="Editar">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => setPermTarget(r)} title="Permissões de menu">
+                          <Lock className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => { setResetTarget(r); setNewPass(genPassword()); }} title="Redefinir senha">
+                          <KeyRound className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => handleDelete(r)} disabled={r.user_id === user?.id} title="Remover">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {rows.length === 0 && (
+                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum usuário cadastrado</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
 
       <Dialog open={!!resetTarget} onOpenChange={(o) => !o && setResetTarget(null)}>
         <DialogContent>
