@@ -265,7 +265,7 @@ export default function Dashboard() {
           <h2 className="font-display text-xl font-semibold mb-4">Leads por etapa</h2>
           <div className="space-y-2">
             {STAGES.map(s => {
-              const count = leads.filter(l => l.etapa_funil === s.id).length;
+              const count = campaignLeads.filter(l => l.etapa_funil === s.id).length;
               const pct = total ? (count / total) * 100 : 0;
               return (
                 <div key={s.id}>
