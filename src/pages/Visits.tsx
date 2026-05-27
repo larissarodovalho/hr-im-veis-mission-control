@@ -174,7 +174,36 @@ export default function Visits() {
         </Dialog>
       </div>
 
-      <Card className="overflow-x-auto">
+      {/* Mobile: card list */}
+      <div className="md:hidden space-y-2">
+        {items.map(v => (
+          <Card key={v.id} className="p-3 cursor-pointer hover:bg-muted/40" onClick={() => openEdit(v)}>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="text-xs text-muted-foreground">{format(new Date(v.data_visita), "Pp", { locale: ptBR })}</div>
+                <div className="font-medium truncate mt-0.5" onClick={(e) => e.stopPropagation()}>
+                  {v.leads?.id ? (
+                    <Link to={`/crm/leads/${v.lead_id}`} className="hover:underline">{v.leads.nome}</Link>
+                  ) : v.conta?.id ? (
+                    <Link to={`/crm/contas/${v.conta_id}`} className="hover:underline">{v.conta.nome}</Link>
+                  ) : <span className="text-muted-foreground font-normal">Sem vínculo</span>}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1 truncate">{v.imoveis?.titulo || "Sem imóvel"}</div>
+              </div>
+              <Badge variant="outline" className="shrink-0">{v.status}</Badge>
+            </div>
+            {v.status === "Agendada" && (
+              <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                <Button size="sm" variant="outline" className="w-full" onClick={() => quickStatus(v, "Confirmada")}>Aprovar</Button>
+              </div>
+            )}
+          </Card>
+        ))}
+        {items.length === 0 && <Card className="p-6 text-center text-muted-foreground text-sm">Sem visitas.</Card>}
+      </div>
+
+      {/* Desktop: table */}
+      <Card className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left"><tr><th className="p-3">Quando</th><th className="p-3">Vínculo</th><th className="p-3">Imóvel</th><th className="p-3">Status</th><th className="p-3 w-32">Ações</th></tr></thead>
           <tbody>
