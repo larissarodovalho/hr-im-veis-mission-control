@@ -192,7 +192,7 @@ export default function Meetings() {
         </Dialog>
       </div>
 
-      <Card className="overflow-x-auto">
+      <Card className="overflow-x-auto hidden md:block">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left"><tr><th className="p-3">Data</th><th className="p-3">Lead</th><th className="p-3">Tipo / Local</th><th className="p-3">Status</th><th className="p-3 w-24">Ações</th></tr></thead>
           <tbody>
@@ -250,6 +250,58 @@ export default function Meetings() {
         </table>
       </Card>
 
+      <div className="md:hidden space-y-3">
+        {items.map(m => {
+          const tipoMeta: Record<string, { label: string; emoji: string }> = {
+            presencial: { label: "Presencial", emoji: "🏠" },
+            videochamada: { label: "Videochamada", emoji: "💻" },
+            ligacao: { label: "Ligação", emoji: "📞" },
+          };
+          const t = tipoMeta[m.tipo] || { label: m.tipo || "—", emoji: "📌" };
+          const statusStyles: Record<string, string> = {
+            agendada: "bg-danger/15 text-danger border-danger/30",
+            confirmada: "bg-success/15 text-success border-success/30",
+            realizada: "bg-success text-success-foreground border-transparent",
+            cancelada: "bg-muted text-muted-foreground border-border",
+            no_show: "bg-warning/15 text-warning border-warning/30",
+          };
+          return (
+            <Card key={m.id} className="p-3 space-y-2 cursor-pointer" onClick={() => openEdit(m)}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="text-sm font-medium">{format(new Date(m.agendada_para), "Pp", { locale: ptBR })}</div>
+                <Badge variant="outline" className={statusStyles[m.status] || ""}>{m.status}</Badge>
+              </div>
+              <div className="text-sm" onClick={(e) => e.stopPropagation()}>
+                {m.leads?.id ? (
+                  <Link to={`/crm/leads/${m.lead_id}`} className="font-medium text-primary underline-offset-2 hover:underline">{m.leads.nome}</Link>
+                ) : m.conta?.id ? (
+                  <Link to={`/crm/contas/${m.conta_id}`} className="font-medium text-primary underline-offset-2 hover:underline">{m.conta.nome}</Link>
+                ) : (
+                  <span>{m.titulo || "Sem lead"}</span>
+                )}
+                {m.leads?.telefone && <div className="text-xs text-muted-foreground">📞 {m.leads.telefone}</div>}
+                {m.leads?.email && <div className="text-xs text-muted-foreground truncate">✉ {m.leads.email}</div>}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="secondary" className="w-fit">{t.emoji} {t.label}</Badge>
+                {m.link ? (
+                  <a href={m.link} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline truncate max-w-full" onClick={(e) => e.stopPropagation()}>{m.link}</a>
+                ) : m.local ? (
+                  <span className="text-xs text-muted-foreground truncate">{m.local}</span>
+                ) : null}
+              </div>
+              {m.status !== "confirmada" && m.status !== "realizada" && (
+                <Button size="sm" className="w-full bg-success text-success-foreground hover:bg-success/90" onClick={(e) => { e.stopPropagation(); quickStatus(m, "confirmada"); }}>Aprovar</Button>
+              )}
+            </Card>
+          );
+        })}
+        {items.length === 0 && (
+          <Card className="p-6 text-center text-muted-foreground text-sm">Nada por aqui.</Card>
+        )}
+      </div>
+
+
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Editar reunião</DialogTitle></DialogHeader>
@@ -266,7 +318,7 @@ export default function Meetings() {
             </div>
           )}
           <form onSubmit={saveEdit} className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label>Lead</Label>
                 <SearchableSelect
@@ -298,7 +350,7 @@ export default function Meetings() {
                 emptyLabel="Sem imóvel vinculado"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label>Tipo</Label>
                 <Select value={editForm.tipo} onValueChange={v => setEditForm({ ...editForm, tipo: v })}>
