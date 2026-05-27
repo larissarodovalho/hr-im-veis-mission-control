@@ -59,6 +59,28 @@ export default function ConfiguracoesPage() {
   const [s, setS] = useState<SystemSettings>(DEFAULTS);
   const [busy, setBusy] = useState(false);
   const [stats, setStats] = useState<{ leads: number; contatos: number; conversas: number; usuarios: number } | null>(null);
+  const [sofiaEnabled, setSofiaEnabled] = useState<boolean | null>(null);
+  const [sofiaBusy, setSofiaBusy] = useState(false);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    fetchAiAssistant().then((v) => setSofiaEnabled(v.whatsapp_enabled)).catch(() => setSofiaEnabled(true));
+  }, [isAdmin]);
+
+  const toggleSofia = async (checked: boolean) => {
+    setSofiaBusy(true);
+    const prev = sofiaEnabled;
+    setSofiaEnabled(checked);
+    try {
+      await saveAiAssistant({ whatsapp_enabled: checked });
+      toast.success(checked ? "Sofia ativada para o WhatsApp" : "Sofia desativada — atendimento 100% humano");
+    } catch (e: any) {
+      setSofiaEnabled(prev);
+      toast.error(e?.message || "Erro ao salvar");
+    } finally {
+      setSofiaBusy(false);
+    }
+  };
 
   useEffect(() => {
     try {
