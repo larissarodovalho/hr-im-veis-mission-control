@@ -180,12 +180,12 @@ export default function Meetings() {
                   emptyLabel="Sem imóvel vinculado"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
+              <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
+                <div className="min-w-0">
                   <Label>Data</Label>
                   <Input
                     type="date"
-                    className="w-full"
+                    className="min-w-0 w-full px-2 text-sm sm:px-3 sm:text-base md:text-sm"
                     value={form.agendada_para.slice(0, 10)}
                     onChange={e => {
                       const time = form.agendada_para.slice(11, 16) || "09:00";
@@ -193,11 +193,11 @@ export default function Meetings() {
                     }}
                   />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <Label>Hora</Label>
                   <Input
                     type="time"
-                    className="w-full"
+                    className="min-w-0 w-full px-2 text-sm sm:px-3 sm:text-base md:text-sm"
                     value={form.agendada_para.slice(11, 16)}
                     onChange={e => {
                       const date = form.agendada_para.slice(0, 10) || new Date().toISOString().slice(0, 10);
@@ -403,12 +403,12 @@ export default function Meetings() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
+            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
+              <div className="min-w-0">
                 <Label>Data</Label>
                 <Input
                   type="date"
-                  className="w-full"
+                  className="min-w-0 w-full px-2 text-sm sm:px-3 sm:text-base md:text-sm"
                   value={editForm.agendada_para.slice(0, 10)}
                   onChange={e => {
                     const time = editForm.agendada_para.slice(11, 16) || "09:00";
@@ -416,11 +416,11 @@ export default function Meetings() {
                   }}
                 />
               </div>
-              <div>
+              <div className="min-w-0">
                 <Label>Hora</Label>
                 <Input
                   type="time"
-                  className="w-full"
+                  className="min-w-0 w-full px-2 text-sm sm:px-3 sm:text-base md:text-sm"
                   value={editForm.agendada_para.slice(11, 16)}
                   onChange={e => {
                     const date = editForm.agendada_para.slice(0, 10) || new Date().toISOString().slice(0, 10);
