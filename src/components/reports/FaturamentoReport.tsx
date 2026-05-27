@@ -345,7 +345,7 @@ export default function FaturamentoReport() {
       </Card>
 
       {/* Ranking */}
-      <Card className="p-4 overflow-x-auto">
+      <Card className="p-3 sm:p-4 overflow-x-auto">
         <h3 className="font-semibold text-sm mb-3">Ranking por corretor</h3>
         {loading ? (
           <p className="text-muted-foreground text-sm">Carregando…</p>
