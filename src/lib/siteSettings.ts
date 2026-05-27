@@ -21,6 +21,27 @@ export const SITE_IMAGE_LABELS: Record<SiteImageKey, { label: string; descriptio
 const TABLE = "site_settings" as const;
 const IMAGES_KEY = "images";
 const FEATURED_KEY = "featured_imoveis";
+const AI_ASSISTANT_KEY = "ai_assistant";
+
+export type AiAssistantSettings = { whatsapp_enabled: boolean };
+
+export async function fetchAiAssistant(): Promise<AiAssistantSettings> {
+  const { data } = await supabase
+    .from(TABLE as any)
+    .select("value")
+    .eq("key", AI_ASSISTANT_KEY)
+    .maybeSingle();
+  const value = (data as any)?.value;
+  const enabled = value && typeof value === "object" && (value as any).whatsapp_enabled === false ? false : true;
+  return { whatsapp_enabled: enabled };
+}
+
+export async function saveAiAssistant(settings: AiAssistantSettings) {
+  const { error } = await supabase
+    .from(TABLE as any)
+    .upsert({ key: AI_ASSISTANT_KEY, value: settings as any }, { onConflict: "key" });
+  if (error) throw error;
+}
 
 type ImagesRecord = Partial<Record<SiteImageKey, string>>;
 

@@ -17,6 +17,7 @@ import {
   UserCircle,
 } from "lucide-react";
 import SiteSettingsTab from "@/components/configuracoes/SiteSettingsTab";
+import { fetchAiAssistant, saveAiAssistant } from "@/lib/siteSettings";
 import GoogleCalendarConnect from "@/components/configuracoes/GoogleCalendarConnect";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -58,6 +59,28 @@ export default function ConfiguracoesPage() {
   const [s, setS] = useState<SystemSettings>(DEFAULTS);
   const [busy, setBusy] = useState(false);
   const [stats, setStats] = useState<{ leads: number; contatos: number; conversas: number; usuarios: number } | null>(null);
+  const [sofiaEnabled, setSofiaEnabled] = useState<boolean | null>(null);
+  const [sofiaBusy, setSofiaBusy] = useState(false);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    fetchAiAssistant().then((v) => setSofiaEnabled(v.whatsapp_enabled)).catch(() => setSofiaEnabled(true));
+  }, [isAdmin]);
+
+  const toggleSofia = async (checked: boolean) => {
+    setSofiaBusy(true);
+    const prev = sofiaEnabled;
+    setSofiaEnabled(checked);
+    try {
+      await saveAiAssistant({ whatsapp_enabled: checked });
+      toast.success(checked ? "Sofia ativada para o WhatsApp" : "Sofia desativada — atendimento 100% humano");
+    } catch (e: any) {
+      setSofiaEnabled(prev);
+      toast.error(e?.message || "Erro ao salvar");
+    } finally {
+      setSofiaBusy(false);
+    }
+  };
 
   useEffect(() => {
     try {
@@ -236,6 +259,34 @@ export default function ConfiguracoesPage() {
 
         <TabsContent value="sistema">
           <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bot className="h-5 w-5 text-primary" />
+                  Assistente virtual Sofia
+                  {sofiaEnabled === false && <Badge variant="destructive">Pausada</Badge>}
+                </CardTitle>
+                <CardDescription>
+                  Controle global do atendimento por IA no WhatsApp. Quando desativada, a Sofia não responde nenhuma conversa, mesmo as que estiverem com IA ligada individualmente.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <Label className="text-sm font-medium">Sofia ativa no WhatsApp</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {sofiaEnabled === false
+                      ? "Todas as conversas estão sendo atendidas apenas por humanos."
+                      : "Sofia responde automaticamente as conversas com IA habilitada."}
+                  </p>
+                </div>
+                <Switch
+                  checked={sofiaEnabled ?? true}
+                  onCheckedChange={toggleSofia}
+                  disabled={sofiaEnabled === null || sofiaBusy}
+                />
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Localização</CardTitle>
