@@ -381,13 +381,14 @@ export default function Meetings() {
             <div><Label>Local</Label><Input value={editForm.local} onChange={e => setEditForm({ ...editForm, local: e.target.value })} /></div>
             <div><Label>Link</Label><Input value={editForm.link} onChange={e => setEditForm({ ...editForm, link: e.target.value })} /></div>
             <div><Label>Notas</Label><Textarea value={editForm.notas} onChange={e => setEditForm({ ...editForm, notas: e.target.value })} /></div>
-            <DialogFooter className="flex-row justify-between sm:justify-between">
-              <Button type="button" variant="destructive" onClick={remove}>Excluir</Button>
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
-                <Button type="submit">Salvar</Button>
+            <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0 sm:justify-between">
+              <Button type="button" variant="destructive" onClick={remove} className="w-full sm:w-auto">Excluir</Button>
+              <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-2 w-full sm:w-auto">
+                <Button type="button" variant="outline" onClick={() => setEditing(null)} className="w-full sm:w-auto">Cancelar</Button>
+                <Button type="submit" className="w-full sm:w-auto">Salvar</Button>
               </div>
             </DialogFooter>
+
           </form>
         </DialogContent>
       </Dialog>
