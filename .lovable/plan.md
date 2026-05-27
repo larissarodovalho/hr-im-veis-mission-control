@@ -1,19 +1,39 @@
-## Ajustar Reuniões para mobile
+# Correção: Oportunidades de Negócio
 
-Em viewport pequeno (~440px), a aba `src/pages/Meetings.tsx` mostra uma `<table>` de 5 colunas dentro de `overflow-x-auto`, o que força scroll horizontal e quebra a leitura. Vou criar uma visualização em cards para mobile, mantendo a tabela em telas ≥ md.
+## Diagnóstico
 
-### Mudanças em `src/pages/Meetings.tsx`
+Investiguei as políticas de acesso (RLS) das tabelas envolvidas e encontrei **dois problemas reais** no comportamento descrito:
 
-1. Envolver o `Card` da tabela atual em `hidden md:block` para preservá-la no desktop.
-2. Adicionar logo abaixo uma lista de cards `md:hidden`, gerada do mesmo `items.map(...)`, com:
-   - Data/hora formatada (`format(..., "Pp")`) em destaque.
-   - Nome do lead/conta como `Link` (ou "Sem lead").
-   - Telefone/email quando existirem.
-   - Badge do tipo (presencial/videochamada/ligação) e badge de status com os mesmos estilos atuais.
-   - Local ou link (link clicável, truncado).
-   - Botão "Aprovar" full-width quando status ≠ confirmada/realizada.
-   - Card inteiro clicável → `openEdit(m)` (com `stopPropagation` nos elementos interativos internos).
-3. Empty state equivalente quando `items.length === 0`.
-4. Dialog "Nova reunião" e "Editar reunião": já funcionam no mobile, apenas trocar o grid `grid-cols-2` (Lead/Conta e Tipo/Status) para `grid-cols-1 sm:grid-cols-2` para não espremer os selects em 440px.
+### 1. Não consegue excluir o card da oportunidade
+A política atual de exclusão da tabela `oportunidades` permite **apenas administradores**:
+```
+DELETE: has_role(auth.uid(), 'admin')
+```
+Ou seja, um corretor/gestor que criou a oportunidade (ou é o responsável dela) **não consegue excluí-la**, mesmo sendo o dono. O botão "Excluir" no diálogo simplesmente falha silenciosamente (ou mostra erro).
 
-Apenas mudanças de UI/Tailwind; nenhuma alteração em queries, lógica ou schema.
+### 2. Não consegue adicionar alguns contatos (leads/contas)
+No seletor de cliente do diálogo "Nova oportunidade" / "Editar oportunidade":
+- **Leads**: já existe política `Staff sees all leads (agenda)` — todos staff veem todos os leads. ✅
+- **Contas**: o corretor só vê contas onde `responsavel_id = auth.uid()` ou `created_by = auth.uid()`. Contas de outros corretores **não aparecem** na busca, por isso "não consegue adicionar alguns contatos".
+
+## Plano de correção
+
+### Migração de banco (políticas RLS)
+
+**a) Permitir que dono/responsável exclua a oportunidade** (mantém admin):
+- Substituir a policy `DELETE` de `oportunidades` por:
+  ```sql
+  is_admin() OR corretor_id = auth.uid() OR created_by = auth.uid()
+  ```
+- Espelha a regra de `UPDATE` que já existe.
+
+**b) Permitir que todo staff visualize todas as contas** (apenas SELECT, igual aos leads):
+- Adicionar policy `Staff sees all contas (agenda)` em `contas` com `USING (is_staff())`.
+- Não altera INSERT/UPDATE/DELETE — apenas leitura, para poder selecionar a conta como cliente da oportunidade.
+
+### Sem mudança de código frontend
+Os diálogos `NovaOportunidadeDialog` e `EditarOportunidadeDialog` já listam corretamente leads e contas e já chamam `delete` corretamente — só faltam as permissões no backend.
+
+## Pergunta antes de aplicar
+
+A liberação de leitura de **todas as contas** para qualquer corretor é desejada? (hoje cada corretor só vê as próprias). Se preferir manter o isolamento, posso, em vez disso, mostrar no seletor apenas o que o usuário já enxerga e deixar claro na UI — mas aí o problema "não consigo adicionar contato X" continuaria por design.
