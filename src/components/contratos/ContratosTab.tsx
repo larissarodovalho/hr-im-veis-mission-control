@@ -144,23 +144,23 @@ export default function ContratosTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <FileSignature className="h-6 w-6" /> Contratos
+            <FileSignature className="h-6 w-6 shrink-0" /> Contratos
           </h1>
           <p className="text-sm text-muted-foreground">Autorização de venda com exclusividade</p>
         </div>
-        <Button onClick={() => setOpenNew(true)}><Plus className="h-4 w-4 mr-1" /> Novo contrato</Button>
+        <Button size="sm" onClick={() => setOpenNew(true)}><Plus className="h-4 w-4 mr-1" /> Novo contrato</Button>
       </div>
 
-      <Card className="p-4">
-        <div className="flex gap-3 flex-wrap mb-4">
-          <div className="relative flex-1 min-w-[220px]">
+      <Card className="p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:flex-wrap mb-4">
+          <div className="relative flex-1 min-w-0 sm:min-w-[220px]">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por cliente ou imóvel" className="pl-9" />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-[200px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os status</SelectItem>
               {Object.entries(CONTRATO_STATUS).map(([k, v]) => (
@@ -169,6 +169,7 @@ export default function ContratosTab() {
             </SelectContent>
           </Select>
         </div>
+
 
         {loading ? (
           <div className="py-12 text-center text-muted-foreground">Carregando...</div>
