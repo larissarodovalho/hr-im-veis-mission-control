@@ -163,11 +163,37 @@ export default function SharedCalendarCard() {
               <Button size="sm" onClick={openInviteDialog} disabled={busy}>
                 <Users className="h-4 w-4 mr-1" /> Convidar membros
               </Button>
+              <Button size="sm" variant="secondary" onClick={backfill} disabled={busy}>
+                {busy ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+                Sincronizar eventos existentes
+              </Button>
               <Button size="sm" variant="outline" asChild>
                 <a href={`https://calendar.google.com/calendar/u/0?cid=${btoa(settings.google_calendar_id)}`} target="_blank" rel="noreferrer">
                   <ExternalLink className="h-4 w-4 mr-1" /> Abrir no Google Calendar
                 </a>
               </Button>
+            </div>
+
+            <div className="rounded-md border border-blue-500/30 bg-blue-500/5 p-3 text-xs space-y-1.5">
+              <div className="flex items-center gap-1.5 font-medium text-blue-400">
+                <Info className="h-3.5 w-3.5" /> Como o membro vê no celular
+              </div>
+              <p className="text-muted-foreground">
+                1. Ele recebe o convite por email do Google e clica em <strong>"Adicionar agenda"</strong>.
+              </p>
+              <p className="text-muted-foreground">
+                2. <strong>Android / app Google Agenda:</strong> abre o app → menu → ativa <em>Agenda HR Imóveis</em>.
+              </p>
+              <p className="text-muted-foreground">
+                3. <strong>iPhone / Apple Calendar (sem app Google):</strong> precisa abrir{" "}
+                <a href="https://calendar.google.com/calendar/syncselect" target="_blank" rel="noreferrer" className="text-blue-400 underline">
+                  calendar.google.com/syncselect
+                </a>{" "}
+                no navegador e marcar a agenda.
+              </p>
+              <p className="text-muted-foreground">
+                4. Eventos antigos não vão sozinhos — clique em <strong>Sincronizar eventos existentes</strong> uma vez.
+              </p>
             </div>
 
             <div>
