@@ -135,6 +135,7 @@ Deno.serve(async (req) => {
     async function pushTo(target_user_id: string, calendar_id: string, access_token: string) {
       const { data: existing } = await supa.from("google_calendar_sync")
         .select("*").eq("user_id", target_user_id)
+        .eq("calendar_id", calendar_id)
         .eq("entity_type", entity_type).eq("entity_id", entity_id).maybeSingle();
 
       let r: Response;
@@ -152,12 +153,13 @@ Deno.serve(async (req) => {
 
       await supa.from("google_calendar_sync").upsert({
         user_id: target_user_id,
+        calendar_id,
         entity_type, entity_id,
         google_event_id: ev.id,
         etag: ev.etag,
         html_link: ev.htmlLink,
         last_synced_at: new Date().toISOString(),
-      }, { onConflict: "user_id,entity_type,entity_id" });
+      }, { onConflict: "user_id,calendar_id,entity_type,entity_id" });
       return { eventId: ev.id, htmlLink: ev.htmlLink };
     }
 
