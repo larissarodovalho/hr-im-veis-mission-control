@@ -94,35 +94,38 @@ export default function GoogleCalendarConnect() {
 
   const syncNow = async () => {
     if (!user) return;
+    if (!conn) {
+      toast.error("Conecte sua conta Google antes de sincronizar.");
+      return;
+    }
     setBusy(true);
-    const startedAt = conn?.last_sync_at ?? null;
     try {
-      const { error } = await supabase.functions.invoke("gcal-pull", { body: { user_id: user.id } });
+      const { data, error } = await supabase.functions.invoke("gcal-pull", {
+        body: { user_id: user.id, wait: true },
+      });
       if (error) throw error;
-      toast.info("Sincronização iniciada. Isso pode levar alguns segundos...");
-
-      // Polling: aguarda last_sync_at mudar ou um erro aparecer (até ~2min)
-      const deadline = Date.now() + 120_000;
-      const poll = async (): Promise<void> => {
-        const { data } = await supabase
-          .from("user_google_calendar")
-          .select("google_email, connected_at, last_sync_at, last_sync_error, calendar_id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        const next = (data as Conn) ?? null;
-        setConn(next);
-        if (next?.last_sync_error && next.last_sync_at !== startedAt) {
-          toast.error("Falha na sincronização. Veja o detalhe abaixo."); return;
+      const result = (data as any)?.results?.[0];
+      if (result?.error) {
+        toast.error(`Falha: ${result.error}`);
+      } else if (result?.skipped) {
+        toast.warning("Sua conta Google não está conectada. Conecte-a primeiro.");
+      } else if (result?.reset) {
+        toast.info("Sincronização reiniciada. Clique de novo em alguns segundos.");
+      } else {
+        const imp = result?.imported ?? 0;
+        const upd = result?.updated ?? 0;
+        const del = result?.deleted ?? 0;
+        if (imp + upd + del === 0) {
+          toast.success("Sincronizado — nenhum evento novo.");
+        } else {
+          toast.success(`Sincronizado: ${imp} novo(s), ${upd} atualizado(s), ${del} removido(s).`);
         }
-        if (next && next.last_sync_at !== startedAt) { toast.success("Sincronizado"); return; }
-        if (Date.now() > deadline) { toast.warning("Sincronização ainda em andamento. Atualize em instantes."); return; }
-        await new Promise(r => setTimeout(r, 3000));
-        return poll();
-      };
-      await poll();
+      }
+      await load();
     } catch (e) { toast.error((e as Error).message); }
     finally { setBusy(false); }
   };
+
 
   return (
     <Card>

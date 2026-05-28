@@ -5,7 +5,7 @@ import { adminClient, formatGoogleCalendarApiError, getValidAccessToken, gcalFet
 
 async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string) {
   const conn = await getValidAccessToken(supa, user_id);
-  if (!conn) return { user_id, skipped: true };
+  if (!conn) return { user_id, skipped: true, reason: "not_connected" };
 
   let pageToken: string | undefined;
   let nextSyncToken: string | undefined;
@@ -17,10 +17,15 @@ async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string
     const params = new URLSearchParams({ singleEvents: "true", maxResults: "250" });
     if (conn.sync_token) params.set("syncToken", conn.sync_token);
     else {
-      params.set("timeMin", new Date().toISOString());
+      // Janela limitada na primeira carga para evitar estouro de CPU em agendas com muitos eventos.
+      const now = new Date();
+      const max = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000); // próximos 90 dias
+      params.set("timeMin", now.toISOString());
+      params.set("timeMax", max.toISOString());
       params.set("orderBy", "startTime");
     }
     if (pageToken) params.set("pageToken", pageToken);
+
 
     const r = await gcalFetch(conn.access_token, `/calendars/${encodeURIComponent(conn.calendar_id)}/events?${params.toString()}`);
     if (r.status === 410) {
