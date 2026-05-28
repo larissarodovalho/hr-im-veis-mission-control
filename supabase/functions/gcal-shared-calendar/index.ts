@@ -200,9 +200,8 @@ Deno.serve(async (req) => {
 
     // ---- backfill ----
     if (action === "backfill") {
-      const LIMIT = 200;
-      const includePast = body.includePast !== false; // default: sincroniza tudo
-      const sinceISO = includePast ? null : new Date().toISOString();
+      const PER_BUCKET = 100; // 100 futuros + 100 passados por tipo
+      const nowISO = new Date().toISOString();
 
       // já sincronizados na agenda compartilhada
       const { data: already } = await supa
@@ -212,40 +211,49 @@ Deno.serve(async (req) => {
       const seen = new Set((already ?? []).map((r: any) => `${r.entity_type}:${r.entity_id}`));
 
       const pending: { entity_type: string; entity_id: string }[] = [];
+      const addAll = (rows: any[] | null, type: string) => {
+        for (const r of rows ?? []) {
+          const k = `${type}:${r.id}`;
+          if (!seen.has(k)) {
+            seen.add(k);
+            pending.push({ entity_type: type, entity_id: r.id });
+          }
+        }
+      };
 
-      let q1 = supa.from("reunioes").select("id, agendada_para").order("agendada_para", { ascending: false }).limit(LIMIT);
-      if (sinceISO) q1 = q1.gte("agendada_para", sinceISO);
-      const { data: reunioes } = await q1;
-      for (const r of reunioes ?? []) {
-        const k = `reuniao:${r.id}`;
-        if (!seen.has(k)) pending.push({ entity_type: "reuniao", entity_id: r.id });
-      }
+      // reuniões
+      const { data: rFut } = await supa.from("reunioes")
+        .select("id").gte("agendada_para", nowISO).order("agendada_para", { ascending: true }).limit(PER_BUCKET);
+      addAll(rFut, "reuniao");
+      const { data: rPast } = await supa.from("reunioes")
+        .select("id").lt("agendada_para", nowISO).order("agendada_para", { ascending: false }).limit(PER_BUCKET);
+      addAll(rPast, "reuniao");
 
-      let q2 = supa.from("ligacoes").select("id, data").order("data", { ascending: false }).limit(LIMIT);
-      if (sinceISO) q2 = q2.gte("data", sinceISO);
-      const { data: ligacoes } = await q2;
-      for (const r of ligacoes ?? []) {
-        const k = `ligacao:${r.id}`;
-        if (!seen.has(k)) pending.push({ entity_type: "ligacao", entity_id: r.id });
-      }
+      // ligações
+      const { data: lFut } = await supa.from("ligacoes")
+        .select("id").gte("data", nowISO).order("data", { ascending: true }).limit(PER_BUCKET);
+      addAll(lFut, "ligacao");
+      const { data: lPast } = await supa.from("ligacoes")
+        .select("id").lt("data", nowISO).order("data", { ascending: false }).limit(PER_BUCKET);
+      addAll(lPast, "ligacao");
 
-      let q3 = supa.from("visitas").select("id, data_visita").order("data_visita", { ascending: false }).limit(LIMIT);
-      if (sinceISO) q3 = q3.gte("data_visita", sinceISO);
-      const { data: visitas } = await q3;
-      for (const r of visitas ?? []) {
-        const k = `visita:${r.id}`;
-        if (!seen.has(k)) pending.push({ entity_type: "visita", entity_id: r.id });
-      }
+      // visitas
+      const { data: vFut } = await supa.from("visitas")
+        .select("id").gte("data_visita", nowISO).order("data_visita", { ascending: true }).limit(PER_BUCKET);
+      addAll(vFut, "visita");
+      const { data: vPast } = await supa.from("visitas")
+        .select("id").lt("data_visita", nowISO).order("data_visita", { ascending: false }).limit(PER_BUCKET);
+      addAll(vPast, "visita");
 
-      let q4 = supa.from("captacoes_imovel").select("id, data_agendada").not("data_agendada", "is", null).order("data_agendada", { ascending: false }).limit(LIMIT);
-      if (sinceISO) q4 = q4.gte("data_agendada", sinceISO);
-      const { data: captacoes } = await q4;
-      for (const r of captacoes ?? []) {
-        const k = `captacao:${r.id}`;
-        if (!seen.has(k)) pending.push({ entity_type: "captacao", entity_id: r.id });
-      }
+      // captações
+      const { data: cFut } = await supa.from("captacoes_imovel")
+        .select("id").not("data_agendada", "is", null).gte("data_agendada", nowISO).order("data_agendada", { ascending: true }).limit(PER_BUCKET);
+      addAll(cFut, "captacao");
+      const { data: cPast } = await supa.from("captacoes_imovel")
+        .select("id").not("data_agendada", "is", null).lt("data_agendada", nowISO).order("data_agendada", { ascending: false }).limit(PER_BUCKET);
+      addAll(cPast, "captacao");
 
-      const toProcess = pending.slice(0, LIMIT);
+      const toProcess = pending.slice(0, 400);
       let ok = 0, fail = 0;
       const errors: string[] = [];
       for (const item of toProcess) {
