@@ -277,11 +277,11 @@ export default function Schedule() {
           lead_telefone: lead?.telefone ?? null,
           lead_email: lead?.email ?? null,
           conta_id: c.conta_id ?? null,
+          conta_nome: contaNome ?? null,
           criado_por_ia: false,
           criado_por_id: c.created_by ?? null,
           criado_por_nome: c.created_by ? criadoresById.get(c.created_by) ?? null : null,
 
-          criado_por_ia: false,
         };
       });
     const visitasAgendadas: Compromisso[] = ((vis ?? []) as any[]).map((v) => {
