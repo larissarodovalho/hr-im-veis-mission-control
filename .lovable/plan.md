@@ -1,26 +1,29 @@
-Diagnóstico encontrado:
-- O cron automático está ativo e roda a cada 2 minutos.
-- O usuário Hans existe no CRM, mas não tem conexão registrada com Google Calendar em `user_google_calendar`.
-- Hoje só há 1 conta Google conectada, e ela não é a do Hans.
-- A função `gcal-pull` também registrou estouro de CPU recentemente, então vale endurecer a sincronização para não travar quando houver muitos eventos.
+## Plano de correção de segurança
 
-Plano de ação:
-1. Confirmar conexão do Hans
-   - Garantir que Hans conecte a conta Google dele pelo botão de integração dentro do CRM.
-   - Após conectar, a tabela de conexão deve registrar o `user_id` do Hans e `calendar_id = primary`.
+Vou ajustar as RLS policies do Supabase para resolver os findings, respeitando suas decisões:
 
-2. Melhorar a função `gcal-pull`
-   - Fazer a sincronização ignorar usuários sem conexão sem travar a rotina geral.
-   - Limitar a primeira busca sem `sync_token` a uma janela segura de eventos futuros, para evitar estouro de CPU.
-   - Manter o cron automático chamando todos os usuários conectados.
-   - Preservar a regra já ajustada para não importar eventos recorrentes como vários agendamentos diários.
+### 1. `booking_links` (corrigir — error)
+- Substituir policy SELECT atual por:
+  - admin/gestor: vê tudo
+  - corretor: só vê links onde `created_by = auth.uid()` OU o `lead_id`/`reuniao_id` pertence a ele
 
-3. Adicionar retorno de diagnóstico na sincronização manual
-   - Quando o usuário clicar em “Sincronizar agora”, mostrar se a conta Google não está conectada, se importou eventos, se atualizou eventos ou se deu erro.
-   - Isso evita a impressão de que sincronizou quando na verdade o usuário ainda não conectou a agenda.
+### 2. `signed_documents` + `document_signers` (corrigir — error)
+- SELECT em `signed_documents`:
+  - admin/gestor: vê tudo
+  - demais staff: só vê quando `created_by = auth.uid()` OU `lead_id`/`conta_id` pertence ao usuário (via responsavel_id/corretor_id/created_by da conta/lead)
+- SELECT em `document_signers`:
+  - mesma regra via join em `signed_documents`
+- `document_events` segue o mesmo escopo (consistência)
 
-4. Validar depois da implementação
-   - Verificar que Hans aparece em `user_google_calendar` após conectar.
-   - Rodar a sincronização do Hans individualmente.
-   - Confirmar se o novo agendamento aparece em `/crm/agenda`.
-   - Confirmar que o cron continua ativo para próximas sincronizações automáticas.
+### 3. `conteudo_posts` (corrigir — warn)
+- Adicionar `marketing` nas policies de SELECT, INSERT e UPDATE (admin/gestor + marketing)
+
+### 4. `reunioes` e `agenda_bloqueios` (manter compartilhado)
+- Você confirmou que a agenda é compartilhada para todo o staff. Vou manter as policies atuais e marcar os 2 findings (`reunioes_public_select`, `agenda_bloqueios_broad_read`) como **ignorados** no scanner, com justificativa registrada no security memory ("agenda compartilhada é requisito de produto").
+
+### Entregáveis
+- 1 migração SQL com DROP/CREATE das policies acima
+- Atualização do security memory documentando o que é intencionalmente compartilhado
+- Marcar findings resolvidos como `mark_as_fixed` e os 2 da agenda como `ignore`
+
+Nenhuma mudança em código de UI será necessária — as policies novas continuam permitindo o que o admin/gestor já fazia, e cada corretor continuará vendo o que ele criou.
