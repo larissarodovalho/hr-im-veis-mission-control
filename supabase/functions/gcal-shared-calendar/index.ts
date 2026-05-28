@@ -198,6 +198,74 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ---- backfill ----
+    if (action === "backfill") {
+      const LIMIT = 200;
+      const nowISO = new Date().toISOString();
+
+      // já sincronizados na agenda compartilhada
+      const { data: already } = await supa
+        .from("google_calendar_sync")
+        .select("entity_type, entity_id")
+        .eq("calendar_id", settings.google_calendar_id);
+      const seen = new Set((already ?? []).map((r: any) => `${r.entity_type}:${r.entity_id}`));
+
+      const pending: { entity_type: string; entity_id: string }[] = [];
+
+      const { data: reunioes } = await supa.from("reunioes")
+        .select("id").gte("agendada_para", nowISO).order("agendada_para").limit(LIMIT);
+      for (const r of reunioes ?? []) {
+        const k = `reuniao:${r.id}`;
+        if (!seen.has(k)) pending.push({ entity_type: "reuniao", entity_id: r.id });
+      }
+      const { data: ligacoes } = await supa.from("ligacoes")
+        .select("id").gte("data", nowISO).order("data").limit(LIMIT);
+      for (const r of ligacoes ?? []) {
+        const k = `ligacao:${r.id}`;
+        if (!seen.has(k)) pending.push({ entity_type: "ligacao", entity_id: r.id });
+      }
+      const { data: visitas } = await supa.from("visitas")
+        .select("id").gte("data_visita", nowISO).order("data_visita").limit(LIMIT);
+      for (const r of visitas ?? []) {
+        const k = `visita:${r.id}`;
+        if (!seen.has(k)) pending.push({ entity_type: "visita", entity_id: r.id });
+      }
+      const { data: captacoes } = await supa.from("captacoes_imovel")
+        .select("id, data_agendada").gte("data_agendada", nowISO).order("data_agendada").limit(LIMIT);
+      for (const r of captacoes ?? []) {
+        const k = `captacao:${r.id}`;
+        if (!seen.has(k)) pending.push({ entity_type: "captacao", entity_id: r.id });
+      }
+
+      const toProcess = pending.slice(0, LIMIT);
+      let ok = 0, fail = 0;
+      const errors: string[] = [];
+      for (const item of toProcess) {
+        try {
+          const res = await supa.functions.invoke("gcal-push", {
+            body: { entity_type: item.entity_type, entity_id: item.entity_id, action: "create" },
+          });
+          if (res.error || (res.data as any)?.error) {
+            fail++;
+            errors.push(`${item.entity_type}:${item.entity_id} — ${res.error?.message || (res.data as any)?.error}`);
+          } else {
+            ok++;
+          }
+        } catch (e) {
+          fail++;
+          errors.push(`${item.entity_type}:${item.entity_id} — ${(e as Error).message}`);
+        }
+      }
+
+      return new Response(JSON.stringify({
+        ok: true,
+        synced: ok,
+        failed: fail,
+        remaining: Math.max(0, pending.length - toProcess.length),
+        errors: errors.slice(0, 5),
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     throw new Error(`Ação desconhecida: ${action}`);
   } catch (e) {
     console.error("gcal-shared-calendar error", e);
