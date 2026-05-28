@@ -208,6 +208,20 @@ export default function Schedule() {
       imoveisById = new Map((ims ?? []).map((x: any) => [x.id, x]));
     }
 
+    const criadorIds = [
+      ...new Set([
+        ...((r ?? []) as any[]).map((m) => m.created_by).filter(Boolean),
+        ...((ligs ?? []) as any[]).map((c) => c.created_by).filter(Boolean),
+        ...((vis ?? []) as any[]).map((v) => v.created_by).filter(Boolean),
+        ...((capts ?? []) as any[]).map((c) => c.created_by).filter(Boolean),
+      ]),
+    ];
+    let criadoresById = new Map<string, string>();
+    if (criadorIds.length) {
+      const { data: profs } = await supabase.from("profiles").select("user_id, nome").in("user_id", criadorIds);
+      criadoresById = new Map((profs ?? []).map((p: any) => [p.user_id, p.nome]));
+    }
+
     const reus: Compromisso[] = ((r ?? []) as any[]).map((m) => {
       const start = new Date(m.agendada_para);
       const end = new Date(start.getTime() + (m.duracao_min ?? 60) * 60000);
