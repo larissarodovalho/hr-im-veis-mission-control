@@ -37,9 +37,12 @@ type Compromisso = {
   conta_nome?: string | null;
   origem?: "captacao";
   criado_por_ia?: boolean;
+  criado_por_id?: string | null;
+  criado_por_nome?: string | null;
   recorrencia_id?: string | null;
   recorrencia_regra?: string | null;
 };
+
 
 type RecorrenciaRegra = "nenhuma" | "diaria_util" | "semanal" | "quinzenal" | "mensal";
 
