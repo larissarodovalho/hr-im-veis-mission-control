@@ -311,6 +311,9 @@ export default function Schedule() {
         conta_id: v.conta_id ?? null,
         conta_nome: contaNome ?? null,
         criado_por_ia: false,
+        criado_por_id: v.created_by ?? null,
+        criado_por_nome: v.created_by ? criadoresById.get(v.created_by) ?? null : null,
+
       };
     });
     const captacoesAgendadas: Compromisso[] = ((capts ?? []) as any[]).map((c) => {
