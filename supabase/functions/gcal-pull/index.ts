@@ -36,6 +36,17 @@ async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string
       const { data: map } = await supa.from("google_calendar_sync")
         .select("*").eq("user_id", user_id).eq("google_event_id", ev.id).maybeSingle();
 
+      // Não importa ocorrências expandidas de eventos recorrentes do Google.
+      // Isso evita que bloqueios como "Escritório" apareçam repetidos em todos os dias no CRM.
+      if (ev.recurringEventId) {
+        if (map) {
+          await supa.from("reunioes").delete().eq("id", map.entity_id);
+          await supa.from("google_calendar_sync").delete().eq("id", map.id);
+          deleted++;
+        }
+        continue;
+      }
+
       if (ev.status === "cancelled") {
         if (map) {
           await supa.from(map.entity_type === "reuniao" ? "reunioes" : "reunioes").delete().eq("id", map.entity_id);
