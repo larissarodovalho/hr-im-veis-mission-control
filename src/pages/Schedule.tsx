@@ -338,6 +338,9 @@ export default function Schedule() {
         conta_nome: contaNome ?? null,
         origem: "captacao",
         criado_por_ia: false,
+        criado_por_id: c.created_by ?? null,
+        criado_por_nome: c.created_by ? criadoresById.get(c.created_by) ?? null : null,
+
       };
     });
     setReunioes([...reus, ...ligsAgendadas, ...visitasAgendadas, ...captacoesAgendadas].sort((a, b) => +a.date - +b.date));
