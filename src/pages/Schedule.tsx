@@ -37,9 +37,12 @@ type Compromisso = {
   conta_nome?: string | null;
   origem?: "captacao";
   criado_por_ia?: boolean;
+  criado_por_id?: string | null;
+  criado_por_nome?: string | null;
   recorrencia_id?: string | null;
   recorrencia_regra?: string | null;
 };
+
 
 type RecorrenciaRegra = "nenhuma" | "diaria_util" | "semanal" | "quinzenal" | "mensal";
 
@@ -146,21 +149,22 @@ export default function Schedule() {
       { data: capts, error: cErr },
     ] = await Promise.all([
       supabase.from("reunioes")
-        .select("id, agendada_para, status, local, link, notas, tipo, duracao_min, titulo, criado_por_ia, lead_id, conta_id, recorrencia_id, recorrencia_regra")
+        .select("id, agendada_para, status, local, link, notas, tipo, duracao_min, titulo, criado_por_ia, lead_id, conta_id, recorrencia_id, recorrencia_regra, created_by")
         .order("agendada_para"),
       supabase.from("agenda_bloqueios" as any).select("*").order("inicio"),
       supabase.from("leads").select("id, nome").order("nome"),
       supabase.from("ligacoes")
-        .select("id, data, duracao_seg, resultado, notas, lead_id, conta_id")
+        .select("id, data, duracao_seg, resultado, notas, lead_id, conta_id, created_by")
         .order("data"),
       supabase.from("visitas")
-        .select("id, data_visita, status, observacoes, lead_id, imovel_id, conta_id")
+        .select("id, data_visita, status, observacoes, lead_id, imovel_id, conta_id, created_by")
         .order("data_visita"),
       supabase.from("captacoes_imovel")
-        .select("id, data_agendada, estagio, observacoes, conta_id, imovel_id, responsavel_id")
+        .select("id, data_agendada, estagio, observacoes, conta_id, imovel_id, responsavel_id, created_by")
         .not("data_agendada", "is", null)
         .order("data_agendada"),
     ]);
+
     if (rErr) console.error("[Schedule] reunioes", rErr);
     if (lErr) console.error("[Schedule] ligacoes", lErr);
     if (vErr) console.error("[Schedule] visitas", vErr);
@@ -204,6 +208,20 @@ export default function Schedule() {
       imoveisById = new Map((ims ?? []).map((x: any) => [x.id, x]));
     }
 
+    const criadorIds = [
+      ...new Set([
+        ...((r ?? []) as any[]).map((m) => m.created_by).filter(Boolean),
+        ...((ligs ?? []) as any[]).map((c) => c.created_by).filter(Boolean),
+        ...((vis ?? []) as any[]).map((v) => v.created_by).filter(Boolean),
+        ...((capts ?? []) as any[]).map((c) => c.created_by).filter(Boolean),
+      ]),
+    ];
+    let criadoresById = new Map<string, string>();
+    if (criadorIds.length) {
+      const { data: profs } = await supabase.from("profiles").select("user_id, nome").in("user_id", criadorIds);
+      criadoresById = new Map((profs ?? []).map((p: any) => [p.user_id, p.nome]));
+    }
+
     const reus: Compromisso[] = ((r ?? []) as any[]).map((m) => {
       const start = new Date(m.agendada_para);
       const end = new Date(start.getTime() + (m.duracao_min ?? 60) * 60000);
@@ -227,6 +245,9 @@ export default function Schedule() {
         conta_id: m.conta_id ?? null,
         conta_nome: contaNome ?? null,
         criado_por_ia: m.criado_por_ia,
+        criado_por_id: m.created_by ?? null,
+        criado_por_nome: m.created_by ? criadoresById.get(m.created_by) ?? null : null,
+
         recorrencia_id: m.recorrencia_id ?? null,
         recorrencia_regra: m.recorrencia_regra ?? null,
       };
@@ -258,6 +279,9 @@ export default function Schedule() {
           conta_id: c.conta_id ?? null,
           conta_nome: contaNome ?? null,
           criado_por_ia: false,
+          criado_por_id: c.created_by ?? null,
+          criado_por_nome: c.created_by ? criadoresById.get(c.created_by) ?? null : null,
+
         };
       });
     const visitasAgendadas: Compromisso[] = ((vis ?? []) as any[]).map((v) => {
@@ -287,6 +311,9 @@ export default function Schedule() {
         conta_id: v.conta_id ?? null,
         conta_nome: contaNome ?? null,
         criado_por_ia: false,
+        criado_por_id: v.created_by ?? null,
+        criado_por_nome: v.created_by ? criadoresById.get(v.created_by) ?? null : null,
+
       };
     });
     const captacoesAgendadas: Compromisso[] = ((capts ?? []) as any[]).map((c) => {
@@ -311,6 +338,9 @@ export default function Schedule() {
         conta_nome: contaNome ?? null,
         origem: "captacao",
         criado_por_ia: false,
+        criado_por_id: c.created_by ?? null,
+        criado_por_nome: c.created_by ? criadoresById.get(c.created_by) ?? null : null,
+
       };
     });
     setReunioes([...reus, ...ligsAgendadas, ...visitasAgendadas, ...captacoesAgendadas].sort((a, b) => +a.date - +b.date));
@@ -1181,6 +1211,8 @@ export default function Schedule() {
                         )}
                         {(c.local || c.link) && <div className="text-xs text-muted-foreground mt-0.5">{c.local || c.link}</div>}
                         {c.notas && <div className="text-xs text-muted-foreground mt-1">{c.notas}</div>}
+                        {c.criado_por_nome && <div className="text-xs text-muted-foreground mt-1">Criado por: {c.criado_por_nome}</div>}
+
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <Badge variant="outline">{c.status}</Badge>
