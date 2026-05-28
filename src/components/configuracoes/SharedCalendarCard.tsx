@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Loader2, ExternalLink, Trash2, Plus, CalendarRange } from "lucide-react";
+import { Users, Loader2, ExternalLink, Trash2, Plus, CalendarRange, RefreshCw, Info } from "lucide-react";
 import { toast } from "sonner";
 import { fetchSharedCalendar, type SharedCalendarSettings } from "@/lib/siteSettings";
 
