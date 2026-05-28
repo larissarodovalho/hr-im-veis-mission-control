@@ -1282,7 +1282,7 @@ export default function Schedule() {
             const { entity } = parseId(editing.id);
             const showDuracao = entity === "reuniao" || entity === "ligacao";
             const showLocalLink = entity === "reuniao";
-            const showTitulo = entity === "reuniao";
+            const showTitulo = true;
             const statusOptions =
               entity === "captacao"
                 ? ["novo", "agendada", "em_andamento", "concluido", "cancelada"]
