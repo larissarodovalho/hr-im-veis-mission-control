@@ -1211,6 +1211,8 @@ export default function Schedule() {
                         )}
                         {(c.local || c.link) && <div className="text-xs text-muted-foreground mt-0.5">{c.local || c.link}</div>}
                         {c.notas && <div className="text-xs text-muted-foreground mt-1">{c.notas}</div>}
+                        {c.criado_por_nome && <div className="text-xs text-muted-foreground mt-1">Criado por: {c.criado_por_nome}</div>}
+
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <Badge variant="outline">{c.status}</Badge>
