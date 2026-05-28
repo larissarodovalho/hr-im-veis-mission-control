@@ -134,10 +134,6 @@ export default function SharedCalendarCard() {
           Uma agenda Google única em que todos os compromissos do CRM aparecem. Convide membros para que eles vejam tudo no celular.
         </CardDescription>
       </CardHeader>
-        <CardDescription>
-          Uma agenda Google única em que todos os compromissos do CRM aparecem. Convide membros para que eles vejam tudo no celular.
-        </CardDescription>
-      </CardHeader>
       <CardContent>
         {loading ? (
           <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin" /></div>
