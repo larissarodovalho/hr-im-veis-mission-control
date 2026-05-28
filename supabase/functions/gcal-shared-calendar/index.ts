@@ -17,7 +17,8 @@ type Action =
   | "list_members"
   | "add_members"
   | "remove_member"
-  | "update_push_flag";
+  | "update_push_flag"
+  | "backfill";
 
 const SETTINGS_KEY = "shared_calendar";
 const CALENDAR_SUMMARY = "Agenda HR Imóveis";
