@@ -201,7 +201,8 @@ Deno.serve(async (req) => {
     // ---- backfill ----
     if (action === "backfill") {
       const LIMIT = 200;
-      const nowISO = new Date().toISOString();
+      const includePast = body.includePast !== false; // default: sincroniza tudo
+      const sinceISO = includePast ? null : new Date().toISOString();
 
       // já sincronizados na agenda compartilhada
       const { data: already } = await supa
@@ -212,26 +213,33 @@ Deno.serve(async (req) => {
 
       const pending: { entity_type: string; entity_id: string }[] = [];
 
-      const { data: reunioes } = await supa.from("reunioes")
-        .select("id").gte("agendada_para", nowISO).order("agendada_para").limit(LIMIT);
+      let q1 = supa.from("reunioes").select("id, agendada_para").order("agendada_para", { ascending: false }).limit(LIMIT);
+      if (sinceISO) q1 = q1.gte("agendada_para", sinceISO);
+      const { data: reunioes } = await q1;
       for (const r of reunioes ?? []) {
         const k = `reuniao:${r.id}`;
         if (!seen.has(k)) pending.push({ entity_type: "reuniao", entity_id: r.id });
       }
-      const { data: ligacoes } = await supa.from("ligacoes")
-        .select("id").gte("data", nowISO).order("data").limit(LIMIT);
+
+      let q2 = supa.from("ligacoes").select("id, data").order("data", { ascending: false }).limit(LIMIT);
+      if (sinceISO) q2 = q2.gte("data", sinceISO);
+      const { data: ligacoes } = await q2;
       for (const r of ligacoes ?? []) {
         const k = `ligacao:${r.id}`;
         if (!seen.has(k)) pending.push({ entity_type: "ligacao", entity_id: r.id });
       }
-      const { data: visitas } = await supa.from("visitas")
-        .select("id").gte("data_visita", nowISO).order("data_visita").limit(LIMIT);
+
+      let q3 = supa.from("visitas").select("id, data_visita").order("data_visita", { ascending: false }).limit(LIMIT);
+      if (sinceISO) q3 = q3.gte("data_visita", sinceISO);
+      const { data: visitas } = await q3;
       for (const r of visitas ?? []) {
         const k = `visita:${r.id}`;
         if (!seen.has(k)) pending.push({ entity_type: "visita", entity_id: r.id });
       }
-      const { data: captacoes } = await supa.from("captacoes_imovel")
-        .select("id, data_agendada").gte("data_agendada", nowISO).order("data_agendada").limit(LIMIT);
+
+      let q4 = supa.from("captacoes_imovel").select("id, data_agendada").not("data_agendada", "is", null).order("data_agendada", { ascending: false }).limit(LIMIT);
+      if (sinceISO) q4 = q4.gte("data_agendada", sinceISO);
+      const { data: captacoes } = await q4;
       for (const r of captacoes ?? []) {
         const k = `captacao:${r.id}`;
         if (!seen.has(k)) pending.push({ entity_type: "captacao", entity_id: r.id });
