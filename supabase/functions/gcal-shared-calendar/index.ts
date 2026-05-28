@@ -253,7 +253,7 @@ Deno.serve(async (req) => {
         .select("id").not("data_agendada", "is", null).lt("data_agendada", nowISO).order("data_agendada", { ascending: false }).limit(PER_BUCKET);
       addAll(cPast, "captacao");
 
-      const toProcess = pending.slice(0, LIMIT);
+      const toProcess = pending.slice(0, 400);
       let ok = 0, fail = 0;
       const errors: string[] = [];
       for (const item of toProcess) {
