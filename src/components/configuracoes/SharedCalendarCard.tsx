@@ -106,6 +106,21 @@ export default function SharedCalendarCard() {
     finally { setBusy(false); }
   };
 
+  const backfill = async () => {
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("gcal-shared-calendar", { body: { action: "backfill" } });
+      if (error) throw error;
+      const d = data as any;
+      if (d?.error) throw new Error(d.error);
+      let msg = `${d.synced} evento(s) enviado(s) para a agenda compartilhada`;
+      if (d.failed) msg += `, ${d.failed} falha(s)`;
+      if (d.remaining) msg += `. ${d.remaining} restante(s) — clique novamente.`;
+      toast.success(msg);
+    } catch (e: any) { toast.error(e.message || "Erro ao sincronizar"); }
+    finally { setBusy(false); }
+  };
+
   const memberEmails = new Set(members.map((m) => m.email.toLowerCase()));
 
   return (
@@ -115,6 +130,10 @@ export default function SharedCalendarCard() {
           <CalendarRange className="h-5 w-5 text-primary" /> Agenda compartilhada da equipe
           {settings && <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Ativa</Badge>}
         </CardTitle>
+        <CardDescription>
+          Uma agenda Google única em que todos os compromissos do CRM aparecem. Convide membros para que eles vejam tudo no celular.
+        </CardDescription>
+      </CardHeader>
         <CardDescription>
           Uma agenda Google única em que todos os compromissos do CRM aparecem. Convide membros para que eles vejam tudo no celular.
         </CardDescription>
