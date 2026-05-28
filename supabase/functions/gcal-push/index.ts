@@ -59,12 +59,14 @@ async function buildEventPayload(supa: ReturnType<typeof adminClient>, entity_ty
     };
   }
   if (entity_type === "captacao") {
-    const { data: r } = await supa.from("captacoes_imovel").select("*, imoveis(titulo, endereco, cidade)").eq("id", entity_id).maybeSingle();
+    const { data: r } = await supa.from("captacoes_imovel").select("*").eq("id", entity_id).maybeSingle();
     if (!r) return null;
     if (!r.data_agendada) return null;
     const start = new Date(r.data_agendada);
     const end = new Date(start.getTime() + 60 * 60000);
-    const im: any = (r as any).imoveis;
+    const { data: im } = r.imovel_id
+      ? await supa.from("imoveis").select("titulo, endereco, cidade").eq("id", r.imovel_id).maybeSingle()
+      : { data: null };
     return {
       ownerUserId: r.responsavel_id ?? r.created_by,
       contaId: r.conta_id,
