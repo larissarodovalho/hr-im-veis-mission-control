@@ -200,7 +200,8 @@ Deno.serve(async (req) => {
 
     // ---- backfill ----
     if (action === "backfill") {
-      const PER_BUCKET = 100; // 100 futuros + 100 passados por tipo
+      const PAGE_SIZE = 500;
+      const PROCESS_LIMIT = 400;
       const nowISO = new Date().toISOString();
 
       // já sincronizados na agenda compartilhada
@@ -221,39 +222,44 @@ Deno.serve(async (req) => {
         }
       };
 
-      // reuniões
-      const { data: rFut } = await supa.from("reunioes")
-        .select("id").gte("agendada_para", nowISO).order("agendada_para", { ascending: true }).limit(PER_BUCKET);
-      addAll(rFut, "reuniao");
-      const { data: rPast } = await supa.from("reunioes")
-        .select("id").lt("agendada_para", nowISO).order("agendada_para", { ascending: false }).limit(PER_BUCKET);
-      addAll(rPast, "reuniao");
+      const collect = async (
+        table: string,
+        dateColumn: string,
+        type: string,
+        direction: "future" | "past",
+      ) => {
+        let page = 0;
+        while (pending.length < PROCESS_LIMIT) {
+          const from = page * PAGE_SIZE;
+          const to = from + PAGE_SIZE - 1;
+          let q = supa
+            .from(table)
+            .select("id")
+            .not(dateColumn, "is", null)
+            .order(dateColumn, { ascending: direction === "future" })
+            .range(from, to);
 
-      // ligações
-      const { data: lFut } = await supa.from("ligacoes")
-        .select("id").gte("data", nowISO).order("data", { ascending: true }).limit(PER_BUCKET);
-      addAll(lFut, "ligacao");
-      const { data: lPast } = await supa.from("ligacoes")
-        .select("id").lt("data", nowISO).order("data", { ascending: false }).limit(PER_BUCKET);
-      addAll(lPast, "ligacao");
+          q = direction === "future" ? q.gte(dateColumn, nowISO) : q.lt(dateColumn, nowISO);
+          const { data, error } = await q;
+          if (error) {
+            throw new Error(`Erro ao buscar ${type}: ${error.message}`);
+          }
+          addAll(data, type);
+          if (!data || data.length < PAGE_SIZE) break;
+          page++;
+        }
+      };
 
-      // visitas
-      const { data: vFut } = await supa.from("visitas")
-        .select("id").gte("data_visita", nowISO).order("data_visita", { ascending: true }).limit(PER_BUCKET);
-      addAll(vFut, "visita");
-      const { data: vPast } = await supa.from("visitas")
-        .select("id").lt("data_visita", nowISO).order("data_visita", { ascending: false }).limit(PER_BUCKET);
-      addAll(vPast, "visita");
+      await collect("reunioes", "agendada_para", "reuniao", "future");
+      await collect("ligacoes", "data", "ligacao", "future");
+      await collect("visitas", "data_visita", "visita", "future");
+      await collect("captacoes_imovel", "data_agendada", "captacao", "future");
+      await collect("reunioes", "agendada_para", "reuniao", "past");
+      await collect("ligacoes", "data", "ligacao", "past");
+      await collect("visitas", "data_visita", "visita", "past");
+      await collect("captacoes_imovel", "data_agendada", "captacao", "past");
 
-      // captações
-      const { data: cFut } = await supa.from("captacoes_imovel")
-        .select("id").not("data_agendada", "is", null).gte("data_agendada", nowISO).order("data_agendada", { ascending: true }).limit(PER_BUCKET);
-      addAll(cFut, "captacao");
-      const { data: cPast } = await supa.from("captacoes_imovel")
-        .select("id").not("data_agendada", "is", null).lt("data_agendada", nowISO).order("data_agendada", { ascending: false }).limit(PER_BUCKET);
-      addAll(cPast, "captacao");
-
-      const toProcess = pending.slice(0, 400);
+      const toProcess = pending.slice(0, PROCESS_LIMIT);
       let ok = 0, fail = 0;
       const errors: string[] = [];
       for (const item of toProcess) {
