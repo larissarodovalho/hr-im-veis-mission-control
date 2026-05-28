@@ -194,7 +194,9 @@ export default function ConfiguracoesPage() {
             </CardContent>
           </Card>
           <GoogleCalendarConnect />
+          {isAdmin && <SharedCalendarCard />}
         </TabsContent>
+
 
         <TabsContent value="empresa">
           <Card>
