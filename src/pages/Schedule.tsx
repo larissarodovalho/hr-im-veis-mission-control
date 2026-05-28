@@ -145,6 +145,9 @@ export default function Schedule() {
       { data: b },
       { data: l },
       { data: ligs, error: lErr },
+      { data: vis, error: vErr },
+      { data: capts, error: cErr },
+    ] = await Promise.all([
       supabase.from("reunioes")
         .select("id, agendada_para, status, local, link, notas, tipo, duracao_min, titulo, criado_por_ia, lead_id, conta_id, recorrencia_id, recorrencia_regra, created_by")
         .order("agendada_para"),
@@ -162,9 +165,6 @@ export default function Schedule() {
         .order("data_agendada"),
     ]);
 
-        .not("data_agendada", "is", null)
-        .order("data_agendada"),
-    ]);
     if (rErr) console.error("[Schedule] reunioes", rErr);
     if (lErr) console.error("[Schedule] ligacoes", lErr);
     if (vErr) console.error("[Schedule] visitas", vErr);
