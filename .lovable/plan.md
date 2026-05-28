@@ -1,76 +1,48 @@
-# Agenda compartilhada da equipe via Google Calendar
+## Diagnóstico
 
-## Objetivo
+Verifiquei o estado atual:
 
-Permitir que o admin crie uma agenda Google compartilhada (dentro da própria conta Google dele), convide usuários do CRM selecionados, e que todos os eventos do CRM (reuniões, ligações, visitas, captações) apareçam nessa agenda — visível e editável no celular de cada pessoa convidada.
+1. **A agenda compartilhada está criada e configurada** (`shared_calendar` em `site_settings`, dono = você).
+2. **O convite ACL para o membro foi enviado** — quando ele aceitar e habilitar a agenda no celular, ele verá os eventos *futuros*.
+3. **Porém:** todos os 20 últimos registros em `google_calendar_sync` apontam para `calendar_id = "primary"` (apenas a sua agenda pessoal). **Nenhum evento foi empurrado para a agenda compartilhada ainda.**
 
-## Como o usuário final vai usar
+Motivos prováveis:
+- A função `gcal-push` não foi chamada para nenhum evento *depois* da criação da agenda compartilhada (14:28). Logo, mesmo com a config no lugar, não há evento na agenda nova.
+- Eventos *antigos* (criados antes da agenda existir) também não foram para lá — a duplicação só acontece no momento em que o `gcal-push` roda.
 
-1. Admin entra em **Configurações → Google Calendar**, conecta a conta Google (já existe).
-2. Aparece um novo card **"Agenda compartilhada da equipe"**:
-   - Botão **"Criar agenda compartilhada"** (só na primeira vez)
-   - Depois de criada, mostra: nome da agenda, link pro Google, e a lista de membros
-3. Admin clica em **"Convidar membros"** → modal com a lista de usuários do CRM, checkbox para selecionar quem convidar e dropdown de permissão por pessoa (Ver / Editar / Gerenciar).
-4. Ao confirmar, o sistema chama a API do Google e adiciona cada email com a permissão escolhida. Cada usuário recebe um convite por email do próprio Google.
-5. No celular, os membros adicionam a conta Google deles (se ainda não tiverem) e a agenda aparece automaticamente no Google Agenda / Apple Calendar.
-6. Eventos do CRM passam a ser empurrados pra essa agenda compartilhada (em paralelo aos eventos pessoais do responsável, que continuam funcionando como hoje).
+Conclusão: o sistema funciona pra eventos *novos* que forem criados/editados a partir de agora, mas o histórico precisa ser preenchido manualmente (backfill).
 
-## O que muda no sistema
+## O que vou fazer
 
-### 1. Configuração global em `site_settings`
+### 1. Adicionar botão "Sincronizar eventos existentes" no `SharedCalendarCard`
+Quando o admin clica, dispara uma nova ação `backfill` na edge function `gcal-shared-calendar` que:
+- Busca todas as `reunioes`, `ligacoes`, `visitas` e `captacoes` futuras (data >= hoje) que ainda não estão em `google_calendar_sync` com `calendar_id = <id da agenda compartilhada>`.
+- Para cada uma, chama internamente o `gcal-push` (action = "create") usando o token do dono da agenda.
+- Retorna contagem `{ inseridos, atualizados, falhas }` e mostra um toast com o resultado.
 
-Nova chave `shared_calendar` armazenando:
-- `google_calendar_id` — id da agenda criada no Google
-- `owner_user_id` — usuário do CRM dono da agenda (admin que conectou)
-- `created_at`
-- `push_to_personal` — boolean, se `true` continua empurrando também pra agenda pessoal do responsável (padrão `true`)
+Limite de segurança: processa no máximo 200 eventos por chamada e mostra "Clique novamente para continuar" se houver mais.
 
-### 2. Nova edge function `gcal-shared-calendar`
+### 2. Adicionar mensagem informativa no card
+Um aviso curto explicando:
+- "Membros recebem um convite por email do Google. Após aceitar, no celular: abra Google Agenda → menu → ative a agenda **Agenda HR Imóveis**."
+- "Em iPhone com Apple Calendar (sem app Google), o membro precisa entrar em https://calendar.google.com/calendar/syncselect pelo navegador e marcar a agenda."
+- "Eventos antigos não vão automaticamente — use o botão **Sincronizar eventos existentes**."
 
-Responsável por gerenciar a agenda compartilhada. Aceita 4 ações:
+### 3. (Opcional, incluído) Confirmar que o push novo funciona
+Adicionar um log curto em `gcal-push` quando o destino "shared" for ignorado/erro, pra facilitar debug futuro via Edge Logs.
 
-- **`create`** — cria a agenda "Agenda HR Imóveis" via `POST /calendars` na conta do admin logado. Salva o `google_calendar_id` em `site_settings`.
-- **`list_members`** — lista ACL atual via `GET /calendars/{id}/acl`. Retorna emails + roles atuais.
-- **`add_members`** — recebe `[{ email, role }]` e faz `POST /calendars/{id}/acl` para cada um (`role` mapeia para `reader` / `writer` / `owner`). Por padrão `sendNotifications=true` → Google manda o email de convite.
-- **`remove_member`** — `DELETE /calendars/{id}/acl/{ruleId}`.
+## Fora do escopo
 
-Usa o token OAuth já armazenado em `user_google_calendar` do admin.
+- Não vamos sincronizar eventos passados (já aconteceram, não fazem sentido na agenda).
+- Não vamos forçar reenvio de eventos que já estejam na agenda compartilhada — o backfill pula os que já têm registro em `google_calendar_sync` com aquele `calendar_id`.
 
-### 3. Ajuste no `gcal-push` existente
+## Detalhes técnicos
 
-Hoje empurra só pra `conn.calendar_id` (agenda pessoal do responsável). Vai passar a empurrar **também** pra agenda compartilhada, se existir em `site_settings.shared_calendar`:
+- **Arquivos**: `supabase/functions/gcal-shared-calendar/index.ts` (nova ação `backfill`), `src/components/configuracoes/SharedCalendarCard.tsx` (botão + instruções).
+- Nenhuma migração de banco. Nenhum schema novo.
+- O backfill reusa exatamente a mesma lógica de `gcal-push` (importa `buildEventPayload` ou faz chamadas internas via `supabase.functions.invoke('gcal-push', ...)`), garantindo consistência.
 
-- Continua criando/atualizando o evento na agenda pessoal do responsável (comportamento atual).
-- Adicionalmente, cria/atualiza o mesmo evento na agenda compartilhada usando o token do **dono da agenda** (admin), não o do responsável.
-- Tabela `google_calendar_sync` ganha registros adicionais com `user_id = owner_user_id` para rastrear o evento compartilhado.
-- Se `push_to_personal = false`, só empurra pra compartilhada (economiza chamadas, mas perde o "vê na minha agenda pessoal").
-
-Delete também precisa remover das duas agendas.
-
-### 4. UI em `src/pages/ConfiguracoesPage.tsx`
-
-Novo card "Agenda compartilhada da equipe" na aba Sistema, visível só para admin/gestor:
-- Se não existir: botão **"Criar agenda compartilhada"** (chama `gcal-shared-calendar` ação `create`).
-- Se existir: nome, link "Abrir no Google Calendar", switch "Também duplicar na agenda pessoal do responsável" (controla `push_to_personal`), e tabela de membros com botão **"Convidar / Gerenciar membros"**.
-
-### 5. Componente `SharedCalendarMembersDialog`
-
-Modal que:
-- Lista usuários do CRM (`profiles` join `user_roles`) com email
-- Mostra status atual de cada um (Não convidado / Ver / Editar / Gerenciar) consultando `list_members`
-- Permite adicionar/alterar/remover em lote
-- Confirma e chama `add_members` / `remove_member`
-
-## Considerações técnicas
-
-- **Permissão Google**: a conta do admin precisa ter escopo `https://www.googleapis.com/auth/calendar` (escopo amplo, não apenas `.events`). Já é o escopo configurado em `_shared/google-calendar.ts` (`GOOGLE_OAUTH_SCOPES`), então não precisa reconectar.
-- **Token expirado do admin**: se o admin desconectar a conta Google, o push pra agenda compartilhada para de funcionar. Vamos mostrar aviso na tela de Configurações nesse caso.
-- **Eventos antigos**: a sincronização vale pra eventos novos. Posso adicionar um botão "Reenviar todos os eventos futuros pra agenda compartilhada" se quiser, mas deixo de fora do escopo inicial.
-- **iPhone sem conta Google**: usuário convidado que não tem Google precisa criar uma (gratuito) ou usar a opção de feed ICS (fora deste escopo).
-- **Sem schema novo além de `site_settings`**: tudo se encaixa nas tabelas existentes (`google_calendar_sync`, `site_settings`, `profiles`).
-
-## Fora do escopo (para futuro, se quiser)
-
-- Feed ICS público pra quem não usa Google
-- Integração Outlook 365
-- Múltiplas agendas compartilhadas (ex: uma por equipe regional)
+Após implementar, o fluxo do usuário é:
+1. Membro aceita o convite no email e ativa a agenda no celular (ver instruções no card).
+2. Você clica em **"Sincronizar eventos existentes"** uma vez para popular a agenda com os compromissos atuais.
+3. A partir daí, todo evento novo do CRM aparece automaticamente nas duas agendas (pessoal do responsável + compartilhada).
