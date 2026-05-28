@@ -442,7 +442,7 @@ export default function Schedule() {
     load();
   };
 
-  };
+
 
   const criarBloqueio = async (e: React.FormEvent) => {
     e.preventDefault();
