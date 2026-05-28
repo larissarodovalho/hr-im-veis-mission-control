@@ -95,7 +95,8 @@ Deno.serve(async (req) => {
       for (const m of maps ?? []) {
         const conn = await getValidAccessToken(supa, m.user_id);
         if (!conn) continue;
-        await gcalFetch(conn.access_token, `/calendars/${encodeURIComponent(conn.calendar_id)}/events/${m.google_event_id}`, { method: "DELETE" });
+        const calId = (m as any).calendar_id || conn.calendar_id;
+        await gcalFetch(conn.access_token, `/calendars/${encodeURIComponent(calId)}/events/${m.google_event_id}`, { method: "DELETE" });
       }
       await supa.from("google_calendar_sync").delete().eq("entity_type", entity_type).eq("entity_id", entity_id);
       return new Response(JSON.stringify({ ok: true, deleted: maps?.length ?? 0 }), {
