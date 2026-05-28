@@ -420,8 +420,15 @@ export default function Schedule() {
       recorrencia_regra: novo.recorrencia !== "nenhuma" ? novo.recorrencia : null,
     }));
 
-    const { error } = await supabase.from("reunioes").insert(rows as any);
+    const { data: inserted, error } = await supabase.from("reunioes").insert(rows as any).select("id");
     if (error) return toast.error(error.message);
+
+    // Push para Google Calendar (pessoal + compartilhada). Silencioso se falhar.
+    for (const row of inserted ?? []) {
+      supabase.functions.invoke("gcal-push", {
+        body: { entity_type: "reuniao", entity_id: (row as any).id, action: "create" },
+      }).catch(() => {});
+    }
 
     if (conflitos.length > 0) {
       toast.success(`${rows.length} criado(s). ${conflitos.length} pulado(s) por conflito.`);
@@ -434,6 +441,8 @@ export default function Schedule() {
     setOpenNovo(false);
     load();
   };
+
+
 
   const criarBloqueio = async (e: React.FormEvent) => {
     e.preventDefault();
