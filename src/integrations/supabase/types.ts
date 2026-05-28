@@ -1003,7 +1003,7 @@ export type Database = {
       }
       google_calendar_sync: {
         Row: {
-          calendar_id: string | null
+          calendar_id: string
           created_at: string
           entity_id: string
           entity_type: string
@@ -1015,7 +1015,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          calendar_id?: string | null
+          calendar_id?: string
           created_at?: string
           entity_id: string
           entity_type: string
@@ -1027,7 +1027,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          calendar_id?: string | null
+          calendar_id?: string
           created_at?: string
           entity_id?: string
           entity_type?: string
