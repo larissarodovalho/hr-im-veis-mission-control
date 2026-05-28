@@ -245,6 +245,9 @@ export default function Schedule() {
         conta_id: m.conta_id ?? null,
         conta_nome: contaNome ?? null,
         criado_por_ia: m.criado_por_ia,
+        criado_por_id: m.created_by ?? null,
+        criado_por_nome: m.created_by ? criadoresById.get(m.created_by) ?? null : null,
+
         recorrencia_id: m.recorrencia_id ?? null,
         recorrencia_regra: m.recorrencia_regra ?? null,
       };
