@@ -293,7 +293,8 @@ export default function Schedule() {
       const start = new Date(c.data_agendada);
       const contaNome = c.conta_id ? contasById.get(c.conta_id)?.nome : null;
       const imovel = c.imovel_id ? imoveisById.get(c.imovel_id) : null;
-      const titulo = imovel?.titulo ? `Captação: ${imovel.titulo}` : "Captação";
+      const base = imovel?.titulo ? `Captação – ${imovel.titulo}` : "Captação";
+      const titulo = contaNome ? `${base} · ${contaNome}` : base;
       return {
         id: `cap:${c.id}`,
         date: start,
