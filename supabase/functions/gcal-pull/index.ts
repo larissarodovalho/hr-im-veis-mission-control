@@ -63,9 +63,36 @@ async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string
         }).eq("id", map.id);
         updated++;
       } else {
-        // Não importa mais eventos do Google que não foram criados pelo CRM.
-        // Apenas eventos com mapeamento existente (criados via gcal-push) são atualizados.
-        continue;
+        // Importa evento criado direto no Google (celular/desktop) como reunião no CRM.
+        const { data: novaReuniao, error: insErr } = await supa.from("reunioes").insert({
+          titulo: ev.summary || "Evento Google",
+          agendada_para: startISO,
+          duracao_min,
+          local: ev.location ?? null,
+          link: ev.hangoutLink ?? null,
+          notas: ev.description ?? null,
+          corretor_id: user_id,
+          created_by: user_id,
+          tipo: "presencial",
+          status: "agendada",
+          origem: "google_calendar",
+          google_owner_user_id: user_id,
+        }).select("id").single();
+        if (insErr || !novaReuniao) {
+          console.error("Falha ao criar reuniao a partir do Google", insErr);
+          continue;
+        }
+        await supa.from("google_calendar_sync").insert({
+          user_id,
+          entity_type: "reuniao",
+          entity_id: novaReuniao.id,
+          google_event_id: ev.id,
+          calendar_id: conn.calendar_id,
+          etag: ev.etag ?? null,
+          html_link: ev.htmlLink ?? null,
+          last_synced_at: new Date().toISOString(),
+        });
+        imported++;
       }
 
     }
