@@ -22,6 +22,7 @@ const TABLE = "site_settings" as const;
 const IMAGES_KEY = "images";
 const FEATURED_KEY = "featured_imoveis";
 const AI_ASSISTANT_KEY = "ai_assistant";
+const SHARED_CALENDAR_KEY = "shared_calendar";
 
 export type AiAssistantSettings = { whatsapp_enabled: boolean };
 
@@ -40,6 +41,41 @@ export async function saveAiAssistant(settings: AiAssistantSettings) {
   const { error } = await supabase
     .from(TABLE as any)
     .upsert({ key: AI_ASSISTANT_KEY, value: settings as any }, { onConflict: "key" });
+  if (error) throw error;
+}
+
+export type SharedCalendarSettings = {
+  google_calendar_id: string;
+  owner_user_id: string;
+  created_at: string;
+  push_to_personal: boolean;
+};
+
+export async function fetchSharedCalendar(): Promise<SharedCalendarSettings | null> {
+  const { data } = await supabase
+    .from(TABLE as any)
+    .select("value")
+    .eq("key", SHARED_CALENDAR_KEY)
+    .maybeSingle();
+  const value = (data as any)?.value;
+  if (!value || typeof value !== "object" || !(value as any).google_calendar_id) return null;
+  return {
+    google_calendar_id: (value as any).google_calendar_id,
+    owner_user_id: (value as any).owner_user_id,
+    created_at: (value as any).created_at,
+    push_to_personal: (value as any).push_to_personal !== false,
+  };
+}
+
+export async function saveSharedCalendarPushFlag(push_to_personal: boolean) {
+  const current = await fetchSharedCalendar();
+  if (!current) return;
+  const { error } = await supabase
+    .from(TABLE as any)
+    .upsert(
+      { key: SHARED_CALENDAR_KEY, value: { ...current, push_to_personal } as any },
+      { onConflict: "key" },
+    );
   if (error) throw error;
 }
 

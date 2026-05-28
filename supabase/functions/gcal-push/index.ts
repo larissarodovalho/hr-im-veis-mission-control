@@ -95,7 +95,8 @@ Deno.serve(async (req) => {
       for (const m of maps ?? []) {
         const conn = await getValidAccessToken(supa, m.user_id);
         if (!conn) continue;
-        await gcalFetch(conn.access_token, `/calendars/${encodeURIComponent(conn.calendar_id)}/events/${m.google_event_id}`, { method: "DELETE" });
+        const calId = (m as any).calendar_id || conn.calendar_id;
+        await gcalFetch(conn.access_token, `/calendars/${encodeURIComponent(calId)}/events/${m.google_event_id}`, { method: "DELETE" });
       }
       await supa.from("google_calendar_sync").delete().eq("entity_type", entity_type).eq("entity_id", entity_id);
       return new Response(JSON.stringify({ ok: true, deleted: maps?.length ?? 0 }), {
@@ -104,8 +105,8 @@ Deno.serve(async (req) => {
     }
 
     const built = await buildEventPayload(supa, entity_type, entity_id);
-    if (!built || !built.ownerUserId) {
-      return new Response(JSON.stringify({ ok: true, skipped: "sem responsável" }), {
+    if (!built) {
+      return new Response(JSON.stringify({ ok: true, skipped: "evento não encontrado" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -118,41 +119,82 @@ Deno.serve(async (req) => {
     }
     const fullPayload = attendees.length ? { ...built.payload, attendees } : built.payload;
 
-    const conn = await getValidAccessToken(supa, built.ownerUserId);
-    if (!conn) {
-      return new Response(JSON.stringify({ ok: true, skipped: "responsável sem Google conectado" }), {
+    // Carrega configuração da agenda compartilhada (se existir)
+    const { data: sharedRow } = await supa.from("site_settings")
+      .select("value").eq("key", "shared_calendar").maybeSingle();
+    const shared = (sharedRow as any)?.value && (sharedRow as any).value.google_calendar_id
+      ? {
+          google_calendar_id: (sharedRow as any).value.google_calendar_id as string,
+          owner_user_id: (sharedRow as any).value.owner_user_id as string,
+          push_to_personal: (sharedRow as any).value.push_to_personal !== false,
+        }
+      : null;
+
+    // Faz push para um destino (calendário pessoal ou compartilhado).
+    // Cada destino tem seu próprio registro em google_calendar_sync (chave: user_id, entity_type, entity_id).
+    async function pushTo(target_user_id: string, calendar_id: string, access_token: string) {
+      const { data: existing } = await supa.from("google_calendar_sync")
+        .select("*").eq("user_id", target_user_id)
+        .eq("calendar_id", calendar_id)
+        .eq("entity_type", entity_type).eq("entity_id", entity_id).maybeSingle();
+
+      let r: Response;
+      if (existing) {
+        r = await gcalFetch(access_token, `/calendars/${encodeURIComponent(calendar_id)}/events/${existing.google_event_id}`, {
+          method: "PATCH", body: JSON.stringify(fullPayload),
+        });
+      } else {
+        r = await gcalFetch(access_token, `/calendars/${encodeURIComponent(calendar_id)}/events?sendUpdates=all`, {
+          method: "POST", body: JSON.stringify(fullPayload),
+        });
+      }
+      const ev = await r.json();
+      if (!r.ok) throw new Error(formatGoogleCalendarApiError(r.status, ev));
+
+      await supa.from("google_calendar_sync").upsert({
+        user_id: target_user_id,
+        calendar_id,
+        entity_type, entity_id,
+        google_event_id: ev.id,
+        etag: ev.etag,
+        html_link: ev.htmlLink,
+        last_synced_at: new Date().toISOString(),
+      }, { onConflict: "user_id,calendar_id,entity_type,entity_id" });
+      return { eventId: ev.id, htmlLink: ev.htmlLink };
+    }
+
+    const results: any = {};
+
+    // 1) push para o responsável (se houver e se push_to_personal não estiver desligado)
+    const personalAllowed = !shared || shared.push_to_personal;
+    if (personalAllowed && built.ownerUserId) {
+      const conn = await getValidAccessToken(supa, built.ownerUserId);
+      if (conn) {
+        try { results.personal = await pushTo(built.ownerUserId, conn.calendar_id, conn.access_token); }
+        catch (e) { results.personal = { error: (e as Error).message }; }
+      } else {
+        results.personal = { skipped: "responsável sem Google conectado" };
+      }
+    }
+
+    // 2) push para a agenda compartilhada da equipe (se configurada)
+    if (shared) {
+      const ownerConn = await getValidAccessToken(supa, shared.owner_user_id);
+      if (ownerConn) {
+        try { results.shared = await pushTo(shared.owner_user_id, shared.google_calendar_id, ownerConn.access_token); }
+        catch (e) { results.shared = { error: (e as Error).message }; }
+      } else {
+        results.shared = { skipped: "dono da agenda compartilhada precisa reconectar Google" };
+      }
+    }
+
+    if (!results.personal && !results.shared) {
+      return new Response(JSON.stringify({ ok: true, skipped: "nenhum destino disponível" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // existe mapping?
-    const { data: existing } = await supa.from("google_calendar_sync")
-      .select("*").eq("user_id", built.ownerUserId)
-      .eq("entity_type", entity_type).eq("entity_id", entity_id).maybeSingle();
-
-    let r: Response;
-    if (existing) {
-      r = await gcalFetch(conn.access_token, `/calendars/${encodeURIComponent(conn.calendar_id)}/events/${existing.google_event_id}`, {
-        method: "PATCH", body: JSON.stringify(fullPayload),
-      });
-    } else {
-      r = await gcalFetch(conn.access_token, `/calendars/${encodeURIComponent(conn.calendar_id)}/events?sendUpdates=all`, {
-        method: "POST", body: JSON.stringify(fullPayload),
-      });
-    }
-    const ev = await r.json();
-    if (!r.ok) throw new Error(formatGoogleCalendarApiError(r.status, ev));
-
-    await supa.from("google_calendar_sync").upsert({
-      user_id: built.ownerUserId,
-      entity_type, entity_id,
-      google_event_id: ev.id,
-      etag: ev.etag,
-      html_link: ev.htmlLink,
-      last_synced_at: new Date().toISOString(),
-    }, { onConflict: "user_id,entity_type,entity_id" });
-
-    return new Response(JSON.stringify({ ok: true, eventId: ev.id, htmlLink: ev.htmlLink }), {
+    return new Response(JSON.stringify({ ok: true, ...results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

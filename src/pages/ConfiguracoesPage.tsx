@@ -19,6 +19,7 @@ import {
 import SiteSettingsTab from "@/components/configuracoes/SiteSettingsTab";
 import { fetchAiAssistant, saveAiAssistant } from "@/lib/siteSettings";
 import GoogleCalendarConnect from "@/components/configuracoes/GoogleCalendarConnect";
+import SharedCalendarCard from "@/components/configuracoes/SharedCalendarCard";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -193,7 +194,9 @@ export default function ConfiguracoesPage() {
             </CardContent>
           </Card>
           <GoogleCalendarConnect />
+          {isAdmin && <SharedCalendarCard />}
         </TabsContent>
+
 
         <TabsContent value="empresa">
           <Card>

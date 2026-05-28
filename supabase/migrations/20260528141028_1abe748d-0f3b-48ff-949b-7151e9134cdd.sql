@@ -1,0 +1,1 @@
+ALTER TABLE public.google_calendar_sync ADD COLUMN IF NOT EXISTS calendar_id TEXT;
