@@ -145,22 +145,23 @@ export default function Schedule() {
       { data: b },
       { data: l },
       { data: ligs, error: lErr },
-      { data: vis, error: vErr },
-      { data: capts, error: cErr },
-    ] = await Promise.all([
       supabase.from("reunioes")
-        .select("id, agendada_para, status, local, link, notas, tipo, duracao_min, titulo, criado_por_ia, lead_id, conta_id, recorrencia_id, recorrencia_regra")
+        .select("id, agendada_para, status, local, link, notas, tipo, duracao_min, titulo, criado_por_ia, lead_id, conta_id, recorrencia_id, recorrencia_regra, created_by")
         .order("agendada_para"),
       supabase.from("agenda_bloqueios" as any).select("*").order("inicio"),
       supabase.from("leads").select("id, nome").order("nome"),
       supabase.from("ligacoes")
-        .select("id, data, duracao_seg, resultado, notas, lead_id, conta_id")
+        .select("id, data, duracao_seg, resultado, notas, lead_id, conta_id, created_by")
         .order("data"),
       supabase.from("visitas")
-        .select("id, data_visita, status, observacoes, lead_id, imovel_id, conta_id")
+        .select("id, data_visita, status, observacoes, lead_id, imovel_id, conta_id, created_by")
         .order("data_visita"),
       supabase.from("captacoes_imovel")
-        .select("id, data_agendada, estagio, observacoes, conta_id, imovel_id, responsavel_id")
+        .select("id, data_agendada, estagio, observacoes, conta_id, imovel_id, responsavel_id, created_by")
+        .not("data_agendada", "is", null)
+        .order("data_agendada"),
+    ]);
+
         .not("data_agendada", "is", null)
         .order("data_agendada"),
     ]);
