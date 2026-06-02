@@ -51,6 +51,8 @@ export default function Imoveis() {
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [contas, setContas] = useState<Record<string, string>>({});
   const [tab, setTab] = useState("disponiveis");
+  const [anoFiltro, setAnoFiltro] = useState<string>("all");
+  const [mesFiltro, setMesFiltro] = useState<string>("all");
 
   const load = async () => {
     const [imRes, prRes, ldRes] = await Promise.all([
