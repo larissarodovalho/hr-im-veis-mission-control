@@ -48,6 +48,25 @@ export default function MetaLeadAdsTab() {
 
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [diagLoading, setDiagLoading] = useState(false);
+  const [diagResult, setDiagResult] = useState<any>(null);
+
+  async function diagnosticar() {
+    setDiagLoading(true);
+    setDiagResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("meta-debug-subscription");
+      if (error) throw new Error(error.message);
+      setDiagResult(data);
+      if ((data as any).ok) toast.success("Inscrição OK");
+      else toast.warning("Inscrição com problemas — veja diagnóstico");
+    } catch (e: any) {
+      toast.error(e.message);
+      setDiagResult({ errors: [{ step: "invoke", details: e.message }], diagnostico: [`❌ ${e.message}`] });
+    } finally {
+      setDiagLoading(false);
+    }
+  }
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<MetaLeadForm | null>(null);
