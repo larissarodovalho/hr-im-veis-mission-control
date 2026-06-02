@@ -5,6 +5,16 @@ import { adminClient, formatGoogleCalendarApiError, getValidAccessToken, gcalFet
 type EntityType = "reuniao" | "ligacao" | "visita" | "captacao";
 type Action = "create" | "update" | "delete";
 
+// Cor determinística por usuário criador, alinhada com a paleta da agenda interna.
+// Google Calendar aceita colorId de "1" a "11" em eventos.
+function colorIdForUser(userId?: string | null): string | undefined {
+  if (!userId) return undefined;
+  let h = 0;
+  for (let i = 0; i < userId.length; i++) h = (h * 31 + userId.charCodeAt(i)) >>> 0;
+  return String((h % 11) + 1);
+}
+
+
 async function buildEventPayload(supa: ReturnType<typeof adminClient>, entity_type: EntityType, entity_id: string) {
   if (entity_type === "reuniao") {
     const { data: r } = await supa.from("reunioes").select("*").eq("id", entity_id).maybeSingle();
