@@ -90,7 +90,7 @@ async function processLeadgen(leadgenId: string, formId: string, pageId: string)
       telefone: mapped.telefone,
       regiao: mapped.cidade,
       origem: "meta_ads",
-      etapa_funil: mapping?.etapa_funil_inicial || "novo",
+      etapa_funil: mapping?.etapa_funil_inicial || "Novo Lead",
       tags: mapping?.tags ?? null,
       corretor_id: mapping?.corretor_responsavel_id ?? null,
       observacoes: observacoesParts.join("\n"),
