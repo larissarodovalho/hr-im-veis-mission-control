@@ -1,53 +1,26 @@
-## Objetivo
+Plano para confirmar e corrigir o recebimento de leads do Meta:
 
-Criar um endpoint de diagnóstico que verifica, em tempo real, se a Página HR Imóveis está corretamente inscrita ao app Meta — eliminando a adivinhação sobre por que o webhook não recebe leads de teste.
+1. Criar função backend para disparar lead de teste
+- Adicionar `meta-create-test-lead`.
+- Receber um `form_id` validado.
+- Chamar a API da Meta em `POST /{form_id}/test_leads` usando o `META_PAGE_ACCESS_TOKEN` já configurado.
+- Retornar o resultado da Meta e uma mensagem clara de sucesso/erro.
 
-## O que será construído
+2. Criar função backend para forçar inscrição do webhook
+- Adicionar `meta-force-subscribe`.
+- Chamar `POST /1095453883642999/subscribed_apps?subscribed_fields=leadgen` com o token da página.
+- Retornar se a página ficou inscrita no campo `leadgen`.
 
-### 1. Nova edge function `meta-debug-subscription`
+3. Melhorar o diagnóstico existente
+- Atualizar `meta-debug-subscription` para mostrar com mais clareza quais apps estão inscritos na página e quais campos cada app recebe.
+- Manter a verificação atual de token, página, inscrição e formulários.
 
-Faz 3 chamadas à Graph API usando o `META_PAGE_ACCESS_TOKEN` salvo e devolve um JSON com diagnóstico:
+4. Atualizar a tela Configurações → Meta Lead Ads
+- Adicionar botão “Forçar inscrição”.
+- Adicionar botão “Disparar lead de teste” ao lado dos Form IDs encontrados no diagnóstico.
+- Mostrar feedback visual: sucesso, erro da Meta, ou aviso de que a inscrição ainda não chegou ao app correto.
+- Após disparar o teste, orientar a conferir a aba Leads; se possível, mostrar uma mensagem dizendo que o webhook pode levar alguns segundos.
 
-- **Check 1 — Token válido?**
-  `GET /me?fields=id,name` → confirma a qual página o token pertence. Deve retornar `id: 1095453883642999` e `name: HR Imóveis`.
-
-- **Check 2 — Página inscrita ao app?**
-  `GET /1095453883642999/subscribed_apps` → lista os apps subscritos e os campos (`subscribed_fields`) de cada um. Procuramos um app com `leadgen` na lista.
-
-- **Check 3 — Formulários disponíveis**
-  `GET /1095453883642999/leadgen_forms?fields=id,name,status` → mostra os Form IDs reais que a página possui (útil para preencher o mapeamento em Configurações).
-
-Resposta esperada:
-```json
-{
-  "token_ok": true,
-  "page_id_token": "1095453883642999",
-  "page_name": "HR Imóveis",
-  "subscribed_apps": [{ "app_id": "...", "subscribed_fields": ["leadgen", ...] }],
-  "leadgen_subscribed": true,
-  "forms": [{ "id": "...", "name": "...", "status": "ACTIVE" }],
-  "diagnostico": ["✅ Token OK", "✅ leadgen subscrito", "✅ 3 formulários ativos"]
-}
-```
-
-Requer JWT de admin (mesmo padrão do `meta-test-token`).
-
-### 2. Botão "Diagnosticar Webhook" em `MetaLeadAdsTab`
-
-Adiciona um botão na aba de Configurações → Meta Lead Ads que chama a função e renderiza o resultado num card com checks verdes/vermelhos e a lista de Form IDs encontrados (com botão de copiar).
-
-## Como interpretar o resultado
-
-| Sintoma | Causa provável | Ação |
-|---|---|---|
-| `token_ok: false` | Token expirado | Gerar novo Page Access Token |
-| `page_id_token` diferente de `1095453883642999` | Token é de outra página | Gerar token correto da HR Imóveis |
-| `subscribed_apps` vazio ou sem `leadgen` | Página não inscrita ao app | No app Meta → Webhooks → Add Subscription → HR Imóveis + leadgen |
-| Tudo verde mas webhook ainda silencioso | Usuário do teste não é Admin do app | Adicionar usuário em Funções (Roles) |
-
-## Detalhes técnicos
-
-- Arquivo: `supabase/functions/meta-debug-subscription/index.ts`
-- Reutiliza padrão de auth do `meta-test-token` (verifica JWT antes de chamar Graph API)
-- Frontend: edição mínima em `src/components/configuracoes/MetaLeadAdsTab.tsx` para adicionar o botão e o card de resultado
-- Nenhuma alteração de schema, secrets ou tabelas
+5. Resultado esperado
+- Se o lead de teste aparecer na aba Leads: o webhook e o CRM estão funcionando; o problema dos cadastros reais é o app da Meta ainda estar em modo desenvolvimento/permissões.
+- Se o lead de teste não aparecer: vamos saber que a página ainda está inscrita no app errado ou que a Meta não está chamando o endpoint.
