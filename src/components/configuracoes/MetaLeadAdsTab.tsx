@@ -100,7 +100,13 @@ export default function MetaLeadAdsTab() {
         toast.success("Lead de teste enviado — aguarde alguns segundos e confira a aba Leads");
       } else {
         const msg = (data as any)?.meta_response?.error?.message || (data as any)?.error || "Falha";
-        toast.error(`Meta: ${msg}`);
+        const isUnavailable = /temporarily unavailable|permission/i.test(msg);
+        toast.error(
+          isUnavailable
+            ? "Meta bloqueou o disparo via API (token sem permissão). Use a Lead Ads Testing Tool no botão abaixo."
+            : `Meta: ${msg}`,
+          { duration: 8000 },
+        );
       }
     } catch (e: any) {
       toast.error(e.message);
@@ -243,7 +249,17 @@ export default function MetaLeadAdsTab() {
 
               {diagResult.forms?.length > 0 && (
                 <div className="pt-2 border-t">
-                  <div className="text-xs font-semibold mb-1">Formulários da Página (use o ID no mapeamento):</div>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="text-xs font-semibold">Formulários da Página (use o ID no mapeamento):</div>
+                    <a
+                      href="https://developers.facebook.com/tools/lead-ads-testing"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[10px] text-primary underline inline-flex items-center gap-1"
+                    >
+                      Abrir Lead Ads Testing Tool <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
                   <div className="space-y-1">
                     {diagResult.forms.map((f: any) => (
                       <div key={f.id} className="flex items-center gap-2 text-xs">
