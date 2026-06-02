@@ -99,6 +99,22 @@ const TipoIcon = ({ tipo }: { tipo: Compromisso["tipo"] }) => {
   return <MapPin className="h-4 w-4" />;
 };
 
+// Paleta determinística por usuário criador (cor estável por user_id)
+const USER_HUES = [12, 32, 56, 92, 142, 172, 200, 222, 258, 288, 318, 348];
+function hashUserId(id: string) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return h;
+}
+function colorForUser(id?: string | null): { solid: string; soft: string } | null {
+  if (!id) return null;
+  const hue = USER_HUES[hashUserId(id) % USER_HUES.length];
+  return {
+    solid: `hsl(${hue} 70% 45%)`,
+    soft: `hsl(${hue} 70% 45% / 0.12)`,
+  };
+}
+
 export default function Schedule() {
   const { user, roles } = useAuth();
   const { isAdmin } = useRole();
@@ -904,6 +920,38 @@ export default function Schedule() {
                   </div>
                 </div>
 
+                {(() => {
+                  const seen = new Map<string, string>();
+                  days.forEach((d) => {
+                    (eventsByDay.get(dayKey(d)) ?? []).forEach((c) => {
+                      if (c.criado_por_id && c.criado_por_nome && !seen.has(c.criado_por_id)) {
+                        seen.set(c.criado_por_id, c.criado_por_nome);
+                      }
+                    });
+                  });
+                  if (seen.size === 0) return null;
+                  return (
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-3 text-xs text-muted-foreground">
+                      <span className="font-medium">Criado por:</span>
+                      {Array.from(seen.entries()).map(([uid, nome]) => {
+                        const col = colorForUser(uid);
+                        return (
+                          <span key={uid} className="inline-flex items-center gap-1.5">
+                            <span
+                              className="inline-block h-2.5 w-2.5 rounded-full"
+                              style={{ background: col?.solid }}
+                              aria-hidden
+                            />
+                            <span className="text-foreground/80">{nome}</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+
+
+
 
                 {viewMode === "week" ? (
                   (() => {
@@ -1018,6 +1066,7 @@ export default function Schedule() {
                                   const top = Math.max(0, (startH - HOUR_START) * HOUR_PX);
                                   const height = Math.max(22, (Math.min(endH, HOUR_END) - Math.max(startH, HOUR_START)) * HOUR_PX - 2);
                                   if (endH <= HOUR_START || startH >= HOUR_END) return null;
+                                  const userColor = colorForUser(c.criado_por_id);
                                   return (
                                     <div
                                       key={c.id}
@@ -1026,8 +1075,12 @@ export default function Schedule() {
                                         "absolute left-1 right-1 rounded-md px-1.5 py-1 overflow-hidden cursor-pointer hover:brightness-95 shadow-sm",
                                         tipoChip[c.tipo],
                                       )}
-                                      style={{ top, height }}
-                                      title={`${format(c.date, "HH:mm")} – ${format(endDate, "HH:mm")} · ${c.titulo}`}
+                                      style={{
+                                        top,
+                                        height,
+                                        ...(userColor ? { borderLeftColor: userColor.solid, borderLeftWidth: 4 } : {}),
+                                      }}
+                                      title={`${format(c.date, "HH:mm")} – ${format(endDate, "HH:mm")} · ${c.titulo}${c.criado_por_nome ? ` · ${c.criado_por_nome}` : ""}`}
                                     >
                                       <div className="text-[11px] font-semibold leading-tight truncate">{c.titulo}</div>
                                       <div className="text-[10px] tabular-nums opacity-80 leading-tight">
@@ -1108,20 +1161,31 @@ export default function Schedule() {
                             </span>
                           </div>
                           <div className="space-y-1">
-                            {visible.map((c) => (
-                              <div
-                                key={c.id}
-                                onClick={(e) => { e.stopPropagation(); setSelected(d); openEdit(c); }}
-                                className={cn(
-                                  "flex items-center gap-1.5 text-[11px] leading-tight rounded-sm pl-1.5 pr-1 py-1 cursor-pointer overflow-hidden font-medium hover:brightness-95 transition-all",
-                                  tipoChip[c.tipo],
-                                )}
-                                title={`${format(c.date, "HH:mm")} ${c.titulo}`}
-                              >
-                                <span className="shrink-0 text-[10px] tabular-nums opacity-80">{format(c.date, "HH:mm")}</span>
-                                <span className="truncate flex-1 min-w-0">{c.titulo}</span>
-                              </div>
-                            ))}
+                            {visible.map((c) => {
+                              const userColor = colorForUser(c.criado_por_id);
+                              return (
+                                <div
+                                  key={c.id}
+                                  onClick={(e) => { e.stopPropagation(); setSelected(d); openEdit(c); }}
+                                  className={cn(
+                                    "flex items-center gap-1.5 text-[11px] leading-tight rounded-sm pl-1.5 pr-1 py-1 cursor-pointer overflow-hidden font-medium hover:brightness-95 transition-all",
+                                    tipoChip[c.tipo],
+                                  )}
+                                  style={userColor ? { borderLeftColor: userColor.solid, borderLeftWidth: 4 } : undefined}
+                                  title={`${format(c.date, "HH:mm")} ${c.titulo}${c.criado_por_nome ? ` · ${c.criado_por_nome}` : ""}`}
+                                >
+                                  {userColor && (
+                                    <span
+                                      className="inline-block h-2 w-2 rounded-full shrink-0"
+                                      style={{ background: userColor.solid }}
+                                      aria-hidden
+                                    />
+                                  )}
+                                  <span className="shrink-0 text-[10px] tabular-nums opacity-80">{format(c.date, "HH:mm")}</span>
+                                  <span className="truncate flex-1 min-w-0">{c.titulo}</span>
+                                </div>
+                              );
+                            })}
                             {extra > 0 && (
                               <div className="text-[10px] text-muted-foreground pl-1.5 font-medium hover:text-foreground">
                                 + {extra} mais
@@ -1177,8 +1241,14 @@ export default function Schedule() {
             <ul className="space-y-2">
               {eventosDoDia.compromissos
                 .sort((a, b) => +a.date - +b.date)
-                .map((c) => (
-                  <li key={c.id} className="rounded-md border bg-card p-3">
+                .map((c) => {
+                  const userColor = colorForUser(c.criado_por_id);
+                  return (
+                  <li
+                    key={c.id}
+                    className="rounded-md border bg-card p-3"
+                    style={userColor ? { borderLeft: `4px solid ${userColor.solid}` } : undefined}
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="text-sm font-medium flex items-center gap-2">
@@ -1229,7 +1299,8 @@ export default function Schedule() {
                       </div>
                     </div>
                   </li>
-                ))}
+                  );
+                })}
             </ul>
           </Card>
 
