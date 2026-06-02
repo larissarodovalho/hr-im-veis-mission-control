@@ -100,7 +100,13 @@ export default function MetaLeadAdsTab() {
         toast.success("Lead de teste enviado — aguarde alguns segundos e confira a aba Leads");
       } else {
         const msg = (data as any)?.meta_response?.error?.message || (data as any)?.error || "Falha";
-        toast.error(`Meta: ${msg}`);
+        const isUnavailable = /temporarily unavailable|permission/i.test(msg);
+        toast.error(
+          isUnavailable
+            ? "Meta bloqueou o disparo via API (token sem permissão). Use a Lead Ads Testing Tool no botão abaixo."
+            : `Meta: ${msg}`,
+          { duration: 8000 },
+        );
       }
     } catch (e: any) {
       toast.error(e.message);
