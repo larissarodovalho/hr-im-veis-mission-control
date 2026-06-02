@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  Copy, Plus, Trash2, Pencil, Facebook, CheckCircle2, AlertCircle, Loader2, ExternalLink, RefreshCw,
+  Copy, Plus, Trash2, Pencil, Facebook, CheckCircle2, AlertCircle, Loader2, ExternalLink, RefreshCw, Zap, Send,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,6 +50,8 @@ export default function MetaLeadAdsTab() {
   const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [diagLoading, setDiagLoading] = useState(false);
   const [diagResult, setDiagResult] = useState<any>(null);
+  const [forceLoading, setForceLoading] = useState(false);
+  const [testLeadLoading, setTestLeadLoading] = useState<string | null>(null);
 
   async function diagnosticar() {
     setDiagLoading(true);
@@ -65,6 +67,45 @@ export default function MetaLeadAdsTab() {
       setDiagResult({ errors: [{ step: "invoke", details: e.message }], diagnostico: [`❌ ${e.message}`] });
     } finally {
       setDiagLoading(false);
+    }
+  }
+
+  async function forcarInscricao() {
+    setForceLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("meta-force-subscribe");
+      if (error) throw new Error(error.message);
+      if ((data as any).ok) {
+        toast.success("Página inscrita em leadgen com sucesso");
+      } else {
+        toast.error((data as any)?.subscribe_response?.error?.message || (data as any)?.error || "Falha ao inscrever");
+      }
+      // re-run diagnostic to show updated state
+      await diagnosticar();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setForceLoading(false);
+    }
+  }
+
+  async function dispararLeadTeste(form_id: string) {
+    setTestLeadLoading(form_id);
+    try {
+      const { data, error } = await supabase.functions.invoke("meta-create-test-lead", {
+        body: { form_id },
+      });
+      if (error) throw new Error(error.message);
+      if ((data as any).ok) {
+        toast.success("Lead de teste enviado — aguarde alguns segundos e confira a aba Leads");
+      } else {
+        const msg = (data as any)?.meta_response?.error?.message || (data as any)?.error || "Falha";
+        toast.error(`Meta: ${msg}`);
+      }
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setTestLeadLoading(null);
     }
   }
 
@@ -168,10 +209,16 @@ export default function MetaLeadAdsTab() {
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
-            <Button onClick={diagnosticar} disabled={diagLoading} variant="outline">
-              {diagLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <AlertCircle className="h-4 w-4 mr-1" />}
-              Diagnosticar inscrição
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={diagnosticar} disabled={diagLoading} variant="outline">
+                {diagLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <AlertCircle className="h-4 w-4 mr-1" />}
+                Diagnosticar inscrição
+              </Button>
+              <Button onClick={forcarInscricao} disabled={forceLoading} variant="outline">
+                {forceLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Zap className="h-4 w-4 mr-1" />}
+                Forçar inscrição
+              </Button>
+            </div>
           </div>
 
           {diagResult && (
@@ -205,6 +252,17 @@ export default function MetaLeadAdsTab() {
                         <code className="text-muted-foreground">{f.id}</code>
                         <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copy(f.id, "Form ID")}>
                           <Copy className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 px-2 text-[10px]"
+                          disabled={testLeadLoading === f.id}
+                          onClick={() => dispararLeadTeste(f.id)}
+                        >
+                          {testLeadLoading === f.id
+                            ? <Loader2 className="h-3 w-3 animate-spin" />
+                            : <><Send className="h-3 w-3 mr-1" /> Lead teste</>}
                         </Button>
                       </div>
                     ))}
