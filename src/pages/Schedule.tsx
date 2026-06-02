@@ -1209,8 +1209,14 @@ export default function Schedule() {
             <ul className="space-y-2">
               {eventosDoDia.compromissos
                 .sort((a, b) => +a.date - +b.date)
-                .map((c) => (
-                  <li key={c.id} className="rounded-md border bg-card p-3">
+                .map((c) => {
+                  const userColor = colorForUser(c.criado_por_id);
+                  return (
+                  <li
+                    key={c.id}
+                    className="rounded-md border bg-card p-3"
+                    style={userColor ? { borderLeft: `4px solid ${userColor.solid}` } : undefined}
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="text-sm font-medium flex items-center gap-2">
