@@ -307,6 +307,9 @@ export default function ImoveisReport() {
     rows.push({ secao: "Captação", metrica: "Tempo médio (dias)", valor: capKpis.tempoMedio.toFixed(1) });
     topParceiros.forEach((p) => rows.push({ secao: "Top parceiros", metrica: p.nome, valor: p.qtd }));
     topCaptadores.forEach((c) => rows.push({ secao: "Top captadores", metrica: c.nome, valor: c.qtd }));
+    captacaoMensal.forEach((c) => rows.push({ secao: "Captação por mês", metrica: c.name, valor: c.qtd }));
+    captacaoAnual.forEach((c) => rows.push({ secao: "Captação por ano", metrica: c.name, valor: c.qtd }));
+    topBairros.forEach((b) => rows.push({ secao: "Bairros mais cadastrados", metrica: `${b.bairro}${b.cidade ? ` (${b.cidade})` : ""}`, valor: b.qtd }));
 
     const csv = Papa.unparse(rows);
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
