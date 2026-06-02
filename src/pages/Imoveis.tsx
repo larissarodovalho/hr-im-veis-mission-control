@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2, FileDown, History, Eye, EyeOff, Info } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -50,6 +51,8 @@ export default function Imoveis() {
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [contas, setContas] = useState<Record<string, string>>({});
   const [tab, setTab] = useState("disponiveis");
+  const [anoFiltro, setAnoFiltro] = useState<string>("all");
+  const [mesFiltro, setMesFiltro] = useState<string>("all");
 
   const load = async () => {
     const [imRes, prRes, ldRes] = await Promise.all([
@@ -86,6 +89,21 @@ export default function Imoveis() {
     i.cidade?.toLowerCase().includes(search.toLowerCase()) ||
     i.codigo?.toLowerCase().includes(search.toLowerCase());
 
+  const matchesData = (i: Imovel) => {
+    if (anoFiltro === "all" && mesFiltro === "all") return true;
+    if (!i.created_at) return false;
+    const d = new Date(i.created_at);
+    if (anoFiltro !== "all" && d.getFullYear() !== Number(anoFiltro)) return false;
+    if (mesFiltro !== "all" && d.getMonth() + 1 !== Number(mesFiltro)) return false;
+    return true;
+  };
+
+  const anosDisponiveis = useMemo(() => {
+    const set = new Set<number>();
+    items.forEach((i) => { if (i.created_at) set.add(new Date(i.created_at).getFullYear()); });
+    return Array.from(set).sort((a, b) => b - a);
+  }, [items]);
+
   const propostasByImovel = useMemo(() => {
     const m: Record<string, Proposta[]> = {};
     propostas.forEach(p => {
@@ -106,10 +124,11 @@ export default function Imoveis() {
     return "disponivel";
   };
 
-  const disponiveis = items.filter(i => stage(i) === "disponivel" && matchesSearch(i));
-  const emProposta  = items.filter(i => stage(i) === "proposta"   && matchesSearch(i));
-  const emFechamento = items.filter(i => stage(i) === "fechamento" && matchesSearch(i));
-  const vendidos    = items.filter(i => stage(i) === "vendido"    && matchesSearch(i));
+  const passa = (i: Imovel) => matchesSearch(i) && matchesData(i);
+  const disponiveis = items.filter(i => stage(i) === "disponivel" && passa(i));
+  const emProposta  = items.filter(i => stage(i) === "proposta"   && passa(i));
+  const emFechamento = items.filter(i => stage(i) === "fechamento" && passa(i));
+  const vendidos    = items.filter(i => stage(i) === "vendido"    && passa(i));
 
   // ---------- Ações ----------
   const aceitarProposta = async (imovel: Imovel, proposta: Proposta) => {
@@ -391,6 +410,27 @@ export default function Imoveis() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Buscar…" className="pl-8 w-full" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
+          <Select value={anoFiltro} onValueChange={setAnoFiltro}>
+            <SelectTrigger className="w-full sm:w-32"><SelectValue placeholder="Ano" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os anos</SelectItem>
+              {anosDisponiveis.map((a) => <SelectItem key={a} value={String(a)}>{a}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={mesFiltro} onValueChange={setMesFiltro}>
+            <SelectTrigger className="w-full sm:w-36"><SelectValue placeholder="Mês" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os meses</SelectItem>
+              {["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"].map((m, idx) => (
+                <SelectItem key={idx} value={String(idx + 1)}>{m}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {(anoFiltro !== "all" || mesFiltro !== "all") && (
+            <Button variant="ghost" size="sm" onClick={() => { setAnoFiltro("all"); setMesFiltro("all"); }}>
+              Limpar
+            </Button>
+          )}
           {canEdit && (
             <Button onClick={() => setOpenNew(true)} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-1" /> Cadastrar imóvel

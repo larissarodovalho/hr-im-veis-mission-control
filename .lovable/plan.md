@@ -1,28 +1,24 @@
-# Adicionar etapa "Cadastro do imóvel" no funil de Captação
+## Filtro por data de cadastro (mês/ano) em Imóveis
 
-Nova etapa entre **Captação agendada** e **Concluído** na subaba *Captação* (Imóveis).
+Adicionar, no header da página `/crm/imoveis`, dois seletores ao lado da busca:
 
-## Funil atualizado
-```
-Novo → Agendar → Detalhamento → Captação agendada → Cadastro do imóvel → Concluído
-```
+- **Ano**: lista dos anos presentes em `imoveis.created_at` + opção "Todos"
+- **Mês**: 1–12 (jan–dez) + opção "Todos"
 
-## Alterações
+### Comportamento
 
-### 1. `src/lib/captacaoFunil.ts`
-- Adicionar `"cadastro"` ao tipo `EstagioCaptacao`.
-- Inserir item no array `ESTAGIOS_CAPTACAO` entre `agendada` e `concluido`:
-  - id: `cadastro`
-  - label: `"Cadastro do imóvel"`
-  - color: tom violeta/roxo (`bg-violet-500/10 border-violet-500/30`) para distinguir das demais.
+- Filtro aplica-se em todas as abas baseadas em `items` (Disponíveis, Em Proposta, Em Fechamento) — combinando com a busca textual já existente.
+- Vendidos / Oportunidades / Captação / Parceiros usam componentes próprios — o filtro do header não afeta essas abas (caso queira estender, posso fazer depois).
+- Contadores no subtítulo e nos badges das tabs refletem o filtro ativo.
+- Se "Ano" = Todos, o seletor de Mês fica desabilitado (ou aplica em qualquer ano).
 
-### 2. Banco de dados
-- A coluna `estagio` em `captacoes_imovel` é `text` livre (sem CHECK constraint detectada). Não precisa de migração.
-- Caso exista constraint, será adicionada via migração ajustando o CHECK para incluir `'cadastro'`.
+### Implementação técnica
 
-### 3. UI (`src/pages/imoveis/CaptacaoTab.tsx`)
-- Nenhuma alteração de código necessária: o grid já renderiza dinamicamente todas as etapas via `ESTAGIOS_CAPTACAO.map(...)` e o layout já é `xl:grid-cols-5` — passará a ter 6 colunas. Ajustar para `xl:grid-cols-6` para acomodar a nova coluna sem quebrar em telas grandes (mantém `lg:grid-cols-3` e `md:grid-cols-2`).
+Em `src/pages/Imoveis.tsx`:
+1. Novos estados `anoFiltro` (string, default "all") e `mesFiltro` (string, default "all").
+2. Derivar `anosDisponiveis` via `useMemo` a partir de `items` (anos únicos de `created_at`, ordem decrescente).
+3. Adicionar predicado `matchesData(i)` que compara ano/mês de `new Date(i.created_at)` com os filtros.
+4. Aplicar `matchesSearch(i) && matchesData(i)` nas listas `disponiveis`, `emProposta`, `emFechamento`, `vendidos`.
+5. Renderizar dois `<Select>` (shadcn) compactos no header, antes do botão "Cadastrar imóvel".
 
-## Comportamento
-- Drag-and-drop funciona automaticamente para a nova etapa.
-- Cards existentes permanecem nos estágios atuais; usuário move manualmente para "Cadastro do imóvel" quando iniciar o cadastro do imóvel no sistema, e para "Concluído" após finalizar.
+Sem mudanças de schema, sem mudanças em outras abas.
