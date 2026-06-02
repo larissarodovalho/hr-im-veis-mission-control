@@ -410,6 +410,27 @@ export default function Imoveis() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Buscar…" className="pl-8 w-full" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
+          <Select value={anoFiltro} onValueChange={setAnoFiltro}>
+            <SelectTrigger className="w-full sm:w-32"><SelectValue placeholder="Ano" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os anos</SelectItem>
+              {anosDisponiveis.map((a) => <SelectItem key={a} value={String(a)}>{a}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={mesFiltro} onValueChange={setMesFiltro}>
+            <SelectTrigger className="w-full sm:w-36"><SelectValue placeholder="Mês" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os meses</SelectItem>
+              {["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"].map((m, idx) => (
+                <SelectItem key={idx} value={String(idx + 1)}>{m}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {(anoFiltro !== "all" || mesFiltro !== "all") && (
+            <Button variant="ghost" size="sm" onClick={() => { setAnoFiltro("all"); setMesFiltro("all"); }}>
+              Limpar
+            </Button>
+          )}
           {canEdit && (
             <Button onClick={() => setOpenNew(true)} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-1" /> Cadastrar imóvel
