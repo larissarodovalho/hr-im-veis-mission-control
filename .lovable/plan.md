@@ -1,26 +1,35 @@
-Plano para confirmar e corrigir o recebimento de leads do Meta:
+Plano proposto:
 
-1. Criar função backend para disparar lead de teste
-- Adicionar `meta-create-test-lead`.
-- Receber um `form_id` validado.
-- Chamar a API da Meta em `POST /{form_id}/test_leads` usando o `META_PAGE_ACCESS_TOKEN` já configurado.
-- Retornar o resultado da Meta e uma mensagem clara de sucesso/erro.
+1. Confirmar o ponto de falha atual
+- O backend está saudável.
+- Não existe nenhum lead recente com origem `meta_ads`.
+- Não existe nenhum registro recente em `activity_log` do tipo `lead_meta`.
+- O diagnóstico da Meta mostra token OK, página correta, app inscrito em `leadgen` e 1 formulário ativo.
+- Portanto, o problema mais provável é: a Meta ainda não está chamando o webhook do CRM, ou está chamando uma URL/ambiente diferente.
 
-2. Criar função backend para forçar inscrição do webhook
-- Adicionar `meta-force-subscribe`.
-- Chamar `POST /1095453883642999/subscribed_apps?subscribed_fields=leadgen` com o token da página.
-- Retornar se a página ficou inscrita no campo `leadgen`.
+2. Melhorar o webhook para deixar rastros claros
+- Atualizar `meta-leadgen-webhook` para registrar no `activity_log` toda chamada recebida:
+  - verificação GET da Meta;
+  - POST recebido;
+  - assinatura inválida;
+  - payload sem `leadgen`;
+  - erro ao buscar dados do lead na Meta;
+  - erro ao inserir no CRM;
+  - lead inserido com sucesso.
+- Isso vai permitir diferenciar claramente “a Meta não chamou” de “a Meta chamou, mas falhou ao processar”.
 
-3. Melhorar o diagnóstico existente
-- Atualizar `meta-debug-subscription` para mostrar com mais clareza quais apps estão inscritos na página e quais campos cada app recebe.
-- Manter a verificação atual de token, página, inscrição e formulários.
+3. Criar um teste de saúde do webhook
+- Adicionar uma função protegida `meta-webhook-health` para testar o endpoint com o token correto sem expor segredo no navegador.
+- Ela vai confirmar se o webhook responde corretamente ao handshake usado pela Meta e retornar a URL exata que deve estar configurada no painel da Meta.
 
 4. Atualizar a tela Configurações → Meta Lead Ads
-- Adicionar botão “Forçar inscrição”.
-- Adicionar botão “Disparar lead de teste” ao lado dos Form IDs encontrados no diagnóstico.
-- Mostrar feedback visual: sucesso, erro da Meta, ou aviso de que a inscrição ainda não chegou ao app correto.
-- Após disparar o teste, orientar a conferir a aba Leads; se possível, mostrar uma mensagem dizendo que o webhook pode levar alguns segundos.
+- Adicionar um botão “Testar webhook”.
+- Mostrar a URL correta do webhook para conferência manual na Meta.
+- Mostrar um alerta objetivo:
+  - se o webhook local responde OK, mas nenhum POST chega após usar o Lead Ads Testing Tool, a URL configurada na Meta está diferente ou o app/ambiente da Meta não está enviando eventos para este backend;
+  - se o POST chega, mostrar o erro real de processamento.
 
 5. Resultado esperado
-- Se o lead de teste aparecer na aba Leads: o webhook e o CRM estão funcionando; o problema dos cadastros reais é o app da Meta ainda estar em modo desenvolvimento/permissões.
-- Se o lead de teste não aparecer: vamos saber que a página ainda está inscrita no app errado ou que a Meta não está chamando o endpoint.
+- Depois de usar o Lead Ads Testing Tool, a aba Configurações deve mostrar se chegou alguma chamada da Meta.
+- Se chegou, eu corrijo o erro de gravação conforme o log.
+- Se não chegou, a correção será ajustar a Callback URL no Webhook da Meta para a URL exibida pelo CRM.

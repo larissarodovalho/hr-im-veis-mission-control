@@ -52,6 +52,25 @@ export default function MetaLeadAdsTab() {
   const [diagResult, setDiagResult] = useState<any>(null);
   const [forceLoading, setForceLoading] = useState(false);
   const [testLeadLoading, setTestLeadLoading] = useState<string | null>(null);
+  const [healthLoading, setHealthLoading] = useState(false);
+  const [healthResult, setHealthResult] = useState<any>(null);
+
+  async function testarWebhook() {
+    setHealthLoading(true);
+    setHealthResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("meta-webhook-health");
+      if (error) throw new Error(error.message);
+      setHealthResult(data);
+      if ((data as any).ok) toast.success("Webhook responde OK");
+      else toast.warning("Webhook não respondeu ao handshake");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setHealthLoading(false);
+    }
+  }
+
 
   async function diagnosticar() {
     setDiagLoading(true);
@@ -224,8 +243,50 @@ export default function MetaLeadAdsTab() {
                 {forceLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Zap className="h-4 w-4 mr-1" />}
                 Forçar inscrição
               </Button>
+              <Button onClick={testarWebhook} disabled={healthLoading} variant="outline">
+                {healthLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+                Testar webhook
+              </Button>
             </div>
           </div>
+
+          {healthResult && (
+            <div className="rounded-lg border bg-muted/30 p-3 space-y-2 text-sm">
+              <div className="font-medium flex items-center gap-2">
+                {healthResult.ok
+                  ? <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  : <AlertCircle className="h-4 w-4 text-amber-600" />}
+                Saúde do webhook
+              </div>
+              <div className="text-xs space-y-1">
+                <div><span className="text-muted-foreground">Handshake:</span> {healthResult.handshake?.ok ? "OK" : `falhou (status ${healthResult.handshake?.status})`}</div>
+                <div><span className="text-muted-foreground">POSTs recebidos (24h):</span> <strong>{healthResult.posts_received_last_24h}</strong></div>
+                <div className="text-muted-foreground italic">{healthResult.hint}</div>
+              </div>
+              {healthResult.recent_logs?.length > 0 && (
+                <div className="pt-2 border-t">
+                  <div className="text-xs font-semibold mb-1">Últimos eventos do webhook:</div>
+                  <div className="space-y-1 max-h-64 overflow-auto">
+                    {healthResult.recent_logs.map((l: any) => (
+                      <div key={l.id} className="text-[11px] font-mono flex gap-2">
+                        <Badge
+                          variant="outline"
+                          className={
+                            l.status === "ok" ? "text-[9px] bg-green-500/10 text-green-700 border-green-500/30"
+                            : l.status === "erro" ? "text-[9px] bg-red-500/10 text-red-700 border-red-500/30"
+                            : "text-[9px]"
+                          }
+                        >{l.status}</Badge>
+                        <span className="text-muted-foreground shrink-0">{new Date(l.created_at).toLocaleTimeString()}</span>
+                        <span className="truncate">{l.descricao}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
 
           {diagResult && (
             <div className="rounded-lg border bg-muted/30 p-3 space-y-2 text-sm">
