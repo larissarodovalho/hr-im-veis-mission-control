@@ -53,6 +53,10 @@ export default function Imoveis() {
   const [tab, setTab] = useState("disponiveis");
   const [anoFiltro, setAnoFiltro] = useState<string>("all");
   const [mesFiltro, setMesFiltro] = useState<string>("all");
+  const [captadorFiltro, setCaptadorFiltro] = useState<string>("all");
+  const [valorMin, setValorMin] = useState<string>("");
+  const [valorMax, setValorMax] = useState<string>("");
+  const [bairroFiltro, setBairroFiltro] = useState<string>("");
 
   const load = async () => {
     const [imRes, prRes, ldRes] = await Promise.all([
