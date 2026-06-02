@@ -920,6 +920,38 @@ export default function Schedule() {
                   </div>
                 </div>
 
+                {(() => {
+                  const seen = new Map<string, string>();
+                  days.forEach((d) => {
+                    (eventsByDay.get(dayKey(d)) ?? []).forEach((c) => {
+                      if (c.criado_por_id && c.criado_por_nome && !seen.has(c.criado_por_id)) {
+                        seen.set(c.criado_por_id, c.criado_por_nome);
+                      }
+                    });
+                  });
+                  if (seen.size === 0) return null;
+                  return (
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-3 text-xs text-muted-foreground">
+                      <span className="font-medium">Criado por:</span>
+                      {Array.from(seen.entries()).map(([uid, nome]) => {
+                        const col = colorForUser(uid);
+                        return (
+                          <span key={uid} className="inline-flex items-center gap-1.5">
+                            <span
+                              className="inline-block h-2.5 w-2.5 rounded-full"
+                              style={{ background: col?.solid }}
+                              aria-hidden
+                            />
+                            <span className="text-foreground/80">{nome}</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+
+
+
 
                 {viewMode === "week" ? (
                   (() => {
