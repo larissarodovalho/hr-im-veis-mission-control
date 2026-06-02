@@ -248,6 +248,47 @@ export default function ImoveisReport() {
       .slice(0, 10);
   }, [imoveisF, profiles]);
 
+  // Captação por mês (YYYY-MM)
+  const captacaoMensal = useMemo(() => {
+    const m = new Map<string, number>();
+    imoveisF.forEach((i) => {
+      if (!i.created_at) return;
+      const d = new Date(i.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      m.set(key, (m.get(key) || 0) + 1);
+    });
+    return [...m.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([name, qtd]) => ({ name, qtd }));
+  }, [imoveisF]);
+
+  // Captação por ano
+  const captacaoAnual = useMemo(() => {
+    const m = new Map<string, number>();
+    imoveisF.forEach((i) => {
+      if (!i.created_at) return;
+      const key = String(new Date(i.created_at).getFullYear());
+      m.set(key, (m.get(key) || 0) + 1);
+    });
+    return [...m.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([name, qtd]) => ({ name, qtd }));
+  }, [imoveisF]);
+
+  // Top bairros / condomínios
+  const topBairros = useMemo(() => {
+    const m = new Map<string, { bairro: string; cidade: string; qtd: number }>();
+    imoveisF.forEach((i) => {
+      const bairro = (i.bairro || "—").trim() || "—";
+      const cidade = i.cidade || "";
+      const key = `${bairro}__${cidade}`;
+      const cur = m.get(key) || { bairro, cidade, qtd: 0 };
+      cur.qtd++;
+      m.set(key, cur);
+    });
+    return [...m.values()].sort((a, b) => b.qtd - a.qtd).slice(0, 10);
+  }, [imoveisF]);
+
   const exportCsv = () => {
     const rows: any[] = [];
     rows.push({ secao: "KPIs", metrica: "Total imóveis", valor: kpis.total });
@@ -266,6 +307,9 @@ export default function ImoveisReport() {
     rows.push({ secao: "Captação", metrica: "Tempo médio (dias)", valor: capKpis.tempoMedio.toFixed(1) });
     topParceiros.forEach((p) => rows.push({ secao: "Top parceiros", metrica: p.nome, valor: p.qtd }));
     topCaptadores.forEach((c) => rows.push({ secao: "Top captadores", metrica: c.nome, valor: c.qtd }));
+    captacaoMensal.forEach((c) => rows.push({ secao: "Captação por mês", metrica: c.name, valor: c.qtd }));
+    captacaoAnual.forEach((c) => rows.push({ secao: "Captação por ano", metrica: c.name, valor: c.qtd }));
+    topBairros.forEach((b) => rows.push({ secao: "Bairros mais cadastrados", metrica: `${b.bairro}${b.cidade ? ` (${b.cidade})` : ""}`, valor: b.qtd }));
 
     const csv = Papa.unparse(rows);
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
@@ -429,6 +473,64 @@ export default function ImoveisReport() {
             <Bar dataKey="qtd" fill="#10b981" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
+      </Card>
+
+      {/* Captação por período */}
+      <Card className="p-4 space-y-4">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-primary" />
+          <h3 className="font-semibold">Captação por período</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <div className="text-xs text-muted-foreground mb-2">Por mês</div>
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={captacaoMensal}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="qtd" fill="#6366f1" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground mb-2">Por ano</div>
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={captacaoAnual}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="qtd" fill="#06b6d4" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </Card>
+
+      {/* Bairros mais cadastrados */}
+      <Card className="p-4">
+        <h3 className="font-semibold mb-3">Bairros / condomínios com mais imóveis</h3>
+        <Table>
+          <TableHeader><TableRow>
+            <TableHead>Bairro</TableHead>
+            <TableHead>Cidade</TableHead>
+            <TableHead className="text-right">Imóveis</TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {topBairros.map((b, idx) => (
+              <TableRow key={`${b.bairro}-${b.cidade}-${idx}`}>
+                <TableCell>{b.bairro}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{b.cidade || "—"}</TableCell>
+                <TableCell className="text-right font-semibold">{b.qtd}</TableCell>
+              </TableRow>
+            ))}
+            {topBairros.length === 0 && (
+              <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground">Sem dados</TableCell></TableRow>
+            )}
+          </TableBody>
+        </Table>
       </Card>
 
       {/* Parceiros e captadores */}
