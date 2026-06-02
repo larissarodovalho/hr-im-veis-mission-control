@@ -441,12 +441,19 @@ export default function Imoveis() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-semibold flex items-center gap-2"><HomeIcon className="h-6 w-6 sm:h-7 sm:w-7 text-primary" /> Imóveis</h1>
-          <p className="text-muted-foreground mt-1 text-sm">{counts.d} disponíveis · {counts.p} em proposta · {counts.f} em fechamento · {counts.v} vendidos</p>
+      <header className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="font-display text-2xl sm:text-3xl font-semibold flex items-center gap-2"><HomeIcon className="h-6 w-6 sm:h-7 sm:w-7 text-primary" /> Imóveis</h1>
+            <p className="text-muted-foreground mt-1 text-sm">{counts.d} disponíveis · {counts.p} em proposta · {counts.f} em fechamento · {counts.v} vendidos</p>
+          </div>
+          {canEdit && (
+            <Button onClick={() => setOpenNew(true)} className="w-full sm:w-auto">
+              <Plus className="h-4 w-4 mr-1" /> Cadastrar imóvel
+            </Button>
+          )}
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Buscar…" className="pl-8 w-full" value={search} onChange={e => setSearch(e.target.value)} />
@@ -467,15 +474,37 @@ export default function Imoveis() {
               ))}
             </SelectContent>
           </Select>
-          {(anoFiltro !== "all" || mesFiltro !== "all") && (
-            <Button variant="ghost" size="sm" onClick={() => { setAnoFiltro("all"); setMesFiltro("all"); }}>
-              Limpar
-            </Button>
-          )}
-          {canEdit && (
-            <Button onClick={() => setOpenNew(true)} className="w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-1" /> Cadastrar imóvel
-            </Button>
+          <Select value={captadorFiltro} onValueChange={setCaptadorFiltro}>
+            <SelectTrigger className="w-full sm:w-52"><SelectValue placeholder="Captador" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os captadores</SelectItem>
+              {captadoresDisponiveis.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Input
+            type="number"
+            inputMode="numeric"
+            placeholder="R$ mín"
+            className="w-full sm:w-32"
+            value={valorMin}
+            onChange={(e) => setValorMin(e.target.value)}
+          />
+          <Input
+            type="number"
+            inputMode="numeric"
+            placeholder="R$ máx"
+            className="w-full sm:w-32"
+            value={valorMax}
+            onChange={(e) => setValorMax(e.target.value)}
+          />
+          <Input
+            placeholder="Bairro ou condomínio"
+            className="w-full sm:w-56"
+            value={bairroFiltro}
+            onChange={(e) => setBairroFiltro(e.target.value)}
+          />
+          {algumFiltro && (
+            <Button variant="ghost" size="sm" onClick={limparFiltros}>Limpar filtros</Button>
           )}
         </div>
       </header>
