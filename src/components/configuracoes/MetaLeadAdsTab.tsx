@@ -48,6 +48,25 @@ export default function MetaLeadAdsTab() {
 
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [diagLoading, setDiagLoading] = useState(false);
+  const [diagResult, setDiagResult] = useState<any>(null);
+
+  async function diagnosticar() {
+    setDiagLoading(true);
+    setDiagResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("meta-debug-subscription");
+      if (error) throw new Error(error.message);
+      setDiagResult(data);
+      if ((data as any).ok) toast.success("Inscrição OK");
+      else toast.warning("Inscrição com problemas — veja diagnóstico");
+    } catch (e: any) {
+      toast.error(e.message);
+      setDiagResult({ errors: [{ step: "invoke", details: e.message }], diagnostico: [`❌ ${e.message}`] });
+    } finally {
+      setDiagLoading(false);
+    }
+  }
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<MetaLeadForm | null>(null);
@@ -149,7 +168,51 @@ export default function MetaLeadAdsTab() {
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
+            <Button onClick={diagnosticar} disabled={diagLoading} variant="outline">
+              {diagLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <AlertCircle className="h-4 w-4 mr-1" />}
+              Diagnosticar inscrição
+            </Button>
           </div>
+
+          {diagResult && (
+            <div className="rounded-lg border bg-muted/30 p-3 space-y-2 text-sm">
+              <div className="font-medium">Diagnóstico</div>
+              <ul className="space-y-1">
+                {(diagResult.diagnostico ?? []).map((d: string, i: number) => (
+                  <li key={i} className="font-mono text-xs">{d}</li>
+                ))}
+              </ul>
+
+              {diagResult.subscribed_apps?.length > 0 && (
+                <div className="pt-2 border-t">
+                  <div className="text-xs font-semibold mb-1">Apps inscritos:</div>
+                  {diagResult.subscribed_apps.map((a: any) => (
+                    <div key={a.app_id} className="text-xs font-mono">
+                      • {a.name} ({a.app_id}) — campos: {(a.subscribed_fields ?? []).join(", ") || "—"}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {diagResult.forms?.length > 0 && (
+                <div className="pt-2 border-t">
+                  <div className="text-xs font-semibold mb-1">Formulários da Página (use o ID no mapeamento):</div>
+                  <div className="space-y-1">
+                    {diagResult.forms.map((f: any) => (
+                      <div key={f.id} className="flex items-center gap-2 text-xs">
+                        <Badge variant="outline" className="text-[10px]">{f.status}</Badge>
+                        <span className="flex-1">{f.name}</span>
+                        <code className="text-muted-foreground">{f.id}</code>
+                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copy(f.id, "Form ID")}>
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="flex flex-wrap items-center gap-3">
             <Button onClick={testarConexao} disabled={testing} variant="outline">
