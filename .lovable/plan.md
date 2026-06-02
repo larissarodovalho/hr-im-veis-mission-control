@@ -1,31 +1,28 @@
-## Filtros adicionais em Imóveis
+## Objetivo
+Substituir os dois inputs de filtro de valor (mínimo e máximo) na página de Imóveis por um único dropdown (Select) com faixas de valor pré-definidas.
 
-Adicionar três novos filtros ao header da página `/crm/imoveis`, juntos aos filtros de Ano/Mês já existentes:
+## Alterações no arquivo `src/pages/Imoveis.tsx`
 
-### 1. Corretor captador
-- Select com lista de captadores (a partir de `imoveis.corretor_captador_id`, resolvidos via `profiles.nome`).
-- Opção "Todos os captadores" como default.
-- Mostra apenas captadores que aparecem em pelo menos um imóvel.
+### Estado
+- Remover `valorMin` e `valorMax` (strings).
+- Adicionar `faixaValor` (string, default `"all"`).
 
-### 2. Faixa de valor
-- Dois inputs numéricos compactos: **Min** e **Max** (R$).
-- Filtra `imoveis.valor` entre os limites (qualquer um pode ficar vazio).
-- Formatação leve com placeholder "R$ mín" / "R$ máx".
+### Lógica de filtro
+- Substituir `matchesValor` por `matchesFaixaValor` que interpreta as opções do select:
+  - `"all"` → qualquer valor
+  - `"0-500000"` → até R$ 500.000
+  - `"500000-1000000"` → R$ 500.000 a R$ 1.000.000
+  - `"1000000-2000000"` → R$ 1.000.000 a R$ 2.000.000
+  - `"2000000-5000000"` → R$ 2.000.000 a R$ 5.000.000
+  - `"5000000-10000000"` → R$ 5.000.000 a R$ 10.000.000
+  - `"10000000-20000000"` → R$ 10.000.000 a R$ 20.000.000
+  - `"20000000+"` → acima de R$ 20.000.000
 
-### 3. Bairro / Condomínio
-- Input de texto único "Bairro ou condomínio".
-- Match case-insensitive em `bairro`, `endereco` e `complemento` (já que não há campo `condominio` separado — condomínios normalmente aparecem ali).
+### UI
+- Remover os dois `<Input type="number">` de valor mín/máx.
+- Adicionar um único `<Select value={faixaValor} onValueChange={setFaixaValor}>` com as opções acima, apresentadas de forma legível (ex: "Até R$ 500 mil", "R$ 500 mil – R$ 1 milhão", etc.).
 
-### Comportamento
-- Todos os filtros combinam (AND) com busca, ano e mês já existentes.
-- Botão "Limpar" do header reseta todos os filtros (ano, mês, captador, faixa, bairro).
-- Aplica nas abas Disponíveis, Em Proposta, Em Fechamento e Vendidos (lista local do `Imoveis.tsx`).
+### Limpar filtros
+- Atualizar `algumFiltro` e `limparFiltros` para usar `faixaValor !== "all"` em vez de `valorMin/valorMax`.
 
-### Implementação
-Em `src/pages/Imoveis.tsx`:
-1. Novos estados: `captadorFiltro`, `valorMin`, `valorMax`, `bairroFiltro`.
-2. `captadoresDisponiveis` via `useMemo` — ids únicos de `corretor_captador_id` com nome de `profiles`.
-3. Novos predicados `matchesCaptador`, `matchesValor`, `matchesBairro` incluídos em `passa(i)`.
-4. Header reorganizado: busca + linha de filtros (selects e inputs compactos). Em telas pequenas, empilham; em ≥ lg, ficam em flex-wrap.
-
-Sem mudanças de schema.
+Nenhuma alteração de schema ou backend necessária.
