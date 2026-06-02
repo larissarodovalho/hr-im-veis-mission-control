@@ -176,10 +176,10 @@ export default function Imoveis() {
 
   const algumFiltro =
     anoFiltro !== "all" || mesFiltro !== "all" || captadorFiltro !== "all" ||
-    valorMin !== "" || valorMax !== "" || bairroFiltro !== "";
+    faixaValor !== "all" || bairroFiltro !== "";
   const limparFiltros = () => {
     setAnoFiltro("all"); setMesFiltro("all"); setCaptadorFiltro("all");
-    setValorMin(""); setValorMax(""); setBairroFiltro("");
+    setFaixaValor("all"); setBairroFiltro("");
   };
 
   // ---------- Ações ----------
