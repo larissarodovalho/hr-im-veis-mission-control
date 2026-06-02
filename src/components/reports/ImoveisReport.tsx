@@ -248,6 +248,47 @@ export default function ImoveisReport() {
       .slice(0, 10);
   }, [imoveisF, profiles]);
 
+  // Captação por mês (YYYY-MM)
+  const captacaoMensal = useMemo(() => {
+    const m = new Map<string, number>();
+    imoveisF.forEach((i) => {
+      if (!i.created_at) return;
+      const d = new Date(i.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      m.set(key, (m.get(key) || 0) + 1);
+    });
+    return [...m.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([name, qtd]) => ({ name, qtd }));
+  }, [imoveisF]);
+
+  // Captação por ano
+  const captacaoAnual = useMemo(() => {
+    const m = new Map<string, number>();
+    imoveisF.forEach((i) => {
+      if (!i.created_at) return;
+      const key = String(new Date(i.created_at).getFullYear());
+      m.set(key, (m.get(key) || 0) + 1);
+    });
+    return [...m.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([name, qtd]) => ({ name, qtd }));
+  }, [imoveisF]);
+
+  // Top bairros / condomínios
+  const topBairros = useMemo(() => {
+    const m = new Map<string, { bairro: string; cidade: string; qtd: number }>();
+    imoveisF.forEach((i) => {
+      const bairro = (i.bairro || "—").trim() || "—";
+      const cidade = i.cidade || "";
+      const key = `${bairro}__${cidade}`;
+      const cur = m.get(key) || { bairro, cidade, qtd: 0 };
+      cur.qtd++;
+      m.set(key, cur);
+    });
+    return [...m.values()].sort((a, b) => b.qtd - a.qtd).slice(0, 10);
+  }, [imoveisF]);
+
   const exportCsv = () => {
     const rows: any[] = [];
     rows.push({ secao: "KPIs", metrica: "Total imóveis", valor: kpis.total });
