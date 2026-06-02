@@ -1129,20 +1129,31 @@ export default function Schedule() {
                             </span>
                           </div>
                           <div className="space-y-1">
-                            {visible.map((c) => (
-                              <div
-                                key={c.id}
-                                onClick={(e) => { e.stopPropagation(); setSelected(d); openEdit(c); }}
-                                className={cn(
-                                  "flex items-center gap-1.5 text-[11px] leading-tight rounded-sm pl-1.5 pr-1 py-1 cursor-pointer overflow-hidden font-medium hover:brightness-95 transition-all",
-                                  tipoChip[c.tipo],
-                                )}
-                                title={`${format(c.date, "HH:mm")} ${c.titulo}`}
-                              >
-                                <span className="shrink-0 text-[10px] tabular-nums opacity-80">{format(c.date, "HH:mm")}</span>
-                                <span className="truncate flex-1 min-w-0">{c.titulo}</span>
-                              </div>
-                            ))}
+                            {visible.map((c) => {
+                              const userColor = colorForUser(c.criado_por_id);
+                              return (
+                                <div
+                                  key={c.id}
+                                  onClick={(e) => { e.stopPropagation(); setSelected(d); openEdit(c); }}
+                                  className={cn(
+                                    "flex items-center gap-1.5 text-[11px] leading-tight rounded-sm pl-1.5 pr-1 py-1 cursor-pointer overflow-hidden font-medium hover:brightness-95 transition-all",
+                                    tipoChip[c.tipo],
+                                  )}
+                                  style={userColor ? { borderLeftColor: userColor.solid, borderLeftWidth: 4 } : undefined}
+                                  title={`${format(c.date, "HH:mm")} ${c.titulo}${c.criado_por_nome ? ` · ${c.criado_por_nome}` : ""}`}
+                                >
+                                  {userColor && (
+                                    <span
+                                      className="inline-block h-2 w-2 rounded-full shrink-0"
+                                      style={{ background: userColor.solid }}
+                                      aria-hidden
+                                    />
+                                  )}
+                                  <span className="shrink-0 text-[10px] tabular-nums opacity-80">{format(c.date, "HH:mm")}</span>
+                                  <span className="truncate flex-1 min-w-0">{c.titulo}</span>
+                                </div>
+                              );
+                            })}
                             {extra > 0 && (
                               <div className="text-[10px] text-muted-foreground pl-1.5 font-medium hover:text-foreground">
                                 + {extra} mais
