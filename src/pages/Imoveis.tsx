@@ -108,6 +108,34 @@ export default function Imoveis() {
     return Array.from(set).sort((a, b) => b - a);
   }, [items]);
 
+  const captadoresDisponiveis = useMemo(() => {
+    const set = new Set<string>();
+    items.forEach((i) => { if (i.corretor_captador_id) set.add(i.corretor_captador_id); });
+    return Array.from(set).map((id) => ({ id, nome: profiles[id] || "—" })).sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [items, profiles]);
+
+  const matchesCaptador = (i: Imovel) =>
+    captadorFiltro === "all" || i.corretor_captador_id === captadorFiltro;
+
+  const matchesValor = (i: Imovel) => {
+    const v = Number(i.valor) || 0;
+    const min = valorMin ? Number(valorMin) : null;
+    const max = valorMax ? Number(valorMax) : null;
+    if (min !== null && v < min) return false;
+    if (max !== null && v > max) return false;
+    return true;
+  };
+
+  const matchesBairro = (i: Imovel) => {
+    if (!bairroFiltro.trim()) return true;
+    const q = bairroFiltro.toLowerCase();
+    return (
+      (i.bairro || "").toLowerCase().includes(q) ||
+      (i.endereco || "").toLowerCase().includes(q) ||
+      (i.complemento || "").toLowerCase().includes(q)
+    );
+  };
+
   const propostasByImovel = useMemo(() => {
     const m: Record<string, Proposta[]> = {};
     propostas.forEach(p => {
@@ -128,11 +156,20 @@ export default function Imoveis() {
     return "disponivel";
   };
 
-  const passa = (i: Imovel) => matchesSearch(i) && matchesData(i);
+  const passa = (i: Imovel) =>
+    matchesSearch(i) && matchesData(i) && matchesCaptador(i) && matchesValor(i) && matchesBairro(i);
   const disponiveis = items.filter(i => stage(i) === "disponivel" && passa(i));
   const emProposta  = items.filter(i => stage(i) === "proposta"   && passa(i));
   const emFechamento = items.filter(i => stage(i) === "fechamento" && passa(i));
   const vendidos    = items.filter(i => stage(i) === "vendido"    && passa(i));
+
+  const algumFiltro =
+    anoFiltro !== "all" || mesFiltro !== "all" || captadorFiltro !== "all" ||
+    valorMin !== "" || valorMax !== "" || bairroFiltro !== "";
+  const limparFiltros = () => {
+    setAnoFiltro("all"); setMesFiltro("all"); setCaptadorFiltro("all");
+    setValorMin(""); setValorMax(""); setBairroFiltro("");
+  };
 
   // ---------- Ações ----------
   const aceitarProposta = async (imovel: Imovel, proposta: Proposta) => {
