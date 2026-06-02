@@ -31,6 +31,7 @@ async function buildEventPayload(supa: ReturnType<typeof adminClient>, entity_ty
         location: r.local || undefined,
         start: { dateTime: start.toISOString(), timeZone: TIMEZONE },
         end: { dateTime: end.toISOString(), timeZone: TIMEZONE },
+        colorId: colorIdForUser(r.created_by),
       },
     };
   }
