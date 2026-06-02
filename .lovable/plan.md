@@ -1,24 +1,31 @@
-## Filtro por data de cadastro (mês/ano) em Imóveis
+## Filtros adicionais em Imóveis
 
-Adicionar, no header da página `/crm/imoveis`, dois seletores ao lado da busca:
+Adicionar três novos filtros ao header da página `/crm/imoveis`, juntos aos filtros de Ano/Mês já existentes:
 
-- **Ano**: lista dos anos presentes em `imoveis.created_at` + opção "Todos"
-- **Mês**: 1–12 (jan–dez) + opção "Todos"
+### 1. Corretor captador
+- Select com lista de captadores (a partir de `imoveis.corretor_captador_id`, resolvidos via `profiles.nome`).
+- Opção "Todos os captadores" como default.
+- Mostra apenas captadores que aparecem em pelo menos um imóvel.
+
+### 2. Faixa de valor
+- Dois inputs numéricos compactos: **Min** e **Max** (R$).
+- Filtra `imoveis.valor` entre os limites (qualquer um pode ficar vazio).
+- Formatação leve com placeholder "R$ mín" / "R$ máx".
+
+### 3. Bairro / Condomínio
+- Input de texto único "Bairro ou condomínio".
+- Match case-insensitive em `bairro`, `endereco` e `complemento` (já que não há campo `condominio` separado — condomínios normalmente aparecem ali).
 
 ### Comportamento
+- Todos os filtros combinam (AND) com busca, ano e mês já existentes.
+- Botão "Limpar" do header reseta todos os filtros (ano, mês, captador, faixa, bairro).
+- Aplica nas abas Disponíveis, Em Proposta, Em Fechamento e Vendidos (lista local do `Imoveis.tsx`).
 
-- Filtro aplica-se em todas as abas baseadas em `items` (Disponíveis, Em Proposta, Em Fechamento) — combinando com a busca textual já existente.
-- Vendidos / Oportunidades / Captação / Parceiros usam componentes próprios — o filtro do header não afeta essas abas (caso queira estender, posso fazer depois).
-- Contadores no subtítulo e nos badges das tabs refletem o filtro ativo.
-- Se "Ano" = Todos, o seletor de Mês fica desabilitado (ou aplica em qualquer ano).
-
-### Implementação técnica
-
+### Implementação
 Em `src/pages/Imoveis.tsx`:
-1. Novos estados `anoFiltro` (string, default "all") e `mesFiltro` (string, default "all").
-2. Derivar `anosDisponiveis` via `useMemo` a partir de `items` (anos únicos de `created_at`, ordem decrescente).
-3. Adicionar predicado `matchesData(i)` que compara ano/mês de `new Date(i.created_at)` com os filtros.
-4. Aplicar `matchesSearch(i) && matchesData(i)` nas listas `disponiveis`, `emProposta`, `emFechamento`, `vendidos`.
-5. Renderizar dois `<Select>` (shadcn) compactos no header, antes do botão "Cadastrar imóvel".
+1. Novos estados: `captadorFiltro`, `valorMin`, `valorMax`, `bairroFiltro`.
+2. `captadoresDisponiveis` via `useMemo` — ids únicos de `corretor_captador_id` com nome de `profiles`.
+3. Novos predicados `matchesCaptador`, `matchesValor`, `matchesBairro` incluídos em `passa(i)`.
+4. Header reorganizado: busca + linha de filtros (selects e inputs compactos). Em telas pequenas, empilham; em ≥ lg, ficam em flex-wrap.
 
-Sem mudanças de schema, sem mudanças em outras abas.
+Sem mudanças de schema.
