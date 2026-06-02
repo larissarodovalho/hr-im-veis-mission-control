@@ -1498,6 +1498,48 @@ export type Database = {
           },
         ]
       }
+      meta_lead_forms: {
+        Row: {
+          ativo: boolean
+          corretor_responsavel_id: string | null
+          created_at: string
+          created_by: string | null
+          etapa_funil_inicial: string
+          form_id: string
+          form_nome: string
+          id: string
+          page_id: string
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          corretor_responsavel_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          etapa_funil_inicial?: string
+          form_id: string
+          form_nome: string
+          id?: string
+          page_id: string
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          corretor_responsavel_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          etapa_funil_inicial?: string
+          form_id?: string
+          form_nome?: string
+          id?: string
+          page_id?: string
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       newsletter_subscribers: {
         Row: {
           created_at: string
