@@ -1034,6 +1034,7 @@ export default function Schedule() {
                                   const top = Math.max(0, (startH - HOUR_START) * HOUR_PX);
                                   const height = Math.max(22, (Math.min(endH, HOUR_END) - Math.max(startH, HOUR_START)) * HOUR_PX - 2);
                                   if (endH <= HOUR_START || startH >= HOUR_END) return null;
+                                  const userColor = colorForUser(c.criado_por_id);
                                   return (
                                     <div
                                       key={c.id}
@@ -1042,8 +1043,12 @@ export default function Schedule() {
                                         "absolute left-1 right-1 rounded-md px-1.5 py-1 overflow-hidden cursor-pointer hover:brightness-95 shadow-sm",
                                         tipoChip[c.tipo],
                                       )}
-                                      style={{ top, height }}
-                                      title={`${format(c.date, "HH:mm")} – ${format(endDate, "HH:mm")} · ${c.titulo}`}
+                                      style={{
+                                        top,
+                                        height,
+                                        ...(userColor ? { borderLeftColor: userColor.solid, borderLeftWidth: 4 } : {}),
+                                      }}
+                                      title={`${format(c.date, "HH:mm")} – ${format(endDate, "HH:mm")} · ${c.titulo}${c.criado_por_nome ? ` · ${c.criado_por_nome}` : ""}`}
                                     >
                                       <div className="text-[11px] font-semibold leading-tight truncate">{c.titulo}</div>
                                       <div className="text-[10px] tabular-nums opacity-80 leading-tight">
