@@ -1267,7 +1267,8 @@ export default function Schedule() {
                       </div>
                     </div>
                   </li>
-                ))}
+                  );
+                })}
             </ul>
           </Card>
 
