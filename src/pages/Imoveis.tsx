@@ -54,8 +54,7 @@ export default function Imoveis() {
   const [anoFiltro, setAnoFiltro] = useState<string>("all");
   const [mesFiltro, setMesFiltro] = useState<string>("all");
   const [captadorFiltro, setCaptadorFiltro] = useState<string>("all");
-  const [valorMin, setValorMin] = useState<string>("");
-  const [valorMax, setValorMax] = useState<string>("");
+  const [faixaValor, setFaixaValor] = useState<string>("all");
   const [bairroFiltro, setBairroFiltro] = useState<string>("");
 
   const load = async () => {
