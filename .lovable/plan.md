@@ -1,69 +1,55 @@
-## Visão geral
-Integrar Meta Lead Ads ao CRM via webhook nativo. Quando alguém preencher um formulário de anúncio no Facebook/Instagram, o lead cai automaticamente na tabela `leads`.
+## Plano — Integração Meta Lead Ads
 
-## Arquitetura
+Você já tem os 3 valores em mãos. Agora vou implementar tudo de uma vez.
 
-```text
-Meta Lead Ads → webhook leadgen → Edge Function `meta-leadgen-webhook`
-                                          ↓
-                              Graph API (busca dados com Page Access Token)
-                                          ↓
-                              Insert em public.leads (+ tags, origem = "meta_ads")
+### 1. Salvar os secrets
+Pedir via tool seguro:
+- `META_VERIFY_TOKEN`
+- `META_PAGE_ACCESS_TOKEN`
+- `META_APP_SECRET`
+
+### 2. Edge Function `meta-leadgen-webhook` (`verify_jwt = false`)
+- **GET** handshake: valida `hub.verify_token` contra `META_VERIFY_TOKEN` e devolve `hub.challenge`.
+- **POST** evento `leadgen`:
+  1. Valida assinatura `X-Hub-Signature-256` (HMAC SHA-256 com `META_APP_SECRET`).
+  2. Para cada `leadgen_id` no payload, busca `field_data` via Graph API v21.0 com `META_PAGE_ACCESS_TOKEN`.
+  3. Mapeia campos comuns (full_name, email, phone_number, cidade, mensagem).
+  4. Procura `form_id` em `meta_lead_forms` → herda tags, corretor responsável e etapa inicial.
+  5. Insere em `leads` com `origem='meta_ads'`, `data_entrada=now()`.
+  6. Loga em `activity_log` (tipo `lead_meta`).
+- Service role client para bypass RLS. Retorna 200 sempre (exigência do Meta).
+
+### 3. Adicionar bloco no `supabase/config.toml`
+```
+[functions.meta-leadgen-webhook]
+verify_jwt = false
 ```
 
-## Mudanças técnicas
-
-### 1. Banco (migration)
-Nova tabela `meta_lead_forms` para mapear formulários:
-- `id`, `page_id`, `form_id`, `form_nome`
-- `tags text[]`, `corretor_responsavel_id uuid`, `etapa_funil_inicial text` (default `'novo'`)
-- `ativo boolean default true`, timestamps
-- RLS: admin/gestor full, staff select
-- GRANTs para `authenticated` e `service_role`
-
-### 2. Edge Function `meta-leadgen-webhook` (verify_jwt = false)
-- **GET** `?hub.mode=subscribe&hub.verify_token=...&hub.challenge=...` → retorna o challenge se o verify token bater (handshake exigido pelo Meta).
-- **POST** com payload `{ entry: [{ id: page_id, changes: [{ field: "leadgen", value: { leadgen_id, form_id, page_id, created_time } }] }] }`:
-  1. Para cada `leadgen_id`, chama `GET https://graph.facebook.com/v21.0/{leadgen_id}?access_token={PAGE_TOKEN}` para buscar `field_data`.
-  2. Mapeia campos comuns (`full_name`, `email`, `phone_number`, `cidade`, etc.).
-  3. Procura mapeamento em `meta_lead_forms` por `form_id` → puxa tags, corretor, etapa.
-  4. Insere em `leads` com `origem='meta_ads'`, `data_entrada=now()`.
-  5. Loga em `activity_log` (tipo `lead_meta`).
-- Service role client para bypass RLS.
-- Retorna 200 sempre (Meta exige), erros vão pro log.
-
-### 3. Secrets
-- `META_VERIFY_TOKEN` — string aleatória que você gera (ex.: `hr-meta-2026-xyz`)
-- `META_PAGE_ACCESS_TOKEN` — Page Access Token de longa duração (60 dias / nunca expira)
-- `META_APP_SECRET` — pra validar assinatura `X-Hub-Signature-256` (segurança)
-
 ### 4. UI — nova aba "Meta Lead Ads" em Configurações
-Mostra:
-- URL do webhook (copiável): `https://<projeto>.supabase.co/functions/v1/meta-leadgen-webhook`
-- Verify Token (mostra se já configurado)
-- Botão "Testar conexão" (chama Graph API `/me` com o token, confirma se está válido e qual página)
-- Tabela de **Mapeamento de Formulários**: lista `meta_lead_forms`, com botões adicionar/editar/excluir. Form: `Form ID`, `Nome`, `Tags`, `Corretor responsável`, `Etapa inicial`.
-- Passo-a-passo visual (accordion) com o tutorial de como criar o App no Meta.
+Arquivo novo `src/components/configuracoes/MetaLeadAdsTab.tsx`, adicionado em `ConfiguracoesPage.tsx`:
+- **Card "Webhook"**: mostra URL `https://<projeto>.supabase.co/functions/v1/meta-leadgen-webhook` (botão copiar) + status do Verify Token (configurado/não) + botão "Testar token da página" (chama Graph API `/me` via edge function auxiliar `meta-test-token`).
+- **Card "Mapeamento de Formulários"** (tabela CRUD sobre `meta_lead_forms`):
+  - Colunas: Form ID, Nome, Tags, Corretor responsável, Etapa inicial, Ativo, Ações.
+  - Dialog Novo/Editar com SearchableSelect de corretor e select de etapa do funil.
+  - Excluir (apenas admin, conforme RLS já criada).
+- **Accordion "Passo a passo"**: tutorial resumido dos 7 passos no painel do Meta + link "Lead Ads Testing Tool".
 
-### 5. Passo-a-passo que vou entregar no chat (não no código)
-Vou te mandar um guia simples cobrindo:
-1. Criar App no [developers.facebook.com](https://developers.facebook.com) (tipo "Business").
-2. Adicionar produto "Webhooks" + "Permissions and Features" pedindo `leads_retrieval` e `pages_manage_metadata`.
-3. Gerar **Page Access Token** de longa duração no Graph API Explorer.
-4. Inscrever a Página em `leadgen` (Webhooks → Page → leadgen).
-5. Colar a URL do webhook e o Verify Token nas configurações do App.
-6. Conectar a Página de Anúncios ao App.
-7. Voltar no CRM, abrir Configurações → Meta Lead Ads, colar o Page ID + Form ID nos mapeamentos.
-8. Fazer um lead de teste no Meta Lead Ads Testing Tool.
+### 5. Hook `useMetaLeadForms.ts`
+CRUD básico sobre `meta_lead_forms` (espelhando padrão de `useMetaAdsMapping`).
 
-## Detalhes técnicos extras
-- Sem alteração no schema de `leads` — só insere usando campos existentes.
-- Validação opcional de assinatura HMAC SHA-256 do header `X-Hub-Signature-256` com `META_APP_SECRET` (recomendado).
-- Sem dependência externa nova; tudo via `fetch` na edge function.
+### 6. Edge Function auxiliar `meta-test-token` (verify_jwt = true)
+GET → chama `https://graph.facebook.com/v21.0/me?access_token=...&fields=id,name` e devolve `{ ok, page_id, page_name }`. Usada pelo botão "Testar conexão" da UI.
 
-## O que você vai precisar ter em mãos depois do código
-- Conta no Meta for Developers (gratuita).
-- Página do Facebook conectada ao Gerenciador de Anúncios.
-- Permissão de admin na Página.
+## Detalhes técnicos
+- Sem alteração de schema: a tabela `meta_lead_forms` já foi criada na migration anterior.
+- Sem dependências novas: tudo via `fetch` + `crypto.subtle` (HMAC) nas edge functions.
+- Tipagem do Supabase já contempla `meta_lead_forms` (foi regerada).
 
-Confirmo o plano e parto pra implementação?
+## O que você faz depois que eu terminar
+1. Copio a URL do webhook → você cola em **Webhooks → Page → leadgen** no painel do App Meta.
+2. Cola o `META_VERIFY_TOKEN` no mesmo painel.
+3. Inscreve sua Página no campo `leadgen`.
+4. Cria um lead de teste no **Lead Ads Testing Tool** → o lead deve aparecer em `/crm/leads`.
+5. Para cada formulário publicado, abre Configurações → Meta Lead Ads → "Novo mapeamento" e cola o Form ID.
+
+Confirma pra eu partir pra implementação?
