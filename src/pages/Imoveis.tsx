@@ -89,6 +89,21 @@ export default function Imoveis() {
     i.cidade?.toLowerCase().includes(search.toLowerCase()) ||
     i.codigo?.toLowerCase().includes(search.toLowerCase());
 
+  const matchesData = (i: Imovel) => {
+    if (anoFiltro === "all" && mesFiltro === "all") return true;
+    if (!i.created_at) return false;
+    const d = new Date(i.created_at);
+    if (anoFiltro !== "all" && d.getFullYear() !== Number(anoFiltro)) return false;
+    if (mesFiltro !== "all" && d.getMonth() + 1 !== Number(mesFiltro)) return false;
+    return true;
+  };
+
+  const anosDisponiveis = useMemo(() => {
+    const set = new Set<number>();
+    items.forEach((i) => { if (i.created_at) set.add(new Date(i.created_at).getFullYear()); });
+    return Array.from(set).sort((a, b) => b - a);
+  }, [items]);
+
   const propostasByImovel = useMemo(() => {
     const m: Record<string, Proposta[]> = {};
     propostas.forEach(p => {
@@ -109,10 +124,11 @@ export default function Imoveis() {
     return "disponivel";
   };
 
-  const disponiveis = items.filter(i => stage(i) === "disponivel" && matchesSearch(i));
-  const emProposta  = items.filter(i => stage(i) === "proposta"   && matchesSearch(i));
-  const emFechamento = items.filter(i => stage(i) === "fechamento" && matchesSearch(i));
-  const vendidos    = items.filter(i => stage(i) === "vendido"    && matchesSearch(i));
+  const passa = (i: Imovel) => matchesSearch(i) && matchesData(i);
+  const disponiveis = items.filter(i => stage(i) === "disponivel" && passa(i));
+  const emProposta  = items.filter(i => stage(i) === "proposta"   && passa(i));
+  const emFechamento = items.filter(i => stage(i) === "fechamento" && passa(i));
+  const vendidos    = items.filter(i => stage(i) === "vendido"    && passa(i));
 
   // ---------- Ações ----------
   const aceitarProposta = async (imovel: Imovel, proposta: Proposta) => {
