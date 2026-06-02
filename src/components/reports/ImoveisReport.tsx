@@ -475,6 +475,64 @@ export default function ImoveisReport() {
         </ResponsiveContainer>
       </Card>
 
+      {/* Captação por período */}
+      <Card className="p-4 space-y-4">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-primary" />
+          <h3 className="font-semibold">Captação por período</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <div className="text-xs text-muted-foreground mb-2">Por mês</div>
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={captacaoMensal}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="qtd" fill="#6366f1" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground mb-2">Por ano</div>
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={captacaoAnual}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="qtd" fill="#06b6d4" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </Card>
+
+      {/* Bairros mais cadastrados */}
+      <Card className="p-4">
+        <h3 className="font-semibold mb-3">Bairros / condomínios com mais imóveis</h3>
+        <Table>
+          <TableHeader><TableRow>
+            <TableHead>Bairro</TableHead>
+            <TableHead>Cidade</TableHead>
+            <TableHead className="text-right">Imóveis</TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {topBairros.map((b, idx) => (
+              <TableRow key={`${b.bairro}-${b.cidade}-${idx}`}>
+                <TableCell>{b.bairro}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{b.cidade || "—"}</TableCell>
+                <TableCell className="text-right font-semibold">{b.qtd}</TableCell>
+              </TableRow>
+            ))}
+            {topBairros.length === 0 && (
+              <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground">Sem dados</TableCell></TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </Card>
+
       {/* Parceiros e captadores */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-4">
