@@ -116,11 +116,23 @@ export default function Imoveis() {
   const matchesCaptador = (i: Imovel) =>
     captadorFiltro === "all" || i.corretor_captador_id === captadorFiltro;
 
+  const FAIXAS_VALOR: Record<string, [number, number | null]> = {
+    "0-500000": [0, 500000],
+    "500000-1000000": [500000, 1000000],
+    "1000000-2000000": [1000000, 2000000],
+    "2000000-5000000": [2000000, 5000000],
+    "5000000-10000000": [5000000, 10000000],
+    "10000000-20000000": [10000000, 20000000],
+    "20000000+": [20000000, null],
+  };
+
   const matchesValor = (i: Imovel) => {
+    if (faixaValor === "all") return true;
+    const range = FAIXAS_VALOR[faixaValor];
+    if (!range) return true;
     const v = Number(i.valor) || 0;
-    const min = valorMin ? Number(valorMin) : null;
-    const max = valorMax ? Number(valorMax) : null;
-    if (min !== null && v < min) return false;
+    const [min, max] = range;
+    if (v < min) return false;
     if (max !== null && v > max) return false;
     return true;
   };
