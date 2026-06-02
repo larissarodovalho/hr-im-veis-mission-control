@@ -1,38 +1,32 @@
 ## Objetivo
 
-Exibir, em cada agendamento da agenda (`/crm/agenda`), o nome do usuário que criou o compromisso.
+Diferenciar visualmente, na agenda, quem criou cada compromisso atribuindo uma cor fixa por usuário.
 
-## Situação atual
+## Como vai funcionar
 
-Os compromissos da agenda são montados em `src/pages/Schedule.tsx` a partir de 4 tabelas — `reunioes`, `ligacoes`, `visitas` e `captacoes_imovel` — e todas já possuem a coluna `created_by`. Porém:
-- As consultas não selecionam `created_by`.
-- O tipo `Compromisso` não tem campo para o criador.
-- Os cartões de evento não mostram essa informação.
+- Cada usuário (`criado_por_id`) recebe uma cor estável, derivada de um hash do `user_id` sobre uma paleta curada (~12 cores HSL definidas no design system).
+- A mesma cor é usada onde o compromisso aparece:
+  - blocos compactos do calendário (mês/semana) — borda lateral + leve fundo tonalizado;
+  - cartões do painel de detalhes do dia — pequeno “pílula” colorida com a inicial do criador, ao lado do título;
+  - lista do dia (visão diária) — mesma pílula.
+- Compromissos sem criador continuam com o estilo neutro atual.
+- Adicionamos uma **legenda discreta** no topo da agenda (“Criado por: ⬤ João  ⬤ Maria …”), listando só os usuários com compromissos visíveis no período exibido.
+- Tudo apenas no front; sem mudanças de banco, RLS ou edge functions (o campo `criado_por_id` já está sendo carregado).
 
-Os nomes dos usuários ficam na tabela `profiles` (`user_id` → `nome`).
+## Arquivos
 
-## Mudanças (somente em `src/pages/Schedule.tsx`)
-
-1. **Tipo `Compromisso`**: adicionar `criado_por_id?: string | null` e `criado_por_nome?: string | null`.
-
-2. **Consultas (`load`)**: incluir `created_by` no `.select(...)` das 4 tabelas (reunioes, ligacoes, visitas, captacoes_imovel).
-
-3. **Buscar nomes dos criadores**: coletar todos os `created_by` distintos dos 4 conjuntos, consultar `profiles` (`id/user_id, nome`) e montar um `Map<user_id, nome>` (mesmo padrão já usado para `leadsById`/`contasById`).
-
-4. **Mapeamento dos eventos**: preencher `criado_por_id` e `criado_por_nome` em cada compromisso (reuniões, ligações, visitas e captações).
-
-5. **Exibição**: no painel de detalhes do dia (área das linhas ~1173-1183, onde já aparecem "Lead:"/"Cliente:"/notas), adicionar uma linha discreta:
-   `Criado por: <nome>` (usando `text-xs text-muted-foreground`). Quando o nome não existir, mostrar "—" ou omitir.
+- `src/pages/Schedule.tsx`
+  - utilitário `colorForUser(userId)` → retorna um índice/objeto `{ bg, border, text, dot }` baseado em hash;
+  - aplicar as classes nos blocos do calendário, nos cartões do dia e na lista;
+  - renderizar a legenda no header (apenas usuários presentes no recorte atual).
+- `src/index.css` (ou `tailwind.config.ts`)
+  - definir ~12 tokens semânticos HSL `--user-color-1..12` (cor sólida + variação clara para fundo), seguindo a paleta do projeto.
 
 ## Observações
 
-- Sem alterações de banco, RLS ou edge functions — `created_by` já existe e o staff já enxerga esses registros na agenda.
-- Como a leitura de `profiles` depende das policies atuais, validaremos que os nomes aparecem; se algum não resolver, exibimos o fallback "—".
+- Como a paleta é fixa e determinística, a mesma pessoa sempre fica com a mesma cor em qualquer máquina, sem precisar guardar nada no banco.
+- Se no futuro quiser “cor escolhida pelo usuário”, basta adicionar uma coluna `cor` em `profiles` e o utilitário passa a preferi-la sobre o hash — mas isso fica fora deste escopo.
 
-## Decisão pendente
+## Dúvida (opcional)
 
-Onde mostrar o criador:
-- **(A) Apenas no painel de detalhes** do dia (recomendado, menos poluição visual).
-- **(B) Também nos blocos compactos** do calendário (mês/semana), via tooltip.
-
-Vou seguir com a opção A, salvo indicação contrária.
+Prefere que a cor apareça também como **borda lateral grossa** nos blocos do calendário (mais chamativo) ou só como **pílula com inicial** ao lado do título (mais sutil)? Sigo com **borda lateral + pílula** se nada for dito.
