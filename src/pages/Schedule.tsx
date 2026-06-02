@@ -99,6 +99,22 @@ const TipoIcon = ({ tipo }: { tipo: Compromisso["tipo"] }) => {
   return <MapPin className="h-4 w-4" />;
 };
 
+// Paleta determinística por usuário criador (cor estável por user_id)
+const USER_HUES = [12, 32, 56, 92, 142, 172, 200, 222, 258, 288, 318, 348];
+function hashUserId(id: string) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return h;
+}
+function colorForUser(id?: string | null): { solid: string; soft: string } | null {
+  if (!id) return null;
+  const hue = USER_HUES[hashUserId(id) % USER_HUES.length];
+  return {
+    solid: `hsl(${hue} 70% 45%)`,
+    soft: `hsl(${hue} 70% 45% / 0.12)`,
+  };
+}
+
 export default function Schedule() {
   const { user, roles } = useAuth();
   const { isAdmin } = useRole();
