@@ -472,14 +472,14 @@ export default function Imoveis() {
           <Select value={anoFiltro} onValueChange={setAnoFiltro}>
             <SelectTrigger className="w-full sm:w-32"><SelectValue placeholder="Ano" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os anos</SelectItem>
+              <SelectItem value="all">Ano</SelectItem>
               {anosDisponiveis.map((a) => <SelectItem key={a} value={String(a)}>{a}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={mesFiltro} onValueChange={setMesFiltro}>
             <SelectTrigger className="w-full sm:w-36"><SelectValue placeholder="Mês" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os meses</SelectItem>
+              <SelectItem value="all">Mês</SelectItem>
               {["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"].map((m, idx) => (
                 <SelectItem key={idx} value={String(idx + 1)}>{m}</SelectItem>
               ))}
@@ -488,14 +488,14 @@ export default function Imoveis() {
           <Select value={captadorFiltro} onValueChange={setCaptadorFiltro}>
             <SelectTrigger className="w-full sm:w-52"><SelectValue placeholder="Captador" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os captadores</SelectItem>
+              <SelectItem value="all">Captador</SelectItem>
               {captadoresDisponiveis.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={faixaValor} onValueChange={setFaixaValor}>
             <SelectTrigger className="w-full sm:w-56"><SelectValue placeholder="Faixa de valor" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Qualquer valor</SelectItem>
+              <SelectItem value="all">Valor</SelectItem>
               <SelectItem value="0-500000">Até R$ 500 mil</SelectItem>
               <SelectItem value="500000-1000000">R$ 500 mil – R$ 1 milhão</SelectItem>
               <SelectItem value="1000000-2000000">R$ 1 mi – R$ 2 mi</SelectItem>
