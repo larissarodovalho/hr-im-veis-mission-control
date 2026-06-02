@@ -492,22 +492,19 @@ export default function Imoveis() {
               {captadoresDisponiveis.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Input
-            type="number"
-            inputMode="numeric"
-            placeholder="R$ mín"
-            className="w-full sm:w-32"
-            value={valorMin}
-            onChange={(e) => setValorMin(e.target.value)}
-          />
-          <Input
-            type="number"
-            inputMode="numeric"
-            placeholder="R$ máx"
-            className="w-full sm:w-32"
-            value={valorMax}
-            onChange={(e) => setValorMax(e.target.value)}
-          />
+          <Select value={faixaValor} onValueChange={setFaixaValor}>
+            <SelectTrigger className="w-full sm:w-56"><SelectValue placeholder="Faixa de valor" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Qualquer valor</SelectItem>
+              <SelectItem value="0-500000">Até R$ 500 mil</SelectItem>
+              <SelectItem value="500000-1000000">R$ 500 mil – R$ 1 milhão</SelectItem>
+              <SelectItem value="1000000-2000000">R$ 1 mi – R$ 2 mi</SelectItem>
+              <SelectItem value="2000000-5000000">R$ 2 mi – R$ 5 mi</SelectItem>
+              <SelectItem value="5000000-10000000">R$ 5 mi – R$ 10 mi</SelectItem>
+              <SelectItem value="10000000-20000000">R$ 10 mi – R$ 20 mi</SelectItem>
+              <SelectItem value="20000000+">Acima de R$ 20 mi</SelectItem>
+            </SelectContent>
+          </Select>
           <Input
             placeholder="Bairro ou condomínio"
             className="w-full sm:w-56"
