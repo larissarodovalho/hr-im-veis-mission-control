@@ -171,6 +171,7 @@ export default function ConfiguracoesPage() {
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="empresa"><Building2 className="h-4 w-4 mr-1" />Empresa</TabsTrigger>
           <TabsTrigger value="site"><ImageIcon className="h-4 w-4 mr-1" />Site</TabsTrigger>
+          <TabsTrigger value="meta-ads"><Facebook className="h-4 w-4 mr-1" />Meta Lead Ads</TabsTrigger>
           <TabsTrigger value="minha-conta"><UserCircle className="h-4 w-4 mr-1" />Minha conta</TabsTrigger>
           <TabsTrigger value="notificacoes"><Bell className="h-4 w-4 mr-1" />Notificações</TabsTrigger>
           <TabsTrigger value="sistema"><Database className="h-4 w-4 mr-1" />Sistema</TabsTrigger>
@@ -178,6 +179,10 @@ export default function ConfiguracoesPage() {
 
         <TabsContent value="site">
           <SiteSettingsTab />
+        </TabsContent>
+
+        <TabsContent value="meta-ads">
+          <MetaLeadAdsTab />
         </TabsContent>
 
         <TabsContent value="minha-conta" className="space-y-4">
