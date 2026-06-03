@@ -126,6 +126,28 @@ export default function GoogleCalendarConnect() {
     finally { setBusy(false); }
   };
 
+  const recalcCriadores = async () => {
+    if (!user) return;
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("gcal-creator-backfill", {
+        body: { user_id: user.id },
+      });
+      if (error) throw error;
+      const t = (data as any)?.totals;
+      if (!t) {
+        toast.success("Backfill concluído.");
+      } else {
+        toast.success(
+          `Processados ${t.total}: ${t.updated} corrigidos, ${t.unchanged} já ok, ${t.no_match} sem usuário, ${t.no_email} sem e-mail, ${t.errors} erros.`,
+        );
+      }
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setBusy(false); }
+  };
+
+
+
 
   return (
     <Card>
