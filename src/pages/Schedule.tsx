@@ -543,6 +543,7 @@ export default function Schedule() {
       link: c.link ?? "",
       notas: c.notas ?? "",
       status: c.status ?? "",
+      created_by: c.criado_por_id ?? "",
     });
   };
 
