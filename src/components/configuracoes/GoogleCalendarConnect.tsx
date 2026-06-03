@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Loader2, RefreshCw, Unlink, ExternalLink, CheckCircle2 } from "lucide-react";
+import { Calendar, Loader2, RefreshCw, Unlink, ExternalLink, CheckCircle2, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -126,6 +126,28 @@ export default function GoogleCalendarConnect() {
     finally { setBusy(false); }
   };
 
+  const recalcCriadores = async () => {
+    if (!user) return;
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("gcal-creator-backfill", {
+        body: { user_id: user.id },
+      });
+      if (error) throw error;
+      const t = (data as any)?.totals;
+      if (!t) {
+        toast.success("Backfill concluído.");
+      } else {
+        toast.success(
+          `Processados ${t.total}: ${t.updated} corrigidos, ${t.unchanged} já ok, ${t.no_match} sem usuário, ${t.no_email} sem e-mail, ${t.errors} erros.`,
+        );
+      }
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setBusy(false); }
+  };
+
+
+
 
   return (
     <Card>
@@ -173,6 +195,9 @@ export default function GoogleCalendarConnect() {
                 <a href="https://calendar.google.com" target="_blank" rel="noreferrer">
                   <ExternalLink className="h-4 w-4 mr-1" /> Abrir Google Calendar
                 </a>
+              </Button>
+              <Button size="sm" variant="outline" onClick={recalcCriadores} disabled={busy} title="Reprocessa eventos já importados e ajusta o criador conforme o Google">
+                <UserCheck className="h-4 w-4 mr-1" /> Recalcular criadores
               </Button>
               <Button size="sm" variant="destructive" onClick={disconnect} disabled={busy}>
                 <Unlink className="h-4 w-4 mr-1" /> Desconectar
