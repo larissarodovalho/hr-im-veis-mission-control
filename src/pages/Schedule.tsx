@@ -1439,6 +1439,16 @@ export default function Schedule() {
                   </Select>
                 </div>
                 <div>
+                  <Label>Responsável (quem criou)</Label>
+                  <Select value={editForm.created_by || "none"} onValueChange={(v) => setEditForm({ ...editForm, created_by: v === "none" ? "" : v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— sem responsável —</SelectItem>
+                      {usuariosList.map((u) => <SelectItem key={u.user_id} value={u.user_id}>{u.nome}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label>{entity === "visita" || entity === "captacao" ? "Observações" : "Notas"}</Label>
                   <Textarea rows={3} value={editForm.notas} onChange={(e) => setEditForm({ ...editForm, notas: e.target.value })} />
                 </div>
