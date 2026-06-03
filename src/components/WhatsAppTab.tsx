@@ -9,6 +9,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Send, Search, MessageCircle, Phone, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRole } from "@/hooks/useRole";
+import { subscribeWhatsAppRealtime } from "@/lib/whatsappRealtime";
 
 interface Conversation {
   id: string;
@@ -55,58 +58,59 @@ export default function WhatsAppTab() {
   const [loading, setLoading] = useState(true);
   const [newPhone, setNewPhone] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+  const { isAdmin } = useRole();
+
+  const reloadConvs = async () => {
+    const { data } = await supabase
+      .from("whatsapp_conversations")
+      .select("*")
+      .order("last_message_at", { ascending: false });
+    setConversations((data as Conversation[]) ?? []);
+  };
 
   // Carregar conversas
   useEffect(() => {
     (async () => {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("whatsapp_conversations")
-        .select("*")
-        .order("last_message_at", { ascending: false });
+        .select("id")
+        .limit(1);
       if (error) toast.error("Erro ao carregar conversas");
-      setConversations((data as Conversation[]) ?? []);
+      await reloadConvs();
       setLoading(false);
     })();
 
-    const channel = supabase
-      .channel("wa-conversations")
-      .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_conversations" }, (payload) => {
-        setConversations((prev) => {
-          const row = payload.new as Conversation;
-          if (payload.eventType === "DELETE") return prev.filter((c) => c.id !== (payload.old as any).id);
-          const others = prev.filter((c) => c.id !== row.id);
-          return [row, ...others].sort((a, b) =>
-            new Date(b.last_message_at ?? 0).getTime() - new Date(a.last_message_at ?? 0).getTime()
-          );
-        });
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, []);
+    if (!user) return;
+    const unsubscribe = subscribeWhatsAppRealtime(user.id, isAdmin, {
+      onConvChange: () => reloadConvs(),
+      onMsgNew: () => reloadConvs(),
+    });
+    return () => { unsubscribe(); };
+  }, [user?.id, isAdmin]);
 
   // Carregar mensagens da conversa ativa + realtime
   useEffect(() => {
     if (!activeId) { setMessages([]); return; }
-    (async () => {
+    const loadMsgs = async () => {
       const { data } = await supabase
         .from("whatsapp_messages")
         .select("*")
         .eq("conversation_id", activeId)
         .order("timestamp", { ascending: true });
       setMessages((data as Message[]) ?? []);
-      // zerar não-lidas
+    };
+    (async () => {
+      await loadMsgs();
       await supabase.from("whatsapp_conversations").update({ unread_count: 0 }).eq("id", activeId);
     })();
 
-    const ch = supabase
-      .channel(`wa-msgs-${activeId}`)
-      .on("postgres_changes",
-        { event: "INSERT", schema: "public", table: "whatsapp_messages", filter: `conversation_id=eq.${activeId}` },
-        (payload) => setMessages((prev) => [...prev, payload.new as Message])
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [activeId]);
+    if (!user) return;
+    const unsubscribe = subscribeWhatsAppRealtime(user.id, isAdmin, {
+      onMsgNew: (p: any) => { if (p?.conversation_id === activeId) loadMsgs(); },
+    });
+    return () => { unsubscribe(); };
+  }, [activeId, user?.id, isAdmin]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });

@@ -11,6 +11,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useRole } from "@/hooks/useRole";
+import { useAuth } from "@/contexts/AuthContext";
+import { subscribeWhatsAppRealtime } from "@/lib/whatsappRealtime";
 import { initials } from "@/lib/leads";
 import { Send, Bot, User as UserIcon, ArrowLeft, Pencil, Trash2, MessageCircle, Settings } from "lucide-react";
 import { toast } from "sonner";
@@ -58,6 +60,7 @@ export default function WhatsApp() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const { isAdmin } = useRole();
+  const { user } = useAuth();
   const { unreadByConv, markConvSeen } = useWhatsAppPerConvUnread();
   const [editConv, setEditConv] = useState<{ phone: string } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -124,20 +127,21 @@ export default function WhatsApp() {
 
   useEffect(() => {
     loadConvs();
-    const convsChannel = supabase
-      .channel("wa-convs")
-      .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_conversations" }, loadConvs)
-      .subscribe();
+    if (!user) return;
+    const unsubscribe = subscribeWhatsAppRealtime(user.id, isAdmin, {
+      onConvChange: () => loadConvs(),
+      onMsgNew: () => loadConvs(),
+    });
     const leadsChannel = supabase
       .channel("wa-leads")
       .on("postgres_changes", { event: "*", schema: "public", table: "leads" }, loadConvs)
       .subscribe();
     return () => {
-      supabase.removeChannel(convsChannel);
+      unsubscribe();
       supabase.removeChannel(leadsChannel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user?.id, isAdmin]);
 
   useEffect(() => {
     const wantedId = searchParams.get("conv");
@@ -163,17 +167,22 @@ export default function WhatsApp() {
       setMsgs((data as unknown as Msg[]) ?? []);
     })();
 
-    const ch = supabase.channel("wa-msgs-" + active.id).on(
-      "postgres_changes",
-      { event: "INSERT", schema: "public", table: "whatsapp_messages", filter: `conversation_id=eq.${active.id}` },
-      (p) => {
-        setMsgs((m) => [...m, p.new as Msg]);
+    if (!user) return;
+    const unsubscribe = subscribeWhatsAppRealtime(user.id, isAdmin, {
+      onMsgNew: async (p: any) => {
+        if (p?.conversation_id !== active.id) return;
+        const { data } = await supabase
+          .from("whatsapp_messages")
+          .select("*")
+          .eq("conversation_id", active.id)
+          .order("created_at");
+        setMsgs((data as unknown as Msg[]) ?? []);
         markWhatsAppSeen();
         markConvSeen(active.id);
-      }
-    ).subscribe();
+      },
+    });
 
-    return () => { supabase.removeChannel(ch); };
+    return () => { unsubscribe(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active?.id]);
 
