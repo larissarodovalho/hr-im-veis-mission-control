@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "Staff update booking_links" ON public.booking_links;
+CREATE POLICY "Admins update booking_links" ON public.booking_links FOR UPDATE TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
