@@ -9,6 +9,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Send, Search, MessageCircle, Phone, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRole } from "@/hooks/useRole";
+import { subscribeWhatsAppRealtime } from "@/lib/whatsappRealtime";
 
 interface Conversation {
   id: string;
