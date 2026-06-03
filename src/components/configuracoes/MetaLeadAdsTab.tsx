@@ -375,6 +375,53 @@ export default function MetaLeadAdsTab() {
             )}
           </div>
 
+          {testResult?.ok && testResult.token && (() => {
+            const t = testResult.token;
+            const never = t.never_expires || t.expires_at === 0;
+            const expMs = t.expires_at && t.expires_at > 0 ? t.expires_at * 1000 : null;
+            const daysLeft = expMs ? Math.floor((expMs - Date.now()) / 86_400_000) : null;
+            const warn = !never && daysLeft !== null && daysLeft < 14;
+            return (
+              <div className={`rounded-lg border p-3 text-sm ${
+                never ? "bg-green-500/5 border-green-500/30"
+                : warn ? "bg-amber-500/5 border-amber-500/40"
+                : "bg-muted/30"
+              }`}>
+                <div className="font-medium flex items-center gap-2">
+                  {never
+                    ? <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    : warn ? <AlertCircle className="h-4 w-4 text-amber-600" />
+                    : <CheckCircle2 className="h-4 w-4 text-muted-foreground" />}
+                  Validade do token
+                </div>
+                <div className="text-xs space-y-1 mt-1.5">
+                  <div><span className="text-muted-foreground">Tipo:</span> {t.type || "—"}</div>
+                  <div>
+                    <span className="text-muted-foreground">Expira em:</span>{" "}
+                    {never
+                      ? <strong className="text-green-700">Nunca</strong>
+                      : expMs
+                        ? <><strong>{new Date(expMs).toLocaleString()}</strong> ({daysLeft} dia{daysLeft === 1 ? "" : "s"} restantes)</>
+                        : "—"}
+                  </div>
+                  {t.data_access_expires_at_iso && (
+                    <div>
+                      <span className="text-muted-foreground">Acesso a dados expira:</span>{" "}
+                      {new Date(t.data_access_expires_at_iso).toLocaleDateString()}
+                    </div>
+                  )}
+                  {!never && (
+                    <div className="text-amber-700 italic pt-1">
+                      Este token vai expirar. Gere um Page Token permanente: User Token longo → <code>/me/accounts</code> → copie o <code>access_token</code> da Página.
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+
+
           <p className="text-xs text-muted-foreground">
             Os tokens <code>META_VERIFY_TOKEN</code>, <code>META_PAGE_ACCESS_TOKEN</code> e{" "}
             <code>META_APP_SECRET</code> estão armazenados de forma segura no backend.
