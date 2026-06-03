@@ -127,20 +127,21 @@ export default function WhatsApp() {
 
   useEffect(() => {
     loadConvs();
-    const convsChannel = supabase
-      .channel("wa-convs")
-      .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_conversations" }, loadConvs)
-      .subscribe();
+    if (!user) return;
+    const unsubscribe = subscribeWhatsAppRealtime(user.id, isAdmin, {
+      onConvChange: () => loadConvs(),
+      onMsgNew: () => loadConvs(),
+    });
     const leadsChannel = supabase
       .channel("wa-leads")
       .on("postgres_changes", { event: "*", schema: "public", table: "leads" }, loadConvs)
       .subscribe();
     return () => {
-      supabase.removeChannel(convsChannel);
+      unsubscribe();
       supabase.removeChannel(leadsChannel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user?.id, isAdmin]);
 
   useEffect(() => {
     const wantedId = searchParams.get("conv");
