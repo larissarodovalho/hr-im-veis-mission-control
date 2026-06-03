@@ -124,13 +124,14 @@ export default function Schedule() {
   const [leads, setLeads] = useState<any[]>([]);
   const [contasList, setContasList] = useState<any[]>([]);
   const [imoveisList, setImoveisList] = useState<any[]>([]);
+  const [usuariosList, setUsuariosList] = useState<{ user_id: string; nome: string }[]>([]);
   const [selected, setSelected] = useState<Date | undefined>(new Date());
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<"month" | "week">("month");
   const [openNovo, setOpenNovo] = useState(false);
   const [openBloqueio, setOpenBloqueio] = useState(false);
   const [editing, setEditing] = useState<Compromisso | null>(null);
-  const [editForm, setEditForm] = useState<{ when: string; duracao: number; titulo: string; local: string; link: string; notas: string; status: string }>({ when: "", duracao: 60, titulo: "", local: "", link: "", notas: "", status: "" });
+  const [editForm, setEditForm] = useState<{ when: string; duracao: number; titulo: string; local: string; link: string; notas: string; status: string; created_by: string }>({ when: "", duracao: 60, titulo: "", local: "", link: "", notas: "", status: "", created_by: "" });
   const [savingEdit, setSavingEdit] = useState(false);
 
   const [novo, setNovo] = useState({
@@ -373,6 +374,8 @@ export default function Schedule() {
     setImoveisList((ims ?? []).map((i: any) => ({ id: i.id, nome: i.codigo ? `${i.titulo} · ${i.codigo}` : i.titulo })));
     const { data: ctsAll } = await supabase.from("contas").select("id, nome").order("nome");
     setContasList(ctsAll ?? []);
+    const { data: usrs } = await supabase.from("profiles").select("user_id, nome").order("nome");
+    setUsuariosList((usrs ?? []) as any);
   };
 
   useEffect(() => {
@@ -542,6 +545,7 @@ export default function Schedule() {
       link: c.link ?? "",
       notas: c.notas ?? "",
       status: c.status ?? "",
+      created_by: c.criado_por_id ?? "",
     });
   };
 
@@ -561,6 +565,7 @@ export default function Schedule() {
         link: editForm.link?.trim() || null,
         notas: editForm.notas?.trim() || null,
         status: editForm.status || "agendada",
+        created_by: editForm.created_by || null,
       } as any).eq("id", realId);
       error = res.error;
     } else if (table === "ligacoes") {
@@ -569,6 +574,7 @@ export default function Schedule() {
         duracao_seg: (Number(editForm.duracao) || 30) * 60,
         notas: editForm.notas?.trim() || null,
         resultado: editForm.status || "agendada",
+        created_by: editForm.created_by || null,
       } as any).eq("id", realId);
       error = res.error;
     } else if (table === "visitas") {
@@ -576,6 +582,7 @@ export default function Schedule() {
         data_visita: whenISO,
         observacoes: editForm.notas?.trim() || null,
         status: editForm.status || "Agendada",
+        created_by: editForm.created_by || null,
       } as any).eq("id", realId);
       error = res.error;
     } else if (table === "captacoes_imovel") {
@@ -583,6 +590,7 @@ export default function Schedule() {
         data_agendada: whenISO,
         observacoes: editForm.notas?.trim() || null,
         estagio: editForm.status || "agendada",
+        created_by: editForm.created_by || null,
       } as any).eq("id", realId);
       error = res.error;
     }
@@ -1427,6 +1435,16 @@ export default function Schedule() {
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
                       {statusOptions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Responsável (quem criou)</Label>
+                  <Select value={editForm.created_by || "none"} onValueChange={(v) => setEditForm({ ...editForm, created_by: v === "none" ? "" : v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— sem responsável —</SelectItem>
+                      {usuariosList.map((u) => <SelectItem key={u.user_id} value={u.user_id}>{u.nome}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
