@@ -565,6 +565,7 @@ export default function Schedule() {
         link: editForm.link?.trim() || null,
         notas: editForm.notas?.trim() || null,
         status: editForm.status || "agendada",
+        created_by: editForm.created_by || null,
       } as any).eq("id", realId);
       error = res.error;
     } else if (table === "ligacoes") {
@@ -573,6 +574,7 @@ export default function Schedule() {
         duracao_seg: (Number(editForm.duracao) || 30) * 60,
         notas: editForm.notas?.trim() || null,
         resultado: editForm.status || "agendada",
+        created_by: editForm.created_by || null,
       } as any).eq("id", realId);
       error = res.error;
     } else if (table === "visitas") {
@@ -580,6 +582,7 @@ export default function Schedule() {
         data_visita: whenISO,
         observacoes: editForm.notas?.trim() || null,
         status: editForm.status || "Agendada",
+        created_by: editForm.created_by || null,
       } as any).eq("id", realId);
       error = res.error;
     } else if (table === "captacoes_imovel") {
@@ -587,6 +590,7 @@ export default function Schedule() {
         data_agendada: whenISO,
         observacoes: editForm.notas?.trim() || null,
         estagio: editForm.status || "agendada",
+        created_by: editForm.created_by || null,
       } as any).eq("id", realId);
       error = res.error;
     }
