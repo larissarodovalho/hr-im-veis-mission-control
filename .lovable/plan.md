@@ -1,34 +1,48 @@
-## Objetivo
+## Problema
 
-A partir de agora, toda foto de imóvel enviada terá **2 versões salvas**:
-- a versão pública **com marca d'água** (como já acontece hoje)
-- a versão **original sem marca d'água**, guardada em local privado
+O compromisso "Amis" (hoje 03/06, 17h) aparece como criado por **Gabriel Souza**, mas quem criou foi o **Hans Rodovalho**.
 
-Adicionar botão para baixar a versão sem marca d'água, quando disponível.
+Investigando no banco, achei a causa:
 
-## Mudanças
+- `reunioes.origem = 'google_calendar'`
+- O evento foi importado da **agenda do Google** do Gabriel pela edge function `gcal-pull`.
+- Hans criou o evento no Google Calendar dele e convidou o Gabriel. Quando o sync rodou pra conta do Gabriel, a função importou e marcou `created_by = Gabriel` (o dono do calendário sincronizado), ignorando o criador real do evento no Google.
 
-### 1. Storage
-- Criar bucket privado `imoveis-originais` (só acessível via signed URL, autenticado).
-- As fotos com marca d'água continuam no bucket público `imoveis` (sem alteração).
+Trecho atual (`supabase/functions/gcal-pull/index.ts`, linha ~106):
+```ts
+.insert({
+  ...
+  corretor_id: user_id,
+  created_by: user_id,   // <- sempre o dono do sync
+  google_owner_user_id: user_id,
+})
+```
 
-### 2. Upload (NovoImovelDialog, EditarImovelDialog, NovaVendaDialog)
-- Ao subir uma nova foto: enviar o arquivo **original** para `imoveis-originais/<imovel_id>/<nome>` e a versão com marca para `imoveis/...` como hoje.
-- Usar o **mesmo nome de arquivo** nos dois buckets para casar original ↔ com marca.
+O Google retorna `ev.creator.email` e `ev.organizer.email` no evento — basta cruzar com a tabela `profiles.email` pra achar o usuário real.
 
-### 3. Botão "Baixar originais (sem marca)"
-No EditarImovelDialog, ao lado de "Reaplicar marca d'água":
-- Lista as fotos atuais e, para cada uma, tenta achar a correspondente em `imoveis-originais`.
-- Se encontrar 1+: baixa em um **.zip** (usando `jszip`) contendo apenas as originais disponíveis.
-- Se não encontrar nenhuma (fotos antigas): mostra toast explicando que originais não existem para fotos enviadas antes desta atualização.
-- Botão fica desabilitado durante o download.
+## Plano
 
-### 4. Fotos antigas
-Não há como recuperar — ficam apenas com marca d'água. O botão simplesmente avisa quando não houver original disponível.
+### 1. `supabase/functions/gcal-pull/index.ts`
 
-## Detalhes técnicos
+- Antes do `insert`, resolver o criador real:
+  - Pegar `ev.creator?.email` (fallback `ev.organizer?.email`).
+  - Se existir, buscar `profiles.user_id` por `email = <esse email>` (case-insensitive).
+  - Se achar → `created_by = profile.user_id`.
+  - Se não achar → manter `created_by = user_id` (dono do sync) como hoje.
+- `corretor_id` e `google_owner_user_id` continuam sendo `user_id` (o dono da agenda sincronizada — isso é correto, pois define de quem é a agenda no CRM).
+- Aplicar só na criação (linha 106). O `update` (linha 93) não toca em `created_by`, então ok.
 
-- Bucket `imoveis-originais`: privado, RLS em `storage.objects` permitindo `SELECT/INSERT/DELETE` para usuários autenticados (mesma política do bucket atual de imóveis).
-- Match original ↔ pública: derivar o path do original a partir da URL pública atual (mesmo basename, prefixo do bucket trocado).
-- Dependência nova: `jszip` para empacotar o download.
-- Sem alteração no schema do banco — o vínculo é só pelo nome de arquivo no storage.
+### 2. Correção pontual do evento existente
+
+- Atualizar o registro `f2a59ef5-a4c6-4ebf-bf0a-0a92aaf80aa3` ("Amis") para `created_by = <user_id do Hans>` (`6132fe03-0718-4763-aeed-09e24f3a6364`).
+- `corretor_id` fica como está (Gabriel), porque é a agenda dele.
+
+### 3. (Opcional, mas recomendado) Backfill
+
+Rodar um update único nos eventos já importados de `origem = 'google_calendar'` para tentar corrigir o `created_by` retroativamente. Como o `creator.email` original não está armazenado, **não dá pra fazer backfill automático** sem repuxar do Google. Sugestão: deixar só a correção manual do "Amis" agora, e o fix novo passa a valer pros próximos syncs. Se quiser, posso adicionar um endpoint/forçar um resync completo (limpar `sync_token`) para reprocessar — mas isso pode duplicar/mudar eventos já editados manualmente, então prefiro **não** fazer por padrão.
+
+## Resumo
+
+- Fix de raiz: `gcal-pull` passa a mapear `creator.email` → `profiles.user_id` no momento da importação.
+- Fix pontual: corrigir o "Amis" para mostrar Hans como criador.
+- Nada muda em criação manual pelo CRM (já usa `auth.uid()` corretamente).
