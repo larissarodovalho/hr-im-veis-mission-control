@@ -176,27 +176,21 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id;
 
-      // upload novas fotos com marca d'água
+      // upload novas fotos: original (privado) + com marca d'água (público)
       const novasUrls: string[] = [];
       for (const original of novasFotos) {
-        const file = await applyWatermark(original);
-        const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-        const path = `${userId}/${Date.now()}-${safeName}`;
-        const { error: upErr } = await supabase.storage.from("imoveis").upload(path, file, {
-          cacheControl: "3600", upsert: false, contentType: file.type,
-        });
-        if (upErr) {
-          console.error(upErr);
+        const res = await uploadFotoImovel(original, userId!);
+        if (!res) {
           toast.error(`Falha ao enviar foto: ${original.name}`);
           continue;
         }
-        const { data: pub } = supabase.storage.from("imoveis").getPublicUrl(path);
-        novasUrls.push(pub.publicUrl);
+        novasUrls.push(res.publicUrl);
       }
 
-      // remover do storage as fotos descartadas
+      // remover do storage as fotos descartadas (em ambos os buckets)
       if (removerPaths.length) {
         await supabase.storage.from("imoveis").remove(removerPaths);
+        await supabase.storage.from("imoveis-originais").remove(removerPaths).catch(() => {});
       }
 
       const num = (s: string) => (s.trim() === "" ? null : Number(s.replace(",", ".")));
