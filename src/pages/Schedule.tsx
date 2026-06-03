@@ -124,13 +124,14 @@ export default function Schedule() {
   const [leads, setLeads] = useState<any[]>([]);
   const [contasList, setContasList] = useState<any[]>([]);
   const [imoveisList, setImoveisList] = useState<any[]>([]);
+  const [usuariosList, setUsuariosList] = useState<{ user_id: string; nome: string }[]>([]);
   const [selected, setSelected] = useState<Date | undefined>(new Date());
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<"month" | "week">("month");
   const [openNovo, setOpenNovo] = useState(false);
   const [openBloqueio, setOpenBloqueio] = useState(false);
   const [editing, setEditing] = useState<Compromisso | null>(null);
-  const [editForm, setEditForm] = useState<{ when: string; duracao: number; titulo: string; local: string; link: string; notas: string; status: string }>({ when: "", duracao: 60, titulo: "", local: "", link: "", notas: "", status: "" });
+  const [editForm, setEditForm] = useState<{ when: string; duracao: number; titulo: string; local: string; link: string; notas: string; status: string; created_by: string }>({ when: "", duracao: 60, titulo: "", local: "", link: "", notas: "", status: "", created_by: "" });
   const [savingEdit, setSavingEdit] = useState(false);
 
   const [novo, setNovo] = useState({
