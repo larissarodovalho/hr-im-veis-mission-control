@@ -10,8 +10,9 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload, X, Trash2, Droplet, FileText, ShieldCheck } from "lucide-react";
+import { Loader2, Upload, X, Trash2, Droplet, FileText, ShieldCheck, Download } from "lucide-react";
 import { applyWatermark } from "@/lib/watermark";
+import { uploadFotoImovel, baixarOriginaisZip } from "@/lib/uploadFotoImovel";
 import ResponsavelProprietarioSection from "./ResponsavelProprietarioSection";
 import ImovelDocumentosTab from "./ImovelDocumentosTab";
 import { calcExclusividade, formatDate } from "@/lib/exclusividade";
@@ -53,6 +54,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
   const [removerPaths, setRemoverPaths] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [reapplying, setReapplying] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [corretorId, setCorretorId] = useState<string>("");
   const [proprietarioId, setProprietarioId] = useState<string>("");
   const [captadorId, setCaptadorId] = useState<string>("");
@@ -139,6 +141,29 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
     if (fail === 0) toast.success(`Marca d'água aplicada em ${ok} foto(s)`);
     else toast.warning(`${ok} ok, ${fail} falharam`);
     onSaved();
+  };
+
+  const downloadOriginais = async () => {
+    if (fotosExistentes.length === 0) return;
+    setDownloading(true);
+    try {
+      const codigo = imovel?.codigo || imovel?.id || "imovel";
+      const { ok, missing } = await baixarOriginaisZip(
+        fotosExistentes,
+        `${codigo}-originais.zip`,
+      );
+      if (ok === 0) {
+        toast.error("Nenhuma original disponível. Fotos enviadas antes desta atualização só têm a versão com marca d'água.");
+      } else if (missing > 0) {
+        toast.success(`${ok} foto(s) baixadas. ${missing} sem original disponível.`);
+      } else {
+        toast.success(`${ok} foto(s) originais baixadas.`);
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao baixar originais");
+    } finally {
+      setDownloading(false);
+    }
   };
 
 
