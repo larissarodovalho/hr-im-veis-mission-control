@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Upload, X } from "lucide-react";
-import { applyWatermark } from "@/lib/watermark";
+import { uploadFotoImovel } from "@/lib/uploadFotoImovel";
 import ResponsavelProprietarioSection from "./ResponsavelProprietarioSection";
 
 interface Props {
@@ -163,24 +163,15 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id;
 
-      // Upload das fotos no bucket "imoveis" (com marca d'água)
+      // Upload das fotos: salva original (privado) + versão com marca d'água (pública)
       const urls: string[] = [];
       for (const original of fotos) {
-        const file = await applyWatermark(original);
-        const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-        const path = `${userId}/${Date.now()}-${safeName}`;
-        const { error: upErr } = await supabase.storage.from("imoveis").upload(path, file, {
-          cacheControl: "3600",
-          upsert: false,
-          contentType: file.type,
-        });
-        if (upErr) {
-          console.error(upErr);
+        const res = await uploadFotoImovel(original, userId!);
+        if (!res) {
           toast.error(`Falha ao enviar foto: ${original.name}`);
           continue;
         }
-        const { data: pub } = supabase.storage.from("imoveis").getPublicUrl(path);
-        urls.push(pub.publicUrl);
+        urls.push(res.publicUrl);
       }
 
       const num = (s: string) => (s.trim() === "" ? null : Number(s.replace(",", ".")));

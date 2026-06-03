@@ -1,6 +1,34 @@
-Recomeçar do zero, do Passo 1.
+## Objetivo
 
-1. Abro o formulário seguro do Lovable para você colar o token atual do Passo 1 (User Token de curta duração do Graph API Explorer). Substitui o segredo `META_PAGE_ACCESS_TOKEN`.
-2. Rodo `meta-test-token` só pra confirmar que o token chegou no backend (vai aparecer como `type: USER`, isso é esperado nesse passo).
-3. Passo 2 — trocar por User Token de longa duração (~60 dias): te passo a URL pronta com `grant_type=fb_exchange_token` usando seu App ID e App Secret. Você cola no navegador, copia o `access_token` da resposta, e eu reabro o formulário pra substituir.
-4. Passo 3 — obter o Page Token permanente da HR Imóveis: chama `/me/accounts` com o token longo, copia o `access_token` do objeto cujo `name` é HR Imóveis, eu reabro o formulário, substitui e rodo `meta-test-token` + `meta-debug-subscription` pra confirmar `type: PAGE`, `name: HR Imóveis`, `Expires: Never` e webhook inscrito.
+A partir de agora, toda foto de imóvel enviada terá **2 versões salvas**:
+- a versão pública **com marca d'água** (como já acontece hoje)
+- a versão **original sem marca d'água**, guardada em local privado
+
+Adicionar botão para baixar a versão sem marca d'água, quando disponível.
+
+## Mudanças
+
+### 1. Storage
+- Criar bucket privado `imoveis-originais` (só acessível via signed URL, autenticado).
+- As fotos com marca d'água continuam no bucket público `imoveis` (sem alteração).
+
+### 2. Upload (NovoImovelDialog, EditarImovelDialog, NovaVendaDialog)
+- Ao subir uma nova foto: enviar o arquivo **original** para `imoveis-originais/<imovel_id>/<nome>` e a versão com marca para `imoveis/...` como hoje.
+- Usar o **mesmo nome de arquivo** nos dois buckets para casar original ↔ com marca.
+
+### 3. Botão "Baixar originais (sem marca)"
+No EditarImovelDialog, ao lado de "Reaplicar marca d'água":
+- Lista as fotos atuais e, para cada uma, tenta achar a correspondente em `imoveis-originais`.
+- Se encontrar 1+: baixa em um **.zip** (usando `jszip`) contendo apenas as originais disponíveis.
+- Se não encontrar nenhuma (fotos antigas): mostra toast explicando que originais não existem para fotos enviadas antes desta atualização.
+- Botão fica desabilitado durante o download.
+
+### 4. Fotos antigas
+Não há como recuperar — ficam apenas com marca d'água. O botão simplesmente avisa quando não houver original disponível.
+
+## Detalhes técnicos
+
+- Bucket `imoveis-originais`: privado, RLS em `storage.objects` permitindo `SELECT/INSERT/DELETE` para usuários autenticados (mesma política do bucket atual de imóveis).
+- Match original ↔ pública: derivar o path do original a partir da URL pública atual (mesmo basename, prefixo do bucket trocado).
+- Dependência nova: `jszip` para empacotar o download.
+- Sem alteração no schema do banco — o vínculo é só pelo nome de arquivo no storage.

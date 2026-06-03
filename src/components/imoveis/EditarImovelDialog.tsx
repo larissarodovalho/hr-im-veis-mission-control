@@ -10,8 +10,9 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload, X, Trash2, Droplet, FileText, ShieldCheck } from "lucide-react";
+import { Loader2, Upload, X, Trash2, Droplet, FileText, ShieldCheck, Download } from "lucide-react";
 import { applyWatermark } from "@/lib/watermark";
+import { uploadFotoImovel, baixarOriginaisZip } from "@/lib/uploadFotoImovel";
 import ResponsavelProprietarioSection from "./ResponsavelProprietarioSection";
 import ImovelDocumentosTab from "./ImovelDocumentosTab";
 import { calcExclusividade, formatDate } from "@/lib/exclusividade";
@@ -53,6 +54,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
   const [removerPaths, setRemoverPaths] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [reapplying, setReapplying] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [corretorId, setCorretorId] = useState<string>("");
   const [proprietarioId, setProprietarioId] = useState<string>("");
   const [captadorId, setCaptadorId] = useState<string>("");
@@ -141,6 +143,29 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
     onSaved();
   };
 
+  const downloadOriginais = async () => {
+    if (fotosExistentes.length === 0) return;
+    setDownloading(true);
+    try {
+      const codigo = imovel?.codigo || imovel?.id || "imovel";
+      const { ok, missing } = await baixarOriginaisZip(
+        fotosExistentes,
+        `${codigo}-originais.zip`,
+      );
+      if (ok === 0) {
+        toast.error("Nenhuma original disponível. Fotos enviadas antes desta atualização só têm a versão com marca d'água.");
+      } else if (missing > 0) {
+        toast.success(`${ok} foto(s) baixadas. ${missing} sem original disponível.`);
+      } else {
+        toast.success(`${ok} foto(s) originais baixadas.`);
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao baixar originais");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
 
 
   const submit = async () => {
@@ -151,27 +176,21 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id;
 
-      // upload novas fotos com marca d'água
+      // upload novas fotos: original (privado) + com marca d'água (público)
       const novasUrls: string[] = [];
       for (const original of novasFotos) {
-        const file = await applyWatermark(original);
-        const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-        const path = `${userId}/${Date.now()}-${safeName}`;
-        const { error: upErr } = await supabase.storage.from("imoveis").upload(path, file, {
-          cacheControl: "3600", upsert: false, contentType: file.type,
-        });
-        if (upErr) {
-          console.error(upErr);
+        const res = await uploadFotoImovel(original, userId!);
+        if (!res) {
           toast.error(`Falha ao enviar foto: ${original.name}`);
           continue;
         }
-        const { data: pub } = supabase.storage.from("imoveis").getPublicUrl(path);
-        novasUrls.push(pub.publicUrl);
+        novasUrls.push(res.publicUrl);
       }
 
-      // remover do storage as fotos descartadas
+      // remover do storage as fotos descartadas (em ambos os buckets)
       if (removerPaths.length) {
         await supabase.storage.from("imoveis").remove(removerPaths);
+        await supabase.storage.from("imoveis-originais").remove(removerPaths).catch(() => {});
       }
 
       const num = (s: string) => (s.trim() === "" ? null : Number(s.replace(",", ".")));
@@ -379,19 +398,33 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Fotos</h3>
             {fotosExistentes.length > 0 && (
               <div>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
                   <p className="text-xs text-muted-foreground">Fotos atuais — arraste para reordenar. A primeira é a capa.</p>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={reapplyWatermark}
-                    disabled={reapplying || saving}
-                    className="h-7 text-xs"
-                  >
-                    {reapplying ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Droplet className="h-3 w-3 mr-1" />}
-                    Reaplicar marca d'água
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={downloadOriginais}
+                      disabled={downloading || saving || reapplying}
+                      className="h-7 text-xs"
+                      title="Baixa as fotos originais (sem marca d'água). Disponível apenas para fotos enviadas após esta atualização."
+                    >
+                      {downloading ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Download className="h-3 w-3 mr-1" />}
+                      Baixar originais
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={reapplyWatermark}
+                      disabled={reapplying || saving || downloading}
+                      className="h-7 text-xs"
+                    >
+                      {reapplying ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Droplet className="h-3 w-3 mr-1" />}
+                      Reaplicar marca d'água
+                    </Button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                   {fotosExistentes.map((url, idx) => (
