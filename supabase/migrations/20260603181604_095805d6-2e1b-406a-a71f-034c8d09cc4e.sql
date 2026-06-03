@@ -1,0 +1,2 @@
+ALTER PUBLICATION supabase_realtime DROP TABLE public.whatsapp_conversations;
+ALTER PUBLICATION supabase_realtime DROP TABLE public.whatsapp_messages;
