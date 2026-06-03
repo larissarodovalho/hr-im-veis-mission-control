@@ -188,7 +188,11 @@ export default function MetaLeadAdsTab() {
       const { data, error } = await supabase.functions.invoke("meta-test-token");
       if (error) throw new Error(error.message);
       if ((data as any).ok) {
-        setTestResult({ ok: true, msg: `Conectado à Página: ${data.page_name} (ID ${data.page_id})` });
+        setTestResult({
+          ok: true,
+          msg: `Conectado à Página: ${data.page_name} (ID ${data.page_id})`,
+          token: (data as any).token,
+        });
         toast.success("Token válido");
       } else {
         setTestResult({ ok: false, msg: (data as any).error || "Token inválido" });
