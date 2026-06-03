@@ -47,7 +47,7 @@ export default function MetaLeadAdsTab() {
   const corretores = useCorretores();
 
   const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string; token?: any } | null>(null);
   const [diagLoading, setDiagLoading] = useState(false);
   const [diagResult, setDiagResult] = useState<any>(null);
   const [forceLoading, setForceLoading] = useState(false);
