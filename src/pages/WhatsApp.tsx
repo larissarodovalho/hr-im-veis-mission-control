@@ -60,6 +60,7 @@ export default function WhatsApp() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const { isAdmin } = useRole();
+  const { user } = useAuth();
   const { unreadByConv, markConvSeen } = useWhatsAppPerConvUnread();
   const [editConv, setEditConv] = useState<{ phone: string } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
