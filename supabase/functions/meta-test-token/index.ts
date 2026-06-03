@@ -3,7 +3,22 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const PAGE_TOKEN = Deno.env.get("META_PAGE_ACCESS_TOKEN") || "";
-const APP_SECRET = Deno.env.get("META_APP_SECRET") || "";
+const GRAPH = "https://graph.facebook.com/v21.0";
+
+async function resolveHRPageToken(token: string) {
+  const meRes = await fetch(`${GRAPH}/me?fields=id,name&access_token=${encodeURIComponent(token)}`);
+  const me = await meRes.json();
+  if (!meRes.ok) return { error: me?.error?.message || "Token inválido", details: me };
+  if (me.id?.endsWith("99")) {
+    return { pageId: me.id, pageName: me.name, token };
+  }
+  const accRes = await fetch(`${GRAPH}/me/accounts?fields=id,name,access_token&limit=100&access_token=${encodeURIComponent(token)}`);
+  const acc = await accRes.json();
+  const pages = (acc?.data ?? []) as any[];
+  const hr = pages.find((p) => p.id?.endsWith("99")) ?? pages.find((p) => /hr\s*im[oó]veis/i.test(p.name ?? ""));
+  if (!hr) return { error: "Página HR Imóveis não encontrada", details: acc };
+  return { pageId: hr.id, pageName: hr.name, token: hr.access_token };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -11,8 +26,7 @@ Deno.serve(async (req) => {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
   const supabase = createClient(
@@ -20,38 +34,25 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_ANON_KEY")!,
     { global: { headers: { Authorization: authHeader } } },
   );
-  const { data: claims, error: cErr } = await supabase.auth.getClaims(
-    authHeader.replace("Bearer ", ""),
-  );
+  const { data: claims, error: cErr } = await supabase.auth.getClaims(authHeader.replace("Bearer ", ""));
   if (cErr || !claims?.claims) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
   if (!PAGE_TOKEN) {
-    return new Response(
-      JSON.stringify({ ok: false, error: "META_PAGE_ACCESS_TOKEN não configurado" }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify({ ok: false, error: "META_PAGE_ACCESS_TOKEN não configurado" }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
   try {
-    const meRes = await fetch(
-      `https://graph.facebook.com/v21.0/me?fields=id,name&access_token=${encodeURIComponent(PAGE_TOKEN)}`,
-    );
-    const me = await meRes.json();
-    if (!meRes.ok) {
-      return new Response(
-        JSON.stringify({ ok: false, error: me?.error?.message || "Erro Graph API", details: me }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+    const resolved = await resolveHRPageToken(PAGE_TOKEN);
+    if ("error" in resolved) {
+      return new Response(JSON.stringify({ ok: false, error: resolved.error, details: resolved.details }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // debug_token requires app access token (app_id|app_secret). We only have app secret here,
-    // so we use the page token itself as the "access_token" param — Meta accepts this when
-    // inspecting a token issued for the same app.
     let expires_at: number | null = null;
     let data_access_expires_at: number | null = null;
     let token_type: string | null = null;
@@ -59,7 +60,7 @@ Deno.serve(async (req) => {
     let scopes: string[] = [];
     try {
       const dbgRes = await fetch(
-        `https://graph.facebook.com/v21.0/debug_token?input_token=${encodeURIComponent(PAGE_TOKEN)}&access_token=${encodeURIComponent(PAGE_TOKEN)}`,
+        `${GRAPH}/debug_token?input_token=${encodeURIComponent(resolved.token)}&access_token=${encodeURIComponent(PAGE_TOKEN)}`,
       );
       const dbg = await dbgRes.json();
       const d = dbg?.data;
@@ -70,31 +71,28 @@ Deno.serve(async (req) => {
         is_valid = d.is_valid ?? null;
         scopes = d.scopes ?? [];
       }
-    } catch { /* debug_token is best-effort */ }
+    } catch { /* best-effort */ }
 
     return new Response(
       JSON.stringify({
         ok: true,
-        page_id: me.id,
-        page_name: me.name,
+        page_id: resolved.pageId,
+        page_name: resolved.pageName,
         token: {
           type: token_type,
           is_valid,
-          expires_at, // 0 = never expires
+          expires_at,
           expires_at_iso: expires_at && expires_at > 0 ? new Date(expires_at * 1000).toISOString() : null,
           never_expires: expires_at === 0,
           data_access_expires_at_iso: data_access_expires_at
-            ? new Date(data_access_expires_at * 1000).toISOString()
-            : null,
+            ? new Date(data_access_expires_at * 1000).toISOString() : null,
           scopes,
         },
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
-    return new Response(
-      JSON.stringify({ ok: false, error: (e as Error).message }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify({ ok: false, error: (e as Error).message }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
