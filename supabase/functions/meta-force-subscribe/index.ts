@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         ok: subRes.ok && leadgen_subscribed,
         page_id: pageId,
-        page_name: me.name,
+        page_name: pageName,
         subscribe_response: sub,
         subscribed_apps: apps.map((a) => ({
           app_id: a.id,
