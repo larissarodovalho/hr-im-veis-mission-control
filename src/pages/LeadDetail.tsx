@@ -467,6 +467,21 @@ export default function LeadDetail() {
           <div className="pt-2"><Label className="text-xs">Observações</Label>
             <Textarea defaultValue={lead.observacoes ?? ""} onBlur={e => e.target.value !== lead.observacoes && updateLead({ observacoes: e.target.value })} rows={4} />
           </div>
+          {lead.meta_form_data?.respostas?.length > 0 && (
+            <div className="pt-3 border-t">
+              <Label className="text-xs">
+                Respostas do formulário{lead.meta_form_data.form_nome ? ` · ${lead.meta_form_data.form_nome}` : ""}
+              </Label>
+              <dl className="mt-2 space-y-2 text-sm">
+                {lead.meta_form_data.respostas.map((r: { campo: string; valor: string }, i: number) => (
+                  <div key={i} className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-2">
+                    <dt className="text-muted-foreground capitalize truncate">{r.campo.replace(/_/g, " ")}</dt>
+                    <dd className="break-words">{r.valor || "—"}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          )}
         </Card>
 
         <Card className="p-5 lg:col-span-2 space-y-4">

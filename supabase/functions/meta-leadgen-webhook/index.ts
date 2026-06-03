@@ -82,6 +82,19 @@ async function processLeadgen(leadgenId: string, formId: string, pageId: string)
     .eq("ativo", true)
     .maybeSingle();
 
+  const respostas = (lead.field_data ?? []).map((f: { name: string; values: string[] }) => ({
+    campo: f.name,
+    valor: (f.values ?? []).join(", "),
+  }));
+
+  const metaFormData = {
+    form_nome: mapping?.form_nome || null,
+    form_id: formId,
+    page_id: pageId,
+    leadgen_id: leadgenId,
+    respostas,
+  };
+
   const observacoesParts = [
     mapped.mensagem ? `Mensagem: ${mapped.mensagem}` : null,
     `Form: ${mapping?.form_nome || formId}`,
@@ -101,6 +114,7 @@ async function processLeadgen(leadgenId: string, formId: string, pageId: string)
       tags: mapping?.tags ?? null,
       corretor_id: mapping?.corretor_responsavel_id ?? null,
       observacoes: observacoesParts.join("\n"),
+      meta_form_data: metaFormData,
       data_entrada: new Date().toISOString(),
     })
     .select("id")
