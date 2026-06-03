@@ -196,6 +196,9 @@ export default function GoogleCalendarConnect() {
                   <ExternalLink className="h-4 w-4 mr-1" /> Abrir Google Calendar
                 </a>
               </Button>
+              <Button size="sm" variant="outline" onClick={recalcCriadores} disabled={busy} title="Reprocessa eventos já importados e ajusta o criador conforme o Google">
+                <UserCheck className="h-4 w-4 mr-1" /> Recalcular criadores
+              </Button>
               <Button size="sm" variant="destructive" onClick={disconnect} disabled={busy}>
                 <Unlink className="h-4 w-4 mr-1" /> Desconectar
               </Button>
