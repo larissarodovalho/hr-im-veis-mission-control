@@ -167,17 +167,22 @@ export default function WhatsApp() {
       setMsgs((data as unknown as Msg[]) ?? []);
     })();
 
-    const ch = supabase.channel("wa-msgs-" + active.id).on(
-      "postgres_changes",
-      { event: "INSERT", schema: "public", table: "whatsapp_messages", filter: `conversation_id=eq.${active.id}` },
-      (p) => {
-        setMsgs((m) => [...m, p.new as Msg]);
+    if (!user) return;
+    const unsubscribe = subscribeWhatsAppRealtime(user.id, isAdmin, {
+      onMsgNew: async (p: any) => {
+        if (p?.conversation_id !== active.id) return;
+        const { data } = await supabase
+          .from("whatsapp_messages")
+          .select("*")
+          .eq("conversation_id", active.id)
+          .order("created_at");
+        setMsgs((data as unknown as Msg[]) ?? []);
         markWhatsAppSeen();
         markConvSeen(active.id);
-      }
-    ).subscribe();
+      },
+    });
 
-    return () => { supabase.removeChannel(ch); };
+    return () => { unsubscribe(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active?.id]);
 
