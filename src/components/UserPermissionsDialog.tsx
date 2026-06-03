@@ -9,7 +9,7 @@ import { Loader2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { MENU_ITEMS, defaultForRole, MenuKey } from "@/hooks/useMenuAccess";
 
-type Target = { user_id: string; nome: string | null; email: string | null; roles: AppRole[] };
+type Target = { user_id: string; nome: string | null; email: string | null; roles: AppRole[]; notify_new_leads?: boolean };
 
 export function UserPermissionsDialog({
   target,
@@ -20,22 +20,30 @@ export function UserPermissionsDialog({
 }) {
   const { user: currentUser } = useAuth();
   const [overrides, setOverrides] = useState<Record<string, boolean>>({});
+  const [notifyNewLeads, setNotifyNewLeads] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
 
   useEffect(() => {
     if (!target) return;
     setLoading(true);
-    supabase
-      .from("user_menu_access")
-      .select("menu_key, allowed")
-      .eq("user_id", target.user_id)
-      .then(({ data }) => {
-        const map: Record<string, boolean> = {};
-        (data ?? []).forEach((r: any) => (map[r.menu_key] = r.allowed));
-        setOverrides(map);
-        setLoading(false);
-      });
+    Promise.all([
+      supabase
+        .from("user_menu_access")
+        .select("menu_key, allowed")
+        .eq("user_id", target.user_id),
+      supabase
+        .from("profiles")
+        .select("notify_new_leads")
+        .eq("user_id", target.user_id)
+        .maybeSingle(),
+    ]).then(([{ data: access }, { data: prof }]) => {
+      const map: Record<string, boolean> = {};
+      (access ?? []).forEach((r: any) => (map[r.menu_key] = r.allowed));
+      setOverrides(map);
+      setNotifyNewLeads(Boolean((prof as any)?.notify_new_leads));
+      setLoading(false);
+    });
   }, [target?.user_id]);
 
   if (!target) return null;
@@ -85,6 +93,43 @@ export function UserPermissionsDialog({
           </div>
         ) : (
           <div className="space-y-5">
+            <div className="space-y-2">
+              <div className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">
+                Notificações
+              </div>
+              <div className="border rounded-md">
+                <div className="flex items-center justify-between px-3 py-2.5">
+                  <div className="flex flex-col">
+                    <Label className="text-sm font-medium">
+                      Receber e-mail quando chegar um lead novo
+                    </Label>
+                    <span className="text-[11px] text-muted-foreground">
+                      Envia um aviso por e-mail sempre que um lead for cadastrado (Meta Ads, site, WhatsApp ou manual).
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {notifyNewLeads ? "Ligado" : "Desligado"}
+                    </span>
+                    <Switch
+                      checked={notifyNewLeads}
+                      disabled={saving === "__notify_new_leads"}
+                      onCheckedChange={async (v) => {
+                        setSaving("__notify_new_leads");
+                        const { error } = await supabase
+                          .from("profiles")
+                          .update({ notify_new_leads: v } as any)
+                          .eq("user_id", target.user_id);
+                        setSaving(null);
+                        if (error) return toast.error(error.message);
+                        setNotifyNewLeads(v);
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {groups.map((group) => (
               <div key={group} className="space-y-2">
                 <div className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">

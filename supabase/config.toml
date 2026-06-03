@@ -41,3 +41,7 @@ verify_jwt = false
 
 [functions.meta-leadgen-webhook]
 verify_jwt = false
+
+[functions.notify-new-lead]
+verify_jwt = false
+

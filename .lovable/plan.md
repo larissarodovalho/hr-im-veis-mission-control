@@ -1,22 +1,42 @@
-## Objetivo
+## O que vamos entregar
 
-Quando um lead chegar via Meta Lead Ads, salvar todas as perguntas e respostas do formulário e mostrá-las no detalhamento do lead, para qualificar o interesse.
+Quando um lead novo for criado (Meta Ads, site, WhatsApp ou cadastro manual), todos os usuários que tiverem ligado o toggle **"Receber e-mail de novos leads"** receberão automaticamente um e-mail com nome, telefone, origem e link para abrir o lead no CRM.
 
-## Mudanças
+O toggle fica disponível em **Usuários → botão "Permissões"** de cada pessoa (mesma janela onde já se libera/bloqueia os itens de menu), em uma nova seção **"Notificações"**.
 
-### 1. Banco (migração)
-- Adicionar coluna `meta_form_data jsonb` na tabela `leads` (nullable). Vai guardar `{ form_nome, form_id, page_id, leadgen_id, respostas: [{ campo, valor }] }`.
+## Passo a passo
 
-### 2. Webhook `meta-leadgen-webhook`
-- Em `processLeadgen`, montar um array `respostas` a partir de `lead.field_data` preservando a ordem e o label original de cada pergunta (`name` → `valor`).
-- Salvar em `meta_form_data` no insert do lead, junto com `form_nome`, `form_id`, `page_id`, `leadgen_id`.
-- Manter o `observacoes` atual como fallback humano.
+1. **Banco**
+   - Nova coluna `notify_new_leads boolean default false` em `profiles`.
+   - Gatilho `AFTER INSERT` em `leads` que chama, via `pg_net`, a nova função `notify-new-lead` (não bloqueia o insert).
 
-### 3. UI — `src/pages/LeadDetail.tsx`
-- Buscar `meta_form_data` junto com o lead.
-- Quando existir, renderizar um card "Respostas do formulário (Meta Ads)" logo abaixo do bloco de dados do lead, listando cada pergunta e resposta em formato chave → valor, com o nome do formulário no título.
-- Esconder o card quando `meta_form_data` for nulo.
+2. **Edge function `notify-new-lead`**
+   - Recebe `lead_id`, busca o lead, lista os perfis com `notify_new_leads = true` e envia um e-mail para cada um usando a infraestrutura de e-mail já existente (`send-transactional-email`).
+   - Idempotência por `new-lead-${lead.id}-${user_id}` para não duplicar em retries.
 
-## Fora de escopo
-- Leads antigos já criados continuam sem `meta_form_data` (não há backfill — os dados originais não estão guardados).
-- Nenhuma mudança em outras telas/listagens.
+3. **Template de e-mail `new-lead-alert`**
+   - Componente React Email no padrão visual dos templates já existentes, com:
+     - Nome do lead, telefone, origem/fonte, intenção (quando houver)
+     - Botão "Abrir lead no CRM" apontando para `/leads/<id>`
+
+4. **UI — janela de Permissões do usuário (`UserPermissionsDialog`)**
+   - Nova seção "Notificações" acima ou abaixo dos grupos de menu, com 1 switch: **"Receber e-mail quando chegar um lead novo"**.
+   - Admin grava direto em `profiles.notify_new_leads` do usuário-alvo.
+
+5. **Defaults**
+   - Por padrão o toggle vem **desligado** para todos. O admin liga manualmente para os corretores que devem receber. (Posso inverter para ligado-por-padrão-para-corretores se preferir — diga na aprovação.)
+
+## Fora do escopo
+
+- Não vamos mexer em notificação push/in-app, só e-mail.
+- Não vamos enviar e-mail retroativo para leads já existentes.
+- Secretaria/marketing também poderão ligar o toggle se o admin quiser — não há restrição por papel, é por usuário.
+
+## Detalhes técnicos
+
+- Trigger usa `pg_net.http_post` para `…/functions/v1/notify-new-lead` com header `Authorization: Bearer <service_role>` (mesmo padrão já usado em `notify-immediate-contact`).
+- `notify-new-lead` é deployada com `verify_jwt = false` e valida internamente o bearer `SUPABASE_SERVICE_ROLE_KEY`.
+- Registro de `template_name = "new-lead-alert"` em `_shared/transactional-email-templates/registry.ts`.
+- RLS de `profiles` já permite admin atualizar qualquer perfil; nada novo a criar.
+
+Posso seguir com a implementação?

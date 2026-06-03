@@ -11,8 +11,10 @@ export interface TemplateEntry {
 
 import { template as immediateContactAlert } from './immediate-contact-alert.tsx'
 import { template as userWelcome } from './user-welcome.tsx'
+import { template as newLeadAlert } from './new-lead-alert.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'immediate-contact-alert': immediateContactAlert,
   'user-welcome': userWelcome,
+  'new-lead-alert': newLeadAlert,
 }
