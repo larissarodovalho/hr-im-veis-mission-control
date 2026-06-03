@@ -11,6 +11,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useRole } from "@/hooks/useRole";
+import { useAuth } from "@/contexts/AuthContext";
+import { subscribeWhatsAppRealtime } from "@/lib/whatsappRealtime";
 import { initials } from "@/lib/leads";
 import { Send, Bot, User as UserIcon, ArrowLeft, Pencil, Trash2, MessageCircle, Settings } from "lucide-react";
 import { toast } from "sonner";
