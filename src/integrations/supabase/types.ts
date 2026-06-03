@@ -1283,6 +1283,7 @@ export type Database = {
           etapa_funil: string
           id: string
           imovel_interesse: string | null
+          meta_form_data: Json | null
           nome: string
           observacoes: string | null
           origem: string | null
@@ -1305,6 +1306,7 @@ export type Database = {
           etapa_funil?: string
           id?: string
           imovel_interesse?: string | null
+          meta_form_data?: Json | null
           nome: string
           observacoes?: string | null
           origem?: string | null
@@ -1327,6 +1329,7 @@ export type Database = {
           etapa_funil?: string
           id?: string
           imovel_interesse?: string | null
+          meta_form_data?: Json | null
           nome?: string
           observacoes?: string | null
           origem?: string | null
