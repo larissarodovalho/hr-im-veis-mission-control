@@ -1694,6 +1694,7 @@ export type Database = {
           id: string
           nivel: string
           nome: string | null
+          notify_new_leads: boolean
           telefone: string | null
           updated_at: string
           user_id: string
@@ -1707,6 +1708,7 @@ export type Database = {
           id?: string
           nivel?: string
           nome?: string | null
+          notify_new_leads?: boolean
           telefone?: string | null
           updated_at?: string
           user_id: string
@@ -1720,6 +1722,7 @@ export type Database = {
           id?: string
           nivel?: string
           nome?: string | null
+          notify_new_leads?: boolean
           telefone?: string | null
           updated_at?: string
           user_id?: string
