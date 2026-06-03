@@ -398,19 +398,33 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Fotos</h3>
             {fotosExistentes.length > 0 && (
               <div>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
                   <p className="text-xs text-muted-foreground">Fotos atuais — arraste para reordenar. A primeira é a capa.</p>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={reapplyWatermark}
-                    disabled={reapplying || saving}
-                    className="h-7 text-xs"
-                  >
-                    {reapplying ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Droplet className="h-3 w-3 mr-1" />}
-                    Reaplicar marca d'água
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={downloadOriginais}
+                      disabled={downloading || saving || reapplying}
+                      className="h-7 text-xs"
+                      title="Baixa as fotos originais (sem marca d'água). Disponível apenas para fotos enviadas após esta atualização."
+                    >
+                      {downloading ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Download className="h-3 w-3 mr-1" />}
+                      Baixar originais
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={reapplyWatermark}
+                      disabled={reapplying || saving || downloading}
+                      className="h-7 text-xs"
+                    >
+                      {reapplying ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Droplet className="h-3 w-3 mr-1" />}
+                      Reaplicar marca d'água
+                    </Button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                   {fotosExistentes.map((url, idx) => (
