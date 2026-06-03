@@ -103,6 +103,18 @@ async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string
         updated++;
       } else {
         // Importa evento criado direto no Google (celular/desktop) como reunião no CRM.
+        // Resolve o criador real do evento: cruza creator/organizer email com profiles.
+        let realCreator = user_id;
+        const creatorEmail = (ev.creator?.email || ev.organizer?.email || "").toLowerCase().trim();
+        if (creatorEmail) {
+          const { data: prof } = await supa
+            .from("profiles")
+            .select("user_id")
+            .ilike("email", creatorEmail)
+            .maybeSingle();
+          if (prof?.user_id) realCreator = prof.user_id;
+        }
+
         const { data: novaReuniao, error: insErr } = await supa.from("reunioes").insert({
           titulo: ev.summary || "Evento Google",
           agendada_para: startISO,
@@ -111,7 +123,7 @@ async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string
           link: ev.hangoutLink ?? null,
           notas: ev.description ?? null,
           corretor_id: user_id,
-          created_by: user_id,
+          created_by: realCreator,
           tipo: "presencial",
           status: "agendada",
           origem: "google_calendar",
