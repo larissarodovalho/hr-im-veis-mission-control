@@ -1,43 +1,60 @@
 ## Objetivo
-Substituir o `META_PAGE_ACCESS_TOKEN` atual (que expirou em ~60 dias) por um **Page Access Token permanente**, para o webhook nunca mais parar de receber leads por token expirado.
+Refazer a geração do Page Access Token permanente porque o token enviado anteriormente aponta para uma Página diferente da **HR Imóveis**.
 
-## Como funciona (contexto)
-Tokens da Meta têm 3 tipos:
-1. **User Token curto** (~1h) — o que sai do Graph API Explorer.
-2. **User Token longo** (~60 dias) — gerado trocando o curto pelo endpoint `oauth/access_token`.
-3. **Page Token derivado de User Token longo** — **não expira** (desde que o usuário mantenha admin da Página e as permissões do app).
+## Causa provável
+No Passo 1 (Graph API Explorer), ao clicar **Generate Access Token**, a tela de autorização do Facebook lista todas as Páginas que sua conta administra e por padrão **só vem marcada a primeira / a que você usou na última vez**. Se a HR Imóveis não estava marcada ali, o User Token longo não tem permissão sobre ela e o `/me/accounts` devolve outra Página (ou nenhuma).
 
-Vamos chegar no #3.
+A correção é repetir os Passos 1 → 3 garantindo que a HR Imóveis esteja explicitamente selecionada na tela de "Opt in to Pages".
 
-## Passos que você executa no painel da Meta
+## Passos que você executa
 
+### Passo 1 — Gerar User Token curto com a Página certa
 1. Abra https://developers.facebook.com/tools/explorer/
-2. Selecione o App do CRM. Em "User or Page" deixe **User Token**.
-3. Em Permissions adicione: `pages_show_list`, `pages_read_engagement`, `pages_manage_metadata`, `pages_manage_ads`, `leads_retrieval`, `business_management`.
-4. Clique **Generate Access Token** e autorize. Copie o token (User Token curto).
-5. Troque por User Token longo (cole no navegador, substituindo as chaves):
-   ```
-   https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id={APP_ID}&client_secret={APP_SECRET}&fb_exchange_token={USER_TOKEN_CURTO}
-   ```
-   Copie o `access_token` da resposta (User Token longo, ~60 dias).
-6. Liste as Páginas com esse token longo:
-   ```
-   https://graph.facebook.com/v21.0/me/accounts?access_token={USER_TOKEN_LONGO}
-   ```
-   Encontre a Página HR Imóveis e copie o campo `access_token` dela.
-   **Esse é o Page Token permanente.**
-7. (Opcional, mas recomendado) Confirme que não expira em https://developers.facebook.com/tools/debug/accesstoken/ → o campo "Expires" deve mostrar **Never**.
+2. No topo direito, em **Meta App** selecione o App do CRM (mesmo de antes).
+3. Em **User or Page** deixe **User Token**.
+4. Em **Permissions** confirme estas (adicione as que faltarem):
+   - `pages_show_list`
+   - `pages_read_engagement`
+   - `pages_manage_metadata`
+   - `pages_manage_ads`
+   - `leads_retrieval`
+   - `business_management`
+5. Clique **Generate Access Token**.
+6. **ATENÇÃO — passo onde deu errado da última vez:** Vai abrir um popup do Facebook pedindo autorização. Numa das telas vai aparecer **"Opt in to all current and future Pages"** ou **"Choose what [App] can access"** com uma lista de Páginas e um botão **"Edit access"** / **"Escolher o que pode acessar"**.
+   - Clique **Edit access** / **Escolher**.
+   - **Marque a Página HR Imóveis** (e pode marcar as outras também, não atrapalha).
+   - Confirme.
+7. Copie o token gerado (User Token curto, ~1h).
 
-## Passo que eu executo (depois que você aprovar o plano)
+### Passo 2 — Trocar pelo User Token longo (~60 dias)
+Cole na barra do navegador, substituindo `{APP_SECRET}` e `{USER_TOKEN_CURTO}`:
+```
+https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id=1116308894903755&client_secret={APP_SECRET}&fb_exchange_token={USER_TOKEN_CURTO}
+```
+Copie o `access_token` da resposta.
 
-1. Abrir o formulário seguro do Lovable para você colar o novo `META_PAGE_ACCESS_TOKEN` (substitui o atual).
-2. Adicionar na aba **Configurações → Meta Lead Ads** um pequeno card **"Validade do token"** que chama `meta-test-token` + um endpoint `debug_token` da Meta e mostra:
-   - Status (válido / expirado)
-   - Data de expiração (ou "Nunca")
-   - Página vinculada
-   Assim, se algum dia for trocado por um token de curta duração de novo, você vê na hora.
-3. Após salvar o token: clicar **"Testar conexão"** e enviar um lead pelo Lead Ads Testing Tool para confirmar fim a fim.
+### Passo 3 — Listar páginas e validar
+```
+https://graph.facebook.com/v21.0/me/accounts?access_token={USER_TOKEN_LONGO}
+```
+Confirme que **HR Imóveis aparece na lista**. Copie o `access_token` do objeto da HR Imóveis — esse é o Page Token permanente.
 
-## Observações importantes
-- O Page Token permanente continua válido enquanto o usuário que o gerou for admin da Página e o App mantiver as permissões aprovadas. Se aquele usuário sair da Página, o token morre — por isso o ideal a longo prazo é um **System User Token** do Business Manager (também não expira e independe de pessoa física). Posso incluir esse caminho alternativo no plano se preferir.
-- Nada de código de negócio muda. Só o segredo e um indicador de validade na UI de Configurações.
+### Passo 4 — Validar que é permanente
+Cole em https://developers.facebook.com/tools/debug/accesstoken/ → o campo **Expires** deve mostrar **Never** e o campo **Profile ID** deve ser o ID da Página HR Imóveis (não o seu User ID).
+
+## Passos que eu executo depois
+1. Abrir o formulário seguro do Lovable pra você colar o novo `META_PAGE_ACCESS_TOKEN` (substitui o atual).
+2. Chamar a edge function `meta-test-token` que vai mostrar:
+   - Nome da Página vinculada (precisa ser **HR Imóveis**)
+   - `never_expires: true`
+3. Chamar `meta-debug-subscription` pra confirmar que o app continua subscrito ao campo `leadgen` da Página.
+4. Se algo estiver errado, te aviso antes de salvar.
+
+## Se der errado de novo
+Caso o popup de autorização **não mostre** a opção de escolher Páginas (alguns navegadores pulam essa tela quando já há autorização prévia salva), faça antes:
+1. Vá em https://www.facebook.com/settings?tab=business_tools
+2. Encontre o App do CRM → **Remover**.
+3. Volte ao Graph API Explorer e refaça o Passo 1 — agora a tela de seleção de Páginas vai aparecer obrigatoriamente.
+
+## Observação
+Como você é admin direto da Página, o Page Token permanente vai funcionar enquanto sua conta continuar admin. Se um dia você quiser blindar contra "e se eu sair da Página", a alternativa definitiva é gerar via **System User do Business Manager** — posso documentar esse caminho num plano separado quando quiser.
