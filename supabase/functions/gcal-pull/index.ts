@@ -112,7 +112,13 @@ async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string
             .select("user_id")
             .ilike("email", creatorEmail)
             .maybeSingle();
-          if (prof?.user_id) realCreator = prof.user_id;
+          if (prof?.user_id) {
+            realCreator = prof.user_id;
+          } else {
+            console.log(`[gcal-pull] creator sem profile correspondente: ${creatorEmail} (event ${ev.id})`);
+          }
+        } else {
+          console.log(`[gcal-pull] evento sem creator/organizer email (event ${ev.id}) — usando dono do calendário`);
         }
 
         const { data: novaReuniao, error: insErr } = await supa.from("reunioes").insert({
