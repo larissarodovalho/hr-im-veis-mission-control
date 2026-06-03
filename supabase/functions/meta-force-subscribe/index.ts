@@ -38,22 +38,40 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Identify page from token
+    // Identify token type. If it's a User token, find the HR Imóveis page and use its Page Access Token.
     const meRes = await fetch(`${GRAPH}/me?fields=id,name&access_token=${encodeURIComponent(PAGE_TOKEN)}`);
     const me = await meRes.json();
     if (!meRes.ok) {
       return new Response(JSON.stringify({ ok: false, step: "me", error: me?.error?.message ?? "Token inválido", details: me }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    const pageId = me.id as string;
+
+    let pageId = me.id as string;
+    let pageName = me.name as string;
+    let effectiveToken = PAGE_TOKEN;
+
+    // If /me doesn't return an HR Imóveis page (id ending with 99), try /me/accounts
+    if (!pageId?.endsWith("99")) {
+      const accRes = await fetch(`${GRAPH}/me/accounts?fields=id,name,access_token&access_token=${encodeURIComponent(PAGE_TOKEN)}`);
+      const acc = await accRes.json();
+      const pages = (acc?.data ?? []) as any[];
+      const hr = pages.find((p) => p.id?.endsWith("99")) ?? pages.find((p) => /hr\s*im[oó]veis/i.test(p.name ?? ""));
+      if (!hr) {
+        return new Response(JSON.stringify({ ok: false, step: "find_page", error: "Página HR Imóveis não encontrada nas contas do token", details: acc }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      pageId = hr.id;
+      pageName = hr.name;
+      effectiveToken = hr.access_token;
+    }
 
     // Force subscribe to leadgen
-    const subUrl = `${GRAPH}/${pageId}/subscribed_apps?subscribed_fields=leadgen&access_token=${encodeURIComponent(PAGE_TOKEN)}`;
+    const subUrl = `${GRAPH}/${pageId}/subscribed_apps?subscribed_fields=leadgen&access_token=${encodeURIComponent(effectiveToken)}`;
     const subRes = await fetch(subUrl, { method: "POST" });
     const sub = await subRes.json();
 
     // Re-read subscribed apps to confirm
-    const checkRes = await fetch(`${GRAPH}/${pageId}/subscribed_apps?access_token=${encodeURIComponent(PAGE_TOKEN)}`);
+    const checkRes = await fetch(`${GRAPH}/${pageId}/subscribed_apps?access_token=${encodeURIComponent(effectiveToken)}`);
     const check = await checkRes.json();
     const apps = (check?.data ?? []) as any[];
     const leadgen_subscribed = apps.some((a) => (a.subscribed_fields ?? []).includes("leadgen"));
