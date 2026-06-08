@@ -1,14 +1,19 @@
-## Problema
+O Dashboard em `src/pages/Dashboard.tsx` filtra os leads através de um `Set` chamado `CAMPAIGN_SOURCES` (linha 17). Atualmente ele só reconhece as origens:
+- meta_ads
+- google_ads
+- ia_chat
+- webhook
+- whatsapp
 
-No funil de Oportunidades, o nome do cliente aparece como "—" mesmo quando a oportunidade tem cliente válido (visível ao editar).
+Por isso leads vindos de "site" ou "indicacao" não entram nos KPIs nem nos gráficos, o que causa diferença entre o total exibido no dashboard e o total da aba "Leads".
 
-**Causa:** Em `src/pages/imoveis/OportunidadesTab.tsx`, os mapas de `leads` e `contas` são carregados com uma única query (`supabase.from("contas").select("id,nome")`), que respeita o limite padrão de 1000 linhas do PostgREST. Quando há mais de 1000 contas/leads, vários clientes ficam de fora do mapa e o card mostra vazio. O `NovaOportunidadeDialog` já faz paginação por isso funciona lá.
+**O que vai ser feito:**
 
-## Correção
+1.  **Ajustar o filtro** em `src/pages/Dashboard.tsx`:
+    - Adicionar as strings `"site"` e `"indicacao"` ao `CAMPAIGN_SOURCES`.
+    - Opcionalmente atualizar o comentário ao lado do `Set` para refletir a inclusão de leads orgânicos.
 
-Em `src/pages/imoveis/OportunidadesTab.tsx`:
+**Arquivo alterado:**
+- `src/pages/Dashboard.tsx` (linha 17)
 
-- Substituir as buscas únicas de `leads` e `contas` por uma busca paginada (loop com `.range(from, from+999)` até esgotar), igual ao padrão usado em `NovaOportunidadeDialog`.
-- Manter o restante (profiles, vínculos, filtros) inalterado.
-
-Sem mudanças de banco, sem mudanças de UI.
+**Sem mudanças em:** banco de dados, layout, rotas ou outros componentes.

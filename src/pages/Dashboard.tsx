@@ -13,8 +13,8 @@ import {
 
 const CHART_COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--success))", "hsl(var(--warning))", "hsl(var(--danger))", "hsl(var(--muted-foreground))"];
 
-// Origens consideradas "campanhas / atendente virtual" — leads automáticos
-const CAMPAIGN_SOURCES = new Set(["meta_ads", "google_ads", "ia_chat", "webhook", "whatsapp"]);
+// Origens consideradas no dashboard — campanhas, atendente virtual e leads orgânicos (site/indicação)
+const CAMPAIGN_SOURCES = new Set(["meta_ads", "google_ads", "ia_chat", "webhook", "whatsapp", "site", "indicacao"]);
 
 export default function Dashboard() {
   const navigate = useNavigate();
