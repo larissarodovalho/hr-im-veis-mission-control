@@ -80,23 +80,16 @@ export default function Dashboard() {
     return siteVisits.reduce((a, r) => a + r.visitantes_unicos, 0);
   }, [siteVisits]);
 
-  // KPIs principais: somente leads vindos de campanhas / atendente virtual
-  const campaignLeads = useMemo(
-    () => leads.filter(l => CAMPAIGN_SOURCES.has((l.origem || "").toLowerCase())),
-    [leads]
-  );
-  const campaignLeadIds = useMemo(
-    () => new Set(campaignLeads.map(l => l.id)),
-    [campaignLeads]
-  );
+  // KPIs principais: todos os leads (sincronizado com a aba Leads)
+  const leadIds = useMemo(() => new Set(leads.map(l => l.id)), [leads]);
 
-  const total = campaignLeads.length;
+  const total = leads.length;
   const reunioesMesList = useMemo(
     () => reunioes.filter(m => {
       const d = new Date(m.agendada_para);
-      return d >= monthStart && d < monthEnd && m.lead_id && campaignLeadIds.has(m.lead_id);
+      return d >= monthStart && d < monthEnd && m.lead_id && leadIds.has(m.lead_id);
     }),
-    [reunioes, monthStart, monthEnd, campaignLeadIds]
+    [reunioes, monthStart, monthEnd, leadIds]
   );
   const leadsComReuniao = new Set(
     reunioesMesList
@@ -105,12 +98,12 @@ export default function Dashboard() {
       .filter(Boolean)
   ).size;
   const rate = total ? Math.round((leadsComReuniao / total) * 100) : 0;
-  const overdue = campaignLeads.filter(l => {
+  const overdue = leads.filter(l => {
     const d = daysSince(l.ultima_interacao ?? l.created_at);
     return d !== null && d > 3 && !["Fechado", "Perdido"].includes(l.etapa_funil);
   });
   const reunioesMes = reunioesMesList.length;
-  const bySource = campaignLeads.reduce<Record<string, number>>((acc, l) => { const k = l.origem || "manual"; acc[k] = (acc[k] || 0) + 1; return acc; }, {});
+  const bySource = leads.reduce<Record<string, number>>((acc, l) => { const k = l.origem || "manual"; acc[k] = (acc[k] || 0) + 1; return acc; }, {});
 
 
   const leadsTrend = useMemo(() => {
