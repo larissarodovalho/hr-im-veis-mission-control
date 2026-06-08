@@ -220,6 +220,51 @@ export default function Dashboard() {
         </ResponsiveContainer>
       </Card>
 
+      {canSeeSiteVisits && (
+        <Card className="p-4 md:p-6">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <div>
+              <h2 className="font-display text-xl font-semibold flex items-center gap-2">
+                <Globe className="h-5 w-5 text-accent" /> Acessos ao site — últimos 30 dias
+              </h2>
+              <p className="text-sm text-muted-foreground">Pageviews registrados em hrimoveis.com</p>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <Badge variant="secondary">Hoje: {siteVisitsToday}</Badge>
+              <Badge variant="secondary">30d: {siteVisitsTotal}</Badge>
+              <Badge variant="outline">Visitantes únicos (soma): {siteUniqueTotal}</Badge>
+            </div>
+          </div>
+          {siteVisitsTotal === 0 ? (
+            <p className="text-sm text-muted-foreground py-12 text-center">
+              Ainda sem acessos registrados. Os dados aparecem aqui assim que visitantes navegarem no site.
+            </p>
+          ) : (
+            <ResponsiveContainer width="100%" height={260}>
+              <AreaChart data={siteVisitsChart} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gSiteVisits" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.45} />
+                    <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} interval={3} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                  formatter={(value: any, name: any) => [value, name === "visitas" ? "Acessos" : "Visitantes únicos"]}
+                />
+                <Area type="monotone" dataKey="visitas" name="visitas" stroke="hsl(var(--accent))" strokeWidth={2} fill="url(#gSiteVisits)" />
+                <Line type="monotone" dataKey="visitantes_unicos" name="visitantes_unicos" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </Card>
+      )}
+
+
+
       <div className="grid gap-4 lg:grid-cols-3">
         <Card
           role="button"
