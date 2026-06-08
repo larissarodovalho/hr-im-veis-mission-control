@@ -67,21 +67,12 @@ Deno.serve(async (req) => {
         area_util: im.area_util,
       }))
 
-    const apiKey = Deno.env.get('SUPABASE_PUBLISHABLE_KEY')
-      || Deno.env.get('SUPABASE_ANON_KEY')
-      || ''
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const sendRes = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-        apikey: apiKey,
-      },
-      body: JSON.stringify({
+    const { data: sendData, error: sendErr } = await supabase.functions.invoke('send-transactional-email', {
+      body: {
         templateName: 'newsletter-weekly',
         recipientEmail: email,
         idempotencyKey: `newsletter-test-${Date.now()}-${email}`,
+        purpose: 'transactional',
         templateData: {
           assunto: 'Novidades do mercado imobiliário — Sinop',
           manchete: 'O que está movimentando o mercado esta semana',
@@ -89,16 +80,16 @@ Deno.serve(async (req) => {
             'Este é um e-mail de teste do informativo HR Imóveis. O mercado de Sinop segue aquecido, com boa procura por imóveis prontos para morar nas regiões centrais e bairros planejados.\n\nSelecionamos abaixo alguns destaques do nosso catálogo para você conferir o visual completo do e-mail.',
           imoveis: imoveisData,
         },
-      }),
+      },
     })
 
-    if (!sendRes.ok) {
-      const body = await sendRes.text()
-      console.error('send-transactional-email http', sendRes.status, body)
-      return new Response(JSON.stringify({ error: `send falhou: ${sendRes.status} ${body}` }), {
+    if (sendErr) {
+      console.error('send-transactional-email erro', sendErr)
+      return new Response(JSON.stringify({ error: sendErr.message ?? 'erro send' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+    console.log('send-transactional-email ok', sendData)
 
 
     return new Response(JSON.stringify({ ok: true, email, imoveis: imoveisData.length }), {
