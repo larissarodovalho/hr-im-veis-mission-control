@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { STAGES, daysSince, slaColor, slaLabel, SOURCES } from "@/lib/leads";
 import { Link, useNavigate } from "react-router-dom";
-import { TrendingUp, Users, Clock, Calendar, AlertTriangle, Phone, MapPin } from "lucide-react";
+import { TrendingUp, Users, Clock, Calendar, AlertTriangle, Phone, MapPin, Globe } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   BarChart, Bar, Cell, LineChart, Line,
@@ -17,10 +18,13 @@ const CAMPAIGN_SOURCES = new Set(["meta_ads", "google_ads", "ia_chat", "webhook"
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { roles } = useAuth();
+  const canSeeSiteVisits = roles.includes("admin") || roles.includes("gestor");
   const [leads, setLeads] = useState<any[]>([]);
   const [reunioes, setReunioes] = useState<any[]>([]);
   const [visitas, setVisitas] = useState<any[]>([]);
   const [ligacoes, setLigacoes] = useState<any[]>([]);
+  const [siteVisits, setSiteVisits] = useState<Array<{ dia: string; visitas: number; visitantes_unicos: number }>>([]);
 
   const monthStart = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); d.setDate(1); return d; }, []);
   const monthEnd = useMemo(() => { const d = new Date(monthStart); d.setMonth(d.getMonth() + 1); return d; }, [monthStart]);
@@ -46,6 +50,37 @@ export default function Dashboard() {
       setLeads(l.data ?? []); setReunioes(r.data ?? []); setVisitas(vMerged); setLigacoes(cMerged);
     })();
   }, [monthStart, monthEnd]);
+
+  useEffect(() => {
+    if (!canSeeSiteVisits) return;
+    (async () => {
+      const { data } = await supabase.rpc("get_site_visits_daily" as any, { days: 30 });
+      const rows = ((data as any[]) ?? []).map((r) => ({
+        dia: r.dia,
+        visitas: Number(r.visitas) || 0,
+        visitantes_unicos: Number(r.visitantes_unicos) || 0,
+      }));
+      setSiteVisits(rows);
+    })();
+  }, [canSeeSiteVisits]);
+
+  const siteVisitsChart = useMemo(
+    () =>
+      siteVisits.map((r) => ({
+        ...r,
+        label: new Date(r.dia + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+      })),
+    [siteVisits],
+  );
+  const siteVisitsTotal = useMemo(() => siteVisits.reduce((a, r) => a + r.visitas, 0), [siteVisits]);
+  const siteVisitsToday = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return siteVisits.find((r) => r.dia === today)?.visitas ?? 0;
+  }, [siteVisits]);
+  const siteUniqueTotal = useMemo(() => {
+    // Soma diária aproxima visitantes únicos (não deduplica entre dias).
+    return siteVisits.reduce((a, r) => a + r.visitantes_unicos, 0);
+  }, [siteVisits]);
 
   // KPIs principais: somente leads vindos de campanhas / atendente virtual
   const campaignLeads = useMemo(
