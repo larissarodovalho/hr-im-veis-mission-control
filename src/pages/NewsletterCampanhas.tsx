@@ -161,7 +161,7 @@ export default function NewsletterCampanhas() {
           <div className="space-y-2">
             <Label>Email destinatário</Label>
             <Input type="email" value={testeEmail} onChange={(e) => setTesteEmail(e.target.value)} placeholder="voce@exemplo.com" />
-            <p className="text-xs text-muted-foreground">Será enviada uma prévia do template newsletter com 3 imóveis disponíveis do catálogo.</p>
+            <p className="text-xs text-muted-foreground">Será enviada uma prévia do template com 3 imóveis disponíveis. Dica: teste em Gmail e Outlook — se cair em "Lixo Eletrônico" no Hotmail, marque "Não é lixo eletrônico" e adicione <code>suporte@hrimoveis.com</code> aos contatos. Isso ajuda a treinar o filtro enquanto a reputação do remetente se consolida.</p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setTesteOpen(false)} disabled={testando}>Cancelar</Button>
