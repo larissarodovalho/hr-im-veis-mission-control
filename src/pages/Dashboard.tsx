@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { STAGES, daysSince, slaColor, slaLabel, SOURCES } from "@/lib/leads";
 import { Link, useNavigate } from "react-router-dom";
-import { TrendingUp, Users, Clock, Calendar, AlertTriangle, Phone, MapPin, Globe } from "lucide-react";
+import { TrendingUp, Users, Clock, Calendar, AlertTriangle, Phone, MapPin, Globe, UserPlus, Activity, CheckCircle2, XCircle } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   BarChart, Bar, Cell, LineChart, Line,
@@ -155,12 +155,25 @@ export default function Dashboard() {
       </header>
 
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPI icon={Users} label="Total de leads" value={total} />
-        <KPI icon={TrendingUp} label="Taxa de conversão" value={`${rate}%`} />
-        <KPI icon={Calendar} label="Reuniões este mês" value={reunioesMes} />
-        <KPI icon={Clock} label="Sem atendimento (3d+)" value={overdue.length} accent={overdue.length > 0} />
-      </div>
+      {(() => {
+        const ATENDIMENTO_STAGES = new Set(["Em Contato","Conversa Ativa","IA de acompanhamento","Manual de acompanhamento","Reunião Agendada","Visita","Proposta"]);
+        const emAtendimento = leads.filter(l => ATENDIMENTO_STAGES.has(l.etapa_funil)).length;
+        const novosSemContato = leads.filter(l => l.etapa_funil === "Novo Lead").length;
+        const fechados = leads.filter(l => l.etapa_funil === "Fechado").length;
+        const perdidos = leads.filter(l => l.etapa_funil === "Perdido").length;
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <KPI icon={Users} label="Total de leads" value={total} />
+            <KPI icon={Activity} label="Em atendimento" value={emAtendimento} variant="accent" />
+            <KPI icon={UserPlus} label="Novos sem contato" value={novosSemContato} variant={novosSemContato > 0 ? "warning" : "default"} />
+            <KPI icon={Clock} label="Sem atendimento (3d+)" value={overdue.length} variant={overdue.length > 0 ? "danger" : "default"} />
+            <KPI icon={TrendingUp} label="Taxa de conversão" value={`${rate}%`} />
+            <KPI icon={Calendar} label="Reuniões este mês" value={reunioesMes} />
+            <KPI icon={CheckCircle2} label="Fechados" value={fechados} variant="success" />
+            <KPI icon={XCircle} label="Perdidos" value={perdidos} variant="danger" />
+          </div>
+        );
+      })()}
 
       {overdue.length > 0 && (
         <Card className="p-4 md:p-6 border-danger/30 bg-danger/5">
@@ -365,15 +378,25 @@ export default function Dashboard() {
   );
 }
 
-function KPI({ icon: Icon, label, value, accent }: { icon: any; label: string; value: any; accent?: boolean }) {
+type KPIVariant = "default" | "accent" | "success" | "warning" | "danger";
+const KPI_STYLES: Record<KPIVariant, { card: string; icon: string }> = {
+  default: { card: "", icon: "bg-primary/10 text-primary" },
+  accent: { card: "border-accent/30", icon: "bg-accent/10 text-accent" },
+  success: { card: "border-success/30", icon: "bg-success/10 text-success" },
+  warning: { card: "border-warning/30", icon: "bg-warning/10 text-warning" },
+  danger: { card: "border-danger/30", icon: "bg-danger/10 text-danger" },
+};
+
+function KPI({ icon: Icon, label, value, variant = "default" }: { icon: any; label: string; value: any; variant?: KPIVariant }) {
+  const s = KPI_STYLES[variant];
   return (
-    <Card className={"p-5 " + (accent ? "border-danger/30" : "")}>
+    <Card className={"p-5 " + s.card}>
       <div className="flex items-center justify-between">
         <div>
           <div className="text-sm text-muted-foreground">{label}</div>
           <div className="text-3xl font-display font-semibold mt-1">{value}</div>
         </div>
-        <div className={"flex h-10 w-10 items-center justify-center rounded-lg " + (accent ? "bg-danger/10 text-danger" : "bg-primary/10 text-primary")}>
+        <div className={"flex h-10 w-10 items-center justify-center rounded-lg " + s.icon}>
           <Icon className="h-5 w-5" />
         </div>
       </div>
