@@ -1543,6 +1543,108 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletter_campanhas: {
+        Row: {
+          aprovada_em: string | null
+          aprovada_por: string | null
+          assunto: string
+          corpo: string | null
+          created_at: string
+          criada_por: string | null
+          enviada_em: string | null
+          id: string
+          imoveis_ids: string[]
+          manchete: string | null
+          status: string
+          total_destinatarios: number
+          total_enviados: number
+          total_falhas: number
+          updated_at: string
+        }
+        Insert: {
+          aprovada_em?: string | null
+          aprovada_por?: string | null
+          assunto: string
+          corpo?: string | null
+          created_at?: string
+          criada_por?: string | null
+          enviada_em?: string | null
+          id?: string
+          imoveis_ids?: string[]
+          manchete?: string | null
+          status?: string
+          total_destinatarios?: number
+          total_enviados?: number
+          total_falhas?: number
+          updated_at?: string
+        }
+        Update: {
+          aprovada_em?: string | null
+          aprovada_por?: string | null
+          assunto?: string
+          corpo?: string | null
+          created_at?: string
+          criada_por?: string | null
+          enviada_em?: string | null
+          id?: string
+          imoveis_ids?: string[]
+          manchete?: string | null
+          status?: string
+          total_destinatarios?: number
+          total_enviados?: number
+          total_falhas?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      newsletter_envios: {
+        Row: {
+          campanha_id: string
+          created_at: string
+          email: string
+          error_message: string | null
+          id: string
+          sent_at: string | null
+          status: string
+          subscriber_id: string | null
+        }
+        Insert: {
+          campanha_id: string
+          created_at?: string
+          email: string
+          error_message?: string | null
+          id?: string
+          sent_at?: string | null
+          status?: string
+          subscriber_id?: string | null
+        }
+        Update: {
+          campanha_id?: string
+          created_at?: string
+          email?: string
+          error_message?: string | null
+          id?: string
+          sent_at?: string | null
+          status?: string
+          subscriber_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_envios_campanha_id_fkey"
+            columns: ["campanha_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_campanhas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_envios_subscriber_id_fkey"
+            columns: ["subscriber_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_subscribers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newsletter_subscribers: {
         Row: {
           created_at: string
