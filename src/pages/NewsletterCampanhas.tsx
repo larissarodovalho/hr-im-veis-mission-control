@@ -123,10 +123,11 @@ export default function NewsletterCampanhas() {
           idempotencyKey: `newsletter-test-${Date.now()}-${testeEmail.trim()}`,
           purpose: "transactional",
           templateData: {
-            assunto: "Novidades do mercado imobiliário — Sinop",
-            manchete: "O que está movimentando o mercado esta semana",
+            assunto: "HR Imóveis · Boletim semanal de Sinop",
+            manchete: "Como está o mercado imobiliário de Sinop nesta semana",
+            preheader: "Panorama do mercado de Sinop e imóveis selecionados pela equipe.",
             corpo:
-              "Este é um e-mail de teste do informativo HR Imóveis. O mercado de Sinop segue aquecido, com boa procura por imóveis prontos para morar nas regiões centrais e bairros planejados.\n\nSelecionamos abaixo alguns destaques do nosso catálogo para você conferir o visual completo do e-mail.",
+              "Sinop segue com bom volume de procura por imóveis prontos para morar, especialmente nas regiões centrais e em bairros planejados como o Jardim Maringá. Imóveis de 3 quartos com vaga coberta continuam sendo os mais buscados pelas famílias que estão se mudando para a cidade.\n\nNeste boletim, nossa equipe reuniu alguns imóveis do nosso portfólio que vale a pena conhecer. Se quiser agendar uma visita ou tirar dúvidas sobre financiamento, é só responder este e-mail que um corretor entra em contato.",
             imoveis: imoveisData,
           },
         },
@@ -144,7 +145,7 @@ export default function NewsletterCampanhas() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={() => { setTesteEmail("larissadefreitas@hotmail.com"); setTesteOpen(true); }}>
+        <Button variant="outline" onClick={() => { setTesteEmail(""); setTesteOpen(true); }}>
           <Send className="h-4 w-4 mr-2" /> Enviar email de teste
         </Button>
         <Button onClick={() => { setEditing(null); setOpen(true); }}>
@@ -160,7 +161,7 @@ export default function NewsletterCampanhas() {
           <div className="space-y-2">
             <Label>Email destinatário</Label>
             <Input type="email" value={testeEmail} onChange={(e) => setTesteEmail(e.target.value)} placeholder="voce@exemplo.com" />
-            <p className="text-xs text-muted-foreground">Será enviada uma prévia do template newsletter com 3 imóveis disponíveis do catálogo.</p>
+            <p className="text-xs text-muted-foreground">Será enviada uma prévia do template com 3 imóveis disponíveis. Dica: teste em Gmail e Outlook — se cair em "Lixo Eletrônico" no Hotmail, marque "Não é lixo eletrônico" e adicione <code>suporte@hrimoveis.com</code> aos contatos. Isso ajuda a treinar o filtro enquanto a reputação do remetente se consolida.</p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setTesteOpen(false)} disabled={testando}>Cancelar</Button>
