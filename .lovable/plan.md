@@ -1,48 +1,14 @@
-## Objetivo
-Registrar pageviews das páginas públicas do site (`/site/*`) e exibir um gráfico de acessos diários (últimos 30 dias) no Dashboard, no mesmo estilo do gráfico de leads.
+## Problema
 
-## 1. Banco de dados (migration)
-Criar tabela `public.site_visits`:
-- `path` (text) — rota visitada
-- `referrer` (text, nullable)
-- `user_agent` (text, nullable)
-- `session_id` (text) — id anônimo gerado no browser (localStorage), para distinguir visitantes
-- `country` / `city` (text, nullable, opcional via header)
-- `created_at` (timestamptz default now())
+No funil de Oportunidades, o nome do cliente aparece como "—" mesmo quando a oportunidade tem cliente válido (visível ao editar).
 
-Índice em `created_at` para agregações rápidas.
+**Causa:** Em `src/pages/imoveis/OportunidadesTab.tsx`, os mapas de `leads` e `contas` são carregados com uma única query (`supabase.from("contas").select("id,nome")`), que respeita o limite padrão de 1000 linhas do PostgREST. Quando há mais de 1000 contas/leads, vários clientes ficam de fora do mapa e o card mostra vazio. O `NovaOportunidadeDialog` já faz paginação por isso funciona lá.
 
-RLS:
-- INSERT liberado para `anon` e `authenticated` (qualquer visitante registra acesso).
-- SELECT apenas para `admin` e `gestor` (via `is_admin()`).
-- GRANT INSERT para anon/authenticated; GRANT SELECT para authenticated; GRANT ALL para service_role.
+## Correção
 
-Função `public.get_site_visits_daily(days int)` (SECURITY DEFINER, restrita a admin/gestor) retornando `(dia date, visitas bigint, visitantes_unicos bigint)` para os últimos N dias — facilita a query do dashboard.
+Em `src/pages/imoveis/OportunidadesTab.tsx`:
 
-## 2. Tracking no site público
-Criar hook `useTrackPageview()` em `src/lib/siteAnalytics.ts`:
-- Gera/recupera `session_id` em `localStorage` (`hr_sid`).
-- Em cada mudança de rota dentro de `SiteLayout`, faz `supabase.from('site_visits').insert({ path, referrer, user_agent, session_id })`.
-- Fire-and-forget, sem bloquear UI; ignora erros silenciosamente.
-- Não rastreia rotas do CRM (apenas `/site/*` e `/`).
+- Substituir as buscas únicas de `leads` e `contas` por uma busca paginada (loop com `.range(from, from+999)` até esgotar), igual ao padrão usado em `NovaOportunidadeDialog`.
+- Manter o restante (profiles, vínculos, filtros) inalterado.
 
-Integrar o hook no `src/components/site/SiteLayout.tsx`.
-
-## 3. Dashboard — gráfico de acessos
-Em `src/pages/Dashboard.tsx`:
-- Novo card "Acessos ao site (últimos 30 dias)" ao lado/abaixo do gráfico de leads.
-- Visível apenas para `admin`/`gestor` (usa `useAuth().roles`).
-- Busca via `supabase.rpc('get_site_visits_daily', { days: 30 })`.
-- Recharts `LineChart` ou `BarChart` mostrando visitas por dia; tooltip com total + visitantes únicos.
-- KPIs no topo do card: total 30 dias, total hoje, visitantes únicos 30 dias.
-
-## Detalhes técnicos
-- Stack: tabela em Lovable Cloud, função SQL agregadora, hook React no SiteLayout, Recharts no Dashboard.
-- Sem dependências novas (Recharts já está no projeto).
-- Sem edge function — insert direto via cliente Supabase com RLS.
-- Privacidade: não armazenamos IP nem dados pessoais; `session_id` é aleatório local.
-
-## Fora de escopo
-- Mensal/12 meses (pode ser adicionado depois).
-- GA4 ou Plausible.
-- Detalhamento por imóvel/landing page específica.
+Sem mudanças de banco, sem mudanças de UI.

@@ -112,14 +112,29 @@ export default function OportunidadesTab() {
 
   useEffect(() => {
     load();
-    supabase.from("leads").select("id,nome").then(({ data }) => {
+    const fetchAll = async (table: "leads" | "contas") => {
+      const rows: { id: string; nome: string }[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from(table).select("id,nome").order("nome")
+          .range(from, from + pageSize - 1);
+        if (error || !data?.length) break;
+        rows.push(...(data as any));
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      return rows;
+    };
+    fetchAll("leads").then((rows) => {
       const m: Record<string, string> = {};
-      (data ?? []).forEach((l: any) => { m[l.id] = l.nome; });
+      rows.forEach((l) => { m[l.id] = l.nome; });
       setLeads(m);
     });
-    supabase.from("contas").select("id,nome").then(({ data }) => {
+    fetchAll("contas").then((rows) => {
       const m: Record<string, string> = {};
-      (data ?? []).forEach((c: any) => { m[c.id] = c.nome; });
+      rows.forEach((c) => { m[c.id] = c.nome; });
       setContas(m);
     });
     supabase.from("profiles").select("user_id,nome").then(({ data }) => {
