@@ -378,15 +378,25 @@ export default function Dashboard() {
   );
 }
 
-function KPI({ icon: Icon, label, value, accent }: { icon: any; label: string; value: any; accent?: boolean }) {
+type KPIVariant = "default" | "accent" | "success" | "warning" | "danger";
+const KPI_STYLES: Record<KPIVariant, { card: string; icon: string }> = {
+  default: { card: "", icon: "bg-primary/10 text-primary" },
+  accent: { card: "border-accent/30", icon: "bg-accent/10 text-accent" },
+  success: { card: "border-success/30", icon: "bg-success/10 text-success" },
+  warning: { card: "border-warning/30", icon: "bg-warning/10 text-warning" },
+  danger: { card: "border-danger/30", icon: "bg-danger/10 text-danger" },
+};
+
+function KPI({ icon: Icon, label, value, variant = "default" }: { icon: any; label: string; value: any; variant?: KPIVariant }) {
+  const s = KPI_STYLES[variant];
   return (
-    <Card className={"p-5 " + (accent ? "border-danger/30" : "")}>
+    <Card className={"p-5 " + s.card}>
       <div className="flex items-center justify-between">
         <div>
           <div className="text-sm text-muted-foreground">{label}</div>
           <div className="text-3xl font-display font-semibold mt-1">{value}</div>
         </div>
-        <div className={"flex h-10 w-10 items-center justify-center rounded-lg " + (accent ? "bg-danger/10 text-danger" : "bg-primary/10 text-primary")}>
+        <div className={"flex h-10 w-10 items-center justify-center rounded-lg " + s.icon}>
           <Icon className="h-5 w-5" />
         </div>
       </div>
