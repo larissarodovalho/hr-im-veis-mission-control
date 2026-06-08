@@ -54,13 +54,20 @@ export function defaultForRole(key: MenuKey, roles: AppRole[]): boolean {
     hasSecretaria && !isAdmin && !roles.includes("gestor") && !hasCorretor && !hasMarketing;
 
   if (secretariaOnly) return key === "agenda" || key === "minha-conta";
-  if (marketingOnly) return key === "imoveis" || key === "agenda" || key === "minha-conta";
+  if (marketingOnly)
+    return key === "dashboard" || key === "imoveis" || key === "agenda" || key === "minha-conta";
 
   // Admin/gestor see everything
   if (isAdmin || isGestor) return true;
 
-  // Corretor / other staff: base nav + minha-conta, no admin section
-  if (key === "relatorios" || key === "newsletter" || key === "usuarios" || key === "configuracoes") {
+  // Corretor / other staff: base nav + minha-conta, no dashboard, no admin section
+  if (
+    key === "dashboard" ||
+    key === "relatorios" ||
+    key === "newsletter" ||
+    key === "usuarios" ||
+    key === "configuracoes"
+  ) {
     return false;
   }
   return true;
