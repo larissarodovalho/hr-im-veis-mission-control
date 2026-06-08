@@ -98,12 +98,6 @@ Deno.serve(async (req) => {
       })
     }
 
-    if (sendErr) {
-      console.error('send-transactional-email erro', sendErr)
-      return new Response(JSON.stringify({ error: sendErr.message }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
 
     return new Response(JSON.stringify({ ok: true, email, imoveis: imoveisData.length }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
