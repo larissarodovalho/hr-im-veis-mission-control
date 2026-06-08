@@ -67,14 +67,16 @@ Deno.serve(async (req) => {
         area_util: im.area_util,
       }))
 
-    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+    const apiKey = Deno.env.get('SUPABASE_PUBLISHABLE_KEY')
+      || Deno.env.get('SUPABASE_ANON_KEY')
+      || ''
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const sendRes = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${anonKey}`,
-        apikey: anonKey,
+        Authorization: `Bearer ${apiKey}`,
+        apikey: apiKey,
       },
       body: JSON.stringify({
         templateName: 'newsletter-weekly',
