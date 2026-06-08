@@ -16,10 +16,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Mail, Download, Search, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import NewsletterCampanhas from "./NewsletterCampanhas";
 
 type Subscriber = {
   id: string;
@@ -115,13 +117,27 @@ export default function Newsletter() {
             <Mail className="h-6 w-6" /> Newsletter
           </h1>
           <p className="text-sm text-muted-foreground">
-            Inscritos do site recebendo informações do mercado imobiliário.
+            Inscritos do site e campanhas de informativo por e-mail.
           </p>
         </div>
-        <Button onClick={exportCsv} variant="outline" disabled={!filtered.length}>
-          <Download className="h-4 w-4 mr-2" /> Exportar CSV
-        </Button>
       </div>
+
+      <Tabs defaultValue="inscritos">
+        <TabsList>
+          <TabsTrigger value="inscritos">Inscritos</TabsTrigger>
+          <TabsTrigger value="campanhas">Campanhas</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="campanhas" className="mt-4">
+          <NewsletterCampanhas />
+        </TabsContent>
+
+        <TabsContent value="inscritos" className="mt-4 space-y-6">
+        <div className="flex justify-end">
+          <Button onClick={exportCsv} variant="outline" disabled={!filtered.length}>
+            <Download className="h-4 w-4 mr-2" /> Exportar CSV
+          </Button>
+        </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-4">
@@ -239,6 +255,8 @@ export default function Newsletter() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
