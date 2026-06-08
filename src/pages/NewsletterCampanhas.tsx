@@ -145,7 +145,7 @@ export default function NewsletterCampanhas() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={() => { setTesteEmail("larissadefreitas@hotmail.com"); setTesteOpen(true); }}>
+        <Button variant="outline" onClick={() => { setTesteEmail(""); setTesteOpen(true); }}>
           <Send className="h-4 w-4 mr-2" /> Enviar email de teste
         </Button>
         <Button onClick={() => { setEditing(null); setOpen(true); }}>
