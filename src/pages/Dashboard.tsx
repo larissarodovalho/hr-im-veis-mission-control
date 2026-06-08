@@ -155,12 +155,25 @@ export default function Dashboard() {
       </header>
 
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPI icon={Users} label="Total de leads" value={total} />
-        <KPI icon={TrendingUp} label="Taxa de conversão" value={`${rate}%`} />
-        <KPI icon={Calendar} label="Reuniões este mês" value={reunioesMes} />
-        <KPI icon={Clock} label="Sem atendimento (3d+)" value={overdue.length} accent={overdue.length > 0} />
-      </div>
+      {(() => {
+        const ATENDIMENTO_STAGES = new Set(["Em Contato","Conversa Ativa","IA de acompanhamento","Manual de acompanhamento","Reunião Agendada","Visita","Proposta"]);
+        const emAtendimento = leads.filter(l => ATENDIMENTO_STAGES.has(l.etapa_funil)).length;
+        const novosSemContato = leads.filter(l => l.etapa_funil === "Novo Lead").length;
+        const fechados = leads.filter(l => l.etapa_funil === "Fechado").length;
+        const perdidos = leads.filter(l => l.etapa_funil === "Perdido").length;
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <KPI icon={Users} label="Total de leads" value={total} />
+            <KPI icon={Activity} label="Em atendimento" value={emAtendimento} variant="accent" />
+            <KPI icon={UserPlus} label="Novos sem contato" value={novosSemContato} variant={novosSemContato > 0 ? "warning" : "default"} />
+            <KPI icon={Clock} label="Sem atendimento (3d+)" value={overdue.length} variant={overdue.length > 0 ? "danger" : "default"} />
+            <KPI icon={TrendingUp} label="Taxa de conversão" value={`${rate}%`} />
+            <KPI icon={Calendar} label="Reuniões este mês" value={reunioesMes} />
+            <KPI icon={CheckCircle2} label="Fechados" value={fechados} variant="success" />
+            <KPI icon={XCircle} label="Perdidos" value={perdidos} variant="danger" />
+          </div>
+        );
+      })()}
 
       {overdue.length > 0 && (
         <Card className="p-4 md:p-6 border-danger/30 bg-danger/5">
