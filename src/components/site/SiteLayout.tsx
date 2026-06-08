@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import hrLogo from "@/assets/logo-hr-branco.png";
 import { createWhatsAppUrl, openWhatsApp } from "@/lib/whatsapp";
 import ScrollToTop from "./ScrollToTop";
+import { useTrackPageview } from "@/lib/siteAnalytics";
 
 const navLinks = [
   { label: "Início", to: "/" },
@@ -17,6 +18,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  useTrackPageview();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
