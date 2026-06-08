@@ -67,7 +67,9 @@ Deno.serve(async (req) => {
         area_util: im.area_util,
       }))
 
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const { error: sendErr } = await supabase.functions.invoke('send-transactional-email', {
+      headers: { Authorization: `Bearer ${serviceKey}` },
       body: {
         templateName: 'newsletter-weekly',
         recipientEmail: email,
