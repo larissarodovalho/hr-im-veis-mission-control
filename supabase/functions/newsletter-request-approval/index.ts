@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
         if (!p.email) continue
         await supabase.functions.invoke('send-transactional-email', {
           body: {
-            templateName: 'newsletter-weekly-approval',
+            templateName: 'newsletter-weekly',
             recipientEmail: p.email,
             idempotencyKey: `nl-approval-${campanha_id}-${p.user_id}`,
             // Reaproveita template newsletter-weekly como aviso simples:
