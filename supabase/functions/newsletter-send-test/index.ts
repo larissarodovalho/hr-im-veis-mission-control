@@ -68,9 +68,15 @@ Deno.serve(async (req) => {
       }))
 
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const { error: sendErr } = await supabase.functions.invoke('send-transactional-email', {
-      headers: { Authorization: `Bearer ${serviceKey}` },
-      body: {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const sendRes = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${serviceKey}`,
+        apikey: serviceKey,
+      },
+      body: JSON.stringify({
         templateName: 'newsletter-weekly',
         recipientEmail: email,
         idempotencyKey: `newsletter-test-${Date.now()}-${email}`,
@@ -81,8 +87,16 @@ Deno.serve(async (req) => {
             'Este é um e-mail de teste do informativo HR Imóveis. O mercado de Sinop segue aquecido, com boa procura por imóveis prontos para morar nas regiões centrais e bairros planejados.\n\nSelecionamos abaixo alguns destaques do nosso catálogo para você conferir o visual completo do e-mail.',
           imoveis: imoveisData,
         },
-      },
+      }),
     })
+
+    if (!sendRes.ok) {
+      const body = await sendRes.text()
+      console.error('send-transactional-email http', sendRes.status, body)
+      return new Response(JSON.stringify({ error: `send falhou: ${sendRes.status} ${body}` }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     if (sendErr) {
       console.error('send-transactional-email erro', sendErr)
