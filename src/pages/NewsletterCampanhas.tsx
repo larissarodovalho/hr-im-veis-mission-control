@@ -92,13 +92,53 @@ export default function NewsletterCampanhas() {
   const handleTeste = async () => {
     if (!testeEmail.trim()) return toast.error("Informe o email");
     setTestando(true);
-    const { error } = await supabase.functions.invoke("newsletter-send-test", {
-      body: { email: testeEmail.trim() },
-    });
-    setTestando(false);
-    if (error) return toast.error("Erro: " + error.message);
-    toast.success("Email de teste enfileirado! Chega em alguns segundos.");
-    setTesteOpen(false);
+    try {
+      // Busca até 3 imóveis disponíveis com foto
+      const { data: imoveis } = await supabase
+        .from("imoveis")
+        .select("id,titulo,cidade,bairro,valor,fotos,codigo,quartos,vagas,area_util,status")
+        .eq("status", "disponivel")
+        .order("created_at", { ascending: false })
+        .limit(12);
+      const imoveisData = ((imoveis ?? []) as any[])
+        .filter((im) => Array.isArray(im.fotos) && im.fotos.length)
+        .slice(0, 3)
+        .map((im) => ({
+          id: im.id,
+          titulo: im.titulo,
+          cidade: im.cidade,
+          bairro: im.bairro,
+          valor: im.valor,
+          foto: im.fotos[0],
+          codigo: im.codigo,
+          quartos: im.quartos,
+          vagas: im.vagas,
+          area_util: im.area_util,
+        }));
+
+      const { error } = await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "newsletter-weekly",
+          recipientEmail: testeEmail.trim(),
+          idempotencyKey: `newsletter-test-${Date.now()}-${testeEmail.trim()}`,
+          purpose: "transactional",
+          templateData: {
+            assunto: "Novidades do mercado imobiliário — Sinop",
+            manchete: "O que está movimentando o mercado esta semana",
+            corpo:
+              "Este é um e-mail de teste do informativo HR Imóveis. O mercado de Sinop segue aquecido, com boa procura por imóveis prontos para morar nas regiões centrais e bairros planejados.\n\nSelecionamos abaixo alguns destaques do nosso catálogo para você conferir o visual completo do e-mail.",
+            imoveis: imoveisData,
+          },
+        },
+      });
+      if (error) throw error;
+      toast.success("Email de teste enfileirado! Chega em alguns segundos.");
+      setTesteOpen(false);
+    } catch (e: any) {
+      toast.error("Erro: " + (e?.message ?? "falha ao enviar"));
+    } finally {
+      setTestando(false);
+    }
   };
 
   return (
