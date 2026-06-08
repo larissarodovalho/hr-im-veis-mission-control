@@ -13,8 +13,6 @@ import {
 
 const CHART_COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--success))", "hsl(var(--warning))", "hsl(var(--danger))", "hsl(var(--muted-foreground))"];
 
-// Origens consideradas no dashboard — campanhas, atendente virtual e leads orgânicos (site/indicação)
-const CAMPAIGN_SOURCES = new Set(["meta_ads", "google_ads", "ia_chat", "webhook", "whatsapp", "site", "indicacao"]);
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -82,23 +80,16 @@ export default function Dashboard() {
     return siteVisits.reduce((a, r) => a + r.visitantes_unicos, 0);
   }, [siteVisits]);
 
-  // KPIs principais: somente leads vindos de campanhas / atendente virtual
-  const campaignLeads = useMemo(
-    () => leads.filter(l => CAMPAIGN_SOURCES.has((l.origem || "").toLowerCase())),
-    [leads]
-  );
-  const campaignLeadIds = useMemo(
-    () => new Set(campaignLeads.map(l => l.id)),
-    [campaignLeads]
-  );
+  // KPIs principais: todos os leads (sincronizado com a aba Leads)
+  const leadIds = useMemo(() => new Set(leads.map(l => l.id)), [leads]);
 
-  const total = campaignLeads.length;
+  const total = leads.length;
   const reunioesMesList = useMemo(
     () => reunioes.filter(m => {
       const d = new Date(m.agendada_para);
-      return d >= monthStart && d < monthEnd && m.lead_id && campaignLeadIds.has(m.lead_id);
+      return d >= monthStart && d < monthEnd && m.lead_id && leadIds.has(m.lead_id);
     }),
-    [reunioes, monthStart, monthEnd, campaignLeadIds]
+    [reunioes, monthStart, monthEnd, leadIds]
   );
   const leadsComReuniao = new Set(
     reunioesMesList
@@ -107,12 +98,12 @@ export default function Dashboard() {
       .filter(Boolean)
   ).size;
   const rate = total ? Math.round((leadsComReuniao / total) * 100) : 0;
-  const overdue = campaignLeads.filter(l => {
+  const overdue = leads.filter(l => {
     const d = daysSince(l.ultima_interacao ?? l.created_at);
     return d !== null && d > 3 && !["Fechado", "Perdido"].includes(l.etapa_funil);
   });
   const reunioesMes = reunioesMesList.length;
-  const bySource = campaignLeads.reduce<Record<string, number>>((acc, l) => { const k = l.origem || "manual"; acc[k] = (acc[k] || 0) + 1; return acc; }, {});
+  const bySource = leads.reduce<Record<string, number>>((acc, l) => { const k = l.origem || "manual"; acc[k] = (acc[k] || 0) + 1; return acc; }, {});
 
 
   const leadsTrend = useMemo(() => {
@@ -121,9 +112,9 @@ export default function Dashboard() {
       const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - i);
       days.push({ date: d.toISOString().slice(0,10), label: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }), novos: 0 });
     }
-    campaignLeads.forEach(l => { const k = new Date(l.created_at).toISOString().slice(0,10); const day = days.find(d => d.date === k); if (day) day.novos += 1; });
+    leads.forEach(l => { const k = new Date(l.created_at).toISOString().slice(0,10); const day = days.find(d => d.date === k); if (day) day.novos += 1; });
     return days;
-  }, [campaignLeads]);
+  }, [leads]);
 
 
   const reunioesByStatus = useMemo(() => {
@@ -160,7 +151,7 @@ export default function Dashboard() {
     <div className="p-4 md:p-8 pb-12 space-y-6">
       <header>
         <h1 className="font-display text-2xl md:text-3xl font-semibold">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Leads de campanhas e do atendente virtual</p>
+        <p className="text-muted-foreground mt-1">Visão geral de todos os leads</p>
       </header>
 
 
@@ -346,7 +337,7 @@ export default function Dashboard() {
           <h2 className="font-display text-xl font-semibold mb-4">Leads por etapa</h2>
           <div className="space-y-2">
             {STAGES.map(s => {
-              const count = campaignLeads.filter(l => l.etapa_funil === s.id).length;
+              const count = leads.filter(l => l.etapa_funil === s.id).length;
               const pct = total ? (count / total) * 100 : 0;
               return (
                 <div key={s.id}>
