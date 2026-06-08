@@ -151,7 +151,7 @@ export default function Dashboard() {
     <div className="p-4 md:p-8 pb-12 space-y-6">
       <header>
         <h1 className="font-display text-2xl md:text-3xl font-semibold">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Leads de campanhas e do atendente virtual</p>
+        <p className="text-muted-foreground mt-1">Visão geral de todos os leads</p>
       </header>
 
 
