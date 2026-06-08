@@ -256,7 +256,7 @@ export default function Dashboard() {
                   formatter={(value: any, name: any) => [value, name === "visitas" ? "Acessos" : "Visitantes únicos"]}
                 />
                 <Area type="monotone" dataKey="visitas" name="visitas" stroke="hsl(var(--accent))" strokeWidth={2} fill="url(#gSiteVisits)" />
-                <Line type="monotone" dataKey="visitantes_unicos" name="visitantes_unicos" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+
               </AreaChart>
             </ResponsiveContainer>
           )}
