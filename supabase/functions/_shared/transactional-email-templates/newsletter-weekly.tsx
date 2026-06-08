@@ -36,6 +36,7 @@ interface NewsletterProps {
   manchete?: string
   corpo?: string
   imoveis?: ImovelItem[]
+  preheader?: string
 }
 
 const fmtBRL = (v?: number | null) =>
@@ -44,91 +45,97 @@ const fmtBRL = (v?: number | null) =>
     : 'Sob consulta'
 
 const Email = ({
-  assunto = 'Novidades HR Imóveis',
-  manchete = 'O que está movimentando o mercado',
+  assunto = 'HR Imóveis · Boletim de Sinop',
+  manchete = 'Boletim semanal do mercado imobiliário de Sinop',
   corpo = '',
   imoveis = [],
-}: NewsletterProps) => (
-  <Html lang="pt-BR" dir="ltr">
-    <Head />
-    <Preview>{assunto}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Section style={brandHeader}>
-          <Text style={brandName}>HR IMÓVEIS</Text>
-          <Text style={brandTagline}>Sinop — Mato Grosso</Text>
-        </Section>
+  preheader,
+}: NewsletterProps) => {
+  const preview =
+    preheader ||
+    (corpo ? corpo.replace(/\s+/g, ' ').slice(0, 110) : 'Atualização do mercado imobiliário de Sinop e imóveis selecionados.')
+  return (
+    <Html lang="pt-BR" dir="ltr">
+      <Head />
+      <Preview>{preview}</Preview>
+      <Body style={main}>
+        <Container style={container}>
+          <Section style={brandHeader}>
+            <Text style={brandName}>HR IMÓVEIS</Text>
+            <Text style={brandTagline}>Sinop · Mato Grosso</Text>
+          </Section>
 
-        <Section style={card}>
-          {manchete ? <Heading style={h1}>{manchete}</Heading> : null}
-          {corpo
-            ? corpo.split(/\n{2,}/).map((p, i) => (
-                <Text key={i} style={text}>{p}</Text>
-              ))
-            : null}
+          <Section style={card}>
+            {manchete ? <Heading style={h1}>{manchete}</Heading> : null}
+            {corpo
+              ? corpo.split(/\n{2,}/).map((p, i) => (
+                  <Text key={i} style={text}>{p}</Text>
+                ))
+              : null}
 
-          {imoveis.length > 0 && (
-            <>
-              <Hr style={hr} />
-              <Text style={label}>IMÓVEIS EM DESTAQUE</Text>
-              {imoveis.map((im) => {
-                const url = `${SITE_URL}/imovel/${im.id}`
-                const local = [im.bairro, im.cidade].filter(Boolean).join(' · ')
-                const specs = [
-                  im.quartos ? `${im.quartos} quarto${im.quartos > 1 ? 's' : ''}` : null,
-                  im.vagas ? `${im.vagas} vaga${im.vagas > 1 ? 's' : ''}` : null,
-                  im.area_util ? `${im.area_util} m²` : null,
-                ].filter(Boolean).join(' · ')
-                return (
-                  <Section key={im.id} style={imovelCard}>
-                    {im.foto ? (
-                      <Link href={url}>
-                        <Img src={im.foto} alt={im.titulo} style={imovelImg} />
-                      </Link>
-                    ) : null}
-                    <Text style={imovelTitulo}>
-                      <Link href={url} style={linkTitulo}>{im.titulo}</Link>
-                    </Text>
-                    {local ? <Text style={imovelMeta}>{local}</Text> : null}
-                    {specs ? <Text style={imovelMeta}>{specs}</Text> : null}
-                    <Text style={imovelPreco}>{fmtBRL(im.valor)}</Text>
-                    <Text style={imovelLink}>
-                      <Link href={url} style={linkStyle}>Ver detalhes →</Link>
-                    </Text>
-                  </Section>
-                )
-              })}
-            </>
-          )}
+            {imoveis.length > 0 && (
+              <>
+                <Hr style={hr} />
+                <Text style={label}>Imóveis selecionados</Text>
+                {imoveis.map((im) => {
+                  const url = `${SITE_URL}/imovel/${im.id}`
+                  const local = [im.bairro, im.cidade].filter(Boolean).join(' · ')
+                  const specs = [
+                    im.quartos ? `${im.quartos} quarto${im.quartos > 1 ? 's' : ''}` : null,
+                    im.vagas ? `${im.vagas} vaga${im.vagas > 1 ? 's' : ''}` : null,
+                    im.area_util ? `${im.area_util} m²` : null,
+                  ].filter(Boolean).join(' · ')
+                  const altText = `Foto do imóvel ${im.titulo}${local ? ` em ${local}` : ''}`
+                  return (
+                    <Section key={im.id} style={imovelCard}>
+                      {im.foto ? (
+                        <Img src={im.foto} alt={altText} style={imovelImg} />
+                      ) : null}
+                      <Text style={imovelTitulo}>{im.titulo}</Text>
+                      {local ? <Text style={imovelMeta}>{local}</Text> : null}
+                      {specs ? <Text style={imovelMeta}>{specs}</Text> : null}
+                      <Text style={imovelPreco}>{fmtBRL(im.valor)}</Text>
+                      <Text style={imovelLink}>
+                        <Link href={url} style={linkStyle}>Ver detalhes do imóvel</Link>
+                      </Text>
+                    </Section>
+                  )
+                })}
+              </>
+            )}
 
-          <Hr style={hr} />
-          <Text style={footerNote}>
-            Quer falar com um corretor? Visite{' '}
-            <Link href={SITE_URL} style={linkStyle}>www.hrimoveis.com</Link>.
+            <Hr style={hr} />
+            <Text style={footerNote}>
+              Para falar com um corretor, responda este e-mail ou acesse{' '}
+              <Link href={SITE_URL} style={linkStyle}>www.hrimoveis.com</Link>.
+            </Text>
+          </Section>
+
+          <Text style={footer}>
+            {SITE_NAME} — Avenida das Itaúbas, Sinop/MT.{'\n'}
+            Você recebe este boletim porque se inscreveu no informativo do {SITE_NAME}.
           </Text>
-        </Section>
-
-        <Text style={footer}>
-          Você está recebendo este e-mail porque se inscreveu no informativo do {SITE_NAME}.
-        </Text>
-      </Container>
-    </Body>
-  </Html>
-)
+        </Container>
+      </Body>
+    </Html>
+  )
+}
 
 export const template = {
   component: Email,
-  subject: (data: Record<string, any>) => (data?.assunto as string) || 'Novidades HR Imóveis',
+  subject: (data: Record<string, any>) =>
+    (data?.assunto as string) || 'HR Imóveis · Boletim de Sinop',
   displayName: 'Newsletter semanal',
   previewData: {
-    assunto: 'Destaques da semana — HR Imóveis',
-    manchete: 'O mercado de Sinop em movimento',
+    assunto: 'HR Imóveis · Boletim semanal de Sinop',
+    manchete: 'Como está o mercado imobiliário de Sinop nesta semana',
     corpo:
-      'Esta semana selecionamos imóveis com excelente liquidez na região central. O mercado segue aquecido para imóveis prontos para morar.\n\nConfira os destaques abaixo e fale com nosso time para uma visita.',
+      'Sinop segue com bom volume de procura por imóveis prontos para morar, especialmente nas regiões centrais e em bairros planejados como o Jardim Maringá. Imóveis de 3 quartos com vaga coberta continuam sendo os mais buscados pelas famílias que estão se mudando para a cidade.\n\nNeste boletim, nossa equipe reuniu alguns imóveis do nosso portfólio que vale a pena conhecer. Se quiser agendar uma visita ou tirar dúvidas sobre financiamento, é só responder este e-mail que um corretor entra em contato.',
+    preheader: 'Panorama do mercado de Sinop e imóveis selecionados pela equipe.',
     imoveis: [
       {
         id: 'demo',
-        titulo: 'Casa moderna no Jardim Maringá',
+        titulo: 'Casa no Jardim Maringá',
         cidade: 'Sinop',
         bairro: 'Jardim Maringá',
         valor: 1250000,
@@ -144,9 +151,10 @@ export const template = {
 
 const main = {
   backgroundColor: '#ffffff',
-  fontFamily: 'Montserrat, Helvetica, Arial, sans-serif',
+  fontFamily: 'Helvetica, Arial, sans-serif',
   margin: 0,
   padding: '24px 12px',
+  color: '#2B2A29',
 }
 const container = { maxWidth: '600px', margin: '0 auto' }
 const brandHeader = { textAlign: 'center' as const, padding: '8px 0 24px' }
@@ -159,8 +167,7 @@ const brandName = {
 }
 const brandTagline = {
   fontSize: '11px',
-  letterSpacing: '0.35em',
-  textTransform: 'uppercase' as const,
+  letterSpacing: '0.28em',
   color: '#A8A6A2',
   margin: '6px 0 0',
 }
@@ -173,9 +180,8 @@ const card = {
 const h1 = { fontSize: '22px', fontWeight: 500, color: '#2B2A29', margin: '0 0 14px' }
 const text = { fontSize: '15px', color: '#3B3A38', lineHeight: '1.65', margin: '0 0 14px' }
 const label = {
-  fontSize: '11px',
-  letterSpacing: '0.18em',
-  textTransform: 'uppercase' as const,
+  fontSize: '12px',
+  letterSpacing: '0.12em',
   color: '#8a8783',
   margin: '8px 0 12px',
 }
@@ -197,8 +203,7 @@ const imovelImg = {
 const imovelTitulo = { fontSize: '16px', fontWeight: 600, color: '#2B2A29', margin: '0 0 4px' }
 const imovelMeta = { fontSize: '13px', color: '#6e6c68', margin: '2px 0' }
 const imovelPreco = { fontSize: '17px', fontWeight: 600, color: '#2B2A29', margin: '10px 0 4px' }
-const imovelLink = { fontSize: '13px', margin: '4px 0 0' }
-const linkTitulo = { color: '#2B2A29', textDecoration: 'none' }
+const imovelLink = { fontSize: '13px', margin: '8px 0 0' }
 const linkStyle = { color: '#2B2A29', textDecoration: 'underline' }
 const hr = { borderColor: '#EDEAE4', margin: '22px 0' }
 const footerNote = { fontSize: '13px', color: '#6e6c68', textAlign: 'center' as const, margin: 0 }
@@ -208,4 +213,5 @@ const footer = {
   margin: '22px 0 0',
   textAlign: 'center' as const,
   lineHeight: '1.5',
+  whiteSpace: 'pre-line' as const,
 }
