@@ -1955,6 +1955,33 @@ export type Database = {
         }
         Relationships: []
       }
+      site_visits: {
+        Row: {
+          created_at: string
+          id: string
+          path: string
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          path: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          path?: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       social_metrics_daily: {
         Row: {
           alcance: number | null
@@ -2689,6 +2716,14 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      get_site_visits_daily: {
+        Args: { days?: number }
+        Returns: {
+          dia: string
+          visitantes_unicos: number
+          visitas: number
+        }[]
       }
       has_role: {
         Args: {

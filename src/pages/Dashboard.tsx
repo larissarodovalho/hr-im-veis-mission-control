@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { STAGES, daysSince, slaColor, slaLabel, SOURCES } from "@/lib/leads";
 import { Link, useNavigate } from "react-router-dom";
-import { TrendingUp, Users, Clock, Calendar, AlertTriangle, Phone, MapPin } from "lucide-react";
+import { TrendingUp, Users, Clock, Calendar, AlertTriangle, Phone, MapPin, Globe } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   BarChart, Bar, Cell, LineChart, Line,
@@ -17,10 +18,13 @@ const CAMPAIGN_SOURCES = new Set(["meta_ads", "google_ads", "ia_chat", "webhook"
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { roles } = useAuth();
+  const canSeeSiteVisits = roles.includes("admin") || roles.includes("gestor");
   const [leads, setLeads] = useState<any[]>([]);
   const [reunioes, setReunioes] = useState<any[]>([]);
   const [visitas, setVisitas] = useState<any[]>([]);
   const [ligacoes, setLigacoes] = useState<any[]>([]);
+  const [siteVisits, setSiteVisits] = useState<Array<{ dia: string; visitas: number; visitantes_unicos: number }>>([]);
 
   const monthStart = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); d.setDate(1); return d; }, []);
   const monthEnd = useMemo(() => { const d = new Date(monthStart); d.setMonth(d.getMonth() + 1); return d; }, [monthStart]);
@@ -46,6 +50,37 @@ export default function Dashboard() {
       setLeads(l.data ?? []); setReunioes(r.data ?? []); setVisitas(vMerged); setLigacoes(cMerged);
     })();
   }, [monthStart, monthEnd]);
+
+  useEffect(() => {
+    if (!canSeeSiteVisits) return;
+    (async () => {
+      const { data } = await supabase.rpc("get_site_visits_daily" as any, { days: 30 });
+      const rows = ((data as any[]) ?? []).map((r) => ({
+        dia: r.dia,
+        visitas: Number(r.visitas) || 0,
+        visitantes_unicos: Number(r.visitantes_unicos) || 0,
+      }));
+      setSiteVisits(rows);
+    })();
+  }, [canSeeSiteVisits]);
+
+  const siteVisitsChart = useMemo(
+    () =>
+      siteVisits.map((r) => ({
+        ...r,
+        label: new Date(r.dia + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+      })),
+    [siteVisits],
+  );
+  const siteVisitsTotal = useMemo(() => siteVisits.reduce((a, r) => a + r.visitas, 0), [siteVisits]);
+  const siteVisitsToday = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return siteVisits.find((r) => r.dia === today)?.visitas ?? 0;
+  }, [siteVisits]);
+  const siteUniqueTotal = useMemo(() => {
+    // Soma diária aproxima visitantes únicos (não deduplica entre dias).
+    return siteVisits.reduce((a, r) => a + r.visitantes_unicos, 0);
+  }, [siteVisits]);
 
   // KPIs principais: somente leads vindos de campanhas / atendente virtual
   const campaignLeads = useMemo(
@@ -184,6 +219,51 @@ export default function Dashboard() {
           </AreaChart>
         </ResponsiveContainer>
       </Card>
+
+      {canSeeSiteVisits && (
+        <Card className="p-4 md:p-6">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <div>
+              <h2 className="font-display text-xl font-semibold flex items-center gap-2">
+                <Globe className="h-5 w-5 text-accent" /> Acessos ao site — últimos 30 dias
+              </h2>
+              <p className="text-sm text-muted-foreground">Pageviews registrados em hrimoveis.com</p>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <Badge variant="secondary">Hoje: {siteVisitsToday}</Badge>
+              <Badge variant="secondary">30d: {siteVisitsTotal}</Badge>
+              <Badge variant="outline">Visitantes únicos (soma): {siteUniqueTotal}</Badge>
+            </div>
+          </div>
+          {siteVisitsTotal === 0 ? (
+            <p className="text-sm text-muted-foreground py-12 text-center">
+              Ainda sem acessos registrados. Os dados aparecem aqui assim que visitantes navegarem no site.
+            </p>
+          ) : (
+            <ResponsiveContainer width="100%" height={260}>
+              <AreaChart data={siteVisitsChart} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gSiteVisits" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.45} />
+                    <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} interval={3} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                  formatter={(value: any, name: any) => [value, name === "visitas" ? "Acessos" : "Visitantes únicos"]}
+                />
+                <Area type="monotone" dataKey="visitas" name="visitas" stroke="hsl(var(--accent))" strokeWidth={2} fill="url(#gSiteVisits)" />
+
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </Card>
+      )}
+
+
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card
