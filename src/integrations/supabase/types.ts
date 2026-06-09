@@ -2811,6 +2811,7 @@ export type Database = {
       }
     }
     Functions: {
+      conta_tem_captacao: { Args: { _conta_id: string }; Returns: boolean }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
