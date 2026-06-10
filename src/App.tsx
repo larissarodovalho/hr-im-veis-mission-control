@@ -98,20 +98,20 @@ const App = () => (
               }
             >
               <Route index element={<StaffRoute allowMarketing><Dashboard /></StaffRoute>} />
-              <Route path="leads" element={<MarketingRoute><Leads /></MarketingRoute>} />
-              <Route path="leads/:id" element={<MarketingRoute><LeadDetail /></MarketingRoute>} />
-              <Route path="contas" element={<MarketingRoute><Accounts /></MarketingRoute>} />
+              <Route path="leads" element={<MarketingRoute menuKey="leads"><Leads /></MarketingRoute>} />
+              <Route path="leads/:id" element={<MarketingRoute menuKey="leads"><LeadDetail /></MarketingRoute>} />
+              <Route path="contas" element={<MarketingRoute menuKey="contas"><Accounts /></MarketingRoute>} />
               <Route path="contas/:id" element={<AccountDetail />} />
               <Route path="imoveis" element={<Imoveis />} />
-              <Route path="whatsapp" element={<MarketingRoute><WhatsApp /></MarketingRoute>} />
-              <Route path="reunioes" element={<MarketingRoute><Meetings /></MarketingRoute>} />
-              <Route path="ligacoes" element={<MarketingRoute><Calls /></MarketingRoute>} />
-              <Route path="visitas" element={<MarketingRoute><Visits /></MarketingRoute>} />
+              <Route path="whatsapp" element={<MarketingRoute menuKey="whatsapp"><WhatsApp /></MarketingRoute>} />
+              <Route path="reunioes" element={<MarketingRoute menuKey="reunioes"><Meetings /></MarketingRoute>} />
+              <Route path="ligacoes" element={<MarketingRoute menuKey="ligacoes"><Calls /></MarketingRoute>} />
+              <Route path="visitas" element={<MarketingRoute menuKey="visitas"><Visits /></MarketingRoute>} />
               <Route path="agenda" element={<Schedule />} />
-              <Route path="tarefas" element={<MarketingRoute><Tasks /></MarketingRoute>} />
-              <Route path="documentos" element={<MarketingRoute><Documents /></MarketingRoute>} />
-              <Route path="documentos/:id" element={<MarketingRoute><DocumentDetail /></MarketingRoute>} />
-              <Route path="contratos" element={<MarketingRoute><Contratos /></MarketingRoute>} />
+              <Route path="tarefas" element={<MarketingRoute menuKey="tarefas"><Tasks /></MarketingRoute>} />
+              <Route path="documentos" element={<MarketingRoute menuKey="documentos"><Documents /></MarketingRoute>} />
+              <Route path="documentos/:id" element={<MarketingRoute menuKey="documentos"><DocumentDetail /></MarketingRoute>} />
+              <Route path="contratos" element={<MarketingRoute menuKey="contratos"><Contratos /></MarketingRoute>} />
               <Route path="relatorios" element={<StaffRoute><Reports /></StaffRoute>} />
               <Route path="usuarios" element={<StaffRoute><Users /></StaffRoute>} />
               <Route path="configuracoes" element={<StaffRoute><ConfiguracoesPage /></StaffRoute>} />
