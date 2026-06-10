@@ -101,7 +101,7 @@ const App = () => (
               <Route path="leads" element={<MarketingRoute><Leads /></MarketingRoute>} />
               <Route path="leads/:id" element={<MarketingRoute><LeadDetail /></MarketingRoute>} />
               <Route path="contas" element={<MarketingRoute><Accounts /></MarketingRoute>} />
-              <Route path="contas/:id" element={<MarketingRoute><AccountDetail /></MarketingRoute>} />
+              <Route path="contas/:id" element={<AccountDetail />} />
               <Route path="imoveis" element={<Imoveis />} />
               <Route path="whatsapp" element={<MarketingRoute><WhatsApp /></MarketingRoute>} />
               <Route path="reunioes" element={<MarketingRoute><Meetings /></MarketingRoute>} />
