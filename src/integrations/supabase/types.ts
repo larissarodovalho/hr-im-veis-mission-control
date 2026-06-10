@@ -2855,6 +2855,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      user_has_menu_override: {
+        Args: { _menu_key: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "gestor" | "corretor" | "marketing" | "secretaria"
