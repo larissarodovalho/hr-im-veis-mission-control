@@ -8,6 +8,7 @@ import Papa from "papaparse";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
 import FunilContasReport from "@/components/reports/FunilContasReport";
+import LeadsParaContasReport from "@/components/reports/LeadsParaContasReport";
 import FaturamentoReport from "@/components/reports/FaturamentoReport";
 import ImoveisReport from "@/components/reports/ImoveisReport";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -85,6 +86,7 @@ export default function Reports() {
 
         <TabsContent value="performance" className="space-y-4 md:space-y-6 mt-4">
           <FunilContasReport />
+          <LeadsParaContasReport />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="p-4 md:p-6">
