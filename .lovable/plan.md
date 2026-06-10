@@ -1,41 +1,34 @@
 ## Problema
 
-A política que adicionei em `contas` (`Marketing sees contas com captacao`) faz `EXISTS (SELECT ... FROM captacoes_imovel)`. A política de SELECT em `captacoes_imovel` por sua vez faz `EXISTS (SELECT ... FROM contas)`. Isso gera recursão infinita no RLS — o Postgres aborta a query e nenhuma captação aparece (nem para admin/gestor/corretor).
+1. Na aba **Imóveis → Captação**, ao clicar no card o link aponta para `/crm/contas/:id`, mas o usuário marketing é redirecionado de volta para `/crm/imoveis`. Isso acontece porque a rota está envolvida pelo `MarketingRoute`, que bloqueia usuários só-marketing.
+2. Mesmo se a rota fosse liberada, o marketing **não consegue agendar/editar captação** dentro da conta porque o fluxo "Captação" no `ContaAgendaQuickAdd` faz `UPDATE` em `contas.etapa_funil`, e a policy atual de UPDATE em `contas` só permite admin/gestor/responsável.
 
 ## Correção
 
-Quebrar o ciclo com uma função `SECURITY DEFINER` que ignora RLS ao checar se uma conta tem captação. A política de `contas` chama essa função em vez de consultar `captacoes_imovel` diretamente.
+### Frontend
+- Em `src/App.tsx`, remover o `MarketingRoute` da rota `/crm/contas/:id` (mantendo nas demais rotas de leads/contas listagem). Assim o marketing consegue abrir a conta vinda do card de captação. O RLS já garante que ele só vê contas com captação (policy `Marketing sees contas com captacao`).
 
-### Migração
+### Backend (migração)
+Adicionar policy de UPDATE em `public.contas` permitindo marketing apenas em contas que tenham captação:
 
 ```sql
--- 1. Função security definer (bypassa RLS)
-CREATE OR REPLACE FUNCTION public.conta_tem_captacao(_conta_id uuid)
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.captacoes_imovel
-    WHERE conta_id = _conta_id
-  )
-$$;
-
--- 2. Recria a política de marketing usando a função
-DROP POLICY IF EXISTS "Marketing sees contas com captacao" ON public.contas;
-
-CREATE POLICY "Marketing sees contas com captacao"
+CREATE POLICY "Marketing updates contas com captacao"
 ON public.contas
-FOR SELECT
+FOR UPDATE
 TO authenticated
 USING (
   has_role(auth.uid(), 'marketing'::app_role)
-  AND public.conta_tem_captacao(contas.id)
+  AND public.conta_tem_captacao(id)
+)
+WITH CHECK (
+  has_role(auth.uid(), 'marketing'::app_role)
+  AND public.conta_tem_captacao(id)
 );
 ```
 
-Sem alterações de frontend. Após aplicada:
-- A recursão acaba e as captações voltam a aparecer para admin/gestor/corretor.
-- Marketing continua vendo nome/telefone/e-mail dos clientes apenas nas contas com captação.
+As policies já existentes em `captacoes_imovel` (INSERT via `is_staff()`, UPDATE para marketing) já cobrem criar/editar a captação em si, então não precisam de mudança.
+
+## Resultado
+- Marketing clica no card em Imóveis → Captação e abre a página da conta normalmente.
+- Marketing consegue agendar/editar captação pelo botão dentro da conta, e a mudança de `etapa_funil` para `captacao_imovel` é aceita.
+- Demais campos da conta continuam editáveis só por admin/gestor/responsável dentro do escopo da policy (marketing pode atualizar, mas apenas em contas que já têm captação — o uso prático é o fluxo de captação).
