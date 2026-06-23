@@ -88,6 +88,9 @@ export default function AccountDetail() {
   const responsavelNome = acc?.responsavel_id
     ? corretores.find(c => c.user_id === acc.responsavel_id)?.nome ?? null
     : null;
+  const criadorNome = acc?.created_by
+    ? corretores.find(c => c.user_id === acc.created_by)?.nome ?? null
+    : null;
 
   if (loadError) {
     return (
