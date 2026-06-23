@@ -35,6 +35,7 @@ export default function Leads() {
   const { user } = useAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [convertedIds, setConvertedIds] = useState<Set<string>>(new Set());
+  const [brokers, setBrokers] = useState<Record<string, string>>({});
   const [view, setView] = useState<"kanban" | "list">("kanban");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"recent" | "idle">("recent");
