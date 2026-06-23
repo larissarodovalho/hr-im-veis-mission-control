@@ -299,6 +299,11 @@ function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, bro
             <UserIcon className="h-2.5 w-2.5" /> Sem responsável
           </Badge>
         )}
+        {creatorName && (
+          <Badge variant="outline" className="text-[10px] gap-0.5 text-muted-foreground" title={`Criado por ${creatorName}`}>
+            <PencilLine className="h-2.5 w-2.5" /> {shortName(creatorName)}
+          </Badge>
+        )}
       </div>
       <div className="mt-2.5 pt-2 border-t flex items-center justify-between gap-2" onPointerDown={e => e.stopPropagation()}>
         <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Follow-up</span>
