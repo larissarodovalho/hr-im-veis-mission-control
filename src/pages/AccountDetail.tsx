@@ -244,6 +244,8 @@ export default function AccountDetail() {
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             Responsável: <span className="text-foreground font-medium">{responsavelNome || "—"}</span>
+            {" · "}
+            Criado por: <span className="text-foreground font-medium">{criadorNome || "—"}</span>
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
