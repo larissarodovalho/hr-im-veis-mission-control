@@ -266,6 +266,7 @@ function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, bro
   const age = ageInDays(lead.created_at);
   const idle = idleDays(lead.ultima_interacao);
   const brokerName = lead.corretor_id ? brokers[lead.corretor_id] : null;
+  const creatorName = lead.created_by && lead.created_by !== lead.corretor_id ? brokers[lead.created_by] : null;
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} style={style} className={"group rounded-lg bg-card border p-3 shadow-soft cursor-grab active:cursor-grabbing relative " + (isDragging ? "opacity-50" : "")}>
       {canDelete && (
