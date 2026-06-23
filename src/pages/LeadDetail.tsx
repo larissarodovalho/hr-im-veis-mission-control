@@ -334,6 +334,11 @@ export default function LeadDetail() {
               {" · "}
               Última interação: <strong className="text-foreground/80">{lead.ultima_interacao ? formatDateBR(lead.ultima_interacao) : "nunca"}</strong>
             </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Responsável: <strong className="text-foreground/80">{lead.corretor_id ? (brokers[lead.corretor_id] || "—") : "—"}</strong>
+              {" · "}
+              Criado por: <strong className="text-foreground/80">{lead.created_by ? (brokers[lead.created_by] || "—") : "—"}</strong>
+            </div>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row sm:flex-wrap lg:items-center gap-2 w-full lg:w-auto">
