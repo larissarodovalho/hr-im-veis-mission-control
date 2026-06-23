@@ -247,7 +247,12 @@ function ContaCard({
         )}
         {responsavelNome && (
           <Badge variant="outline" className={`${ownerColor(a.responsavel_id)} text-[10px]`}>
-            <User className="h-3 w-3 mr-1" /> {responsavelNome}
+            <User className="h-3 w-3 mr-1" /> {shortName(responsavelNome)}
+          </Badge>
+        )}
+        {criadorNome && a.created_by && a.created_by !== a.responsavel_id && (
+          <Badge variant="outline" className="text-[10px] text-muted-foreground" title={`Criado por ${criadorNome}`}>
+            <PencilLine className="h-3 w-3 mr-1" /> {shortName(criadorNome)}
           </Badge>
         )}
       </div>
