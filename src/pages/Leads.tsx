@@ -60,6 +60,11 @@ export default function Leads() {
 
   useEffect(() => {
     load();
+    supabase.from("profiles").select("user_id,nome").then(({ data }) => {
+      const m: Record<string, string> = {};
+      (data ?? []).forEach((p: any) => { if (p.user_id) m[p.user_id] = p.nome || "Sem nome"; });
+      setBrokers(m);
+    });
     const ch = supabase.channel("leads-stream").on("postgres_changes", { event: "*", schema: "public", table: "leads" }, load).subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
