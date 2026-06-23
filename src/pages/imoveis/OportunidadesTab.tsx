@@ -51,7 +51,18 @@ function OportunidadeCard({ op, clienteNome, corretorNome, qtdImoveis, onClick }
       <div className="text-[11px] text-muted-foreground space-y-0.5">
         <div className="flex items-center gap-1">
           {op.cliente_tipo === "lead" ? <User className="h-3 w-3" /> : <Building2 className="h-3 w-3" />}
-          <span className="text-foreground truncate">{clienteNome || "—"}</span>
+          {op.cliente_id ? (
+            <Link
+              to={`/crm/${op.cliente_tipo === "lead" ? "leads" : "contas"}/${op.cliente_id}`}
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="text-foreground truncate hover:underline hover:text-primary"
+            >
+              {clienteNome || "—"}
+            </Link>
+          ) : (
+            <span className="text-foreground truncate">{clienteNome || "—"}</span>
+          )}
         </div>
         {op.cidade && <div>{op.cidade}{op.bairro && ` · ${op.bairro}`}</div>}
         <div className="flex items-center justify-between pt-1">
