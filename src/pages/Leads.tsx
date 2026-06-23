@@ -24,7 +24,7 @@ type Lead = {
   id: string; nome: string; email: string | null; telefone: string | null;
   origem: string | null; etapa_funil: Stage; imovel_interesse: string | null; regiao: string | null;
   valor_estimado: number | null; ultima_interacao: string | null; created_at: string;
-  temperatura: Temperature | null; tags: string[] | null; corretor_id: string | null;
+  temperatura: Temperature | null; tags: string[] | null; corretor_id: string | null; created_by: string | null;
 };
 
 const isUrgent = (l: { tags?: string[] | null; etapa_funil: Stage }) =>
