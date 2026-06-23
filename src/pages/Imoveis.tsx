@@ -7,7 +7,7 @@
 // no site durante todo o ciclo de proposta/fechamento.
 import { useEffect, useMemo, useState } from "react";
 import { formatBRL } from "@/lib/format";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -50,7 +50,13 @@ export default function Imoveis() {
   const [viewing, setViewing] = useState<Imovel | null>(null);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [contas, setContas] = useState<Record<string, string>>({});
-  const [tab, setTab] = useState("disponiveis");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "disponiveis";
+  const setTab = (v: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (v === "disponiveis") next.delete("tab"); else next.set("tab", v);
+    setSearchParams(next, { replace: false });
+  };
   const [anoFiltro, setAnoFiltro] = useState<string>("all");
   const [mesFiltro, setMesFiltro] = useState<string>("all");
   const [captadorFiltro, setCaptadorFiltro] = useState<string>("all");
