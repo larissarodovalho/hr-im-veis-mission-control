@@ -75,10 +75,17 @@ function ownerColor(id?: string | null) {
   return OWNER_PALETTE[h % OWNER_PALETTE.length];
 }
 
+function shortName(name: string) {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
+
 function ContaCard({
   a,
   total,
   responsavelNome,
+  criadorNome,
   owners,
   onMoveStage,
   onChangeOwner,
@@ -87,6 +94,7 @@ function ContaCard({
   a: Account;
   total: number;
   responsavelNome?: string | null;
+  criadorNome?: string | null;
   owners?: { id: string; nome: string }[];
   onMoveStage: (id: string, etapa: EtapaFunil) => void;
   onChangeOwner?: (id: string, userId: string | null) => void;
