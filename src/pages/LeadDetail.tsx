@@ -99,6 +99,15 @@ export default function LeadDetail() {
 
   useEffect(() => { load(); }, [id]);
 
+  useEffect(() => {
+    supabase.from("profiles").select("user_id,nome").then(({ data }) => {
+      const m: Record<string, string> = {};
+      (data ?? []).forEach((p: any) => { if (p.user_id) m[p.user_id] = p.nome || "Sem nome"; });
+      setBrokers(m);
+    });
+  }, []);
+
+
   const updateLead = async (patch: any) => {
     const { error } = await supabase.from("leads").update(patch).eq("id", id);
     if (error) return toast.error(error.message);
