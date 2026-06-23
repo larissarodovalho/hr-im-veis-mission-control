@@ -6,24 +6,9 @@ export function createWhatsAppUrl(message?: string) {
   return `${base}?text=${encodeURIComponent(message)}`;
 }
 
-type WhatsAppClickEvent = {
-  preventDefault: () => void;
-  defaultPrevented?: boolean;
-};
-
-export function openWhatsApp(event?: WhatsAppClickEvent, message?: string) {
-  // Deixa o comportamento nativo do <a target="_blank"> abrir a nova aba.
-  // Só intervém se, por algum motivo, o navegador não tiver aberto nada.
-  if (event?.defaultPrevented) return;
-
-  const url = createWhatsAppUrl(message);
-
-  try {
-    const win = window.open(url, "_blank", "noopener,noreferrer");
-    if (win) {
-      event?.preventDefault();
-    }
-  } catch {
-    // ignora — o link nativo cuidará da navegação
-  }
+// Mantido por compatibilidade — não faz nada.
+// O <a target="_blank" href={createWhatsAppUrl(...)}> já abre nativamente,
+// sem ser bloqueado por pop-up blocker.
+export function openWhatsApp(_event?: unknown, _message?: string) {
+  return;
 }
