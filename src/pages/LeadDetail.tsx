@@ -58,6 +58,7 @@ export default function LeadDetail() {
   const [interacoes, setInteracoes] = useState<any[]>([]);
   const [reunioes, setReunioes] = useState<any[]>([]);
   const [conta, setConta] = useState<any>(null);
+  const [brokers, setBrokers] = useState<Record<string, string>>({});
   const [interaction, setInteraction] = useState({ tipo: "ligacao", resultado: "", descricao: "", proxima_acao: "" });
   const [meeting, setMeeting] = useState<{ agendada_para: string; local: string; link: string; notas: string; format: MeetingFormat }>({ agendada_para: "", local: "", link: "", notas: "", format: "escritorio" });
   const [editingMeeting, setEditingMeeting] = useState<any | null>(null);
