@@ -24,7 +24,7 @@ import {
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { ETAPAS, EtapaFunil } from "@/lib/contasFunil";
-import { Handshake, Target, User, MoreVertical, Check, UserX, Thermometer } from "lucide-react";
+import { Handshake, Target, User, MoreVertical, Check, UserX, Thermometer, PencilLine } from "lucide-react";
 import { tempInfo, TEMPERATURAS } from "@/lib/contasTemperatura";
 
 type Account = {
@@ -36,6 +36,7 @@ type Account = {
   interesse: string | null;
   etapa_funil: string | null;
   responsavel_id: string | null;
+  created_by?: string | null;
   temperatura?: string | null;
 };
 
