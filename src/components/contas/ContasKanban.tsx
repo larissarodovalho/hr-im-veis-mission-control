@@ -316,12 +316,14 @@ export default function ContasKanban({ accounts, propsByAccount, onMoveStage, on
               {cards.map((a) => {
                 const total = (propsByAccount[a.id] ?? []).reduce((s, p) => s + (p.valor_negocio ?? 0), 0);
                 const responsavelNome = a.responsavel_id ? ownerMap?.[a.responsavel_id] : null;
+                const criadorNome = a.created_by ? ownerMap?.[a.created_by] : null;
                 return (
                   <ContaCard
                     key={a.id}
                     a={a}
                     total={total}
                     responsavelNome={responsavelNome}
+                    criadorNome={criadorNome}
                     owners={owners}
                     onMoveStage={onMoveStage}
                     onChangeOwner={onChangeOwner}
