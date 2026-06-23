@@ -1,28 +1,13 @@
-## Mostrar "criado por" em leads e contas
+## Selecionar responsável dentro do lead
 
-Hoje exibimos apenas o **responsável** (corretor_id / responsavel_id). Vamos adicionar também quem **criou** o registro (`created_by`) — o corretor que originou o contato.
+Hoje o responsável (`corretor_id`) só pode ser alterado via Kanban ou ao criar/editar manualmente. Dentro do detalhe do lead não há esse controle.
 
-### Mudanças
+### Mudança
 
-**1. Kanban de Leads (`src/pages/Leads.tsx`)**
-- Incluir `created_by` no tipo `Lead` e no select.
-- No card, adicionar uma 2ª etiqueta ao lado da etiqueta de responsável: `✍️ Criado: <nome>`.
-- Se `created_by === corretor_id`, mostrar **apenas a etiqueta de responsável** (evita poluição visual quando é a mesma pessoa).
-- Reutilizar o mapa `brokers` já carregado.
+No `src/pages/LeadDetail.tsx`, adicionar um `Select` "Responsável" na barra superior de ações do lead (ao lado de Temperatura / Etapa), listando todos os perfis ativos e atualizando `corretor_id` via `updateLead({ corretor_id: ... })`.
 
-**2. Detalhe do Lead (`src/pages/LeadDetail.tsx`)**
-- Adicionar uma linha "Criado por" no painel de informações, ao lado/abaixo de "Responsável", mostrando nome do corretor (ou "—").
+- Opções: "Sem responsável" + lista de `profiles` (mesmo mapa `brokers` já carregado, complementado com `ativo=true` para filtrar a UI do dropdown).
+- Largura/estilo: mesmo padrão dos outros selects desta seção (`w-full sm:w-52 lg:w-56`).
+- Sem mudanças de schema/RLS. `updateLead` já existe e persiste alterações no lead.
 
-**3. Kanban de Contas (`src/components/contas/ContasKanban.tsx`)**
-- Incluir `created_by` no tipo e select.
-- Adicionar etiqueta `✍️ Criado: <nome>` no card, mesma regra de ocultar quando igual ao responsável.
-
-**4. Detalhe da Conta (`src/pages/AccountDetail.tsx`)**
-- Adicionar linha "Criado por" no painel de informações.
-
-### Detalhes técnicos
-
-- Nenhuma mudança de schema, RLS ou backend: `created_by` já existe em `leads` e `contas` e é preenchido na criação.
-- Mapa de nomes vem de `profiles` (já carregado em ambos os Kanbans).
-- Badge usa `variant="outline"`, `text-[10px]`, ícone `PencilLine` do `lucide-react` para diferenciar visualmente do responsável (`User`).
-- Mostrar nome no formato "Primeiro Ú." (helper `shortName` já existe no `Leads.tsx`; replicar em `ContasKanban.tsx`).
+A linha de informação textual "Responsável: X · Criado por: Y" continua refletindo o valor selecionado automaticamente quando o `lead` recarregar.

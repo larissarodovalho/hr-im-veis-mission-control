@@ -99,13 +99,22 @@ export default function LeadDetail() {
 
   useEffect(() => { load(); }, [id]);
 
+  const [brokersList, setBrokersList] = useState<{ user_id: string; nome: string }[]>([]);
+
   useEffect(() => {
-    supabase.from("profiles").select("user_id,nome").then(({ data }) => {
+    supabase.from("profiles").select("user_id,nome,ativo").order("nome").then(({ data }) => {
       const m: Record<string, string> = {};
-      (data ?? []).forEach((p: any) => { if (p.user_id) m[p.user_id] = p.nome || "Sem nome"; });
+      const list: { user_id: string; nome: string }[] = [];
+      (data ?? []).forEach((p: any) => {
+        if (!p.user_id) return;
+        m[p.user_id] = p.nome || "Sem nome";
+        if (p.ativo !== false) list.push({ user_id: p.user_id, nome: p.nome || "Sem nome" });
+      });
       setBrokers(m);
+      setBrokersList(list);
     });
   }, []);
+
 
 
   const updateLead = async (patch: any) => {
