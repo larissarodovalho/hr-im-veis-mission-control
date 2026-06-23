@@ -381,6 +381,13 @@ export default function LeadDetail() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={lead.corretor_id ?? "none"} onValueChange={v => updateLead({ corretor_id: v === "none" ? null : v })}>
+            <SelectTrigger className="w-full sm:w-52 lg:w-56"><SelectValue placeholder="Responsável" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Sem responsável</SelectItem>
+              {brokersList.map(b => <SelectItem key={b.user_id} value={b.user_id}>{b.nome}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <Select value={lead.etapa_funil} onValueChange={v => updateLead({ etapa_funil: v as Stage })}>
             <SelectTrigger className="w-full sm:w-52 lg:w-56"><SelectValue /></SelectTrigger>
             <SelectContent>{STAGES.map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}</SelectContent>
