@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
 import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature } from "@/lib/leads";
-import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2 } from "lucide-react";
+import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2, User as UserIcon } from "lucide-react";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
@@ -24,7 +24,7 @@ type Lead = {
   id: string; nome: string; email: string | null; telefone: string | null;
   origem: string | null; etapa_funil: Stage; imovel_interesse: string | null; regiao: string | null;
   valor_estimado: number | null; ultima_interacao: string | null; created_at: string;
-  temperatura: Temperature | null; tags: string[] | null;
+  temperatura: Temperature | null; tags: string[] | null; corretor_id: string | null;
 };
 
 const isUrgent = (l: { tags?: string[] | null; etapa_funil: Stage }) =>
@@ -35,6 +35,7 @@ export default function Leads() {
   const { user } = useAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [convertedIds, setConvertedIds] = useState<Set<string>>(new Set());
+  const [brokers, setBrokers] = useState<Record<string, string>>({});
   const [view, setView] = useState<"kanban" | "list">("kanban");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"recent" | "idle">("recent");
@@ -59,6 +60,11 @@ export default function Leads() {
 
   useEffect(() => {
     load();
+    supabase.from("profiles").select("user_id,nome").then(({ data }) => {
+      const m: Record<string, string> = {};
+      (data ?? []).forEach((p: any) => { if (p.user_id) m[p.user_id] = p.nome || "Sem nome"; });
+      setBrokers(m);
+    });
     const ch = supabase.channel("leads-stream").on("postgres_changes", { event: "*", schema: "public", table: "leads" }, load).subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
@@ -158,7 +164,7 @@ export default function Leads() {
         <DndContext sensors={sensors} onDragEnd={onDragEnd}>
           <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
             {STAGES.map(s => (
-              <Column key={s.id} stage={s.id} label={s.label} color={s.color} leads={filtered.filter(l => l.etapa_funil === s.id)} canDelete={canDelete} onDelete={remove} convertedIds={convertedIds} userId={user?.id} onChanged={load} />
+              <Column key={s.id} stage={s.id} label={s.label} color={s.color} leads={filtered.filter(l => l.etapa_funil === s.id)} canDelete={canDelete} onDelete={remove} convertedIds={convertedIds} userId={user?.id} onChanged={load} brokers={brokers} />
             ))}
           </div>
         </DndContext>
@@ -235,7 +241,7 @@ export default function Leads() {
   );
 }
 
-function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds, userId, onChanged }: any) {
+function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds, userId, onChanged, brokers }: any) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   return (
     <div ref={setNodeRef} className={"min-w-[280px] w-72 flex-shrink-0 rounded-xl bg-muted/40 p-3 transition flex flex-col min-h-[calc(100vh-220px)] " + (isOver ? "ring-2 ring-primary/40" : "")}>
@@ -243,16 +249,23 @@ function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds,
         <div className="flex items-center gap-2"><span className={"h-2 w-2 rounded-full " + color} /><span className="font-medium text-sm">{label}</span></div>
         <span className="text-xs text-muted-foreground">{leads.length}</span>
       </div>
-      <div className="space-y-2 flex-1 overflow-y-auto pr-1">{leads.map((l: Lead) => <LeadCard key={l.id} lead={l} canDelete={canDelete} onDelete={onDelete} converted={convertedIds.has(l.id)} userId={userId} onChanged={onChanged} />)}</div>
+      <div className="space-y-2 flex-1 overflow-y-auto pr-1">{leads.map((l: Lead) => <LeadCard key={l.id} lead={l} canDelete={canDelete} onDelete={onDelete} converted={convertedIds.has(l.id)} userId={userId} onChanged={onChanged} brokers={brokers} />)}</div>
     </div>
   );
 }
 
-function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged }: { lead: Lead; canDelete: boolean; onDelete: (id: string, name: string) => void; converted: boolean; userId?: string; onChanged: () => void }) {
+function shortName(name: string) {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
+
+function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, brokers }: { lead: Lead; canDelete: boolean; onDelete: (id: string, name: string) => void; converted: boolean; userId?: string; onChanged: () => void; brokers: Record<string, string> }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
   const age = ageInDays(lead.created_at);
   const idle = idleDays(lead.ultima_interacao);
+  const brokerName = lead.corretor_id ? brokers[lead.corretor_id] : null;
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} style={style} className={"group rounded-lg bg-card border p-3 shadow-soft cursor-grab active:cursor-grabbing relative " + (isDragging ? "opacity-50" : "")}>
       {canDelete && (
@@ -276,6 +289,15 @@ function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged }: {
       <div className="flex items-center gap-1 mt-1.5 flex-wrap">
         <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
         <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
+        {brokerName ? (
+          <Badge variant="secondary" className="text-[10px] gap-0.5 max-w-full truncate" title={`Responsável: ${brokerName}`}>
+            <UserIcon className="h-2.5 w-2.5" /> {shortName(brokerName)}
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="text-[10px] gap-0.5 text-muted-foreground" title="Sem responsável">
+            <UserIcon className="h-2.5 w-2.5" /> Sem responsável
+          </Badge>
+        )}
       </div>
       <div className="mt-2.5 pt-2 border-t flex items-center justify-between gap-2" onPointerDown={e => e.stopPropagation()}>
         <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Follow-up</span>
