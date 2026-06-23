@@ -3,7 +3,7 @@ import { Phone, Mail, Instagram, Facebook, Menu, X, MessageCircle } from "lucide
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import hrLogo from "@/assets/logo-hr-branco.png";
-import { createWhatsAppUrl, openWhatsApp } from "@/lib/whatsapp";
+import { createWhatsAppUrl } from "@/lib/whatsapp";
 import ScrollToTop from "./ScrollToTop";
 import { useTrackPageview } from "@/lib/siteAnalytics";
 
@@ -111,7 +111,6 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       {/* Floating WhatsApp button */}
       <a
         href={createWhatsAppUrl("Olá, tudo bem? Quero falar com um corretor de imóveis.")}
-        onClick={(event) => openWhatsApp(event, "Olá, tudo bem? Quero falar com um corretor de imóveis.")}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Falar no WhatsApp"

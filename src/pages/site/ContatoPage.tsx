@@ -4,7 +4,7 @@ import { MapPin, Phone, Mail, Clock, ArrowUpRight } from "lucide-react";
 import heroBg from "@/assets/hero-dark.jpg";
 import sectionLiving from "@/assets/section-living.jpg";
 import { useSiteImages } from "@/lib/siteSettings";
-import { createWhatsAppUrl, openWhatsApp } from "@/lib/whatsapp";
+import { createWhatsAppUrl } from "@/lib/whatsapp";
 import { ScrollSection, ParallaxImage } from "@/components/site/MotionSections";
 
 const infos = [
@@ -146,7 +146,6 @@ export default function ContatoPage() {
           </p>
           <a
             href={createWhatsAppUrl("Olá, tudo bem? Quero falar com um corretor de imóveis.")}
-            onClick={(event) => openWhatsApp(event, "Olá, tudo bem? Quero falar com um corretor de imóveis.")}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-10 py-3.5 rounded-full text-sm font-medium bg-white text-black hover:bg-white/90 hover:scale-[1.03] active:scale-[0.97] transition-all"
