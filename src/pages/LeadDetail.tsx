@@ -58,6 +58,7 @@ export default function LeadDetail() {
   const [interacoes, setInteracoes] = useState<any[]>([]);
   const [reunioes, setReunioes] = useState<any[]>([]);
   const [conta, setConta] = useState<any>(null);
+  const [brokers, setBrokers] = useState<Record<string, string>>({});
   const [interaction, setInteraction] = useState({ tipo: "ligacao", resultado: "", descricao: "", proxima_acao: "" });
   const [meeting, setMeeting] = useState<{ agendada_para: string; local: string; link: string; notas: string; format: MeetingFormat }>({ agendada_para: "", local: "", link: "", notas: "", format: "escritorio" });
   const [editingMeeting, setEditingMeeting] = useState<any | null>(null);
@@ -97,6 +98,15 @@ export default function LeadDetail() {
   };
 
   useEffect(() => { load(); }, [id]);
+
+  useEffect(() => {
+    supabase.from("profiles").select("user_id,nome").then(({ data }) => {
+      const m: Record<string, string> = {};
+      (data ?? []).forEach((p: any) => { if (p.user_id) m[p.user_id] = p.nome || "Sem nome"; });
+      setBrokers(m);
+    });
+  }, []);
+
 
   const updateLead = async (patch: any) => {
     const { error } = await supabase.from("leads").update(patch).eq("id", id);
@@ -323,6 +333,11 @@ export default function LeadDetail() {
               Entrou em <strong className="text-foreground/80">{formatDateBR(lead.created_at)}</strong>
               {" · "}
               Última interação: <strong className="text-foreground/80">{lead.ultima_interacao ? formatDateBR(lead.ultima_interacao) : "nunca"}</strong>
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Responsável: <strong className="text-foreground/80">{lead.corretor_id ? (brokers[lead.corretor_id] || "—") : "—"}</strong>
+              {" · "}
+              Criado por: <strong className="text-foreground/80">{lead.created_by ? (brokers[lead.created_by] || "—") : "—"}</strong>
             </div>
           </div>
         </div>

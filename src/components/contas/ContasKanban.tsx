@@ -24,7 +24,7 @@ import {
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { ETAPAS, EtapaFunil } from "@/lib/contasFunil";
-import { Handshake, Target, User, MoreVertical, Check, UserX, Thermometer } from "lucide-react";
+import { Handshake, Target, User, MoreVertical, Check, UserX, Thermometer, PencilLine } from "lucide-react";
 import { tempInfo, TEMPERATURAS } from "@/lib/contasTemperatura";
 
 type Account = {
@@ -36,6 +36,7 @@ type Account = {
   interesse: string | null;
   etapa_funil: string | null;
   responsavel_id: string | null;
+  created_by?: string | null;
   temperatura?: string | null;
 };
 
@@ -74,10 +75,17 @@ function ownerColor(id?: string | null) {
   return OWNER_PALETTE[h % OWNER_PALETTE.length];
 }
 
+function shortName(name: string) {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
+
 function ContaCard({
   a,
   total,
   responsavelNome,
+  criadorNome,
   owners,
   onMoveStage,
   onChangeOwner,
@@ -86,6 +94,7 @@ function ContaCard({
   a: Account;
   total: number;
   responsavelNome?: string | null;
+  criadorNome?: string | null;
   owners?: { id: string; nome: string }[];
   onMoveStage: (id: string, etapa: EtapaFunil) => void;
   onChangeOwner?: (id: string, userId: string | null) => void;
@@ -238,7 +247,12 @@ function ContaCard({
         )}
         {responsavelNome && (
           <Badge variant="outline" className={`${ownerColor(a.responsavel_id)} text-[10px]`}>
-            <User className="h-3 w-3 mr-1" /> {responsavelNome}
+            <User className="h-3 w-3 mr-1" /> {shortName(responsavelNome)}
+          </Badge>
+        )}
+        {criadorNome && a.created_by && a.created_by !== a.responsavel_id && (
+          <Badge variant="outline" className="text-[10px] text-muted-foreground" title={`Criado por ${criadorNome}`}>
+            <PencilLine className="h-3 w-3 mr-1" /> {shortName(criadorNome)}
           </Badge>
         )}
       </div>
@@ -302,12 +316,14 @@ export default function ContasKanban({ accounts, propsByAccount, onMoveStage, on
               {cards.map((a) => {
                 const total = (propsByAccount[a.id] ?? []).reduce((s, p) => s + (p.valor_negocio ?? 0), 0);
                 const responsavelNome = a.responsavel_id ? ownerMap?.[a.responsavel_id] : null;
+                const criadorNome = a.created_by ? ownerMap?.[a.created_by] : null;
                 return (
                   <ContaCard
                     key={a.id}
                     a={a}
                     total={total}
                     responsavelNome={responsavelNome}
+                    criadorNome={criadorNome}
                     owners={owners}
                     onMoveStage={onMoveStage}
                     onChangeOwner={onChangeOwner}

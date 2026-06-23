@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
 import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature } from "@/lib/leads";
-import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2, User as UserIcon } from "lucide-react";
+import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2, User as UserIcon, PencilLine } from "lucide-react";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
@@ -24,7 +24,7 @@ type Lead = {
   id: string; nome: string; email: string | null; telefone: string | null;
   origem: string | null; etapa_funil: Stage; imovel_interesse: string | null; regiao: string | null;
   valor_estimado: number | null; ultima_interacao: string | null; created_at: string;
-  temperatura: Temperature | null; tags: string[] | null; corretor_id: string | null;
+  temperatura: Temperature | null; tags: string[] | null; corretor_id: string | null; created_by: string | null;
 };
 
 const isUrgent = (l: { tags?: string[] | null; etapa_funil: Stage }) =>
@@ -266,6 +266,7 @@ function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, bro
   const age = ageInDays(lead.created_at);
   const idle = idleDays(lead.ultima_interacao);
   const brokerName = lead.corretor_id ? brokers[lead.corretor_id] : null;
+  const creatorName = lead.created_by && lead.created_by !== lead.corretor_id ? brokers[lead.created_by] : null;
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} style={style} className={"group rounded-lg bg-card border p-3 shadow-soft cursor-grab active:cursor-grabbing relative " + (isDragging ? "opacity-50" : "")}>
       {canDelete && (
@@ -296,6 +297,11 @@ function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, bro
         ) : (
           <Badge variant="outline" className="text-[10px] gap-0.5 text-muted-foreground" title="Sem responsável">
             <UserIcon className="h-2.5 w-2.5" /> Sem responsável
+          </Badge>
+        )}
+        {creatorName && (
+          <Badge variant="outline" className="text-[10px] gap-0.5 text-muted-foreground" title={`Criado por ${creatorName}`}>
+            <PencilLine className="h-2.5 w-2.5" /> {shortName(creatorName)}
           </Badge>
         )}
       </div>
