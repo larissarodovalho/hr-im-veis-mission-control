@@ -474,6 +474,7 @@ export type Database = {
           data_proposta: string
           descricao: string | null
           id: string
+          imovel_id: string | null
           status: string
           updated_at: string
           valor: number | null
@@ -486,6 +487,7 @@ export type Database = {
           data_proposta: string
           descricao?: string | null
           id?: string
+          imovel_id?: string | null
           status?: string
           updated_at?: string
           valor?: number | null
@@ -498,6 +500,7 @@ export type Database = {
           data_proposta?: string
           descricao?: string | null
           id?: string
+          imovel_id?: string | null
           status?: string
           updated_at?: string
           valor?: number | null
@@ -508,6 +511,20 @@ export type Database = {
             columns: ["conta_id"]
             isOneToOne: false
             referencedRelation: "contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conta_propostas_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conta_propostas_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis_public"
             referencedColumns: ["id"]
           },
         ]
