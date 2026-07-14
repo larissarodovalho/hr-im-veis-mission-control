@@ -188,6 +188,16 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
                     {p.valor != null && (
                       <span className="font-semibold text-primary">{formatBRL(Number(p.valor))}</span>
                     )}
+                    {p.imovel_id && (() => {
+                      const im = imoveis.find((x) => x.id === p.imovel_id);
+                      const label = im ? [im.codigo, im.titulo].filter(Boolean).join(" · ") : "Imóvel";
+                      return (
+                        <Badge variant="outline" className="text-[11px]">
+                          <Building2 className="h-3 w-3 mr-1" />
+                          {label}
+                        </Badge>
+                      );
+                    })()}
                   </div>
                   {p.descricao && (
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">{p.descricao}</p>
