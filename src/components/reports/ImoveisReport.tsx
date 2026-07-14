@@ -182,7 +182,7 @@ export default function ImoveisReport() {
   }, [imoveisF]);
 
   // Oportunidades
-  const opF = useMemo(() => oportunidades.filter((o) => inPeriod(o.created_at)), [oportunidades, dataIni, dataFim]);
+  const opF = useMemo(() => oportunidades.filter((o) => inPeriod(o.created_at)), [oportunidades, inicio, fim]);
   const opData = useMemo(() => OPP_ESTAGIOS.map((e) => ({
     name: e.label,
     qtd: opF.filter((o) => o.estagio === e.key).length,
@@ -203,7 +203,7 @@ export default function ImoveisReport() {
   }, [opF]);
 
   // Captação
-  const capF = useMemo(() => captacoes.filter((c) => inPeriod(c.created_at)), [captacoes, dataIni, dataFim]);
+  const capF = useMemo(() => captacoes.filter((c) => inPeriod(c.created_at)), [captacoes, inicio, fim]);
   const capData = useMemo(() => ESTAGIOS_CAPTACAO.map((e) => ({
     name: e.label,
     qtd: capF.filter((c) => c.estagio === e.id).length,
@@ -329,15 +329,8 @@ export default function ImoveisReport() {
     <div className="space-y-6">
       {/* Filtros */}
       <Card className="p-3 sm:p-4 overflow-hidden">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
-          <div className="min-w-0">
-            <Label>De</Label>
-            <Input type="date" value={dataIni} onChange={(e) => setDataIni(e.target.value)} className="w-full max-w-full block" />
-          </div>
-          <div className="min-w-0">
-            <Label>Até</Label>
-            <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-full max-w-full block" />
-          </div>
+        <div className="text-sm text-muted-foreground mb-2">Período: <span className="font-medium text-foreground">{periodoLabel}</span></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 items-end">
           <div className="min-w-0">
             <Label>Cidade</Label>
             <Select value={cidade} onValueChange={setCidade}>
@@ -359,9 +352,10 @@ export default function ImoveisReport() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={exportCsv} className="w-full sm:col-span-2 md:col-span-1"><Download className="h-4 w-4 mr-2" /> Exportar CSV</Button>
+          <Button onClick={exportCsv} className="w-full"><Download className="h-4 w-4 mr-2" /> Exportar CSV</Button>
         </div>
       </Card>
+
 
 
       {/* KPIs */}
