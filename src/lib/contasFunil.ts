@@ -21,7 +21,7 @@ export const ETAPAS: { id: EtapaFunil; label: string; color: string }[] = [
   { id: "visita", label: "Visita", color: "bg-teal-500/15 text-teal-700 border-teal-500/30" },
   { id: "proposta", label: "Proposta", color: "bg-sky-500/15 text-sky-700 border-sky-500/30" },
   { id: "fechado", label: "Fechado", color: "bg-success/15 text-success border-success/30" },
-  { id: "perdido", label: "Followup", color: "bg-destructive/15 text-destructive border-destructive/30" },
+  { id: "perdido", label: "Oportunidade futura", color: "bg-destructive/15 text-destructive border-destructive/30" },
   { id: "parceiros", label: "Parceiros", color: "bg-accent/15 text-accent-foreground border-accent/30" },
 ];
 
