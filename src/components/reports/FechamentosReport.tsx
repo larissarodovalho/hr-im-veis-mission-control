@@ -175,7 +175,7 @@ export default function FechamentosReport() {
     <Card className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="font-display text-lg font-semibold flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-primary" /> Negócios fechados
+          <Trophy className="h-5 w-5 text-primary" /> Negócios fechados · {periodoLabel}
         </h2>
         <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" size="sm" onClick={exportDetalhadoCSV} disabled={!filtered.length}>
@@ -187,15 +187,8 @@ export default function FechamentosReport() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-        <div>
-          <Label className="text-xs">Início</Label>
-          <Input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} />
-        </div>
-        <div>
-          <Label className="text-xs">Fim</Label>
-          <Input type="date" value={fim} onChange={(e) => setFim(e.target.value)} />
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
         <div>
           <Label className="text-xs">Responsável</Label>
           <select
