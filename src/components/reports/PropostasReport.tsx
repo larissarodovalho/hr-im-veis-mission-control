@@ -436,6 +436,11 @@ export default function PropostasReport() {
                     <span className="text-muted-foreground">—</span>
                   )}
                 </TableCell>
+                <TableCell className="text-sm">
+                  {r.imovel_codigo || r.imovel_titulo
+                    ? [r.imovel_codigo, r.imovel_titulo].filter(Boolean).join(" · ")
+                    : <span className="text-muted-foreground">—</span>}
+                </TableCell>
                 <TableCell className="text-sm">{r.responsavel_nome ?? "—"}</TableCell>
                 <TableCell>{statusBadge(r.status)}</TableCell>
                 <TableCell className="text-right font-medium">
@@ -448,7 +453,7 @@ export default function PropostasReport() {
             ))}
             {!filtered.length && !loading && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-6">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-6">
                   Nenhuma proposta no período selecionado.
                 </TableCell>
               </TableRow>
