@@ -95,7 +95,7 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
   }, [contaId]);
 
   const openNew = () =>
-    setEditing({ _date: new Date(), status: "pendente", valor: null, descricao: "" });
+    setEditing({ _date: new Date(), status: "pendente", valor: null, descricao: "", imovel_id: null });
   const openEdit = (p: Proposta) =>
     setEditing({ ...p, _date: new Date(p.data_proposta + "T00:00:00") });
 
@@ -106,6 +106,7 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
       valor: editing.valor != null && editing.valor !== ("" as any) ? Number(editing.valor) : null,
       status: (editing.status ?? "pendente") as Proposta["status"],
       descricao: editing.descricao?.toString().trim() || null,
+      imovel_id: editing.imovel_id || null,
     });
     if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Dados inválidos");
 
@@ -116,6 +117,7 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
       valor: parsed.data.valor,
       status: parsed.data.status,
       descricao: parsed.data.descricao,
+      imovel_id: parsed.data.imovel_id,
     };
     let error;
     if (editing.id) {
