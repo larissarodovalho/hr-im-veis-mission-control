@@ -651,10 +651,12 @@ export default function LeadDetail() {
             {interacoes.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma interação ainda.</p>}
             {interacoes.map(i => (
               <div key={i.id} className="border-l-2 border-primary/30 pl-3">
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-sm flex-wrap">
                   <Badge variant="outline" className="text-[10px]">{INTERACTION_TYPE_LABEL[i.tipo] ?? i.tipo}</Badge>
                   {i.resultado && <span className="text-xs text-muted-foreground">{i.resultado}</span>}
-                  <span className="text-xs text-muted-foreground ml-auto">{format(new Date(i.created_at), "Pp", { locale: ptBR })}</span>
+                  <span className="text-xs text-muted-foreground ml-auto">
+                    Por <strong className="text-foreground/80">{i.created_by ? (brokers[i.created_by] || "—") : "—"}</strong> · {format(new Date(i.created_at), "Pp", { locale: ptBR })}
+                  </span>
                 </div>
                 {i.descricao && <p className="text-sm mt-1">{i.descricao}</p>}
                 {i.proxima_acao && <p className="text-xs text-primary mt-1">→ {i.proxima_acao}</p>}
