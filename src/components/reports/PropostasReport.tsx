@@ -266,10 +266,29 @@ export default function PropostasReport() {
       "Valor (R$)": Number(r.valor) || 0,
       Descrição: r.descricao ?? "",
     }));
+    const porImovelData = porImovel.map((i) => ({
+      Imóvel: i.label,
+      Total: i.total,
+      Aceitas: i.aceita,
+      Recusadas: i.recusada,
+      Pendentes: i.pendente,
+      "Valor total (R$)": i.valor,
+    }));
+    const porClienteData = porCliente.map((c) => ({
+      Cliente: c.nome,
+      Total: c.total,
+      Aceitas: c.aceita,
+      Recusadas: c.recusada,
+      Pendentes: c.pendente,
+      "Taxa aceite (%)": c.total ? Number(((c.aceita / c.total) * 100).toFixed(1)) : 0,
+      "Valor total (R$)": c.valor,
+    }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumo), "Resumo");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(porMesData), "Por mês");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(porRespData), "Por corretor");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(porImovelData), "Top imóveis");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(porClienteData), "Top clientes");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(detalhado), "Detalhado");
     XLSX.writeFile(wb, `propostas-${filenameStamp()}.xlsx`);
     toast.success("Excel gerado");
