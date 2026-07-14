@@ -43,13 +43,11 @@ const getVendaComissaoTotal = (v: Venda) =>
 
 
 export default function FaturamentoReport() {
+  const { inicio, fim, label: periodoLabel } = useReportsPeriod();
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [profiles, setProfiles] = useState<{ id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [preset, setPreset] = useState<Preset>("ano");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
   const [papel, setPapel] = useState<"todos" | "vendedor" | "captador" | "hr">("todos");
   const [corretorId, setCorretorId] = useState<string>("none");
   const [origem, setOrigem] = useState<"todos" | OrigemNegocio>("todos");
@@ -73,7 +71,10 @@ export default function FaturamentoReport() {
     return (id?: string | null) => (id ? m.get(id) || "—" : "—");
   }, [profiles]);
 
-  const range = useMemo(() => getRange(preset, from, to), [preset, from, to]);
+  const range = useMemo(
+    () => ({ from: new Date(inicio + "T00:00:00"), to: new Date(fim + "T23:59:59") }),
+    [inicio, fim],
+  );
 
   const filtered = useMemo(() => {
     return vendas.filter((v) => {
