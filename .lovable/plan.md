@@ -1,32 +1,20 @@
 ## Objetivo
-Adicionar uma nova seção "Propostas" na aba Relatórios para acompanhar a performance de propostas registradas nas contas dos clientes.
+Permitir que o corretor vincule (opcionalmente) um imóvel a cada proposta registrada dentro da conta, para gerar histórico de propostas por imóvel e por cliente.
 
-## O que será criado
+## Mudanças
 
-**Nova aba "Propostas" em `src/pages/Reports.tsx`**, alimentada pela tabela `conta_propostas` já existente, respeitando o filtro global de período (anual/mensal) que já usamos nos outros relatórios.
+### 1. Banco (migração)
+Adicionar coluna `imovel_id uuid` (nullable) em `public.conta_propostas` com FK para `public.imoveis(id) ON DELETE SET NULL` e índice `conta_propostas_imovel_idx`.
 
-### KPIs no topo
-- Total de propostas no período
-- Propostas aceitas (com % de conversão)
-- Propostas recusadas (com %)
-- Propostas pendentes
-- Valor total proposto (soma) e valor total aceito
+### 2. UI — `src/components/contas/ContaPropostas.tsx`
+- Carregar lista de imóveis (id, código, título) junto com as propostas — mesmo padrão usado em `ContaFechamentos`.
+- Adicionar um `<select>` "Imóvel vinculado" no diálogo de criar/editar proposta, com opção "— Nenhum —".
+- Exibir um badge com código/título do imóvel em cada card de proposta quando houver vínculo.
+- Persistir `imovel_id` no insert/update.
 
-### Gráficos
-- **Barras**: propostas por mês (empilhado por status: aceita / recusada / pendente)
-- **Barras**: propostas por corretor responsável (top performers, com taxa de aceite)
-- **Pizza/Donut**: distribuição por status
+### 3. Relatório — `src/components/reports/PropostasReport.tsx`
+- Carregar imóveis referenciados (código/título) das propostas exibidas.
+- Nova coluna "Imóvel" na tabela detalhada (código + título, ou "—").
+- Incluir a coluna "Imóvel" nas exportações CSV e Excel (aba Detalhado).
 
-### Tabela detalhada
-Lista das propostas do período com: data, cliente (conta), corretor responsável, valor, status, com link clicável levando à conta.
-
-### Exportação
-Botão para exportar CSV/Excel das propostas do período filtrado (mesmo padrão do relatório de Fechamentos).
-
-## Detalhes técnicos
-- Novo componente `src/components/reports/PropostasReport.tsx`.
-- Consumir `useReportsPeriod()` para filtro por ano/mês.
-- Query em `conta_propostas` com join em `contas` (nome do cliente) e `profiles` (nome do responsável).
-- Adicionar nova `TabsTrigger` "Propostas" em `src/pages/Reports.tsx`, entre "Negócios fechados" e as demais.
-
-Nenhuma mudança de schema é necessária — a tabela `conta_propostas` já tem tudo (data, valor, status, conta_id, created_by).
+Nenhuma alteração de RLS necessária — as policies existentes de `conta_propostas` continuam válidas.

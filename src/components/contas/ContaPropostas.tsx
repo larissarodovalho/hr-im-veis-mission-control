@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, FileText, Pencil, Trash2, Save, CalendarIcon, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Plus, FileText, Pencil, Trash2, Save, CalendarIcon, CheckCircle2, XCircle, Clock, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -28,14 +28,18 @@ type Proposta = {
   descricao: string | null;
   corretor_id: string | null;
   created_by: string | null;
+  imovel_id: string | null;
   created_at: string;
 };
+
+type ImovelLite = { id: string; codigo: string | null; titulo: string | null };
 
 const schema = z.object({
   data_proposta: z.date({ required_error: "Data obrigatória" }),
   valor: z.number().min(0).nullable().optional(),
   status: z.enum(["pendente", "aceita", "recusada"]),
   descricao: z.string().trim().max(2000).nullable().optional(),
+  imovel_id: z.string().uuid().nullable().optional(),
 });
 
 const STATUS_META: Record<Proposta["status"], { label: string; badge: string; icon: JSX.Element }> = {
@@ -59,20 +63,23 @@ const STATUS_META: Record<Proposta["status"], { label: string; badge: string; ic
 export default function ContaPropostas({ contaId }: { contaId: string }) {
   const { isAdmin } = useRole();
   const [items, setItems] = useState<Proposta[]>([]);
+  const [imoveis, setImoveis] = useState<ImovelLite[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [editing, setEditing] = useState<(Partial<Proposta> & { _date?: Date }) | null>(null);
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
-    const [{ data }, { data: { user } }] = await Promise.all([
+    const [{ data }, { data: { user } }, { data: imv }] = await Promise.all([
       supabase
         .from("conta_propostas" as any)
         .select("*")
         .eq("conta_id", contaId)
         .order("data_proposta", { ascending: false }),
       supabase.auth.getUser(),
+      supabase.from("imoveis").select("id, codigo, titulo").order("codigo", { ascending: true }),
     ]);
     setItems(((data as any) ?? []) as Proposta[]);
+    setImoveis(((imv as any) ?? []) as ImovelLite[]);
     setUserId(user?.id ?? null);
   };
 
@@ -88,7 +95,7 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
   }, [contaId]);
 
   const openNew = () =>
-    setEditing({ _date: new Date(), status: "pendente", valor: null, descricao: "" });
+    setEditing({ _date: new Date(), status: "pendente", valor: null, descricao: "", imovel_id: null });
   const openEdit = (p: Proposta) =>
     setEditing({ ...p, _date: new Date(p.data_proposta + "T00:00:00") });
 
@@ -99,6 +106,7 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
       valor: editing.valor != null && editing.valor !== ("" as any) ? Number(editing.valor) : null,
       status: (editing.status ?? "pendente") as Proposta["status"],
       descricao: editing.descricao?.toString().trim() || null,
+      imovel_id: editing.imovel_id || null,
     });
     if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Dados inválidos");
 
@@ -109,6 +117,7 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
       valor: parsed.data.valor,
       status: parsed.data.status,
       descricao: parsed.data.descricao,
+      imovel_id: parsed.data.imovel_id,
     };
     let error;
     if (editing.id) {
@@ -179,6 +188,16 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
                     {p.valor != null && (
                       <span className="font-semibold text-primary">{formatBRL(Number(p.valor))}</span>
                     )}
+                    {p.imovel_id && (() => {
+                      const im = imoveis.find((x) => x.id === p.imovel_id);
+                      const label = im ? [im.codigo, im.titulo].filter(Boolean).join(" · ") : "Imóvel";
+                      return (
+                        <Badge variant="outline" className="text-[11px]">
+                          <Building2 className="h-3 w-3 mr-1" />
+                          {label}
+                        </Badge>
+                      );
+                    })()}
                   </div>
                   {p.descricao && (
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">{p.descricao}</p>
@@ -267,6 +286,21 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              <div>
+                <Label>Imóvel vinculado</Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={editing.imovel_id ?? ""}
+                  onChange={(e) => setEditing({ ...editing, imovel_id: e.target.value || null })}
+                >
+                  <option value="">— Nenhum —</option>
+                  {imoveis.map((im) => (
+                    <option key={im.id} value={im.id}>
+                      {[im.codigo, im.titulo].filter(Boolean).join(" · ") || "Sem título"}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <Label>Descrição / condições</Label>

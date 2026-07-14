@@ -28,9 +28,12 @@ type Row = {
   descricao: string | null;
   corretor_id: string | null;
   created_by: string | null;
+  imovel_id: string | null;
   conta_nome?: string | null;
   responsavel_nome?: string | null;
   responsavel_id?: string | null;
+  imovel_codigo?: string | null;
+  imovel_titulo?: string | null;
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -58,7 +61,7 @@ export default function PropostasReport() {
     const [{ data, error }, { data: profs }] = await Promise.all([
       supabase
         .from("conta_propostas" as any)
-        .select("id, conta_id, data_proposta, valor, status, descricao, corretor_id, created_by")
+        .select("id, conta_id, data_proposta, valor, status, descricao, corretor_id, created_by, imovel_id")
         .gte("data_proposta", inicio)
         .lte("data_proposta", fim)
         .order("data_proposta", { ascending: false }),
@@ -71,20 +74,30 @@ export default function PropostasReport() {
     }
     const list = (data as any as Row[]) ?? [];
     const contaIds = Array.from(new Set(list.map((r) => r.conta_id).filter(Boolean)));
-    const { data: contas } = contaIds.length
-      ? await supabase.from("contas").select("id, nome, responsavel_id").in("id", contaIds)
-      : { data: [] as any[] };
+    const imovelIds = Array.from(new Set(list.map((r) => r.imovel_id).filter(Boolean) as string[]));
+    const [{ data: contas }, { data: imoveis }] = await Promise.all([
+      contaIds.length
+        ? supabase.from("contas").select("id, nome, responsavel_id").in("id", contaIds)
+        : Promise.resolve({ data: [] as any[] }),
+      imovelIds.length
+        ? supabase.from("imoveis").select("id, codigo, titulo").in("id", imovelIds)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
     const cMap = new Map((contas ?? []).map((c: any) => [c.id, c]));
+    const iMap = new Map((imoveis ?? []).map((i: any) => [i.id, i]));
     const pMap = new Map((profs ?? []).map((p: any) => [p.user_id, p.nome]));
 
     const enriched: Row[] = list.map((r) => {
       const c = cMap.get(r.conta_id) as any;
+      const im = r.imovel_id ? (iMap.get(r.imovel_id) as any) : null;
       const respId = r.corretor_id ?? c?.responsavel_id ?? null;
       return {
         ...r,
         conta_nome: c?.nome ?? null,
         responsavel_id: respId,
         responsavel_nome: respId ? pMap.get(respId) ?? null : null,
+        imovel_codigo: im?.codigo ?? null,
+        imovel_titulo: im?.titulo ?? null,
       };
     });
 
@@ -168,6 +181,7 @@ export default function PropostasReport() {
     const data = filtered.map((r) => ({
       Data: r.data_proposta,
       Cliente: r.conta_nome ?? "",
+      Imóvel: [r.imovel_codigo, r.imovel_titulo].filter(Boolean).join(" · "),
       Responsável: r.responsavel_nome ?? "",
       Status: STATUS_LABEL[r.status] ?? r.status,
       "Valor (R$)": r.valor ?? "",
@@ -213,6 +227,7 @@ export default function PropostasReport() {
     const detalhado = filtered.map((r) => ({
       Data: r.data_proposta,
       Cliente: r.conta_nome ?? "",
+      Imóvel: [r.imovel_codigo, r.imovel_titulo].filter(Boolean).join(" · "),
       Responsável: r.responsavel_nome ?? "",
       Status: STATUS_LABEL[r.status] ?? r.status,
       "Valor (R$)": Number(r.valor) || 0,
@@ -399,6 +414,7 @@ export default function PropostasReport() {
             <TableRow>
               <TableHead>Data</TableHead>
               <TableHead>Cliente</TableHead>
+              <TableHead>Imóvel</TableHead>
               <TableHead>Responsável</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Valor</TableHead>
@@ -420,6 +436,11 @@ export default function PropostasReport() {
                     <span className="text-muted-foreground">—</span>
                   )}
                 </TableCell>
+                <TableCell className="text-sm">
+                  {r.imovel_codigo || r.imovel_titulo
+                    ? [r.imovel_codigo, r.imovel_titulo].filter(Boolean).join(" · ")
+                    : <span className="text-muted-foreground">—</span>}
+                </TableCell>
                 <TableCell className="text-sm">{r.responsavel_nome ?? "—"}</TableCell>
                 <TableCell>{statusBadge(r.status)}</TableCell>
                 <TableCell className="text-right font-medium">
@@ -432,7 +453,7 @@ export default function PropostasReport() {
             ))}
             {!filtered.length && !loading && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-6">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-6">
                   Nenhuma proposta no período selecionado.
                 </TableCell>
               </TableRow>
