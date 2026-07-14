@@ -10,6 +10,7 @@ export type Stage =
   | 'Reunião Agendada'
   | 'Visita'
   | 'Proposta'
+  | 'Permuta'
   | 'Fechado'
   | 'Perdido';
 
@@ -30,6 +31,7 @@ export const STAGES: { id: Stage; label: string; color: string }[] = [
   { id: 'Reunião Agendada', label: 'Reunião Agendada', color: 'bg-purple-500' },
   { id: 'Visita', label: 'Visita', color: 'bg-amber-500' },
   { id: 'Proposta', label: 'Proposta', color: 'bg-orange-500' },
+  { id: 'Permuta', label: 'Permuta', color: 'bg-amber-600' },
   { id: 'Fechado', label: 'Fechado', color: 'bg-success' },
   { id: 'Perdido', label: 'Perdido', color: 'bg-danger' },
 ];
