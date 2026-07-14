@@ -26,8 +26,9 @@ import {
   Legend,
   CartesianGrid,
 } from "recharts";
+import { useReportsPeriod } from "@/hooks/useReportsPeriod";
 
-type Conta = { id: string; etapa_funil: string | null; tags: string[] | null; responsavel_id: string | null };
+type Conta = { id: string; etapa_funil: string | null; tags: string[] | null; responsavel_id: string | null; created_at: string | null };
 type Profile = { user_id: string; nome: string | null };
 
 type Lista = "carteira" | "marketing" | "todas";
@@ -57,6 +58,7 @@ const COLORS = {
 } as const;
 
 export default function FunilContasReport() {
+  const { inicioISO, fimISO, label } = useReportsPeriod();
   const [contas, setContas] = useState<Conta[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [lista, setLista] = useState<Lista>("carteira");
@@ -71,7 +73,9 @@ export default function FunilContasReport() {
       for (let from = 0; ; from += PAGE) {
         const { data, error } = await supabase
           .from("contas")
-          .select("id, etapa_funil, tags, responsavel_id")
+          .select("id, etapa_funil, tags, responsavel_id, created_at")
+          .gte("created_at", inicioISO)
+          .lte("created_at", fimISO)
           .range(from, from + PAGE - 1);
         if (error) break;
         const rows = (data ?? []) as Conta[];
@@ -83,7 +87,7 @@ export default function FunilContasReport() {
       setProfiles((p ?? []) as Profile[]);
       setLoading(false);
     })();
-  }, []);
+  }, [inicioISO, fimISO]);
 
   const filtered = useMemo(() => {
     return contas.filter((a) => {
@@ -164,7 +168,7 @@ export default function FunilContasReport() {
     <Card className="p-3 sm:p-4 md:p-6 space-y-4 md:space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-          <h2 className="font-display text-lg md:text-xl font-semibold">Funil de Contas</h2>
+          <h2 className="font-display text-lg md:text-xl font-semibold">Funil de Contas · {label}</h2>
           <p className="text-sm text-muted-foreground">
             Distribuição por etapa, taxas de conversão e comparação entre listas.
           </p>

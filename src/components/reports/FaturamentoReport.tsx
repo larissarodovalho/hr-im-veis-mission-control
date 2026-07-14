@@ -12,6 +12,7 @@ import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAx
 import { Download, TrendingUp, Coins, Building2, BarChart3 } from "lucide-react";
 import { ORIGENS, NIVEIS, calculateCommissionPart, calculateCommissionValue, origemLabel, nivelLabel, type OrigemNegocio, type NivelCorretor } from "@/lib/comissaoHR";
 import * as XLSX from "xlsx";
+import { useReportsPeriod } from "@/hooks/useReportsPeriod";
 
 type Venda = {
   id: string;
@@ -40,34 +41,13 @@ const getVendaComissaoTotal = (v: Venda) =>
     hr: v.percent_hr ?? 0,
   });
 
-type Preset = "mes" | "trimestre" | "ano" | "custom";
-
-function getRange(preset: Preset, from: string, to: string): { from: Date; to: Date } {
-  const now = new Date();
-  if (preset === "mes") {
-    return { from: new Date(now.getFullYear(), now.getMonth(), 1), to: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59) };
-  }
-  if (preset === "trimestre") {
-    const d = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-    return { from: d, to: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59) };
-  }
-  if (preset === "ano") {
-    return { from: new Date(now.getFullYear(), 0, 1), to: new Date(now.getFullYear(), 11, 31, 23, 59, 59) };
-  }
-  return {
-    from: from ? new Date(from + "T00:00:00") : new Date(now.getFullYear(), 0, 1),
-    to: to ? new Date(to + "T23:59:59") : now,
-  };
-}
 
 export default function FaturamentoReport() {
+  const { inicio, fim, label: periodoLabel } = useReportsPeriod();
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [profiles, setProfiles] = useState<{ id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [preset, setPreset] = useState<Preset>("ano");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
   const [papel, setPapel] = useState<"todos" | "vendedor" | "captador" | "hr">("todos");
   const [corretorId, setCorretorId] = useState<string>("none");
   const [origem, setOrigem] = useState<"todos" | OrigemNegocio>("todos");
@@ -91,7 +71,10 @@ export default function FaturamentoReport() {
     return (id?: string | null) => (id ? m.get(id) || "—" : "—");
   }, [profiles]);
 
-  const range = useMemo(() => getRange(preset, from, to), [preset, from, to]);
+  const range = useMemo(
+    () => ({ from: new Date(inicio + "T00:00:00"), to: new Date(fim + "T23:59:59") }),
+    [inicio, fim],
+  );
 
   const filtered = useMemo(() => {
     return vendas.filter((v) => {
@@ -224,31 +207,9 @@ export default function FaturamentoReport() {
 
 
       {/* Filtros */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div>
-          <Label className="text-xs">Período</Label>
-          <Select value={preset} onValueChange={(v) => setPreset(v as Preset)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="mes">Mês atual</SelectItem>
-              <SelectItem value="trimestre">Últimos 3 meses</SelectItem>
-              <SelectItem value="ano">Ano atual</SelectItem>
-              <SelectItem value="custom">Customizado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        {preset === "custom" && (
-          <>
-            <div>
-              <Label className="text-xs">De</Label>
-              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs">Até</Label>
-              <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-            </div>
-          </>
-        )}
+      <div className="text-sm text-muted-foreground">Período: <span className="font-medium text-foreground">{periodoLabel}</span></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+
         <div>
           <Label className="text-xs">Papel</Label>
           <Select value={papel} onValueChange={(v) => setPapel(v as any)}>

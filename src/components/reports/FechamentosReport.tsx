@@ -2,19 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, FileSpreadsheet, Trophy } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
-import { format, startOfYear, endOfYear } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/format";
 import { Link } from "react-router-dom";
+import { useReportsPeriod } from "@/hooks/useReportsPeriod";
 
 type Row = {
   id: string;
@@ -32,11 +32,9 @@ type Row = {
 };
 
 export default function FechamentosReport() {
-  const now = new Date();
-  const [inicio, setInicio] = useState(format(startOfYear(now), "yyyy-MM-dd"));
-  const [fim, setFim] = useState(format(endOfYear(now), "yyyy-MM-dd"));
+  const { inicio, fim, label: periodoLabel, mes } = useReportsPeriod();
   const [responsavelId, setResponsavelId] = useState<string>("todos");
-  const [agrupamento, setAgrupamento] = useState<"mensal" | "anual">("mensal");
+  const [agrupamento, setAgrupamento] = useState<"mensal" | "anual">(mes == null ? "mensal" : "mensal");
   const [rows, setRows] = useState<Row[]>([]);
   const [responsaveis, setResponsaveis] = useState<{ user_id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -121,7 +119,7 @@ export default function FechamentosReport() {
     return [...map.values()].sort((a, b) => a.key.localeCompare(b.key));
   }, [filtered, agrupamento]);
 
-  const filenameStamp = () => `${inicio}_a_${fim}`;
+  const filenameStamp = () => periodoLabel.replace("/", "-");
 
   const exportDetalhadoCSV = () => {
     const data = filtered.map((r) => ({
@@ -177,7 +175,7 @@ export default function FechamentosReport() {
     <Card className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="font-display text-lg font-semibold flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-primary" /> Negócios fechados
+          <Trophy className="h-5 w-5 text-primary" /> Negócios fechados · {periodoLabel}
         </h2>
         <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" size="sm" onClick={exportDetalhadoCSV} disabled={!filtered.length}>
@@ -189,15 +187,8 @@ export default function FechamentosReport() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-        <div>
-          <Label className="text-xs">Início</Label>
-          <Input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} />
-        </div>
-        <div>
-          <Label className="text-xs">Fim</Label>
-          <Input type="date" value={fim} onChange={(e) => setFim(e.target.value)} />
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
         <div>
           <Label className="text-xs">Responsável</Label>
           <select

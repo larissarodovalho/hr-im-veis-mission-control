@@ -1,15 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { format, startOfMonth, subMonths, endOfMonth, startOfDay, endOfDay, differenceInDays } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
 import {
   ResponsiveContainer,
   BarChart,
@@ -22,27 +16,15 @@ import {
   Legend,
   CartesianGrid,
 } from "recharts";
+import { useReportsPeriod } from "@/hooks/useReportsPeriod";
 
-type Mode = "mensal" | "custom";
 type Bucket = { key: string; label: string; leads: number; contas: number };
 
 export default function LeadsParaContasReport() {
-  const [mode, setMode] = useState<Mode>("mensal");
-  const [from, setFrom] = useState<Date>(() => startOfMonth(subMonths(new Date(), 1)));
-  const [to, setTo] = useState<Date>(() => endOfDay(new Date()));
+  const { inicioISO, fimISO, inicio, fim, mes, label: periodoLabel } = useReportsPeriod();
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState<{ created_at: string }[]>([]);
   const [contas, setContas] = useState<{ created_at: string }[]>([]);
-
-  const range = useMemo(() => {
-    if (mode === "mensal") {
-      return {
-        start: startOfMonth(subMonths(new Date(), 11)),
-        end: endOfDay(new Date()),
-      };
-    }
-    return { start: startOfDay(from), end: endOfDay(to) };
-  }, [mode, from, to]);
 
   useEffect(() => {
     let cancel = false;
@@ -52,14 +34,14 @@ export default function LeadsParaContasReport() {
         supabase
           .from("leads")
           .select("created_at")
-          .gte("created_at", range.start.toISOString())
-          .lte("created_at", range.end.toISOString()),
+          .gte("created_at", inicioISO)
+          .lte("created_at", fimISO),
         supabase
           .from("contas" as any)
           .select("created_at,lead_id_origem")
           .not("lead_id_origem", "is", null)
-          .gte("created_at", range.start.toISOString())
-          .lte("created_at", range.end.toISOString()),
+          .gte("created_at", inicioISO)
+          .lte("created_at", fimISO),
       ]);
       if (cancel) return;
       setLeads((l ?? []) as any);
@@ -69,15 +51,15 @@ export default function LeadsParaContasReport() {
     return () => {
       cancel = true;
     };
-  }, [range.start, range.end]);
+  }, [inicioISO, fimISO]);
 
-  const granularity: "day" | "month" = useMemo(() => {
-    if (mode === "mensal") return "month";
-    return differenceInDays(range.end, range.start) > 90 ? "month" : "day";
-  }, [mode, range.start, range.end]);
+  // Se um mês específico está selecionado, agrupa por dia; senão, por mês do ano.
+  const granularity: "day" | "month" = mes == null ? "month" : "day";
 
   const buckets = useMemo<Bucket[]>(() => {
     const map = new Map<string, Bucket>();
+    const start = new Date(inicio + "T00:00:00");
+    const end = new Date(fim + "T00:00:00");
     const keyFor = (d: Date) =>
       granularity === "month" ? format(d, "yyyy-MM") : format(d, "yyyy-MM-dd");
     const labelFor = (d: Date) =>
@@ -85,18 +67,17 @@ export default function LeadsParaContasReport() {
         ? format(d, "MMM/yy", { locale: ptBR })
         : format(d, "dd/MM", { locale: ptBR });
 
-    // Pre-fill buckets so empty periods aparecem no gráfico
     if (granularity === "month") {
-      let cur = startOfMonth(range.start);
-      const end = startOfMonth(range.end);
-      while (cur <= end) {
+      const cur = new Date(start.getFullYear(), start.getMonth(), 1);
+      const stop = new Date(end.getFullYear(), end.getMonth(), 1);
+      while (cur <= stop) {
         const k = keyFor(cur);
         map.set(k, { key: k, label: labelFor(cur), leads: 0, contas: 0 });
-        cur = startOfMonth(subMonths(cur, -1));
+        cur.setMonth(cur.getMonth() + 1);
       }
     } else {
-      const d = new Date(range.start);
-      while (d <= range.end) {
+      const d = new Date(start);
+      while (d <= end) {
         const k = keyFor(d);
         map.set(k, { key: k, label: labelFor(d), leads: 0, contas: 0 });
         d.setDate(d.getDate() + 1);
@@ -116,7 +97,7 @@ export default function LeadsParaContasReport() {
       if (b) b.contas++;
     }
     return [...map.values()].sort((a, b) => a.key.localeCompare(b.key));
-  }, [leads, contas, granularity, range.start, range.end]);
+  }, [leads, contas, granularity, inicio, fim]);
 
   const totals = useMemo(() => {
     const tl = leads.length;
@@ -135,28 +116,11 @@ export default function LeadsParaContasReport() {
 
   return (
     <Card className="p-4 md:p-6 space-y-4">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div>
-          <h2 className="font-semibold">Leads → Contas</h2>
-          <p className="text-sm text-muted-foreground">
-            Quantos leads viraram conta (origem do lead preenchida) ao longo do tempo.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
-            <TabsList>
-              <TabsTrigger value="mensal">Últimos 12 meses</TabsTrigger>
-              <TabsTrigger value="custom">Customizado</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          {mode === "custom" && (
-            <div className="flex items-center gap-2">
-              <DateBtn label="Início" date={from} onChange={setFrom} />
-              <span className="text-muted-foreground text-sm">até</span>
-              <DateBtn label="Fim" date={to} onChange={setTo} />
-            </div>
-          )}
-        </div>
+      <div>
+        <h2 className="font-semibold">Leads → Contas · {periodoLabel}</h2>
+        <p className="text-sm text-muted-foreground">
+          Quantos leads viraram conta (origem do lead preenchida) ao longo do período.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -236,39 +200,5 @@ function Kpi({ label, value }: { label: string; value: number | string }) {
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="text-2xl font-semibold mt-1">{value}</div>
     </div>
-  );
-}
-
-function DateBtn({
-  label,
-  date,
-  onChange,
-}: {
-  label: string;
-  date: Date;
-  onChange: (d: Date) => void;
-}) {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={cn("justify-start text-left font-normal gap-2")}
-        >
-          <CalendarIcon className="h-4 w-4" />
-          {format(date, "dd/MM/yyyy", { locale: ptBR })}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={(d) => d && onChange(d)}
-          initialFocus
-          className={cn("p-3 pointer-events-auto")}
-        />
-      </PopoverContent>
-    </Popover>
   );
 }

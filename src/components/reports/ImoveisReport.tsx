@@ -37,6 +37,7 @@ import { formatBRL } from "@/lib/format";
 import { ESTAGIOS_CAPTACAO } from "@/lib/captacaoFunil";
 import Papa from "papaparse";
 import { toast } from "sonner";
+import { useReportsPeriod } from "@/hooks/useReportsPeriod";
 
 const FAIXAS = [
   { label: "Até R$ 500 mil", min: 0, max: 500_000 },
@@ -60,6 +61,7 @@ const PIE_COLORS = ["#6366f1", "#3b82f6", "#06b6d4", "#f59e0b", "#10b981", "#ef4
 const lower = (s: string | null | undefined) => (s || "").toLowerCase();
 
 export default function ImoveisReport() {
+  const { inicio, fim, label: periodoLabel } = useReportsPeriod();
   const [imoveis, setImoveis] = useState<any[]>([]);
   const [propostas, setPropostas] = useState<any[]>([]);
   const [oportunidades, setOportunidades] = useState<any[]>([]);
@@ -69,8 +71,6 @@ export default function ImoveisReport() {
   const [loading, setLoading] = useState(true);
 
   // Filtros
-  const [dataIni, setDataIni] = useState("");
-  const [dataFim, setDataFim] = useState("");
   const [cidade, setCidade] = useState("all");
   const [finalidade, setFinalidade] = useState("all");
 
@@ -105,8 +105,9 @@ export default function ImoveisReport() {
   }, [imoveis]);
 
   const inPeriod = (created: string) => {
-    if (dataIni && created < dataIni) return false;
-    if (dataFim && created > `${dataFim}T23:59:59`) return false;
+    if (!created) return false;
+    if (created < inicio) return false;
+    if (created > `${fim}T23:59:59`) return false;
     return true;
   };
 
@@ -115,7 +116,7 @@ export default function ImoveisReport() {
     if (cidade !== "all" && i.cidade !== cidade) return false;
     if (finalidade !== "all" && lower(i.finalidade) !== lower(finalidade)) return false;
     return true;
-  }), [imoveis, dataIni, dataFim, cidade, finalidade]);
+  }), [imoveis, inicio, fim, cidade, finalidade]);
 
   const imovelIds = useMemo(() => new Set(imoveisF.map((i) => i.id)), [imoveisF]);
   const propostasF = useMemo(
@@ -181,7 +182,7 @@ export default function ImoveisReport() {
   }, [imoveisF]);
 
   // Oportunidades
-  const opF = useMemo(() => oportunidades.filter((o) => inPeriod(o.created_at)), [oportunidades, dataIni, dataFim]);
+  const opF = useMemo(() => oportunidades.filter((o) => inPeriod(o.created_at)), [oportunidades, inicio, fim]);
   const opData = useMemo(() => OPP_ESTAGIOS.map((e) => ({
     name: e.label,
     qtd: opF.filter((o) => o.estagio === e.key).length,
@@ -202,7 +203,7 @@ export default function ImoveisReport() {
   }, [opF]);
 
   // Captação
-  const capF = useMemo(() => captacoes.filter((c) => inPeriod(c.created_at)), [captacoes, dataIni, dataFim]);
+  const capF = useMemo(() => captacoes.filter((c) => inPeriod(c.created_at)), [captacoes, inicio, fim]);
   const capData = useMemo(() => ESTAGIOS_CAPTACAO.map((e) => ({
     name: e.label,
     qtd: capF.filter((c) => c.estagio === e.id).length,
@@ -328,15 +329,8 @@ export default function ImoveisReport() {
     <div className="space-y-6">
       {/* Filtros */}
       <Card className="p-3 sm:p-4 overflow-hidden">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
-          <div className="min-w-0">
-            <Label>De</Label>
-            <Input type="date" value={dataIni} onChange={(e) => setDataIni(e.target.value)} className="w-full max-w-full block" />
-          </div>
-          <div className="min-w-0">
-            <Label>Até</Label>
-            <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-full max-w-full block" />
-          </div>
+        <div className="text-sm text-muted-foreground mb-2">Período: <span className="font-medium text-foreground">{periodoLabel}</span></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 items-end">
           <div className="min-w-0">
             <Label>Cidade</Label>
             <Select value={cidade} onValueChange={setCidade}>
@@ -358,9 +352,10 @@ export default function ImoveisReport() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={exportCsv} className="w-full sm:col-span-2 md:col-span-1"><Download className="h-4 w-4 mr-2" /> Exportar CSV</Button>
+          <Button onClick={exportCsv} className="w-full"><Download className="h-4 w-4 mr-2" /> Exportar CSV</Button>
         </div>
       </Card>
+
 
 
       {/* KPIs */}
