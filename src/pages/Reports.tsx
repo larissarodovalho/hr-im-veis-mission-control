@@ -111,7 +111,7 @@ export default function Reports() {
                   <TableHeader><TableRow>
                     <TableHead>Corretor</TableHead><TableHead className="text-right">Leads</TableHead>
                     <TableHead className="text-right">Reuniões</TableHead><TableHead className="text-right">Ligações</TableHead>
-                    <TableHead className="text-right">Conversões</TableHead><TableHead className="text-right">Taxa</TableHead>
+                    <TableHead className="text-right"><TooltipProvider><Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 cursor-help">Conversões <Info className="h-3 w-3 text-muted-foreground" /></span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Leads do corretor cuja etapa do funil chegou a "Fechado" (negócio ganho). Taxa = Conversões ÷ Leads × 100.</p></TooltipContent></Tooltip></TooltipProvider></TableHead><TableHead className="text-right">Taxa</TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
                     {stats.map(s => (
