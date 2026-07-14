@@ -419,6 +419,98 @@ export default function PropostasReport() {
         </Card>
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="p-4">
+          <p className="text-sm font-medium mb-2">Imóveis com mais propostas</p>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Imóvel</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-right">Aceitas</TableHead>
+                  <TableHead className="text-right">Recusadas</TableHead>
+                  <TableHead className="text-right">Pendentes</TableHead>
+                  <TableHead className="text-right">Valor total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {porImovel.slice(0, 10).map((i) => (
+                  <TableRow key={i.key}>
+                    <TableCell className="font-medium max-w-[220px] truncate" title={i.label}>
+                      {i.imovel_id ? (
+                        <Link to={`/crm/imoveis/${i.imovel_id}`} className="hover:underline text-primary">
+                          {i.label}
+                        </Link>
+                      ) : (
+                        <span className="text-muted-foreground">{i.label}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">{i.total}</TableCell>
+                    <TableCell className="text-right text-green-600">{i.aceita}</TableCell>
+                    <TableCell className="text-right text-red-600">{i.recusada}</TableCell>
+                    <TableCell className="text-right text-amber-600">{i.pendente}</TableCell>
+                    <TableCell className="text-right">{formatBRL(i.valor)}</TableCell>
+                  </TableRow>
+                ))}
+                {!porImovel.length && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-4">
+                      Sem propostas no período.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
+
+        <Card className="p-4">
+          <p className="text-sm font-medium mb-2">Clientes com mais propostas</p>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-right">Aceitas</TableHead>
+                  <TableHead className="text-right">Recusadas</TableHead>
+                  <TableHead className="text-right">Pendentes</TableHead>
+                  <TableHead className="text-right">Taxa aceite</TableHead>
+                  <TableHead className="text-right">Valor total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {porCliente.slice(0, 10).map((c) => (
+                  <TableRow key={c.key}>
+                    <TableCell className="font-medium max-w-[220px] truncate" title={c.nome}>
+                      <Link to={`/crm/contas/${c.conta_id}`} className="hover:underline text-primary">
+                        {c.nome}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">{c.total}</TableCell>
+                    <TableCell className="text-right text-green-600">{c.aceita}</TableCell>
+                    <TableCell className="text-right text-red-600">{c.recusada}</TableCell>
+                    <TableCell className="text-right text-amber-600">{c.pendente}</TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {c.total ? ((c.aceita / c.total) * 100).toFixed(1) : "0.0"}%
+                    </TableCell>
+                    <TableCell className="text-right">{formatBRL(c.valor)}</TableCell>
+                  </TableRow>
+                ))}
+                {!porCliente.length && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-4">
+                      Sem propostas no período.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
+      </div>
+
       <Card className="p-4">
         <p className="text-sm font-medium mb-2">Propostas por corretor</p>
         <div className="overflow-x-auto">
