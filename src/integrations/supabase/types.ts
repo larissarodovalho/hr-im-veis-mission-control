@@ -465,6 +465,53 @@ export type Database = {
           },
         ]
       }
+      conta_propostas: {
+        Row: {
+          conta_id: string
+          corretor_id: string | null
+          created_at: string
+          created_by: string | null
+          data_proposta: string
+          descricao: string | null
+          id: string
+          status: string
+          updated_at: string
+          valor: number | null
+        }
+        Insert: {
+          conta_id: string
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_proposta: string
+          descricao?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+          valor?: number | null
+        }
+        Update: {
+          conta_id?: string
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_proposta?: string
+          descricao?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conta_propostas_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conta_propriedades: {
         Row: {
           aptidao: string | null

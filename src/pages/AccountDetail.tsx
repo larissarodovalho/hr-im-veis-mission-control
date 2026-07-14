@@ -16,6 +16,7 @@ import ContaAgendaQuickAdd from "@/components/contas/ContaAgendaQuickAdd";
 import ContaAgendamentosList from "@/components/contas/ContaAgendamentosList";
 import ContaTarefas from "@/components/contas/ContaTarefas";
 import ContaFechamentos from "@/components/contas/ContaFechamentos";
+import ContaPropostas from "@/components/contas/ContaPropostas";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -289,7 +290,10 @@ export default function AccountDetail() {
         <ContaTarefas contaId={acc.id} responsavelId={acc.responsavel_id} />
       </Card>
 
+      <ContaPropostas contaId={acc.id} />
+
       <ContaFechamentos contaId={acc.id} />
+
 
       <div>
         <div className="flex items-center justify-between mb-3">

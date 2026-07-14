@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { CalendarPlus, Phone, MapPin, Save, Camera } from "lucide-react";
+import { CalendarPlus, Phone, MapPin, Save, Camera, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 type Kind = "reuniao" | "ligacao" | "visita" | "captacao";
@@ -178,6 +178,14 @@ export default function ContaAgendaQuickAdd({ contaId, responsavelId, onCreated 
           </Button>
           <Button variant="outline" onClick={() => openDialog("captacao")}>
             <Camera className="h-4 w-4 mr-1" /> Captação
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() =>
+              window.dispatchEvent(new CustomEvent("conta:proposta:new", { detail: { contaId } }))
+            }
+          >
+            <FileText className="h-4 w-4 mr-1" /> Proposta
           </Button>
         </div>
       </div>
