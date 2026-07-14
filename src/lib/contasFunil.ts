@@ -6,6 +6,7 @@ export type EtapaFunil =
   | "captacao_imovel"
   | "reuniao"
   | "visita"
+  | "permuta"
   | "proposta"
   | "fechado"
   | "perdido"
