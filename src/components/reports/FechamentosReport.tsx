@@ -2,19 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, FileSpreadsheet, Trophy } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
-import { format, startOfYear, endOfYear } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/format";
 import { Link } from "react-router-dom";
+import { useReportsPeriod } from "@/hooks/useReportsPeriod";
 
 type Row = {
   id: string;
