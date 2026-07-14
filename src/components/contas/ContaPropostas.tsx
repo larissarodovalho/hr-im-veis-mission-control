@@ -63,20 +63,23 @@ const STATUS_META: Record<Proposta["status"], { label: string; badge: string; ic
 export default function ContaPropostas({ contaId }: { contaId: string }) {
   const { isAdmin } = useRole();
   const [items, setItems] = useState<Proposta[]>([]);
+  const [imoveis, setImoveis] = useState<ImovelLite[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [editing, setEditing] = useState<(Partial<Proposta> & { _date?: Date }) | null>(null);
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
-    const [{ data }, { data: { user } }] = await Promise.all([
+    const [{ data }, { data: { user } }, { data: imv }] = await Promise.all([
       supabase
         .from("conta_propostas" as any)
         .select("*")
         .eq("conta_id", contaId)
         .order("data_proposta", { ascending: false }),
       supabase.auth.getUser(),
+      supabase.from("imoveis").select("id, codigo, titulo").order("codigo", { ascending: true }),
     ]);
     setItems(((data as any) ?? []) as Proposta[]);
+    setImoveis(((imv as any) ?? []) as ImovelLite[]);
     setUserId(user?.id ?? null);
   };
 
