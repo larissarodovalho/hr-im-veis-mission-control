@@ -123,12 +123,17 @@ function ReportsInner() {
         <TabsList className="w-full justify-start overflow-x-auto whitespace-nowrap">
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="fechamentos">Negócios fechados</TabsTrigger>
+          <TabsTrigger value="propostas">Propostas</TabsTrigger>
           <TabsTrigger value="imoveis">Imóveis</TabsTrigger>
           <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
         </TabsList>
 
         <TabsContent value="fechamentos" className="mt-4">
           <FechamentosReport />
+        </TabsContent>
+
+        <TabsContent value="propostas" className="mt-4">
+          <PropostasReport />
         </TabsContent>
 
         <TabsContent value="performance" className="space-y-4 md:space-y-6 mt-4">
