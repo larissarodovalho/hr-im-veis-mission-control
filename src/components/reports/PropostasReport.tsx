@@ -227,6 +227,7 @@ export default function PropostasReport() {
     const detalhado = filtered.map((r) => ({
       Data: r.data_proposta,
       Cliente: r.conta_nome ?? "",
+      Imóvel: [r.imovel_codigo, r.imovel_titulo].filter(Boolean).join(" · "),
       Responsável: r.responsavel_nome ?? "",
       Status: STATUS_LABEL[r.status] ?? r.status,
       "Valor (R$)": Number(r.valor) || 0,
