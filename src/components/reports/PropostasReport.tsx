@@ -61,7 +61,7 @@ export default function PropostasReport() {
     const [{ data, error }, { data: profs }] = await Promise.all([
       supabase
         .from("conta_propostas" as any)
-        .select("id, conta_id, data_proposta, valor, status, descricao, corretor_id, created_by")
+        .select("id, conta_id, data_proposta, valor, status, descricao, corretor_id, created_by, imovel_id")
         .gte("data_proposta", inicio)
         .lte("data_proposta", fim)
         .order("data_proposta", { ascending: false }),
@@ -74,20 +74,30 @@ export default function PropostasReport() {
     }
     const list = (data as any as Row[]) ?? [];
     const contaIds = Array.from(new Set(list.map((r) => r.conta_id).filter(Boolean)));
-    const { data: contas } = contaIds.length
-      ? await supabase.from("contas").select("id, nome, responsavel_id").in("id", contaIds)
-      : { data: [] as any[] };
+    const imovelIds = Array.from(new Set(list.map((r) => r.imovel_id).filter(Boolean) as string[]));
+    const [{ data: contas }, { data: imoveis }] = await Promise.all([
+      contaIds.length
+        ? supabase.from("contas").select("id, nome, responsavel_id").in("id", contaIds)
+        : Promise.resolve({ data: [] as any[] }),
+      imovelIds.length
+        ? supabase.from("imoveis").select("id, codigo, titulo").in("id", imovelIds)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
     const cMap = new Map((contas ?? []).map((c: any) => [c.id, c]));
+    const iMap = new Map((imoveis ?? []).map((i: any) => [i.id, i]));
     const pMap = new Map((profs ?? []).map((p: any) => [p.user_id, p.nome]));
 
     const enriched: Row[] = list.map((r) => {
       const c = cMap.get(r.conta_id) as any;
+      const im = r.imovel_id ? (iMap.get(r.imovel_id) as any) : null;
       const respId = r.corretor_id ?? c?.responsavel_id ?? null;
       return {
         ...r,
         conta_nome: c?.nome ?? null,
         responsavel_id: respId,
         responsavel_nome: respId ? pMap.get(respId) ?? null : null,
+        imovel_codigo: im?.codigo ?? null,
+        imovel_titulo: im?.titulo ?? null,
       };
     });
 
