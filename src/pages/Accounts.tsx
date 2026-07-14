@@ -133,6 +133,27 @@ export default function Accounts() {
   };
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
+  const kanbanBoxRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = kanbanBoxRef.current;
+    if (!el) return;
+    const update = () => {
+      const top = el.getBoundingClientRect().top;
+      el.style.setProperty("--kanban-top", `${Math.max(0, Math.round(top))}px`);
+    };
+    update();
+    const raf = requestAnimationFrame(update);
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    const ro = new ResizeObserver(update);
+    ro.observe(document.body);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+      ro.disconnect();
+    };
+  }, [view, lista]);
   // Hidratação inicial dos filtros a partir da URL (mantém ao voltar do detalhe)
   const initialStatus = (() => {
     const v = searchParams.get("status");
