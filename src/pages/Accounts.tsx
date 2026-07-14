@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
@@ -686,7 +686,11 @@ export default function Accounts() {
         loading ? (
           <Card className="p-6 text-center text-muted-foreground hidden md:block">Carregando…</Card>
         ) : (
-          <div className="hidden md:block">
+          <div
+            ref={kanbanBoxRef}
+            className="hidden md:block overflow-hidden"
+            style={{ height: "calc(100dvh - var(--kanban-top, 260px) - 8px)" }}
+          >
             <ContasKanban accounts={filtered as any} propsByAccount={propsByAccount} onMoveStage={moveStage} onChangeOwner={changeOwner} onChangeTemperatura={changeTemperatura} ownerMap={ownerMap} owners={owners} />
           </div>
         )
