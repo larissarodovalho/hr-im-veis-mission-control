@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { useEffect, useRef } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -277,14 +276,14 @@ function Column({
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: etapa });
   return (
-    <div className="flex-1 min-w-[260px] flex flex-col">
-      <div className={`px-3 py-2 rounded-t-md border ${color} flex items-center justify-between`}>
+    <div className="flex-1 min-w-[260px] min-h-0 flex flex-col">
+      <div className={`px-3 py-2 rounded-t-md border ${color} flex items-center justify-between shrink-0`}>
         <span className="text-sm font-semibold">{label}</span>
         <Badge variant="outline" className="text-[10px]">{count}</Badge>
       </div>
       <div
         ref={setNodeRef}
-        className={`flex-1 p-2 space-y-2 bg-muted/20 border border-t-0 rounded-b-md h-[calc(100dvh-var(--kanban-top,260px)-16px)] overflow-y-auto transition-colors ${
+        className={`flex-1 min-h-0 p-2 space-y-2 bg-muted/20 border border-t-0 rounded-b-md overflow-y-auto transition-colors ${
           isOver ? "bg-primary/5 border-primary/40" : ""
         }`}
       >
@@ -296,26 +295,6 @@ function Column({
 
 export default function ContasKanban({ accounts, propsByAccount, onMoveStage, onChangeOwner, onChangeTemperatura, ownerMap, owners }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const el = wrapperRef.current;
-    if (!el) return;
-    const update = () => {
-      const top = el.getBoundingClientRect().top;
-      el.style.setProperty("--kanban-top", `${Math.max(0, Math.round(top))}px`);
-    };
-    update();
-    window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, true);
-    const ro = new ResizeObserver(update);
-    ro.observe(document.body);
-    return () => {
-      window.removeEventListener("resize", update);
-      window.removeEventListener("scroll", update, true);
-      ro.disconnect();
-    };
-  }, []);
 
   const onDragEnd = (e: DragEndEvent) => {
     const id = String(e.active.id);
@@ -329,7 +308,8 @@ export default function ContasKanban({ accounts, propsByAccount, onMoveStage, on
 
   return (
     <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-      <div ref={wrapperRef} className="flex gap-3 overflow-x-auto pb-2">
+      <div className="flex gap-3 overflow-x-auto pb-2 h-full min-h-0">
+
 
         {ETAPAS.map((et) => {
           const cards = accounts.filter((a) => (a.etapa_funil ?? "a_contatar") === et.id);
