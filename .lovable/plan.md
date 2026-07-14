@@ -1,27 +1,32 @@
-## Adicionar "Proposta" na seção Agendar da Conta
+## Objetivo
+Adicionar uma nova seção "Propostas" na aba Relatórios para acompanhar a performance de propostas registradas nas contas dos clientes.
 
-Novo botão **Proposta** ao lado de Reunião/Ligação/Visita/Captação em `ContaAgendaQuickAdd`, com diálogo próprio para o corretor registrar a proposta enviada ao cliente.
+## O que será criado
 
-### Campos do diálogo
-- **Data da proposta** (data)
-- **Valor** (opcional, R$)
-- **Status**: Pendente / Aceita / Recusada
-- **Descrição / condições** (textarea)
+**Nova aba "Propostas" em `src/pages/Reports.tsx`**, alimentada pela tabela `conta_propostas` já existente, respeitando o filtro global de período (anual/mensal) que já usamos nos outros relatórios.
 
-### Backend (nova migração)
-Nova tabela `public.conta_propostas`:
-- `conta_id` (FK contas)
-- `data_proposta` (date)
-- `valor` (numeric, opcional)
-- `status` ('pendente' | 'aceita' | 'recusada', default 'pendente')
-- `descricao` (text)
-- `corretor_id`, `created_by`, timestamps
+### KPIs no topo
+- Total de propostas no período
+- Propostas aceitas (com % de conversão)
+- Propostas recusadas (com %)
+- Propostas pendentes
+- Valor total proposto (soma) e valor total aceito
 
-RLS espelhando `conta_fechamentos`: acesso restrito a admin/gestor, responsável da conta e criador.
+### Gráficos
+- **Barras**: propostas por mês (empilhado por status: aceita / recusada / pendente)
+- **Barras**: propostas por corretor responsável (top performers, com taxa de aceite)
+- **Pizza/Donut**: distribuição por status
 
-### Frontend
-- `src/components/contas/ContaAgendaQuickAdd.tsx`: adicionar tipo `"proposta"`, botão, e branch de save que insere em `conta_propostas`. Não cria evento no Google Calendar (não é compromisso).
-- Novo componente `src/components/contas/ContaPropostas.tsx`: lista propostas registradas da conta (data, valor, status com badge colorido, descrição) com opção de alterar status posteriormente e excluir.
-- `src/pages/AccountDetail.tsx`: renderizar `ContaPropostas` próximo a `ContaFechamentos`.
+### Tabela detalhada
+Lista das propostas do período com: data, cliente (conta), corretor responsável, valor, status, com link clicável levando à conta.
 
-Nenhuma alteração no funil ou em outras telas.
+### Exportação
+Botão para exportar CSV/Excel das propostas do período filtrado (mesmo padrão do relatório de Fechamentos).
+
+## Detalhes técnicos
+- Novo componente `src/components/reports/PropostasReport.tsx`.
+- Consumir `useReportsPeriod()` para filtro por ano/mês.
+- Query em `conta_propostas` com join em `contas` (nome do cliente) e `profiles` (nome do responsável).
+- Adicionar nova `TabsTrigger` "Propostas" em `src/pages/Reports.tsx`, entre "Negócios fechados" e as demais.
+
+Nenhuma mudança de schema é necessária — a tabela `conta_propostas` já tem tudo (data, valor, status, conta_id, created_by).
