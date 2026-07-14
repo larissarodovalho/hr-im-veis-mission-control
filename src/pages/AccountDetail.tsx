@@ -289,6 +289,8 @@ export default function AccountDetail() {
         <ContaTarefas contaId={acc.id} responsavelId={acc.responsavel_id} />
       </Card>
 
+      <ContaFechamentos contaId={acc.id} />
+
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-xl font-semibold flex items-center gap-2">
