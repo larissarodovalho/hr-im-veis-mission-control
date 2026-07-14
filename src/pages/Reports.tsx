@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, FileSpreadsheet, BarChart3, Shield } from "lucide-react";
+import { Download, FileSpreadsheet, BarChart3, Shield, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Papa from "papaparse";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
@@ -42,7 +43,7 @@ export default function Reports() {
       if (!l.corretor_id) return;
       const s = map.get(l.corretor_id); if (!s) return;
       s.leads++;
-      if (l.etapa_funil === "Fechado") s.conversoes++;
+      if (l.etapa_funil === "fechado") s.conversoes++;
     });
     (reunioes ?? []).forEach((m: any) => {
       if (!m.corretor_id) return;
@@ -110,7 +111,7 @@ export default function Reports() {
                   <TableHeader><TableRow>
                     <TableHead>Corretor</TableHead><TableHead className="text-right">Leads</TableHead>
                     <TableHead className="text-right">Reuniões</TableHead><TableHead className="text-right">Ligações</TableHead>
-                    <TableHead className="text-right">Conversões</TableHead><TableHead className="text-right">Taxa</TableHead>
+                    <TableHead className="text-right"><TooltipProvider><Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 cursor-help">Conversões <Info className="h-3 w-3 text-muted-foreground" /></span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Leads do corretor cuja etapa do funil chegou a "Fechado" (negócio ganho). Taxa = Conversões ÷ Leads × 100.</p></TooltipContent></Tooltip></TooltipProvider></TableHead><TableHead className="text-right">Taxa</TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
                     {stats.map(s => (

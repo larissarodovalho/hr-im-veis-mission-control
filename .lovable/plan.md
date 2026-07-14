@@ -1,9 +1,18 @@
-Adicionar um tooltip explicativo ao card **"Fechados"** no relatório do funil de contas.
+## Correção de "Conversões" no relatório de Performance por Corretor
 
-## Mudança
+### O que fazer
 
-Em `src/components/reports/FunilContasReport.tsx`, envolver o `<Kpi label="Fechados" ...>` com o componente `Tooltip` do shadcn (`@/components/ui/tooltip`) exibindo:
+Em `src/pages/Reports.tsx`, na tabela **Performance por Corretor**:
 
-> "Contas cuja etapa do funil é **Fechado** — negócios ganhos/concluídos. A taxa de conversão considera Fechados ÷ (Fechados + Perdidos)."
+1. **Corrigir o filtro de conversões**
+   - Trocar `l.etapa_funil === "Fechado"` por `l.etapa_funil === "fechado"` para bater com os ids em minúsculas definidos em `src/lib/leads.ts`.
 
-Um pequeno ícone de `Info` (lucide) aparece ao lado do rótulo "Fechados", e o tooltip abre no hover/focus. Nenhuma mudança de lógica ou dados.
+2. **Adicionar tooltip explicativo no cabeçalho "Conversões"**
+   - Colocar um ícone `Info` (lucide-react) ao lado do texto "Conversões" no `<TableHead>`.
+   - Usar `Tooltip` do shadcn (`@/components/ui/tooltip`) com o texto:
+     > "Leads do corretor cuja etapa do funil chegou a 'Fechado' (negócio ganho). Taxa = Conversões ÷ Leads × 100."
+
+### Escopo
+
+- Apenas `src/pages/Reports.tsx`.
+- Sem mudanças de schema, RLS ou outros relatórios.
