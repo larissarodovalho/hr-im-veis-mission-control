@@ -207,31 +207,9 @@ export default function FaturamentoReport() {
 
 
       {/* Filtros */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div>
-          <Label className="text-xs">Período</Label>
-          <Select value={preset} onValueChange={(v) => setPreset(v as Preset)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="mes">Mês atual</SelectItem>
-              <SelectItem value="trimestre">Últimos 3 meses</SelectItem>
-              <SelectItem value="ano">Ano atual</SelectItem>
-              <SelectItem value="custom">Customizado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        {preset === "custom" && (
-          <>
-            <div>
-              <Label className="text-xs">De</Label>
-              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs">Até</Label>
-              <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-            </div>
-          </>
-        )}
+      <div className="text-sm text-muted-foreground">Período: <span className="font-medium text-foreground">{periodoLabel}</span></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+
         <div>
           <Label className="text-xs">Papel</Label>
           <Select value={papel} onValueChange={(v) => setPapel(v as any)}>
