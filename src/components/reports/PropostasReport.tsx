@@ -169,6 +169,39 @@ export default function PropostasReport() {
     return [...map.values()].sort((a, b) => b.total - a.total);
   }, [filtered]);
 
+  const porImovel = useMemo(() => {
+    const map = new Map<string, { key: string; imovel_id: string | null; label: string; total: number; aceita: number; recusada: number; pendente: number; valor: number }>();
+    filtered.forEach((r) => {
+      const key = r.imovel_id ?? "__sem__";
+      const label = r.imovel_id
+        ? [r.imovel_codigo, r.imovel_titulo].filter(Boolean).join(" · ") || "Imóvel sem título"
+        : "Sem imóvel vinculado";
+      const cur = map.get(key) ?? { key, imovel_id: r.imovel_id, label, total: 0, aceita: 0, recusada: 0, pendente: 0, valor: 0 };
+      cur.total++;
+      cur.valor += Number(r.valor) || 0;
+      if (r.status === "aceita") cur.aceita++;
+      else if (r.status === "recusada") cur.recusada++;
+      else cur.pendente++;
+      map.set(key, cur);
+    });
+    return [...map.values()].sort((a, b) => b.total - a.total || b.valor - a.valor);
+  }, [filtered]);
+
+  const porCliente = useMemo(() => {
+    const map = new Map<string, { key: string; conta_id: string; nome: string; total: number; aceita: number; recusada: number; pendente: number; valor: number }>();
+    filtered.forEach((r) => {
+      const key = r.conta_id;
+      const cur = map.get(key) ?? { key, conta_id: r.conta_id, nome: r.conta_nome ?? "Sem nome", total: 0, aceita: 0, recusada: 0, pendente: 0, valor: 0 };
+      cur.total++;
+      cur.valor += Number(r.valor) || 0;
+      if (r.status === "aceita") cur.aceita++;
+      else if (r.status === "recusada") cur.recusada++;
+      else cur.pendente++;
+      map.set(key, cur);
+    });
+    return [...map.values()].sort((a, b) => b.total - a.total || b.valor - a.valor);
+  }, [filtered]);
+
   const porStatus = [
     { name: "Aceitas", value: totals.aceita, key: "aceita" },
     { name: "Recusadas", value: totals.recusada, key: "recusada" },
@@ -233,10 +266,29 @@ export default function PropostasReport() {
       "Valor (R$)": Number(r.valor) || 0,
       Descrição: r.descricao ?? "",
     }));
+    const porImovelData = porImovel.map((i) => ({
+      Imóvel: i.label,
+      Total: i.total,
+      Aceitas: i.aceita,
+      Recusadas: i.recusada,
+      Pendentes: i.pendente,
+      "Valor total (R$)": i.valor,
+    }));
+    const porClienteData = porCliente.map((c) => ({
+      Cliente: c.nome,
+      Total: c.total,
+      Aceitas: c.aceita,
+      Recusadas: c.recusada,
+      Pendentes: c.pendente,
+      "Taxa aceite (%)": c.total ? Number(((c.aceita / c.total) * 100).toFixed(1)) : 0,
+      "Valor total (R$)": c.valor,
+    }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumo), "Resumo");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(porMesData), "Por mês");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(porRespData), "Por corretor");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(porImovelData), "Top imóveis");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(porClienteData), "Top clientes");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(detalhado), "Detalhado");
     XLSX.writeFile(wb, `propostas-${filenameStamp()}.xlsx`);
     toast.success("Excel gerado");
@@ -363,6 +415,98 @@ export default function PropostasReport() {
                 </PieChart>
               </ResponsiveContainer>
             )}
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="p-4">
+          <p className="text-sm font-medium mb-2">Imóveis com mais propostas</p>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Imóvel</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-right">Aceitas</TableHead>
+                  <TableHead className="text-right">Recusadas</TableHead>
+                  <TableHead className="text-right">Pendentes</TableHead>
+                  <TableHead className="text-right">Valor total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {porImovel.slice(0, 10).map((i) => (
+                  <TableRow key={i.key}>
+                    <TableCell className="font-medium max-w-[220px] truncate" title={i.label}>
+                      {i.imovel_id ? (
+                        <Link to={`/crm/imoveis/${i.imovel_id}`} className="hover:underline text-primary">
+                          {i.label}
+                        </Link>
+                      ) : (
+                        <span className="text-muted-foreground">{i.label}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">{i.total}</TableCell>
+                    <TableCell className="text-right text-green-600">{i.aceita}</TableCell>
+                    <TableCell className="text-right text-red-600">{i.recusada}</TableCell>
+                    <TableCell className="text-right text-amber-600">{i.pendente}</TableCell>
+                    <TableCell className="text-right">{formatBRL(i.valor)}</TableCell>
+                  </TableRow>
+                ))}
+                {!porImovel.length && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-4">
+                      Sem propostas no período.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
+
+        <Card className="p-4">
+          <p className="text-sm font-medium mb-2">Clientes com mais propostas</p>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-right">Aceitas</TableHead>
+                  <TableHead className="text-right">Recusadas</TableHead>
+                  <TableHead className="text-right">Pendentes</TableHead>
+                  <TableHead className="text-right">Taxa aceite</TableHead>
+                  <TableHead className="text-right">Valor total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {porCliente.slice(0, 10).map((c) => (
+                  <TableRow key={c.key}>
+                    <TableCell className="font-medium max-w-[220px] truncate" title={c.nome}>
+                      <Link to={`/crm/contas/${c.conta_id}`} className="hover:underline text-primary">
+                        {c.nome}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">{c.total}</TableCell>
+                    <TableCell className="text-right text-green-600">{c.aceita}</TableCell>
+                    <TableCell className="text-right text-red-600">{c.recusada}</TableCell>
+                    <TableCell className="text-right text-amber-600">{c.pendente}</TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {c.total ? ((c.aceita / c.total) * 100).toFixed(1) : "0.0"}%
+                    </TableCell>
+                    <TableCell className="text-right">{formatBRL(c.valor)}</TableCell>
+                  </TableRow>
+                ))}
+                {!porCliente.length && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-4">
+                      Sem propostas no período.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </div>
         </Card>
       </div>
