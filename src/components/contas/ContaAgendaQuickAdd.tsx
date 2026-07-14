@@ -179,6 +179,14 @@ export default function ContaAgendaQuickAdd({ contaId, responsavelId, onCreated 
           <Button variant="outline" onClick={() => openDialog("captacao")}>
             <Camera className="h-4 w-4 mr-1" /> Captação
           </Button>
+          <Button
+            variant="outline"
+            onClick={() =>
+              window.dispatchEvent(new CustomEvent("conta:proposta:new", { detail: { contaId } }))
+            }
+          >
+            <FileText className="h-4 w-4 mr-1" /> Proposta
+          </Button>
         </div>
       </div>
 
