@@ -12,6 +12,7 @@ import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAx
 import { Download, TrendingUp, Coins, Building2, BarChart3 } from "lucide-react";
 import { ORIGENS, NIVEIS, calculateCommissionPart, calculateCommissionValue, origemLabel, nivelLabel, type OrigemNegocio, type NivelCorretor } from "@/lib/comissaoHR";
 import * as XLSX from "xlsx";
+import { useReportsPeriod } from "@/hooks/useReportsPeriod";
 
 type Venda = {
   id: string;
@@ -40,25 +41,6 @@ const getVendaComissaoTotal = (v: Venda) =>
     hr: v.percent_hr ?? 0,
   });
 
-type Preset = "mes" | "trimestre" | "ano" | "custom";
-
-function getRange(preset: Preset, from: string, to: string): { from: Date; to: Date } {
-  const now = new Date();
-  if (preset === "mes") {
-    return { from: new Date(now.getFullYear(), now.getMonth(), 1), to: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59) };
-  }
-  if (preset === "trimestre") {
-    const d = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-    return { from: d, to: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59) };
-  }
-  if (preset === "ano") {
-    return { from: new Date(now.getFullYear(), 0, 1), to: new Date(now.getFullYear(), 11, 31, 23, 59, 59) };
-  }
-  return {
-    from: from ? new Date(from + "T00:00:00") : new Date(now.getFullYear(), 0, 1),
-    to: to ? new Date(to + "T23:59:59") : now,
-  };
-}
 
 export default function FaturamentoReport() {
   const [vendas, setVendas] = useState<Venda[]>([]);
