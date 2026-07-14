@@ -5,6 +5,13 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 import { ETAPAS, etapaLabel, type EtapaFunil } from "@/lib/contasFunil";
 import {
   ResponsiveContainer,
@@ -193,7 +200,12 @@ export default function FunilContasReport() {
         <Kpi label="Total" value={total} link={`/crm/contas?lista=${listaQuery}`} />
         <Kpi label="Em andamento" value={ativos} />
         <Kpi label="Sem retorno" value={semRetorno} />
-        <Kpi label="Fechados" value={fechados} tone="success" />
+        <Kpi
+          label="Fechados"
+          value={fechados}
+          tone="success"
+          hint="Contas cuja etapa do funil é 'Fechado' — negócios ganhos/concluídos. A taxa de conversão considera Fechados ÷ (Fechados + Perdidos)."
+        />
         <Kpi label="Taxa conversão" value={`${taxaGeral.toFixed(1)}%`} tone="primary" />
       </div>
 
@@ -354,17 +366,43 @@ function Kpi({
   value,
   tone,
   link,
+  hint,
 }: {
   label: string;
   value: number | string;
   tone?: "success" | "primary";
   link?: string;
+  hint?: string;
 }) {
   const color =
     tone === "success" ? "text-success" : tone === "primary" ? "text-primary" : "text-foreground";
   const content = (
     <Card className="p-4">
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+        <span>{label}</span>
+        {hint && (
+          <TooltipProvider delayDuration={100}>
+            <UITooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={`Sobre ${label}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  className="inline-flex items-center text-muted-foreground/70 hover:text-foreground focus:outline-none"
+                >
+                  <Info className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                {hint}
+              </TooltipContent>
+            </UITooltip>
+          </TooltipProvider>
+        )}
+      </div>
       <p className={`text-2xl font-semibold mt-1 ${color}`}>{value}</p>
     </Card>
   );
