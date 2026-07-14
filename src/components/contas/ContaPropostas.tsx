@@ -288,6 +288,21 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
                 </div>
               </div>
               <div>
+                <Label>Imóvel vinculado</Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={editing.imovel_id ?? ""}
+                  onChange={(e) => setEditing({ ...editing, imovel_id: e.target.value || null })}
+                >
+                  <option value="">— Nenhum —</option>
+                  {imoveis.map((im) => (
+                    <option key={im.id} value={im.id}>
+                      {[im.codigo, im.titulo].filter(Boolean).join(" · ") || "Sem título"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
                 <Label>Descrição / condições</Label>
                 <Textarea
                   rows={5}
