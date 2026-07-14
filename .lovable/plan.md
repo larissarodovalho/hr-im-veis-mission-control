@@ -1,49 +1,77 @@
 ## Objetivo
-Na aba **Relatórios → Propostas**, adicionar duas novas visualizações (rankings) alimentadas pelas mesmas propostas já filtradas pelo período global:
+Gerar um **PDF de treinamento corporativo** para os corretores da HR Imóveis, cobrindo em detalhe o preenchimento das abas **Leads**, **Contas** e **Imóveis** do CRM, com foco no *porquê* de cada campo/seção e no impacto que ele tem no funil, atribuição, comunicação e relatórios.
 
-1. **Imóveis que mais receberam propostas**
-2. **Clientes que mais enviaram propostas**
+## Formato e entrega
+- Arquivo único **PDF** em `/mnt/documents/treinamento-preenchimento-crm-hr-imoveis.pdf`.
+- Layout profissional em página A4, com capa, sumário, seções por módulo, cards de "Importância", "Boas práticas" e "Impacto se não preenchido", e checklist final.
+- Tipografia Unicode (DejaVu Sans) para suportar acentos.
+- Paleta discreta alinhada ao CRM (tons neutros + azul primário).
+- Sem imagens externas — apenas tipografia, filetes, caixas coloridas e ícones textuais (evita dependência de assets).
 
-## O que será adicionado (UI)
+## Estrutura do documento
 
-Em `src/components/reports/PropostasReport.tsx`, logo após os cards de KPI / gráficos existentes e antes da tabela "Propostas por corretor", duas novas cards lado a lado (grid 2 colunas no desktop, 1 no mobile):
+### Capa
+- Título: "Treinamento — Preenchimento do CRM"
+- Subtítulo: "Padrões e boas práticas para Leads, Contas e Imóveis"
+- HR Imóveis · Uso interno · Julho/2026
 
-### Card 1 — "Imóveis com mais propostas"
-Tabela top 10 com colunas:
-- Imóvel (código + título; linka para `/crm/imoveis/:id` quando houver id)
-- Total de propostas
-- Aceitas / Recusadas / Pendentes (badges compactos)
-- Valor total proposto (soma dos `valor`)
+### 1. Introdução — por que o preenchimento importa
+- Qualidade de dado = qualidade de atendimento e de decisão.
+- Impacto direto em: distribuição de leads, funil, relatórios de performance, comissionamento, marketing e histórico do cliente.
+- Regra geral: campo em branco = informação perdida para sempre.
 
-Propostas sem `imovel_id` são agrupadas em uma linha "Sem imóvel vinculado" ao final (apenas se houver).
+### 2. Módulo Leads
+Explicar cada seção do formulário e do detalhe do lead:
+- **Identificação** (nome, telefone, e-mail): base para contato e deduplicação.
+- **Origem / Campanha / Meta Ads (form data)**: mede ROI de marketing e alimenta relatório Leads→Contas.
+- **Etapa do funil** (novo → em atendimento → reunião → visita → proposta → permuta → fechado / perdido): rege o Kanban, os relatórios e as automações.
+- **Responsável**: define visibilidade (RLS) e entra na performance por corretor.
+- **Criado por**: rastreabilidade de quem originou o contato.
+- **Interesse / observações / qualificações do formulário Meta**: base para o pitch.
+- **Histórico de interações**: cada anotação registra o corretor autor — evita cliente atendido em duplicidade.
+- **Última interação**: alimenta alertas de follow-up.
 
-### Card 2 — "Clientes com mais propostas"
-Tabela top 10 com colunas:
-- Cliente (nome da conta; linka para `/crm/contas/:id`)
-- Total de propostas
-- Aceitas / Recusadas / Pendentes
-- Valor total proposto
-- Taxa de aceite (aceitas / total)
+### 3. Módulo Contas
+- **Dados do cliente** (nome, documento, telefone, e-mail, endereço): necessários para contrato e ClickSign.
+- **Responsável x Criado por**: distinção importante para relatórios.
+- **Etapa do funil** (Carteira e Marketing): explicar cada coluna, incluindo *Oportunidade futura*, *Permuta*, *Fechado*.
+- **Captação de imóvel vinculada**: quando aplicável, ativa o fluxo de captação.
+- **Agenda rápida — Reunião, Ligação, Visita, Captação, Proposta**: quando usar cada botão.
+- **Propostas**: registrar data, valor, imóvel vinculado, status (pendente/aceita/recusada). Alimenta relatório de Propostas, ranking de imóveis e clientes.
+- **Negócios fechados**: data, valor, imóvel — base para o relatório anual de fechamentos e comissionamento.
+- **Histórico de interações**: mesmo padrão do Lead.
 
-## Dados
+### 4. Módulo Imóveis
+- **Código (HR-XXXX)**: gerado automaticamente — não alterar.
+- **Título e descrição**: SEO no site público; primeiro contato do cliente.
+- **Tipologia, finalidade, status** (disponível / reservado / vendido).
+- **Endereço completo e coordenadas**: essenciais para mapa e filtros do site.
+- **Área, quartos, suítes, vagas, valor, condomínio, IPTU**: filtros do site e comparativos.
+- **Fotos** (bucket público) e **imagens originais** (bucket restrito): qualidade da vitrine.
+- **Documentos do imóvel**: necessários para due diligence e contrato.
+- **Captação — funil e etapas**: novo → em análise → documentação → publicado → enviar detalhamento 24h antes → concluído.
+- **Vinculação a proprietário (conta)**: garante rastreabilidade.
 
-Nenhuma alteração de schema nem nova query — os dados já estão em memória:
-- `rows` já contém `imovel_id`, `imovel_codigo`, `imovel_titulo`, `conta_id`, `conta_nome`, `status`, `valor`.
-- Os agregados serão calculados via `useMemo` em cima de `filtered` (mesmo array que alimenta os KPIs), garantindo que ambos os rankings respeitam o filtro global de período (ano/mês).
+### 5. Boas práticas transversais
+- Sempre atribuir responsável.
+- Registrar toda interação relevante (voz, WhatsApp, e-mail) no histórico.
+- Preferir atualizar o card no Kanban em vez de manter anotações paralelas.
+- Anexar documentos no imóvel/conta em vez de trocar por WhatsApp.
+- Revisar campos obrigatórios antes de mover para "Fechado".
 
-## Export
+### 6. Impacto nos relatórios
+Explicar como cada campo alimenta cada relatório:
+- Funil de Contas · Leads→Contas · Performance por Corretor · Fechamentos · Propostas · Imóveis · Faturamento.
+- Ressaltar que dados faltantes distorcem a análise e o comissionamento.
 
-Estender os exports **CSV** e **Excel** existentes com duas abas/seções extras:
-- CSV: manter o arquivo atual e gerar dois adicionais opcionais? → **Não.** Para simplicidade, adicionar dois botões separados "Exportar imóveis" e "Exportar clientes" ao lado do botão atual, gerando CSVs próprios.
-- Excel: adicionar as abas `Top Imóveis` e `Top Clientes` no mesmo workbook já exportado.
+### 7. Checklist rápido (uma página final)
+Lista objetiva "antes de fechar o card" para Lead, Conta e Imóvel.
 
-## Arquivo tocado
+## Ferramenta
+- Python + **reportlab** (Platypus) para gerar o PDF, com estilo consistente, quebras controladas, boxes coloridos e checklists.
+- Registro de fonte **DejaVu Sans** para acentuação.
+- Após gerar: converter cada página para JPG (`pdftoppm`), inspecionar visualmente todas, corrigir problemas de overflow/quebras e regerar até ficar limpo. QA descrito ao final da entrega.
 
-- `src/components/reports/PropostasReport.tsx` — único arquivo alterado.
-
-## Detalhes técnicos
-
-- Ordenação padrão: por total de propostas desc; empate por valor total desc.
-- Limite: top 10 em cada ranking, com "ver todos" removido (mantém curto). Se `filtered.length` for pequeno, exibe apenas as linhas existentes.
-- Badges reutilizam `statusBadge` já definido no arquivo.
-- Formatação monetária reutiliza `formatBRL`.
+## Arquivos criados
+- Script temporário em `/tmp/build_treinamento_pdf.py` (não persistente).
+- Entrega final: `/mnt/documents/treinamento-preenchimento-crm-hr-imoveis.pdf` com `<presentation-artifact>`.
