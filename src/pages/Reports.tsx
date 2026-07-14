@@ -14,6 +14,7 @@ import LeadsParaContasReport from "@/components/reports/LeadsParaContasReport";
 import FaturamentoReport from "@/components/reports/FaturamentoReport";
 import ImoveisReport from "@/components/reports/ImoveisReport";
 import FechamentosReport from "@/components/reports/FechamentosReport";
+import PropostasReport from "@/components/reports/PropostasReport";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReportsPeriodProvider, useReportsPeriod, MESES_LABELS } from "@/hooks/useReportsPeriod";
 
