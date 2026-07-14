@@ -169,6 +169,39 @@ export default function PropostasReport() {
     return [...map.values()].sort((a, b) => b.total - a.total);
   }, [filtered]);
 
+  const porImovel = useMemo(() => {
+    const map = new Map<string, { key: string; imovel_id: string | null; label: string; total: number; aceita: number; recusada: number; pendente: number; valor: number }>();
+    filtered.forEach((r) => {
+      const key = r.imovel_id ?? "__sem__";
+      const label = r.imovel_id
+        ? [r.imovel_codigo, r.imovel_titulo].filter(Boolean).join(" · ") || "Imóvel sem título"
+        : "Sem imóvel vinculado";
+      const cur = map.get(key) ?? { key, imovel_id: r.imovel_id, label, total: 0, aceita: 0, recusada: 0, pendente: 0, valor: 0 };
+      cur.total++;
+      cur.valor += Number(r.valor) || 0;
+      if (r.status === "aceita") cur.aceita++;
+      else if (r.status === "recusada") cur.recusada++;
+      else cur.pendente++;
+      map.set(key, cur);
+    });
+    return [...map.values()].sort((a, b) => b.total - a.total || b.valor - a.valor);
+  }, [filtered]);
+
+  const porCliente = useMemo(() => {
+    const map = new Map<string, { key: string; conta_id: string; nome: string; total: number; aceita: number; recusada: number; pendente: number; valor: number }>();
+    filtered.forEach((r) => {
+      const key = r.conta_id;
+      const cur = map.get(key) ?? { key, conta_id: r.conta_id, nome: r.conta_nome ?? "Sem nome", total: 0, aceita: 0, recusada: 0, pendente: 0, valor: 0 };
+      cur.total++;
+      cur.valor += Number(r.valor) || 0;
+      if (r.status === "aceita") cur.aceita++;
+      else if (r.status === "recusada") cur.recusada++;
+      else cur.pendente++;
+      map.set(key, cur);
+    });
+    return [...map.values()].sort((a, b) => b.total - a.total || b.valor - a.valor);
+  }, [filtered]);
+
   const porStatus = [
     { name: "Aceitas", value: totals.aceita, key: "aceita" },
     { name: "Recusadas", value: totals.recusada, key: "recusada" },
