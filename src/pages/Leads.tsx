@@ -244,7 +244,7 @@ export default function Leads() {
 function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds, userId, onChanged, brokers }: any) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   return (
-    <div ref={setNodeRef} className={"min-w-[280px] w-72 flex-shrink-0 rounded-xl bg-muted/40 p-3 transition flex flex-col min-h-[calc(100vh-220px)] " + (isOver ? "ring-2 ring-primary/40" : "")}>
+    <div ref={setNodeRef} className={"min-w-[280px] w-72 flex-shrink-0 rounded-xl bg-muted/40 p-3 transition flex flex-col h-[calc(100vh-220px)] " + (isOver ? "ring-2 ring-primary/40" : "")}>
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-2"><span className={"h-2 w-2 rounded-full " + color} /><span className="font-medium text-sm">{label}</span></div>
         <span className="text-xs text-muted-foreground">{leads.length}</span>

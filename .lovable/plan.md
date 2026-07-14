@@ -1,7 +1,11 @@
-Adicionar coluna "Permuta" no Kanban de Leads, entre "Proposta" e "Fechado".
+Fazer cada coluna do Kanban rolar de forma independente, tanto em Leads quanto em Contas.
 
-Alteração única em `src/lib/leads.ts`:
-1. Adicionar `'Permuta'` ao union `Stage` (entre `'Proposta'` e `'Fechado'`).
-2. Inserir `{ id: 'Permuta', label: 'Permuta', color: 'bg-amber-600' }` no array `STAGES` na mesma posição.
+**Problema atual**: as colunas usam `min-h-[calc(100vh-XXXpx)]` junto com `overflow-y-auto`. Como `min-h` força a coluna a crescer com o conteúdo, o `overflow-y-auto` nunca ativa e a página inteira rola.
 
-Como `etapa_funil` é `text` livre no banco (sem CHECK), nenhuma migração é necessária. Leads existentes continuam funcionando; apenas surgirá a nova coluna vazia que poderá receber cards por drag-and-drop.
+**Correção** (apenas troca de classes de altura, sem lógica):
+
+1. `src/pages/Leads.tsx` linha 247 — na `Column`, trocar `min-h-[calc(100vh-220px)]` por `h-[calc(100vh-220px)]` para dar altura fixa à coluna. O filho já tem `flex-1 overflow-y-auto` e passará a rolar sozinho.
+
+2. `src/components/contas/ContasKanban.tsx` linha 286 — trocar `min-h-[calc(100vh-260px)]` por `h-[calc(100vh-260px)]` no container droppable. Já tem `overflow-y-auto`.
+
+Nenhuma alteração de dados ou comportamento — apenas apresentação.
