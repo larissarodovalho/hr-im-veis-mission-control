@@ -32,11 +32,9 @@ type Row = {
 };
 
 export default function FechamentosReport() {
-  const now = new Date();
-  const [inicio, setInicio] = useState(format(startOfYear(now), "yyyy-MM-dd"));
-  const [fim, setFim] = useState(format(endOfYear(now), "yyyy-MM-dd"));
+  const { inicio, fim, label: periodoLabel, mes } = useReportsPeriod();
   const [responsavelId, setResponsavelId] = useState<string>("todos");
-  const [agrupamento, setAgrupamento] = useState<"mensal" | "anual">("mensal");
+  const [agrupamento, setAgrupamento] = useState<"mensal" | "anual">(mes == null ? "mensal" : "mensal");
   const [rows, setRows] = useState<Row[]>([]);
   const [responsaveis, setResponsaveis] = useState<{ user_id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(true);
