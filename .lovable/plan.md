@@ -1,11 +1,27 @@
-## Alteração
+## Adicionar "Proposta" na seção Agendar da Conta
 
-No funil Kanban da aba **Contas** (tanto Carteira quanto Marketing), inserir uma nova coluna **Permuta** logo após **Visita** e antes de **Proposta**.
+Novo botão **Proposta** ao lado de Reunião/Ligação/Visita/Captação em `ContaAgendaQuickAdd`, com diálogo próprio para o corretor registrar a proposta enviada ao cliente.
 
-## Arquivo a editar
+### Campos do diálogo
+- **Data da proposta** (data)
+- **Valor** (opcional, R$)
+- **Status**: Pendente / Aceita / Recusada
+- **Descrição / condições** (textarea)
 
-- `src/lib/contasFunil.ts`: adicionar `"permuta"` ao tipo `EtapaFunil` e inserir o item `{ id: "permuta", label: "Permuta", color: "bg-orange-500/15 text-orange-700 border-orange-500/30" }` no array `ETAPAS`, posicionado entre `visita` e `proposta`.
+### Backend (nova migração)
+Nova tabela `public.conta_propostas`:
+- `conta_id` (FK contas)
+- `data_proposta` (date)
+- `valor` (numeric, opcional)
+- `status` ('pendente' | 'aceita' | 'recusada', default 'pendente')
+- `descricao` (text)
+- `corretor_id`, `created_by`, timestamps
 
-Como o Kanban (`ContasKanban.tsx`), os relatórios de funil e demais componentes iteram sobre `ETAPAS` dinamicamente, a nova coluna aparece automaticamente em Carteira e Marketing sem outras mudanças de UI.
+RLS espelhando `conta_fechamentos`: acesso restrito a admin/gestor, responsável da conta e criador.
 
-Nenhuma migração de banco é necessária — `contas.etapa_funil` é texto livre e aceita o novo valor `"permuta"`.
+### Frontend
+- `src/components/contas/ContaAgendaQuickAdd.tsx`: adicionar tipo `"proposta"`, botão, e branch de save que insere em `conta_propostas`. Não cria evento no Google Calendar (não é compromisso).
+- Novo componente `src/components/contas/ContaPropostas.tsx`: lista propostas registradas da conta (data, valor, status com badge colorido, descrição) com opção de alterar status posteriormente e excluir.
+- `src/pages/AccountDetail.tsx`: renderizar `ContaPropostas` próximo a `ContaFechamentos`.
+
+Nenhuma alteração no funil ou em outras telas.
