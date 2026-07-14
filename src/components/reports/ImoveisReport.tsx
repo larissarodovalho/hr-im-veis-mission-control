@@ -37,6 +37,7 @@ import { formatBRL } from "@/lib/format";
 import { ESTAGIOS_CAPTACAO } from "@/lib/captacaoFunil";
 import Papa from "papaparse";
 import { toast } from "sonner";
+import { useReportsPeriod } from "@/hooks/useReportsPeriod";
 
 const FAIXAS = [
   { label: "Até R$ 500 mil", min: 0, max: 500_000 },
@@ -60,6 +61,7 @@ const PIE_COLORS = ["#6366f1", "#3b82f6", "#06b6d4", "#f59e0b", "#10b981", "#ef4
 const lower = (s: string | null | undefined) => (s || "").toLowerCase();
 
 export default function ImoveisReport() {
+  const { inicio, fim, label: periodoLabel } = useReportsPeriod();
   const [imoveis, setImoveis] = useState<any[]>([]);
   const [propostas, setPropostas] = useState<any[]>([]);
   const [oportunidades, setOportunidades] = useState<any[]>([]);
@@ -69,8 +71,6 @@ export default function ImoveisReport() {
   const [loading, setLoading] = useState(true);
 
   // Filtros
-  const [dataIni, setDataIni] = useState("");
-  const [dataFim, setDataFim] = useState("");
   const [cidade, setCidade] = useState("all");
   const [finalidade, setFinalidade] = useState("all");
 
@@ -105,8 +105,9 @@ export default function ImoveisReport() {
   }, [imoveis]);
 
   const inPeriod = (created: string) => {
-    if (dataIni && created < dataIni) return false;
-    if (dataFim && created > `${dataFim}T23:59:59`) return false;
+    if (!created) return false;
+    if (created < inicio) return false;
+    if (created > `${fim}T23:59:59`) return false;
     return true;
   };
 
@@ -115,7 +116,7 @@ export default function ImoveisReport() {
     if (cidade !== "all" && i.cidade !== cidade) return false;
     if (finalidade !== "all" && lower(i.finalidade) !== lower(finalidade)) return false;
     return true;
-  }), [imoveis, dataIni, dataFim, cidade, finalidade]);
+  }), [imoveis, inicio, fim, cidade, finalidade]);
 
   const imovelIds = useMemo(() => new Set(imoveisF.map((i) => i.id)), [imoveisF]);
   const propostasF = useMemo(
