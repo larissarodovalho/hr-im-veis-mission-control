@@ -28,14 +28,18 @@ type Proposta = {
   descricao: string | null;
   corretor_id: string | null;
   created_by: string | null;
+  imovel_id: string | null;
   created_at: string;
 };
+
+type ImovelLite = { id: string; codigo: string | null; titulo: string | null };
 
 const schema = z.object({
   data_proposta: z.date({ required_error: "Data obrigatória" }),
   valor: z.number().min(0).nullable().optional(),
   status: z.enum(["pendente", "aceita", "recusada"]),
   descricao: z.string().trim().max(2000).nullable().optional(),
+  imovel_id: z.string().uuid().nullable().optional(),
 });
 
 const STATUS_META: Record<Proposta["status"], { label: string; badge: string; icon: JSX.Element }> = {
