@@ -10,6 +10,7 @@ export type Stage =
   | 'Reunião Agendada'
   | 'Visita'
   | 'Proposta'
+  | 'Permuta'
   | 'Fechado'
   | 'Perdido';
 
