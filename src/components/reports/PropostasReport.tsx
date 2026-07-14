@@ -28,9 +28,12 @@ type Row = {
   descricao: string | null;
   corretor_id: string | null;
   created_by: string | null;
+  imovel_id: string | null;
   conta_nome?: string | null;
   responsavel_nome?: string | null;
   responsavel_id?: string | null;
+  imovel_codigo?: string | null;
+  imovel_titulo?: string | null;
 };
 
 const STATUS_LABEL: Record<string, string> = {
