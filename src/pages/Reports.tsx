@@ -12,6 +12,7 @@ import FunilContasReport from "@/components/reports/FunilContasReport";
 import LeadsParaContasReport from "@/components/reports/LeadsParaContasReport";
 import FaturamentoReport from "@/components/reports/FaturamentoReport";
 import ImoveisReport from "@/components/reports/ImoveisReport";
+import FechamentosReport from "@/components/reports/FechamentosReport";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Reports() {
@@ -85,9 +86,14 @@ export default function Reports() {
       <Tabs defaultValue="performance" className="w-full">
         <TabsList className="w-full justify-start overflow-x-auto whitespace-nowrap">
           <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="fechamentos">Negócios fechados</TabsTrigger>
           <TabsTrigger value="imoveis">Imóveis</TabsTrigger>
           <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="fechamentos" className="mt-4">
+          <FechamentosReport />
+        </TabsContent>
 
         <TabsContent value="performance" className="space-y-4 md:space-y-6 mt-4">
           <FunilContasReport />
