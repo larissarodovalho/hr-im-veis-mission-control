@@ -24,12 +24,13 @@ export default function Reports() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: profiles }, { data: roles }, { data: leads }, { data: reunioes }, { data: ligacoes }] = await Promise.all([
+    const [{ data: profiles }, { data: roles }, { data: leads }, { data: reunioes }, { data: ligacoes }, { data: contas }] = await Promise.all([
       supabase.from("profiles").select("user_id, nome"),
       supabase.from("user_roles").select("user_id, role"),
-      supabase.from("leads").select("corretor_id, etapa_funil"),
+      supabase.from("leads").select("corretor_id"),
       supabase.from("reunioes").select("corretor_id, status"),
       supabase.from("ligacoes").select("corretor_id, resultado"),
+      supabase.from("contas").select("responsavel_id, etapa_funil"),
     ]);
     const corretorIds = new Set<string>(
       (roles ?? []).filter((r: any) => r.role === "corretor").map((r: any) => r.user_id)
@@ -43,7 +44,10 @@ export default function Reports() {
       if (!l.corretor_id) return;
       const s = map.get(l.corretor_id); if (!s) return;
       s.leads++;
-      if (l.etapa_funil === "fechado") s.conversoes++;
+    });
+    (contas ?? []).forEach((c: any) => {
+      if (!c.responsavel_id || c.etapa_funil !== "fechado") return;
+      const s = map.get(c.responsavel_id); if (s) s.conversoes++;
     });
     (reunioes ?? []).forEach((m: any) => {
       if (!m.corretor_id) return;
@@ -111,7 +115,7 @@ export default function Reports() {
                   <TableHeader><TableRow>
                     <TableHead>Corretor</TableHead><TableHead className="text-right">Leads</TableHead>
                     <TableHead className="text-right">Reuniões</TableHead><TableHead className="text-right">Ligações</TableHead>
-                    <TableHead className="text-right"><TooltipProvider><Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 cursor-help">Conversões <Info className="h-3 w-3 text-muted-foreground" /></span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Leads do corretor cuja etapa do funil chegou a "Fechado" (negócio ganho). Taxa = Conversões ÷ Leads × 100.</p></TooltipContent></Tooltip></TooltipProvider></TableHead><TableHead className="text-right">Taxa</TableHead>
+                    <TableHead className="text-right"><TooltipProvider><Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 cursor-help">Conversões <Info className="h-3 w-3 text-muted-foreground" /></span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Contas do corretor cuja etapa do funil chegou a "Fechado" (negócios ganhos, considerando Carteira e Marketing). Taxa = Conversões ÷ Leads × 100.</p></TooltipContent></Tooltip></TooltipProvider></TableHead><TableHead className="text-right">Taxa</TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
                     {stats.map(s => (

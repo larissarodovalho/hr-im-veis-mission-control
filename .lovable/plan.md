@@ -1,18 +1,16 @@
-## Correção de "Conversões" no relatório de Performance por Corretor
+## Basear "Conversões" em Contas fechadas (Carteira + Marketing)
 
-### O que fazer
+### Alteração em `src/pages/Reports.tsx`
 
-Em `src/pages/Reports.tsx`, na tabela **Performance por Corretor**:
+1. **Trocar a fonte de dados de conversões**: em vez de contar leads com `etapa_funil = 'fechado'`, buscar `contas` (carteira e marketing juntas — a coluna `etapa_funil` é compartilhada) e contar por `responsavel_id` aquelas com `etapa_funil = 'fechado'`.
+   - Adicionar `supabase.from("contas").select("responsavel_id, etapa_funil")` no `Promise.all`.
+   - No agregador por corretor: `if (c.etapa_funil === "fechado") s.conversoes++` usando `c.responsavel_id`.
+   - Remover o incremento atual em cima de `leads`.
 
-1. **Corrigir o filtro de conversões**
-   - Trocar `l.etapa_funil === "Fechado"` por `l.etapa_funil === "fechado"` para bater com os ids em minúsculas definidos em `src/lib/leads.ts`.
+2. **Manter "Leads" como está** (total de leads onde o corretor é `corretor_id`) e **Taxa = Conversões ÷ Leads × 100**.
 
-2. **Adicionar tooltip explicativo no cabeçalho "Conversões"**
-   - Colocar um ícone `Info` (lucide-react) ao lado do texto "Conversões" no `<TableHead>`.
-   - Usar `Tooltip` do shadcn (`@/components/ui/tooltip`) com o texto:
-     > "Leads do corretor cuja etapa do funil chegou a 'Fechado' (negócio ganho). Taxa = Conversões ÷ Leads × 100."
+3. **Atualizar o tooltip** do cabeçalho "Conversões":
+   > "Contas do corretor cuja etapa do funil chegou a 'Fechado' (negócios ganhos, considerando Carteira e Marketing). Taxa = Conversões ÷ Leads × 100."
 
 ### Escopo
-
-- Apenas `src/pages/Reports.tsx`.
-- Sem mudanças de schema, RLS ou outros relatórios.
+- Apenas `src/pages/Reports.tsx`. Sem mudanças de schema, RLS ou outros relatórios.
