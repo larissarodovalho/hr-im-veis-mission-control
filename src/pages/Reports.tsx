@@ -24,12 +24,13 @@ export default function Reports() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: profiles }, { data: roles }, { data: leads }, { data: reunioes }, { data: ligacoes }] = await Promise.all([
+    const [{ data: profiles }, { data: roles }, { data: leads }, { data: reunioes }, { data: ligacoes }, { data: contas }] = await Promise.all([
       supabase.from("profiles").select("user_id, nome"),
       supabase.from("user_roles").select("user_id, role"),
-      supabase.from("leads").select("corretor_id, etapa_funil"),
+      supabase.from("leads").select("corretor_id"),
       supabase.from("reunioes").select("corretor_id, status"),
       supabase.from("ligacoes").select("corretor_id, resultado"),
+      supabase.from("contas").select("responsavel_id, etapa_funil"),
     ]);
     const corretorIds = new Set<string>(
       (roles ?? []).filter((r: any) => r.role === "corretor").map((r: any) => r.user_id)
@@ -43,7 +44,10 @@ export default function Reports() {
       if (!l.corretor_id) return;
       const s = map.get(l.corretor_id); if (!s) return;
       s.leads++;
-      if (l.etapa_funil === "fechado") s.conversoes++;
+    });
+    (contas ?? []).forEach((c: any) => {
+      if (!c.responsavel_id || c.etapa_funil !== "fechado") return;
+      const s = map.get(c.responsavel_id); if (s) s.conversoes++;
     });
     (reunioes ?? []).forEach((m: any) => {
       if (!m.corretor_id) return;
