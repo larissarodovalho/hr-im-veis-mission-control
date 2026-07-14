@@ -407,6 +407,64 @@ export type Database = {
         }
         Relationships: []
       }
+      conta_fechamentos: {
+        Row: {
+          conta_id: string
+          created_at: string
+          created_by: string | null
+          data_fechamento: string
+          id: string
+          imovel_id: string | null
+          observacoes: string | null
+          updated_at: string
+          valor: number | null
+        }
+        Insert: {
+          conta_id: string
+          created_at?: string
+          created_by?: string | null
+          data_fechamento: string
+          id?: string
+          imovel_id?: string | null
+          observacoes?: string | null
+          updated_at?: string
+          valor?: number | null
+        }
+        Update: {
+          conta_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_fechamento?: string
+          id?: string
+          imovel_id?: string | null
+          observacoes?: string | null
+          updated_at?: string
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conta_fechamentos_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conta_fechamentos_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conta_fechamentos_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conta_propriedades: {
         Row: {
           aptidao: string | null
