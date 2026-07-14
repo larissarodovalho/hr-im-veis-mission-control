@@ -119,7 +119,7 @@ export default function FechamentosReport() {
     return [...map.values()].sort((a, b) => a.key.localeCompare(b.key));
   }, [filtered, agrupamento]);
 
-  const filenameStamp = () => `${inicio}_a_${fim}`;
+  const filenameStamp = () => periodoLabel.replace("/", "-");
 
   const exportDetalhadoCSV = () => {
     const data = filtered.map((r) => ({
