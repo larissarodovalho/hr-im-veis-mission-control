@@ -2960,6 +2960,20 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
+      list_contas_min: {
+        Args: never
+        Returns: {
+          id: string
+          nome: string
+        }[]
+      }
+      list_leads_min: {
+        Args: never
+        Returns: {
+          id: string
+          nome: string
+        }[]
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string

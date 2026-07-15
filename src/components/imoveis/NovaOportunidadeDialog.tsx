@@ -36,24 +36,12 @@ export default function NovaOportunidadeDialog({ open, onOpenChange, onCreated }
 
   useEffect(() => {
     if (!open) return;
-    const fetchAll = async (table: "contas" | "leads") => {
-      const rows: { id: string; nome: string }[] = [];
-      const pageSize = 1000;
-      let from = 0;
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        const { data, error } = await supabase
-          .from(table).select("id,nome").order("nome")
-          .range(from, from + pageSize - 1);
-        if (error || !data?.length) break;
-        rows.push(...(data as any));
-        if (data.length < pageSize) break;
-        from += pageSize;
-      }
-      return rows;
-    };
-    fetchAll("leads").then((r) => setLeads(r));
-    fetchAll("contas").then((r) => setContas(r));
+    supabase.rpc("list_leads_min").then(({ data }) => {
+      setLeads(((data ?? []) as any[]).map((r) => ({ id: r.id, nome: r.nome || "Sem nome" })));
+    });
+    supabase.rpc("list_contas_min").then(({ data }) => {
+      setContas(((data ?? []) as any[]).map((r) => ({ id: r.id, nome: r.nome || "Sem nome" })));
+    });
     supabase.from("imoveis").select("id,titulo,codigo").order("created_at", { ascending: false }).then(({ data }) => {
       setImoveis((data ?? []).map((i: any) => ({ id: i.id, nome: `${i.codigo ? i.codigo + " · " : ""}${i.titulo}` })));
     });
