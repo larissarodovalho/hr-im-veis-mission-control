@@ -1,11 +1,12 @@
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { MapPin, Phone, Mail, Clock, ArrowUpRight } from "lucide-react";
 import heroBg from "@/assets/hero-dark.jpg";
 import sectionLiving from "@/assets/section-living.jpg";
 import { useSiteImages } from "@/lib/siteSettings";
-import { createWhatsAppUrl } from "@/lib/whatsapp";
 import { ScrollSection, ParallaxImage } from "@/components/site/MotionSections";
+import ContactFormDialog from "@/components/site/ContactFormDialog";
+
 
 const infos = [
   { icon: MapPin, label: "Endereço", value: "Av. dos Ingás, 2075\nJd. Maringá — Sinop, MT" },
@@ -21,6 +22,7 @@ export default function ContatoPage() {
   const heroScale = useTransform(heroScroll, [0, 0.5], [1, 1.1]);
   const heroTextY = useTransform(heroScroll, [0, 0.5], [0, 80]);
   const { img, loaded: imagesLoaded } = useSiteImages();
+  const [contactOpen, setContactOpen] = useState(false);
 
   return (
     <div className="bg-black">
@@ -144,17 +146,16 @@ export default function ContatoPage() {
           <p className="text-base text-white/50 font-light mb-10 max-w-sm mx-auto leading-relaxed">
             14 anos de experiência no mercado imobiliário de Sinop, com atendimento exclusivo e personalizado.
           </p>
-          <a
-            href={createWhatsAppUrl("Olá, tudo bem? Quero falar com um corretor de imóveis.")}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => setContactOpen(true)}
             className="inline-flex items-center gap-2 px-10 py-3.5 rounded-full text-sm font-medium bg-white text-black hover:bg-white/90 hover:scale-[1.03] active:scale-[0.97] transition-all"
           >
             Falar com a equipe
             <ArrowUpRight className="h-4 w-4" />
-          </a>
+          </button>
         </div>
       </ScrollSection>
+      <ContactFormDialog open={contactOpen} onOpenChange={setContactOpen} />
     </div>
   );
 }
