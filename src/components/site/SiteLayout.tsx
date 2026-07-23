@@ -1,11 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
-import { Phone, Mail, Instagram, Facebook, Menu, X, MessageCircle } from "lucide-react";
+import { Phone, Mail, Instagram, Facebook, Menu, X, Mail as MailIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import hrLogo from "@/assets/logo-hr-branco.png";
-import { createWhatsAppUrl } from "@/lib/whatsapp";
 import ScrollToTop from "./ScrollToTop";
 import { useTrackPageview } from "@/lib/siteAnalytics";
+import ContactFormDialog from "./ContactFormDialog";
 
 const navLinks = [
   { label: "Início", to: "/" },
@@ -18,6 +18,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
   useTrackPageview();
 
   useEffect(() => {
@@ -108,18 +109,17 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       {/* Main */}
       <main className="flex-1">{children}</main>
 
-      {/* Floating WhatsApp button */}
-      <a
-        href={createWhatsAppUrl("Olá, tudo bem? Quero falar com um corretor de imóveis.")}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Falar no WhatsApp"
-        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-black/40 hover:scale-110 transition-transform"
-        style={{ backgroundColor: "#25D366" }}
+      {/* Floating contact form button */}
+      <button
+        onClick={() => setContactOpen(true)}
+        aria-label="Fale conosco"
+        className="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 px-5 h-14 rounded-full shadow-lg shadow-black/40 bg-white text-black hover:scale-105 transition-transform text-sm font-medium"
       >
-        <span className="absolute inset-0 rounded-full animate-ping opacity-30" style={{ backgroundColor: "#25D366" }} />
-        <MessageCircle className="h-7 w-7 text-white relative z-10" fill="white" strokeWidth={0} />
-      </a>
+        <MailIcon className="h-4 w-4" />
+        Fale conosco
+      </button>
+      <ContactFormDialog open={contactOpen} onOpenChange={setContactOpen} />
+
 
       {/* Footer — minimal Apple-style */}
       <footer className="border-t border-white/5">

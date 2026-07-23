@@ -1,33 +1,40 @@
-## Problema
+## Objetivo
 
-Na tela de "Nova oportunidade" / "Editar oportunidade" (aba Imóveis → Oportunidades), o seletor de cliente carrega as contas via `supabase.from("contas").select("id,nome")`. Como o RLS de `contas` restringe corretores a verem apenas contas onde são `responsavel_id` ou `created_by`, boa parte da carteira não aparece no seletor — só admin/gestor enxerga tudo.
+Remover o botão flutuante verde do WhatsApp em todo o site público e substituí-lo por um botão que abre um formulário de contato. Ao enviar, cria um novo lead na aba Leads com identificação clara de origem "Formulário Site".
 
-Precisamos que, **especificamente para vincular uma oportunidade**, o corretor consiga selecionar qualquer conta cadastrada (nome + id), sem afrouxar o RLS geral da tabela (que continua escondendo dados sensíveis como telefone, email, notas, etc. dos corretores que não são responsáveis).
+## Mudanças
 
-## Solução
+### 1. `src/components/site/SiteLayout.tsx`
+- Remover o `<a>` flutuante do WhatsApp (ícone verde).
+- Adicionar um novo botão flutuante (mesma posição, cor neutra alinhada ao tema dark do site) que abre um Dialog com o formulário.
+- Componente do formulário renderizado dentro do próprio layout para ficar disponível em todas as páginas.
 
-Criar uma função `SECURITY DEFINER` no banco que devolve apenas `id, nome` de todas as contas para qualquer staff autenticado, e usá-la nos dois diálogos de oportunidade.
+### 2. Novo componente `src/components/site/ContactFormDialog.tsx`
+- Dialog do shadcn com campos: **Nome**, **Telefone**, **E-mail**, **Mensagem**.
+- Validação com zod (obrigatórios, limites de tamanho, e-mail válido, telefone só dígitos).
+- Ao enviar, insert em `public.leads` via `supabase.from('leads').insert(...)` com:
+  - `nome`, `telefone`, `email`, `observacoes` (mensagem)
+  - `origem`: `"Formulário Site"`
+  - `status`: `"novo"`
+  - `etapa_funil`: primeira etapa do funil (`"novo"`)
+  - `tags`: `["site"]`
+- Toast de sucesso/erro (sonner).
+- Sem envio de e-mail (conforme resposta).
 
-### Backend (migration)
+### 3. RLS de `leads` para insert anônimo
+- Adicionar política que permita `INSERT` para role `anon` **apenas** com `origem = 'Formulário Site'` e `created_by IS NULL`, para o formulário público funcionar sem login. Sem `GRANT INSERT` a anon a política não vale — incluir o grant.
+- Manter todas as políticas SELECT/UPDATE/DELETE existentes intactas.
 
-- Criar `public.list_contas_min()` retornando `TABLE(id uuid, nome text)`:
-  - `SECURITY DEFINER`, `search_path = public`.
-  - Retorna todas as contas ordenadas por `nome` quando `is_staff()` é verdadeiro; caso contrário vazio.
-  - `GRANT EXECUTE ... TO authenticated`.
-- Fazer o mesmo para leads (`list_leads_min()`) pelo mesmo motivo — o RLS de leads também restringe corretor a leads próprios, então o mesmo sintoma ocorre lá no seletor de cliente.
+### 4. Limpeza
+- Remover import `MessageCircle` e `createWhatsAppUrl` do `SiteLayout.tsx` se não usados em outro lugar do arquivo.
+- Não alterar `src/lib/whatsapp.ts` nem outros CTAs (Contato page, etc.) — escopo limitado ao botão flutuante conforme resposta.
 
-### Frontend
+## Identificação do lead
 
-Nos arquivos:
-- `src/components/imoveis/NovaOportunidadeDialog.tsx`
-- `src/components/imoveis/EditarOportunidadeDialog.tsx`
+Na aba **Leads** do CRM, o lead aparecerá com:
+- Campo **Origem** = `Formulário Site` (visível nos cards do Kanban e no detalhe).
+- Tag `site` para filtro rápido.
 
-Substituir a função paginada `fetchAll("contas" | "leads")` por chamadas `supabase.rpc("list_contas_min")` e `supabase.rpc("list_leads_min")`. Retorno já traz `{id, nome}` no formato esperado pelo `SearchableSelect`.
-
-Nada mais muda: só o carregamento das opções do seletor. Ao salvar, a oportunidade grava `cliente_id` normalmente; a política existente `Users see contas linked to own oportunidades` já permite o corretor ver depois a conta vinculada.
-
-## Impacto de segurança
-
-- Nenhum dado sensível é exposto: as funções só devolvem `id` e `nome`.
-- Só usuários com papel staff (`is_staff()`) conseguem executar.
-- O RLS das tabelas `contas` e `leads` permanece inalterado — leitura completa continua restrita.
+## Fora de escopo
+- CTAs de WhatsApp em outras páginas (Contato, Home, Detalhe do imóvel).
+- Envio de notificação por e-mail aos corretores.
