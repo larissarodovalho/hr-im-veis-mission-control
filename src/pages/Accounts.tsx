@@ -362,8 +362,16 @@ export default function Accounts() {
         if (a.responsavel_id) return false;
       } else if (a.responsavel_id !== ownerFilter) return false;
     }
+    if (contactFilter !== "todos") {
+      const days = parseInt(contactFilter, 10);
+      const last = lastContactMap[a.id];
+      if (!last) return false;
+      const diffDays = (Date.now() - new Date(last).getTime()) / 86400000;
+      if (diffDays > days) return false;
+    }
     if (typeFilter === "cliente" && a.is_partner) return false;
     if (typeFilter === "parceiro" && !a.is_partner) return false;
+
     const accProps = propsByAccount[a.id] ?? [];
     if (!search) return true;
     const s = search.toLowerCase();
