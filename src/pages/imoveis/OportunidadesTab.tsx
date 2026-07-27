@@ -82,9 +82,9 @@ function OportunidadeCard({ op, clienteNome, corretorNome, qtdImoveis, onClick }
 function Coluna({ estagio, children, count }: { estagio: typeof ESTAGIOS[number]; children: React.ReactNode; count: number }) {
   const { setNodeRef, isOver } = useDroppable({ id: estagio.key });
   return (
-    <div ref={setNodeRef} className={`rounded-md border-2 border-dashed ${estagio.color} p-2 min-w-[260px] sm:min-w-0 snap-start min-h-[60vh] md:min-h-[calc(100vh-280px)] overflow-y-auto transition ${isOver ? "ring-2 ring-primary" : ""}`}>
+    <div ref={setNodeRef} className={`rounded-md border-2 border-dashed ${estagio.color} p-2 min-w-[260px] sm:min-w-0 snap-start h-[70vh] md:h-[calc(100vh-320px)] overflow-y-auto transition ${isOver ? "ring-2 ring-primary" : ""}`}>
 
-      <div className="flex items-center justify-between mb-2 px-1">
+      <div className="flex items-center justify-between mb-2 px-1 sticky top-0 bg-background/95 backdrop-blur z-10 py-1 -mx-1">
         <div className="flex items-center gap-2">
           {estagio.key === "ganha" && <Trophy className="h-3.5 w-3.5 text-emerald-600" />}
           {estagio.key === "perdida" && <XCircle className="h-3.5 w-3.5 text-zinc-500" />}
