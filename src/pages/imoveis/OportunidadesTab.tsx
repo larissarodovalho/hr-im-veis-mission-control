@@ -105,6 +105,7 @@ export default function OportunidadesTab() {
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
   const [corretorFilter, setCorretorFilter] = useState<string>("all");
+  const [periodoFilter, setPeriodoFilter] = useState<string>("all");
   const [openNew, setOpenNew] = useState(false);
   const [editing, setEditing] = useState<Oportunidade | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -159,8 +160,12 @@ export default function OportunidadesTab() {
   const clienteNome = (op: Oportunidade) => op.cliente_tipo === "lead" ? leads[op.cliente_id] : contas[op.cliente_id];
 
   const filtered = useMemo(() => {
+    const periodDays: Record<string, number> = { "7": 7, "15": 15, "30": 30, "90": 90, "180": 180 };
+    const days = periodDays[periodoFilter];
+    const cutoff = days ? Date.now() - days * 86400000 : null;
     return items.filter((op) => {
       if (corretorFilter !== "all" && op.corretor_id !== corretorFilter) return false;
+      if (cutoff && new Date(op.created_at).getTime() < cutoff) return false;
       if (!search) return true;
       const s = search.toLowerCase();
       return op.titulo?.toLowerCase().includes(s)
@@ -168,7 +173,7 @@ export default function OportunidadesTab() {
         || op.cidade?.toLowerCase().includes(s)
         || op.bairro?.toLowerCase().includes(s);
     });
-  }, [items, search, corretorFilter, leads, contas]);
+  }, [items, search, corretorFilter, periodoFilter, leads, contas]);
 
   const byEstagio = useMemo(() => {
     const m: Record<string, Oportunidade[]> = {};
@@ -215,6 +220,18 @@ export default function OportunidadesTab() {
           >
             <option value="all">Todos os corretores</option>
             {corretoresList.map((c) => <option key={c.id} value={c.id as string}>{c.nome}</option>)}
+          </select>
+          <select
+            value={periodoFilter}
+            onChange={(e) => setPeriodoFilter(e.target.value)}
+            className="h-9 rounded-md border bg-background px-2 text-sm w-full sm:w-auto"
+          >
+            <option value="all">Todo o período</option>
+            <option value="7">Últimos 7 dias</option>
+            <option value="15">Últimos 15 dias</option>
+            <option value="30">Últimos 30 dias</option>
+            <option value="90">Últimos 3 meses</option>
+            <option value="180">Últimos 6 meses</option>
           </select>
           <Badge variant="secondary" className="self-start sm:self-auto">{ativas} ativas</Badge>
         </div>
