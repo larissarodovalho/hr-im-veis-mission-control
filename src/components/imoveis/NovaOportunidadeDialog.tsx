@@ -67,24 +67,9 @@ export default function NovaOportunidadeDialog({ open, onOpenChange, onCreated }
     if (!titulo.trim()) { toast.error("Informe um título"); return; }
     if (clienteId === "none") { toast.error("Selecione o cliente"); return; }
     setSaving(true);
-
-    // Auto-vincular à conta se o lead já foi convertido
-    let finalTipo: "lead" | "conta" = clienteTipo;
-    let finalId = clienteId;
-    if (clienteTipo === "lead") {
-      const { data: conta } = await supabase
-        .from("contas").select("id,nome").eq("lead_id_origem", clienteId).maybeSingle();
-      if (conta?.id) {
-        finalTipo = "conta";
-        finalId = conta.id;
-        toast.info(`Vinculada à conta ${conta.nome}`);
-      }
-    }
-
     const { data, error } = await supabase.from("oportunidades").insert({
-      cliente_tipo: finalTipo,
-      cliente_id: finalId,
-
+      cliente_tipo: clienteTipo,
+      cliente_id: clienteId,
       titulo: titulo.trim(),
       descricao_busca: descricaoBusca || null,
       valor_alvo: valorAlvo ? Number(valorAlvo) : null,

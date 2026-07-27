@@ -314,17 +314,9 @@ export default function LeadDetail() {
     }).select("id").single();
     setConverting(false);
     if (error) return toast.error(error.message);
-    if (created?.id) {
-      await supabase
-        .from("oportunidades")
-        .update({ cliente_tipo: "conta", cliente_id: created.id })
-        .eq("cliente_tipo", "lead")
-        .eq("cliente_id", lead.id);
-    }
     setConvertOpen(false);
     toast.success("Lead convertido em conta!");
     navigate(created?.id ? `/crm/contas/${created.id}` : "/crm/contas");
-
   };
 
   return (

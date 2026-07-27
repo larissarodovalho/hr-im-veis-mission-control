@@ -66,20 +66,6 @@ export default function EditarOportunidadeDialog({ open, onOpenChange, oportunid
   const submit = async () => {
     if (clienteId === "none") { toast.error("Selecione o cliente"); return; }
     setSaving(true);
-
-    // Auto-vincular à conta se o lead já foi convertido
-    let finalTipo: "lead" | "conta" = clienteTipo;
-    let finalId = clienteId;
-    if (clienteTipo === "lead") {
-      const { data: conta } = await supabase
-        .from("contas").select("id,nome").eq("lead_id_origem", clienteId).maybeSingle();
-      if (conta?.id) {
-        finalTipo = "conta";
-        finalId = conta.id;
-        toast.info(`Vinculada à conta ${conta.nome}`);
-      }
-    }
-
     const { error } = await supabase.from("oportunidades").update({
       titulo: form.titulo,
       descricao_busca: form.descricao_busca,
@@ -91,10 +77,9 @@ export default function EditarOportunidadeDialog({ open, onOpenChange, oportunid
       estagio: form.estagio,
       corretor_id: form.corretor_id || null,
       observacoes: form.observacoes,
-      cliente_tipo: finalTipo,
-      cliente_id: finalId,
+      cliente_tipo: clienteTipo,
+      cliente_id: clienteId,
     }).eq("id", oportunidade.id);
-
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Oportunidade atualizada");
