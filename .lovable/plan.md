@@ -1,14 +1,15 @@
-## Objetivo
-No Kanban de "Oportunidades de negócio", fazer com que cada coluna do funil tenha rolagem vertical independente (mesmo comportamento já aplicado em Leads e Contas).
+## Filtro de período por último contato — Kanban de Contas
 
-## Onde
-`src/pages/imoveis/OportunidadesTab.tsx`
+Adicionar filtro de "Contato em" nos Kanbans da Carteira e do Marketing em `src/pages/Accounts.tsx`, baseado na data da última interação em `public.interacoes`.
 
-## Mudanças
-- Definir altura fixa para cada coluna com base na viewport (ex.: `h-[calc(100vh-320px)]`) em vez do atual `min-h`, para que o overflow interno seja acionado.
-- Manter `overflow-y-auto` na coluna, para rolagem individual dos cards.
-- Ajustar o container das colunas para não rolar verticalmente em conjunto (mantendo o scroll horizontal apenas no mobile, como já é hoje).
-- Cabeçalho da coluna (título + contador) fica fixo no topo (`sticky top-0` com fundo) para permanecer visível durante a rolagem.
+### Comportamento
+- Novo `<Select>` no cabeçalho ao lado dos filtros existentes.
+- Opções: Todo o período (padrão), 7, 15, 30, 90, 180 dias.
+- Uma conta aparece se possuir pelo menos uma interação dentro do período selecionado.
+- Contas sem nenhuma interação ficam ocultas quando um período é escolhido; visíveis em "Todo o período".
 
-## Resultado
-Cada uma das 6 colunas (Nova, Buscando, Visita, Proposta, Ganha, Perdida) rola independente, sem arrastar as demais.
+### Implementação
+- Buscar em paralelo `select conta_id, max(created_at)` de `interacoes` agrupado por `conta_id` e montar `Map<conta_id, lastContactAt>`.
+- Aplicar o filtro em conjunto com os filtros já existentes (busca, responsável).
+- Reagir ao canal Realtime existente: ao receber mudanças em `interacoes`, refazer o fetch do mapa.
+- Sem alterações de schema, RLS ou backend.
