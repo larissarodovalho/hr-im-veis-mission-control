@@ -633,6 +633,18 @@ export default function Accounts() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={draftContact} onValueChange={(v) => setDraftContact(v)}>
+            <SelectTrigger><SelectValue placeholder="Contato em" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todo o período</SelectItem>
+              <SelectItem value="7">Últimos 7 dias</SelectItem>
+              <SelectItem value="15">Últimos 15 dias</SelectItem>
+              <SelectItem value="30">Últimos 30 dias</SelectItem>
+              <SelectItem value="90">Últimos 3 meses</SelectItem>
+              <SelectItem value="180">Últimos 6 meses</SelectItem>
+            </SelectContent>
+          </Select>
+
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
