@@ -105,6 +105,7 @@ export default function OportunidadesTab() {
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
   const [corretorFilter, setCorretorFilter] = useState<string>("all");
+  const [periodoFilter, setPeriodoFilter] = useState<string>("all");
   const [openNew, setOpenNew] = useState(false);
   const [editing, setEditing] = useState<Oportunidade | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
