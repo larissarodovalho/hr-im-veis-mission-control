@@ -169,6 +169,7 @@ export default function Accounts() {
   const [typeFilter, setTypeFilter] = useState<"todas" | "cliente" | "parceiro">(initialType as any);
   const [tempFilter, setTempFilter] = useState<string>(searchParams.get("temp") ?? "todos");
   const [ownerFilter, setOwnerFilter] = useState<string>(searchParams.get("responsavel") ?? "todos");
+  const [contactFilter, setContactFilter] = useState<string>(searchParams.get("contato") ?? "todos");
   // Rascunho — não filtra até clicar em Aplicar
   const [draftSearch, setDraftSearch] = useState(searchParams.get("q") ?? "");
   const [draftStatus, setDraftStatus] = useState<"todos" | Status>(initialStatus as any);
@@ -176,6 +177,8 @@ export default function Accounts() {
   const [draftType, setDraftType] = useState<"todas" | "cliente" | "parceiro">(initialType as any);
   const [draftTemp, setDraftTemp] = useState<string>(searchParams.get("temp") ?? "todos");
   const [draftOwner, setDraftOwner] = useState<string>(searchParams.get("responsavel") ?? "todos");
+  const [draftContact, setDraftContact] = useState<string>(searchParams.get("contato") ?? "todos");
+
 
   const [loading, setLoading] = useState(true);
   const [novaOpen, setNovaOpen] = useState(false);
