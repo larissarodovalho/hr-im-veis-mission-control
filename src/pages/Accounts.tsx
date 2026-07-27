@@ -169,6 +169,7 @@ export default function Accounts() {
   const [typeFilter, setTypeFilter] = useState<"todas" | "cliente" | "parceiro">(initialType as any);
   const [tempFilter, setTempFilter] = useState<string>(searchParams.get("temp") ?? "todos");
   const [ownerFilter, setOwnerFilter] = useState<string>(searchParams.get("responsavel") ?? "todos");
+  const [contactFilter, setContactFilter] = useState<string>(searchParams.get("contato") ?? "todos");
   // Rascunho — não filtra até clicar em Aplicar
   const [draftSearch, setDraftSearch] = useState(searchParams.get("q") ?? "");
   const [draftStatus, setDraftStatus] = useState<"todos" | Status>(initialStatus as any);
@@ -176,6 +177,8 @@ export default function Accounts() {
   const [draftType, setDraftType] = useState<"todas" | "cliente" | "parceiro">(initialType as any);
   const [draftTemp, setDraftTemp] = useState<string>(searchParams.get("temp") ?? "todos");
   const [draftOwner, setDraftOwner] = useState<string>(searchParams.get("responsavel") ?? "todos");
+  const [draftContact, setDraftContact] = useState<string>(searchParams.get("contato") ?? "todos");
+
 
   const [loading, setLoading] = useState(true);
   const [novaOpen, setNovaOpen] = useState(false);
@@ -193,6 +196,30 @@ export default function Accounts() {
 
   const [ownerMap, setOwnerMap] = useState<Record<string, string>>({});
   const [owners, setOwners] = useState<{ id: string; nome: string }[]>([]);
+  const [lastContactMap, setLastContactMap] = useState<Record<string, string>>({});
+
+  const fetchLastContacts = async () => {
+    const PAGE = 1000;
+    let from = 0;
+    const map: Record<string, string> = {};
+    while (true) {
+      const { data, error } = await supabase
+        .from("interacoes")
+        .select("conta_id, created_at")
+        .not("conta_id", "is", null)
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE - 1);
+      if (error) break;
+      if (!data?.length) break;
+      for (const row of data as any[]) {
+        if (row.conta_id && !map[row.conta_id]) map[row.conta_id] = row.created_at;
+      }
+      if (data.length < PAGE) break;
+      from += PAGE;
+    }
+    setLastContactMap(map);
+  };
+
 
   const fetchAllContas = async () => {
     const PAGE = 1000;
@@ -243,10 +270,12 @@ export default function Accounts() {
 
   useEffect(() => {
     load();
+    fetchLastContacts();
     const ch = supabase
       .channel("accounts-stream")
       .on("postgres_changes", { event: "*", schema: "public", table: "contas" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "conta_propriedades" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "interacoes" }, fetchLastContacts)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
@@ -257,10 +286,11 @@ export default function Accounts() {
     draftInterest !== interestFilter ||
     draftType !== typeFilter ||
     draftTemp !== tempFilter ||
-    draftOwner !== ownerFilter;
+    draftOwner !== ownerFilter ||
+    draftContact !== contactFilter;
 
   const syncFiltersToUrl = (vals: {
-    q: string; status: string; interesse: string; tipo: string; temp: string; responsavel: string;
+    q: string; status: string; interesse: string; tipo: string; temp: string; responsavel: string; contato: string;
   }) => {
     const sp = new URLSearchParams(searchParams);
     const set = (key: string, value: string, def: string) => {
@@ -273,6 +303,7 @@ export default function Accounts() {
     set("tipo", vals.tipo, "todas");
     set("temp", vals.temp, "todos");
     set("responsavel", vals.responsavel, "todos");
+    set("contato", vals.contato, "todos");
     setSearchParams(sp, { replace: true });
   };
 
@@ -283,19 +314,29 @@ export default function Accounts() {
     setTypeFilter(draftType);
     setTempFilter(draftTemp);
     setOwnerFilter(draftOwner);
+    setContactFilter(draftContact);
     syncFiltersToUrl({
       q: draftSearch, status: draftStatus, interesse: draftInterest,
-      tipo: draftType, temp: draftTemp, responsavel: draftOwner,
+      tipo: draftType, temp: draftTemp, responsavel: draftOwner, contato: draftContact,
     });
   };
 
   const clearFilters = () => {
     setDraftSearch(""); setDraftStatus("todos"); setDraftInterest("todos");
-    setDraftType("todas"); setDraftTemp("todos"); setDraftOwner("todos");
+    setDraftType("todas"); setDraftTemp("todos"); setDraftOwner("todos"); setDraftContact("todos");
     setSearch(""); setStatusFilter("todos"); setInterestFilter("todos");
-    setTypeFilter("todas"); setTempFilter("todos"); setOwnerFilter("todos");
-    syncFiltersToUrl({ q: "", status: "todos", interesse: "todos", tipo: "todas", temp: "todos", responsavel: "todos" });
+    setTypeFilter("todas"); setTempFilter("todos"); setOwnerFilter("todos"); setContactFilter("todos");
+    syncFiltersToUrl({ q: "", status: "todos", interesse: "todos", tipo: "todas", temp: "todos", responsavel: "todos", contato: "todos" });
   };
+
+  const CONTACT_LABELS: Record<string, string> = {
+    "7": "Últimos 7 dias",
+    "15": "Últimos 15 dias",
+    "30": "Últimos 30 dias",
+    "90": "Últimos 3 meses",
+    "180": "Últimos 6 meses",
+  };
+
 
 
   const propsByAccount = properties.reduce<Record<string, Property[]>>((acc, p) => {
@@ -321,8 +362,16 @@ export default function Accounts() {
         if (a.responsavel_id) return false;
       } else if (a.responsavel_id !== ownerFilter) return false;
     }
+    if (contactFilter !== "todos") {
+      const days = parseInt(contactFilter, 10);
+      const last = lastContactMap[a.id];
+      if (!last) return false;
+      const diffDays = (Date.now() - new Date(last).getTime()) / 86400000;
+      if (diffDays > days) return false;
+    }
     if (typeFilter === "cliente" && a.is_partner) return false;
     if (typeFilter === "parceiro" && !a.is_partner) return false;
+
     const accProps = propsByAccount[a.id] ?? [];
     if (!search) return true;
     const s = search.toLowerCase();
@@ -584,6 +633,18 @@ export default function Accounts() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={draftContact} onValueChange={(v) => setDraftContact(v)}>
+            <SelectTrigger><SelectValue placeholder="Contato em" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todo o período</SelectItem>
+              <SelectItem value="7">Últimos 7 dias</SelectItem>
+              <SelectItem value="15">Últimos 15 dias</SelectItem>
+              <SelectItem value="30">Últimos 30 dias</SelectItem>
+              <SelectItem value="90">Últimos 3 meses</SelectItem>
+              <SelectItem value="180">Últimos 6 meses</SelectItem>
+            </SelectContent>
+          </Select>
+
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -598,12 +659,14 @@ export default function Accounts() {
           )}
           {/* Chips de filtros ativos */}
           {[
-            typeFilter !== "todas" && { label: `Tipo: ${typeFilter === "cliente" ? "Clientes" : "Parceiros"}`, clear: () => { setTypeFilter("todas"); setDraftType("todas"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: "todas", temp: tempFilter, responsavel: ownerFilter }); } },
-            interestFilter !== "todos" && { label: `Interesse: ${interestFilter === "none" ? "Não definido" : interestFilter}`, clear: () => { setInterestFilter("todos"); setDraftInterest("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: "todos", tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter }); } },
-            statusFilter !== "todos" && { label: `Status: ${statusFilter === "ativo" ? "Ativos" : "Inativos"}`, clear: () => { setStatusFilter("todos"); setDraftStatus("todos"); syncFiltersToUrl({ q: search, status: "todos", interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter }); } },
-            tempFilter !== "todos" && { label: `Temperatura: ${tempLabel(tempFilter)}`, clear: () => { setTempFilter("todos"); setDraftTemp("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: "todos", responsavel: ownerFilter }); } },
-            ownerFilter !== "todos" && { label: `Responsável: ${ownerLabel(ownerFilter)}`, clear: () => { setOwnerFilter("todos"); setDraftOwner("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: "todos" }); } },
-            search && { label: `Busca: "${search}"`, clear: () => { setSearch(""); setDraftSearch(""); syncFiltersToUrl({ q: "", status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter }); } },
+            typeFilter !== "todas" && { label: `Tipo: ${typeFilter === "cliente" ? "Clientes" : "Parceiros"}`, clear: () => { setTypeFilter("todas"); setDraftType("todas"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: "todas", temp: tempFilter, responsavel: ownerFilter, contato: contactFilter }); } },
+            interestFilter !== "todos" && { label: `Interesse: ${interestFilter === "none" ? "Não definido" : interestFilter}`, clear: () => { setInterestFilter("todos"); setDraftInterest("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: "todos", tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter, contato: contactFilter }); } },
+            statusFilter !== "todos" && { label: `Status: ${statusFilter === "ativo" ? "Ativos" : "Inativos"}`, clear: () => { setStatusFilter("todos"); setDraftStatus("todos"); syncFiltersToUrl({ q: search, status: "todos", interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter, contato: contactFilter }); } },
+            tempFilter !== "todos" && { label: `Temperatura: ${tempLabel(tempFilter)}`, clear: () => { setTempFilter("todos"); setDraftTemp("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: "todos", responsavel: ownerFilter, contato: contactFilter }); } },
+            ownerFilter !== "todos" && { label: `Responsável: ${ownerLabel(ownerFilter)}`, clear: () => { setOwnerFilter("todos"); setDraftOwner("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: "todos", contato: contactFilter }); } },
+            contactFilter !== "todos" && { label: `Contato: ${CONTACT_LABELS[contactFilter] ?? contactFilter}`, clear: () => { setContactFilter("todos"); setDraftContact("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter, contato: "todos" }); } },
+            search && { label: `Busca: "${search}"`, clear: () => { setSearch(""); setDraftSearch(""); syncFiltersToUrl({ q: "", status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter, contato: contactFilter }); } },
+
           ].filter(Boolean).map((chip: any, i) => (
 
             <Badge key={i} variant="outline" className="gap-1 pl-2 pr-1 py-1">
