@@ -270,10 +270,12 @@ export default function Accounts() {
 
   useEffect(() => {
     load();
+    fetchLastContacts();
     const ch = supabase
       .channel("accounts-stream")
       .on("postgres_changes", { event: "*", schema: "public", table: "contas" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "conta_propriedades" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "interacoes" }, fetchLastContacts)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
@@ -284,10 +286,11 @@ export default function Accounts() {
     draftInterest !== interestFilter ||
     draftType !== typeFilter ||
     draftTemp !== tempFilter ||
-    draftOwner !== ownerFilter;
+    draftOwner !== ownerFilter ||
+    draftContact !== contactFilter;
 
   const syncFiltersToUrl = (vals: {
-    q: string; status: string; interesse: string; tipo: string; temp: string; responsavel: string;
+    q: string; status: string; interesse: string; tipo: string; temp: string; responsavel: string; contato: string;
   }) => {
     const sp = new URLSearchParams(searchParams);
     const set = (key: string, value: string, def: string) => {
@@ -300,6 +303,7 @@ export default function Accounts() {
     set("tipo", vals.tipo, "todas");
     set("temp", vals.temp, "todos");
     set("responsavel", vals.responsavel, "todos");
+    set("contato", vals.contato, "todos");
     setSearchParams(sp, { replace: true });
   };
 
@@ -310,19 +314,29 @@ export default function Accounts() {
     setTypeFilter(draftType);
     setTempFilter(draftTemp);
     setOwnerFilter(draftOwner);
+    setContactFilter(draftContact);
     syncFiltersToUrl({
       q: draftSearch, status: draftStatus, interesse: draftInterest,
-      tipo: draftType, temp: draftTemp, responsavel: draftOwner,
+      tipo: draftType, temp: draftTemp, responsavel: draftOwner, contato: draftContact,
     });
   };
 
   const clearFilters = () => {
     setDraftSearch(""); setDraftStatus("todos"); setDraftInterest("todos");
-    setDraftType("todas"); setDraftTemp("todos"); setDraftOwner("todos");
+    setDraftType("todas"); setDraftTemp("todos"); setDraftOwner("todos"); setDraftContact("todos");
     setSearch(""); setStatusFilter("todos"); setInterestFilter("todos");
-    setTypeFilter("todas"); setTempFilter("todos"); setOwnerFilter("todos");
-    syncFiltersToUrl({ q: "", status: "todos", interesse: "todos", tipo: "todas", temp: "todos", responsavel: "todos" });
+    setTypeFilter("todas"); setTempFilter("todos"); setOwnerFilter("todos"); setContactFilter("todos");
+    syncFiltersToUrl({ q: "", status: "todos", interesse: "todos", tipo: "todas", temp: "todos", responsavel: "todos", contato: "todos" });
   };
+
+  const CONTACT_LABELS: Record<string, string> = {
+    "7": "Últimos 7 dias",
+    "15": "Últimos 15 dias",
+    "30": "Últimos 30 dias",
+    "90": "Últimos 3 meses",
+    "180": "Últimos 6 meses",
+  };
+
 
 
   const propsByAccount = properties.reduce<Record<string, Property[]>>((acc, p) => {
