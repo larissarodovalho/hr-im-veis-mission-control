@@ -196,6 +196,30 @@ export default function Accounts() {
 
   const [ownerMap, setOwnerMap] = useState<Record<string, string>>({});
   const [owners, setOwners] = useState<{ id: string; nome: string }[]>([]);
+  const [lastContactMap, setLastContactMap] = useState<Record<string, string>>({});
+
+  const fetchLastContacts = async () => {
+    const PAGE = 1000;
+    let from = 0;
+    const map: Record<string, string> = {};
+    while (true) {
+      const { data, error } = await supabase
+        .from("interacoes")
+        .select("conta_id, created_at")
+        .not("conta_id", "is", null)
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE - 1);
+      if (error) break;
+      if (!data?.length) break;
+      for (const row of data as any[]) {
+        if (row.conta_id && !map[row.conta_id]) map[row.conta_id] = row.created_at;
+      }
+      if (data.length < PAGE) break;
+      from += PAGE;
+    }
+    setLastContactMap(map);
+  };
+
 
   const fetchAllContas = async () => {
     const PAGE = 1000;
