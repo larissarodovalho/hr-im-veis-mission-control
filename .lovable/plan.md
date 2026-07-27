@@ -1,23 +1,14 @@
 ## Objetivo
-Adicionar um filtro por período na aba "Oportunidades de negócio" (dentro de Imóveis) para filtrar os cards do Kanban por data.
+No Kanban de "Oportunidades de negócio", fazer com que cada coluna do funil tenha rolagem vertical independente (mesmo comportamento já aplicado em Leads e Contas).
 
 ## Onde
 `src/pages/imoveis/OportunidadesTab.tsx`
 
-## Opções do filtro
-Um `<select>` ao lado do filtro de corretor, com:
-- Todas (padrão)
-- 7 dias
-- 15 dias
-- 30 dias
-- 3 meses
-- 6 meses
+## Mudanças
+- Definir altura fixa para cada coluna com base na viewport (ex.: `h-[calc(100vh-320px)]`) em vez do atual `min-h`, para que o overflow interno seja acionado.
+- Manter `overflow-y-auto` na coluna, para rolagem individual dos cards.
+- Ajustar o container das colunas para não rolar verticalmente em conjunto (mantendo o scroll horizontal apenas no mobile, como já é hoje).
+- Cabeçalho da coluna (título + contador) fica fixo no topo (`sticky top-0` com fundo) para permanecer visível durante a rolagem.
 
-## Comportamento
-- Filtra pelo campo `created_at` da oportunidade (data em que foi criada).
-- Aplicado no mesmo `useMemo` que já filtra por busca e corretor — mantém o Kanban, drag-and-drop e contadores por coluna funcionando normalmente.
-- "Todas" desativa o filtro.
-- Combina com os filtros existentes (busca + corretor).
-
-## Observação
-Se preferir filtrar por outro campo (ex.: `updated_at` = última movimentação, ou data de fechamento em "Ganha"/"Perdida"), me avise antes de eu implementar — o padrão do plano é `created_at`.
+## Resultado
+Cada uma das 6 colunas (Nova, Buscando, Visita, Proposta, Ganha, Perdida) rola independente, sem arrastar as demais.
