@@ -72,12 +72,14 @@ export default function Leads() {
   const isClosedStage = (s: Stage) => s === "Fechado" || s === "Perdido";
 
   const needsNurtureCount = leads.filter(l => {
+    if (convertedIds.has(l.id)) return false;
     if (isClosedStage(l.etapa_funil)) return false;
     const id = idleDays(l.ultima_interacao);
     return id === null || id >= 4;
   }).length;
 
   let filtered = leads.filter(l => {
+    if (convertedIds.has(l.id)) return false;
     if (search) {
       const s = search.toLowerCase();
       const match = l.nome.toLowerCase().includes(s) || l.telefone?.includes(search) || l.email?.toLowerCase().includes(s);
