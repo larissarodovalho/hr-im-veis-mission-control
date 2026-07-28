@@ -33,7 +33,9 @@ export default function DuplicateAlert({ matches, onIgnore, onCancel, showAction
                   {m.nome}
                 </Link>
                 <span className="text-xs text-muted-foreground ml-2">
-                  ({m.table === "leads" ? "Lead" : "Conta"} · {by})
+                  ({m.table === "leads" ? "Lead" : "Conta"} · {by}
+                  {m.etapa ? ` · ${m.etapa}` : ""}
+                  {m.responsavel_nome ? ` · resp: ${m.responsavel_nome}` : ""})
                 </span>
               </div>
             </li>
