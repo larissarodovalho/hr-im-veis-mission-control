@@ -2933,6 +2933,16 @@ export type Database = {
       }
     }
     Functions: {
+      check_duplicate_contact: {
+        Args: { _email: string; _phone: string }
+        Returns: {
+          entidade: string
+          etapa: string
+          id: string
+          nome: string
+          responsavel_nome: string
+        }[]
+      }
       conta_tem_captacao: { Args: { _conta_id: string }; Returns: boolean }
       delete_email: {
         Args: { message_id: number; queue_name: string }
