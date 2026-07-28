@@ -1,24 +1,14 @@
 ## Objetivo
-Quando um lead for convertido em conta, a conta deve aparecer automaticamente na subaba **Marketing** do funil de Contas — já que todos os leads vêm do marketing.
-
-## Como a subaba funciona hoje
-As subabas *Carteira* / *Marketing* do funil de Contas são filtradas pela coluna `tags` da conta:
-- `tags` contém `"carteira"` → aparece em Carteira
-- `tags` contém `"marketing"` → aparece em Marketing
-
-Hoje, ao converter um lead em conta (botão "Converter em conta" no detalhe do lead), nenhuma tag é adicionada, então a conta fica só em "Todos".
+Ocultar do funil de Leads (Kanban e Lista) todos os leads que já foram convertidos em conta, para que apareçam apenas na aba Contas (subaba Marketing).
 
 ## Mudanças
 
-1. **Conversão de lead → conta** (`src/pages/LeadDetail.tsx`)
-   - No `insert` em `public.contas`, incluir `tags: ['marketing']` (mesclando com quaisquer tags já vindas do form, sem duplicar).
+**`src/pages/Leads.tsx`**
+- Aplicar filtro adicional em `filtered` para excluir leads cujo `id` esteja em `convertedIds` (que já é carregado via `contas.lead_id_origem`).
+- Vale para as duas visualizações (Kanban e Lista).
+- Remover o badge "Conta" (não é mais necessário, já que esses leads não aparecem mais na aba).
+- KPIs do topo (se existirem contagens locais) passam a refletir apenas leads ativos (não convertidos).
 
-2. **Backfill das conversões existentes** (migration SQL)
-   - Para toda `conta` em que `lead_id_origem IS NOT NULL` e `tags` ainda não contém `'marketing'` nem `'carteira'`, acrescentar `'marketing'` ao array de tags.
-   - Não mexe em contas criadas manualmente já classificadas como Carteira.
-
-3. Sem alterações no funil, sem alterações de RLS, sem alterações no fluxo de criação manual de conta.
-
-## Verificação
-- Converter um lead novo → abrir Contas → subaba Marketing → conta aparece.
-- Contas antigas que vieram de leads passam a aparecer em Marketing automaticamente após a migration.
+## Observações
+- Nenhuma alteração no banco. Os leads continuam existindo em `public.leads` — apenas são omitidos da UI da aba Leads.
+- Dashboard e Relatórios não são afetados por esta mudança (podem ser tratados depois, se você quiser).

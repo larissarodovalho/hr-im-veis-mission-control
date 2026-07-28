@@ -72,12 +72,14 @@ export default function Leads() {
   const isClosedStage = (s: Stage) => s === "Fechado" || s === "Perdido";
 
   const needsNurtureCount = leads.filter(l => {
+    if (convertedIds.has(l.id)) return false;
     if (isClosedStage(l.etapa_funil)) return false;
     const id = idleDays(l.ultima_interacao);
     return id === null || id >= 4;
   }).length;
 
   let filtered = leads.filter(l => {
+    if (convertedIds.has(l.id)) return false;
     if (search) {
       const s = search.toLowerCase();
       const match = l.nome.toLowerCase().includes(s) || l.telefone?.includes(search) || l.email?.toLowerCase().includes(s);
@@ -191,7 +193,7 @@ export default function Leads() {
                     <Badge variant="outline" className="text-[10px]">{STAGES.find(s => s.id === l.etapa_funil)?.label}</Badge>
                     <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
                     <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
-                    {convertedIds.has(l.id) && <Badge className="bg-success/15 text-success border-success/30 border text-[10px] gap-0.5"><Building2 className="h-2.5 w-2.5" /> Conta</Badge>}
+                    
                   </div>
                   <div className="mt-3"><FollowUpCell lead={l} onChanged={load} userId={user?.id} /></div>
                 </Card>
@@ -215,7 +217,7 @@ export default function Leads() {
                       <td className="p-3">
                         <Link to={`/crm/leads/${l.id}`} className="font-medium hover:underline">{l.nome}</Link>
                         {isUrgent(l) && <Badge className="ml-2 bg-destructive text-destructive-foreground border-destructive border text-[10px] animate-pulse">🔥 Imediato</Badge>}
-                        {convertedIds.has(l.id) && <Badge className="ml-2 bg-success/15 text-success border-success/30 border text-[10px] gap-0.5"><Building2 className="h-2.5 w-2.5" /> Conta</Badge>}
+                        
                         <div className="text-xs text-muted-foreground">{l.telefone}</div>
                       </td>
                       <td className="p-3"><Badge variant="secondary">{SOURCES[l.origem || ""]?.emoji} {SOURCES[l.origem || ""]?.label || l.origem}</Badge></td>
