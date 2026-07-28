@@ -1,14 +1,10 @@
-## Objetivo
-Ocultar do funil de Leads (Kanban e Lista) todos os leads que já foram convertidos em conta, para que apareçam apenas na aba Contas (subaba Marketing).
+## Contexto
+Ao converter um lead em conta, o registro já é criado com `tags: ['marketing']` e `etapa_funil` cai no default `a_contatar` — portanto a conta aparece no funil de Marketing, coluna "A contatar". Porém hoje a navegação leva direto à página de detalhe da conta, dando a impressão de que ela não entrou no funil.
 
 ## Mudanças
 
-**`src/pages/Leads.tsx`**
-- Aplicar filtro adicional em `filtered` para excluir leads cujo `id` esteja em `convertedIds` (que já é carregado via `contas.lead_id_origem`).
-- Vale para as duas visualizações (Kanban e Lista).
-- Remover o badge "Conta" (não é mais necessário, já que esses leads não aparecem mais na aba).
-- KPIs do topo (se existirem contagens locais) passam a refletir apenas leads ativos (não convertidos).
+**`src/pages/LeadDetail.tsx`** (função `doConvert`)
+- Definir explicitamente `etapa_funil: 'a_contatar'` no insert de `contas` (garante entrada no funil mesmo se o default do banco mudar).
+- Após conversão, redirecionar para `/crm/contas?lista=marketing` (em vez de `/crm/contas/:id`), para o corretor ver o card já posicionado no Kanban de Marketing. Toast continua confirmando "Lead convertido em conta!".
 
-## Observações
-- Nenhuma alteração no banco. Os leads continuam existindo em `public.leads` — apenas são omitidos da UI da aba Leads.
-- Dashboard e Relatórios não são afetados por esta mudança (podem ser tratados depois, se você quiser).
+Nenhuma alteração de schema — contas convertidas antigas já foram reclassificadas para a tag `marketing` no backfill anterior.
