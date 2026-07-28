@@ -310,14 +310,15 @@ export default function LeadDetail() {
       documento: convertForm.documento?.trim() || null,
       observacoes: convertForm.observacoes?.trim() || null,
       tags: ['marketing'],
+      etapa_funil: 'a_contatar',
       created_by: user?.id,
       responsavel_id: user?.id,
     }).select("id").single();
     setConverting(false);
     if (error) return toast.error(error.message);
     setConvertOpen(false);
-    toast.success("Lead convertido em conta!");
-    navigate(created?.id ? `/crm/contas/${created.id}` : "/crm/contas");
+    toast.success("Lead convertido em conta! Adicionado ao funil de Marketing.");
+    navigate("/crm/contas?lista=marketing");
   };
 
   return (
