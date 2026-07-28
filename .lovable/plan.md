@@ -1,16 +1,29 @@
-## Verificação concluída
+## Objetivo
+Ao converter um lead em conta, migrar automaticamente todo o histórico de interações do lead para a nova conta, para que apareçam no timeline da conta em Marketing.
 
-Consultei todas as contas com `lead_id_origem` (originadas de conversão de lead). **Todas as 11 contas convertidas** estão com a tag `marketing` e presentes em uma coluna do funil de Marketing:
+## Mudanças
 
-| Coluna do funil | Contas |
-|---|---|
-| A contatar | 3 (Diego Maldonado Vani, Raphael Bragagnolo, Marco Aurelio) |
-| Contato estabelecido | 1 (Rafael Francisco De Castilho) |
-| Reunião | 1 (Rodrigo Watanabe) |
-| Visita | 2 (Kelly Negrão, Brasil [Lead HRX]) |
-| Proposta | 2 (Tiago Ramalho da Silva, Aguinaldo Luis) |
-| Perdido | 2 (Maria Eliane Azevedo, Dra Marine M. Borges) |
+**`src/pages/LeadDetail.tsx`** (função `doConvert`, logo após o insert bem-sucedido em `contas`)
+- Se `created?.id` existir, executar:
+  ```ts
+  await supabase.from("interacoes")
+    .update({ conta_id: created.id })
+    .eq("lead_id", lead.id)
+    .is("conta_id", null);
+  ```
+- Isso vincula as interações existentes do lead à conta, sem duplicar. Elas continuam com `lead_id` também (rastreabilidade), e passam a aparecer no timeline da conta (que filtra por `conta_id`).
+- Erro na migração é apenas logado (não bloqueia a conversão).
 
-Nenhuma correção necessária — nenhuma conta convertida ficou de fora do funil de Marketing.
+## Backfill (uma vez, via insert tool)
+Para as 11 contas já convertidas, preencher `conta_id` nas interações órfãs:
+```sql
+UPDATE public.interacoes i
+SET conta_id = c.id
+FROM public.contas c
+WHERE c.lead_id_origem = i.lead_id
+  AND i.conta_id IS NULL;
+```
 
-Se quiser incluir também as duas contas que estão em **Perdido** de volta em alguma etapa ativa, me diga qual.
+## Observações
+- Não altera schema; usa colunas existentes (`interacoes.lead_id` e `interacoes.conta_id`).
+- Não mexe em `lead_historico` (log interno do lead, não é exibido na conta).
