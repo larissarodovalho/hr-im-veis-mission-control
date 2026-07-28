@@ -1,15 +1,24 @@
-## Filtro de período por último contato — Kanban de Contas
+## Objetivo
+Quando um lead for convertido em conta, a conta deve aparecer automaticamente na subaba **Marketing** do funil de Contas — já que todos os leads vêm do marketing.
 
-Adicionar filtro de "Contato em" nos Kanbans da Carteira e do Marketing em `src/pages/Accounts.tsx`, baseado na data da última interação em `public.interacoes`.
+## Como a subaba funciona hoje
+As subabas *Carteira* / *Marketing* do funil de Contas são filtradas pela coluna `tags` da conta:
+- `tags` contém `"carteira"` → aparece em Carteira
+- `tags` contém `"marketing"` → aparece em Marketing
 
-### Comportamento
-- Novo `<Select>` no cabeçalho ao lado dos filtros existentes.
-- Opções: Todo o período (padrão), 7, 15, 30, 90, 180 dias.
-- Uma conta aparece se possuir pelo menos uma interação dentro do período selecionado.
-- Contas sem nenhuma interação ficam ocultas quando um período é escolhido; visíveis em "Todo o período".
+Hoje, ao converter um lead em conta (botão "Converter em conta" no detalhe do lead), nenhuma tag é adicionada, então a conta fica só em "Todos".
 
-### Implementação
-- Buscar em paralelo `select conta_id, max(created_at)` de `interacoes` agrupado por `conta_id` e montar `Map<conta_id, lastContactAt>`.
-- Aplicar o filtro em conjunto com os filtros já existentes (busca, responsável).
-- Reagir ao canal Realtime existente: ao receber mudanças em `interacoes`, refazer o fetch do mapa.
-- Sem alterações de schema, RLS ou backend.
+## Mudanças
+
+1. **Conversão de lead → conta** (`src/pages/LeadDetail.tsx`)
+   - No `insert` em `public.contas`, incluir `tags: ['marketing']` (mesclando com quaisquer tags já vindas do form, sem duplicar).
+
+2. **Backfill das conversões existentes** (migration SQL)
+   - Para toda `conta` em que `lead_id_origem IS NOT NULL` e `tags` ainda não contém `'marketing'` nem `'carteira'`, acrescentar `'marketing'` ao array de tags.
+   - Não mexe em contas criadas manualmente já classificadas como Carteira.
+
+3. Sem alterações no funil, sem alterações de RLS, sem alterações no fluxo de criação manual de conta.
+
+## Verificação
+- Converter um lead novo → abrir Contas → subaba Marketing → conta aparece.
+- Contas antigas que vieram de leads passam a aparecer em Marketing automaticamente após a migration.

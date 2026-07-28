@@ -309,6 +309,7 @@ export default function LeadDetail() {
       tipo: convertForm.tipo,
       documento: convertForm.documento?.trim() || null,
       observacoes: convertForm.observacoes?.trim() || null,
+      tags: ['marketing'],
       created_by: user?.id,
       responsavel_id: user?.id,
     }).select("id").single();
