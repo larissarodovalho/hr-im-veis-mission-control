@@ -1,10 +1,16 @@
-## Contexto
-Ao converter um lead em conta, o registro já é criado com `tags: ['marketing']` e `etapa_funil` cai no default `a_contatar` — portanto a conta aparece no funil de Marketing, coluna "A contatar". Porém hoje a navegação leva direto à página de detalhe da conta, dando a impressão de que ela não entrou no funil.
+## Verificação concluída
 
-## Mudanças
+Consultei todas as contas com `lead_id_origem` (originadas de conversão de lead). **Todas as 11 contas convertidas** estão com a tag `marketing` e presentes em uma coluna do funil de Marketing:
 
-**`src/pages/LeadDetail.tsx`** (função `doConvert`)
-- Definir explicitamente `etapa_funil: 'a_contatar'` no insert de `contas` (garante entrada no funil mesmo se o default do banco mudar).
-- Após conversão, redirecionar para `/crm/contas?lista=marketing` (em vez de `/crm/contas/:id`), para o corretor ver o card já posicionado no Kanban de Marketing. Toast continua confirmando "Lead convertido em conta!".
+| Coluna do funil | Contas |
+|---|---|
+| A contatar | 3 (Diego Maldonado Vani, Raphael Bragagnolo, Marco Aurelio) |
+| Contato estabelecido | 1 (Rafael Francisco De Castilho) |
+| Reunião | 1 (Rodrigo Watanabe) |
+| Visita | 2 (Kelly Negrão, Brasil [Lead HRX]) |
+| Proposta | 2 (Tiago Ramalho da Silva, Aguinaldo Luis) |
+| Perdido | 2 (Maria Eliane Azevedo, Dra Marine M. Borges) |
 
-Nenhuma alteração de schema — contas convertidas antigas já foram reclassificadas para a tag `marketing` no backfill anterior.
+Nenhuma correção necessária — nenhuma conta convertida ficou de fora do funil de Marketing.
+
+Se quiser incluir também as duas contas que estão em **Perdido** de volta em alguma etapa ativa, me diga qual.
