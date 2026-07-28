@@ -316,6 +316,12 @@ export default function LeadDetail() {
     }).select("id").single();
     setConverting(false);
     if (error) return toast.error(error.message);
+    if (created?.id) {
+      await supabase.from("interacoes")
+        .update({ conta_id: created.id })
+        .eq("lead_id", lead.id)
+        .is("conta_id", null);
+    }
     setConvertOpen(false);
     toast.success("Lead convertido em conta! Adicionado ao funil de Marketing.");
     navigate("/crm/contas?lista=marketing");
