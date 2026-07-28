@@ -10,12 +10,17 @@ export type DuplicateMatch = {
   email: string | null;
   telefone: string | null;
   documento?: string | null;
+  etapa?: string | null;
+  responsavel_nome?: string | null;
   matchedBy: ("email" | "telefone" | "documento")[];
 };
 
 /**
- * Procura duplicidades em leads e contas com base em e-mail, telefone (últimos 8 dígitos)
- * e documento (CPF/CNPJ). Retorna os registros encontrados.
+ * Procura duplicidades em leads e contas por telefone (normalizado) e e-mail.
+ * Usa a função SECURITY DEFINER `check_duplicate_contact` para que corretores
+ * também sejam avisados quando o cadastro pertence a outro corretor — a função
+ * devolve apenas dados mínimos (nome, etapa, responsável), sem expor telefone
+ * ou e-mail dos registros que o corretor não pode ver.
  */
 export async function findDuplicates(input: {
   email?: string | null;
@@ -25,58 +30,72 @@ export async function findDuplicates(input: {
   const email = normEmail(input.email);
   const telDigits = onlyDigits(input.telefone);
   const docDigits = onlyDigits(input.documento);
-  const telTail = telDigits.length >= 8 ? telDigits.slice(-8) : "";
 
   const matches = new Map<string, DuplicateMatch>();
-  const add = (
-    table: "leads" | "contas",
-    row: any,
-    by: "email" | "telefone" | "documento"
+  const addOrMerge = (
+    key: string,
+    base: Omit<DuplicateMatch, "matchedBy">,
+    by: DuplicateMatch["matchedBy"][number],
   ) => {
-    const key = `${table}:${row.id}`;
     const existing = matches.get(key);
     if (existing) {
       if (!existing.matchedBy.includes(by)) existing.matchedBy.push(by);
     } else {
-      matches.set(key, {
-        table,
-        id: row.id,
-        nome: row.nome,
-        email: row.email ?? null,
-        telefone: row.telefone ?? null,
-        documento: row.documento ?? null,
-        matchedBy: [by],
-      });
+      matches.set(key, { ...base, matchedBy: [by] });
     }
   };
 
-  // Leads
-  if (email) {
-    const { data } = await supabase.from("leads").select("id,nome,email,telefone").ilike("email", email).limit(5);
-    (data ?? []).forEach((r) => add("leads", r, "email"));
-  }
-  if (telTail) {
-    const { data } = await supabase.from("leads").select("id,nome,email,telefone").ilike("telefone", `%${telTail}%`).limit(10);
-    (data ?? []).forEach((r) => {
-      if (onlyDigits(r.telefone).slice(-8) === telTail) add("leads", r, "telefone");
+  if (email || telDigits) {
+    const { data, error } = await supabase.rpc("check_duplicate_contact", {
+      _phone: telDigits || "",
+      _email: email || "",
     });
+    if (!error && data) {
+      for (const row of data as any[]) {
+        const table: "leads" | "contas" = row.entidade === "lead" ? "leads" : "contas";
+        const key = `${table}:${row.id}`;
+        const primary: "telefone" | "email" = telDigits ? "telefone" : "email";
+        addOrMerge(
+          key,
+          {
+            table,
+            id: row.id,
+            nome: row.nome,
+            email: null,
+            telefone: null,
+            etapa: row.etapa,
+            responsavel_nome: row.responsavel_nome,
+          },
+          primary,
+        );
+        if (telDigits && email) addOrMerge(key, matches.get(key)!, "email");
+      }
+    }
   }
 
-  // Contas
-  if (email) {
-    const { data } = await supabase.from("contas").select("id,nome,email,telefone,documento").ilike("email", email).limit(5);
-    (data ?? []).forEach((r) => add("contas", r, "email"));
-  }
-  if (telTail) {
-    const { data } = await supabase.from("contas").select("id,nome,email,telefone,documento").ilike("telefone", `%${telTail}%`).limit(10);
-    (data ?? []).forEach((r) => {
-      if (onlyDigits(r.telefone).slice(-8) === telTail) add("contas", r, "telefone");
-    });
-  }
+  // Documento — consulta direta (RLS filtra normalmente)
   if (docDigits) {
-    const { data } = await supabase.from("contas").select("id,nome,email,telefone,documento").ilike("documento", `%${docDigits}%`).limit(10);
+    const { data } = await supabase
+      .from("contas")
+      .select("id,nome,email,telefone,documento")
+      .ilike("documento", `%${docDigits}%`)
+      .limit(10);
     (data ?? []).forEach((r) => {
-      if (onlyDigits(r.documento).includes(docDigits)) add("contas", r, "documento");
+      if (onlyDigits(r.documento).includes(docDigits)) {
+        const key = `contas:${r.id}`;
+        addOrMerge(
+          key,
+          {
+            table: "contas",
+            id: r.id,
+            nome: r.nome,
+            email: r.email ?? null,
+            telefone: r.telefone ?? null,
+            documento: r.documento ?? null,
+          },
+          "documento",
+        );
+      }
     });
   }
 
@@ -88,5 +107,6 @@ export function describeMatch(m: DuplicateMatch): string {
   const by = m.matchedBy
     .map((b) => (b === "email" ? "e-mail" : b === "telefone" ? "telefone" : "documento"))
     .join(" e ");
-  return `${where} já cadastrado(a) (${by}): ${m.nome}`;
+  const resp = m.responsavel_nome ? ` — responsável: ${m.responsavel_nome}` : "";
+  return `${where} já cadastrado(a) (${by}): ${m.nome}${resp}`;
 }
