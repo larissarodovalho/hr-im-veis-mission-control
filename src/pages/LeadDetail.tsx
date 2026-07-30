@@ -769,8 +769,14 @@ export default function LeadDetail() {
               const prazo = tentativaPrazo(lead, idx);
               const isNext = status !== "feita" && idx === Math.min(tentativasFeitas, TENTATIVA_SEQ.length - 1);
               const cd = status === "feita" ? null : prazoCountdown(lead, idx);
+              const inter = status === "feita"
+                ? interacoes
+                    .filter(i => i.tipo === t.tipo)
+                    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0]
+                : null;
+              const pont = status === "feita" ? tentativaPontualidade(prazo, inter?.created_at) : null;
               const cls = status === "feita"
-                ? TENTATIVA_TONE_CLASS.success
+                ? TENTATIVA_TONE_CLASS[pont?.tone ?? "success"]
                 : isNext
                   ? TENTATIVA_TONE_CLASS[cd!.tone]
                   : TENTATIVA_TONE_CLASS.muted;
@@ -778,11 +784,15 @@ export default function LeadDetail() {
                 <div
                   key={t.tipo}
                   className={"flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs " + cls + (isNext && cd?.tone === "danger" ? " animate-pulse" : "")}
-                  title={`Prazo: ${prazoDataLabel(prazo)} (entrada do lead + ${t.prazoHoras}h)`}
+                  title={status === "feita" && inter
+                    ? `Registrada: ${prazoDataLabel(new Date(inter.created_at))} · Vencia: ${prazoDataLabel(prazo)} · ${pont?.detalhe ?? ""}`
+                    : `Prazo: ${prazoDataLabel(prazo)} (entrada do lead + ${t.prazoHoras}h)`}
                 >
                   {status === "feita" ? <Check className="h-3 w-3" /> : <span className="h-3 w-3 rounded-full border inline-block" />}
                   <span>{t.titulo}</span>
-                  <span className="opacity-80">· {prazoDataLabel(prazo)}</span>
+                  {status === "feita" && pont
+                    ? <span className="font-semibold">· {pont.emoji} {pont.label}{pont.id !== "no_prazo" ? ` (${pont.detalhe})` : ""}</span>
+                    : <span className="opacity-80">· {prazoDataLabel(prazo)}</span>}
                   {cd && <span className={isNext ? "font-semibold" : "opacity-80"}>· {cd.texto}</span>}
                 </div>
               );
