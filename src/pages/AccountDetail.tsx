@@ -60,6 +60,7 @@ export default function AccountDetail() {
   const [corretores, setCorretores] = useState<{ user_id: string; nome: string | null }[]>([]);
   const [parceiros, setParceiros] = useState<{ id: string; nome: string }[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [catOpen, setCatOpen] = useState(false);
   const { isAdmin } = useRole();
 
   const load = async () => {
@@ -259,14 +260,9 @@ export default function AccountDetail() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Select value={listaAtual} onValueChange={(v) => setLista(v as any)}>
-            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="nenhuma">Sem lista</SelectItem>
-              <SelectItem value="carteira">Carteira</SelectItem>
-              <SelectItem value="marketing">Marketing</SelectItem>
-            </SelectContent>
-          </Select>
+          <Button variant="outline" onClick={() => setCatOpen(true)}>
+            <ArrowLeftRight className="h-4 w-4 mr-1" /> Alterar categoria
+          </Button>
           <Button variant="outline" onClick={() => setEditing({ ...acc, lista: listaAtual })}><Pencil className="h-4 w-4 mr-1" /> Editar dados</Button>
         </div>
       </div>
