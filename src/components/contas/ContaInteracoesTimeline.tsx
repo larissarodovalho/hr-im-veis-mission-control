@@ -16,6 +16,7 @@ type Interacao = {
   descricao: string | null;
   created_at: string;
   created_by: string | null;
+  pontualidade: string | null;
 };
 
 const TIPOS = [
@@ -42,7 +43,7 @@ export default function ContaInteracoesTimeline({ contaId }: { contaId: string }
     const [{ data }, { data: profs }, { data: { user } }] = await Promise.all([
       supabase
         .from("interacoes")
-        .select("id, tipo, descricao, created_at, created_by")
+        .select("id, tipo, descricao, created_at, created_by, pontualidade")
         .eq("conta_id", contaId)
         .order("created_at", { ascending: false }),
       supabase.from("profiles").select("user_id, nome"),

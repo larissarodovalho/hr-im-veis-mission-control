@@ -981,6 +981,11 @@ export default function LeadDetail() {
               <div key={i.id} className="border-l-2 border-primary/30 pl-3">
                 <div className="flex items-center gap-2 text-sm flex-wrap">
                   <Badge variant="outline" className="text-[10px]">{INTERACTION_TYPE_LABEL[i.tipo] ?? i.tipo}</Badge>
+                  {i.pontualidade && PONTUALIDADE_INFO[i.pontualidade as Pontualidade] && (
+                    <Badge variant="outline" className={"text-[10px] border " + TENTATIVA_TONE_CLASS[PONTUALIDADE_INFO[i.pontualidade as Pontualidade].tone]}>
+                      {PONTUALIDADE_INFO[i.pontualidade as Pontualidade].emoji} {PONTUALIDADE_INFO[i.pontualidade as Pontualidade].label}
+                    </Badge>
+                  )}
                   {i.resultado && <span className="text-xs text-muted-foreground">{i.resultado}</span>}
                   <span className="text-xs text-muted-foreground ml-auto">
                     Por <strong className="text-foreground/80">{i.created_by ? (brokers[i.created_by] || "—") : "—"}</strong> · {format(new Date(i.created_at), "Pp", { locale: ptBR })}
