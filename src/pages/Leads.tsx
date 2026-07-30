@@ -357,7 +357,7 @@ function FollowUpCell({ lead, onChanged, userId, compact }: { lead: Lead; onChan
   const [nota, setNota] = useState("");
   const [savingManual, setSavingManual] = useState(false);
   const idle = idleDays(lead.ultima_interacao);
-  const isClosed = lead.etapa_funil === "Fechado" || lead.etapa_funil === "Perdido";
+  const isClosed = isLegacyStage(lead.etapa_funil);
   const iaEligible = !isClosed && (idle === null || idle >= 3) && !!lead.telefone;
 
   const sendIa = async () => {
@@ -387,7 +387,7 @@ function FollowUpCell({ lead, onChanged, userId, compact }: { lead: Lead; onChan
         created_by: userId,
       });
       if (error) throw error;
-      await supabase.from("leads").update({ ultima_interacao: new Date().toISOString() }).eq("id", lead.id);
+      await supabase.from("leads").update({ ultima_interacao: new Date().toISOString(), tipo_acompanhamento: "manual" }).eq("id", lead.id);
       toast.success("Follow-up registrado");
       setNota("");
       setOpenManual(false);
