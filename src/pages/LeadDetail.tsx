@@ -915,7 +915,7 @@ export default function LeadDetail() {
               return (
                 <div key={m.id} className="text-sm border rounded-md p-2 flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="font-medium">{format(new Date(m.agendada_para), "Pp", { locale: ptBR })}</div>
+                    <div className="font-medium">{fmtDateTimeLong(m.agendada_para)}</div>
                     <div className="text-muted-foreground text-xs truncate">
                       <Badge variant="secondary" className="text-[10px] mr-1">{FORMAT_LABEL[fmt]}</Badge>
                       {m.local || m.link} · <Badge variant="outline" className="text-[10px]">{m.status}</Badge>
@@ -924,7 +924,7 @@ export default function LeadDetail() {
                   <Button size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" onClick={() => setEditingMeeting({
                     __isLigacao: !!m.__isLigacao,
                     id: m.id,
-                    agendada_para: format(new Date(m.agendada_para), "yyyy-MM-dd'T'HH:mm"),
+                    agendada_para: toCuiabaInputValue(m.agendada_para),
                     format: fmt,
                     local: m.local ?? "",
                     link: m.link ?? "",
