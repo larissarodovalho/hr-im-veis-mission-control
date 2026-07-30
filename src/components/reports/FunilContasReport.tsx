@@ -113,8 +113,6 @@ export default function FunilContasReport() {
   const semRetorno = byEtapa["sem_retorno"] ?? 0;
   const estabelecidos = byEtapa["contato_estabelecido"] ?? 0;
   const ativos = total - cancelados - semRetorno;
-  const taxaGeral =
-    estabelecidos + cancelados > 0 ? (estabelecidos / (estabelecidos + cancelados)) * 100 : 0;
 
   // Funil acumulado: contas naquela etapa OU posteriores no fluxo ativo
   const fluxoData = useMemo(() => {
@@ -218,7 +216,7 @@ export default function FunilContasReport() {
       </Tabs>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Kpi label="Total" value={total} link={`/crm/contas?lista=${listaQuery}`} />
         <Kpi label="Em andamento" value={ativos} />
         <Kpi label="Sem retorno" value={semRetorno} />
@@ -226,9 +224,8 @@ export default function FunilContasReport() {
           label="Contato estabelecido"
           value={estabelecidos}
           tone="success"
-          hint="Contas que responderam e têm conversa efetiva. A taxa de conversão considera Estabelecidos ÷ (Estabelecidos + Cancelados)."
+          hint="Contas que responderam e têm conversa efetiva."
         />
-        <Kpi label="Taxa conversão" value={`${taxaGeral.toFixed(1)}%`} tone="primary" />
       </div>
 
       {/* Funil + Pie */}
