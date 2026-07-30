@@ -1,10 +1,15 @@
 // Adapter mapping HR Imóveis schema → Brazil Lands canonical types.
 // Tabelas HR: leads, contas, interacoes, reunioes, ligacoes, imoveis, visitas, profiles, user_roles, whatsapp_*
 
-export type Stage =
+export type ActiveStage =
   | 'Novo Lead'
+  | 'Pré-atendimento'
   | 'Em Contato'
-  | 'Conversa Ativa'
+  | 'Conversa Ativa';
+
+// Etapas retiradas da visualização principal (mantidas no banco como legado
+// até a criação do módulo de Oportunidades e Negócios).
+export type LegacyStage =
   | 'IA de acompanhamento'
   | 'Manual de acompanhamento'
   | 'Reunião Agendada'
@@ -14,6 +19,8 @@ export type Stage =
   | 'Fechado'
   | 'Perdido';
 
+export type Stage = ActiveStage | LegacyStage;
+
 export type Temperature = 'frio' | 'morno' | 'quente';
 
 export const TEMPERATURES: Record<Temperature, { label: string; emoji: string; className: string }> = {
@@ -22,10 +29,16 @@ export const TEMPERATURES: Record<Temperature, { label: string; emoji: string; c
   quente: { label: 'Quente', emoji: '🔥', className: 'bg-red-500/15 text-red-600 border-red-500/30' },
 };
 
-export const STAGES: { id: Stage; label: string; color: string }[] = [
+// Funil principal da aba Leads (4 colunas)
+export const STAGES: { id: ActiveStage; label: string; color: string }[] = [
   { id: 'Novo Lead', label: 'Novo Lead', color: 'bg-blue-500' },
-  { id: 'Em Contato', label: 'Em Contato', color: 'bg-cyan-500' },
-  { id: 'Conversa Ativa', label: 'Conversa Ativa', color: 'bg-indigo-500' },
+  { id: 'Pré-atendimento', label: 'Pré-atendimento', color: 'bg-cyan-500' },
+  { id: 'Em Contato', label: 'Em Contato', color: 'bg-indigo-500' },
+  { id: 'Conversa Ativa', label: 'Conversa Ativa', color: 'bg-violet-500' },
+];
+
+// Etapas legadas: não aparecem como colunas, mas os registros continuam no banco
+export const LEGACY_STAGES: { id: LegacyStage; label: string; color: string }[] = [
   { id: 'IA de acompanhamento', label: '🤖 IA de acompanhamento', color: 'bg-violet-500' },
   { id: 'Manual de acompanhamento', label: '👤 Manual de acompanhamento', color: 'bg-fuchsia-500' },
   { id: 'Reunião Agendada', label: 'Reunião Agendada', color: 'bg-purple-500' },
@@ -34,6 +47,57 @@ export const STAGES: { id: Stage; label: string; color: string }[] = [
   { id: 'Permuta', label: 'Permuta', color: 'bg-amber-600' },
   { id: 'Fechado', label: 'Fechado', color: 'bg-success' },
   { id: 'Perdido', label: 'Perdido', color: 'bg-danger' },
+];
+
+export const ALL_STAGES: { id: Stage; label: string; color: string }[] = [...STAGES, ...LEGACY_STAGES];
+
+const LEGACY_IDS = new Set<string>(LEGACY_STAGES.map((s) => s.id));
+export const isLegacyStage = (stage: string | null | undefined): boolean => !!stage && LEGACY_IDS.has(stage);
+export const stageLabel = (id: string | null | undefined): string =>
+  ALL_STAGES.find((s) => s.id === id)?.label ?? id ?? '—';
+
+// Tipo de acompanhamento (IA e manual são formas de acompanhamento, não etapas)
+export type TipoAcompanhamento = 'ia' | 'manual' | 'corretor';
+
+export const TIPO_ACOMPANHAMENTO: Record<TipoAcompanhamento, { label: string; emoji: string; className: string }> = {
+  ia: { label: 'IA', emoji: '🤖', className: 'bg-violet-500/15 text-violet-600 border-violet-500/30' },
+  manual: { label: 'Manual', emoji: '👤', className: 'bg-fuchsia-500/15 text-fuchsia-600 border-fuchsia-500/30' },
+  corretor: { label: 'Corretor', emoji: '🧑‍💼', className: 'bg-cyan-500/15 text-cyan-600 border-cyan-500/30' },
+};
+
+// Sequência de tentativas da etapa "Em Contato" (registradas no histórico, não são colunas)
+export const TENTATIVA_SEQ = [
+  { ordem: 1, tipo: 'mensagem', label: 'Mensagem', titulo: '1ª tentativa · Mensagem' },
+  { ordem: 2, tipo: 'audio', label: 'Áudio', titulo: '2ª tentativa · Áudio' },
+  { ordem: 3, tipo: 'ligacao', label: 'Ligação', titulo: '3ª tentativa · Ligação' },
+] as const;
+
+export const TENTATIVA_TIPOS: string[] = TENTATIVA_SEQ.map((t) => t.tipo);
+
+export const INTERACAO_CANAIS = ['WhatsApp', 'Ligação', 'SMS', 'E-mail'];
+
+export const TENTATIVA_RESULTADOS: { id: string; label: string }[] = [
+  { id: 'enviado', label: 'Enviado' },
+  { id: 'entregue', label: 'Entregue' },
+  { id: 'visualizado', label: 'Visualizado' },
+  { id: 'respondeu', label: 'Respondeu' },
+  { id: 'atendeu', label: 'Atendeu' },
+  { id: 'nao_atendeu', label: 'Não atendeu' },
+  { id: 'caixa_postal', label: 'Caixa postal' },
+  { id: 'numero_invalido', label: 'Número inválido' },
+];
+
+// Motivos de desclassificação (conta desclassificada)
+export const MOTIVOS_DESCLASSIFICACAO = [
+  'Sem interesse',
+  'Contato inválido',
+  'Cadastro duplicado',
+  'Fora do perfil',
+  'Fora da região de atuação',
+  'Não procura mais imóvel',
+  'Solicitou não receber contatos',
+  'Spam',
+  'Outro',
 ];
 
 export const SOURCES: Record<string, { label: string; emoji: string }> = {
@@ -131,10 +195,10 @@ export const ETAPAS = STAGES.map(s => s.id);
 export const ORIGENS = Object.keys(SOURCES);
 export const STATUS = ['Novo', 'Em contato', 'Qualificado', 'Convertido', 'Perdido'];
 export const TEMPERATURAS = TEMPERATURES;
-export const ETAPA_COLORS: Record<string, string> = STAGES.reduce((acc, s) => {
+export const ETAPA_COLORS: Record<string, string> = ALL_STAGES.reduce((acc, s) => {
   acc[s.id] = s.color;
   return acc;
 }, {} as Record<string, string>);
 export const TEMP_META = TEMPERATURES;
-export const INTERACAO_TIPOS = ['ligacao', 'mensagem', 'email', 'visita', 'reuniao', 'nota'];
+export const INTERACAO_TIPOS = ['ligacao', 'mensagem', 'audio', 'email', 'visita', 'reuniao', 'nota'];
 export const INTERACAO_RESULTADOS = ['atendeu', 'nao_atendeu', 'retornar', 'interessado', 'sem_interesse', 'agendou'];
