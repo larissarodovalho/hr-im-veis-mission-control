@@ -10,6 +10,7 @@ import Papa from "papaparse";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
 import FunilContasReport from "@/components/reports/FunilContasReport";
+import FunilLeadsReport from "@/components/reports/FunilLeadsReport";
 import LeadsParaContasReport from "@/components/reports/LeadsParaContasReport";
 import FaturamentoReport from "@/components/reports/FaturamentoReport";
 import ImoveisReport from "@/components/reports/ImoveisReport";
@@ -59,13 +60,15 @@ function ReportsInner() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: profiles }, { data: roles }, { data: leads }, { data: reunioes }, { data: ligacoes }, { data: contas }] = await Promise.all([
+    const inicioMs = Date.parse(inicioISO);
+    const fimMs = Date.parse(fimISO);
+    const [{ data: profiles }, { data: roles }, { data: leads }, { data: contas }, { data: opsGeradas }, { data: opsEncerradas }] = await Promise.all([
       supabase.from("profiles").select("user_id, nome"),
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("leads").select("corretor_id, created_at").gte("created_at", inicioISO).lte("created_at", fimISO),
-      supabase.from("reunioes").select("corretor_id, status, created_at").gte("created_at", inicioISO).lte("created_at", fimISO),
-      supabase.from("ligacoes").select("corretor_id, resultado, created_at").gte("created_at", inicioISO).lte("created_at", fimISO),
-      supabase.from("contas").select("responsavel_id, etapa_funil, updated_at").gte("updated_at", inicioISO).lte("updated_at", fimISO),
+      supabase.from("contas").select("responsavel_id, etapa_funil, created_at, updated_at").gte("updated_at", inicioISO).lte("updated_at", fimISO),
+      supabase.from("oportunidades").select("corretor_id, created_at").gte("created_at", inicioISO).lte("created_at", fimISO),
+      supabase.from("oportunidades").select("corretor_id, estagio, encerrada_em").in("estagio", ["ganha", "perdida"]).gte("encerrada_em", inicioISO).lte("encerrada_em", fimISO),
     ]);
     const corretorIds = new Set<string>(
       (roles ?? []).filter((r: any) => r.role === "corretor").map((r: any) => r.user_id)
@@ -73,7 +76,7 @@ function ReportsInner() {
     const map = new Map<string, any>();
     (profiles ?? []).forEach((p: any) => {
       if (!corretorIds.has(p.user_id)) return;
-      map.set(p.user_id, { user_id: p.user_id, name: p.nome || "Sem nome", leads: 0, reunioes: 0, ligacoes: 0, conversoes: 0 });
+      map.set(p.user_id, { user_id: p.user_id, name: p.nome || "Sem nome", leads: 0, contas: 0, estabelecidos: 0, oportunidades: 0, ganhas: 0, encerradas: 0 });
     });
     (leads ?? []).forEach((l: any) => {
       if (!l.corretor_id) return;
@@ -81,16 +84,21 @@ function ReportsInner() {
       s.leads++;
     });
     (contas ?? []).forEach((c: any) => {
-      if (!c.responsavel_id || c.etapa_funil !== "fechado") return;
-      const s = map.get(c.responsavel_id); if (s) s.conversoes++;
+      if (!c.responsavel_id) return;
+      const s = map.get(c.responsavel_id); if (!s) return;
+      const createdMs = c.created_at ? Date.parse(c.created_at) : null;
+      if (createdMs != null && createdMs >= inicioMs && createdMs <= fimMs) s.contas++;
+      if (c.etapa_funil === "contato_estabelecido") s.estabelecidos++;
     });
-    (reunioes ?? []).forEach((m: any) => {
-      if (!m.corretor_id) return;
-      const s = map.get(m.corretor_id); if (s) s.reunioes++;
+    (opsGeradas ?? []).forEach((o: any) => {
+      if (!o.corretor_id) return;
+      const s = map.get(o.corretor_id); if (s) s.oportunidades++;
     });
-    (ligacoes ?? []).forEach((c: any) => {
-      if (!c.corretor_id) return;
-      const s = map.get(c.corretor_id); if (s) s.ligacoes++;
+    (opsEncerradas ?? []).forEach((o: any) => {
+      if (!o.corretor_id) return;
+      const s = map.get(o.corretor_id); if (!s) return;
+      s.encerradas++;
+      if (o.estagio === "ganha") s.ganhas++;
     });
     setStats([...map.values()].sort((a, b) => b.leads - a.leads));
     setLoading(false);
@@ -123,12 +131,18 @@ function ReportsInner() {
       <Tabs defaultValue="performance" className="w-full">
         <TabsList className="w-full justify-start overflow-x-auto whitespace-nowrap">
           <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="leads">Leads</TabsTrigger>
           <TabsTrigger value="oportunidades">Oportunidades</TabsTrigger>
           <TabsTrigger value="fechamentos">Negócios fechados</TabsTrigger>
           <TabsTrigger value="propostas">Propostas</TabsTrigger>
           <TabsTrigger value="imoveis">Imóveis</TabsTrigger>
           <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="leads" className="space-y-4 md:space-y-6 mt-4">
+          <FunilLeadsReport />
+          <LeadsParaContasReport />
+        </TabsContent>
 
         <TabsContent value="oportunidades" className="mt-4">
           <OportunidadesReport inicioISO={inicioISO} fimISO={fimISO} />
@@ -144,7 +158,6 @@ function ReportsInner() {
 
         <TabsContent value="performance" className="space-y-4 md:space-y-6 mt-4">
           <FunilContasReport />
-          <LeadsParaContasReport />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="p-4 md:p-6">
@@ -167,18 +180,22 @@ function ReportsInner() {
                 <Table>
                   <TableHeader><TableRow>
                     <TableHead>Corretor</TableHead><TableHead className="text-right">Leads</TableHead>
-                    <TableHead className="text-right">Reuniões</TableHead><TableHead className="text-right">Ligações</TableHead>
-                    <TableHead className="text-right"><TooltipProvider><Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 cursor-help">Conversões <Info className="h-3 w-3 text-muted-foreground" /></span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Contas do corretor cuja etapa do funil chegou a "Fechado" (negócios ganhos, considerando Carteira e Marketing). Taxa = Conversões ÷ Leads × 100.</p></TooltipContent></Tooltip></TooltipProvider></TableHead><TableHead className="text-right">Taxa</TableHead>
+                    <TableHead className="text-right">Contas criadas</TableHead>
+                    <TableHead className="text-right"><TooltipProvider><Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 cursor-help">Contatos estabelecidos <Info className="h-3 w-3 text-muted-foreground" /></span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Contas do corretor que estão na etapa "Contato estabelecido" (com movimentação no período, considerando Carteira e Marketing).</p></TooltipContent></Tooltip></TooltipProvider></TableHead>
+                    <TableHead className="text-right"><TooltipProvider><Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 cursor-help">Oportunidades <Info className="h-3 w-3 text-muted-foreground" /></span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Oportunidades de negócio geradas pelo corretor no período (via qualificação do Contato estabelecido).</p></TooltipContent></Tooltip></TooltipProvider></TableHead>
+                    <TableHead className="text-right">Ganhas</TableHead>
+                    <TableHead className="text-right"><TooltipProvider><Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 cursor-help">Taxa de ganho <Info className="h-3 w-3 text-muted-foreground" /></span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Taxa = Oportunidades ganhas ÷ oportunidades encerradas (ganhas + perdidas) no período × 100.</p></TooltipContent></Tooltip></TooltipProvider></TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
                     {stats.map(s => (
                       <TableRow key={s.user_id}>
                         <TableCell className="font-medium whitespace-nowrap">{s.name}</TableCell>
                         <TableCell className="text-right">{s.leads}</TableCell>
-                        <TableCell className="text-right">{s.reunioes}</TableCell>
-                        <TableCell className="text-right">{s.ligacoes}</TableCell>
-                        <TableCell className="text-right">{s.conversoes}</TableCell>
-                        <TableCell className="text-right font-semibold">{s.leads ? ((s.conversoes / s.leads) * 100).toFixed(1) : "0.0"}%</TableCell>
+                        <TableCell className="text-right">{s.contas}</TableCell>
+                        <TableCell className="text-right">{s.estabelecidos}</TableCell>
+                        <TableCell className="text-right">{s.oportunidades}</TableCell>
+                        <TableCell className="text-right">{s.ganhas}</TableCell>
+                        <TableCell className="text-right font-semibold">{s.encerradas ? ((s.ganhas / s.encerradas) * 100).toFixed(1) : "0.0"}%</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

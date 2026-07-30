@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
-import { ETAPAS, ETAPAS_LEGADO, etapaLabel, etapaColor, isEtapaLegado, categoriaDe } from "@/lib/contasFunil";
+import { ETAPAS, etapaLabel, categoriaDe, QUALIFICACAO_LABEL, QUALIFICACAO_BADGE, type QualificacaoStatus } from "@/lib/contasFunil";
 import {
   ResponsiveContainer,
   BarChart,
@@ -35,6 +35,7 @@ type Conta = {
   categoria: string | null;
   responsavel_id: string | null;
   created_at: string | null;
+  qualificacao_status: string | null;
 };
 type Profile = { user_id: string; nome: string | null };
 
@@ -49,8 +50,14 @@ const COLORS: Record<string, string> = {
   sem_retorno: "hsl(38 92% 50%)",
   contato_estabelecido: "hsl(189 94% 43%)",
   contato_cancelado: "hsl(0 72% 51%)",
-  legado: "hsl(262 60% 60%)",
 };
+
+const QUALIFICACAO_ORDER: QualificacaoStatus[] = [
+  "pendente",
+  "oportunidade_ativa",
+  "oportunidade_futura",
+  "nao_qualificado",
+];
 
 export default function FunilContasReport() {
   const { inicioISO, fimISO, label } = useReportsPeriod();
@@ -68,7 +75,7 @@ export default function FunilContasReport() {
       for (let from = 0; ; from += PAGE) {
         const { data, error } = await supabase
           .from("contas")
-          .select("id, etapa_funil, tags, categoria, responsavel_id, created_at")
+          .select("id, etapa_funil, tags, categoria, responsavel_id, created_at, qualificacao_status")
           .gte("created_at", inicioISO)
           .lte("created_at", fimISO)
           .range(from, from + PAGE - 1);
@@ -105,8 +112,7 @@ export default function FunilContasReport() {
   const cancelados = byEtapa["contato_cancelado"] ?? 0;
   const semRetorno = byEtapa["sem_retorno"] ?? 0;
   const estabelecidos = byEtapa["contato_estabelecido"] ?? 0;
-  const legadas = ETAPAS_LEGADO.reduce((s, e) => s + (byEtapa[e.id] ?? 0), 0);
-  const ativos = total - cancelados - semRetorno - legadas;
+  const ativos = total - cancelados - semRetorno;
   const taxaGeral =
     estabelecidos + cancelados > 0 ? (estabelecidos / (estabelecidos + cancelados)) * 100 : 0;
 
@@ -133,8 +139,28 @@ export default function FunilContasReport() {
     { name: "Sem retorno", value: semRetorno, color: COLORS.sem_retorno },
     { name: "Contato estabelecido", value: estabelecidos, color: COLORS.contato_estabelecido },
     { name: "Contato cancelado", value: cancelados, color: COLORS.contato_cancelado },
-    { name: "Etapas legadas", value: legadas, color: COLORS.legado },
   ].filter((d) => d.value > 0);
+
+  // Qualificação das contas em Contato estabelecido (ponte Contas → Oportunidades)
+  const qualificacaoData = useMemo(() => {
+    const estabelecidas = filtered.filter(
+      (a) => (a.etapa_funil ?? "a_contatar") === "contato_estabelecido"
+    );
+    const m: Record<string, number> = {};
+    estabelecidas.forEach((a) => {
+      const k = (a.qualificacao_status as QualificacaoStatus) || "pendente";
+      m[k] = (m[k] ?? 0) + 1;
+    });
+    return {
+      total: estabelecidas.length,
+      itens: QUALIFICACAO_ORDER.map((status) => ({
+        status,
+        label: QUALIFICACAO_LABEL[status],
+        badge: QUALIFICACAO_BADGE[status],
+        qtd: m[status] ?? 0,
+      })),
+    };
+  }, [filtered]);
 
   // Comparação Carteira × Marketing (apenas na aba "todas")
   const comparaData = useMemo(() => {
@@ -306,7 +332,7 @@ export default function FunilContasReport() {
                 </td>
                 <td className="py-2 text-right">—</td>
               </tr>
-              <tr className={legadas > 0 ? "border-b" : ""}>
+              <tr>
                 <td className="py-2">
                   <Badge variant="outline" style={{ borderColor: COLORS.contato_cancelado, color: COLORS.contato_cancelado }}>
                     Contato cancelado
@@ -318,29 +344,6 @@ export default function FunilContasReport() {
                 </td>
                 <td className="py-2 text-right">—</td>
               </tr>
-              {legadas > 0 && (
-                <>
-                  <tr>
-                    <td colSpan={4} className="py-2 text-xs uppercase tracking-wide text-muted-foreground">
-                      Etapas comerciais legadas (aguardam o módulo de Oportunidades)
-                    </td>
-                  </tr>
-                  {ETAPAS_LEGADO.filter((e) => (byEtapa[e.id] ?? 0) > 0).map((e) => (
-                    <tr key={e.id} className="border-b last:border-0">
-                      <td className="py-2">
-                        <Badge variant="outline" className={etapaColor(e.id)}>
-                          {e.label} (legado)
-                        </Badge>
-                      </td>
-                      <td className="py-2 text-right font-medium">{byEtapa[e.id]}</td>
-                      <td className="py-2 text-right text-muted-foreground">
-                        {total ? (((byEtapa[e.id] ?? 0) / total) * 100).toFixed(1) : "0.0"}%
-                      </td>
-                      <td className="py-2 text-right">—</td>
-                    </tr>
-                  ))}
-                </>
-              )}
             </tbody>
           </table>
         </div>
@@ -348,6 +351,34 @@ export default function FunilContasReport() {
           <Link to={`/crm/contas?lista=${listaQuery}`} className="text-xs text-primary hover:underline">
             Abrir kanban de Contas →
           </Link>
+        </div>
+      </Card>
+
+      {/* Qualificação → Oportunidades */}
+      <Card className="p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-3">
+          <div>
+            <h3 className="font-semibold">Qualificação → Oportunidades</h3>
+            <p className="text-sm text-muted-foreground">
+              Status de qualificação das {qualificacaoData.total} contas em Contato estabelecido.
+            </p>
+          </div>
+          {qualificacaoData.itens[0].qtd > 0 && (
+            <Badge variant="outline" className={QUALIFICACAO_BADGE.pendente}>
+              {qualificacaoData.itens[0].qtd} aguardando qualificação
+            </Badge>
+          )}
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {qualificacaoData.itens.map((q) => (
+            <div key={q.status} className="rounded-lg border p-4">
+              <Badge variant="outline" className={q.badge}>{q.label}</Badge>
+              <p className="text-2xl font-semibold mt-2">{q.qtd}</p>
+              <p className="text-xs text-muted-foreground">
+                {qualificacaoData.total ? ((q.qtd / qualificacaoData.total) * 100).toFixed(1) : "0.0"}% das estabelecidas
+              </p>
+            </div>
+          ))}
         </div>
       </Card>
 

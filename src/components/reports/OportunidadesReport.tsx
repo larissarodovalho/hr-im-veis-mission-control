@@ -30,8 +30,14 @@ export default function OportunidadesReport({ inicioISO, fimISO }: { inicioISO: 
   useEffect(() => {
     const run = async () => {
       setLoading(true);
-      const { data: o } = await supabase.from("oportunidades").select("*");
-      const all = (o ?? []) as any[];
+      const all: any[] = [];
+      for (let from = 0; ; from += 1000) {
+        const { data, error } = await supabase.from("oportunidades").select("*").range(from, from + 999);
+        if (error) break;
+        const rows = (data ?? []) as any[];
+        all.push(...rows);
+        if (rows.length < 1000) break;
+      }
       const ids = all.map((x) => x.id);
       const contaIds = [...new Set(all.map((x) => x.conta_id).filter(Boolean))] as string[];
       const [v, p, f, prof, c] = await Promise.all([
@@ -72,9 +78,22 @@ export default function OportunidadesReport({ inicioISO, fimISO }: { inicioISO: 
     const fechPeriodo = fechamentos.filter((f) => noPeriodo(f.data_fechamento));
 
     const porEstagio = ESTAGIOS.map((e) => ({
+      key: e.key as string,
       name: e.label,
       total: ops.filter((o) => (o.estagio ?? "nova") === e.key).length,
     }));
+
+    // Avanço acumulado entre etapas do fluxo ativo (nova → buscando → visita → proposta → ganha)
+    const FLUXO_KEYS = ["nova", "buscando", "visita", "proposta", "ganha"];
+    const accum: number[] = new Array(FLUXO_KEYS.length).fill(0);
+    for (let i = FLUXO_KEYS.length - 1; i >= 0; i--) {
+      const k = FLUXO_KEYS[i];
+      accum[i] = (porEstagio.find((e) => e.key === k)?.total ?? 0) + (accum[i + 1] ?? 0);
+    }
+    const avancoPorEtapa: Record<string, number | null> = {};
+    FLUXO_KEYS.forEach((k, i) => {
+      avancoPorEtapa[k] = i < FLUXO_KEYS.length - 1 && accum[i] > 0 ? (accum[i + 1] / accum[i]) * 100 : null;
+    });
 
     const catCount: Record<string, number> = {};
     ops.forEach((o) => {
@@ -106,7 +125,7 @@ export default function OportunidadesReport({ inicioISO, fimISO }: { inicioISO: 
 
     return {
       total, ativas, novas: novas.length, ganhasPeriodo: ganhasPeriodo.length, perdidasPeriodo: perdidasPeriodo.length,
-      visitasPeriodo, propostasPeriodo, valorGanho, porEstagio, porCategoria, motivosPerda, porCorretor,
+      visitasPeriodo, propostasPeriodo, valorGanho, porEstagio, avancoPorEtapa, porCategoria, motivosPerda, porCorretor,
       fechPeriodo,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -228,13 +247,16 @@ export default function OportunidadesReport({ inicioISO, fimISO }: { inicioISO: 
         <p className="text-sm font-medium mb-3">Resumo por etapa</p>
         <Table>
           <TableHeader>
-            <TableRow><TableHead>Etapa</TableHead><TableHead className="text-right">Oportunidades</TableHead></TableRow>
+            <TableRow><TableHead>Etapa</TableHead><TableHead className="text-right">Oportunidades</TableHead><TableHead className="text-right">Avanço p/ próxima</TableHead></TableRow>
           </TableHeader>
           <TableBody>
             {d.porEstagio.map((e, i) => (
               <TableRow key={e.name}>
                 <TableCell>{estagioLabel(ESTAGIOS[i].key)}</TableCell>
                 <TableCell className="text-right">{e.total}</TableCell>
+                <TableCell className="text-right">
+                  {d.avancoPorEtapa[e.key] != null ? `${d.avancoPorEtapa[e.key]!.toFixed(1)}%` : "—"}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
