@@ -578,12 +578,26 @@ export default function Accounts() {
       patch.cancelado_em = null;
       patch.cancelado_por = null;
     }
+    // Entrando em Contato estabelecido: inicia a qualificação (pendente),
+    // exceto se já houver oportunidade ativa vinculada
+    if (etapa === "contato_estabelecido" && conta?.qualificacao_status !== "oportunidade_ativa") {
+      patch.qualificacao_status = "pendente";
+    }
     setAccounts((cur) => cur.map((a) => (a.id === id ? ({ ...a, ...patch } as Account) : a)));
     const { error } = await supabase.from("contas").update(patch as any).eq("id", id);
     if (error) {
       setAccounts(prev);
       toast.error("Não foi possível mover: " + error.message);
+      return;
     }
+    if (etapa === "contato_estabelecido" && conta) {
+      setQualifTarget({ ...conta, ...patch } as Account);
+    }
+  };
+
+  const abrirQualificacao = (id: string) => {
+    const conta = accounts.find((a) => a.id === id);
+    if (conta) setQualifTarget(conta);
   };
 
   const confirmarCancelamento = async ({ motivo, agradecimento }: CancelamentoData) => {
