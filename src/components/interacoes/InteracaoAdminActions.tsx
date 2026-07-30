@@ -79,14 +79,20 @@ export default function InteracaoAdminActions({ interacao, onChanged, pontualida
     const novoIso = fromCuiabaInputValue(quando);
     if (!novoIso) return toast.error("Data/hora inválida");
     setSaving(true);
-    const patch: Record<string, unknown> = {
+    const patch: {
+      tipo: string;
+      resultado: string | null;
+      descricao: string | null;
+      created_at: string;
+      pontualidade?: string | null;
+    } = {
       tipo,
       resultado: resultado || null,
       descricao: descricao.trim() || null,
       created_at: novoIso,
     };
     if (pontualidadeFor) {
-      const p = pontualidadeFor(novoIso, (patch.descricao as string | null) ?? null, tipo, interacao);
+      const p = pontualidadeFor(novoIso, patch.descricao, tipo, interacao);
       if (p !== undefined) patch.pontualidade = p;
     }
     const { error } = await supabase.from("interacoes").update(patch).eq("id", interacao.id);
