@@ -429,7 +429,7 @@ export default function AccountDetail() {
       </Card>
 
       <AlterarCategoriaDialog
-        conta={acc}
+        contaNome={acc.nome}
         categoriaAtual={categoriaAtual}
         open={catOpen}
         onOpenChange={setCatOpen}
