@@ -187,6 +187,16 @@ export default function LeadDetail() {
     load();
   };
 
+  /** Recalcula pontualidade quando o admin edita data/hora de uma tentativa. */
+  const pontualidadeForInteracao = (novoIso: string, descricao: string | null, tipo: string, original: any): string | null | undefined => {
+    if (!lead) return undefined;
+    const idx = TENTATIVA_SEQ.findIndex(t => t.tipo === tipo);
+    const pareceTentativa = idx >= 0 && /^[123]ª tentativa/i.test(descricao ?? "");
+    if (pareceTentativa) return tentativaPontualidade(tentativaPrazo(lead, idx), novoIso)?.id ?? null;
+    // Deixou de ser tentativa (tipo/texto mudou) → limpa o selo; demais casos mantêm.
+    return original?.pontualidade ? null : undefined;
+  };
+
   const confirmSucesso = async () => {
     if (!sucessoCorretor) return toast.error("Selecione o corretor responsável");
     setSavingSucesso(true);
