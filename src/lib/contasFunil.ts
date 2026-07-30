@@ -105,3 +105,29 @@ export const MOTIVOS_CANCELAMENTO = [
   "Spam",
   "Outro",
 ];
+
+// ── Qualificação → Oportunidade (ponte Contas → Oportunidades de Negócio) ────
+export type QualificacaoStatus = "pendente" | "oportunidade_ativa" | "oportunidade_futura" | "nao_qualificado";
+
+export const QUALIFICACAO_LABEL: Record<QualificacaoStatus, string> = {
+  pendente: "Qualificação pendente",
+  oportunidade_ativa: "Oportunidade ativa",
+  oportunidade_futura: "Oportunidade futura",
+  nao_qualificado: "Não qualificado",
+};
+
+export const QUALIFICACAO_BADGE: Record<QualificacaoStatus, string> = {
+  pendente: "bg-amber-500/15 text-amber-700 border-amber-500/30",
+  oportunidade_ativa: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
+  oportunidade_futura: "bg-blue-500/15 text-blue-700 border-blue-500/30",
+  nao_qualificado: "bg-muted text-muted-foreground border-border",
+};
+
+export const qualificacaoInfo = (s?: string | null) =>
+  s && s in QUALIFICACAO_LABEL
+    ? {
+        status: s as QualificacaoStatus,
+        label: QUALIFICACAO_LABEL[s as QualificacaoStatus],
+        badge: QUALIFICACAO_BADGE[s as QualificacaoStatus],
+      }
+    : null;
