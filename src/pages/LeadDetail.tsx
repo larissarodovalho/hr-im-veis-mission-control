@@ -993,8 +993,11 @@ export default function LeadDetail() {
                   )}
                   {i.resultado && <span className="text-xs text-muted-foreground">{i.resultado}</span>}
                   <span className="text-xs text-muted-foreground ml-auto">
-                    Por <strong className="text-foreground/80">{i.created_by ? (brokers[i.created_by] || "—") : "—"}</strong> · {format(new Date(i.created_at), "Pp", { locale: ptBR })}
+                    Por <strong className="text-foreground/80">{i.created_by ? (brokers[i.created_by] || "—") : "—"}</strong> · {fmtDateTimeLong(i.created_at)}
                   </span>
+                  {isAdmin && (
+                    <InteracaoAdminActions interacao={i} onChanged={load} pontualidadeFor={pontualidadeForInteracao} />
+                  )}
                 </div>
                 {i.descricao && <p className="text-sm mt-1">{i.descricao}</p>}
                 {i.proxima_acao && <p className="text-xs text-primary mt-1">→ {i.proxima_acao}</p>}
