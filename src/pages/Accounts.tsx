@@ -22,11 +22,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import * as XLSX from "xlsx";
 import NovaContaDialog from "@/components/contas/NovaContaDialog";
 import ImportarContasDialog from "@/components/contas/ImportarContasDialog";
-import ContasKanban from "@/components/contas/ContasKanban";
+import ContasKanban, { OpAtivaResumo } from "@/components/contas/ContasKanban";
 import ContaCancelarDialog, { CancelamentoData } from "@/components/contas/ContaCancelarDialog";
 import AlterarCategoriaDialog, { CategoriaData } from "@/components/contas/AlterarCategoriaDialog";
-import { EtapaFunil, ETAPAS, categoriaDe, isEtapaLegado, etapaLabel, CATEGORIA_LABEL } from "@/lib/contasFunil";
-import { LayoutGrid, List as ListIcon } from "lucide-react";
+import QualificacaoOportunidadeDialog from "@/components/oportunidades/QualificacaoOportunidadeDialog";
+import { EtapaFunil, ETAPAS, categoriaDe, isEtapaLegado, etapaLabel, CATEGORIA_LABEL, qualificacaoInfo } from "@/lib/contasFunil";
+import { estagioLabel } from "@/lib/oportunidadesFunil";
+import { LayoutGrid, List as ListIcon, HandCoins } from "lucide-react";
 import { TEMPERATURAS, tempInfo } from "@/lib/contasTemperatura";
 
 type Operation = "compra" | "venda" | "arrendamento" | "outro";
@@ -57,6 +59,9 @@ type Account = {
   data_entrada_carteira?: string | null;
   destino_comercial?: string | null;
   motivo_cancelamento?: string | null;
+  lead_id_origem?: string | null;
+  qualificacao_status?: string | null;
+  proxima_acao_em?: string | null;
 };
 
 const formatDoc = (doc: string | null, tipo: string | null) => {
@@ -242,7 +247,7 @@ export default function Accounts() {
     while (true) {
       const { data, error } = await supabase
         .from("contas")
-        .select("id, nome, email, telefone, documento, tipo, responsavel_id, created_by, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil, temperatura, ramo_atividade, categoria, origem, data_entrada_carteira, destino_comercial, motivo_cancelamento")
+        .select("id, nome, email, telefone, documento, tipo, responsavel_id, created_by, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil, temperatura, ramo_atividade, categoria, origem, data_entrada_carteira, destino_comercial, motivo_cancelamento, lead_id_origem, qualificacao_status, proxima_acao_em")
         .order("nome", { ascending: true })
         .range(from, from + PAGE - 1);
       if (error) throw error;
