@@ -394,6 +394,8 @@ export default function LeadDetail() {
 
   if (!lead) return <div className="p-8 text-muted-foreground">Carregando…</div>;
 
+  const tentativasFeitas = interacoes.filter(i => TENTATIVA_TIPOS.includes(i.tipo)).length;
+
   const confirmConvert = async () => {
     if (!convertForm.nome?.trim()) return toast.error("Nome obrigatório");
     if (convertDups.length && !forceConvert) {
@@ -498,9 +500,14 @@ export default function LeadDetail() {
               </Badge>
             </Link>
           ) : (
-            <Button size="sm" onClick={openConvert} className="bg-success hover:bg-success/90 text-success-foreground w-full sm:w-auto">
-              <Building2 className="h-4 w-4 mr-1" /> Converter em conta
-            </Button>
+            <>
+              <Button size="sm" onClick={openConvert} className="bg-success hover:bg-success/90 text-success-foreground w-full sm:w-auto">
+                <Building2 className="h-4 w-4 mr-1" /> Conta Cliente
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => { setDesclassMotivo(""); setDesclassOutro(""); setDesclassOpen(true); }} className="w-full sm:w-auto text-danger border-danger/40 hover:bg-danger/10">
+                <XCircle className="h-4 w-4 mr-1" /> Desclassificar
+              </Button>
+            </>
           )}
           <Button variant="outline" size="sm" onClick={() => setEditLead({
             nome: lead.nome ?? "",
@@ -530,14 +537,19 @@ export default function LeadDetail() {
           </Select>
           <Select value={lead.etapa_funil} onValueChange={v => updateLead({ etapa_funil: v as Stage })}>
             <SelectTrigger className="w-full sm:w-52 lg:w-56"><SelectValue /></SelectTrigger>
-            <SelectContent>{STAGES.map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}</SelectContent>
+            <SelectContent>
+              {isLegacyStage(lead.etapa_funil) && (
+                <SelectItem value={lead.etapa_funil}>{stageLabel(lead.etapa_funil)} (legado)</SelectItem>
+              )}
+              {STAGES.map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
+            </SelectContent>
           </Select>
         </div>
       </div>
 
       <Dialog open={convertOpen} onOpenChange={setConvertOpen}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Converter lead em conta</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Converter lead em Conta Cliente</DialogTitle></DialogHeader>
           {convertForm && (
             <div className="space-y-3">
               <div><Label>Nome do cliente*</Label><Input value={convertForm.nome} onChange={e => setConvertForm({ ...convertForm, nome: e.target.value })} /></div>
