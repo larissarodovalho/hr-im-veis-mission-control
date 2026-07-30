@@ -1,45 +1,73 @@
-# Funil da aba Contas (Carteira e Marketing) — REESTRUTURA IMPLEMENTADA
+# Estrutura atual do funil de Oportunidades de Negócio — MAPA INFORMATIVO (sem alterações)
 
-## Status: concluído
+Este documento descreve o estado atual do funil de Oportunidades, que é o próximo passo depois do "Contato estabelecido" das Contas. **Nenhuma implementação** está prevista nesta etapa — aguardar o usuário definir as alterações desejadas.
 
-Os dois funis (Carteira e Marketing) usam o mesmo modelo de 5 etapas, separados pela **categoria** da conta (`contas.categoria`: `carteira` | `marketing`, com fallback para tags).
+## 1. Onde vive
 
-## As 5 colunas ativas (ordem fixa)
+- Aba **Imóveis → subaba "Oportunidades de Negócio"** (`/crm/imoveis`), componente `src/pages/imoveis/OportunidadesTab.tsx`.
+- Não é uma aba de topo do CRM — está dentro de Imóveis.
+
+## 2. As 6 colunas do Kanban (ordem atual)
 
 ```text
-1. A contatar
-2. Contatado
-3. Sem retorno
-4. Contato estabelecido
-5. Contato cancelado
+1. Nova
+2. Buscando imóvel
+3. Visita agendada
+4. Em proposta
+5. Ganha            (final — troféu)
+6. Perdida          (final)
 ```
 
-## Regras operacionais implementadas
+- Etapa gravada em `oportunidades.estagio` (`nova`, `buscando`, `visita`, `proposta`, `ganha`, `perdida`).
+- **Atenção**: os valores são travados por `CHECK constraint` no banco — renomear, adicionar ou remover etapas exige migração SQL, não só mudança de rótulo.
+- Movimentação: arrastar e soltar no Kanban ou clicar no card (EditarOportunidadeDialog).
+- Badge "X ativas" conta tudo que não está em Ganha/Perdida.
 
-- **A contatar**: ações de 1º e 2º contato (WhatsApp, ligação, e-mail) com resultado (sem resposta / respondeu / contato inválido). Sem resposta na 2ª tentativa → Sem retorno.
-- **Contatado**: agendar tarefa de retorno, enviar link de imóvel, avançar para Contato estabelecido.
-- **Sem retorno**: novas tentativas; resposta → Contatado; cancelamento exige motivo.
-- **Contato estabelecido**: seleção de **Destino comercial** (não é coluna do funil): Captação/Reunião, Comprar — Oportunidade, Vender — HRX Produções, Oportunidade futura. Gravado em `contas.destino_comercial` + interação.
-- **Contato cancelado**: motivo obrigatório (`contas.motivo_cancelamento`, `cancelado_em`, `cancelado_por`) via ContaCancelarDialog; reativação limpa os campos.
+## 3. Dados de cada oportunidade (tabela `oportunidades`)
 
-## Categoria
+- **Cliente**: `cliente_tipo` (lead **ou** conta) + `cliente_id` — uma oportunidade pode nascer de um lead direto ou de uma conta.
+- Título, descrição da busca, valor alvo, tipo de imóvel, cidade, bairro.
+- **Prioridade**: baixa / média / alta (badge colorido no card).
+- **Corretor** responsável (`corretor_id`).
+- Observações, criado por, datas.
+- **Imóveis vinculados**: tabela `oportunidade_imoveis` (oportunidade ↔ imóvel, com grau de interesse baixo/médio/alto e observação) — alimenta o matching de imóveis para o cliente.
 
-- Coluna `contas.categoria` é a fonte principal; tags `carteira`/`marketing` mantidas em sincronia.
-- `categoriaDe()` prioriza a coluna e cai para tags em registros antigos (src/lib/contasFunil.ts).
-- Transferência Carteira ↔ Marketing exige motivo (AlterarCategoriaDialog), registra interação `transferencia_categoria` e pode reiniciar em A contatar.
-- Contas Carteira têm `origem` (ORIGENS_CARTEIRA) e `data_entrada_carteira` no cadastro.
+## 4. O que aparece no card
 
-## Legado
+- Título + badge de prioridade (🔥 alta)
+- Nome do cliente (clicável → detalhe do lead ou da conta)
+- Cidade/bairro, valor alvo, quantidade de imóveis vinculados, corretor
 
-- Etapas comerciais antigas (Captação/Imóvel, Reunião, Visita, Permuta, Proposta, Fechado, Oportunidade futura, Parceiros) permanecem no banco como `ETAPAS_LEGADO`.
-- Contas em etapa legada não aparecem no Kanban; ficam na visão Lista (filtro "Etapas legadas") e podem ser movidas pelo detalhe da conta (ContaFluxoAtendimento → "Mover para o novo funil").
-- 23 contas da coluna "Parceiros" migradas para `is_partner = true` na migração de reestrutura.
+## 5. Como as oportunidades entram hoje
 
-## Arquivos-chave
+| Origem | Como |
+|---|---|
+| Botão "Nova oportunidade" | Manual: escolhe lead ou conta (via RPCs `list_leads_min`/`list_contas_min`), preenche busca e vincula imóveis |
+| Conta em "Contato estabelecido" | **Não cria oportunidade automaticamente** — o "Destino comercial: Comprar — Oportunidade" só grava `destino_comercial` na conta + nota no histórico. A criação da oportunidade é manual |
 
-- `src/lib/contasFunil.ts` — etapas, legado, categoria, destinos, motivos
-- `src/components/contas/ContaFluxoAtendimento.tsx` — fluxo operacional no detalhe
-- `src/components/contas/ContaCancelarDialog.tsx`, `AlterarCategoriaDialog.tsx`
-- `src/pages/Accounts.tsx` — Kanban 5 colunas, filtros, visão Lista
-- `src/pages/AccountDetail.tsx` — fluxo + alteração de categoria
-- `src/pages/LeadDetail.tsx` — conversão gera `categoria: marketing`; desclassificada → Contato cancelado com motivo
+## 6. Pontes e sobreposições com os outros funis
+
+- **Contas**: o destino "Comprar — Oportunidade" é hoje apenas um marcador; a ponte real (criar oportunidade a partir da conta) é manual.
+- **Etapas legadas de Contas** (Visita, Proposta, Fechado) sobrepõem conceitualmente as etapas de Oportunidades — ficaram preservadas em Contas exatamente à espera deste módulo.
+- **Fechamento**: "Ganha" **não** registra automaticamente em `conta_fechamentos` nem atualiza a conta — são fluxos separados hoje.
+- **Vendas** (`NovaVendaDialog`, subaba Vendidos) é outro fluxo paralelo de fechamento de imóvel, não ligado ao estagio "Ganha".
+
+## 7. Regras de visibilidade (banco)
+
+- Todo staff vê todas as oportunidades; criar exige ser staff; editar: admin, corretor responsável ou criador; excluir: só admin.
+
+## 8. Relatórios ligados
+
+- Não há relatório específico de oportunidades hoje (Relatórios cobrem funil de contas, propostas, fechamentos, faturamento, imóveis).
+
+## 9. Pontos de atenção para a reestrutura
+
+1. `estagio` tem CHECK constraint — qualquer mudança de etapas precisa de migração.
+2. Falta a ponte automática Conta (Contato estabelecido) → Oportunidade.
+3. "Ganha" não alimenta fechamentos/vendas — decidir se integra.
+4. Oportunidade aceita lead direto — avaliar se continua permitido ou se passa a exigir conta.
+5. Localização dentro de Imóveis — avaliar se vira aba própria no CRM.
+
+## Próximo passo
+
+Aguardar o usuário indicar as alterações desejadas (etapas, ponte com Contas, integração com fechamento/vendas, localização no menu, relatórios). Nenhum arquivo será modificado nesta etapa.
