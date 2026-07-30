@@ -1,41 +1,52 @@
-# Histórico de interações do lead deve acompanhar a conversão em conta
+# Cronômetro de prazos nas tentativas de contato (aba Leads)
 
-## Diagnóstico (confirmado no banco)
+## Objetivo
+Exibir prazos exatos (data/hora) e contagem regressiva para a sequência de tentativas da etapa **Em Contato**, ancorados na **entrada do lead no sistema** (`data_entrada`):
 
-A conversão Lead → Conta (`src/pages/LeadDetail.tsx`, dois caminhos: "Conta Cliente" linha 456-461 e "Desclassificar" linha 259-260) tenta vincular as interações à nova conta com um UPDATE no navegador:
+1. **1ª tentativa · Mensagem** — vence imediatamente na entrada do lead
+2. **2ª tentativa · Áudio** — vence 24h após a entrada
+3. **3ª tentativa · Ligação** — vence 48h após a entrada
 
-```ts
-await supabase.from("interacoes")
-  .update({ conta_id: created.id })
-  .eq("lead_id", lead.id)
-  .is("conta_id", null);
-```
+Tentativa que passar do prazo sem registro recebe **apenas destaque visual** (vermelho, "atrasada há Xh"). Sem tarefas automáticas, sem e-mails.
 
-**Por que falha:** a policy de UPDATE de `interacoes` (`Author or admin updates interacoes`) só permite alterar interações que a própria pessoa criou (ou admin/gestor). Quando um corretor converte um lead cujas interações foram criadas por outra pessoa (IA, gestor, outro corretor), o UPDATE não afeta nenhuma linha — e falha **silenciosamente**, sem erro. As interações ficam com `conta_id = NULL` e não aparecem na timeline da conta.
+## Estado atual (verificado)
+- `TENTATIVA_SEQ` em `src/lib/leads.ts` define a sequência mensagem → áudio → ligação, **sem prazos**.
+- Card "Tentativas de contato" em `src/pages/LeadDetail.tsx` (linhas 751-784) mostra só chips de feita/não feita e contador "X de 3".
+- Card do Kanban em `src/pages/Leads.tsx` (linhas 317-321) mostra só o badge "📞 Tentativas: X de 3".
+- O funil já carrega a contagem de tentativas por lead (`tentativasCount`) — dado suficiente para saber qual é a próxima tentativa sem novas queries.
 
-**Evidência nos dados:** a conta "Larissa Freitas" tem 1 interação do lead de origem ainda pendente (`conta_id` nulo). As demais contas convertidas migraram porque quem converteu era o autor das interações ou admin.
+## Mudanças
 
-A timeline da conta (`ContaInteracoesTimeline.tsx`) já busca por `conta_id` — ou seja, resolvido o vínculo, o histórico aparece sem mexer na UI.
+### 1. `src/lib/leads.ts` — lógica central de prazos
+- Adicionar `prazoHoras` a cada item de `TENTATIVA_SEQ`: mensagem = 0, áudio = 24, ligação = 48.
+- Novas funções:
+  - `tentativaPrazo(lead, ordem)`: calcula a data/hora de vencimento = `data_entrada` (fallback `created_at`) + prazoHoras.
+  - `tentativaStatus(lead, tentativasFeitas, idx)`: retorna `feita` | `vencida` (passou do prazo, não registrada) | `disponivel` (dentro do prazo) | `futura` (ainda não chegou a hora).
+  - Formatadores: `prazoLabel` ("vence em 5h", "atrasada há 3h", "disponível a partir de 31/07 19:00") e `prazoColor` (verde/âmbar/vermelho/cinza, usando tokens semânticos existentes: success/warning/danger/muted).
 
-## O que será feito
+### 2. `src/pages/LeadDetail.tsx` — card "Tentativas de contato"
+- Cada chip da sequência passa a exibir: status (feita ✓), **data/hora exata do vencimento** (ex.: "31/07 às 19:00") e contagem regressiva contextual.
+- A próxima tentativa pendente fica destacada (âmbar "vence em Xh" / vermelho pulsante "atrasada há Xh").
+- Tentativas futuras mostram "disponível a partir de …" em cinza.
+- O botão "Registrar tentativa" continua abrindo o modal já existente; nenhuma mudança no fluxo de registro.
 
-### 1. Migration: trigger no banco (solução definitiva)
-- Função `SECURITY DEFINER` `migrar_interacoes_para_conta()` + trigger `AFTER INSERT` em `contas`.
-- Quando uma conta nasce com `lead_id_origem`, vincula automaticamente todas as interações daquele lead (`conta_id = NEW.id` onde `lead_id = NEW.lead_id_origem AND conta_id IS NULL`).
-- Por rodar no banco com privilégio elevado, funciona independentemente de quem converte ou de quem criou as interações — cobre os dois caminhos de conversão (Conta Cliente e Desclassificar) e qualquer futuro.
-- As interações mantêm o `lead_id`, então o histórico continua visível também na tela do lead.
+### 3. `src/pages/Leads.tsx` — cards do Kanban (coluna Em Contato)
+- Substituir o badge "📞 Tentativas: X de 3" por um badge dinâmico da **próxima tentativa**:
+  - "💬 Mensagem: vence em 2h" (âmbar)
+  - "🎧 Áudio: atrasada há 6h" (vermelho)
+  - Quando as 3 estiverem feitas, manter o contador neutro atual.
+- Sem novas queries: usa `tentativasCount` já carregado + `data_entrada` do card.
 
-### 2. Backfill dos registros pendentes
-- Um único UPDATE vinculando interações órfãs de todas as contas já convertidas (corrige o caso da Larissa Freitas e qualquer outro).
+## Regras definidas
+- Marco inicial: **entrada do lead no sistema** (`data_entrada`, fallback `created_at`).
+- Horas corridas (24h/48h exatas), sem lógica de horário comercial.
+- Atraso = somente destaque visual. Nenhuma notificação, tarefa ou automação.
 
-### 3. Limpeza no frontend
-- Remover os dois UPDATEs client-side em `LeadDetail.tsx` (linhas 259-260 e 456-461), agora redundantes — o trigger executa na mesma transação do insert da conta. Mantido o registro da nota de desclassificação.
+## Detalhes técnicos
+- **100% frontend**: nenhuma migração de banco, nenhuma mudança em RLS, edge functions ou tabelas.
+- Arquivos tocados: `src/lib/leads.ts`, `src/pages/LeadDetail.tsx`, `src/pages/Leads.tsx`.
+- Cálculo com `date-fns` (já usado no projeto) e re-render natural dos badges (sem timers de segundo a segundo; precisão de horas é suficiente para a operação).
+- Cores via tokens semânticos (`bg-success/15`, `bg-warning/15`, `bg-danger/15`, `bg-muted`) mantendo o padrão visual dos badges existentes.
 
 ## Verificação
-- Query confirmando que nenhuma conta convertida fica com interações pendentes.
-- Abrir a conta "Larissa Freitas" e conferir a interação migrada na timeline.
-- Simular conversão de um lead com interações de outro autor e confirmar que o histórico aparece na conta.
-
-## Fora de escopo
-- Nenhuma mudança visual na timeline ou nas telas (não é necessário).
-- Interações criadas **depois** da conversão já são registradas direto na conta.
+- Checar um lead real em "Em Contato" no preview: confirmar datas/hora de vencimento corretas a partir de `data_entrada`, destaque vermelho em tentativa vencida e badge correto no Kanban.
