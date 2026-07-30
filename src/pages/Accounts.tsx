@@ -595,6 +595,31 @@ export default function Accounts() {
     toast.success("Atendimento encerrado — cadastro e histórico preservados");
   };
 
+  const confirmarCategoria = async ({ nova, motivo, reiniciar }: CategoriaData) => {
+    if (!catTarget) return;
+    const id = catTarget.id;
+    const anterior = categoriaDe(catTarget);
+    const patch: Record<string, any> = { categoria: nova };
+    const tags = new Set((catTarget.tags ?? []).filter((t) => !["carteira", "marketing"].includes(t.toLowerCase())));
+    tags.add(nova);
+    patch.tags = Array.from(tags);
+    if (reiniciar) patch.etapa_funil = "a_contatar";
+    const { error } = await supabase.from("contas").update(patch as any).eq("id", id);
+    if (error) {
+      toast.error("Não foi possível transferir: " + error.message);
+      return;
+    }
+    await supabase.from("interacoes").insert({
+      conta_id: id,
+      tipo: "nota",
+      descricao: `Categoria alterada de ${anterior ? CATEGORIA_LABEL[anterior] : "Pendente de revisão"} para ${CATEGORIA_LABEL[nova]}. Motivo: ${motivo}.${reiniciar ? " Atendimento reiniciado em A contatar." : " Etapa atual mantida."}`,
+      resultado: "transferencia_categoria",
+      created_by: user?.id ?? null,
+    } as any);
+    toast.success(`Conta transferida para ${CATEGORIA_LABEL[nova]}`);
+    load();
+  };
+
   const remove = async (id: string, name: string) => {
     const { error } = await supabase.from("contas").delete().eq("id", id);
     if (error) return toast.error(error.message);

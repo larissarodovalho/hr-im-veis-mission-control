@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { findDuplicates, DuplicateMatch } from "@/lib/duplicates";
 import DuplicateAlert from "@/components/DuplicateAlert";
 import { SearchableSelect } from "@/components/SearchableSelect";
+import { ORIGENS_CARTEIRA } from "@/lib/contasFunil";
 
 interface Props {
   open: boolean;
