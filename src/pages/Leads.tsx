@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
-import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature } from "@/lib/leads";
+import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature, TIPO_ACOMPANHAMENTO, TipoAcompanhamento, isLegacyStage, stageLabel, TENTATIVA_TIPOS } from "@/lib/leads";
 import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2, User as UserIcon, PencilLine } from "lucide-react";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ type Lead = {
   origem: string | null; etapa_funil: Stage; imovel_interesse: string | null; regiao: string | null;
   valor_estimado: number | null; ultima_interacao: string | null; created_at: string;
   temperatura: Temperature | null; tags: string[] | null; corretor_id: string | null; created_by: string | null;
+  tipo_acompanhamento: TipoAcompanhamento | null;
 };
 
 const isUrgent = (l: { tags?: string[] | null; etapa_funil: Stage }) =>
@@ -36,7 +37,9 @@ export default function Leads() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [convertedIds, setConvertedIds] = useState<Set<string>>(new Set());
   const [brokers, setBrokers] = useState<Record<string, string>>({});
+  const [tentativasCount, setTentativasCount] = useState<Record<string, number>>({});
   const [view, setView] = useState<"kanban" | "list">("kanban");
+  const [listScope, setListScope] = useState<"todas" | "funil" | "legados">("todas");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"recent" | "idle">("recent");
   const [needsNurture, setNeedsNurture] = useState(false);
@@ -53,9 +56,20 @@ export default function Leads() {
 
   const load = async () => {
     const { data } = await supabase.from("leads").select("*").order("created_at", { ascending: false });
-    setLeads((data as any) ?? []);
+    const rows = (data as any as Lead[]) ?? [];
+    setLeads(rows);
     const { data: accs } = await supabase.from("contas").select("lead_id_origem").not("lead_id_origem", "is", null);
     setConvertedIds(new Set((accs ?? []).map((a: any) => a.lead_id_origem)));
+    // Contagem de tentativas (mensagem/áudio/ligação) dos leads em "Em Contato"
+    const emContatoIds = rows.filter(l => l.etapa_funil === "Em Contato").map(l => l.id);
+    if (emContatoIds.length) {
+      const { data: ints } = await supabase.from("interacoes").select("lead_id").in("lead_id", emContatoIds).in("tipo", TENTATIVA_TIPOS);
+      const counts: Record<string, number> = {};
+      ((ints ?? []) as any[]).forEach(r => { counts[r.lead_id] = (counts[r.lead_id] ?? 0) + 1; });
+      setTentativasCount(counts);
+    } else {
+      setTentativasCount({});
+    }
   };
 
   useEffect(() => {
@@ -69,24 +83,26 @@ export default function Leads() {
     return () => { supabase.removeChannel(ch); };
   }, []);
 
-  const isClosedStage = (s: Stage) => s === "Fechado" || s === "Perdido";
+  const legacyCount = leads.filter(l => !convertedIds.has(l.id) && isLegacyStage(l.etapa_funil)).length;
 
   const needsNurtureCount = leads.filter(l => {
     if (convertedIds.has(l.id)) return false;
-    if (isClosedStage(l.etapa_funil)) return false;
+    if (isLegacyStage(l.etapa_funil)) return false;
     const id = idleDays(l.ultima_interacao);
     return id === null || id >= 4;
   }).length;
 
   let filtered = leads.filter(l => {
     if (convertedIds.has(l.id)) return false;
+    if (listScope === "funil" && isLegacyStage(l.etapa_funil)) return false;
+    if (listScope === "legados" && !isLegacyStage(l.etapa_funil)) return false;
     if (search) {
       const s = search.toLowerCase();
       const match = l.nome.toLowerCase().includes(s) || l.telefone?.includes(search) || l.email?.toLowerCase().includes(s);
       if (!match) return false;
     }
     if (needsNurture) {
-      if (isClosedStage(l.etapa_funil)) return false;
+      if (isLegacyStage(l.etapa_funil)) return false;
       const id = idleDays(l.ultima_interacao);
       if (!(id === null || id >= 4)) return false;
     }
@@ -141,12 +157,22 @@ export default function Leads() {
             size="sm"
             className="order-2 gap-1.5"
             onClick={() => setNeedsNurture(v => !v)}
-            title="Leads sem contato há 4+ dias (e fora de Fechado/Perdido)"
+            title="Leads do funil atual sem contato há 4+ dias"
           >
             <Flame className="h-4 w-4" />
             <span className="hidden sm:inline">Precisam nutrição</span>
             <Badge variant="secondary" className="ml-0.5 h-5 px-1.5 text-[10px]">{needsNurtureCount}</Badge>
           </Button>
+          {view === "list" && (
+            <Select value={listScope} onValueChange={v => setListScope(v as any)}>
+              <SelectTrigger className="order-2 w-48 h-9 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas as etapas</SelectItem>
+                <SelectItem value="funil">Somente funil atual</SelectItem>
+                <SelectItem value="legados">Somente legados ({legacyCount})</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           {view === "list" && (
             <Select value={sortBy} onValueChange={v => setSortBy(v as any)}>
               <SelectTrigger className="order-2 w-44 h-9 text-sm"><SelectValue /></SelectTrigger>
@@ -166,7 +192,7 @@ export default function Leads() {
         <DndContext sensors={sensors} onDragEnd={onDragEnd}>
           <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
             {STAGES.map(s => (
-              <Column key={s.id} stage={s.id} label={s.label} color={s.color} leads={filtered.filter(l => l.etapa_funil === s.id)} canDelete={canDelete} onDelete={remove} convertedIds={convertedIds} userId={user?.id} onChanged={load} brokers={brokers} />
+              <Column key={s.id} stage={s.id} label={s.label} color={s.color} leads={filtered.filter(l => l.etapa_funil === s.id)} canDelete={canDelete} onDelete={remove} convertedIds={convertedIds} userId={user?.id} onChanged={load} brokers={brokers} tentativasCount={tentativasCount} />
             ))}
           </div>
         </DndContext>
@@ -190,7 +216,7 @@ export default function Leads() {
                     {isUrgent(l) && <Badge className="bg-destructive text-destructive-foreground border-destructive border text-[10px] animate-pulse">🔥 Contato Imediato</Badge>}
                     {l.origem && <Badge variant="secondary" className="text-[10px]">{SOURCES[l.origem]?.emoji} {SOURCES[l.origem]?.label || l.origem}</Badge>}
                     {l.imovel_interesse && <Badge variant="outline" className="text-[10px]">{INTERESTS[l.imovel_interesse] || l.imovel_interesse}</Badge>}
-                    <Badge variant="outline" className="text-[10px]">{STAGES.find(s => s.id === l.etapa_funil)?.label}</Badge>
+                    <Badge variant="outline" className="text-[10px]">{stageLabel(l.etapa_funil)}{isLegacyStage(l.etapa_funil) ? " (legado)" : ""}</Badge>
                     <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
                     <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
                     
@@ -222,7 +248,7 @@ export default function Leads() {
                       </td>
                       <td className="p-3"><Badge variant="secondary">{SOURCES[l.origem || ""]?.emoji} {SOURCES[l.origem || ""]?.label || l.origem}</Badge></td>
                       <td className="p-3 text-muted-foreground">{l.imovel_interesse ? (INTERESTS[l.imovel_interesse] || l.imovel_interesse) : "—"}</td>
-                      <td className="p-3"><Badge variant="outline">{STAGES.find(s => s.id === l.etapa_funil)?.label}</Badge></td>
+                      <td className="p-3"><Badge variant="outline">{stageLabel(l.etapa_funil)}{isLegacyStage(l.etapa_funil) ? " (legado)" : ""}</Badge></td>
                       <td className="p-3">
                         <div className="flex flex-col gap-1 items-start">
                           <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
@@ -243,7 +269,7 @@ export default function Leads() {
   );
 }
 
-function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds, userId, onChanged, brokers }: any) {
+function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds, userId, onChanged, brokers, tentativasCount }: any) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   return (
     <div ref={setNodeRef} className={"min-w-[280px] w-72 flex-shrink-0 rounded-xl bg-muted/40 p-3 transition flex flex-col h-[calc(100vh-220px)] " + (isOver ? "ring-2 ring-primary/40" : "")}>
@@ -251,7 +277,7 @@ function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds,
         <div className="flex items-center gap-2"><span className={"h-2 w-2 rounded-full " + color} /><span className="font-medium text-sm">{label}</span></div>
         <span className="text-xs text-muted-foreground">{leads.length}</span>
       </div>
-      <div className="space-y-2 flex-1 overflow-y-auto pr-1">{leads.map((l: Lead) => <LeadCard key={l.id} lead={l} canDelete={canDelete} onDelete={onDelete} converted={convertedIds.has(l.id)} userId={userId} onChanged={onChanged} brokers={brokers} />)}</div>
+      <div className="space-y-2 flex-1 overflow-y-auto pr-1">{leads.map((l: Lead) => <LeadCard key={l.id} lead={l} canDelete={canDelete} onDelete={onDelete} converted={convertedIds.has(l.id)} userId={userId} onChanged={onChanged} brokers={brokers} tentativas={tentativasCount?.[l.id] ?? 0} />)}</div>
     </div>
   );
 }
@@ -262,7 +288,7 @@ function shortName(name: string) {
   return `${parts[0]} ${parts[parts.length - 1][0]}.`;
 }
 
-function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, brokers }: { lead: Lead; canDelete: boolean; onDelete: (id: string, name: string) => void; converted: boolean; userId?: string; onChanged: () => void; brokers: Record<string, string> }) {
+function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, brokers, tentativas }: { lead: Lead; canDelete: boolean; onDelete: (id: string, name: string) => void; converted: boolean; userId?: string; onChanged: () => void; brokers: Record<string, string>; tentativas?: number }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
   const age = ageInDays(lead.created_at);
@@ -288,6 +314,16 @@ function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, bro
         {lead.origem && <Badge variant="secondary" className="text-[10px]">{SOURCES[lead.origem]?.emoji} {SOURCES[lead.origem]?.label || lead.origem}</Badge>}
         {lead.temperatura && <Badge className={TEMPERATURES[lead.temperatura].className + " border text-[10px]"}>{TEMPERATURES[lead.temperatura].emoji} {TEMPERATURES[lead.temperatura].label}</Badge>}
         {converted && <Badge className="bg-success/15 text-success border-success/30 border text-[10px] gap-0.5"><Building2 className="h-2.5 w-2.5" /> Conta</Badge>}
+        {lead.etapa_funil === "Em Contato" && (
+          <Badge className={"border text-[10px] " + ((tentativas ?? 0) >= 3 ? "bg-danger/15 text-danger border-danger/30" : "bg-muted text-muted-foreground border-border")}>
+            📞 Tentativas: {Math.min(tentativas ?? 0, 3)} de 3
+          </Badge>
+        )}
+        {lead.tipo_acompanhamento && (
+          <Badge className={TIPO_ACOMPANHAMENTO[lead.tipo_acompanhamento].className + " border text-[10px]"}>
+            {TIPO_ACOMPANHAMENTO[lead.tipo_acompanhamento].emoji} {TIPO_ACOMPANHAMENTO[lead.tipo_acompanhamento].label}
+          </Badge>
+        )}
       </div>
       <div className="flex items-center gap-1 mt-1.5 flex-wrap">
         <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
@@ -321,7 +357,7 @@ function FollowUpCell({ lead, onChanged, userId, compact }: { lead: Lead; onChan
   const [nota, setNota] = useState("");
   const [savingManual, setSavingManual] = useState(false);
   const idle = idleDays(lead.ultima_interacao);
-  const isClosed = lead.etapa_funil === "Fechado" || lead.etapa_funil === "Perdido";
+  const isClosed = isLegacyStage(lead.etapa_funil);
   const iaEligible = !isClosed && (idle === null || idle >= 3) && !!lead.telefone;
 
   const sendIa = async () => {
@@ -351,7 +387,7 @@ function FollowUpCell({ lead, onChanged, userId, compact }: { lead: Lead; onChan
         created_by: userId,
       });
       if (error) throw error;
-      await supabase.from("leads").update({ ultima_interacao: new Date().toISOString() }).eq("id", lead.id);
+      await supabase.from("leads").update({ ultima_interacao: new Date().toISOString(), tipo_acompanhamento: "manual" }).eq("id", lead.id);
       toast.success("Follow-up registrado");
       setNota("");
       setOpenManual(false);

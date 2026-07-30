@@ -14,8 +14,10 @@ import {
   STAGES, SOURCES, INTERESTS, TEMPERATURES,
   ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, formatDateBR,
   initials, Stage, Temperature,
+  isLegacyStage, stageLabel, TENTATIVA_SEQ, TENTATIVA_TIPOS, TENTATIVA_RESULTADOS,
+  INTERACAO_CANAIS, MOTIVOS_DESCLASSIFICACAO,
 } from "@/lib/leads";
-import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Plus, Building2, FileSignature, Pencil } from "lucide-react";
+import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Plus, Building2, FileSignature, Pencil, PhoneCall, CheckCircle2, PhoneOff, XCircle, Check } from "lucide-react";
 import EntityDocumentsTab from "@/components/EntityDocumentsTab";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -34,9 +36,12 @@ const INTERACTION_TYPE_LABEL: Record<string, string> = {
   reuniao: "Reunião",
   videochamada: "Videochamada",
   mensagem: "Mensagem",
+  audio: "Áudio",
   email: "Email",
   visita: "Visita",
   nota: "Nota",
+  whatsapp_ia: "WhatsApp (IA)",
+  followup_manual: "Follow-up manual",
 };
 const inferFormat = (m: any): MeetingFormat => {
   if (m.tipo === "ligacao") return "ligacao";
@@ -68,6 +73,19 @@ export default function LeadDetail() {
   const [converting, setConverting] = useState(false);
   const [convertDups, setConvertDups] = useState<DuplicateMatch[]>([]);
   const [forceConvert, setForceConvert] = useState(false);
+  const [tentOpen, setTentOpen] = useState(false);
+  const [tentForm, setTentForm] = useState({ tipo: "mensagem", resultado: "", canal: "WhatsApp", descricao: "", proxima_acao: "" });
+  const [savingTent, setSavingTent] = useState(false);
+  const [sucessoOpen, setSucessoOpen] = useState(false);
+  const [sucessoCorretor, setSucessoCorretor] = useState("");
+  const [savingSucesso, setSavingSucesso] = useState(false);
+  const [semContatoOpen, setSemContatoOpen] = useState(false);
+  const [semContatoCorretor, setSemContatoCorretor] = useState("");
+  const [savingSemContato, setSavingSemContato] = useState(false);
+  const [desclassOpen, setDesclassOpen] = useState(false);
+  const [desclassMotivo, setDesclassMotivo] = useState("");
+  const [desclassOutro, setDesclassOutro] = useState("");
+  const [savingDesclass, setSavingDesclass] = useState(false);
 
   const load = async () => {
     if (!id) return;
@@ -135,6 +153,120 @@ export default function LeadDetail() {
     setInteraction({ tipo: "ligacao", resultado: "", descricao: "", proxima_acao: "" });
     toast.success("Interação registrada");
     load();
+  };
+
+  const openTentativa = () => {
+    const feitas = interacoes.filter(i => TENTATIVA_TIPOS.includes(i.tipo)).length;
+    const prox = TENTATIVA_SEQ[Math.min(feitas, TENTATIVA_SEQ.length - 1)];
+    setTentForm({ tipo: prox.tipo, resultado: "", canal: prox.tipo === "ligacao" ? "Ligação" : "WhatsApp", descricao: "", proxima_acao: "" });
+    setTentOpen(true);
+  };
+
+  const registerTentativa = async () => {
+    setSavingTent(true);
+    const seqItem = TENTATIVA_SEQ.find(t => t.tipo === tentForm.tipo);
+    const { error } = await supabase.from("interacoes").insert({
+      lead_id: id!, tipo: tentForm.tipo, canal: tentForm.canal || null,
+      resultado: tentForm.resultado || null,
+      descricao: tentForm.descricao.trim() ? `${seqItem?.titulo ?? "Tentativa"} — ${tentForm.descricao.trim()}` : (seqItem?.titulo ?? "Tentativa de contato"),
+      proxima_acao: tentForm.proxima_acao || null,
+      created_by: user?.id,
+    });
+    setSavingTent(false);
+    if (error) return toast.error(error.message);
+    await supabase.from("leads").update({ ultima_interacao: new Date().toISOString() }).eq("id", id);
+    toast.success("Tentativa registrada no histórico");
+    setTentOpen(false);
+    load();
+  };
+
+  const confirmSucesso = async () => {
+    if (!sucessoCorretor) return toast.error("Selecione o corretor responsável");
+    setSavingSucesso(true);
+    const nome = brokers[sucessoCorretor] || "corretor";
+    const { error } = await supabase.from("leads").update({
+      corretor_id: sucessoCorretor,
+      etapa_funil: "Conversa Ativa",
+      tipo_acompanhamento: "corretor",
+      ultima_interacao: new Date().toISOString(),
+    }).eq("id", id);
+    if (error) { setSavingSucesso(false); return toast.error(error.message); }
+    await supabase.from("interacoes").insert({
+      lead_id: id!, tipo: "nota", resultado: "encaminhado",
+      descricao: `Sucesso no contato — lead encaminhado para o corretor ${nome}. Conversa ativa iniciada.`,
+      created_by: user?.id,
+    });
+    setSavingSucesso(false);
+    toast.success(`Lead em Conversa Ativa com ${nome}`);
+    setSucessoOpen(false);
+    load();
+  };
+
+  const confirmSemContato = async () => {
+    if (!semContatoCorretor) return toast.error("Selecione o corretor responsável");
+    setSavingSemContato(true);
+    const nome = brokers[semContatoCorretor] || "corretor";
+    const { error } = await supabase.from("leads").update({
+      corretor_id: semContatoCorretor,
+      tipo_acompanhamento: "corretor",
+    }).eq("id", id);
+    if (error) { setSavingSemContato(false); return toast.error(error.message); }
+    await supabase.from("tarefas").insert({
+      titulo: `Tentar contato manual com ${lead.nome}`,
+      descricao: "A sequência inicial (mensagem, áudio, ligação) terminou sem resposta. Realizar tentativa manual de contato com o lead.",
+      responsavel_id: semContatoCorretor,
+      lead_id: id,
+      prioridade: "Alta",
+      status: "A fazer",
+      prazo: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+      created_by: user?.id,
+    });
+    await supabase.from("interacoes").insert({
+      lead_id: id!, tipo: "nota", resultado: "sem_resposta",
+      descricao: `Sequência inicial de tentativas encerrada sem resposta. Encaminhado para tentativa manual do corretor ${nome} (tarefa criada).`,
+      proxima_acao: "Contato manual pelo corretor",
+      created_by: user?.id,
+    });
+    setSavingSemContato(false);
+    toast.success(`Tarefa criada para ${nome}`);
+    setSemContatoOpen(false);
+    load();
+  };
+
+  const confirmDesclass = async () => {
+    if (!desclassMotivo) return toast.error("Selecione o motivo da desclassificação");
+    const motivo = desclassMotivo === "Outro" ? `Outro: ${desclassOutro.trim()}` : desclassMotivo;
+    if (desclassMotivo === "Outro" && !desclassOutro.trim()) return toast.error("Descreva o motivo");
+    setSavingDesclass(true);
+    const { data: created, error } = await supabase.from("contas").insert({
+      lead_id_origem: lead.id,
+      nome: lead.nome,
+      email: lead.email ?? null,
+      telefone: lead.telefone ?? null,
+      endereco: lead.regiao ?? null,
+      tipo: "PF",
+      observacoes: lead.observacoes ?? null,
+      tags: ["desclassificada"],
+      etapa_funil: "desclassificada",
+      desclassificada: true,
+      motivo_desclassificacao: motivo,
+      created_by: user?.id,
+      responsavel_id: lead.corretor_id ?? user?.id,
+    }).select("id").single();
+    if (error) { setSavingDesclass(false); return toast.error(error.message); }
+    if (created?.id) {
+      await supabase.from("interacoes").update({ conta_id: created.id }).eq("lead_id", lead.id).is("conta_id", null);
+      await supabase.from("interacoes").insert({
+        lead_id: lead.id, conta_id: created.id, tipo: "nota", resultado: "desclassificado",
+        descricao: `Lead desclassificado. Motivo: ${motivo}`,
+        created_by: user?.id,
+      });
+    }
+    await supabase.from("leads").update({ motivo_desclassificacao: motivo }).eq("id", lead.id);
+    setSavingDesclass(false);
+    toast.success("Conta desclassificada registrada — cadastro e histórico preservados.");
+    setDesclassOpen(false);
+    navigate("/crm/leads");
   };
 
   const addMeeting = async (e: React.FormEvent) => {
@@ -262,6 +394,8 @@ export default function LeadDetail() {
 
   if (!lead) return <div className="p-8 text-muted-foreground">Carregando…</div>;
 
+  const tentativasFeitas = interacoes.filter(i => TENTATIVA_TIPOS.includes(i.tipo)).length;
+
   const confirmConvert = async () => {
     if (!convertForm.nome?.trim()) return toast.error("Nome obrigatório");
     if (convertDups.length && !forceConvert) {
@@ -366,9 +500,14 @@ export default function LeadDetail() {
               </Badge>
             </Link>
           ) : (
-            <Button size="sm" onClick={openConvert} className="bg-success hover:bg-success/90 text-success-foreground w-full sm:w-auto">
-              <Building2 className="h-4 w-4 mr-1" /> Converter em conta
-            </Button>
+            <>
+              <Button size="sm" onClick={openConvert} className="bg-success hover:bg-success/90 text-success-foreground w-full sm:w-auto">
+                <Building2 className="h-4 w-4 mr-1" /> Conta Cliente
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => { setDesclassMotivo(""); setDesclassOutro(""); setDesclassOpen(true); }} className="w-full sm:w-auto text-danger border-danger/40 hover:bg-danger/10">
+                <XCircle className="h-4 w-4 mr-1" /> Desclassificar
+              </Button>
+            </>
           )}
           <Button variant="outline" size="sm" onClick={() => setEditLead({
             nome: lead.nome ?? "",
@@ -398,14 +537,19 @@ export default function LeadDetail() {
           </Select>
           <Select value={lead.etapa_funil} onValueChange={v => updateLead({ etapa_funil: v as Stage })}>
             <SelectTrigger className="w-full sm:w-52 lg:w-56"><SelectValue /></SelectTrigger>
-            <SelectContent>{STAGES.map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}</SelectContent>
+            <SelectContent>
+              {isLegacyStage(lead.etapa_funil) && (
+                <SelectItem value={lead.etapa_funil}>{stageLabel(lead.etapa_funil)} (legado)</SelectItem>
+              )}
+              {STAGES.map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
+            </SelectContent>
           </Select>
         </div>
       </div>
 
       <Dialog open={convertOpen} onOpenChange={setConvertOpen}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Converter lead em conta</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Converter lead em Conta Cliente</DialogTitle></DialogHeader>
           {convertForm && (
             <div className="space-y-3">
               <div><Label>Nome do cliente*</Label><Input value={convertForm.nome} onChange={e => setConvertForm({ ...convertForm, nome: e.target.value })} /></div>
@@ -442,8 +586,120 @@ export default function LeadDetail() {
               disabled={converting || (convertDups.length > 0 && !forceConvert)}
               className="bg-success hover:bg-success/90 text-success-foreground"
             >
-              {converting ? "Convertendo…" : "Converter em conta"}
+              {converting ? "Convertendo…" : "Converter em Conta Cliente"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={tentOpen} onOpenChange={setTentOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Registrar tentativa de contato</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Tentativa</Label>
+                <Select value={tentForm.tipo} onValueChange={v => setTentForm({ ...tentForm, tipo: v, canal: v === "ligacao" ? "Ligação" : tentForm.canal })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {TENTATIVA_SEQ.map(t => <SelectItem key={t.tipo} value={t.tipo}>{t.titulo}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label>Canal</Label>
+                <Select value={tentForm.canal} onValueChange={v => setTentForm({ ...tentForm, canal: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {INTERACAO_CANAIS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div><Label>Resultado</Label>
+              <Select value={tentForm.resultado} onValueChange={v => setTentForm({ ...tentForm, resultado: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {TENTATIVA_RESULTADOS.map(r => <SelectItem key={r.id} value={r.id}>{r.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Observação</Label><Textarea rows={2} value={tentForm.descricao} onChange={e => setTentForm({ ...tentForm, descricao: e.target.value })} /></div>
+            <div><Label>Próxima ação</Label><Input value={tentForm.proxima_acao} onChange={e => setTentForm({ ...tentForm, proxima_acao: e.target.value })} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTentOpen(false)} disabled={savingTent}>Cancelar</Button>
+            <Button onClick={registerTentativa} disabled={savingTent}>{savingTent ? "Salvando…" : "Registrar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={sucessoOpen} onOpenChange={setSucessoOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Sucesso no contato</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              O lead respondeu ou demonstrou interesse. Defina o corretor responsável — o lead será movido para <strong>Conversa Ativa</strong> e o encaminhamento ficará registrado no histórico.
+            </p>
+            <div><Label>Corretor responsável*</Label>
+              <Select value={sucessoCorretor} onValueChange={setSucessoCorretor}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {brokersList.map(b => <SelectItem key={b.user_id} value={b.user_id}>{b.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSucessoOpen(false)} disabled={savingSucesso}>Cancelar</Button>
+            <Button onClick={confirmSucesso} disabled={savingSucesso} className="bg-success hover:bg-success/90 text-success-foreground">{savingSucesso ? "Salvando…" : "Encaminhar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={semContatoOpen} onOpenChange={setSemContatoOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Sem contato</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              O lead não respondeu às tentativas iniciais. Defina o corretor responsável — será criada uma <strong>tarefa</strong> para ele fazer a tentativa manual, e o lead permanece em <strong>Em Contato</strong>.
+            </p>
+            <div><Label>Corretor responsável*</Label>
+              <Select value={semContatoCorretor} onValueChange={setSemContatoCorretor}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {brokersList.map(b => <SelectItem key={b.user_id} value={b.user_id}>{b.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSemContatoOpen(false)} disabled={savingSemContato}>Cancelar</Button>
+            <Button onClick={confirmSemContato} disabled={savingSemContato}>{savingSemContato ? "Salvando…" : "Criar tarefa"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={desclassOpen} onOpenChange={setDesclassOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Converter em Conta Desclassificada</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              O cadastro e todo o histórico do lead serão preservados em uma conta marcada como <strong>desclassificada</strong>. Nada será excluído.
+            </p>
+            <div><Label>Motivo da desclassificação*</Label>
+              <Select value={desclassMotivo} onValueChange={setDesclassMotivo}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {MOTIVOS_DESCLASSIFICACAO.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {desclassMotivo === "Outro" && (
+              <div><Label>Descreva o motivo*</Label><Textarea rows={2} value={desclassOutro} onChange={e => setDesclassOutro(e.target.value)} /></div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDesclassOpen(false)} disabled={savingDesclass}>Cancelar</Button>
+            <Button onClick={confirmDesclass} disabled={savingDesclass || !desclassMotivo} className="bg-danger hover:bg-danger/90 text-danger-foreground">{savingDesclass ? "Salvando…" : "Desclassificar"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -492,6 +748,41 @@ export default function LeadDetail() {
         </DialogContent>
       </Dialog>
 
+      {lead.etapa_funil === "Em Contato" && !conta && (
+        <Card className="p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <h3 className="font-display text-lg font-semibold flex items-center gap-2">
+              <PhoneCall className="h-5 w-5" /> Tentativas de contato
+            </h3>
+            <Badge className={"border " + (tentativasFeitas >= 3 ? "bg-danger/15 text-danger border-danger/30" : "bg-muted text-muted-foreground border-border")}>
+              Tentativas: {Math.min(tentativasFeitas, 3)} de 3
+            </Badge>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {TENTATIVA_SEQ.map((t, idx) => {
+              const feita = tentativasFeitas > idx;
+              return (
+                <div key={t.tipo} className={"flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs " + (feita ? "bg-success/15 text-success border-success/30" : "text-muted-foreground")}>
+                  {feita ? <Check className="h-3 w-3" /> : <span className="h-3 w-3 rounded-full border inline-block" />}
+                  {t.titulo}
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={openTentativa}>
+              <Plus className="h-4 w-4 mr-1" /> Registrar tentativa
+            </Button>
+            <Button size="sm" variant="outline" className="text-success border-success/40 hover:bg-success/10" onClick={() => { setSucessoCorretor(lead.corretor_id ?? ""); setSucessoOpen(true); }}>
+              <CheckCircle2 className="h-4 w-4 mr-1" /> Sucesso no contato
+            </Button>
+            <Button size="sm" variant="outline" className="text-warning border-warning/40 hover:bg-warning/10" onClick={() => { setSemContatoCorretor(lead.corretor_id ?? ""); setSemContatoOpen(true); }}>
+              <PhoneOff className="h-4 w-4 mr-1" /> Sem contato
+            </Button>
+          </div>
+        </Card>
+      )}
+
       <div className="grid lg:grid-cols-3 gap-6">
         <Card className="p-5 space-y-3">
           <h3 className="font-display text-lg font-semibold">Contato</h3>
@@ -533,7 +824,7 @@ export default function LeadDetail() {
                   <SelectContent>
                     <SelectItem value="ligacao">Ligação</SelectItem>
                     <SelectItem value="reuniao">Reunião</SelectItem>
-                    <SelectItem value="videochamada">Videochamada</SelectItem>
+                    <SelectItem value="audio">Áudio</SelectItem>
                     <SelectItem value="mensagem">Mensagem</SelectItem>
                     <SelectItem value="email">Email</SelectItem>
                     <SelectItem value="visita">Visita</SelectItem>
