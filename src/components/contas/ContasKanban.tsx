@@ -112,6 +112,9 @@ function ContaCard({
   onChangeOwner,
   onChangeTemperatura,
   onChangeCategoria,
+  onQualificar,
+  opAtiva,
+  ownerMap,
   lista,
   lastContact,
 }: {
@@ -124,6 +127,9 @@ function ContaCard({
   onChangeOwner?: (id: string, userId: string | null) => void;
   onChangeTemperatura?: (id: string, temp: string | null) => void;
   onChangeCategoria?: (id: string) => void;
+  onQualificar?: (id: string) => void;
+  opAtiva?: OpAtivaResumo;
+  ownerMap?: Record<string, string>;
   lista?: "carteira" | "marketing";
   lastContact?: string | null;
 }) {
@@ -136,6 +142,8 @@ function ContaCard({
   const currentEtapa = (a.etapa_funil ?? "a_contatar") as EtapaFunil;
   const categoria = categoriaDe(a);
   const outraLista = lista && categoria && categoria !== lista ? CATEGORIA_LABEL[categoria] : null;
+  const emContatoEstabelecido = currentEtapa === "contato_estabelecido";
+  const qInfo = emContatoEstabelecido ? qualificacaoInfo(a.qualificacao_status) : null;
 
   return (
     <Card
