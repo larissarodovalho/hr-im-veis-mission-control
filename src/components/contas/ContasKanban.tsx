@@ -256,7 +256,27 @@ function ContaCard({
         </div>
       </div>
       <div className="text-xs text-muted-foreground truncate">{a.telefone || a.email || "—"}</div>
+      {lastContact && (
+        <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+          <Clock className="h-3 w-3 shrink-0" />
+          Últ. contato: {format(new Date(lastContact), "dd/MM/yyyy", { locale: ptBR })}
+        </div>
+      )}
       <div className="flex flex-wrap gap-1">
+        {outraLista ? (
+          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px]">
+            {outraLista}
+          </Badge>
+        ) : categoria === "marketing" ? (
+          <Badge variant="outline" className="bg-fuchsia-500/15 text-fuchsia-700 border-fuchsia-500/30 text-[10px]">
+            <Megaphone className="h-3 w-3 mr-1" /> Marketing
+          </Badge>
+        ) : null}
+        {lista === "carteira" && a.origem && (
+          <Badge variant="outline" className="text-[10px] text-muted-foreground" title="Origem da conta">
+            {a.origem}
+          </Badge>
+        )}
         {(() => {
           const t = tempInfo(a.temperatura);
           return t ? (
