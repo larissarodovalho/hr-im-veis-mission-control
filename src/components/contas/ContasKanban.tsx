@@ -336,7 +336,7 @@ function Column({
   );
 }
 
-export default function ContasKanban({ accounts, propsByAccount, onMoveStage, onChangeOwner, onChangeTemperatura, ownerMap, owners }: Props) {
+export default function ContasKanban({ accounts, propsByAccount, onMoveStage, onChangeOwner, onChangeTemperatura, onChangeCategoria, lista, lastContactMap, ownerMap, owners }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const onDragEnd = (e: DragEndEvent) => {
@@ -373,6 +373,9 @@ export default function ContasKanban({ accounts, propsByAccount, onMoveStage, on
                     onMoveStage={onMoveStage}
                     onChangeOwner={onChangeOwner}
                     onChangeTemperatura={onChangeTemperatura}
+                    onChangeCategoria={onChangeCategoria}
+                    lista={lista}
+                    lastContact={lastContactMap?.[a.id]}
                   />
                 );
               })}
