@@ -80,7 +80,7 @@ export default function ContaFluxoAtendimento({ conta, corretores, onChanged }: 
       cancelado_em: new Date().toISOString(),
       cancelado_por: userId,
     } as any).eq("id", conta.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     await registrar(
       "nota",
       `Contato cancelado. Motivo: ${motivo}.${agradecimento ? ` Mensagem de agradecimento registrada: "${agradecimento}"` : ""}`,
