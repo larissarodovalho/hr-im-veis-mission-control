@@ -4,14 +4,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, AlertTriangle, Link2 } from "lucide-react";
+import { Search, AlertTriangle, Link2, Plus } from "lucide-react";
 import { formatBRL } from "@/lib/format";
 import {
   ESTAGIOS, ESTAGIO_ICONS, ESTAGIO_TEXT_COLORS, isEstagioFinal, tempoNaEtapa, prioridadeLabel, categoriaLabel,
   diasSemAcao, diagnosticoPendencias, diagnosticoAtrasado,
 } from "@/lib/oportunidadesFunil";
 import OportunidadeDetailDialog from "@/components/oportunidades/OportunidadeDetailDialog";
+import CriarOportunidadeDialog from "@/components/oportunidades/CriarOportunidadeDialog";
 import MigracaoLegadasPanel from "@/components/oportunidades/MigracaoLegadasPanel";
 
 type Op = any;
@@ -44,6 +46,7 @@ export default function Oportunidades() {
   const [showFinalizadas, setShowFinalizadas] = useState(false);
 
   const [selected, setSelected] = useState<Op | null>(null);
+  const [criarOpen, setCriarOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -159,11 +162,16 @@ export default function Oportunidades() {
 
   return (
     <div className="space-y-4 h-full flex flex-col">
-      <div>
-        <h1 className="text-xl font-bold font-display">Oportunidades de Negócio</h1>
-        <p className="text-sm text-muted-foreground">
-          Funil de compra — nasce das Contas em Contato estabelecido com destino Comprar.
-        </p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-xl font-bold font-display">Oportunidades de Negócio</h1>
+          <p className="text-sm text-muted-foreground">
+            Funil de compra — nasce das Contas em Contato estabelecido com destino Comprar.
+          </p>
+        </div>
+        <Button onClick={() => setCriarOpen(true)}>
+          <Plus className="h-4 w-4 mr-1" /> Nova oportunidade
+        </Button>
       </div>
 
       {/* Filtros */}
@@ -331,6 +339,11 @@ export default function Oportunidades() {
         onOpenChange={(v) => { if (!v) setSelected(null); }}
         oportunidade={selected}
         onSaved={load}
+      />
+      <CriarOportunidadeDialog
+        open={criarOpen}
+        onOpenChange={setCriarOpen}
+        onCreated={() => load()}
       />
     </div>
   );
