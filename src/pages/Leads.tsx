@@ -83,24 +83,26 @@ export default function Leads() {
     return () => { supabase.removeChannel(ch); };
   }, []);
 
-  const isClosedStage = (s: Stage) => s === "Fechado" || s === "Perdido";
+  const legacyCount = leads.filter(l => !convertedIds.has(l.id) && isLegacyStage(l.etapa_funil)).length;
 
   const needsNurtureCount = leads.filter(l => {
     if (convertedIds.has(l.id)) return false;
-    if (isClosedStage(l.etapa_funil)) return false;
+    if (isLegacyStage(l.etapa_funil)) return false;
     const id = idleDays(l.ultima_interacao);
     return id === null || id >= 4;
   }).length;
 
   let filtered = leads.filter(l => {
     if (convertedIds.has(l.id)) return false;
+    if (listScope === "funil" && isLegacyStage(l.etapa_funil)) return false;
+    if (listScope === "legados" && !isLegacyStage(l.etapa_funil)) return false;
     if (search) {
       const s = search.toLowerCase();
       const match = l.nome.toLowerCase().includes(s) || l.telefone?.includes(search) || l.email?.toLowerCase().includes(s);
       if (!match) return false;
     }
     if (needsNurture) {
-      if (isClosedStage(l.etapa_funil)) return false;
+      if (isLegacyStage(l.etapa_funil)) return false;
       const id = idleDays(l.ultima_interacao);
       if (!(id === null || id >= 4)) return false;
     }
@@ -155,12 +157,22 @@ export default function Leads() {
             size="sm"
             className="order-2 gap-1.5"
             onClick={() => setNeedsNurture(v => !v)}
-            title="Leads sem contato há 4+ dias (e fora de Fechado/Perdido)"
+            title="Leads do funil atual sem contato há 4+ dias"
           >
             <Flame className="h-4 w-4" />
             <span className="hidden sm:inline">Precisam nutrição</span>
             <Badge variant="secondary" className="ml-0.5 h-5 px-1.5 text-[10px]">{needsNurtureCount}</Badge>
           </Button>
+          {view === "list" && (
+            <Select value={listScope} onValueChange={v => setListScope(v as any)}>
+              <SelectTrigger className="order-2 w-48 h-9 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas as etapas</SelectItem>
+                <SelectItem value="funil">Somente funil atual</SelectItem>
+                <SelectItem value="legados">Somente legados ({legacyCount})</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           {view === "list" && (
             <Select value={sortBy} onValueChange={v => setSortBy(v as any)}>
               <SelectTrigger className="order-2 w-44 h-9 text-sm"><SelectValue /></SelectTrigger>
@@ -180,7 +192,7 @@ export default function Leads() {
         <DndContext sensors={sensors} onDragEnd={onDragEnd}>
           <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
             {STAGES.map(s => (
-              <Column key={s.id} stage={s.id} label={s.label} color={s.color} leads={filtered.filter(l => l.etapa_funil === s.id)} canDelete={canDelete} onDelete={remove} convertedIds={convertedIds} userId={user?.id} onChanged={load} brokers={brokers} />
+              <Column key={s.id} stage={s.id} label={s.label} color={s.color} leads={filtered.filter(l => l.etapa_funil === s.id)} canDelete={canDelete} onDelete={remove} convertedIds={convertedIds} userId={user?.id} onChanged={load} brokers={brokers} tentativasCount={tentativasCount} />
             ))}
           </div>
         </DndContext>
