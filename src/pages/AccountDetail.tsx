@@ -131,7 +131,7 @@ export default function AccountDetail() {
     patch.tags = Array.from(tags);
     if (reiniciar) patch.etapa_funil = "a_contatar";
     const { error } = await supabase.from("contas").update(patch as any).eq("id", acc.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("interacoes").insert({
       conta_id: acc.id,
