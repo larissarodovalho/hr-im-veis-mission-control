@@ -428,6 +428,14 @@ export default function AccountDetail() {
         <EntityDocumentsTab contaId={acc.id} defaultSigner={{ name: acc.nome, email: acc.email }} />
       </Card>
 
+      <AlterarCategoriaDialog
+        conta={acc}
+        categoriaAtual={categoriaAtual}
+        open={catOpen}
+        onOpenChange={setCatOpen}
+        onConfirm={confirmarCategoria}
+      />
+
       <Dialog open={!!editing} onOpenChange={o => !o && setEditing(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Editar conta</DialogTitle></DialogHeader>
