@@ -110,7 +110,7 @@ export default function OportunidadesReport({ inicioISO, fimISO }: { inicioISO: 
       fechPeriodo,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ops, visitas, propostas, fechamentos, profiles, contas, start, end]);
+  }, [ops, visitas, propostas, fechamentos, profiles, contas, inicioISO, fimISO]);
 
   if (loading) return <p className="text-sm text-muted-foreground py-8 text-center">Carregando relatório…</p>;
 
