@@ -264,10 +264,15 @@ export default function Accounts() {
   const load = async () => {
     setLoading(true);
     try {
-      const [accs, { data: props }, { data: profs }] = await Promise.all([
+      const [accs, { data: props }, { data: profs }, { data: opsData }] = await Promise.all([
         fetchAllContas(),
         supabase.from("conta_propriedades" as any).select("*"),
         supabase.from("profiles").select("user_id, nome"),
+        supabase
+          .from("oportunidades")
+          .select("id,conta_id,titulo,estagio,valor_alvo,corretor_id")
+          .in("estagio", ["nova", "buscando", "visita", "proposta"])
+          .not("conta_id", "is", null),
       ]);
       setAccounts((accs ?? []) as Account[]);
       setProperties(((props as any) ?? []) as Property[]);
@@ -282,6 +287,11 @@ export default function Accounts() {
       list.sort((a, b) => a.nome.localeCompare(b.nome));
       setOwnerMap(map);
       setOwners(list);
+      const opMap: Record<string, OpAtivaResumo> = {};
+      ((opsData ?? []) as any[]).forEach((o) => {
+        if (o.conta_id && !opMap[o.conta_id]) opMap[o.conta_id] = o;
+      });
+      setOpAtivas(opMap);
     } catch (e: any) {
       toast.error(e?.message ?? "Erro ao carregar contas");
     } finally {
@@ -297,6 +307,7 @@ export default function Accounts() {
       .on("postgres_changes", { event: "*", schema: "public", table: "contas" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "conta_propriedades" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "interacoes" }, fetchLastContacts)
+      .on("postgres_changes", { event: "*", schema: "public", table: "oportunidades" }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
