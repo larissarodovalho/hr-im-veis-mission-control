@@ -1,36 +1,42 @@
-# Plano: Gestão de interações pelo admin + Fuso horário de Cuiabá
+# Plano: Trazer todas as contas legadas para o Kanban (Contato estabelecido)
 
-## Parte 1 — Administrador edita e exclui interações/tentativas
+## O que vai acontecer
 
-O banco já permite (política de exclusão para admin e de edição para admin/gestor) — falta só a interface. Hoje a timeline de Contas tem botão de excluir para admin, mas o Histórico do Lead não tem nada, e edição não existe em lugar nenhum.
+As 424 contas paradas em etapas do funil antigo serão movidas de uma vez para a coluna **Contato estabelecido**, passando a aparecer no Kanban de Carteira e Marketing. Nenhuma oportunidade de negócio será criada automaticamente.
 
-**Novo componente compartilhado** `src/components/interacoes/EditarInteracaoDialog.tsx`:
-- Modal com: tipo da interação, resultado, descrição e **data/hora** (input `datetime-local` no horário de Cuiabá).
-- Ao salvar: atualiza a interação. Se for registro de tentativa ("1ª/2ª/3ª tentativa · …"), o selo de **pontualidade é recalculado** automaticamente a partir da nova data/hora.
-- Botão **Excluir** com confirmação via `AlertDialog` (substitui o `confirm()` nativo atual).
+## Destino de cada grupo (conforme suas respostas)
 
-**Onde aparece (somente para admin):**
-- `src/pages/LeadDetail.tsx` — card **Histórico**: lápis (editar) e lixeira (excluir) em cada interação. Após alterar/excluir, o card de Tentativas se atualiza sozinho (excluir uma tentativa a devolve para "pendente").
-- `src/components/contas/ContaInteracoesTimeline.tsx` — adiciona botão de editar ao lado do excluir já existente.
+| Etapa antiga | Qtd | Destino no Kanban |
+|---|---|---|
+| Oportunidade futura (antiga perdido) | 351 | Contato estabelecido + selo azul "Oportunidade futura" |
+| Captação/Imóvel | 36 | Contato estabelecido + selo "Qualificação pendente" |
+| Reunião | 16 | Contato estabelecido + selo "Qualificação pendente" |
+| Visita | 5 | Contato estabelecido + selo "Qualificação pendente" |
+| Proposta | 3 | Contato estabelecido + selo "Qualificação pendente" |
+| Fechado | 12 | Contato estabelecido + selo "Qualificação pendente" |
+| Permuta | 1 | Contato estabelecido + selo "Qualificação pendente" |
 
-## Parte 2 — Fuso horário fixo: America/Cuiaba (UTC-4)
+Detalhes:
+- As 351 de "Oportunidade futura" ficam com o selo azul e podem ter próxima ação agendada depois, conta a conta.
+- As demais entram como "Qualificação pendente" — o time pode qualificar pelo próprio card do Kanban (botão "Continuar") para gerar oportunidade quando fizer sentido.
+- 5 contas de Captação/Imóvel não têm categoria (não aparecem nem em Carteira nem em Marketing): serão marcadas como **Carteira** para ficarem visíveis.
+- A mudança é silenciosa: não cria registros no histórico de interações (evita 424 entradas de "etapa alterada" na timeline).
 
-Problemas encontrados na análise:
-- Dashboard: gráfico de leads agrupa por data **UTC** — depois das 20h de Cuiabá o "hoje" vira o dia seguinte e leads criados à noite caem no dia errado.
-- Visitas do site: função do banco agrupa por data UTC e o card "hoje" compara em UTC — mostra 0 visitas à noite.
-- Demais horários (histórico, prazos das tentativas) usam o relógio do navegador, que desanda se alguém acessar de outro fuso.
+## Limpeza da interface
 
-**Solução:**
-- Nova lib `src/lib/datetime.ts` com `CRM_TZ = 'America/Cuiaba'` e funções: `fmtDateTime`, `fmtDate`, `fmtTime`, `dayKeyCRM` (chave AAAA-MM-DD em Cuiabá), `todayCRM`, e conversores para o input de data/hora do modal de edição.
-- **Migração no banco**: recria `get_site_visits_daily` agrupando visitas pela data de Cuiabá e ancorando a série no "hoje" de Cuiabá.
-- Telas atualizadas para usar a lib: Dashboard (gráficos e cards), prazos/pontualidade das tentativas (`src/lib/leads.ts`), Histórico do Lead, timeline das Contas.
-- Resultado: todo o time vê sempre horário de Cuiabá, acessando de onde estiver; agrupamentos diários viram o dia à meia-noite de Cuiabá.
+Como não restará nenhuma conta em etapa antiga:
+- Remover o aviso amarelo "N conta(s) em etapas legadas não aparecem no Kanban" da página Contas.
+- O Kanban passa a receber todas as contas filtradas, sem exclusão.
+- O painel "Migração das etapas legadas" na página Oportunidades ficará zerado (mantido, sem uso).
 
 ## Verificação
-- Build sem erros; teste visual (Playwright) mostrando os botões de admin no histórico e horários exibidos em Cuiabá (ex.: 15:35 quando UTC marca 19:35).
+- Consulta no banco confirmando 0 contas em etapas legadas após a migração.
+- Teste visual (Playwright): abas Carteira e Marketing mostrando os cards na coluna Contato estabelecido com os selos corretos.
 
 ## Detalhes técnicos
-- Sem novas políticas RLS: admin já pode excluir/editar `interacoes` no banco.
-- Recálculo de pontualidade: mesma função `tentativaPontualidade` (tolerância de 1h) usando `data_entrada` do lead + prazo da tentativa vs. nova `created_at`.
-- Conversão do input `datetime-local`: feita com partes do `Intl.DateTimeFormat` em America/Cuiaba, sem nova dependência.
-- Migração única: apenas recria a função `get_site_visits_daily` (SECURITY DEFINER preservado).
+- Migração única (`UPDATE` em `public.contas`):
+  1. `categoria = 'carteira'` onde `etapa_funil = 'captacao_imovel'` e `categoria IS NULL` (5 contas).
+  2. `etapa_funil = 'contato_estabelecido', qualificacao_status = 'oportunidade_futura'` onde `etapa_funil = 'perdido'` (351).
+  3. `etapa_funil = 'contato_estabelecido', qualificacao_status = 'pendente'` onde `etapa_funil IN ('captacao_imovel','reuniao','visita','permuta','proposta','fechado')` (73).
+- Sem mudanças de RLS, GRANTs ou estrutura de tabelas — apenas atualização de dados.
+- Frontend: edição em `src/pages/Accounts.tsx` (remover banner e filtro de exclusão do Kanban).
