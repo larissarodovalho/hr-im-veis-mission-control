@@ -202,6 +202,8 @@ export default function Accounts() {
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [cancelTarget, setCancelTarget] = useState<Account | null>(null);
+  const [qualifTarget, setQualifTarget] = useState<Account | null>(null);
+  const [opAtivas, setOpAtivas] = useState<Record<string, OpAtivaResumo>>({});
   const [catTarget, setCatTarget] = useState<Account | null>(null);
 
   const interestLabel = (v: string | null | undefined) => {
