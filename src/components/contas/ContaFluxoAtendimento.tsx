@@ -13,13 +13,14 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  MessageCircle, Mic, Phone, Link2, CalendarClock, Compass, RotateCcw, XCircle, AlertTriangle,
+  MessageCircle, Mic, Phone, Link2, CalendarClock, Compass, RotateCcw, XCircle, AlertTriangle, HandCoins,
 } from "lucide-react";
 import {
   ETAPAS, etapaLabel, etapaColor, isEtapaLegado, destinoLabel,
   DESTINOS_COMERCIAIS, DestinoComercial, EtapaFunil,
 } from "@/lib/contasFunil";
 import ContaCancelarDialog, { CancelamentoData } from "@/components/contas/ContaCancelarDialog";
+import CriarOportunidadeDialog from "@/components/oportunidades/CriarOportunidadeDialog";
 
 interface Props {
   conta: any;
@@ -38,6 +39,7 @@ export default function ContaFluxoAtendimento({ conta, corretores, onChanged }: 
   const [saving, setSaving] = useState(false);
   const [dlg, setDlg] = useState<null | "contato1" | "contato2" | "tentativa" | "link" | "retorno" | "destino" | "moverLegado">(null);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [criarOpOpen, setCriarOpOpen] = useState(false);
   const [form, setForm] = useState<any>({});
   const [legacyTarget, setLegacyTarget] = useState<EtapaFunil | "">("");
 
@@ -176,6 +178,8 @@ export default function ContaFluxoAtendimento({ conta, corretores, onChanged }: 
     setDlg(null);
     toast.success(`Destino comercial: ${label}`);
     onChanged();
+    // Ponte Contas → Oportunidades: "Comprar — Oportunidade" abre o modal de criação
+    if (form.destino === "comprar_oportunidade") setCriarOpOpen(true);
   };
 
   const openDlg = (which: NonNullable<typeof dlg>, initial: any = {}) => {
@@ -315,13 +319,19 @@ export default function ContaFluxoAtendimento({ conta, corretores, onChanged }: 
       {!legado && etapa === "contato_estabelecido" && (
         <div className="space-y-2">
           <p className="text-sm text-muted-foreground">
-            Conversa efetiva em andamento. Defina o <strong>destino comercial</strong> desta conta
-            (a criação de oportunidades virá na próxima etapa da reestruturação).
+            Conversa efetiva em andamento. Defina o <strong>destino comercial</strong> desta conta.
+            Com o destino <strong>Comprar — Oportunidade</strong>, a conta gera uma Oportunidade de Negócio
+            (sem sair da categoria Carteira/Marketing).
           </p>
           <div className="flex gap-2 flex-wrap">
             <Button size="sm" onClick={() => openDlg("destino", { destino: conta.destino_comercial ?? "" })}>
               <Compass className="h-4 w-4 mr-1" /> {destinoAtual ? "Alterar destino comercial" : "Definir destino comercial"}
             </Button>
+            {conta.destino_comercial === "comprar_oportunidade" && (
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setCriarOpOpen(true)}>
+                <HandCoins className="h-4 w-4 mr-1" /> Criar oportunidade de negócio
+              </Button>
+            )}
             <Button size="sm" variant="outline" onClick={() => setCancelOpen(true)}>
               <XCircle className="h-4 w-4 mr-1" /> Cancelar contato
             </Button>
@@ -505,6 +515,13 @@ export default function ContaFluxoAtendimento({ conta, corretores, onChanged }: 
         onOpenChange={setCancelOpen}
         contaNome={conta.nome}
         onConfirm={confirmarCancelamento}
+      />
+
+      <CriarOportunidadeDialog
+        open={criarOpOpen}
+        onOpenChange={setCriarOpOpen}
+        conta={conta}
+        onCreated={() => onChanged()}
       />
     </Card>
   );
