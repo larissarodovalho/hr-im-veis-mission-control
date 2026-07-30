@@ -23,9 +23,11 @@ import {
   DropdownMenuSubContent,
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
-import { ETAPAS, EtapaFunil } from "@/lib/contasFunil";
-import { Handshake, Target, User, MoreVertical, Check, UserX, Thermometer, PencilLine } from "lucide-react";
+import { ETAPAS, EtapaFunil, categoriaDe, CATEGORIA_LABEL } from "@/lib/contasFunil";
+import { Handshake, Target, User, MoreVertical, Check, UserX, Thermometer, PencilLine, ArrowLeftRight, Megaphone, Clock } from "lucide-react";
 import { tempInfo, TEMPERATURAS } from "@/lib/contasTemperatura";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 type Account = {
   id: string;
@@ -38,6 +40,9 @@ type Account = {
   responsavel_id: string | null;
   created_by?: string | null;
   temperatura?: string | null;
+  categoria?: string | null;
+  tags?: string[] | null;
+  origem?: string | null;
 };
 
 type Property = { conta_id: string; valor_negocio: number | null };
@@ -48,6 +53,9 @@ interface Props {
   onMoveStage: (contaId: string, etapa: EtapaFunil) => void;
   onChangeOwner?: (contaId: string, userId: string | null) => void;
   onChangeTemperatura?: (contaId: string, temp: string | null) => void;
+  onChangeCategoria?: (contaId: string) => void;
+  lista?: "carteira" | "marketing";
+  lastContactMap?: Record<string, string>;
   ownerMap?: Record<string, string>;
   owners?: { id: string; nome: string }[];
 }
