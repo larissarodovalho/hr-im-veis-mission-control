@@ -1,78 +1,45 @@
-# Reestruturação dos funis de Contas — Carteira e Marketing (5 etapas)
+# Funil da aba Contas (Carteira e Marketing) — REESTRUTURA IMPLEMENTADA
 
-## Estado atual (verificado no banco)
+## Status: concluído
 
-Total: 1.427 contas — 1.354 Carteira, 56 Marketing, 3 sem tag, **0 com as duas tags**, 0 desclassificadas.
+Os dois funis (Carteira e Marketing) usam o mesmo modelo de 5 etapas, separados pela **categoria** da conta (`contas.categoria`: `carteira` | `marketing`, com fallback para tags).
 
-| Etapa atual | Carteira | Marketing |
-|---|---|---|
-| A contatar | 633 | 18 |
-| Contatado | 13 | 3 |
-| Sem retorno | 207 | 1 |
-| Contato estabelecido | 86 | 7 |
-| Captação/Imóvel | 31 | 0 |
-| Reunião | 14 | 2 |
-| Visita | 3 | 2 |
-| Permuta | 1 | 0 |
-| Proposta | 1 | 2 |
-| Fechado | 9 | 3 |
-| Oportunidade futura (`perdido`) | 333 | 18 |
-| Parceiros | 23 | 0 |
+## As 5 colunas ativas (ordem fixa)
 
-## 1. Banco de dados (uma migração)
+```text
+1. A contatar
+2. Contatado
+3. Sem retorno
+4. Contato estabelecido
+5. Contato cancelado
+```
 
-Novos campos em `contas`:
-- `categoria` (text: `carteira` | `marketing`, nullable) — categoria principal de atendimento
-- `origem` (text) — origem do contato (manual, importação, indicação, Meta Ads, site…)
-- `data_entrada_carteira` (timestamptz, default now() no cadastro)
-- `destino_comercial` (text: `captacao_reuniao` | `comprar_oportunidade` | `vender_hrx_producoes` | `oportunidade_futura`, nullable)
-- `motivo_cancelamento` (text), `cancelado_em`, `cancelado_por` (uuid)
+## Regras operacionais implementadas
 
-Backfill e migrações não destrutivas:
-- `categoria` preenchida a partir das tags (`carteira`/`marketing`); as 3 contas sem tag ficam com `categoria = NULL` → "pendente de revisão"
-- 23 contas da etapa `parceiros` → `is_partner = true` + etapa `contato_estabelecido`, com registro da etapa anterior no histórico
-- Nada é excluído: etapas comerciais (captacao_imovel, reuniao, visita, permuta, proposta, fechado, perdido) permanecem no banco como legado
-- Trigger em `contas`: toda mudança de `etapa_funil` ou `categoria` grava uma linha em `interacoes` (tipo `nota`) com etapa anterior → nova etapa, categoria, usuário e data/hora
+- **A contatar**: ações de 1º e 2º contato (WhatsApp, ligação, e-mail) com resultado (sem resposta / respondeu / contato inválido). Sem resposta na 2ª tentativa → Sem retorno.
+- **Contatado**: agendar tarefa de retorno, enviar link de imóvel, avançar para Contato estabelecido.
+- **Sem retorno**: novas tentativas; resposta → Contatado; cancelamento exige motivo.
+- **Contato estabelecido**: seleção de **Destino comercial** (não é coluna do funil): Captação/Reunião, Comprar — Oportunidade, Vender — HRX Produções, Oportunidade futura. Gravado em `contas.destino_comercial` + interação.
+- **Contato cancelado**: motivo obrigatório (`contas.motivo_cancelamento`, `cancelado_em`, `cancelado_por`) via ContaCancelarDialog; reativação limpa os campos.
 
-## 2. Configuração do funil (`src/lib/contasFunil.ts`)
+## Categoria
 
-- `ETAPAS` ativas (5): `a_contatar`, `contatado`, `sem_retorno`, `contato_estabelecido`, `contato_cancelado` (nova)
-- `ETAPAS_LEGADO`: captacao_imovel, reuniao, visita, permuta, proposta, fechado, perdido, parceiros — preservadas com rótulo "(legado)"
-- O id `perdido` não é renomeado nem reutilizado
+- Coluna `contas.categoria` é a fonte principal; tags `carteira`/`marketing` mantidas em sincronia.
+- `categoriaDe()` prioriza a coluna e cai para tags em registros antigos (src/lib/contasFunil.ts).
+- Transferência Carteira ↔ Marketing exige motivo (AlterarCategoriaDialog), registra interação `transferencia_categoria` e pode reiniciar em A contatar.
+- Contas Carteira têm `origem` (ORIGENS_CARTEIRA) e `data_entrada_carteira` no cadastro.
 
-## 3. Aba Contas (`src/pages/Accounts.tsx` + `ContasKanban.tsx`)
+## Legado
 
-- Kanbans de Carteira e Marketing filtram pela **categoria principal** (não só pela tag); arrastar entre etapas nunca altera a categoria
-- Kanban passa a ter as 5 colunas; contas em etapas legadas ficam fora do Kanban e acessíveis na visão de lista com o filtro **"Mostrar etapas comerciais legadas"** (mesmo padrão da aba Leads)
-- Arrastar ou mover para **Contato cancelado** abre diálogo com motivo obrigatório (9 motivos; "Outro" exige observação) + mensagem de agradecimento opcional
-- Ação separada **"Alterar categoria da conta"** (menu ⋯ do card e detalhe): confirmação, mostra categoria atual/nova, motivo obrigatório, opção de reiniciar em "A contatar", registra no histórico — nunca pelo arrastar
-- Cards ganham: badge de categoria, data/tipo do último contato, próxima ação, tempo na etapa; Carteira destaca o corretor, Marketing destaca origem/campanha
-- Lista **"Categoria pendente de revisão"** para as contas sem categoria, com ação para defini-la
-- Filtros novos: origem/campanha (Marketing) e por corretor (já existe, mantido)
+- Etapas comerciais antigas (Captação/Imóvel, Reunião, Visita, Permuta, Proposta, Fechado, Oportunidade futura, Parceiros) permanecem no banco como `ETAPAS_LEGADO`.
+- Contas em etapa legada não aparecem no Kanban; ficam na visão Lista (filtro "Etapas legadas") e podem ser movidas pelo detalhe da conta (ContaFluxoAtendimento → "Mover para o novo funil").
+- 23 contas da coluna "Parceiros" migradas para `is_partner = true` na migração de reestrutura.
 
-## 4. Detalhe da conta (`src/pages/AccountDetail.tsx`)
+## Arquivos-chave
 
-Card "Fluxo de atendimento" conforme a etapa:
-- **A contatar**: registrar 1º contato (mensagem) → grava histórico e move para Contatado
-- **Contatado**: registrar 2º contato (áudio ou ligação) com desfechos: resposta → Contato estabelecido; sem resposta → Sem retorno; inválido → Contato cancelado (motivo)
-- **Sem retorno**: registrar nova tentativa, registrar envio de link, criar tarefa de retorno com próxima data, ou mover manualmente
-- **Contato estabelecido**: ação **"Definir destino comercial"** (4 opções, não viram colunas; salva na conta + histórico, sem trocar categoria e sem mover para etapas antigas)
-- **Contato cancelado**: exibe motivo, data e responsável; conta preservada
-
-## 5. Cadastro e conversão
-
-- `NovaContaDialog`: ao cadastrar na Carteira, campos de corretor responsável, origem, interesse, temperatura e observação inicial; `data_entrada_carteira` automática; categoria gravada conforme a aba de origem
-- `LeadDetail.tsx`: conversão em **Conta Cliente** → Marketing › A contatar (já existente, mantido); conversão em **Conta Desclassificada** → agora entra em **Marketing › Contato cancelado** com `motivo_cancelamento` preenchido e registro de origem "Leads" (em vez de A contatar)
-
-## 6. Relatórios
-
-- `FunilContasReport` e demais relatórios de conversão passam a usar as 5 etapas ativas + agrupamento das legadas, sem perder os dados antigos
-
-## 7. Verificação e relatório final
-
-- Typecheck + teste no navegador dos dois Kanbans, diálogos de cancelamento/categoria/destino e conversão de lead
-- Relatório final com: contagens antes/depois por categoria, contas migradas de Parceiros (23), contas com duas tags (0), pendentes de revisão (3), campos criados, automações alteradas e registros aguardando o módulo de Oportunidades (408 contas em etapas comerciais legadas)
-
-## Fora de escopo (conforme solicitado)
-
-Não cria o funil de Oportunidades/Negócios, não move contas para etapas comerciais, não automatiza contatos por temperatura, não exclui nenhum registro.
+- `src/lib/contasFunil.ts` — etapas, legado, categoria, destinos, motivos
+- `src/components/contas/ContaFluxoAtendimento.tsx` — fluxo operacional no detalhe
+- `src/components/contas/ContaCancelarDialog.tsx`, `AlterarCategoriaDialog.tsx`
+- `src/pages/Accounts.tsx` — Kanban 5 colunas, filtros, visão Lista
+- `src/pages/AccountDetail.tsx` — fluxo + alteração de categoria
+- `src/pages/LeadDetail.tsx` — conversão gera `categoria: marketing`; desclassificada → Contato cancelado com motivo
