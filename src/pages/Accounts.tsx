@@ -919,18 +919,12 @@ export default function Accounts() {
           <Card className="p-6 text-center text-muted-foreground hidden md:block">Carregando…</Card>
         ) : (
           <>
-            {filtered.some((a) => isEtapaLegado(a.etapa_funil)) && (
-              <p className="hidden md:block text-xs text-amber-600 mb-2">
-                {filtered.filter((a) => isEtapaLegado(a.etapa_funil)).length} conta(s) em etapas legadas não aparecem no Kanban —
-                elas ficam visíveis na visão Lista (filtro "Etapas legadas") e podem ser movidas pelo detalhe da conta.
-              </p>
-            )}
             <div
               ref={kanbanBoxRef}
               className="hidden md:block overflow-hidden"
               style={{ height: "calc(100dvh - var(--kanban-top, 260px) - 8px)" }}
             >
-              <ContasKanban accounts={filtered.filter((a) => !isEtapaLegado(a.etapa_funil)) as any} propsByAccount={propsByAccount} onMoveStage={moveStage} onChangeOwner={changeOwner} onChangeTemperatura={changeTemperatura} onChangeCategoria={(id) => setCatTarget(accounts.find((a) => a.id === id) ?? null)} onQualificar={abrirQualificacao} opAtivaPorConta={opAtivas} lista={lista} lastContactMap={lastContactMap} ownerMap={ownerMap} owners={owners} />
+              <ContasKanban accounts={filtered as any} propsByAccount={propsByAccount} onMoveStage={moveStage} onChangeOwner={changeOwner} onChangeTemperatura={changeTemperatura} onChangeCategoria={(id) => setCatTarget(accounts.find((a) => a.id === id) ?? null)} onQualificar={abrirQualificacao} opAtivaPorConta={opAtivas} lista={lista} lastContactMap={lastContactMap} ownerMap={ownerMap} owners={owners} />
             </div>
           </>
         )
