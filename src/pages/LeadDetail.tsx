@@ -586,13 +586,123 @@ export default function LeadDetail() {
               disabled={converting || (convertDups.length > 0 && !forceConvert)}
               className="bg-success hover:bg-success/90 text-success-foreground"
             >
-              {converting ? "Convertendo…" : "Converter em conta"}
+              {converting ? "Convertendo…" : "Converter em Conta Cliente"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!editLead} onOpenChange={(o) => !o && setEditLead(null)}>
+      <Dialog open={tentOpen} onOpenChange={setTentOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Registrar tentativa de contato</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Tentativa</Label>
+                <Select value={tentForm.tipo} onValueChange={v => setTentForm({ ...tentForm, tipo: v, canal: v === "ligacao" ? "Ligação" : tentForm.canal })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {TENTATIVA_SEQ.map(t => <SelectItem key={t.tipo} value={t.tipo}>{t.titulo}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label>Canal</Label>
+                <Select value={tentForm.canal} onValueChange={v => setTentForm({ ...tentForm, canal: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {INTERACAO_CANAIS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div><Label>Resultado</Label>
+              <Select value={tentForm.resultado} onValueChange={v => setTentForm({ ...tentForm, resultado: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {TENTATIVA_RESULTADOS.map(r => <SelectItem key={r.id} value={r.id}>{r.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Observação</Label><Textarea rows={2} value={tentForm.descricao} onChange={e => setTentForm({ ...tentForm, descricao: e.target.value })} /></div>
+            <div><Label>Próxima ação</Label><Input value={tentForm.proxima_acao} onChange={e => setTentForm({ ...tentForm, proxima_acao: e.target.value })} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTentOpen(false)} disabled={savingTent}>Cancelar</Button>
+            <Button onClick={registerTentativa} disabled={savingTent}>{savingTent ? "Salvando…" : "Registrar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={sucessoOpen} onOpenChange={setSucessoOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Sucesso no contato</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              O lead respondeu ou demonstrou interesse. Defina o corretor responsável — o lead será movido para <strong>Conversa Ativa</strong> e o encaminhamento ficará registrado no histórico.
+            </p>
+            <div><Label>Corretor responsável*</Label>
+              <Select value={sucessoCorretor} onValueChange={setSucessoCorretor}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {brokersList.map(b => <SelectItem key={b.user_id} value={b.user_id}>{b.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSucessoOpen(false)} disabled={savingSucesso}>Cancelar</Button>
+            <Button onClick={confirmSucesso} disabled={savingSucesso} className="bg-success hover:bg-success/90 text-success-foreground">{savingSucesso ? "Salvando…" : "Encaminhar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={semContatoOpen} onOpenChange={setSemContatoOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Sem contato</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              O lead não respondeu às tentativas iniciais. Defina o corretor responsável — será criada uma <strong>tarefa</strong> para ele fazer a tentativa manual, e o lead permanece em <strong>Em Contato</strong>.
+            </p>
+            <div><Label>Corretor responsável*</Label>
+              <Select value={semContatoCorretor} onValueChange={setSemContatoCorretor}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {brokersList.map(b => <SelectItem key={b.user_id} value={b.user_id}>{b.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSemContatoOpen(false)} disabled={savingSemContato}>Cancelar</Button>
+            <Button onClick={confirmSemContato} disabled={savingSemContato}>{savingSemContato ? "Salvando…" : "Criar tarefa"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={desclassOpen} onOpenChange={setDesclassOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Converter em Conta Desclassificada</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              O cadastro e todo o histórico do lead serão preservados em uma conta marcada como <strong>desclassificada</strong>. Nada será excluído.
+            </p>
+            <div><Label>Motivo da desclassificação*</Label>
+              <Select value={desclassMotivo} onValueChange={setDesclassMotivo}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {MOTIVOS_DESCLASSIFICACAO.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {desclassMotivo === "Outro" && (
+              <div><Label>Descreva o motivo*</Label><Textarea rows={2} value={desclassOutro} onChange={e => setDesclassOutro(e.target.value)} /></div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDesclassOpen(false)} disabled={savingDesclass}>Cancelar</Button>
+            <Button onClick={confirmDesclass} disabled={savingDesclass || !desclassMotivo} className="bg-danger hover:bg-danger/90 text-danger-foreground">{savingDesclass ? "Salvando…" : "Desclassificar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
         <DialogContent>
           <DialogHeader><DialogTitle>Editar lead</DialogTitle></DialogHeader>
           {editLead && (
