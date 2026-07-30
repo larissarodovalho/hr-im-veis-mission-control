@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.migrar_contas_legadas_oportunidades() FROM PUBLIC, anon;

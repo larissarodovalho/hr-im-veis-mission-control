@@ -416,6 +416,7 @@ export type Database = {
           id: string
           imovel_id: string | null
           observacoes: string | null
+          oportunidade_id: string | null
           updated_at: string
           valor: number | null
         }
@@ -427,6 +428,7 @@ export type Database = {
           id?: string
           imovel_id?: string | null
           observacoes?: string | null
+          oportunidade_id?: string | null
           updated_at?: string
           valor?: number | null
         }
@@ -438,6 +440,7 @@ export type Database = {
           id?: string
           imovel_id?: string | null
           observacoes?: string | null
+          oportunidade_id?: string | null
           updated_at?: string
           valor?: number | null
         }
@@ -461,6 +464,13 @@ export type Database = {
             columns: ["imovel_id"]
             isOneToOne: false
             referencedRelation: "imoveis_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conta_fechamentos_oportunidade_id_fkey"
+            columns: ["oportunidade_id"]
+            isOneToOne: false
+            referencedRelation: "oportunidades"
             referencedColumns: ["id"]
           },
         ]
@@ -1358,6 +1368,7 @@ export type Database = {
           descricao: string | null
           id: string
           lead_id: string | null
+          oportunidade_id: string | null
           proxima_acao: string | null
           resultado: string | null
           tipo: string
@@ -1371,6 +1382,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           lead_id?: string | null
+          oportunidade_id?: string | null
           proxima_acao?: string | null
           resultado?: string | null
           tipo: string
@@ -1384,11 +1396,20 @@ export type Database = {
           descricao?: string | null
           id?: string
           lead_id?: string | null
+          oportunidade_id?: string | null
           proxima_acao?: string | null
           resultado?: string | null
           tipo?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "interacoes_oportunidade_id_fkey"
+            columns: ["oportunidade_id"]
+            isOneToOne: false
+            referencedRelation: "oportunidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lead_historico: {
         Row: {
@@ -1862,87 +1883,397 @@ export type Database = {
       }
       oportunidade_imoveis: {
         Row: {
+          apresentado_em: string | null
+          apresentado_por: string | null
           created_at: string
+          created_by: string | null
+          feedback_cliente: string | null
           id: string
           imovel_id: string
           interesse: string | null
+          motivo_rejeicao: string | null
           observacao: string | null
           oportunidade_id: string
+          status: string
         }
         Insert: {
+          apresentado_em?: string | null
+          apresentado_por?: string | null
           created_at?: string
+          created_by?: string | null
+          feedback_cliente?: string | null
           id?: string
           imovel_id: string
           interesse?: string | null
+          motivo_rejeicao?: string | null
           observacao?: string | null
           oportunidade_id: string
+          status?: string
         }
         Update: {
+          apresentado_em?: string | null
+          apresentado_por?: string | null
           created_at?: string
+          created_by?: string | null
+          feedback_cliente?: string | null
           id?: string
           imovel_id?: string
           interesse?: string | null
+          motivo_rejeicao?: string | null
           observacao?: string | null
           oportunidade_id?: string
+          status?: string
         }
         Relationships: []
+      }
+      oportunidade_propostas: {
+        Row: {
+          condicoes: string | null
+          conta_id: string | null
+          created_at: string
+          created_by: string | null
+          entrada: number | null
+          financiamento: string | null
+          forma_pagamento: string | null
+          id: string
+          imovel_id: string | null
+          imovel_permuta: string | null
+          observacoes: string | null
+          oportunidade_id: string
+          parcelamento: string | null
+          possui_permuta: boolean
+          prazos: string | null
+          status: string
+          updated_at: string
+          validade: string | null
+          valor_estimado_permuta: number | null
+          valor_pedido: number | null
+          valor_proposto: number | null
+        }
+        Insert: {
+          condicoes?: string | null
+          conta_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          entrada?: number | null
+          financiamento?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          imovel_id?: string | null
+          imovel_permuta?: string | null
+          observacoes?: string | null
+          oportunidade_id: string
+          parcelamento?: string | null
+          possui_permuta?: boolean
+          prazos?: string | null
+          status?: string
+          updated_at?: string
+          validade?: string | null
+          valor_estimado_permuta?: number | null
+          valor_pedido?: number | null
+          valor_proposto?: number | null
+        }
+        Update: {
+          condicoes?: string | null
+          conta_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          entrada?: number | null
+          financiamento?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          imovel_id?: string | null
+          imovel_permuta?: string | null
+          observacoes?: string | null
+          oportunidade_id?: string
+          parcelamento?: string | null
+          possui_permuta?: boolean
+          prazos?: string | null
+          status?: string
+          updated_at?: string
+          validade?: string | null
+          valor_estimado_permuta?: number | null
+          valor_pedido?: number | null
+          valor_proposto?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oportunidade_propostas_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oportunidade_propostas_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oportunidade_propostas_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oportunidade_propostas_oportunidade_id_fkey"
+            columns: ["oportunidade_id"]
+            isOneToOne: false
+            referencedRelation: "oportunidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oportunidade_visitas: {
+        Row: {
+          conta_id: string | null
+          corretor_id: string | null
+          created_at: string
+          created_by: string | null
+          data_visita: string
+          feedback: string | null
+          id: string
+          imovel_id: string | null
+          interesse_cliente: string | null
+          local: string | null
+          objeções: string | null
+          observacao: string | null
+          oportunidade_id: string
+          pontos_positivos: string | null
+          proxima_acao: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          conta_id?: string | null
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_visita: string
+          feedback?: string | null
+          id?: string
+          imovel_id?: string | null
+          interesse_cliente?: string | null
+          local?: string | null
+          objeções?: string | null
+          observacao?: string | null
+          oportunidade_id: string
+          pontos_positivos?: string | null
+          proxima_acao?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          conta_id?: string | null
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_visita?: string
+          feedback?: string | null
+          id?: string
+          imovel_id?: string | null
+          interesse_cliente?: string | null
+          local?: string | null
+          objeções?: string | null
+          observacao?: string | null
+          oportunidade_id?: string
+          pontos_positivos?: string | null
+          proxima_acao?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oportunidade_visitas_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oportunidade_visitas_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oportunidade_visitas_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oportunidade_visitas_oportunidade_id_fkey"
+            columns: ["oportunidade_id"]
+            isOneToOne: false
+            referencedRelation: "oportunidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       oportunidades: {
         Row: {
           bairro: string | null
+          caracteristicas_indispensaveis: string | null
+          categoria_origem: string | null
           cidade: string | null
           cliente_id: string
           cliente_tipo: string
+          conta_id: string | null
           corretor_id: string | null
           created_at: string
           created_by: string | null
+          data_diagnostico: string | null
+          data_fechamento: string | null
           descricao_busca: string | null
+          destino_conta_perda: string | null
+          diagnostico_por: string | null
+          encerrada_em: string | null
+          encerrada_por: string | null
           estagio: string
+          estagio_desde: string
+          forma_pagamento: string | null
           id: string
+          imovel_fechamento_id: string | null
+          imovel_permuta: string | null
+          lead_id_origem: string | null
+          motivo_perda: string | null
+          obs_perda: string | null
           observacoes: string | null
+          origem: string | null
+          possui_permuta: boolean
+          prazo_pretendido: string | null
           prioridade: string
+          proposta_aceita_id: string | null
           tipo_imovel: string | null
           titulo: string
           updated_at: string
           valor_alvo: number | null
+          valor_estimado_permuta: number | null
+          valor_final: number | null
         }
         Insert: {
           bairro?: string | null
+          caracteristicas_indispensaveis?: string | null
+          categoria_origem?: string | null
           cidade?: string | null
           cliente_id: string
           cliente_tipo: string
+          conta_id?: string | null
           corretor_id?: string | null
           created_at?: string
           created_by?: string | null
+          data_diagnostico?: string | null
+          data_fechamento?: string | null
           descricao_busca?: string | null
+          destino_conta_perda?: string | null
+          diagnostico_por?: string | null
+          encerrada_em?: string | null
+          encerrada_por?: string | null
           estagio?: string
+          estagio_desde?: string
+          forma_pagamento?: string | null
           id?: string
+          imovel_fechamento_id?: string | null
+          imovel_permuta?: string | null
+          lead_id_origem?: string | null
+          motivo_perda?: string | null
+          obs_perda?: string | null
           observacoes?: string | null
+          origem?: string | null
+          possui_permuta?: boolean
+          prazo_pretendido?: string | null
           prioridade?: string
+          proposta_aceita_id?: string | null
           tipo_imovel?: string | null
           titulo: string
           updated_at?: string
           valor_alvo?: number | null
+          valor_estimado_permuta?: number | null
+          valor_final?: number | null
         }
         Update: {
           bairro?: string | null
+          caracteristicas_indispensaveis?: string | null
+          categoria_origem?: string | null
           cidade?: string | null
           cliente_id?: string
           cliente_tipo?: string
+          conta_id?: string | null
           corretor_id?: string | null
           created_at?: string
           created_by?: string | null
+          data_diagnostico?: string | null
+          data_fechamento?: string | null
           descricao_busca?: string | null
+          destino_conta_perda?: string | null
+          diagnostico_por?: string | null
+          encerrada_em?: string | null
+          encerrada_por?: string | null
           estagio?: string
+          estagio_desde?: string
+          forma_pagamento?: string | null
           id?: string
+          imovel_fechamento_id?: string | null
+          imovel_permuta?: string | null
+          lead_id_origem?: string | null
+          motivo_perda?: string | null
+          obs_perda?: string | null
           observacoes?: string | null
+          origem?: string | null
+          possui_permuta?: boolean
+          prazo_pretendido?: string | null
           prioridade?: string
+          proposta_aceita_id?: string | null
           tipo_imovel?: string | null
           titulo?: string
           updated_at?: string
           valor_alvo?: number | null
+          valor_estimado_permuta?: number | null
+          valor_final?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "oportunidades_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oportunidades_imovel_fechamento_id_fkey"
+            columns: ["imovel_fechamento_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oportunidades_imovel_fechamento_id_fkey"
+            columns: ["imovel_fechamento_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oportunidades_lead_id_origem_fkey"
+            columns: ["lead_id_origem"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oportunidades_proposta_aceita_fk"
+            columns: ["proposta_aceita_id"]
+            isOneToOne: false
+            referencedRelation: "oportunidade_propostas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -2414,6 +2745,7 @@ export type Database = {
           descricao: string | null
           id: string
           lead_id: string | null
+          oportunidade_id: string | null
           prazo: string | null
           prioridade: string
           responsavel_id: string | null
@@ -2428,6 +2760,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           lead_id?: string | null
+          oportunidade_id?: string | null
           prazo?: string | null
           prioridade?: string
           responsavel_id?: string | null
@@ -2442,6 +2775,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           lead_id?: string | null
+          oportunidade_id?: string | null
           prazo?: string | null
           prioridade?: string
           responsavel_id?: string | null
@@ -2462,6 +2796,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_oportunidade_id_fkey"
+            columns: ["oportunidade_id"]
+            isOneToOne: false
+            referencedRelation: "oportunidades"
             referencedColumns: ["id"]
           },
         ]
@@ -3018,6 +3359,16 @@ export type Database = {
         Returns: {
           id: string
           nome: string
+        }[]
+      }
+      migrar_contas_legadas_oportunidades: {
+        Args: never
+        Returns: {
+          acao: string
+          conta_nome: string
+          etapa_legada: string
+          migrada_conta_id: string
+          nova_oportunidade_id: string
         }[]
       }
       move_to_dlq: {
