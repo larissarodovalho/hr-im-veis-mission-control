@@ -18,11 +18,14 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
+import { useAuth } from "@/contexts/AuthContext";
 import * as XLSX from "xlsx";
 import NovaContaDialog from "@/components/contas/NovaContaDialog";
 import ImportarContasDialog from "@/components/contas/ImportarContasDialog";
 import ContasKanban from "@/components/contas/ContasKanban";
-import { EtapaFunil } from "@/lib/contasFunil";
+import ContaCancelarDialog, { CancelamentoData } from "@/components/contas/ContaCancelarDialog";
+import AlterarCategoriaDialog from "@/components/contas/AlterarCategoriaDialog";
+import { EtapaFunil, ETAPAS, categoriaDe, isEtapaLegado, etapaLabel } from "@/lib/contasFunil";
 import { LayoutGrid, List as ListIcon } from "lucide-react";
 import { TEMPERATURAS, tempInfo } from "@/lib/contasTemperatura";
 
@@ -39,6 +42,7 @@ type Account = {
   documento: string | null;
   tipo: "PF" | "PJ" | null;
   responsavel_id: string | null;
+  created_by?: string | null;
   status: Status | null;
   observacoes: string | null;
   created_at: string;
@@ -48,6 +52,11 @@ type Account = {
   etapa_funil: string | null;
   temperatura: string | null;
   ramo_atividade: string | null;
+  categoria?: string | null;
+  origem?: string | null;
+  data_entrada_carteira?: string | null;
+  destino_comercial?: string | null;
+  motivo_cancelamento?: string | null;
 };
 
 const formatDoc = (doc: string | null, tipo: string | null) => {
@@ -114,6 +123,7 @@ const fmt = (v: number | null) => (v == null || v === 0 ? "—" : formatBRL(v));
 
 export default function Accounts() {
   const { isAdmin, isGestor } = useRole();
+  const { user } = useAuth();
   const canDelete = isAdmin;
   const [searchParams, setSearchParams] = useSearchParams();
   const listaParam = searchParams.get("lista");
