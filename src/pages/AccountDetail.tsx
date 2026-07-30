@@ -152,6 +152,7 @@ export default function AccountDetail() {
     const novaLista = editing.lista as "carteira" | "marketing" | "nenhuma" | undefined;
     const tags = !novaLista || novaLista === "nenhuma" ? baseTags : [...baseTags, novaLista];
     const { error } = await supabase.from("contas").update({
+      categoria: !novaLista || novaLista === "nenhuma" ? null : novaLista,
       nome: editing.nome.trim(),
       email: editing.email?.trim() || null,
       telefone: editing.telefone?.trim() || null,
@@ -283,6 +284,8 @@ export default function AccountDetail() {
           )}
         </Card>
       </div>
+
+      <ContaFluxoAtendimento conta={acc} corretores={corretores} onChanged={load} />
 
       <ContaAgendaQuickAdd contaId={acc.id} responsavelId={acc.responsavel_id} onCreated={load} />
 
