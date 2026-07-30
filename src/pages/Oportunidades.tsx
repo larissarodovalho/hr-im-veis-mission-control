@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
@@ -105,6 +106,16 @@ export default function Oportunidades() {
   };
 
   useEffect(() => { load(); }, []);
+
+  // Deep-link: /crm/oportunidades?op=<id> abre os detalhes da oportunidade
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const opId = searchParams.get("op");
+    if (!opId || loading) return;
+    const found = ops.find((o) => o.id === opId);
+    if (found) setSelected(found);
+    setSearchParams((prev) => { prev.delete("op"); return prev; }, { replace: true });
+  }, [searchParams, ops, loading, setSearchParams]);
 
   const clienteDe = (o: Op): { nome: string; contaId: string | null; categoria: string | null } => {
     const contaId = o.conta_id || (o.cliente_tipo === "conta" ? o.cliente_id : null);
