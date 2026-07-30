@@ -22,10 +22,11 @@ import {
 import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Plus, Building2, FileSignature, Pencil, PhoneCall, CheckCircle2, PhoneOff, XCircle, Check } from "lucide-react";
 import EntityDocumentsTab from "@/components/EntityDocumentsTab";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { findDuplicates, onlyDigits, normEmail, DuplicateMatch } from "@/lib/duplicates";
 import DuplicateAlert from "@/components/DuplicateAlert";
+import { useRole } from "@/hooks/useRole";
+import InteracaoAdminActions from "@/components/interacoes/InteracaoAdminActions";
+import { fmtDateTimeLong, toCuiabaInputValue, fromCuiabaInputValue } from "@/lib/datetime";
 
 type MeetingFormat = "escritorio" | "virtual" | "ligacao";
 const FORMAT_LABEL: Record<MeetingFormat, string> = {
@@ -61,6 +62,7 @@ export default function LeadDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isAdmin } = useRole();
   const [lead, setLead] = useState<any>(null);
   const [interacoes, setInteracoes] = useState<any[]>([]);
   const [reunioes, setReunioes] = useState<any[]>([]);
@@ -280,7 +282,8 @@ export default function LeadDetail() {
   const addMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!meeting.agendada_para) return toast.error("Data obrigatória");
-    const startIso = new Date(meeting.agendada_para).toISOString();
+    const startIso = fromCuiabaInputValue(meeting.agendada_para);
+    if (!startIso) return toast.error("Data/hora inválida");
     if (meeting.format === "ligacao") {
       // Ligação vai para a tabela `ligacoes` (aparece na aba Ligações e na Agenda)
       const { error } = await supabase.from("ligacoes").insert({
@@ -317,10 +320,12 @@ export default function LeadDetail() {
 
   const saveMeetingEdit = async () => {
     if (!editingMeeting) return;
+    const startIso = fromCuiabaInputValue(editingMeeting.agendada_para);
+    if (!startIso) return toast.error("Data/hora inválida");
     if (editingMeeting.__isLigacao) {
       const dur = 30;
       const { error } = await supabase.from("ligacoes").update({
-        data: new Date(editingMeeting.agendada_para).toISOString(),
+        data: startIso,
         duracao_seg: dur * 60,
         resultado: editingMeeting.status,
         notas: editingMeeting.notas || null,
@@ -330,7 +335,7 @@ export default function LeadDetail() {
       const tipo = editingMeeting.format === "ligacao" ? "ligacao" : editingMeeting.format === "virtual" ? "videochamada" : "presencial";
       const duracao_min = editingMeeting.format === "ligacao" ? 30 : 60;
       const { error } = await supabase.from("reunioes").update({
-        agendada_para: new Date(editingMeeting.agendada_para).toISOString(),
+        agendada_para: startIso,
         tipo, duracao_min,
         local: editingMeeting.format === "virtual" ? null : (editingMeeting.local || null),
         link: editingMeeting.format === "virtual" ? (editingMeeting.link || null) : null,
