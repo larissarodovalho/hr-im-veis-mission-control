@@ -23,9 +23,10 @@ import {
   DropdownMenuSubContent,
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
-import { ETAPAS, EtapaFunil, categoriaDe, CATEGORIA_LABEL } from "@/lib/contasFunil";
-import { Handshake, Target, User, MoreVertical, Check, UserX, Thermometer, PencilLine, ArrowLeftRight, Megaphone, Clock } from "lucide-react";
+import { ETAPAS, EtapaFunil, categoriaDe, CATEGORIA_LABEL, qualificacaoInfo } from "@/lib/contasFunil";
+import { Handshake, Target, User, MoreVertical, Check, UserX, Thermometer, PencilLine, ArrowLeftRight, Megaphone, Clock, HandCoins, ExternalLink } from "lucide-react";
 import { tempInfo, TEMPERATURAS } from "@/lib/contasTemperatura";
+import { estagioLabel } from "@/lib/oportunidadesFunil";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -43,9 +44,19 @@ type Account = {
   categoria?: string | null;
   tags?: string[] | null;
   origem?: string | null;
+  qualificacao_status?: string | null;
+  proxima_acao_em?: string | null;
 };
 
 type Property = { conta_id: string; valor_negocio: number | null };
+
+export type OpAtivaResumo = {
+  id: string;
+  titulo: string;
+  estagio: string;
+  valor_alvo: number | null;
+  corretor_id: string | null;
+};
 
 interface Props {
   accounts: Account[];
@@ -54,6 +65,8 @@ interface Props {
   onChangeOwner?: (contaId: string, userId: string | null) => void;
   onChangeTemperatura?: (contaId: string, temp: string | null) => void;
   onChangeCategoria?: (contaId: string) => void;
+  onQualificar?: (contaId: string) => void;
+  opAtivaPorConta?: Record<string, OpAtivaResumo>;
   lista?: "carteira" | "marketing";
   lastContactMap?: Record<string, string>;
   ownerMap?: Record<string, string>;
