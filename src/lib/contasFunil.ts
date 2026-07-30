@@ -51,6 +51,18 @@ export const etapaColor = (id: string) =>
 // ---- Categoria principal da conta ----
 export type CategoriaConta = "carteira" | "marketing";
 
+export const ORIGENS_CARTEIRA = [
+  "Indicação",
+  "Cliente antigo",
+  "Site",
+  "Instagram",
+  "Facebook",
+  "Google",
+  "Portal imobiliário",
+  "Evento",
+  "Outro",
+];
+
 export const categoriaDe = (c: { categoria?: string | null; tags?: string[] | null }): CategoriaConta | null => {
   if (c.categoria === "carteira" || c.categoria === "marketing") return c.categoria;
   const tags = (c.tags ?? []).map((t) => t.toLowerCase());

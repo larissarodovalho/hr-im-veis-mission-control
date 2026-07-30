@@ -16,9 +16,10 @@ interface Props {
   onOpenChange: (v: boolean) => void;
   onCreated: (newId?: string) => void;
   defaultTags?: string[];
+  defaultCategoria?: "carteira" | "marketing" | null;
 }
 
-export default function NovaContaDialog({ open, onOpenChange, onCreated, defaultTags }: Props) {
+export default function NovaContaDialog({ open, onOpenChange, onCreated, defaultTags, defaultCategoria }: Props) {
   const [saving, setSaving] = useState(false);
   const [duplicates, setDuplicates] = useState<DuplicateMatch[]>([]);
   const [forceCreate, setForceCreate] = useState(false);
@@ -34,6 +35,8 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
     interesse: "",
     observacoes: "",
     parceiro_origem_id: "none",
+    origem: "",
+    data_entrada: "",
   });
   const [parceiros, setParceiros] = useState<{ id: string; nome: string }[]>([]);
 
