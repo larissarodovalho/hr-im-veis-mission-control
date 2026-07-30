@@ -20,7 +20,7 @@ import {
   DESTINOS_COMERCIAIS, DestinoComercial, EtapaFunil,
 } from "@/lib/contasFunil";
 import ContaCancelarDialog, { CancelamentoData } from "@/components/contas/ContaCancelarDialog";
-import CriarOportunidadeDialog from "@/components/oportunidades/CriarOportunidadeDialog";
+import QualificacaoOportunidadeDialog from "@/components/oportunidades/QualificacaoOportunidadeDialog";
 
 interface Props {
   conta: any;
@@ -39,7 +39,7 @@ export default function ContaFluxoAtendimento({ conta, corretores, onChanged }: 
   const [saving, setSaving] = useState(false);
   const [dlg, setDlg] = useState<null | "contato1" | "contato2" | "tentativa" | "link" | "retorno" | "destino" | "moverLegado">(null);
   const [cancelOpen, setCancelOpen] = useState(false);
-  const [criarOpOpen, setCriarOpOpen] = useState(false);
+  const [qualifOpen, setQualifOpen] = useState(false);
   const [form, setForm] = useState<any>({});
   const [legacyTarget, setLegacyTarget] = useState<EtapaFunil | "">("");
 
@@ -68,11 +68,18 @@ export default function ContaFluxoAtendimento({ conta, corretores, onChanged }: 
       patch.cancelado_em = null;
       patch.cancelado_por = null;
     }
+    // Entrando em Contato estabelecido: inicia a qualificação (pendente),
+    // exceto se já houver oportunidade ativa vinculada
+    if (nova === "contato_estabelecido" && conta.qualificacao_status !== "oportunidade_ativa") {
+      patch.qualificacao_status = "pendente";
+    }
     const { error } = await supabase.from("contas").update(patch as any).eq("id", conta.id);
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success(msg ?? `Movida para ${etapaLabel(nova)}`);
     onChanged();
+    // Fluxo integrado: ao chegar em Contato estabelecido, abrir a qualificação
+    if (nova === "contato_estabelecido") setQualifOpen(true);
   };
 
   const confirmarCancelamento = async ({ motivo, agradecimento }: CancelamentoData) => {
@@ -178,8 +185,8 @@ export default function ContaFluxoAtendimento({ conta, corretores, onChanged }: 
     setDlg(null);
     toast.success(`Destino comercial: ${label}`);
     onChanged();
-    // Ponte Contas → Oportunidades: "Comprar — Oportunidade" abre o modal de criação
-    if (form.destino === "comprar_oportunidade") setCriarOpOpen(true);
+    // Ponte Contas → Oportunidades: "Comprar — Oportunidade" abre a qualificação
+    if (form.destino === "comprar_oportunidade") setQualifOpen(true);
   };
 
   const openDlg = (which: NonNullable<typeof dlg>, initial: any = {}) => {
@@ -319,19 +326,16 @@ export default function ContaFluxoAtendimento({ conta, corretores, onChanged }: 
       {!legado && etapa === "contato_estabelecido" && (
         <div className="space-y-2">
           <p className="text-sm text-muted-foreground">
-            Conversa efetiva em andamento. Defina o <strong>destino comercial</strong> desta conta.
-            Com o destino <strong>Comprar — Oportunidade</strong>, a conta gera uma Oportunidade de Negócio
-            (sem sair da categoria Carteira/Marketing).
+            Conversa efetiva em andamento. O próximo passo é a <strong>qualificação</strong>: registrar os dados
+            da busca e gerar a Oportunidade de Negócio (a conta permanece na categoria Carteira/Marketing).
           </p>
           <div className="flex gap-2 flex-wrap">
-            <Button size="sm" onClick={() => openDlg("destino", { destino: conta.destino_comercial ?? "" })}>
+            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setQualifOpen(true)}>
+              <HandCoins className="h-4 w-4 mr-1" /> Qualificar e gerar oportunidade
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => openDlg("destino", { destino: conta.destino_comercial ?? "" })}>
               <Compass className="h-4 w-4 mr-1" /> {destinoAtual ? "Alterar destino comercial" : "Definir destino comercial"}
             </Button>
-            {conta.destino_comercial === "comprar_oportunidade" && (
-              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setCriarOpOpen(true)}>
-                <HandCoins className="h-4 w-4 mr-1" /> Criar oportunidade de negócio
-              </Button>
-            )}
             <Button size="sm" variant="outline" onClick={() => setCancelOpen(true)}>
               <XCircle className="h-4 w-4 mr-1" /> Cancelar contato
             </Button>
@@ -517,11 +521,11 @@ export default function ContaFluxoAtendimento({ conta, corretores, onChanged }: 
         onConfirm={confirmarCancelamento}
       />
 
-      <CriarOportunidadeDialog
-        open={criarOpOpen}
-        onOpenChange={setCriarOpOpen}
+      <QualificacaoOportunidadeDialog
+        open={qualifOpen}
+        onOpenChange={setQualifOpen}
         conta={conta}
-        onCreated={() => onChanged()}
+        onDone={() => onChanged()}
       />
     </Card>
   );
