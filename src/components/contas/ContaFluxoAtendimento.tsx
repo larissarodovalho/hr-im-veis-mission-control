@@ -183,7 +183,11 @@ export default function ContaFluxoAtendimento({ conta, corretores, onChanged }: 
     await registrar("nota", `Destino comercial definido: ${label}.`, { resultado: "destino_comercial" });
     setSaving(false);
     setDlg(null);
-    toast.success(`Destino comercial: ${label}`);
+    toast.success(
+      form.destino === "captacao_reuniao"
+        ? `Destino comercial: ${label} — card criado na aba Captação (Imóveis)`
+        : `Destino comercial: ${label}`
+    );
     onChanged();
     // Ponte Contas → Oportunidades: "Comprar — Oportunidade" abre a qualificação
     if (form.destino === "comprar_oportunidade") setQualifOpen(true);
