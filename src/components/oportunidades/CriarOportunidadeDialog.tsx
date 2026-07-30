@@ -41,6 +41,8 @@ export default function CriarOportunidadeDialog({
   const [ativas, setAtivas] = useState<any[]>([]);
   const [confirmarOutra, setConfirmarOutra] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Chave de idempotência: gerada por abertura do modal; reenvios/duplo clique retornam a mesma oportunidade
+  const [chave, setChave] = useState(() => crypto.randomUUID());
 
   const [form, setForm] = useState<any>({});
   const [imoveisVinculados, setImoveisVinculados] = useState<string[]>([]);
@@ -53,6 +55,7 @@ export default function CriarOportunidadeDialog({
     setContaSel(null);
     setAtivas([]);
     setConfirmarOutra(false);
+    setChave(crypto.randomUUID());
   };
 
   // Carrega listas base
@@ -104,66 +107,49 @@ export default function CriarOportunidadeDialog({
     if (ativas.length > 0 && !confirmarOutra) { toast.error("Confirme que deseja criar outra oportunidade para esta conta"); return; }
     setSaving(true);
 
-    const payload: any = {
-      cliente_tipo: "conta",
-      cliente_id: contaSel.id,
-      conta_id: contaSel.id,
-      lead_id_origem: contaSel.lead_id_origem ?? null,
-      categoria_origem: ["carteira", "marketing"].includes(contaSel.categoria) ? contaSel.categoria : null,
-      origem: contaSel.origem ?? null,
-      titulo: form.titulo.trim(),
-      descricao_busca: form.descricao_busca?.trim() || null,
-      valor_alvo: form.valor_alvo ? Number(form.valor_alvo) : null,
-      tipo_imovel: form.tipo_imovel?.trim() || null,
-      cidade: form.cidade?.trim() || null,
-      bairro: form.bairro?.trim() || null,
-      prioridade: form.prioridade || "media",
-      corretor_id: !form.corretor_id || form.corretor_id === "none" ? contaSel.responsavel_id ?? null : form.corretor_id,
-      forma_pagamento: form.forma_pagamento?.trim() || null,
-      prazo_pretendido: form.prazo_pretendido?.trim() || null,
-      possui_permuta: !!form.possui_permuta,
-      imovel_permuta: form.possui_permuta ? form.imovel_permuta?.trim() || null : null,
-      valor_estimado_permuta: form.possui_permuta && form.valor_estimado_permuta ? Number(form.valor_estimado_permuta) : null,
-      caracteristicas_indispensaveis: form.caracteristicas_indispensaveis?.trim() || null,
-      observacoes: form.observacoes?.trim() || null,
-      estagio: "nova",
-      created_by: user?.id,
-    };
+    // RPC transacional e idempotente: cria a oportunidade, marca a qualificação
+    // na conta (status + destino comercial) e registra as interações no histórico
+    const { data, error } = await supabase.rpc("criar_oportunidade_qualificada" as any, {
+      p_conta_id: contaSel.id,
+      p_payload: {
+        titulo: form.titulo.trim(),
+        descricao_busca: form.descricao_busca?.trim() || null,
+        tipo_imovel: form.tipo_imovel?.trim() || null,
+        cidade: form.cidade?.trim() || null,
+        bairro: form.bairro?.trim() || null,
+        valor_alvo: form.valor_alvo ? String(Number(form.valor_alvo)) : null,
+        prioridade: form.prioridade || "media",
+        corretor_id: !form.corretor_id || form.corretor_id === "none" ? contaSel.responsavel_id ?? null : form.corretor_id,
+        forma_pagamento: form.forma_pagamento?.trim() || null,
+        prazo_pretendido: form.prazo_pretendido?.trim() || null,
+        possui_permuta: !!form.possui_permuta,
+        imovel_permuta: form.possui_permuta ? form.imovel_permuta?.trim() || null : null,
+        valor_estimado_permuta: form.possui_permuta && form.valor_estimado_permuta ? String(Number(form.valor_estimado_permuta)) : null,
+        caracteristicas_indispensaveis: form.caracteristicas_indispensaveis?.trim() || null,
+        observacoes: form.observacoes?.trim() || null,
+      },
+      p_chave: chave,
+    } as any);
 
-    const { data, error } = await supabase.from("oportunidades").insert(payload).select("id").single();
-    if (error || !data) {
+    const resultado = (data as any) ?? {};
+    const opId = resultado.oportunidade_id as string | undefined;
+    if (error || !opId) {
       setSaving(false);
       toast.error(error?.message || "Erro ao criar oportunidade");
       return;
     }
 
-    if (imoveisVinculados.length) {
+    if (imoveisVinculados.length && !resultado.ja_existia) {
       await supabase.from("oportunidade_imoveis").insert(
-        imoveisVinculados.map((imovel_id) => ({ oportunidade_id: data.id, imovel_id, created_by: user?.id })) as any
+        imoveisVinculados.map((imovel_id) => ({ oportunidade_id: opId, imovel_id, created_by: user?.id })) as any
       );
     }
 
-    // Ponte Contas → Oportunidades: grava o destino comercial na conta
-    if (definirDestinoComprar) {
-      await supabase.from("contas").update({ destino_comercial: "comprar_oportunidade" } as any).eq("id", contaSel.id);
-      await supabase.from("interacoes").insert({
-        conta_id: contaSel.id, tipo: "nota",
-        descricao: `Destino comercial definido: Comprar — Oportunidade. Oportunidade "${payload.titulo}" criada na etapa Nova.`,
-        resultado: "destino_comercial", created_by: user?.id,
-      } as any);
-    }
-
-    await supabase.from("interacoes").insert({
-      conta_id: contaSel.id, oportunidade_id: data.id, tipo: "nota",
-      descricao: `Oportunidade "${payload.titulo}" criada na etapa Nova${contaSel.categoria ? ` (origem: ${categoriaLabel(contaSel.categoria)})` : ""}.`,
-      created_by: user?.id,
-    } as any);
-
     setSaving(false);
-    toast.success("Oportunidade criada na etapa Nova");
+    toast.success(resultado.ja_existia ? "Esta oportunidade já havia sido criada" : "Oportunidade criada na etapa Nova");
     reset();
     onOpenChange(false);
-    onCreated(data.id);
+    onCreated(opId);
   };
 
   const f = (k: string) => form[k] ?? "";
