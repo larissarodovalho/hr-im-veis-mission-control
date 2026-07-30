@@ -98,6 +98,9 @@ function ContaCard({
   onMoveStage,
   onChangeOwner,
   onChangeTemperatura,
+  onChangeCategoria,
+  lista,
+  lastContact,
 }: {
   a: Account;
   total: number;
@@ -107,6 +110,9 @@ function ContaCard({
   onMoveStage: (id: string, etapa: EtapaFunil) => void;
   onChangeOwner?: (id: string, userId: string | null) => void;
   onChangeTemperatura?: (id: string, temp: string | null) => void;
+  onChangeCategoria?: (id: string) => void;
+  lista?: "carteira" | "marketing";
+  lastContact?: string | null;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: a.id });
   const style: React.CSSProperties = {
@@ -115,6 +121,8 @@ function ContaCard({
   };
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
   const currentEtapa = (a.etapa_funil ?? "a_contatar") as EtapaFunil;
+  const categoria = categoriaDe(a);
+  const outraLista = lista && categoria && categoria !== lista ? CATEGORIA_LABEL[categoria] : null;
 
   return (
     <Card
