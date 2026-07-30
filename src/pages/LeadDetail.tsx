@@ -444,6 +444,7 @@ export default function LeadDetail() {
       documento: convertForm.documento?.trim() || null,
       observacoes: convertForm.observacoes?.trim() || null,
       tags: ['marketing'],
+      categoria: 'marketing',
       etapa_funil: 'a_contatar',
       created_by: user?.id,
       responsavel_id: user?.id,
