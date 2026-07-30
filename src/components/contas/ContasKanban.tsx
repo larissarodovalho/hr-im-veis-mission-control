@@ -182,6 +182,13 @@ function ContaCard({
                 </DropdownMenuPortal>
               </DropdownMenuSub>
 
+              {onChangeCategoria && (
+                <DropdownMenuItem onSelect={() => onChangeCategoria(a.id)}>
+                  <ArrowLeftRight className="h-3.5 w-3.5 mr-2" />
+                  Alterar categoria
+                </DropdownMenuItem>
+              )}
+
               {onChangeOwner && (
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>Responsável</DropdownMenuSubTrigger>
