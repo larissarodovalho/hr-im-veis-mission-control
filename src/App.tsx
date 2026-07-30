@@ -25,6 +25,7 @@ import LeadDetail from "@/pages/LeadDetail";
 import Accounts from "@/pages/Accounts";
 import AccountDetail from "@/pages/AccountDetail";
 import Imoveis from "@/pages/Imoveis";
+import Oportunidades from "@/pages/Oportunidades";
 import WhatsApp from "@/pages/WhatsApp";
 import Meetings from "@/pages/Meetings";
 import Calls from "@/pages/Calls";
@@ -103,6 +104,7 @@ const App = () => (
               <Route path="contas" element={<MarketingRoute menuKey="contas"><Accounts /></MarketingRoute>} />
               <Route path="contas/:id" element={<AccountDetail />} />
               <Route path="imoveis" element={<Imoveis />} />
+              <Route path="oportunidades" element={<Oportunidades />} />
               <Route path="whatsapp" element={<MarketingRoute menuKey="whatsapp"><WhatsApp /></MarketingRoute>} />
               <Route path="reunioes" element={<MarketingRoute menuKey="reunioes"><Meetings /></MarketingRoute>} />
               <Route path="ligacoes" element={<MarketingRoute menuKey="ligacoes"><Calls /></MarketingRoute>} />

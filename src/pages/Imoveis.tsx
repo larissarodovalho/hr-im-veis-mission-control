@@ -25,7 +25,7 @@ import ImovelHistoricoDrawer from "@/components/imoveis/ImovelHistoricoDrawer";
 import DetalhesImovelDialog from "@/components/imoveis/DetalhesImovelDialog";
 import VendidosTab from "@/pages/imoveis/VendidosTab";
 import ParceirosTab from "@/pages/imoveis/ParceirosTab";
-import OportunidadesTab from "@/pages/imoveis/OportunidadesTab";
+
 import CaptacaoTab from "@/pages/imoveis/CaptacaoTab";
 
 type Imovel = any;
@@ -561,7 +561,17 @@ export default function Imoveis() {
         </TabsContent>
 
         <TabsContent value="oportunidades" className="mt-4">
-          <OportunidadesTab />
+          <Card className="p-8 text-center space-y-3">
+            <Handshake className="h-10 w-10 mx-auto text-primary" />
+            <h3 className="font-semibold">Oportunidades de Negócio mudou de lugar</h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              O funil de oportunidades agora é um módulo próprio do CRM, integrado às Contas (Carteira e Marketing),
+              com diagnóstico, visitas, propostas e fechamento.
+            </p>
+            <Button asChild>
+              <Link to="/crm/oportunidades">Abrir Oportunidades de Negócio</Link>
+            </Button>
+          </Card>
         </TabsContent>
 
         <TabsContent value="captacao" className="mt-4">

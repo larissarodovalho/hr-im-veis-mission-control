@@ -15,6 +15,7 @@ import FaturamentoReport from "@/components/reports/FaturamentoReport";
 import ImoveisReport from "@/components/reports/ImoveisReport";
 import FechamentosReport from "@/components/reports/FechamentosReport";
 import PropostasReport from "@/components/reports/PropostasReport";
+import OportunidadesReport from "@/components/reports/OportunidadesReport";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReportsPeriodProvider, useReportsPeriod, MESES_LABELS } from "@/hooks/useReportsPeriod";
 
@@ -122,11 +123,16 @@ function ReportsInner() {
       <Tabs defaultValue="performance" className="w-full">
         <TabsList className="w-full justify-start overflow-x-auto whitespace-nowrap">
           <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="oportunidades">Oportunidades</TabsTrigger>
           <TabsTrigger value="fechamentos">Negócios fechados</TabsTrigger>
           <TabsTrigger value="propostas">Propostas</TabsTrigger>
           <TabsTrigger value="imoveis">Imóveis</TabsTrigger>
           <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="oportunidades" className="mt-4">
+          <OportunidadesReport inicioISO={inicioISO} fimISO={fimISO} />
+        </TabsContent>
 
         <TabsContent value="fechamentos" className="mt-4">
           <FechamentosReport />
