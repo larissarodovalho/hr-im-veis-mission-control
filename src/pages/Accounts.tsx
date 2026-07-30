@@ -547,13 +547,52 @@ export default function Accounts() {
   };
 
   const moveStage = async (id: string, etapa: EtapaFunil) => {
+    const conta = accounts.find((a) => a.id === id);
+    if (etapa === "contato_cancelado" && conta) {
+      setCancelTarget(conta);
+      return;
+    }
     const prev = accounts;
-    setAccounts((cur) => cur.map((a) => (a.id === id ? { ...a, etapa_funil: etapa } : a)));
-    const { error } = await supabase.from("contas").update({ etapa_funil: etapa } as any).eq("id", id);
+    const patch: Record<string, any> = { etapa_funil: etapa };
+    // Saindo do cancelamento: limpa os campos de cancelamento
+    if (conta?.etapa_funil === "contato_cancelado") {
+      patch.motivo_cancelamento = null;
+      patch.cancelado_em = null;
+      patch.cancelado_por = null;
+    }
+    setAccounts((cur) => cur.map((a) => (a.id === id ? ({ ...a, ...patch } as Account) : a)));
+    const { error } = await supabase.from("contas").update(patch as any).eq("id", id);
     if (error) {
       setAccounts(prev);
       toast.error("Não foi possível mover: " + error.message);
     }
+  };
+
+  const confirmarCancelamento = async ({ motivo, agradecimento }: CancelamentoData) => {
+    if (!cancelTarget) return;
+    const id = cancelTarget.id;
+    const patch: Record<string, any> = {
+      etapa_funil: "contato_cancelado",
+      motivo_cancelamento: motivo,
+      cancelado_em: new Date().toISOString(),
+      cancelado_por: user?.id ?? null,
+    };
+    const prev = accounts;
+    setAccounts((cur) => cur.map((a) => (a.id === id ? ({ ...a, ...patch } as Account) : a)));
+    const { error } = await supabase.from("contas").update(patch as any).eq("id", id);
+    if (error) {
+      setAccounts(prev);
+      toast.error("Não foi possível cancelar: " + error.message);
+      return;
+    }
+    await supabase.from("interacoes").insert({
+      conta_id: id,
+      tipo: "nota",
+      descricao: `Contato cancelado. Motivo: ${motivo}.${agradecimento ? ` Mensagem de agradecimento registrada: "${agradecimento}"` : ""}`,
+      resultado: "cancelado",
+      created_by: user?.id ?? null,
+    } as any);
+    toast.success("Atendimento encerrado — cadastro e histórico preservados");
   };
 
   const remove = async (id: string, name: string) => {
