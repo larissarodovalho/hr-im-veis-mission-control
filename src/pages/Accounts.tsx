@@ -705,6 +705,16 @@ export default function Accounts() {
               <SelectItem value="180">Últimos 6 meses</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={draftEtapa} onValueChange={(v) => setDraftEtapa(v)}>
+            <SelectTrigger><SelectValue placeholder="Etapa" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todas as etapas</SelectItem>
+              {ETAPAS.map((e) => (
+                <SelectItem key={e.id} value={e.id}>{e.label}</SelectItem>
+              ))}
+              <SelectItem value="legado">Etapas legadas</SelectItem>
+            </SelectContent>
+          </Select>
 
         </div>
 
@@ -771,8 +781,22 @@ export default function Accounts() {
         )}
       </div>
 
-      <NovaContaDialog open={novaOpen} onOpenChange={setNovaOpen} onCreated={load} defaultTags={lista === "todos" ? [] : [lista]} />
+      <NovaContaDialog open={novaOpen} onOpenChange={setNovaOpen} onCreated={load} defaultCategoria={lista === "todos" ? null : lista} />
       <ImportarContasDialog open={importOpen} onOpenChange={setImportOpen} onImported={load} defaultTags={lista === "todos" ? [] : [lista]} />
+      <ContaCancelarDialog
+        open={!!cancelTarget}
+        onOpenChange={(o) => { if (!o) setCancelTarget(null); }}
+        contaNome={cancelTarget?.nome ?? ""}
+        onConfirm={confirmarCancelamento}
+      />
+      <AlterarCategoriaDialog
+        open={!!catTarget}
+        onOpenChange={(o) => { if (!o) setCatTarget(null); }}
+        conta={catTarget ? { id: catTarget.id, nome: catTarget.nome, categoria: catTarget.categoria ?? null, tags: catTarget.tags, etapa_funil: catTarget.etapa_funil } : null}
+        ownerMap={ownerMap}
+        userId={user?.id ?? null}
+        onChanged={load}
+      />
 
       <Dialog open={exportOpen} onOpenChange={setExportOpen}>
         <DialogContent className="max-w-lg">
@@ -837,7 +861,7 @@ export default function Accounts() {
             className="hidden md:block overflow-hidden"
             style={{ height: "calc(100dvh - var(--kanban-top, 260px) - 8px)" }}
           >
-            <ContasKanban accounts={filtered as any} propsByAccount={propsByAccount} onMoveStage={moveStage} onChangeOwner={changeOwner} onChangeTemperatura={changeTemperatura} ownerMap={ownerMap} owners={owners} />
+            <ContasKanban accounts={filtered.filter((a) => !isEtapaLegado(a.etapa_funil)) as any} propsByAccount={propsByAccount} onMoveStage={moveStage} onChangeOwner={changeOwner} onChangeTemperatura={changeTemperatura} onChangeCategoria={(id) => setCatTarget(accounts.find((a) => a.id === id) ?? null)} lista={lista === "todos" ? undefined : lista} lastContactMap={lastContactMap} ownerMap={ownerMap} owners={owners} />
           </div>
         )
       ) : null}
