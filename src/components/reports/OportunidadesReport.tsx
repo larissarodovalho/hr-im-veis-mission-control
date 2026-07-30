@@ -18,7 +18,7 @@ const Kpi = ({ icon: Icon, label, value, sub }: { icon: any; label: string; valu
 );
 
 /** Relatório do funil de Oportunidades de Negócio (etapa final da cadeia comercial). */
-export default function OportunidadesReport({ start, end }: { start: Date; end: Date }) {
+export default function OportunidadesReport({ inicioISO, fimISO }: { inicioISO: string; fimISO: string }) {
   const [ops, setOps] = useState<any[]>([]);
   const [visitas, setVisitas] = useState<any[]>([]);
   const [propostas, setPropostas] = useState<any[]>([]);
@@ -56,7 +56,7 @@ export default function OportunidadesReport({ start, end }: { start: Date; end: 
     run();
   }, []);
 
-  const noPeriodo = (iso?: string | null) => !!iso && new Date(iso) >= start && new Date(iso) <= end;
+  const noPeriodo = (iso?: string | null) => !!iso && iso >= inicioISO && iso <= fimISO;
 
   const d = useMemo(() => {
     const novas = ops.filter((o) => noPeriodo(o.created_at));
