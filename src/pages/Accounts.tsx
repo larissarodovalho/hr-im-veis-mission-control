@@ -965,6 +965,24 @@ export default function Accounts() {
                           <Badge variant="outline" className={`${t.badge} text-[10px]`}>{t.emoji} {t.label}</Badge>
                         ) : null;
                       })()}
+                      {a.etapa_funil === "contato_estabelecido" && (() => {
+                        const op = opAtivas[a.id];
+                        if (op) {
+                          return (
+                            <Link to={`/crm/oportunidades?op=${op.id}`}>
+                              <Badge variant="outline" className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30 text-[10px] hover:bg-emerald-500/25">
+                                <HandCoins className="h-3 w-3 mr-1" /> Oportunidade: {estagioLabel(op.estagio)}
+                              </Badge>
+                            </Link>
+                          );
+                        }
+                        const qi = qualificacaoInfo(a.qualificacao_status);
+                        return qi ? (
+                          <Badge variant="outline" className={`${qi.badge} text-[10px]`}>
+                            <HandCoins className="h-3 w-3 mr-1" /> {qi.label}
+                          </Badge>
+                        ) : null;
+                      })()}
                     </div>
                   </div>
                   <Badge className={status === "ativo" ? "bg-success/15 text-success border-success/30 border shrink-0" : "bg-muted text-muted-foreground border shrink-0"}>
@@ -1062,6 +1080,24 @@ export default function Accounts() {
                             const t = tempInfo(a.temperatura);
                             return t ? (
                               <Badge variant="outline" className={`${t.badge} text-[10px]`}>{t.emoji} {t.label}</Badge>
+                            ) : null;
+                          })()}
+                          {a.etapa_funil === "contato_estabelecido" && (() => {
+                            const op = opAtivas[a.id];
+                            if (op) {
+                              return (
+                                <Link to={`/crm/oportunidades?op=${op.id}`}>
+                                  <Badge variant="outline" className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30 text-[10px] hover:bg-emerald-500/25">
+                                    <HandCoins className="h-3 w-3 mr-1" /> Oportunidade: {estagioLabel(op.estagio)}
+                                  </Badge>
+                                </Link>
+                              );
+                            }
+                            const qi = qualificacaoInfo(a.qualificacao_status);
+                            return qi ? (
+                              <Badge variant="outline" className={`${qi.badge} text-[10px]`}>
+                                <HandCoins className="h-3 w-3 mr-1" /> {qi.label}
+                              </Badge>
                             ) : null;
                           })()}
                         </div>
