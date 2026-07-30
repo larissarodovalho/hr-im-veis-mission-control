@@ -940,11 +940,10 @@ export default function Accounts() {
                   <div>
                     <span className="text-xs text-muted-foreground">Qualificação: </span>
                     {(() => {
-                      const tags = (a.tags ?? []).map((t) => t.toLowerCase());
-                      const q = tags.includes("carteira") ? "carteira" : tags.includes("marketing") ? "marketing" : null;
+                      const q = categoriaDe(a);
                       return q ? (
                         <Badge variant="outline" className={q === "carteira" ? "bg-blue-500/15 text-blue-700 border-blue-500/30" : "bg-pink-500/15 text-pink-700 border-pink-500/30"}>
-                          {q === "carteira" ? "Carteira" : "Marketing"}
+                          {CATEGORIA_LABEL[q]}
                         </Badge>
                       ) : <span className="text-muted-foreground">—</span>;
                     })()}
