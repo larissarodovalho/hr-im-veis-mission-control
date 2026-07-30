@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
-import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature, TIPO_ACOMPANHAMENTO, TipoAcompanhamento, isLegacyStage, stageLabel, TENTATIVA_TIPOS } from "@/lib/leads";
+import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature, TIPO_ACOMPANHAMENTO, TipoAcompanhamento, isLegacyStage, stageLabel, TENTATIVA_TIPOS, TENTATIVA_SEQ, TENTATIVA_EMOJI, prazoCountdown, TENTATIVA_TONE_CLASS } from "@/lib/leads";
 import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2, User as UserIcon, PencilLine } from "lucide-react";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { toast } from "sonner";
@@ -23,7 +23,7 @@ import { useNavigate } from "react-router-dom";
 type Lead = {
   id: string; nome: string; email: string | null; telefone: string | null;
   origem: string | null; etapa_funil: Stage; imovel_interesse: string | null; regiao: string | null;
-  valor_estimado: number | null; ultima_interacao: string | null; created_at: string;
+  valor_estimado: number | null; ultima_interacao: string | null; created_at: string; data_entrada: string | null;
   temperatura: Temperature | null; tags: string[] | null; corretor_id: string | null; created_by: string | null;
   tipo_acompanhamento: TipoAcompanhamento | null;
 };
@@ -314,11 +314,23 @@ function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, bro
         {lead.origem && <Badge variant="secondary" className="text-[10px]">{SOURCES[lead.origem]?.emoji} {SOURCES[lead.origem]?.label || lead.origem}</Badge>}
         {lead.temperatura && <Badge className={TEMPERATURES[lead.temperatura].className + " border text-[10px]"}>{TEMPERATURES[lead.temperatura].emoji} {TEMPERATURES[lead.temperatura].label}</Badge>}
         {converted && <Badge className="bg-success/15 text-success border-success/30 border text-[10px] gap-0.5"><Building2 className="h-2.5 w-2.5" /> Conta</Badge>}
-        {lead.etapa_funil === "Em Contato" && (
-          <Badge className={"border text-[10px] " + ((tentativas ?? 0) >= 3 ? "bg-danger/15 text-danger border-danger/30" : "bg-muted text-muted-foreground border-border")}>
-            📞 Tentativas: {Math.min(tentativas ?? 0, 3)} de 3
-          </Badge>
-        )}
+        {lead.etapa_funil === "Em Contato" && (() => {
+          const feitas = Math.min(tentativas ?? 0, TENTATIVA_SEQ.length);
+          if (feitas >= TENTATIVA_SEQ.length) {
+            return (
+              <Badge className="border text-[10px] bg-danger/15 text-danger border-danger/30">
+                📞 Tentativas: {TENTATIVA_SEQ.length} de {TENTATIVA_SEQ.length}
+              </Badge>
+            );
+          }
+          const t = TENTATIVA_SEQ[feitas];
+          const cd = prazoCountdown(lead, feitas);
+          return (
+            <Badge className={"border text-[10px] " + TENTATIVA_TONE_CLASS[cd.tone]}>
+              {TENTATIVA_EMOJI[t.tipo]} {t.label}: {cd.texto}
+            </Badge>
+          );
+        })()}
         {lead.tipo_acompanhamento && (
           <Badge className={TIPO_ACOMPANHAMENTO[lead.tipo_acompanhamento].className + " border text-[10px]"}>
             {TIPO_ACOMPANHAMENTO[lead.tipo_acompanhamento].emoji} {TIPO_ACOMPANHAMENTO[lead.tipo_acompanhamento].label}

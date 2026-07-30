@@ -16,6 +16,7 @@ import {
   initials, Stage, Temperature,
   isLegacyStage, stageLabel, TENTATIVA_SEQ, TENTATIVA_TIPOS, TENTATIVA_RESULTADOS,
   INTERACAO_CANAIS, MOTIVOS_DESCLASSIFICACAO,
+  tentativaStatus, tentativaPrazo, prazoDataLabel, prazoCountdown, TENTATIVA_TONE_CLASS,
 } from "@/lib/leads";
 import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Plus, Building2, FileSignature, Pencil, PhoneCall, CheckCircle2, PhoneOff, XCircle, Check } from "lucide-react";
 import EntityDocumentsTab from "@/components/EntityDocumentsTab";
@@ -760,11 +761,25 @@ export default function LeadDetail() {
           </div>
           <div className="flex flex-wrap gap-2">
             {TENTATIVA_SEQ.map((t, idx) => {
-              const feita = tentativasFeitas > idx;
+              const status = tentativaStatus(lead, tentativasFeitas, idx);
+              const prazo = tentativaPrazo(lead, idx);
+              const isNext = status !== "feita" && idx === Math.min(tentativasFeitas, TENTATIVA_SEQ.length - 1);
+              const cd = status === "feita" ? null : prazoCountdown(lead, idx);
+              const cls = status === "feita"
+                ? TENTATIVA_TONE_CLASS.success
+                : isNext
+                  ? TENTATIVA_TONE_CLASS[cd!.tone]
+                  : TENTATIVA_TONE_CLASS.muted;
               return (
-                <div key={t.tipo} className={"flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs " + (feita ? "bg-success/15 text-success border-success/30" : "text-muted-foreground")}>
-                  {feita ? <Check className="h-3 w-3" /> : <span className="h-3 w-3 rounded-full border inline-block" />}
-                  {t.titulo}
+                <div
+                  key={t.tipo}
+                  className={"flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs " + cls + (isNext && cd?.tone === "danger" ? " animate-pulse" : "")}
+                  title={`Prazo: ${prazoDataLabel(prazo)} (entrada do lead + ${t.prazoHoras}h)`}
+                >
+                  {status === "feita" ? <Check className="h-3 w-3" /> : <span className="h-3 w-3 rounded-full border inline-block" />}
+                  <span>{t.titulo}</span>
+                  <span className="opacity-80">· {prazoDataLabel(prazo)}</span>
+                  {cd && <span className={isNext ? "font-semibold" : "opacity-80"}>· {cd.texto}</span>}
                 </div>
               );
             })}
