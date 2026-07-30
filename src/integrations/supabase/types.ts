@@ -1381,6 +1381,7 @@ export type Database = {
           id: string
           lead_id: string | null
           oportunidade_id: string | null
+          pontualidade: string | null
           proxima_acao: string | null
           resultado: string | null
           tipo: string
@@ -1395,6 +1396,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           oportunidade_id?: string | null
+          pontualidade?: string | null
           proxima_acao?: string | null
           resultado?: string | null
           tipo: string
@@ -1409,6 +1411,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           oportunidade_id?: string | null
+          pontualidade?: string | null
           proxima_acao?: string | null
           resultado?: string | null
           tipo?: string
