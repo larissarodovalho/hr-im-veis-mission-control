@@ -703,6 +703,8 @@ export default function LeadDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!editLead} onOpenChange={(o) => !o && setEditLead(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Editar lead</DialogTitle></DialogHeader>
           {editLead && (
