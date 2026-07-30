@@ -1031,17 +1031,16 @@ export default function Accounts() {
                       <td className="p-3 whitespace-nowrap">{a.telefone || <span className="text-muted-foreground">—</span>}</td>
                       <td className="p-3">{a.email || <span className="text-muted-foreground">—</span>}</td>
                       <td className="p-3 whitespace-nowrap">{a.documento ? formatDoc(a.documento, a.tipo) : <span className="text-muted-foreground">—</span>}</td>
-                      <td className="p-3">
-                        {(() => {
-                          const tags = (a.tags ?? []).map((t) => t.toLowerCase());
-                          const q = tags.includes("carteira") ? "carteira" : tags.includes("marketing") ? "marketing" : null;
-                          return q ? (
-                            <Badge variant="outline" className={q === "carteira" ? "bg-blue-500/15 text-blue-700 border-blue-500/30" : "bg-pink-500/15 text-pink-700 border-pink-500/30"}>
-                              {q === "carteira" ? "Carteira" : "Marketing"}
-                            </Badge>
-                          ) : <span className="text-muted-foreground">—</span>;
-                        })()}
-                      </td>
+                       <td className="p-3">
+                         {(() => {
+                           const q = categoriaDe(a);
+                           return q ? (
+                             <Badge variant="outline" className={q === "carteira" ? "bg-blue-500/15 text-blue-700 border-blue-500/30" : "bg-pink-500/15 text-pink-700 border-pink-500/30"}>
+                               {CATEGORIA_LABEL[q]}
+                             </Badge>
+                           ) : <span className="text-muted-foreground">—</span>;
+                         })()}
+                       </td>
                       <td className="p-3">
                         {a.interesse ? (
                           <Badge variant="outline" className="bg-amber-500/15 text-amber-700 border-amber-500/30">{a.interesse}</Badge>
