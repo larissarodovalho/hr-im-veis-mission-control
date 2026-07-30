@@ -64,11 +64,11 @@ export default function OportunidadesReport({ start, end }: { start: Date; end: 
     const ativas = ops.filter((o) => !isEstagioFinal(o.estagio)).length;
     const ganhas = ops.filter((o) => o.estagio === "ganha");
     const perdidas = ops.filter((o) => o.estagio === "perdida");
-    const ganhasPeriodo = ganhas.filter((o) => noPeriodo(o.finalizado_em));
-    const perdidasPeriodo = perdidas.filter((o) => noPeriodo(o.finalizado_em));
+    const ganhasPeriodo = ganhas.filter((o) => noPeriodo(o.encerrada_em));
+    const perdidasPeriodo = perdidas.filter((o) => noPeriodo(o.encerrada_em));
     const visitasPeriodo = visitas.filter((v) => noPeriodo(v.data_visita)).length;
     const propostasPeriodo = propostas.filter((p) => noPeriodo(p.created_at)).length;
-    const valorGanho = ganhasPeriodo.reduce((s, o) => s + (o.valor_fechado ?? 0), 0);
+    const valorGanho = ganhasPeriodo.reduce((s, o) => s + (o.valor_final ?? 0), 0);
     const fechPeriodo = fechamentos.filter((f) => noPeriodo(f.data_fechamento));
 
     const porEstagio = ESTAGIOS.map((e) => ({
@@ -95,7 +95,7 @@ export default function OportunidadesReport({ start, end }: { start: Date; end: 
       const id = o.corretor_id ?? "sem-responsavel";
       corretorAgg[id] = corretorAgg[id] ?? { ativas: 0, ganhas: 0, perdidas: 0, valor: 0 };
       if (!isEstagioFinal(o.estagio)) corretorAgg[id].ativas++;
-      if (o.estagio === "ganha") { corretorAgg[id].ganhas++; corretorAgg[id].valor += o.valor_fechado ?? 0; }
+      if (o.estagio === "ganha") { corretorAgg[id].ganhas++; corretorAgg[id].valor += o.valor_final ?? 0; }
       if (o.estagio === "perdida") corretorAgg[id].perdidas++;
     });
     const porCorretor = Object.entries(corretorAgg).map(([id, v]) => ({
