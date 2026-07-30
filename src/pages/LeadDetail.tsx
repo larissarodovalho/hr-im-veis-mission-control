@@ -748,6 +748,41 @@ export default function LeadDetail() {
         </DialogContent>
       </Dialog>
 
+      {lead.etapa_funil === "Em Contato" && !conta && (
+        <Card className="p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <h3 className="font-display text-lg font-semibold flex items-center gap-2">
+              <PhoneCall className="h-5 w-5" /> Tentativas de contato
+            </h3>
+            <Badge className={"border " + (tentativasFeitas >= 3 ? "bg-danger/15 text-danger border-danger/30" : "bg-muted text-muted-foreground border-border")}>
+              Tentativas: {Math.min(tentativasFeitas, 3)} de 3
+            </Badge>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {TENTATIVA_SEQ.map((t, idx) => {
+              const feita = tentativasFeitas > idx;
+              return (
+                <div key={t.tipo} className={"flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs " + (feita ? "bg-success/15 text-success border-success/30" : "text-muted-foreground")}>
+                  {feita ? <Check className="h-3 w-3" /> : <span className="h-3 w-3 rounded-full border inline-block" />}
+                  {t.titulo}
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={openTentativa}>
+              <Plus className="h-4 w-4 mr-1" /> Registrar tentativa
+            </Button>
+            <Button size="sm" variant="outline" className="text-success border-success/40 hover:bg-success/10" onClick={() => { setSucessoCorretor(lead.corretor_id ?? ""); setSucessoOpen(true); }}>
+              <CheckCircle2 className="h-4 w-4 mr-1" /> Sucesso no contato
+            </Button>
+            <Button size="sm" variant="outline" className="text-warning border-warning/40 hover:bg-warning/10" onClick={() => { setSemContatoCorretor(lead.corretor_id ?? ""); setSemContatoOpen(true); }}>
+              <PhoneOff className="h-4 w-4 mr-1" /> Sem contato
+            </Button>
+          </div>
+        </Card>
+      )}
+
       <div className="grid lg:grid-cols-3 gap-6">
         <Card className="p-5 space-y-3">
           <h3 className="font-display text-lg font-semibold">Contato</h3>
