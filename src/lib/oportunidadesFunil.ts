@@ -3,6 +3,42 @@
 // ('nova','buscando','visita','proposta','ganha','perdida')
 // "Proposta" é apenas o rótulo exibido do valor interno `proposta`.
 
+import { Sparkles, Search, CalendarCheck, FileText, Trophy, XCircle, type LucideIcon } from "lucide-react";
+
+export const ESTAGIO_ICONS: Record<string, LucideIcon> = {
+  nova: Sparkles,
+  buscando: Search,
+  visita: CalendarCheck,
+  proposta: FileText,
+  ganha: Trophy,
+  perdida: XCircle,
+};
+
+export const ESTAGIO_TEXT_COLORS: Record<string, string> = {
+  nova: "text-slate-500",
+  buscando: "text-blue-500",
+  visita: "text-indigo-500",
+  proposta: "text-amber-500",
+  ganha: "text-emerald-500",
+  perdida: "text-zinc-500",
+};
+
+export const prioridadeLabel = (p?: string | null) => (p === "alta" ? "Alta" : p === "baixa" ? "Baixa" : "Média");
+
+/** Dias desde a última ação registrada (fallback: data de criação). */
+export function diasSemAcao(ultimaAcao?: string | null, fallback?: string | null): number {
+  const base = ultimaAcao ?? fallback;
+  if (!base) return 0;
+  return Math.max(0, Math.floor((Date.now() - new Date(base).getTime()) / 86400000));
+}
+
+/** Diagnóstico em "Nova" há mais de 5 dias sem conclusão. */
+export function diagnosticoAtrasado(op: any): boolean {
+  if (!op || op.estagio !== "nova" || op.data_diagnostico) return false;
+  if (!op.created_at) return false;
+  return Date.now() - new Date(op.created_at).getTime() > 5 * 86400000;
+}
+
 export type EstagioOportunidade = "nova" | "buscando" | "visita" | "proposta" | "ganha" | "perdida";
 
 export const ESTAGIOS = [

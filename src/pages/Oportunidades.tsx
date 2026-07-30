@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, AlertTriangle, Link2 } from "lucide-react";
 import { formatBRL } from "@/lib/format";
 import {
-  ESTAGIOS, isEstagioFinal, tempoNoEstagio, prioridadeLabel, categoriaLabel,
+  ESTAGIOS, ESTAGIO_ICONS, ESTAGIO_TEXT_COLORS, isEstagioFinal, tempoNaEtapa, prioridadeLabel, categoriaLabel,
   diasSemAcao, diagnosticoPendencias, diagnosticoAtrasado,
 } from "@/lib/oportunidadesFunil";
 import OportunidadeDetailDialog from "@/components/oportunidades/OportunidadeDetailDialog";
@@ -261,11 +261,11 @@ export default function Oportunidades() {
         <div className="flex gap-3 overflow-x-auto pb-4 flex-1 min-h-0">
           {ESTAGIOS.map((col) => {
             const cards = porEstagio(col.key);
-            const Icon = col.icon;
+            const Icon = ESTAGIO_ICONS[col.key];
             return (
               <div key={col.key} className="w-[280px] shrink-0 flex flex-col min-h-0">
                 <div className="flex items-center gap-2 px-2 py-2">
-                  <Icon className="h-4 w-4" style={{ color: col.color }} />
+                  <Icon className={`h-4 w-4 ${ESTAGIO_TEXT_COLORS[col.key]}`} />
                   <span className="text-sm font-semibold">{col.label}</span>
                   <Badge variant="secondary" className="ml-auto text-[10px]">{cards.length}</Badge>
                 </div>
