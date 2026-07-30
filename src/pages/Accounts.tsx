@@ -180,6 +180,7 @@ export default function Accounts() {
   const [tempFilter, setTempFilter] = useState<string>(searchParams.get("temp") ?? "todos");
   const [ownerFilter, setOwnerFilter] = useState<string>(searchParams.get("responsavel") ?? "todos");
   const [contactFilter, setContactFilter] = useState<string>(searchParams.get("contato") ?? "todos");
+  const [etapaFilter, setEtapaFilter] = useState<string>(searchParams.get("etapa") ?? "todos");
   // Rascunho — não filtra até clicar em Aplicar
   const [draftSearch, setDraftSearch] = useState(searchParams.get("q") ?? "");
   const [draftStatus, setDraftStatus] = useState<"todos" | Status>(initialStatus as any);
@@ -188,12 +189,15 @@ export default function Accounts() {
   const [draftTemp, setDraftTemp] = useState<string>(searchParams.get("temp") ?? "todos");
   const [draftOwner, setDraftOwner] = useState<string>(searchParams.get("responsavel") ?? "todos");
   const [draftContact, setDraftContact] = useState<string>(searchParams.get("contato") ?? "todos");
+  const [draftEtapa, setDraftEtapa] = useState<string>(searchParams.get("etapa") ?? "todos");
 
 
   const [loading, setLoading] = useState(true);
   const [novaOpen, setNovaOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<Account | null>(null);
+  const [catTarget, setCatTarget] = useState<Account | null>(null);
 
   const interestLabel = (v: string | null | undefined) => {
     if (!v) return "";
@@ -238,7 +242,7 @@ export default function Accounts() {
     while (true) {
       const { data, error } = await supabase
         .from("contas")
-        .select("id, nome, email, telefone, documento, tipo, responsavel_id, created_by, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil, temperatura, ramo_atividade")
+        .select("id, nome, email, telefone, documento, tipo, responsavel_id, created_by, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil, temperatura, ramo_atividade, categoria, origem, data_entrada_carteira, destino_comercial, motivo_cancelamento")
         .order("nome", { ascending: true })
         .range(from, from + PAGE - 1);
       if (error) throw error;
