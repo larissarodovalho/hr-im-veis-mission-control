@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
-import { ETAPAS, etapaLabel, type EtapaFunil } from "@/lib/contasFunil";
+import { ETAPAS, ETAPAS_LEGADO, etapaLabel, etapaColor, isEtapaLegado, categoriaDe } from "@/lib/contasFunil";
 import {
   ResponsiveContainer,
   BarChart,
@@ -28,34 +28,29 @@ import {
 } from "recharts";
 import { useReportsPeriod } from "@/hooks/useReportsPeriod";
 
-type Conta = { id: string; etapa_funil: string | null; tags: string[] | null; responsavel_id: string | null; created_at: string | null };
+type Conta = {
+  id: string;
+  etapa_funil: string | null;
+  tags: string[] | null;
+  categoria: string | null;
+  responsavel_id: string | null;
+  created_at: string | null;
+};
 type Profile = { user_id: string; nome: string | null };
 
 type Lista = "carteira" | "marketing" | "todas";
 
-const FLUXO: EtapaFunil[] = [
-  "a_contatar",
-  "contatado",
-  "contato_estabelecido",
-  "captacao_imovel",
-  "reuniao",
-  "visita",
-  "proposta",
-  "fechado",
-];
+// Fluxo ativo do novo funil (5 etapas)
+const FLUXO: string[] = ["a_contatar", "contatado", "contato_estabelecido"];
 
-const COLORS = {
+const COLORS: Record<string, string> = {
   a_contatar: "hsl(215 16% 47%)",
   contatado: "hsl(217 91% 60%)",
-  contato_estabelecido: "hsl(189 94% 43%)",
   sem_retorno: "hsl(38 92% 50%)",
-  captacao_imovel: "hsl(292 84% 61%)",
-  reuniao: "hsl(258 90% 66%)",
-  visita: "hsl(173 80% 40%)",
-  proposta: "hsl(199 89% 48%)",
-  fechado: "hsl(142 71% 45%)",
-  perdido: "hsl(0 72% 51%)",
-} as const;
+  contato_estabelecido: "hsl(189 94% 43%)",
+  contato_cancelado: "hsl(0 72% 51%)",
+  legado: "hsl(262 60% 60%)",
+};
 
 export default function FunilContasReport() {
   const { inicioISO, fimISO, label } = useReportsPeriod();
@@ -73,7 +68,7 @@ export default function FunilContasReport() {
       for (let from = 0; ; from += PAGE) {
         const { data, error } = await supabase
           .from("contas")
-          .select("id, etapa_funil, tags, responsavel_id, created_at")
+          .select("id, etapa_funil, tags, categoria, responsavel_id, created_at")
           .gte("created_at", inicioISO)
           .lte("created_at", fimISO)
           .range(from, from + PAGE - 1);
@@ -93,14 +88,12 @@ export default function FunilContasReport() {
     return contas.filter((a) => {
       if (corretor !== "todos" && a.responsavel_id !== corretor) return false;
       if (lista === "todas") return true;
-      const tags = (a.tags ?? []).map((t) => t.toLowerCase());
-      return tags.includes(lista);
+      return categoriaDe(a) === lista;
     });
   }, [contas, lista, corretor]);
 
   const byEtapa = useMemo(() => {
     const m: Record<string, number> = {};
-    ETAPAS.forEach((e) => (m[e.id] = 0));
     filtered.forEach((a) => {
       const k = (a.etapa_funil as string) || "a_contatar";
       m[k] = (m[k] ?? 0) + 1;
@@ -109,16 +102,17 @@ export default function FunilContasReport() {
   }, [filtered]);
 
   const total = filtered.length;
-  const fechados = byEtapa["fechado"] ?? 0;
-  const perdidos = byEtapa["perdido"] ?? 0;
+  const cancelados = byEtapa["contato_cancelado"] ?? 0;
   const semRetorno = byEtapa["sem_retorno"] ?? 0;
-  const ativos = total - fechados - perdidos - semRetorno;
-  const taxaGeral = fechados + perdidos > 0 ? (fechados / (fechados + perdidos)) * 100 : 0;
+  const estabelecidos = byEtapa["contato_estabelecido"] ?? 0;
+  const legadas = ETAPAS_LEGADO.reduce((s, e) => s + (byEtapa[e.id] ?? 0), 0);
+  const ativos = total - cancelados - semRetorno - legadas;
+  const taxaGeral =
+    estabelecidos + cancelados > 0 ? (estabelecidos / (estabelecidos + cancelados)) * 100 : 0;
 
-  // Funil acumulado: contas naquela etapa OU posteriores no fluxo
+  // Funil acumulado: contas naquela etapa OU posteriores no fluxo ativo
   const fluxoData = useMemo(() => {
     const indices = FLUXO.map((id) => byEtapa[id] ?? 0);
-    // acumulado a partir do fim
     const accum: number[] = new Array(FLUXO.length).fill(0);
     for (let i = FLUXO.length - 1; i >= 0; i--) {
       accum[i] = indices[i] + (accum[i + 1] ?? 0);
@@ -130,15 +124,16 @@ export default function FunilContasReport() {
       acumulado: accum[i],
       conversaoProxima:
         i < FLUXO.length - 1 && accum[i] > 0 ? (accum[i + 1] / accum[i]) * 100 : null,
-      color: (COLORS as any)[id],
+      color: COLORS[id],
     }));
   }, [byEtapa]);
 
   const pieData = [
     { name: "Em andamento", value: ativos, color: "hsl(217 91% 60%)" },
     { name: "Sem retorno", value: semRetorno, color: COLORS.sem_retorno },
-    { name: "Fechado", value: fechados, color: COLORS.fechado },
-    { name: "Perdido", value: perdidos, color: COLORS.perdido },
+    { name: "Contato estabelecido", value: estabelecidos, color: COLORS.contato_estabelecido },
+    { name: "Contato cancelado", value: cancelados, color: COLORS.contato_cancelado },
+    { name: "Etapas legadas", value: legadas, color: COLORS.legado },
   ].filter((d) => d.value > 0);
 
   // Comparação Carteira × Marketing (apenas na aba "todas")
@@ -146,14 +141,12 @@ export default function FunilContasReport() {
     if (lista !== "todas") return [];
     const base = contas.filter((a) => corretor === "todos" || a.responsavel_id === corretor);
     return ETAPAS.map((e) => {
-      const carteira = base.filter((a) => {
-        const t = (a.tags ?? []).map((x) => x.toLowerCase());
-        return t.includes("carteira") && (a.etapa_funil ?? "a_contatar") === e.id;
-      }).length;
-      const marketing = base.filter((a) => {
-        const t = (a.tags ?? []).map((x) => x.toLowerCase());
-        return t.includes("marketing") && (a.etapa_funil ?? "a_contatar") === e.id;
-      }).length;
+      const carteira = base.filter(
+        (a) => categoriaDe(a) === "carteira" && (a.etapa_funil ?? "a_contatar") === e.id
+      ).length;
+      const marketing = base.filter(
+        (a) => categoriaDe(a) === "marketing" && (a.etapa_funil ?? "a_contatar") === e.id
+      ).length;
       return { label: e.label, Carteira: carteira, Marketing: marketing };
     });
   }, [contas, lista, corretor]);
@@ -198,17 +191,16 @@ export default function FunilContasReport() {
         </TabsList>
       </Tabs>
 
-
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Kpi label="Total" value={total} link={`/crm/contas?lista=${listaQuery}`} />
         <Kpi label="Em andamento" value={ativos} />
         <Kpi label="Sem retorno" value={semRetorno} />
         <Kpi
-          label="Fechados"
-          value={fechados}
+          label="Contato estabelecido"
+          value={estabelecidos}
           tone="success"
-          hint="Contas cuja etapa do funil é 'Fechado' — negócios ganhos/concluídos. A taxa de conversão considera Fechados ÷ (Fechados + Perdidos)."
+          hint="Contas que responderam e têm conversa efetiva. A taxa de conversão considera Estabelecidos ÷ (Estabelecidos + Cancelados)."
         />
         <Kpi label="Taxa conversão" value={`${taxaGeral.toFixed(1)}%`} tone="primary" />
       </div>
@@ -314,18 +306,41 @@ export default function FunilContasReport() {
                 </td>
                 <td className="py-2 text-right">—</td>
               </tr>
-              <tr>
+              <tr className={legadas > 0 ? "border-b" : ""}>
                 <td className="py-2">
-                  <Badge variant="outline" style={{ borderColor: COLORS.perdido, color: COLORS.perdido }}>
-                    Perdido
+                  <Badge variant="outline" style={{ borderColor: COLORS.contato_cancelado, color: COLORS.contato_cancelado }}>
+                    Contato cancelado
                   </Badge>
                 </td>
-                <td className="py-2 text-right font-medium">{perdidos}</td>
+                <td className="py-2 text-right font-medium">{cancelados}</td>
                 <td className="py-2 text-right text-muted-foreground">
-                  {total ? ((perdidos / total) * 100).toFixed(1) : "0.0"}%
+                  {total ? ((cancelados / total) * 100).toFixed(1) : "0.0"}%
                 </td>
                 <td className="py-2 text-right">—</td>
               </tr>
+              {legadas > 0 && (
+                <>
+                  <tr>
+                    <td colSpan={4} className="py-2 text-xs uppercase tracking-wide text-muted-foreground">
+                      Etapas comerciais legadas (aguardam o módulo de Oportunidades)
+                    </td>
+                  </tr>
+                  {ETAPAS_LEGADO.filter((e) => (byEtapa[e.id] ?? 0) > 0).map((e) => (
+                    <tr key={e.id} className="border-b last:border-0">
+                      <td className="py-2">
+                        <Badge variant="outline" className={etapaColor(e.id)}>
+                          {e.label} (legado)
+                        </Badge>
+                      </td>
+                      <td className="py-2 text-right font-medium">{byEtapa[e.id]}</td>
+                      <td className="py-2 text-right text-muted-foreground">
+                        {total ? (((byEtapa[e.id] ?? 0) / total) * 100).toFixed(1) : "0.0"}%
+                      </td>
+                      <td className="py-2 text-right">—</td>
+                    </tr>
+                  ))}
+                </>
+              )}
             </tbody>
           </table>
         </div>
