@@ -7,8 +7,9 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, AlertTriangle, Link2, Plus } from "lucide-react";
+import { Search, AlertTriangle, Link2, Plus, SlidersHorizontal } from "lucide-react";
 import { formatBRL } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import {
   ESTAGIOS, ESTAGIO_ICONS, ESTAGIO_TEXT_COLORS, isEstagioFinal, tempoNaEtapa, prioridadeLabel, categoriaLabel,
   diasSemAcao, diagnosticoPendencias, diagnosticoAtrasado,
@@ -20,6 +21,76 @@ import MigracaoLegadasPanel from "@/components/oportunidades/MigracaoLegadasPane
 type Op = any;
 
 const PAGE_SIZE = 500;
+
+const prioridadeBadge = (p?: string | null) => {
+  const map: Record<string, string> = {
+    alta: "bg-red-500/10 text-red-600 border-red-500/30",
+    media: "bg-amber-500/10 text-amber-600 border-amber-500/30",
+    baixa: "bg-muted text-muted-foreground",
+  };
+  return map[p ?? "media"] ?? map.media;
+};
+
+function OpCard({
+  o,
+  cli,
+  vincs,
+  lastActionIso,
+  corretorNome,
+  onClick,
+}: {
+  o: Op;
+  cli: { nome: string; contaId: string | null; categoria: string | null };
+  vincs: any[];
+  lastActionIso?: string;
+  corretorNome: string;
+  onClick: () => void;
+}) {
+  const pend = !isEstagioFinal(o.estagio) ? diagnosticoPendencias(o).length : 0;
+  const semAcao = !isEstagioFinal(o.estagio) ? diasSemAcao(lastActionIso, o.created_at) : 0;
+  return (
+    <Card className="p-3 cursor-pointer hover:border-primary/50 transition-colors" onClick={onClick}>
+      <div className="flex items-start justify-between gap-1">
+        <p className="text-sm font-medium leading-tight line-clamp-2">{o.titulo}</p>
+      </div>
+      <div className="flex flex-wrap gap-1 mt-1.5">
+        <Badge variant="outline" className={`text-[10px] ${prioridadeBadge(o.prioridade)}`}>{prioridadeLabel(o.prioridade)}</Badge>
+        {categoriaLabel(o.categoria_origem ?? cli.categoria) && (
+          <Badge variant="outline" className="text-[10px]">{categoriaLabel(o.categoria_origem ?? cli.categoria)}</Badge>
+        )}
+        {o.possui_permuta && <Badge variant="outline" className="text-[10px] bg-orange-500/10 text-orange-600 border-orange-500/30">Permuta</Badge>}
+      </div>
+      <p className="text-xs mt-2 flex items-center gap-1 text-muted-foreground">
+        <Link2 className="h-3 w-3 shrink-0" />
+        <span className={cli.contaId ? "text-foreground" : "text-amber-600"}>{cli.nome}</span>
+      </p>
+      <div className="text-[11px] text-muted-foreground mt-1.5 space-y-0.5">
+        {(o.cidade || o.bairro) && <p>{[o.cidade, o.bairro].filter(Boolean).join(" · ")}</p>}
+        {o.valor_alvo != null && <p className="font-medium text-foreground">{formatBRL(o.valor_alvo)}</p>}
+        {vincs.length > 0 && (
+          <p>{vincs.length} imóve{vincs.length === 1 ? "l" : "is"} · {vincs.filter((v) => v.interesse === "alto").length} interesse alto</p>
+        )}
+        <p>Resp.: {corretorNome}</p>
+      </div>
+      {!isEstagioFinal(o.estagio) && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {pend > 0 && (
+            <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30">
+              <AlertTriangle className="h-3 w-3 mr-0.5" /> {pend} pendência{pend > 1 ? "s" : ""}
+            </Badge>
+          )}
+          {o.estagio === "nova" && diagnosticoAtrasado(o) && (
+            <Badge variant="outline" className="text-[10px] bg-red-500/10 text-red-600 border-red-500/30">Diagnóstico &gt; 5d</Badge>
+          )}
+          {semAcao > 7 && (
+            <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30">{semAcao}d sem ação</Badge>
+          )}
+        </div>
+      )}
+      <p className="text-[10px] text-muted-foreground mt-2">há {tempoNaEtapa(o.estagio_desde ?? o.created_at)}</p>
+    </Card>
+  );
+}
 
 /**
  * Funil de Oportunidades de Negócio — etapa final da cadeia comercial
@@ -45,6 +116,8 @@ export default function Oportunidades() {
   const [fDias, setFDias] = useState("todos");
   const [fPermuta, setFPermuta] = useState("todos");
   const [showFinalizadas, setShowFinalizadas] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [mobileEstagio, setMobileEstagio] = useState<string>(ESTAGIOS[0]?.key ?? "nova");
 
   const [selected, setSelected] = useState<Op | null>(null);
   const [criarOpen, setCriarOpen] = useState(false);
@@ -162,17 +235,33 @@ export default function Oportunidades() {
   const paradas = ativas ? filtradas.filter((o) => !isEstagioFinal(o.estagio) && diasSemAcao(lastAction[o.id], o.created_at) > 7).length : 0;
   const vinculoPendente = filtradas.filter((o) => !o.conta_id && !isEstagioFinal(o.estagio)).length;
 
-  const prioridadeBadge = (p?: string | null) => {
-    const map: Record<string, string> = {
-      alta: "bg-red-500/10 text-red-600 border-red-500/30",
-      media: "bg-amber-500/10 text-amber-600 border-amber-500/30",
-      baixa: "bg-muted text-muted-foreground",
-    };
-    return map[p ?? "media"] ?? map.media;
-  };
+  const activeFilterCount =
+    (fCorretor !== "todos" ? 1 : 0) +
+    (fCategoria !== "todas" ? 1 : 0) +
+    (fTipo !== "todos" ? 1 : 0) +
+    (fOrigem !== "todas" ? 1 : 0) +
+    (fVinculo !== "todos" ? 1 : 0) +
+    (fPrioridade !== "todas" ? 1 : 0) +
+    (fDias !== "todos" ? 1 : 0) +
+    (fPermuta !== "todos" ? 1 : 0) +
+    (showFinalizadas ? 1 : 0);
+
+  const renderCard = (o: Op) => (
+    <OpCard
+      key={o.id}
+      o={o}
+      cli={clienteDe(o)}
+      vincs={imoveisPorOp[o.id] ?? []}
+      lastActionIso={lastAction[o.id]}
+      corretorNome={o.corretor_id ? corretores[o.corretor_id] ?? "—" : "—"}
+      onClick={() => setSelected(o)}
+    />
+  );
+
+  const mobileCards = porEstagio(mobileEstagio);
 
   return (
-    <div className="space-y-4 h-full flex flex-col">
+    <div className="p-4 md:p-6 flex flex-col gap-4 md:h-full md:min-h-0">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-xl font-bold font-display">Oportunidades de Negócio</h1>
@@ -185,21 +274,31 @@ export default function Oportunidades() {
         </Button>
       </div>
 
-      {/* Filtros */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative w-full sm:w-64">
+      {/* Busca + botão de filtros (mobile) */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1 md:flex-none md:w-64">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input className="pl-9" placeholder="Buscar por título ou cliente..." value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
+        <Button variant="outline" className="md:hidden shrink-0" onClick={() => setFiltersOpen((v) => !v)}>
+          <SlidersHorizontal className="h-4 w-4 mr-1" /> Filtros
+          {activeFilterCount > 0 && (
+            <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-[10px]">{activeFilterCount}</Badge>
+          )}
+        </Button>
+      </div>
+
+      {/* Filtros */}
+      <div className={cn("flex-wrap items-center gap-2", filtersOpen ? "flex" : "hidden md:flex")}>
         <Select value={fCorretor} onValueChange={setFCorretor}>
-          <SelectTrigger className="w-[160px]"><SelectValue placeholder="Corretor" /></SelectTrigger>
+          <SelectTrigger className="w-full md:w-[160px]"><SelectValue placeholder="Corretor" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os corretores</SelectItem>
             {corretoresLista.map((c) => <SelectItem key={c.id as string} value={c.id as string}>{c.nome}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={fCategoria} onValueChange={setFCategoria}>
-          <SelectTrigger className="w-[140px]"><SelectValue placeholder="Categoria" /></SelectTrigger>
+          <SelectTrigger className="w-full md:w-[140px]"><SelectValue placeholder="Categoria" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todas">Todas categorias</SelectItem>
             <SelectItem value="carteira">Carteira</SelectItem>
@@ -207,21 +306,21 @@ export default function Oportunidades() {
           </SelectContent>
         </Select>
         <Select value={fTipo} onValueChange={setFTipo}>
-          <SelectTrigger className="w-[140px]"><SelectValue placeholder="Tipo de imóvel" /></SelectTrigger>
+          <SelectTrigger className="w-full md:w-[140px]"><SelectValue placeholder="Tipo de imóvel" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os tipos</SelectItem>
             {tipos.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={fOrigem} onValueChange={setFOrigem}>
-          <SelectTrigger className="w-[150px]"><SelectValue placeholder="Origem" /></SelectTrigger>
+          <SelectTrigger className="w-full md:w-[150px]"><SelectValue placeholder="Origem" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todas">Todas origens</SelectItem>
             {origens.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={fPrioridade} onValueChange={setFPrioridade}>
-          <SelectTrigger className="w-[130px]"><SelectValue placeholder="Prioridade" /></SelectTrigger>
+          <SelectTrigger className="w-full md:w-[130px]"><SelectValue placeholder="Prioridade" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todas">Prioridades</SelectItem>
             <SelectItem value="alta">Alta</SelectItem>
@@ -230,7 +329,7 @@ export default function Oportunidades() {
           </SelectContent>
         </Select>
         <Select value={fDias} onValueChange={setFDias}>
-          <SelectTrigger className="w-[150px]"><SelectValue placeholder="Período" /></SelectTrigger>
+          <SelectTrigger className="w-full md:w-[150px]"><SelectValue placeholder="Período" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todo o período</SelectItem>
             <SelectItem value="7">Últimos 7 dias</SelectItem>
@@ -241,7 +340,7 @@ export default function Oportunidades() {
           </SelectContent>
         </Select>
         <Select value={fVinculo} onValueChange={setFVinculo}>
-          <SelectTrigger className="w-[160px]"><SelectValue placeholder="Vínculo" /></SelectTrigger>
+          <SelectTrigger className="w-full md:w-[160px]"><SelectValue placeholder="Vínculo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Vínculo: todos</SelectItem>
             <SelectItem value="ok">Com conta</SelectItem>
@@ -249,7 +348,7 @@ export default function Oportunidades() {
           </SelectContent>
         </Select>
         <Select value={fPermuta} onValueChange={setFPermuta}>
-          <SelectTrigger className="w-[130px]"><SelectValue placeholder="Permuta" /></SelectTrigger>
+          <SelectTrigger className="w-full md:w-[130px]"><SelectValue placeholder="Permuta" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Permuta: todas</SelectItem>
             <SelectItem value="sim">Com permuta</SelectItem>
@@ -273,76 +372,62 @@ export default function Oportunidades() {
 
       {(isAdmin || isGestor) && <MigracaoLegadasPanel />}
 
-      {/* Kanban */}
       {loading ? (
         <p className="text-sm text-muted-foreground">Carregando oportunidades…</p>
       ) : (
-        <div className="flex gap-3 overflow-x-auto pb-4 flex-1 min-h-0">
-          {ESTAGIOS.map((col) => {
-            const cards = porEstagio(col.key);
-            const Icon = ESTAGIO_ICONS[col.key];
-            return (
-              <div key={col.key} className="w-[280px] shrink-0 flex flex-col min-h-0">
-                <div className="flex items-center gap-2 px-2 py-2">
-                  <Icon className={`h-4 w-4 ${ESTAGIO_TEXT_COLORS[col.key]}`} />
-                  <span className="text-sm font-semibold">{col.label}</span>
-                  <Badge variant="secondary" className="ml-auto text-[10px]">{cards.length}</Badge>
+        <>
+          {/* Kanban — desktop */}
+          <div className="hidden md:flex gap-3 overflow-x-auto pb-4 flex-1 min-h-0">
+            {ESTAGIOS.map((col) => {
+              const cards = porEstagio(col.key);
+              const Icon = ESTAGIO_ICONS[col.key];
+              return (
+                <div key={col.key} className="w-[280px] shrink-0 flex flex-col min-h-0">
+                  <div className="flex items-center gap-2 px-2 py-2">
+                    <Icon className={`h-4 w-4 ${ESTAGIO_TEXT_COLORS[col.key]}`} />
+                    <span className="text-sm font-semibold">{col.label}</span>
+                    <Badge variant="secondary" className="ml-auto text-[10px]">{cards.length}</Badge>
+                  </div>
+                  <div className="flex-1 min-h-0 overflow-y-auto space-y-2 rounded-md bg-muted/30 p-1.5">
+                    {cards.map(renderCard)}
+                    {cards.length === 0 && <p className="text-xs text-muted-foreground text-center py-6">Nenhuma oportunidade</p>}
+                  </div>
                 </div>
-                <div className="flex-1 min-h-0 overflow-y-auto space-y-2 px-1 pb-2 rounded-md bg-muted/30 p-1.5">
-                  {cards.map((o) => {
-                    const cli = clienteDe(o);
-                    const vincs = imoveisPorOp[o.id] ?? [];
-                    const pend = !isEstagioFinal(o.estagio) ? diagnosticoPendencias(o).length : 0;
-                    const semAcao = !isEstagioFinal(o.estagio) ? diasSemAcao(lastAction[o.id], o.created_at) : 0;
-                    return (
-                      <Card key={o.id} className="p-3 cursor-pointer hover:border-primary/50 transition-colors" onClick={() => setSelected(o)}>
-                        <div className="flex items-start justify-between gap-1">
-                          <p className="text-sm font-medium leading-tight line-clamp-2">{o.titulo}</p>
-                        </div>
-                        <div className="flex flex-wrap gap-1 mt-1.5">
-                          <Badge variant="outline" className={`text-[10px] ${prioridadeBadge(o.prioridade)}`}>{prioridadeLabel(o.prioridade)}</Badge>
-                          {categoriaLabel(o.categoria_origem ?? cli.categoria) && (
-                            <Badge variant="outline" className="text-[10px]">{categoriaLabel(o.categoria_origem ?? cli.categoria)}</Badge>
-                          )}
-                          {o.possui_permuta && <Badge variant="outline" className="text-[10px] bg-orange-500/10 text-orange-600 border-orange-500/30">Permuta</Badge>}
-                        </div>
-                        <p className="text-xs mt-2 flex items-center gap-1 text-muted-foreground">
-                          <Link2 className="h-3 w-3 shrink-0" />
-                          <span className={cli.contaId ? "text-foreground" : "text-amber-600"}>{cli.nome}</span>
-                        </p>
-                        <div className="text-[11px] text-muted-foreground mt-1.5 space-y-0.5">
-                          {(o.cidade || o.bairro) && <p>{[o.cidade, o.bairro].filter(Boolean).join(" · ")}</p>}
-                          {o.valor_alvo != null && <p className="font-medium text-foreground">{formatBRL(o.valor_alvo)}</p>}
-                          {vincs.length > 0 && (
-                            <p>{vincs.length} imóve{vincs.length === 1 ? "l" : "is"} · {vincs.filter((v) => v.interesse === "alto").length} interesse alto</p>
-                          )}
-                          <p>Resp.: {o.corretor_id ? corretores[o.corretor_id] ?? "—" : "—"}</p>
-                        </div>
-                        {!isEstagioFinal(o.estagio) && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {pend > 0 && (
-                              <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30">
-                                <AlertTriangle className="h-3 w-3 mr-0.5" /> {pend} pendência{pend > 1 ? "s" : ""}
-                              </Badge>
-                            )}
-                            {o.estagio === "nova" && diagnosticoAtrasado(o) && (
-                              <Badge variant="outline" className="text-[10px] bg-red-500/10 text-red-600 border-red-500/30">Diagnóstico &gt; 5d</Badge>
-                            )}
-                            {semAcao > 7 && (
-                              <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30">{semAcao}d sem ação</Badge>
-                            )}
-                          </div>
-                        )}
-                        <p className="text-[10px] text-muted-foreground mt-2">há {tempoNaEtapa(o.estagio_desde ?? o.created_at)}</p>
-                      </Card>
-                    );
-                  })}
-                  {cards.length === 0 && <p className="text-xs text-muted-foreground text-center py-6">Nenhuma oportunidade</p>}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+
+          {/* Lista por etapa — mobile */}
+          <div className="md:hidden space-y-3">
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
+              {ESTAGIOS.map((col) => {
+                const count = porEstagio(col.key).length;
+                const Icon = ESTAGIO_ICONS[col.key];
+                const active = mobileEstagio === col.key;
+                return (
+                  <button
+                    key={col.key}
+                    onClick={() => setMobileEstagio(col.key)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-2 rounded-full border text-xs font-medium whitespace-nowrap shrink-0 transition-colors",
+                      active ? "bg-primary/10 border-primary/50 text-foreground" : "text-muted-foreground hover:bg-accent/50"
+                    )}
+                  >
+                    <Icon className={`h-3.5 w-3.5 ${ESTAGIO_TEXT_COLORS[col.key]}`} />
+                    {col.label}
+                    <Badge variant="secondary" className="ml-0.5 h-4 px-1.5 text-[10px]">{count}</Badge>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="space-y-2">
+              {mobileCards.map(renderCard)}
+              {mobileCards.length === 0 && (
+                <Card className="p-6 text-center text-sm text-muted-foreground">Nenhuma oportunidade nesta etapa.</Card>
+              )}
+            </div>
+          </div>
+        </>
       )}
 
       <OportunidadeDetailDialog
