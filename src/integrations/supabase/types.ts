@@ -581,6 +581,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          desclassificada: boolean
           documento: string | null
           email: string | null
           endereco: string | null
@@ -589,6 +590,7 @@ export type Database = {
           interesse: string | null
           is_partner: boolean
           lead_id_origem: string | null
+          motivo_desclassificacao: string | null
           nome: string
           observacoes: string | null
           parceiro_origem_id: string | null
@@ -604,6 +606,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          desclassificada?: boolean
           documento?: string | null
           email?: string | null
           endereco?: string | null
@@ -612,6 +615,7 @@ export type Database = {
           interesse?: string | null
           is_partner?: boolean
           lead_id_origem?: string | null
+          motivo_desclassificacao?: string | null
           nome: string
           observacoes?: string | null
           parceiro_origem_id?: string | null
@@ -627,6 +631,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          desclassificada?: boolean
           documento?: string | null
           email?: string | null
           endereco?: string | null
@@ -635,6 +640,7 @@ export type Database = {
           interesse?: string | null
           is_partner?: boolean
           lead_id_origem?: string | null
+          motivo_desclassificacao?: string | null
           nome?: string
           observacoes?: string | null
           parceiro_origem_id?: string | null
@@ -1324,6 +1330,7 @@ export type Database = {
       interacoes: {
         Row: {
           agendado_para: string | null
+          canal: string | null
           conta_id: string | null
           created_at: string
           created_by: string | null
@@ -1336,6 +1343,7 @@ export type Database = {
         }
         Insert: {
           agendado_para?: string | null
+          canal?: string | null
           conta_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1348,6 +1356,7 @@ export type Database = {
         }
         Update: {
           agendado_para?: string | null
+          canal?: string | null
           conta_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1406,6 +1415,7 @@ export type Database = {
           id: string
           imovel_interesse: string | null
           meta_form_data: Json | null
+          motivo_desclassificacao: string | null
           nome: string
           observacoes: string | null
           origem: string | null
@@ -1415,6 +1425,7 @@ export type Database = {
           tags: string[] | null
           telefone: string | null
           temperatura: string | null
+          tipo_acompanhamento: string | null
           ultima_interacao: string | null
           updated_at: string
           valor_estimado: number | null
@@ -1429,6 +1440,7 @@ export type Database = {
           id?: string
           imovel_interesse?: string | null
           meta_form_data?: Json | null
+          motivo_desclassificacao?: string | null
           nome: string
           observacoes?: string | null
           origem?: string | null
@@ -1438,6 +1450,7 @@ export type Database = {
           tags?: string[] | null
           telefone?: string | null
           temperatura?: string | null
+          tipo_acompanhamento?: string | null
           ultima_interacao?: string | null
           updated_at?: string
           valor_estimado?: number | null
@@ -1452,6 +1465,7 @@ export type Database = {
           id?: string
           imovel_interesse?: string | null
           meta_form_data?: Json | null
+          motivo_desclassificacao?: string | null
           nome?: string
           observacoes?: string | null
           origem?: string | null
@@ -1461,6 +1475,7 @@ export type Database = {
           tags?: string[] | null
           telefone?: string | null
           temperatura?: string | null
+          tipo_acompanhamento?: string | null
           ultima_interacao?: string | null
           updated_at?: string
           valor_estimado?: number | null
