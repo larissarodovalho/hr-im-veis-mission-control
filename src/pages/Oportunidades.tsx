@@ -314,7 +314,7 @@ export default function Oportunidades() {
                             )}
                           </div>
                         )}
-                        <p className="text-[10px] text-muted-foreground mt-2">há {tempoNoEstagio(o.etapa_changed_at, o.created_at)}</p>
+                        <p className="text-[10px] text-muted-foreground mt-2">há {tempoNaEtapa(o.etapa_changed_at ?? o.created_at)}</p>
                       </Card>
                     );
                   })}
