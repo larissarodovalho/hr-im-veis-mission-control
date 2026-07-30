@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Phone, Calendar, MessageCircle, Mail, MapPin, Star, StickyNote, Trash2, Send, History } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { Phone, Calendar, MessageCircle, Mail, MapPin, Star, StickyNote, Send, History } from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
 import { PONTUALIDADE_INFO, TENTATIVA_TONE_CLASS, Pontualidade } from "@/lib/leads";
+import { fmtDateTimeLong } from "@/lib/datetime";
+import InteracaoAdminActions from "@/components/interacoes/InteracaoAdminActions";
 
 type Interacao = {
   id: string;
@@ -85,14 +85,6 @@ export default function ContaInteracoesTimeline({ contaId }: { contaId: string }
     load();
   };
 
-  const excluir = async (id: string) => {
-    if (!confirm("Excluir esta interação?")) return;
-    const { error } = await supabase.from("interacoes").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success("Excluída");
-    setItems((prev) => prev.filter((i) => i.id !== id));
-  };
-
   return (
     <div className="space-y-4">
       <h3 className="font-display text-lg font-semibold flex items-center gap-2">
@@ -147,14 +139,12 @@ export default function ContaInteracoesTimeline({ contaId }: { contaId: string }
                       </Badge>
                     )}
                     <span className="text-xs text-muted-foreground">
-                      {format(new Date(it.created_at), "dd MMM yyyy 'às' HH:mm", { locale: ptBR })}
+                      {fmtDateTimeLong(it.created_at)}
                     </span>
                     <span className="text-xs text-muted-foreground">• {autor}</span>
                   </div>
                   {canDelete && (
-                    <Button size="sm" variant="ghost" onClick={() => excluir(it.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <InteracaoAdminActions interacao={it} onChanged={load} />
                   )}
                 </div>
                 {it.descricao && (
