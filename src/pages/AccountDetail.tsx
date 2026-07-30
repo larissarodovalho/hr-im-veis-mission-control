@@ -525,6 +525,9 @@ export default function AccountDetail() {
                 >
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
+                    {editing.etapa_funil && isEtapaLegado(editing.etapa_funil) && (
+                      <SelectItem value={editing.etapa_funil}>{etapaLabel(editing.etapa_funil)} (legado)</SelectItem>
+                    )}
                     {ETAPAS.map(e => (
                       <SelectItem key={e.id} value={e.id}>{e.label}</SelectItem>
                     ))}
