@@ -1,35 +1,36 @@
-# Check de pontualidade nas tentativas de contato (Leads)
+# Plano: Gestão de interações pelo admin + Fuso horário de Cuiabá
 
-Hoje cada tentativa (mensagem na entrada, áudio em +24h, ligação em +48h) vira uma linha em `interacoes` com `created_at` no momento do registro, mas nada registra se o atendente cumpriu o cronograma. Vamos classificar cada tentativa feita como **adiantada**, **no prazo** ou **atrasada**, gravar isso no banco e exibir o check no card de tentativas e no histórico.
+## Parte 1 — Administrador edita e exclui interações/tentativas
 
-## Régua de pontualidade (conforme sua escolha)
+O banco já permite (política de exclusão para admin e de edição para admin/gestor) — falta só a interface. Hoje a timeline de Contas tem botão de excluir para admin, mas o Histórico do Lead não tem nada, e edição não existe em lugar nenhum.
 
-Comparando a data/hora do registro com o vencimento da tentativa:
+**Novo componente compartilhado** `src/components/interacoes/EditarInteracaoDialog.tsx`:
+- Modal com: tipo da interação, resultado, descrição e **data/hora** (input `datetime-local` no horário de Cuiabá).
+- Ao salvar: atualiza a interação. Se for registro de tentativa ("1ª/2ª/3ª tentativa · …"), o selo de **pontualidade é recalculado** automaticamente a partir da nova data/hora.
+- Botão **Excluir** com confirmação via `AlertDialog` (substitui o `confirm()` nativo atual).
 
-- **✓ No prazo** — registrada até 1h após o vencimento (ex.: áudio vencia 14h → registrar até 15h conta como no prazo)
-- **Adiantada** — registrada mais de 1h antes do vencimento (vale para áudio/ligação; mostra "Xh antes do prazo")
-- **Atrasada** — registrada mais de 1h após o vencimento (mostra "Xh de atraso")
+**Onde aparece (somente para admin):**
+- `src/pages/LeadDetail.tsx` — card **Histórico**: lápis (editar) e lixeira (excluir) em cada interação. Após alterar/excluir, o card de Tentativas se atualiza sozinho (excluir uma tentativa a devolve para "pendente").
+- `src/components/contas/ContaInteracoesTimeline.tsx` — adiciona botão de editar ao lado do excluir já existente.
 
-## Passos
+## Parte 2 — Fuso horário fixo: America/Cuiaba (UTC-4)
 
-1. **Migration no banco** (`interacoes`)
-   - Nova coluna `pontualidade TEXT` (valores: `adiantada`, `no_prazo`, `atrasada`; nula para interações que não são tentativa).
-   - Backfill: para todas as interações de tentativa já existentes (tipo `mensagem`/`audio`/`ligacao` ligadas a lead), calcular a pontualidade retroativamente a partir de `created_at` da interação vs. entrada do lead + prazo da tentativa.
+Problemas encontrados na análise:
+- Dashboard: gráfico de leads agrupa por data **UTC** — depois das 20h de Cuiabá o "hoje" vira o dia seguinte e leads criados à noite caem no dia errado.
+- Visitas do site: função do banco agrupa por data UTC e o card "hoje" compara em UTC — mostra 0 visitas à noite.
+- Demais horários (histórico, prazos das tentativas) usam o relógio do navegador, que desanda se alguém acessar de outro fuso.
 
-2. **`src/lib/leads.ts`**
-   - Adicionar metadados de pontualidade (label, emoji, cor) e o helper `tentativaPontualidade(prazo, feitaEm)` que aplica a régua acima e retorna também o detalhe ("2h de atraso", "5h antes do prazo").
+**Solução:**
+- Nova lib `src/lib/datetime.ts` com `CRM_TZ = 'America/Cuiaba'` e funções: `fmtDateTime`, `fmtDate`, `fmtTime`, `dayKeyCRM` (chave AAAA-MM-DD em Cuiabá), `todayCRM`, e conversores para o input de data/hora do modal de edição.
+- **Migração no banco**: recria `get_site_visits_daily` agrupando visitas pela data de Cuiabá e ancorando a série no "hoje" de Cuiabá.
+- Telas atualizadas para usar a lib: Dashboard (gráficos e cards), prazos/pontualidade das tentativas (`src/lib/leads.ts`), Histórico do Lead, timeline das Contas.
+- Resultado: todo o time vê sempre horário de Cuiabá, acessando de onde estiver; agrupamentos diários viram o dia à meia-noite de Cuiabá.
 
-3. **`src/pages/LeadDetail.tsx`**
-   - No `registerTentativa`: calcular a pontualidade no momento do registro e gravar o campo `pontualidade` junto da interação.
-   - No card **Tentativas de contato**: cada tentativa já feita passa a exibir o selo — verde "✓ no prazo", âmbar "adiantada · Xh antes", vermelho "atrasada · há X" (com tooltip mostrando data/hora do registro e do vencimento).
-   - No **histórico de interações**: a linha da tentativa ganha o mesmo selo quando `pontualidade` estiver presente.
-
-4. **`src/components/contas/ContaInteracoesTimeline.tsx`**
-   - Como o histórico migra do lead para a conta na conversão, exibir o mesmo selo na timeline da conta (visível também depois de virar conta).
+## Verificação
+- Build sem erros; teste visual (Playwright) mostrando os botões de admin no histórico e horários exibidos em Cuiabá (ex.: 15:35 quando UTC marca 19:35).
 
 ## Detalhes técnicos
-
-- Ordem: migration primeiro (você aprova), depois o código (os tipos do banco são regenerados automaticamente após a migration).
-- Sem mudança de RLS/permissões — só coluna nova em tabela existente.
-- Funciona retroativamente: tentativas antigas já ganham o selo via backfill.
-- Como fica gravado no banco, abre caminho para um futuro relatório de pontualidade por corretor (fora deste escopo).
+- Sem novas políticas RLS: admin já pode excluir/editar `interacoes` no banco.
+- Recálculo de pontualidade: mesma função `tentativaPontualidade` (tolerância de 1h) usando `data_entrada` do lead + prazo da tentativa vs. nova `created_at`.
+- Conversão do input `datetime-local`: feita com partes do `Intl.DateTimeFormat` em America/Cuiaba, sem nova dependência.
+- Migração única: apenas recria a função `get_site_visits_daily` (SECURITY DEFINER preservado).

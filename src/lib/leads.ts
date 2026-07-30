@@ -1,6 +1,8 @@
 // Adapter mapping HR Imóveis schema → Brazil Lands canonical types.
 // Tabelas HR: leads, contas, interacoes, reunioes, ligacoes, imoveis, visitas, profiles, user_roles, whatsapp_*
 
+import { fmtDayMonthTime } from './datetime';
+
 export type ActiveStage =
   | 'Novo Lead'
   | 'Pré-atendimento'
@@ -141,14 +143,10 @@ export function fmtDuracao(ms: number): string {
   return restH ? `${d}d ${restH}h` : `${d}d`;
 }
 
-/** Data/hora exata do prazo: "31/07 às 19:00". */
+/** Data/hora exata do prazo: "31/07 às 15:00" (sempre no fuso de Cuiabá). */
 export function prazoDataLabel(prazo: Date | null): string {
   if (!prazo) return '—';
-  return (
-    prazo.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) +
-    ' às ' +
-    prazo.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-  );
+  return fmtDayMonthTime(prazo);
 }
 
 /** Contagem regressiva de uma tentativa ainda não registrada. */

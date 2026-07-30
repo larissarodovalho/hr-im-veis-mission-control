@@ -22,10 +22,11 @@ import {
 import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Plus, Building2, FileSignature, Pencil, PhoneCall, CheckCircle2, PhoneOff, XCircle, Check } from "lucide-react";
 import EntityDocumentsTab from "@/components/EntityDocumentsTab";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { findDuplicates, onlyDigits, normEmail, DuplicateMatch } from "@/lib/duplicates";
 import DuplicateAlert from "@/components/DuplicateAlert";
+import { useRole } from "@/hooks/useRole";
+import InteracaoAdminActions from "@/components/interacoes/InteracaoAdminActions";
+import { fmtDateTimeLong, toCuiabaInputValue, fromCuiabaInputValue } from "@/lib/datetime";
 
 type MeetingFormat = "escritorio" | "virtual" | "ligacao";
 const FORMAT_LABEL: Record<MeetingFormat, string> = {
@@ -61,6 +62,7 @@ export default function LeadDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isAdmin } = useRole();
   const [lead, setLead] = useState<any>(null);
   const [interacoes, setInteracoes] = useState<any[]>([]);
   const [reunioes, setReunioes] = useState<any[]>([]);
@@ -185,6 +187,16 @@ export default function LeadDetail() {
     load();
   };
 
+  /** Recalcula pontualidade quando o admin edita data/hora de uma tentativa. */
+  const pontualidadeForInteracao = (novoIso: string, descricao: string | null, tipo: string, original: any): string | null | undefined => {
+    if (!lead) return undefined;
+    const idx = TENTATIVA_SEQ.findIndex(t => t.tipo === tipo);
+    const pareceTentativa = idx >= 0 && /^[123]ª tentativa/i.test(descricao ?? "");
+    if (pareceTentativa) return tentativaPontualidade(tentativaPrazo(lead, idx), novoIso)?.id ?? null;
+    // Deixou de ser tentativa (tipo/texto mudou) → limpa o selo; demais casos mantêm.
+    return original?.pontualidade ? null : undefined;
+  };
+
   const confirmSucesso = async () => {
     if (!sucessoCorretor) return toast.error("Selecione o corretor responsável");
     setSavingSucesso(true);
@@ -280,7 +292,8 @@ export default function LeadDetail() {
   const addMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!meeting.agendada_para) return toast.error("Data obrigatória");
-    const startIso = new Date(meeting.agendada_para).toISOString();
+    const startIso = fromCuiabaInputValue(meeting.agendada_para);
+    if (!startIso) return toast.error("Data/hora inválida");
     if (meeting.format === "ligacao") {
       // Ligação vai para a tabela `ligacoes` (aparece na aba Ligações e na Agenda)
       const { error } = await supabase.from("ligacoes").insert({
@@ -317,10 +330,12 @@ export default function LeadDetail() {
 
   const saveMeetingEdit = async () => {
     if (!editingMeeting) return;
+    const startIso = fromCuiabaInputValue(editingMeeting.agendada_para);
+    if (!startIso) return toast.error("Data/hora inválida");
     if (editingMeeting.__isLigacao) {
       const dur = 30;
       const { error } = await supabase.from("ligacoes").update({
-        data: new Date(editingMeeting.agendada_para).toISOString(),
+        data: startIso,
         duracao_seg: dur * 60,
         resultado: editingMeeting.status,
         notas: editingMeeting.notas || null,
@@ -330,7 +345,7 @@ export default function LeadDetail() {
       const tipo = editingMeeting.format === "ligacao" ? "ligacao" : editingMeeting.format === "virtual" ? "videochamada" : "presencial";
       const duracao_min = editingMeeting.format === "ligacao" ? 30 : 60;
       const { error } = await supabase.from("reunioes").update({
-        agendada_para: new Date(editingMeeting.agendada_para).toISOString(),
+        agendada_para: startIso,
         tipo, duracao_min,
         local: editingMeeting.format === "virtual" ? null : (editingMeeting.local || null),
         link: editingMeeting.format === "virtual" ? (editingMeeting.link || null) : null,
@@ -910,7 +925,7 @@ export default function LeadDetail() {
               return (
                 <div key={m.id} className="text-sm border rounded-md p-2 flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="font-medium">{format(new Date(m.agendada_para), "Pp", { locale: ptBR })}</div>
+                    <div className="font-medium">{fmtDateTimeLong(m.agendada_para)}</div>
                     <div className="text-muted-foreground text-xs truncate">
                       <Badge variant="secondary" className="text-[10px] mr-1">{FORMAT_LABEL[fmt]}</Badge>
                       {m.local || m.link} · <Badge variant="outline" className="text-[10px]">{m.status}</Badge>
@@ -919,7 +934,7 @@ export default function LeadDetail() {
                   <Button size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" onClick={() => setEditingMeeting({
                     __isLigacao: !!m.__isLigacao,
                     id: m.id,
-                    agendada_para: format(new Date(m.agendada_para), "yyyy-MM-dd'T'HH:mm"),
+                    agendada_para: toCuiabaInputValue(m.agendada_para),
                     format: fmt,
                     local: m.local ?? "",
                     link: m.link ?? "",
@@ -988,8 +1003,11 @@ export default function LeadDetail() {
                   )}
                   {i.resultado && <span className="text-xs text-muted-foreground">{i.resultado}</span>}
                   <span className="text-xs text-muted-foreground ml-auto">
-                    Por <strong className="text-foreground/80">{i.created_by ? (brokers[i.created_by] || "—") : "—"}</strong> · {format(new Date(i.created_at), "Pp", { locale: ptBR })}
+                    Por <strong className="text-foreground/80">{i.created_by ? (brokers[i.created_by] || "—") : "—"}</strong> · {fmtDateTimeLong(i.created_at)}
                   </span>
+                  {isAdmin && (
+                    <InteracaoAdminActions interacao={i} onChanged={load} pontualidadeFor={pontualidadeForInteracao} />
+                  )}
                 </div>
                 {i.descricao && <p className="text-sm mt-1">{i.descricao}</p>}
                 {i.proxima_acao && <p className="text-xs text-primary mt-1">→ {i.proxima_acao}</p>}

@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { STAGES, daysSince, slaColor, slaLabel, SOURCES } from "@/lib/leads";
+import { dayKeyCRM, todayCRM } from "@/lib/datetime";
 import { Link, useNavigate } from "react-router-dom";
 import { TrendingUp, Users, Clock, Calendar, AlertTriangle, Phone, MapPin, Globe, UserPlus, Activity, CheckCircle2, XCircle } from "lucide-react";
 import {
@@ -66,13 +67,13 @@ export default function Dashboard() {
     () =>
       siteVisits.map((r) => ({
         ...r,
-        label: new Date(r.dia + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+        label: `${r.dia.slice(8, 10)}/${r.dia.slice(5, 7)}`,
       })),
     [siteVisits],
   );
   const siteVisitsTotal = useMemo(() => siteVisits.reduce((a, r) => a + r.visitas, 0), [siteVisits]);
   const siteVisitsToday = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayCRM();
     return siteVisits.find((r) => r.dia === today)?.visitas ?? 0;
   }, [siteVisits]);
   const siteUniqueTotal = useMemo(() => {
@@ -108,11 +109,14 @@ export default function Dashboard() {
 
   const leadsTrend = useMemo(() => {
     const days: any[] = [];
+    const [y, m, dd] = todayCRM().split("-").map(Number);
     for (let i = 29; i >= 0; i--) {
-      const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - i);
-      days.push({ date: d.toISOString().slice(0,10), label: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }), novos: 0 });
+      // meio-dia UTC = 08h em Cuiabá: mesmo dia garantido para gerar a chave
+      const base = new Date(Date.UTC(y, m - 1, dd - i, 12));
+      const key = dayKeyCRM(base);
+      days.push({ date: key, label: `${key.slice(8, 10)}/${key.slice(5, 7)}`, novos: 0 });
     }
-    leads.forEach(l => { const k = new Date(l.created_at).toISOString().slice(0,10); const day = days.find(d => d.date === k); if (day) day.novos += 1; });
+    leads.forEach(l => { const k = dayKeyCRM(l.created_at); const day = days.find(d => d.date === k); if (day) day.novos += 1; });
     return days;
   }, [leads]);
 
