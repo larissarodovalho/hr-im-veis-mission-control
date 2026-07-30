@@ -6,6 +6,7 @@ export type MenuKey =
   | "dashboard"
   | "leads"
   | "contas"
+  | "oportunidades"
   | "imoveis"
   | "whatsapp"
   | "reunioes"
@@ -25,6 +26,7 @@ export const MENU_ITEMS: { key: MenuKey; label: string; group: "CRM" | "Administ
   { key: "dashboard", label: "Dashboard", group: "CRM" },
   { key: "leads", label: "Leads", group: "CRM" },
   { key: "contas", label: "Contas", group: "CRM" },
+  { key: "oportunidades", label: "Oportunidades", group: "CRM" },
   { key: "imoveis", label: "Imóveis", group: "CRM" },
   { key: "whatsapp", label: "WhatsApp", group: "CRM" },
   { key: "reunioes", label: "Reuniões", group: "CRM" },
@@ -55,7 +57,13 @@ export function defaultForRole(key: MenuKey, roles: AppRole[]): boolean {
 
   if (secretariaOnly) return key === "agenda" || key === "minha-conta";
   if (marketingOnly)
-    return key === "dashboard" || key === "imoveis" || key === "agenda" || key === "minha-conta";
+    return (
+      key === "dashboard" ||
+      key === "imoveis" ||
+      key === "oportunidades" ||
+      key === "agenda" ||
+      key === "minha-conta"
+    );
 
   // Admin/gestor see everything
   if (isAdmin || isGestor) return true;
