@@ -363,8 +363,13 @@ export default function Accounts() {
 
   const filtered = accounts.filter((a) => {
     if (lista !== "todos") {
-      const tags = (a.tags ?? []).map((t) => t.toLowerCase());
-      if (!tags.includes(lista)) return false;
+      if (categoriaDe(a) !== lista) return false;
+    }
+    if (etapaFilter !== "todos") {
+      const e = a.etapa_funil ?? "a_contatar";
+      if (etapaFilter === "legado") {
+        if (!isEtapaLegado(e)) return false;
+      } else if (e !== etapaFilter) return false;
     }
     const status = (a.status ?? "ativo") as Status;
     if (statusFilter !== "todos" && status !== statusFilter) return false;
@@ -473,7 +478,7 @@ export default function Accounts() {
         temperatura: tempInfo(a.temperatura)?.label ?? "",
         tags: (a.tags ?? []).join(", "),
         ramo: a.ramo_atividade ?? "",
-        etapa: a.etapa_funil ?? "",
+        etapa: etapaLabel(a.etapa_funil ?? "a_contatar") + (isEtapaLegado(a.etapa_funil) ? " (legado)" : ""),
         observacoes: a.observacoes ?? "",
         endereco: (a as any).endereco ?? "",
         valor_negocio: totalNeg || "",
