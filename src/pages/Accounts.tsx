@@ -301,10 +301,11 @@ export default function Accounts() {
     draftType !== typeFilter ||
     draftTemp !== tempFilter ||
     draftOwner !== ownerFilter ||
-    draftContact !== contactFilter;
+    draftContact !== contactFilter ||
+    draftEtapa !== etapaFilter;
 
   const syncFiltersToUrl = (vals: {
-    q: string; status: string; interesse: string; tipo: string; temp: string; responsavel: string; contato: string;
+    q: string; status: string; interesse: string; tipo: string; temp: string; responsavel: string; contato: string; etapa: string;
   }) => {
     const sp = new URLSearchParams(searchParams);
     const set = (key: string, value: string, def: string) => {
@@ -318,6 +319,7 @@ export default function Accounts() {
     set("temp", vals.temp, "todos");
     set("responsavel", vals.responsavel, "todos");
     set("contato", vals.contato, "todos");
+    set("etapa", vals.etapa, "todos");
     setSearchParams(sp, { replace: true });
   };
 
@@ -329,18 +331,19 @@ export default function Accounts() {
     setTempFilter(draftTemp);
     setOwnerFilter(draftOwner);
     setContactFilter(draftContact);
+    setEtapaFilter(draftEtapa);
     syncFiltersToUrl({
       q: draftSearch, status: draftStatus, interesse: draftInterest,
-      tipo: draftType, temp: draftTemp, responsavel: draftOwner, contato: draftContact,
+      tipo: draftType, temp: draftTemp, responsavel: draftOwner, contato: draftContact, etapa: draftEtapa,
     });
   };
 
   const clearFilters = () => {
     setDraftSearch(""); setDraftStatus("todos"); setDraftInterest("todos");
-    setDraftType("todas"); setDraftTemp("todos"); setDraftOwner("todos"); setDraftContact("todos");
+    setDraftType("todas"); setDraftTemp("todos"); setDraftOwner("todos"); setDraftContact("todos"); setDraftEtapa("todos");
     setSearch(""); setStatusFilter("todos"); setInterestFilter("todos");
-    setTypeFilter("todas"); setTempFilter("todos"); setOwnerFilter("todos"); setContactFilter("todos");
-    syncFiltersToUrl({ q: "", status: "todos", interesse: "todos", tipo: "todas", temp: "todos", responsavel: "todos", contato: "todos" });
+    setTypeFilter("todas"); setTempFilter("todos"); setOwnerFilter("todos"); setContactFilter("todos"); setEtapaFilter("todos");
+    syncFiltersToUrl({ q: "", status: "todos", interesse: "todos", tipo: "todas", temp: "todos", responsavel: "todos", contato: "todos", etapa: "todos" });
   };
 
   const CONTACT_LABELS: Record<string, string> = {
