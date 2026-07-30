@@ -210,6 +210,13 @@ function ContaCard({
                 </DropdownMenuItem>
               )}
 
+              {emContatoEstabelecido && onQualificar && (
+                <DropdownMenuItem onSelect={() => onQualificar(a.id)}>
+                  <HandCoins className="h-3.5 w-3.5 mr-2" />
+                  Qualificar e gerar oportunidade
+                </DropdownMenuItem>
+              )}
+
               {onChangeOwner && (
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>Responsável</DropdownMenuSubTrigger>
@@ -320,6 +327,56 @@ function ContaCard({
           </Badge>
         )}
       </div>
+
+      {emContatoEstabelecido && (
+        <div className="rounded-md border border-dashed p-2 space-y-1.5 bg-muted/20">
+          {opAtiva ? (
+            <>
+              <div className="flex items-center justify-between gap-1">
+                <Badge variant="outline" className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30 text-[10px]">
+                  <HandCoins className="h-3 w-3 mr-1" /> Oportunidade ativa
+                </Badge>
+                <Link
+                  to={`/crm/oportunidades?op=${opAtiva.id}`}
+                  onClick={stop}
+                  onPointerDown={stop}
+                  className="text-[10px] text-primary hover:underline flex items-center gap-0.5 shrink-0"
+                >
+                  Abrir <ExternalLink className="h-2.5 w-2.5" />
+                </Link>
+              </div>
+              <p className="text-[11px] leading-tight line-clamp-2">{opAtiva.titulo}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {estagioLabel(opAtiva.estagio)}
+                {opAtiva.valor_alvo ? ` · ${fmt(opAtiva.valor_alvo)}` : ""}
+                {opAtiva.corretor_id && ownerMap?.[opAtiva.corretor_id] ? ` · ${shortName(ownerMap[opAtiva.corretor_id])}` : ""}
+              </p>
+            </>
+          ) : qInfo ? (
+            <div className="flex items-center justify-between gap-1">
+              <Badge variant="outline" className={`${qInfo.badge} text-[10px]`}>
+                <HandCoins className="h-3 w-3 mr-1" /> {qInfo.label}
+              </Badge>
+              {qInfo.status === "pendente" && onQualificar && (
+                <button
+                  onPointerDown={stop}
+                  onClick={(e) => { stop(e); onQualificar(a.id); }}
+                  className="text-[10px] text-primary hover:underline shrink-0"
+                >
+                  Continuar
+                </button>
+              )}
+            </div>
+          ) : null}
+          {qInfo?.status === "oportunidade_futura" && a.proxima_acao_em && (
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <Clock className="h-2.5 w-2.5" />
+              Próxima ação: {format(new Date(a.proxima_acao_em), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+            </p>
+          )}
+        </div>
+      )}
+
       {total > 0 && <div className="text-xs font-medium">{fmt(total)}</div>}
     </Card>
   );
