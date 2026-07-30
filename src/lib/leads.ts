@@ -66,10 +66,11 @@ export const TIPO_ACOMPANHAMENTO: Record<TipoAcompanhamento, { label: string; em
 };
 
 // Sequência de tentativas da etapa "Em Contato" (registradas no histórico, não são colunas)
+// prazoHoras: vencimento em horas corridas a partir da entrada do lead no sistema
 export const TENTATIVA_SEQ = [
-  { ordem: 1, tipo: 'mensagem', label: 'Mensagem', titulo: '1ª tentativa · Mensagem' },
-  { ordem: 2, tipo: 'audio', label: 'Áudio', titulo: '2ª tentativa · Áudio' },
-  { ordem: 3, tipo: 'ligacao', label: 'Ligação', titulo: '3ª tentativa · Ligação' },
+  { ordem: 1, tipo: 'mensagem', label: 'Mensagem', titulo: '1ª tentativa · Mensagem', prazoHoras: 0 },
+  { ordem: 2, tipo: 'audio', label: 'Áudio', titulo: '2ª tentativa · Áudio', prazoHoras: 24 },
+  { ordem: 3, tipo: 'ligacao', label: 'Ligação', titulo: '3ª tentativa · Ligação', prazoHoras: 48 },
 ] as const;
 
 export const TENTATIVA_TIPOS: string[] = TENTATIVA_SEQ.map((t) => t.tipo);
@@ -86,6 +87,80 @@ export const TENTATIVA_RESULTADOS: { id: string; label: string }[] = [
   { id: 'caixa_postal', label: 'Caixa postal' },
   { id: 'numero_invalido', label: 'Número inválido' },
 ];
+
+// ===== Prazos das tentativas de contato (ancorados na entrada do lead) =====
+
+export type TentativaStatus = 'feita' | 'vencida' | 'pendente';
+export type TentativaTone = 'success' | 'warning' | 'danger' | 'muted';
+
+export const TENTATIVA_TONE_CLASS: Record<TentativaTone, string> = {
+  success: 'bg-success/15 text-success border-success/30',
+  warning: 'bg-warning/15 text-warning border-warning/30',
+  danger: 'bg-danger/15 text-danger border-danger/30',
+  muted: 'bg-muted text-muted-foreground border-border',
+};
+
+export const TENTATIVA_EMOJI: Record<string, string> = {
+  mensagem: '💬',
+  audio: '🎧',
+  ligacao: '📞',
+};
+
+type LeadPrazoRef = { data_entrada?: string | null; created_at?: string | null };
+
+function tentativaBaseMs(lead: LeadPrazoRef): number | null {
+  const base = lead.data_entrada ?? lead.created_at;
+  if (!base) return null;
+  const t = new Date(base).getTime();
+  return Number.isNaN(t) ? null : t;
+}
+
+/** Data/hora de vencimento da tentativa idx (0-based): entrada do lead + prazoHoras. */
+export function tentativaPrazo(lead: LeadPrazoRef, idx: number): Date | null {
+  const base = tentativaBaseMs(lead);
+  if (base === null) return null;
+  const item = TENTATIVA_SEQ[Math.min(idx, TENTATIVA_SEQ.length - 1)];
+  return new Date(base + item.prazoHoras * 3600000);
+}
+
+export function tentativaStatus(lead: LeadPrazoRef, tentativasFeitas: number, idx: number): TentativaStatus {
+  if (tentativasFeitas > idx) return 'feita';
+  const prazo = tentativaPrazo(lead, idx);
+  if (prazo && Date.now() > prazo.getTime()) return 'vencida';
+  return 'pendente';
+}
+
+/** Duração amigável: "45min", "5h", "2d 3h". */
+export function fmtDuracao(ms: number): string {
+  const min = Math.max(1, Math.round(ms / 60000));
+  if (min < 60) return `${min}min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  const restH = h % 24;
+  return restH ? `${d}d ${restH}h` : `${d}d`;
+}
+
+/** Data/hora exata do prazo: "31/07 às 19:00". */
+export function prazoDataLabel(prazo: Date | null): string {
+  if (!prazo) return '—';
+  return (
+    prazo.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) +
+    ' às ' +
+    prazo.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  );
+}
+
+/** Contagem regressiva de uma tentativa ainda não registrada. */
+export function prazoCountdown(lead: LeadPrazoRef, idx: number): { texto: string; tone: TentativaTone } {
+  const prazo = tentativaPrazo(lead, idx);
+  if (!prazo) return { texto: 'sem prazo', tone: 'muted' };
+  const diff = prazo.getTime() - Date.now();
+  if (diff > 0) return { texto: `vence em ${fmtDuracao(diff)}`, tone: 'warning' };
+  const atraso = -diff;
+  if (atraso < 3600000) return { texto: 'fazer agora', tone: 'warning' };
+  return { texto: `atrasada há ${fmtDuracao(atraso)}`, tone: 'danger' };
+}
 
 // Motivos de desclassificação (conta desclassificada)
 export const MOTIVOS_DESCLASSIFICACAO = [
