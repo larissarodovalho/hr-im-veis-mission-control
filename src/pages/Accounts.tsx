@@ -22,11 +22,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import * as XLSX from "xlsx";
 import NovaContaDialog from "@/components/contas/NovaContaDialog";
 import ImportarContasDialog from "@/components/contas/ImportarContasDialog";
-import ContasKanban from "@/components/contas/ContasKanban";
+import ContasKanban, { OpAtivaResumo } from "@/components/contas/ContasKanban";
 import ContaCancelarDialog, { CancelamentoData } from "@/components/contas/ContaCancelarDialog";
 import AlterarCategoriaDialog, { CategoriaData } from "@/components/contas/AlterarCategoriaDialog";
-import { EtapaFunil, ETAPAS, categoriaDe, isEtapaLegado, etapaLabel, CATEGORIA_LABEL } from "@/lib/contasFunil";
-import { LayoutGrid, List as ListIcon } from "lucide-react";
+import QualificacaoOportunidadeDialog from "@/components/oportunidades/QualificacaoOportunidadeDialog";
+import { EtapaFunil, ETAPAS, categoriaDe, isEtapaLegado, etapaLabel, CATEGORIA_LABEL, qualificacaoInfo } from "@/lib/contasFunil";
+import { estagioLabel } from "@/lib/oportunidadesFunil";
+import { LayoutGrid, List as ListIcon, HandCoins } from "lucide-react";
 import { TEMPERATURAS, tempInfo } from "@/lib/contasTemperatura";
 
 type Operation = "compra" | "venda" | "arrendamento" | "outro";
@@ -57,6 +59,9 @@ type Account = {
   data_entrada_carteira?: string | null;
   destino_comercial?: string | null;
   motivo_cancelamento?: string | null;
+  lead_id_origem?: string | null;
+  qualificacao_status?: string | null;
+  proxima_acao_em?: string | null;
 };
 
 const formatDoc = (doc: string | null, tipo: string | null) => {
@@ -197,6 +202,8 @@ export default function Accounts() {
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [cancelTarget, setCancelTarget] = useState<Account | null>(null);
+  const [qualifTarget, setQualifTarget] = useState<Account | null>(null);
+  const [opAtivas, setOpAtivas] = useState<Record<string, OpAtivaResumo>>({});
   const [catTarget, setCatTarget] = useState<Account | null>(null);
 
   const interestLabel = (v: string | null | undefined) => {
@@ -242,7 +249,7 @@ export default function Accounts() {
     while (true) {
       const { data, error } = await supabase
         .from("contas")
-        .select("id, nome, email, telefone, documento, tipo, responsavel_id, created_by, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil, temperatura, ramo_atividade, categoria, origem, data_entrada_carteira, destino_comercial, motivo_cancelamento")
+        .select("id, nome, email, telefone, documento, tipo, responsavel_id, created_by, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil, temperatura, ramo_atividade, categoria, origem, data_entrada_carteira, destino_comercial, motivo_cancelamento, lead_id_origem, qualificacao_status, proxima_acao_em")
         .order("nome", { ascending: true })
         .range(from, from + PAGE - 1);
       if (error) throw error;
@@ -257,10 +264,15 @@ export default function Accounts() {
   const load = async () => {
     setLoading(true);
     try {
-      const [accs, { data: props }, { data: profs }] = await Promise.all([
+      const [accs, { data: props }, { data: profs }, { data: opsData }] = await Promise.all([
         fetchAllContas(),
         supabase.from("conta_propriedades" as any).select("*"),
         supabase.from("profiles").select("user_id, nome"),
+        supabase
+          .from("oportunidades")
+          .select("id,conta_id,titulo,estagio,valor_alvo,corretor_id")
+          .in("estagio", ["nova", "buscando", "visita", "proposta"])
+          .not("conta_id", "is", null),
       ]);
       setAccounts((accs ?? []) as Account[]);
       setProperties(((props as any) ?? []) as Property[]);
@@ -275,6 +287,11 @@ export default function Accounts() {
       list.sort((a, b) => a.nome.localeCompare(b.nome));
       setOwnerMap(map);
       setOwners(list);
+      const opMap: Record<string, OpAtivaResumo> = {};
+      ((opsData ?? []) as any[]).forEach((o) => {
+        if (o.conta_id && !opMap[o.conta_id]) opMap[o.conta_id] = o;
+      });
+      setOpAtivas(opMap);
     } catch (e: any) {
       toast.error(e?.message ?? "Erro ao carregar contas");
     } finally {
@@ -290,6 +307,7 @@ export default function Accounts() {
       .on("postgres_changes", { event: "*", schema: "public", table: "contas" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "conta_propriedades" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "interacoes" }, fetchLastContacts)
+      .on("postgres_changes", { event: "*", schema: "public", table: "oportunidades" }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
@@ -560,12 +578,26 @@ export default function Accounts() {
       patch.cancelado_em = null;
       patch.cancelado_por = null;
     }
+    // Entrando em Contato estabelecido: inicia a qualificação (pendente),
+    // exceto se já houver oportunidade ativa vinculada
+    if (etapa === "contato_estabelecido" && conta?.qualificacao_status !== "oportunidade_ativa") {
+      patch.qualificacao_status = "pendente";
+    }
     setAccounts((cur) => cur.map((a) => (a.id === id ? ({ ...a, ...patch } as Account) : a)));
     const { error } = await supabase.from("contas").update(patch as any).eq("id", id);
     if (error) {
       setAccounts(prev);
       toast.error("Não foi possível mover: " + error.message);
+      return;
     }
+    if (etapa === "contato_estabelecido" && conta) {
+      setQualifTarget({ ...conta, ...patch } as Account);
+    }
+  };
+
+  const abrirQualificacao = (id: string) => {
+    const conta = accounts.find((a) => a.id === id);
+    if (conta) setQualifTarget(conta);
   };
 
   const confirmarCancelamento = async ({ motivo, agradecimento }: CancelamentoData) => {
@@ -821,6 +853,12 @@ export default function Accounts() {
         categoriaAtual={catTarget ? categoriaDe(catTarget) : null}
         onConfirm={confirmarCategoria}
       />
+      <QualificacaoOportunidadeDialog
+        open={!!qualifTarget}
+        onOpenChange={(o) => { if (!o) setQualifTarget(null); }}
+        conta={qualifTarget}
+        onDone={() => load()}
+      />
 
       <Dialog open={exportOpen} onOpenChange={setExportOpen}>
         <DialogContent className="max-w-lg">
@@ -892,7 +930,7 @@ export default function Accounts() {
               className="hidden md:block overflow-hidden"
               style={{ height: "calc(100dvh - var(--kanban-top, 260px) - 8px)" }}
             >
-              <ContasKanban accounts={filtered.filter((a) => !isEtapaLegado(a.etapa_funil)) as any} propsByAccount={propsByAccount} onMoveStage={moveStage} onChangeOwner={changeOwner} onChangeTemperatura={changeTemperatura} onChangeCategoria={(id) => setCatTarget(accounts.find((a) => a.id === id) ?? null)} lista={lista} lastContactMap={lastContactMap} ownerMap={ownerMap} owners={owners} />
+              <ContasKanban accounts={filtered.filter((a) => !isEtapaLegado(a.etapa_funil)) as any} propsByAccount={propsByAccount} onMoveStage={moveStage} onChangeOwner={changeOwner} onChangeTemperatura={changeTemperatura} onChangeCategoria={(id) => setCatTarget(accounts.find((a) => a.id === id) ?? null)} onQualificar={abrirQualificacao} opAtivaPorConta={opAtivas} lista={lista} lastContactMap={lastContactMap} ownerMap={ownerMap} owners={owners} />
             </div>
           </>
         )
@@ -925,6 +963,24 @@ export default function Accounts() {
                         const t = tempInfo(a.temperatura);
                         return t ? (
                           <Badge variant="outline" className={`${t.badge} text-[10px]`}>{t.emoji} {t.label}</Badge>
+                        ) : null;
+                      })()}
+                      {a.etapa_funil === "contato_estabelecido" && (() => {
+                        const op = opAtivas[a.id];
+                        if (op) {
+                          return (
+                            <Link to={`/crm/oportunidades?op=${op.id}`}>
+                              <Badge variant="outline" className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30 text-[10px] hover:bg-emerald-500/25">
+                                <HandCoins className="h-3 w-3 mr-1" /> Oportunidade: {estagioLabel(op.estagio)}
+                              </Badge>
+                            </Link>
+                          );
+                        }
+                        const qi = qualificacaoInfo(a.qualificacao_status);
+                        return qi ? (
+                          <Badge variant="outline" className={`${qi.badge} text-[10px]`}>
+                            <HandCoins className="h-3 w-3 mr-1" /> {qi.label}
+                          </Badge>
                         ) : null;
                       })()}
                     </div>
@@ -1024,6 +1080,24 @@ export default function Accounts() {
                             const t = tempInfo(a.temperatura);
                             return t ? (
                               <Badge variant="outline" className={`${t.badge} text-[10px]`}>{t.emoji} {t.label}</Badge>
+                            ) : null;
+                          })()}
+                          {a.etapa_funil === "contato_estabelecido" && (() => {
+                            const op = opAtivas[a.id];
+                            if (op) {
+                              return (
+                                <Link to={`/crm/oportunidades?op=${op.id}`}>
+                                  <Badge variant="outline" className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30 text-[10px] hover:bg-emerald-500/25">
+                                    <HandCoins className="h-3 w-3 mr-1" /> Oportunidade: {estagioLabel(op.estagio)}
+                                  </Badge>
+                                </Link>
+                              );
+                            }
+                            const qi = qualificacaoInfo(a.qualificacao_status);
+                            return qi ? (
+                              <Badge variant="outline" className={`${qi.badge} text-[10px]`}>
+                                <HandCoins className="h-3 w-3 mr-1" /> {qi.label}
+                              </Badge>
                             ) : null;
                           })()}
                         </div>

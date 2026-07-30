@@ -611,6 +611,10 @@ export type Database = {
           observacoes: string | null
           origem: string | null
           parceiro_origem_id: string | null
+          proxima_acao_em: string | null
+          qualificacao_em: string | null
+          qualificacao_por: string | null
+          qualificacao_status: string | null
           ramo_atividade: string | null
           responsavel_id: string | null
           status: string
@@ -643,6 +647,10 @@ export type Database = {
           observacoes?: string | null
           origem?: string | null
           parceiro_origem_id?: string | null
+          proxima_acao_em?: string | null
+          qualificacao_em?: string | null
+          qualificacao_por?: string | null
+          qualificacao_status?: string | null
           ramo_atividade?: string | null
           responsavel_id?: string | null
           status?: string
@@ -675,6 +683,10 @@ export type Database = {
           observacoes?: string | null
           origem?: string | null
           parceiro_origem_id?: string | null
+          proxima_acao_em?: string | null
+          qualificacao_em?: string | null
+          qualificacao_por?: string | null
+          qualificacao_status?: string | null
           ramo_atividade?: string | null
           responsavel_id?: string | null
           status?: string
@@ -2121,6 +2133,7 @@ export type Database = {
           bairro: string | null
           caracteristicas_indispensaveis: string | null
           categoria_origem: string | null
+          chave_idempotencia: string | null
           cidade: string | null
           cliente_id: string
           cliente_tipo: string
@@ -2146,6 +2159,7 @@ export type Database = {
           obs_perda: string | null
           observacoes: string | null
           origem: string | null
+          possibilidade_financiamento: boolean
           possui_permuta: boolean
           prazo_pretendido: string | null
           prioridade: string
@@ -2161,6 +2175,7 @@ export type Database = {
           bairro?: string | null
           caracteristicas_indispensaveis?: string | null
           categoria_origem?: string | null
+          chave_idempotencia?: string | null
           cidade?: string | null
           cliente_id: string
           cliente_tipo: string
@@ -2186,6 +2201,7 @@ export type Database = {
           obs_perda?: string | null
           observacoes?: string | null
           origem?: string | null
+          possibilidade_financiamento?: boolean
           possui_permuta?: boolean
           prazo_pretendido?: string | null
           prioridade?: string
@@ -2201,6 +2217,7 @@ export type Database = {
           bairro?: string | null
           caracteristicas_indispensaveis?: string | null
           categoria_origem?: string | null
+          chave_idempotencia?: string | null
           cidade?: string | null
           cliente_id?: string
           cliente_tipo?: string
@@ -2226,6 +2243,7 @@ export type Database = {
           obs_perda?: string | null
           observacoes?: string | null
           origem?: string | null
+          possibilidade_financiamento?: boolean
           possui_permuta?: boolean
           prazo_pretendido?: string | null
           prioridade?: string
@@ -3321,6 +3339,10 @@ export type Database = {
         }[]
       }
       conta_tem_captacao: { Args: { _conta_id: string }; Returns: boolean }
+      criar_oportunidade_qualificada: {
+        Args: { p_chave: string; p_conta_id: string; p_payload: Json }
+        Returns: Json
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean

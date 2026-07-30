@@ -23,9 +23,10 @@ import {
   DropdownMenuSubContent,
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
-import { ETAPAS, EtapaFunil, categoriaDe, CATEGORIA_LABEL } from "@/lib/contasFunil";
-import { Handshake, Target, User, MoreVertical, Check, UserX, Thermometer, PencilLine, ArrowLeftRight, Megaphone, Clock } from "lucide-react";
+import { ETAPAS, EtapaFunil, categoriaDe, CATEGORIA_LABEL, qualificacaoInfo } from "@/lib/contasFunil";
+import { Handshake, Target, User, MoreVertical, Check, UserX, Thermometer, PencilLine, ArrowLeftRight, Megaphone, Clock, HandCoins, ExternalLink } from "lucide-react";
 import { tempInfo, TEMPERATURAS } from "@/lib/contasTemperatura";
+import { estagioLabel } from "@/lib/oportunidadesFunil";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -43,9 +44,19 @@ type Account = {
   categoria?: string | null;
   tags?: string[] | null;
   origem?: string | null;
+  qualificacao_status?: string | null;
+  proxima_acao_em?: string | null;
 };
 
 type Property = { conta_id: string; valor_negocio: number | null };
+
+export type OpAtivaResumo = {
+  id: string;
+  titulo: string;
+  estagio: string;
+  valor_alvo: number | null;
+  corretor_id: string | null;
+};
 
 interface Props {
   accounts: Account[];
@@ -54,6 +65,8 @@ interface Props {
   onChangeOwner?: (contaId: string, userId: string | null) => void;
   onChangeTemperatura?: (contaId: string, temp: string | null) => void;
   onChangeCategoria?: (contaId: string) => void;
+  onQualificar?: (contaId: string) => void;
+  opAtivaPorConta?: Record<string, OpAtivaResumo>;
   lista?: "carteira" | "marketing";
   lastContactMap?: Record<string, string>;
   ownerMap?: Record<string, string>;
@@ -99,6 +112,9 @@ function ContaCard({
   onChangeOwner,
   onChangeTemperatura,
   onChangeCategoria,
+  onQualificar,
+  opAtiva,
+  ownerMap,
   lista,
   lastContact,
 }: {
@@ -111,6 +127,9 @@ function ContaCard({
   onChangeOwner?: (id: string, userId: string | null) => void;
   onChangeTemperatura?: (id: string, temp: string | null) => void;
   onChangeCategoria?: (id: string) => void;
+  onQualificar?: (id: string) => void;
+  opAtiva?: OpAtivaResumo;
+  ownerMap?: Record<string, string>;
   lista?: "carteira" | "marketing";
   lastContact?: string | null;
 }) {
@@ -123,6 +142,8 @@ function ContaCard({
   const currentEtapa = (a.etapa_funil ?? "a_contatar") as EtapaFunil;
   const categoria = categoriaDe(a);
   const outraLista = lista && categoria && categoria !== lista ? CATEGORIA_LABEL[categoria] : null;
+  const emContatoEstabelecido = currentEtapa === "contato_estabelecido";
+  const qInfo = emContatoEstabelecido ? qualificacaoInfo(a.qualificacao_status) : null;
 
   return (
     <Card
@@ -186,6 +207,13 @@ function ContaCard({
                 <DropdownMenuItem onSelect={() => onChangeCategoria(a.id)}>
                   <ArrowLeftRight className="h-3.5 w-3.5 mr-2" />
                   Alterar categoria
+                </DropdownMenuItem>
+              )}
+
+              {emContatoEstabelecido && onQualificar && (
+                <DropdownMenuItem onSelect={() => onQualificar(a.id)}>
+                  <HandCoins className="h-3.5 w-3.5 mr-2" />
+                  Qualificar e gerar oportunidade
                 </DropdownMenuItem>
               )}
 
@@ -299,6 +327,56 @@ function ContaCard({
           </Badge>
         )}
       </div>
+
+      {emContatoEstabelecido && (
+        <div className="rounded-md border border-dashed p-2 space-y-1.5 bg-muted/20">
+          {opAtiva ? (
+            <>
+              <div className="flex items-center justify-between gap-1">
+                <Badge variant="outline" className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30 text-[10px]">
+                  <HandCoins className="h-3 w-3 mr-1" /> Oportunidade ativa
+                </Badge>
+                <Link
+                  to={`/crm/oportunidades?op=${opAtiva.id}`}
+                  onClick={stop}
+                  onPointerDown={stop}
+                  className="text-[10px] text-primary hover:underline flex items-center gap-0.5 shrink-0"
+                >
+                  Abrir <ExternalLink className="h-2.5 w-2.5" />
+                </Link>
+              </div>
+              <p className="text-[11px] leading-tight line-clamp-2">{opAtiva.titulo}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {estagioLabel(opAtiva.estagio)}
+                {opAtiva.valor_alvo ? ` · ${fmt(opAtiva.valor_alvo)}` : ""}
+                {opAtiva.corretor_id && ownerMap?.[opAtiva.corretor_id] ? ` · ${shortName(ownerMap[opAtiva.corretor_id])}` : ""}
+              </p>
+            </>
+          ) : qInfo ? (
+            <div className="flex items-center justify-between gap-1">
+              <Badge variant="outline" className={`${qInfo.badge} text-[10px]`}>
+                <HandCoins className="h-3 w-3 mr-1" /> {qInfo.label}
+              </Badge>
+              {qInfo.status === "pendente" && onQualificar && (
+                <button
+                  onPointerDown={stop}
+                  onClick={(e) => { stop(e); onQualificar(a.id); }}
+                  className="text-[10px] text-primary hover:underline shrink-0"
+                >
+                  Continuar
+                </button>
+              )}
+            </div>
+          ) : null}
+          {qInfo?.status === "oportunidade_futura" && a.proxima_acao_em && (
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <Clock className="h-2.5 w-2.5" />
+              Próxima ação: {format(new Date(a.proxima_acao_em), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+            </p>
+          )}
+        </div>
+      )}
+
       {total > 0 && <div className="text-xs font-medium">{fmt(total)}</div>}
     </Card>
   );
@@ -336,7 +414,7 @@ function Column({
   );
 }
 
-export default function ContasKanban({ accounts, propsByAccount, onMoveStage, onChangeOwner, onChangeTemperatura, onChangeCategoria, lista, lastContactMap, ownerMap, owners }: Props) {
+export default function ContasKanban({ accounts, propsByAccount, onMoveStage, onChangeOwner, onChangeTemperatura, onChangeCategoria, onQualificar, opAtivaPorConta, lista, lastContactMap, ownerMap, owners }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const onDragEnd = (e: DragEndEvent) => {
@@ -374,6 +452,9 @@ export default function ContasKanban({ accounts, propsByAccount, onMoveStage, on
                     onChangeOwner={onChangeOwner}
                     onChangeTemperatura={onChangeTemperatura}
                     onChangeCategoria={onChangeCategoria}
+                    onQualificar={onQualificar}
+                    opAtiva={opAtivaPorConta?.[a.id]}
+                    ownerMap={ownerMap}
                     lista={lista}
                     lastContact={lastContactMap?.[a.id]}
                   />
