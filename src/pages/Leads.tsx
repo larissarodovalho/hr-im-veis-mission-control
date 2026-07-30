@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
-import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature } from "@/lib/leads";
+import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature, TIPO_ACOMPANHAMENTO, TipoAcompanhamento, isLegacyStage, stageLabel, TENTATIVA_TIPOS } from "@/lib/leads";
 import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2, User as UserIcon, PencilLine } from "lucide-react";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ type Lead = {
   origem: string | null; etapa_funil: Stage; imovel_interesse: string | null; regiao: string | null;
   valor_estimado: number | null; ultima_interacao: string | null; created_at: string;
   temperatura: Temperature | null; tags: string[] | null; corretor_id: string | null; created_by: string | null;
+  tipo_acompanhamento: TipoAcompanhamento | null;
 };
 
 const isUrgent = (l: { tags?: string[] | null; etapa_funil: Stage }) =>
@@ -36,7 +37,9 @@ export default function Leads() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [convertedIds, setConvertedIds] = useState<Set<string>>(new Set());
   const [brokers, setBrokers] = useState<Record<string, string>>({});
+  const [tentativasCount, setTentativasCount] = useState<Record<string, number>>({});
   const [view, setView] = useState<"kanban" | "list">("kanban");
+  const [listScope, setListScope] = useState<"todas" | "funil" | "legados">("todas");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"recent" | "idle">("recent");
   const [needsNurture, setNeedsNurture] = useState(false);
@@ -53,9 +56,20 @@ export default function Leads() {
 
   const load = async () => {
     const { data } = await supabase.from("leads").select("*").order("created_at", { ascending: false });
-    setLeads((data as any) ?? []);
+    const rows = (data as any as Lead[]) ?? [];
+    setLeads(rows);
     const { data: accs } = await supabase.from("contas").select("lead_id_origem").not("lead_id_origem", "is", null);
     setConvertedIds(new Set((accs ?? []).map((a: any) => a.lead_id_origem)));
+    // Contagem de tentativas (mensagem/áudio/ligação) dos leads em "Em Contato"
+    const emContatoIds = rows.filter(l => l.etapa_funil === "Em Contato").map(l => l.id);
+    if (emContatoIds.length) {
+      const { data: ints } = await supabase.from("interacoes").select("lead_id").in("lead_id", emContatoIds).in("tipo", TENTATIVA_TIPOS);
+      const counts: Record<string, number> = {};
+      ((ints ?? []) as any[]).forEach(r => { counts[r.lead_id] = (counts[r.lead_id] ?? 0) + 1; });
+      setTentativasCount(counts);
+    } else {
+      setTentativasCount({});
+    }
   };
 
   useEffect(() => {
