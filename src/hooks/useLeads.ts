@@ -19,6 +19,8 @@ export interface LeadDB {
   corretor_id: string | null;
   data_entrada: string;
   ultima_interacao: string | null;
+  tipo_acompanhamento: "ia" | "manual" | "corretor" | null;
+  motivo_desclassificacao: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;

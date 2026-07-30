@@ -102,6 +102,15 @@ async function processLeadgen(leadgenId: string, formId: string, pageId: string)
     `Leadgen ID: ${leadgenId}`,
   ].filter(Boolean);
 
+  // Etapas de acompanhamento não existem mais como colunas: entram em "Em Contato"
+  // com o tipo de acompanhamento identificado.
+  const etapaInicial = mapping?.etapa_funil_inicial || "Novo Lead";
+  const acompRemap: Record<string, string> = {
+    "IA de acompanhamento": "ia",
+    "Manual de acompanhamento": "manual",
+  };
+  const etapaFinal = acompRemap[etapaInicial] ? "Em Contato" : etapaInicial;
+
   const { data: inserted, error: insErr } = await admin
     .from("leads")
     .insert({
@@ -110,7 +119,8 @@ async function processLeadgen(leadgenId: string, formId: string, pageId: string)
       telefone: mapped.telefone,
       regiao: mapped.cidade,
       origem: "meta_ads",
-      etapa_funil: mapping?.etapa_funil_inicial || "Novo Lead",
+      etapa_funil: etapaFinal,
+      tipo_acompanhamento: acompRemap[etapaInicial] ?? null,
       tags: mapping?.tags ?? null,
       corretor_id: mapping?.corretor_responsavel_id ?? null,
       observacoes: observacoesParts.join("\n"),

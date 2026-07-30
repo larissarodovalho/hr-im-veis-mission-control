@@ -113,8 +113,8 @@ Deno.serve(async (req) => {
       created_by: userRes.user.id,
     });
 
-    // Atualiza última interação
-    await supabase.from("leads").update({ ultima_interacao: new Date().toISOString() }).eq("id", lead.id);
+    // Atualiza última interação e marca acompanhamento por IA
+    await supabase.from("leads").update({ ultima_interacao: new Date().toISOString(), tipo_acompanhamento: "ia" }).eq("id", lead.id);
 
     return new Response(JSON.stringify({ ok: sendOk, message: messageText, error: sendError }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
