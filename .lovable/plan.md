@@ -1,52 +1,35 @@
-# Cronômetro de prazos nas tentativas de contato (aba Leads)
+# Check de pontualidade nas tentativas de contato (Leads)
 
-## Objetivo
-Exibir prazos exatos (data/hora) e contagem regressiva para a sequência de tentativas da etapa **Em Contato**, ancorados na **entrada do lead no sistema** (`data_entrada`):
+Hoje cada tentativa (mensagem na entrada, áudio em +24h, ligação em +48h) vira uma linha em `interacoes` com `created_at` no momento do registro, mas nada registra se o atendente cumpriu o cronograma. Vamos classificar cada tentativa feita como **adiantada**, **no prazo** ou **atrasada**, gravar isso no banco e exibir o check no card de tentativas e no histórico.
 
-1. **1ª tentativa · Mensagem** — vence imediatamente na entrada do lead
-2. **2ª tentativa · Áudio** — vence 24h após a entrada
-3. **3ª tentativa · Ligação** — vence 48h após a entrada
+## Régua de pontualidade (conforme sua escolha)
 
-Tentativa que passar do prazo sem registro recebe **apenas destaque visual** (vermelho, "atrasada há Xh"). Sem tarefas automáticas, sem e-mails.
+Comparando a data/hora do registro com o vencimento da tentativa:
 
-## Estado atual (verificado)
-- `TENTATIVA_SEQ` em `src/lib/leads.ts` define a sequência mensagem → áudio → ligação, **sem prazos**.
-- Card "Tentativas de contato" em `src/pages/LeadDetail.tsx` (linhas 751-784) mostra só chips de feita/não feita e contador "X de 3".
-- Card do Kanban em `src/pages/Leads.tsx` (linhas 317-321) mostra só o badge "📞 Tentativas: X de 3".
-- O funil já carrega a contagem de tentativas por lead (`tentativasCount`) — dado suficiente para saber qual é a próxima tentativa sem novas queries.
+- **✓ No prazo** — registrada até 1h após o vencimento (ex.: áudio vencia 14h → registrar até 15h conta como no prazo)
+- **Adiantada** — registrada mais de 1h antes do vencimento (vale para áudio/ligação; mostra "Xh antes do prazo")
+- **Atrasada** — registrada mais de 1h após o vencimento (mostra "Xh de atraso")
 
-## Mudanças
+## Passos
 
-### 1. `src/lib/leads.ts` — lógica central de prazos
-- Adicionar `prazoHoras` a cada item de `TENTATIVA_SEQ`: mensagem = 0, áudio = 24, ligação = 48.
-- Novas funções:
-  - `tentativaPrazo(lead, ordem)`: calcula a data/hora de vencimento = `data_entrada` (fallback `created_at`) + prazoHoras.
-  - `tentativaStatus(lead, tentativasFeitas, idx)`: retorna `feita` | `vencida` (passou do prazo, não registrada) | `disponivel` (dentro do prazo) | `futura` (ainda não chegou a hora).
-  - Formatadores: `prazoLabel` ("vence em 5h", "atrasada há 3h", "disponível a partir de 31/07 19:00") e `prazoColor` (verde/âmbar/vermelho/cinza, usando tokens semânticos existentes: success/warning/danger/muted).
+1. **Migration no banco** (`interacoes`)
+   - Nova coluna `pontualidade TEXT` (valores: `adiantada`, `no_prazo`, `atrasada`; nula para interações que não são tentativa).
+   - Backfill: para todas as interações de tentativa já existentes (tipo `mensagem`/`audio`/`ligacao` ligadas a lead), calcular a pontualidade retroativamente a partir de `created_at` da interação vs. entrada do lead + prazo da tentativa.
 
-### 2. `src/pages/LeadDetail.tsx` — card "Tentativas de contato"
-- Cada chip da sequência passa a exibir: status (feita ✓), **data/hora exata do vencimento** (ex.: "31/07 às 19:00") e contagem regressiva contextual.
-- A próxima tentativa pendente fica destacada (âmbar "vence em Xh" / vermelho pulsante "atrasada há Xh").
-- Tentativas futuras mostram "disponível a partir de …" em cinza.
-- O botão "Registrar tentativa" continua abrindo o modal já existente; nenhuma mudança no fluxo de registro.
+2. **`src/lib/leads.ts`**
+   - Adicionar metadados de pontualidade (label, emoji, cor) e o helper `tentativaPontualidade(prazo, feitaEm)` que aplica a régua acima e retorna também o detalhe ("2h de atraso", "5h antes do prazo").
 
-### 3. `src/pages/Leads.tsx` — cards do Kanban (coluna Em Contato)
-- Substituir o badge "📞 Tentativas: X de 3" por um badge dinâmico da **próxima tentativa**:
-  - "💬 Mensagem: vence em 2h" (âmbar)
-  - "🎧 Áudio: atrasada há 6h" (vermelho)
-  - Quando as 3 estiverem feitas, manter o contador neutro atual.
-- Sem novas queries: usa `tentativasCount` já carregado + `data_entrada` do card.
+3. **`src/pages/LeadDetail.tsx`**
+   - No `registerTentativa`: calcular a pontualidade no momento do registro e gravar o campo `pontualidade` junto da interação.
+   - No card **Tentativas de contato**: cada tentativa já feita passa a exibir o selo — verde "✓ no prazo", âmbar "adiantada · Xh antes", vermelho "atrasada · há X" (com tooltip mostrando data/hora do registro e do vencimento).
+   - No **histórico de interações**: a linha da tentativa ganha o mesmo selo quando `pontualidade` estiver presente.
 
-## Regras definidas
-- Marco inicial: **entrada do lead no sistema** (`data_entrada`, fallback `created_at`).
-- Horas corridas (24h/48h exatas), sem lógica de horário comercial.
-- Atraso = somente destaque visual. Nenhuma notificação, tarefa ou automação.
+4. **`src/components/contas/ContaInteracoesTimeline.tsx`**
+   - Como o histórico migra do lead para a conta na conversão, exibir o mesmo selo na timeline da conta (visível também depois de virar conta).
 
 ## Detalhes técnicos
-- **100% frontend**: nenhuma migração de banco, nenhuma mudança em RLS, edge functions ou tabelas.
-- Arquivos tocados: `src/lib/leads.ts`, `src/pages/LeadDetail.tsx`, `src/pages/Leads.tsx`.
-- Cálculo com `date-fns` (já usado no projeto) e re-render natural dos badges (sem timers de segundo a segundo; precisão de horas é suficiente para a operação).
-- Cores via tokens semânticos (`bg-success/15`, `bg-warning/15`, `bg-danger/15`, `bg-muted`) mantendo o padrão visual dos badges existentes.
 
-## Verificação
-- Checar um lead real em "Em Contato" no preview: confirmar datas/hora de vencimento corretas a partir de `data_entrada`, destaque vermelho em tentativa vencida e badge correto no Kanban.
+- Ordem: migration primeiro (você aprova), depois o código (os tipos do banco são regenerados automaticamente após a migration).
+- Sem mudança de RLS/permissões — só coluna nova em tabela existente.
+- Funciona retroativamente: tentativas antigas já ganham o selo via backfill.
+- Como fica gravado no banco, abre caminho para um futuro relatório de pontualidade por corretor (fora deste escopo).

@@ -17,6 +17,7 @@ import {
   isLegacyStage, stageLabel, TENTATIVA_SEQ, TENTATIVA_TIPOS, TENTATIVA_RESULTADOS,
   INTERACAO_CANAIS, MOTIVOS_DESCLASSIFICACAO,
   tentativaStatus, tentativaPrazo, prazoDataLabel, prazoCountdown, TENTATIVA_TONE_CLASS,
+  tentativaPontualidade, PONTUALIDADE_INFO, Pontualidade,
 } from "@/lib/leads";
 import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Plus, Building2, FileSignature, Pencil, PhoneCall, CheckCircle2, PhoneOff, XCircle, Check } from "lucide-react";
 import EntityDocumentsTab from "@/components/EntityDocumentsTab";
@@ -166,17 +167,20 @@ export default function LeadDetail() {
   const registerTentativa = async () => {
     setSavingTent(true);
     const seqItem = TENTATIVA_SEQ.find(t => t.tipo === tentForm.tipo);
+    const seqIdx = TENTATIVA_SEQ.findIndex(t => t.tipo === tentForm.tipo);
+    const pont = tentativaPontualidade(tentativaPrazo(lead, seqIdx), new Date());
     const { error } = await supabase.from("interacoes").insert({
       lead_id: id!, tipo: tentForm.tipo, canal: tentForm.canal || null,
       resultado: tentForm.resultado || null,
       descricao: tentForm.descricao.trim() ? `${seqItem?.titulo ?? "Tentativa"} — ${tentForm.descricao.trim()}` : (seqItem?.titulo ?? "Tentativa de contato"),
       proxima_acao: tentForm.proxima_acao || null,
+      pontualidade: pont?.id ?? null,
       created_by: user?.id,
     });
     setSavingTent(false);
     if (error) return toast.error(error.message);
     await supabase.from("leads").update({ ultima_interacao: new Date().toISOString() }).eq("id", id);
-    toast.success("Tentativa registrada no histórico");
+    toast.success(pont ? `Tentativa registrada (${pont.emoji} ${pont.label})` : "Tentativa registrada no histórico");
     setTentOpen(false);
     load();
   };
@@ -765,8 +769,14 @@ export default function LeadDetail() {
               const prazo = tentativaPrazo(lead, idx);
               const isNext = status !== "feita" && idx === Math.min(tentativasFeitas, TENTATIVA_SEQ.length - 1);
               const cd = status === "feita" ? null : prazoCountdown(lead, idx);
+              const inter = status === "feita"
+                ? interacoes
+                    .filter(i => i.tipo === t.tipo)
+                    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0]
+                : null;
+              const pont = status === "feita" ? tentativaPontualidade(prazo, inter?.created_at) : null;
               const cls = status === "feita"
-                ? TENTATIVA_TONE_CLASS.success
+                ? TENTATIVA_TONE_CLASS[pont?.tone ?? "success"]
                 : isNext
                   ? TENTATIVA_TONE_CLASS[cd!.tone]
                   : TENTATIVA_TONE_CLASS.muted;
@@ -774,11 +784,15 @@ export default function LeadDetail() {
                 <div
                   key={t.tipo}
                   className={"flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs " + cls + (isNext && cd?.tone === "danger" ? " animate-pulse" : "")}
-                  title={`Prazo: ${prazoDataLabel(prazo)} (entrada do lead + ${t.prazoHoras}h)`}
+                  title={status === "feita" && inter
+                    ? `Registrada: ${prazoDataLabel(new Date(inter.created_at))} · Vencia: ${prazoDataLabel(prazo)} · ${pont?.detalhe ?? ""}`
+                    : `Prazo: ${prazoDataLabel(prazo)} (entrada do lead + ${t.prazoHoras}h)`}
                 >
                   {status === "feita" ? <Check className="h-3 w-3" /> : <span className="h-3 w-3 rounded-full border inline-block" />}
                   <span>{t.titulo}</span>
-                  <span className="opacity-80">· {prazoDataLabel(prazo)}</span>
+                  {status === "feita" && pont
+                    ? <span className="font-semibold">· {pont.emoji} {pont.label}{pont.id !== "no_prazo" ? ` (${pont.detalhe})` : ""}</span>
+                    : <span className="opacity-80">· {prazoDataLabel(prazo)}</span>}
                   {cd && <span className={isNext ? "font-semibold" : "opacity-80"}>· {cd.texto}</span>}
                 </div>
               );
@@ -967,6 +981,11 @@ export default function LeadDetail() {
               <div key={i.id} className="border-l-2 border-primary/30 pl-3">
                 <div className="flex items-center gap-2 text-sm flex-wrap">
                   <Badge variant="outline" className="text-[10px]">{INTERACTION_TYPE_LABEL[i.tipo] ?? i.tipo}</Badge>
+                  {i.pontualidade && PONTUALIDADE_INFO[i.pontualidade as Pontualidade] && (
+                    <Badge variant="outline" className={"text-[10px] border " + TENTATIVA_TONE_CLASS[PONTUALIDADE_INFO[i.pontualidade as Pontualidade].tone]}>
+                      {PONTUALIDADE_INFO[i.pontualidade as Pontualidade].emoji} {PONTUALIDADE_INFO[i.pontualidade as Pontualidade].label}
+                    </Badge>
+                  )}
                   {i.resultado && <span className="text-xs text-muted-foreground">{i.resultado}</span>}
                   <span className="text-xs text-muted-foreground ml-auto">
                     Por <strong className="text-foreground/80">{i.created_by ? (brokers[i.created_by] || "—") : "—"}</strong> · {format(new Date(i.created_at), "Pp", { locale: ptBR })}

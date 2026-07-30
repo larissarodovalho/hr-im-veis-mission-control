@@ -162,6 +162,43 @@ export function prazoCountdown(lead: LeadPrazoRef, idx: number): { texto: string
   return { texto: `atrasada há ${fmtDuracao(atraso)}`, tone: 'danger' };
 }
 
+// ===== Pontualidade das tentativas (check de cumprimento do cronograma) =====
+
+export type Pontualidade = 'adiantada' | 'no_prazo' | 'atrasada';
+
+export const PONTUALIDADE_INFO: Record<Pontualidade, { label: string; emoji: string; tone: TentativaTone }> = {
+  no_prazo: { label: 'no prazo', emoji: '✓', tone: 'success' },
+  adiantada: { label: 'adiantada', emoji: '⏩', tone: 'warning' },
+  atrasada: { label: 'atrasada', emoji: '⚠', tone: 'danger' },
+};
+
+const PONTUALIDADE_TOLERANCIA_MS = 3600000; // 1h após o vencimento ainda conta como "no prazo"
+
+/** Classifica se a tentativa foi registrada adiantada, no prazo ou atrasada (vs. vencimento). */
+export function tentativaPontualidade(
+  prazo: Date | null,
+  feitaEm: Date | string | null | undefined,
+): { id: Pontualidade; label: string; emoji: string; tone: TentativaTone; detalhe: string } | null {
+  if (!prazo || !feitaEm) return null;
+  const t = new Date(feitaEm).getTime();
+  if (Number.isNaN(t)) return null;
+  const diff = t - prazo.getTime();
+  let id: Pontualidade;
+  let detalhe: string;
+  if (diff < -PONTUALIDADE_TOLERANCIA_MS) {
+    id = 'adiantada';
+    detalhe = `${fmtDuracao(-diff)} antes do prazo`;
+  } else if (diff <= PONTUALIDADE_TOLERANCIA_MS) {
+    id = 'no_prazo';
+    detalhe = 'registrada dentro do prazo';
+  } else {
+    id = 'atrasada';
+    detalhe = `${fmtDuracao(diff)} de atraso`;
+  }
+  const info = PONTUALIDADE_INFO[id];
+  return { id, ...info, detalhe };
+}
+
 // Motivos de desclassificação (conta desclassificada)
 export const MOTIVOS_DESCLASSIFICACAO = [
   'Sem interesse',

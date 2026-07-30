@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
+import { PONTUALIDADE_INFO, TENTATIVA_TONE_CLASS, Pontualidade } from "@/lib/leads";
 
 type Interacao = {
   id: string;
@@ -16,6 +17,7 @@ type Interacao = {
   descricao: string | null;
   created_at: string;
   created_by: string | null;
+  pontualidade: string | null;
 };
 
 const TIPOS = [
@@ -42,7 +44,7 @@ export default function ContaInteracoesTimeline({ contaId }: { contaId: string }
     const [{ data }, { data: profs }, { data: { user } }] = await Promise.all([
       supabase
         .from("interacoes")
-        .select("id, tipo, descricao, created_at, created_by")
+        .select("id, tipo, descricao, created_at, created_by, pontualidade")
         .eq("conta_id", contaId)
         .order("created_at", { ascending: false }),
       supabase.from("profiles").select("user_id, nome"),
@@ -139,6 +141,11 @@ export default function ContaInteracoesTimeline({ contaId }: { contaId: string }
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant="outline" className={meta.color}>{meta.label}</Badge>
+                    {it.pontualidade && PONTUALIDADE_INFO[it.pontualidade as Pontualidade] && (
+                      <Badge variant="outline" className={"border " + TENTATIVA_TONE_CLASS[PONTUALIDADE_INFO[it.pontualidade as Pontualidade].tone]}>
+                        {PONTUALIDADE_INFO[it.pontualidade as Pontualidade].emoji} {PONTUALIDADE_INFO[it.pontualidade as Pontualidade].label}
+                      </Badge>
+                    )}
                     <span className="text-xs text-muted-foreground">
                       {format(new Date(it.created_at), "dd MMM yyyy 'às' HH:mm", { locale: ptBR })}
                     </span>
