@@ -17,6 +17,7 @@ import {
   isLegacyStage, stageLabel, TENTATIVA_SEQ, TENTATIVA_TIPOS, TENTATIVA_RESULTADOS,
   INTERACAO_CANAIS, MOTIVOS_DESCLASSIFICACAO,
   tentativaStatus, tentativaPrazo, prazoDataLabel, prazoCountdown, TENTATIVA_TONE_CLASS,
+  tentativaPontualidade, PONTUALIDADE_INFO, Pontualidade,
 } from "@/lib/leads";
 import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Plus, Building2, FileSignature, Pencil, PhoneCall, CheckCircle2, PhoneOff, XCircle, Check } from "lucide-react";
 import EntityDocumentsTab from "@/components/EntityDocumentsTab";
@@ -166,17 +167,20 @@ export default function LeadDetail() {
   const registerTentativa = async () => {
     setSavingTent(true);
     const seqItem = TENTATIVA_SEQ.find(t => t.tipo === tentForm.tipo);
+    const seqIdx = TENTATIVA_SEQ.findIndex(t => t.tipo === tentForm.tipo);
+    const pont = tentativaPontualidade(tentativaPrazo(lead, seqIdx), new Date());
     const { error } = await supabase.from("interacoes").insert({
       lead_id: id!, tipo: tentForm.tipo, canal: tentForm.canal || null,
       resultado: tentForm.resultado || null,
       descricao: tentForm.descricao.trim() ? `${seqItem?.titulo ?? "Tentativa"} — ${tentForm.descricao.trim()}` : (seqItem?.titulo ?? "Tentativa de contato"),
       proxima_acao: tentForm.proxima_acao || null,
+      pontualidade: pont?.id ?? null,
       created_by: user?.id,
     });
     setSavingTent(false);
     if (error) return toast.error(error.message);
     await supabase.from("leads").update({ ultima_interacao: new Date().toISOString() }).eq("id", id);
-    toast.success("Tentativa registrada no histórico");
+    toast.success(pont ? `Tentativa registrada (${pont.emoji} ${pont.label})` : "Tentativa registrada no histórico");
     setTentOpen(false);
     load();
   };
