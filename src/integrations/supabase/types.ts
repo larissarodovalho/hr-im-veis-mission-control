@@ -579,9 +579,14 @@ export type Database = {
       }
       contas: {
         Row: {
+          cancelado_em: string | null
+          cancelado_por: string | null
+          categoria: string | null
           created_at: string
           created_by: string | null
+          data_entrada_carteira: string | null
           desclassificada: boolean
+          destino_comercial: string | null
           documento: string | null
           email: string | null
           endereco: string | null
@@ -590,9 +595,11 @@ export type Database = {
           interesse: string | null
           is_partner: boolean
           lead_id_origem: string | null
+          motivo_cancelamento: string | null
           motivo_desclassificacao: string | null
           nome: string
           observacoes: string | null
+          origem: string | null
           parceiro_origem_id: string | null
           ramo_atividade: string | null
           responsavel_id: string | null
@@ -604,9 +611,14 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          categoria?: string | null
           created_at?: string
           created_by?: string | null
+          data_entrada_carteira?: string | null
           desclassificada?: boolean
+          destino_comercial?: string | null
           documento?: string | null
           email?: string | null
           endereco?: string | null
@@ -615,9 +627,11 @@ export type Database = {
           interesse?: string | null
           is_partner?: boolean
           lead_id_origem?: string | null
+          motivo_cancelamento?: string | null
           motivo_desclassificacao?: string | null
           nome: string
           observacoes?: string | null
+          origem?: string | null
           parceiro_origem_id?: string | null
           ramo_atividade?: string | null
           responsavel_id?: string | null
@@ -629,9 +643,14 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          categoria?: string | null
           created_at?: string
           created_by?: string | null
+          data_entrada_carteira?: string | null
           desclassificada?: boolean
+          destino_comercial?: string | null
           documento?: string | null
           email?: string | null
           endereco?: string | null
@@ -640,9 +659,11 @@ export type Database = {
           interesse?: string | null
           is_partner?: boolean
           lead_id_origem?: string | null
+          motivo_cancelamento?: string | null
           motivo_desclassificacao?: string | null
           nome?: string
           observacoes?: string | null
+          origem?: string | null
           parceiro_origem_id?: string | null
           ramo_atividade?: string | null
           responsavel_id?: string | null

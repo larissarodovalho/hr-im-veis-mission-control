@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.log_conta_movimentacao() FROM anon, authenticated;

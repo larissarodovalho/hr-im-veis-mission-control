@@ -18,11 +18,14 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
+import { useAuth } from "@/contexts/AuthContext";
 import * as XLSX from "xlsx";
 import NovaContaDialog from "@/components/contas/NovaContaDialog";
 import ImportarContasDialog from "@/components/contas/ImportarContasDialog";
 import ContasKanban from "@/components/contas/ContasKanban";
-import { EtapaFunil } from "@/lib/contasFunil";
+import ContaCancelarDialog, { CancelamentoData } from "@/components/contas/ContaCancelarDialog";
+import AlterarCategoriaDialog, { CategoriaData } from "@/components/contas/AlterarCategoriaDialog";
+import { EtapaFunil, ETAPAS, categoriaDe, isEtapaLegado, etapaLabel, CATEGORIA_LABEL } from "@/lib/contasFunil";
 import { LayoutGrid, List as ListIcon } from "lucide-react";
 import { TEMPERATURAS, tempInfo } from "@/lib/contasTemperatura";
 
@@ -39,6 +42,7 @@ type Account = {
   documento: string | null;
   tipo: "PF" | "PJ" | null;
   responsavel_id: string | null;
+  created_by?: string | null;
   status: Status | null;
   observacoes: string | null;
   created_at: string;
@@ -48,6 +52,11 @@ type Account = {
   etapa_funil: string | null;
   temperatura: string | null;
   ramo_atividade: string | null;
+  categoria?: string | null;
+  origem?: string | null;
+  data_entrada_carteira?: string | null;
+  destino_comercial?: string | null;
+  motivo_cancelamento?: string | null;
 };
 
 const formatDoc = (doc: string | null, tipo: string | null) => {
@@ -114,6 +123,7 @@ const fmt = (v: number | null) => (v == null || v === 0 ? "—" : formatBRL(v));
 
 export default function Accounts() {
   const { isAdmin, isGestor } = useRole();
+  const { user } = useAuth();
   const canDelete = isAdmin;
   const [searchParams, setSearchParams] = useSearchParams();
   const listaParam = searchParams.get("lista");
@@ -170,6 +180,7 @@ export default function Accounts() {
   const [tempFilter, setTempFilter] = useState<string>(searchParams.get("temp") ?? "todos");
   const [ownerFilter, setOwnerFilter] = useState<string>(searchParams.get("responsavel") ?? "todos");
   const [contactFilter, setContactFilter] = useState<string>(searchParams.get("contato") ?? "todos");
+  const [etapaFilter, setEtapaFilter] = useState<string>(searchParams.get("etapa") ?? "todos");
   // Rascunho — não filtra até clicar em Aplicar
   const [draftSearch, setDraftSearch] = useState(searchParams.get("q") ?? "");
   const [draftStatus, setDraftStatus] = useState<"todos" | Status>(initialStatus as any);
@@ -178,12 +189,15 @@ export default function Accounts() {
   const [draftTemp, setDraftTemp] = useState<string>(searchParams.get("temp") ?? "todos");
   const [draftOwner, setDraftOwner] = useState<string>(searchParams.get("responsavel") ?? "todos");
   const [draftContact, setDraftContact] = useState<string>(searchParams.get("contato") ?? "todos");
+  const [draftEtapa, setDraftEtapa] = useState<string>(searchParams.get("etapa") ?? "todos");
 
 
   const [loading, setLoading] = useState(true);
   const [novaOpen, setNovaOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<Account | null>(null);
+  const [catTarget, setCatTarget] = useState<Account | null>(null);
 
   const interestLabel = (v: string | null | undefined) => {
     if (!v) return "";
@@ -228,7 +242,7 @@ export default function Accounts() {
     while (true) {
       const { data, error } = await supabase
         .from("contas")
-        .select("id, nome, email, telefone, documento, tipo, responsavel_id, created_by, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil, temperatura, ramo_atividade")
+        .select("id, nome, email, telefone, documento, tipo, responsavel_id, created_by, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil, temperatura, ramo_atividade, categoria, origem, data_entrada_carteira, destino_comercial, motivo_cancelamento")
         .order("nome", { ascending: true })
         .range(from, from + PAGE - 1);
       if (error) throw error;
@@ -287,10 +301,11 @@ export default function Accounts() {
     draftType !== typeFilter ||
     draftTemp !== tempFilter ||
     draftOwner !== ownerFilter ||
-    draftContact !== contactFilter;
+    draftContact !== contactFilter ||
+    draftEtapa !== etapaFilter;
 
   const syncFiltersToUrl = (vals: {
-    q: string; status: string; interesse: string; tipo: string; temp: string; responsavel: string; contato: string;
+    q: string; status: string; interesse: string; tipo: string; temp: string; responsavel: string; contato: string; etapa: string;
   }) => {
     const sp = new URLSearchParams(searchParams);
     const set = (key: string, value: string, def: string) => {
@@ -304,6 +319,7 @@ export default function Accounts() {
     set("temp", vals.temp, "todos");
     set("responsavel", vals.responsavel, "todos");
     set("contato", vals.contato, "todos");
+    set("etapa", vals.etapa, "todos");
     setSearchParams(sp, { replace: true });
   };
 
@@ -315,18 +331,19 @@ export default function Accounts() {
     setTempFilter(draftTemp);
     setOwnerFilter(draftOwner);
     setContactFilter(draftContact);
+    setEtapaFilter(draftEtapa);
     syncFiltersToUrl({
       q: draftSearch, status: draftStatus, interesse: draftInterest,
-      tipo: draftType, temp: draftTemp, responsavel: draftOwner, contato: draftContact,
+      tipo: draftType, temp: draftTemp, responsavel: draftOwner, contato: draftContact, etapa: draftEtapa,
     });
   };
 
   const clearFilters = () => {
     setDraftSearch(""); setDraftStatus("todos"); setDraftInterest("todos");
-    setDraftType("todas"); setDraftTemp("todos"); setDraftOwner("todos"); setDraftContact("todos");
+    setDraftType("todas"); setDraftTemp("todos"); setDraftOwner("todos"); setDraftContact("todos"); setDraftEtapa("todos");
     setSearch(""); setStatusFilter("todos"); setInterestFilter("todos");
-    setTypeFilter("todas"); setTempFilter("todos"); setOwnerFilter("todos"); setContactFilter("todos");
-    syncFiltersToUrl({ q: "", status: "todos", interesse: "todos", tipo: "todas", temp: "todos", responsavel: "todos", contato: "todos" });
+    setTypeFilter("todas"); setTempFilter("todos"); setOwnerFilter("todos"); setContactFilter("todos"); setEtapaFilter("todos");
+    syncFiltersToUrl({ q: "", status: "todos", interesse: "todos", tipo: "todas", temp: "todos", responsavel: "todos", contato: "todos", etapa: "todos" });
   };
 
   const CONTACT_LABELS: Record<string, string> = {
@@ -346,8 +363,13 @@ export default function Accounts() {
 
   const filtered = accounts.filter((a) => {
     if (lista !== "todos") {
-      const tags = (a.tags ?? []).map((t) => t.toLowerCase());
-      if (!tags.includes(lista)) return false;
+      if (categoriaDe(a) !== lista) return false;
+    }
+    if (etapaFilter !== "todos") {
+      const e = a.etapa_funil ?? "a_contatar";
+      if (etapaFilter === "legado") {
+        if (!isEtapaLegado(e)) return false;
+      } else if (e !== etapaFilter) return false;
     }
     const status = (a.status ?? "ativo") as Status;
     if (statusFilter !== "todos" && status !== statusFilter) return false;
@@ -456,7 +478,7 @@ export default function Accounts() {
         temperatura: tempInfo(a.temperatura)?.label ?? "",
         tags: (a.tags ?? []).join(", "),
         ramo: a.ramo_atividade ?? "",
-        etapa: a.etapa_funil ?? "",
+        etapa: etapaLabel(a.etapa_funil ?? "a_contatar") + (isEtapaLegado(a.etapa_funil) ? " (legado)" : ""),
         observacoes: a.observacoes ?? "",
         endereco: (a as any).endereco ?? "",
         valor_negocio: totalNeg || "",
@@ -525,13 +547,77 @@ export default function Accounts() {
   };
 
   const moveStage = async (id: string, etapa: EtapaFunil) => {
+    const conta = accounts.find((a) => a.id === id);
+    if (etapa === "contato_cancelado" && conta) {
+      setCancelTarget(conta);
+      return;
+    }
     const prev = accounts;
-    setAccounts((cur) => cur.map((a) => (a.id === id ? { ...a, etapa_funil: etapa } : a)));
-    const { error } = await supabase.from("contas").update({ etapa_funil: etapa } as any).eq("id", id);
+    const patch: Record<string, any> = { etapa_funil: etapa };
+    // Saindo do cancelamento: limpa os campos de cancelamento
+    if (conta?.etapa_funil === "contato_cancelado") {
+      patch.motivo_cancelamento = null;
+      patch.cancelado_em = null;
+      patch.cancelado_por = null;
+    }
+    setAccounts((cur) => cur.map((a) => (a.id === id ? ({ ...a, ...patch } as Account) : a)));
+    const { error } = await supabase.from("contas").update(patch as any).eq("id", id);
     if (error) {
       setAccounts(prev);
       toast.error("Não foi possível mover: " + error.message);
     }
+  };
+
+  const confirmarCancelamento = async ({ motivo, agradecimento }: CancelamentoData) => {
+    if (!cancelTarget) return;
+    const id = cancelTarget.id;
+    const patch: Record<string, any> = {
+      etapa_funil: "contato_cancelado",
+      motivo_cancelamento: motivo,
+      cancelado_em: new Date().toISOString(),
+      cancelado_por: user?.id ?? null,
+    };
+    const prev = accounts;
+    setAccounts((cur) => cur.map((a) => (a.id === id ? ({ ...a, ...patch } as Account) : a)));
+    const { error } = await supabase.from("contas").update(patch as any).eq("id", id);
+    if (error) {
+      setAccounts(prev);
+      toast.error("Não foi possível cancelar: " + error.message);
+      return;
+    }
+    await supabase.from("interacoes").insert({
+      conta_id: id,
+      tipo: "nota",
+      descricao: `Contato cancelado. Motivo: ${motivo}.${agradecimento ? ` Mensagem de agradecimento registrada: "${agradecimento}"` : ""}`,
+      resultado: "cancelado",
+      created_by: user?.id ?? null,
+    } as any);
+    toast.success("Atendimento encerrado — cadastro e histórico preservados");
+  };
+
+  const confirmarCategoria = async ({ nova, motivo, reiniciar }: CategoriaData) => {
+    if (!catTarget) return;
+    const id = catTarget.id;
+    const anterior = categoriaDe(catTarget);
+    const patch: Record<string, any> = { categoria: nova };
+    const tags = new Set((catTarget.tags ?? []).filter((t) => !["carteira", "marketing"].includes(t.toLowerCase())));
+    tags.add(nova);
+    patch.tags = Array.from(tags);
+    if (reiniciar) patch.etapa_funil = "a_contatar";
+    const { error } = await supabase.from("contas").update(patch as any).eq("id", id);
+    if (error) {
+      toast.error("Não foi possível transferir: " + error.message);
+      return;
+    }
+    await supabase.from("interacoes").insert({
+      conta_id: id,
+      tipo: "nota",
+      descricao: `Categoria alterada de ${anterior ? CATEGORIA_LABEL[anterior] : "Pendente de revisão"} para ${CATEGORIA_LABEL[nova]}. Motivo: ${motivo}.${reiniciar ? " Atendimento reiniciado em A contatar." : " Etapa atual mantida."}`,
+      resultado: "transferencia_categoria",
+      created_by: user?.id ?? null,
+    } as any);
+    toast.success(`Conta transferida para ${CATEGORIA_LABEL[nova]}`);
+    load();
   };
 
   const remove = async (id: string, name: string) => {
@@ -644,6 +730,16 @@ export default function Accounts() {
               <SelectItem value="180">Últimos 6 meses</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={draftEtapa} onValueChange={(v) => setDraftEtapa(v)}>
+            <SelectTrigger><SelectValue placeholder="Etapa" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todas as etapas</SelectItem>
+              {ETAPAS.map((e) => (
+                <SelectItem key={e.id} value={e.id}>{e.label}</SelectItem>
+              ))}
+              <SelectItem value="legado">Etapas legadas</SelectItem>
+            </SelectContent>
+          </Select>
 
         </div>
 
@@ -659,13 +755,14 @@ export default function Accounts() {
           )}
           {/* Chips de filtros ativos */}
           {[
-            typeFilter !== "todas" && { label: `Tipo: ${typeFilter === "cliente" ? "Clientes" : "Parceiros"}`, clear: () => { setTypeFilter("todas"); setDraftType("todas"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: "todas", temp: tempFilter, responsavel: ownerFilter, contato: contactFilter }); } },
-            interestFilter !== "todos" && { label: `Interesse: ${interestFilter === "none" ? "Não definido" : interestFilter}`, clear: () => { setInterestFilter("todos"); setDraftInterest("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: "todos", tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter, contato: contactFilter }); } },
-            statusFilter !== "todos" && { label: `Status: ${statusFilter === "ativo" ? "Ativos" : "Inativos"}`, clear: () => { setStatusFilter("todos"); setDraftStatus("todos"); syncFiltersToUrl({ q: search, status: "todos", interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter, contato: contactFilter }); } },
-            tempFilter !== "todos" && { label: `Temperatura: ${tempLabel(tempFilter)}`, clear: () => { setTempFilter("todos"); setDraftTemp("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: "todos", responsavel: ownerFilter, contato: contactFilter }); } },
-            ownerFilter !== "todos" && { label: `Responsável: ${ownerLabel(ownerFilter)}`, clear: () => { setOwnerFilter("todos"); setDraftOwner("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: "todos", contato: contactFilter }); } },
-            contactFilter !== "todos" && { label: `Contato: ${CONTACT_LABELS[contactFilter] ?? contactFilter}`, clear: () => { setContactFilter("todos"); setDraftContact("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter, contato: "todos" }); } },
-            search && { label: `Busca: "${search}"`, clear: () => { setSearch(""); setDraftSearch(""); syncFiltersToUrl({ q: "", status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter, contato: contactFilter }); } },
+            typeFilter !== "todas" && { label: `Tipo: ${typeFilter === "cliente" ? "Clientes" : "Parceiros"}`, clear: () => { setTypeFilter("todas"); setDraftType("todas"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: "todas", temp: tempFilter, responsavel: ownerFilter, contato: contactFilter, etapa: etapaFilter }); } },
+            interestFilter !== "todos" && { label: `Interesse: ${interestFilter === "none" ? "Não definido" : interestFilter}`, clear: () => { setInterestFilter("todos"); setDraftInterest("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: "todos", tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter, contato: contactFilter, etapa: etapaFilter }); } },
+            statusFilter !== "todos" && { label: `Status: ${statusFilter === "ativo" ? "Ativos" : "Inativos"}`, clear: () => { setStatusFilter("todos"); setDraftStatus("todos"); syncFiltersToUrl({ q: search, status: "todos", interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter, contato: contactFilter, etapa: etapaFilter }); } },
+            tempFilter !== "todos" && { label: `Temperatura: ${tempLabel(tempFilter)}`, clear: () => { setTempFilter("todos"); setDraftTemp("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: "todos", responsavel: ownerFilter, contato: contactFilter, etapa: etapaFilter }); } },
+            ownerFilter !== "todos" && { label: `Responsável: ${ownerLabel(ownerFilter)}`, clear: () => { setOwnerFilter("todos"); setDraftOwner("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: "todos", contato: contactFilter, etapa: etapaFilter }); } },
+            contactFilter !== "todos" && { label: `Contato: ${CONTACT_LABELS[contactFilter] ?? contactFilter}`, clear: () => { setContactFilter("todos"); setDraftContact("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter, contato: "todos", etapa: etapaFilter }); } },
+            etapaFilter !== "todos" && { label: `Etapa: ${etapaFilter === "legado" ? "Etapas legadas" : etapaLabel(etapaFilter)}`, clear: () => { setEtapaFilter("todos"); setDraftEtapa("todos"); syncFiltersToUrl({ q: search, status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter, contato: contactFilter, etapa: "todos" }); } },
+            search && { label: `Busca: "${search}"`, clear: () => { setSearch(""); setDraftSearch(""); syncFiltersToUrl({ q: "", status: statusFilter, interesse: interestFilter, tipo: typeFilter, temp: tempFilter, responsavel: ownerFilter, contato: contactFilter, etapa: etapaFilter }); } },
 
           ].filter(Boolean).map((chip: any, i) => (
 
@@ -709,8 +806,21 @@ export default function Accounts() {
         )}
       </div>
 
-      <NovaContaDialog open={novaOpen} onOpenChange={setNovaOpen} onCreated={load} defaultTags={lista === "todos" ? [] : [lista]} />
+      <NovaContaDialog open={novaOpen} onOpenChange={setNovaOpen} onCreated={load} defaultCategoria={lista === "todos" ? null : lista} />
       <ImportarContasDialog open={importOpen} onOpenChange={setImportOpen} onImported={load} defaultTags={lista === "todos" ? [] : [lista]} />
+      <ContaCancelarDialog
+        open={!!cancelTarget}
+        onOpenChange={(o) => { if (!o) setCancelTarget(null); }}
+        contaNome={cancelTarget?.nome ?? ""}
+        onConfirm={confirmarCancelamento}
+      />
+      <AlterarCategoriaDialog
+        open={!!catTarget}
+        onOpenChange={(o) => { if (!o) setCatTarget(null); }}
+        contaNome={catTarget?.nome}
+        categoriaAtual={catTarget ? categoriaDe(catTarget) : null}
+        onConfirm={confirmarCategoria}
+      />
 
       <Dialog open={exportOpen} onOpenChange={setExportOpen}>
         <DialogContent className="max-w-lg">
@@ -770,13 +880,21 @@ export default function Accounts() {
         loading ? (
           <Card className="p-6 text-center text-muted-foreground hidden md:block">Carregando…</Card>
         ) : (
-          <div
-            ref={kanbanBoxRef}
-            className="hidden md:block overflow-hidden"
-            style={{ height: "calc(100dvh - var(--kanban-top, 260px) - 8px)" }}
-          >
-            <ContasKanban accounts={filtered as any} propsByAccount={propsByAccount} onMoveStage={moveStage} onChangeOwner={changeOwner} onChangeTemperatura={changeTemperatura} ownerMap={ownerMap} owners={owners} />
-          </div>
+          <>
+            {filtered.some((a) => isEtapaLegado(a.etapa_funil)) && (
+              <p className="hidden md:block text-xs text-amber-600 mb-2">
+                {filtered.filter((a) => isEtapaLegado(a.etapa_funil)).length} conta(s) em etapas legadas não aparecem no Kanban —
+                elas ficam visíveis na visão Lista (filtro "Etapas legadas") e podem ser movidas pelo detalhe da conta.
+              </p>
+            )}
+            <div
+              ref={kanbanBoxRef}
+              className="hidden md:block overflow-hidden"
+              style={{ height: "calc(100dvh - var(--kanban-top, 260px) - 8px)" }}
+            >
+              <ContasKanban accounts={filtered.filter((a) => !isEtapaLegado(a.etapa_funil)) as any} propsByAccount={propsByAccount} onMoveStage={moveStage} onChangeOwner={changeOwner} onChangeTemperatura={changeTemperatura} onChangeCategoria={(id) => setCatTarget(accounts.find((a) => a.id === id) ?? null)} lista={lista} lastContactMap={lastContactMap} ownerMap={ownerMap} owners={owners} />
+            </div>
+          </>
         )
       ) : null}
 
@@ -822,11 +940,10 @@ export default function Accounts() {
                   <div>
                     <span className="text-xs text-muted-foreground">Qualificação: </span>
                     {(() => {
-                      const tags = (a.tags ?? []).map((t) => t.toLowerCase());
-                      const q = tags.includes("carteira") ? "carteira" : tags.includes("marketing") ? "marketing" : null;
+                      const q = categoriaDe(a);
                       return q ? (
                         <Badge variant="outline" className={q === "carteira" ? "bg-blue-500/15 text-blue-700 border-blue-500/30" : "bg-pink-500/15 text-pink-700 border-pink-500/30"}>
-                          {q === "carteira" ? "Carteira" : "Marketing"}
+                          {CATEGORIA_LABEL[q]}
                         </Badge>
                       ) : <span className="text-muted-foreground">—</span>;
                     })()}
@@ -914,17 +1031,16 @@ export default function Accounts() {
                       <td className="p-3 whitespace-nowrap">{a.telefone || <span className="text-muted-foreground">—</span>}</td>
                       <td className="p-3">{a.email || <span className="text-muted-foreground">—</span>}</td>
                       <td className="p-3 whitespace-nowrap">{a.documento ? formatDoc(a.documento, a.tipo) : <span className="text-muted-foreground">—</span>}</td>
-                      <td className="p-3">
-                        {(() => {
-                          const tags = (a.tags ?? []).map((t) => t.toLowerCase());
-                          const q = tags.includes("carteira") ? "carteira" : tags.includes("marketing") ? "marketing" : null;
-                          return q ? (
-                            <Badge variant="outline" className={q === "carteira" ? "bg-blue-500/15 text-blue-700 border-blue-500/30" : "bg-pink-500/15 text-pink-700 border-pink-500/30"}>
-                              {q === "carteira" ? "Carteira" : "Marketing"}
-                            </Badge>
-                          ) : <span className="text-muted-foreground">—</span>;
-                        })()}
-                      </td>
+                       <td className="p-3">
+                         {(() => {
+                           const q = categoriaDe(a);
+                           return q ? (
+                             <Badge variant="outline" className={q === "carteira" ? "bg-blue-500/15 text-blue-700 border-blue-500/30" : "bg-pink-500/15 text-pink-700 border-pink-500/30"}>
+                               {CATEGORIA_LABEL[q]}
+                             </Badge>
+                           ) : <span className="text-muted-foreground">—</span>;
+                         })()}
+                       </td>
                       <td className="p-3">
                         {a.interesse ? (
                           <Badge variant="outline" className="bg-amber-500/15 text-amber-700 border-amber-500/30">{a.interesse}</Badge>

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ArrowLeft, Pencil, Building2, Phone, Save, FileSignature, Plus, Trash2, MapPin, Target, Home as HomeIcon, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Pencil, Building2, Phone, Save, FileSignature, Plus, Trash2, MapPin, Target, Home as HomeIcon, Eye, EyeOff, ArrowLeftRight } from "lucide-react";
 import EntityDocumentsTab from "@/components/EntityDocumentsTab";
 import ContaInteracoesTimeline from "@/components/contas/ContaInteracoesTimeline";
 import ContaAgendaQuickAdd from "@/components/contas/ContaAgendaQuickAdd";
@@ -17,12 +17,14 @@ import ContaAgendamentosList from "@/components/contas/ContaAgendamentosList";
 import ContaTarefas from "@/components/contas/ContaTarefas";
 import ContaFechamentos from "@/components/contas/ContaFechamentos";
 import ContaPropostas from "@/components/contas/ContaPropostas";
+import ContaFluxoAtendimento from "@/components/contas/ContaFluxoAtendimento";
+import AlterarCategoriaDialog, { CategoriaData } from "@/components/contas/AlterarCategoriaDialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
 import { tempInfo, TEMPERATURAS } from "@/lib/contasTemperatura";
-import { ETAPAS } from "@/lib/contasFunil";
+import { ETAPAS, categoriaDe, isEtapaLegado, etapaLabel, CATEGORIA_LABEL } from "@/lib/contasFunil";
 
 type Propriedade = {
   id: string;
@@ -58,6 +60,7 @@ export default function AccountDetail() {
   const [corretores, setCorretores] = useState<{ user_id: string; nome: string | null }[]>([]);
   const [parceiros, setParceiros] = useState<{ id: string; nome: string }[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [catOpen, setCatOpen] = useState(false);
   const { isAdmin } = useRole();
 
   const load = async () => {
@@ -117,21 +120,27 @@ export default function AccountDetail() {
   const totalComissao = props.reduce((s, p) => s + (Number(p.valor_comissao) || 0), 0);
   const totalPropriedades = imoveisPortfolio.length + props.length;
 
-  const listaAtual: "carteira" | "marketing" | "nenhuma" = (() => {
-    const tags = ((acc?.tags ?? []) as string[]).map((t) => t.toLowerCase());
-    if (tags.includes("carteira")) return "carteira";
-    if (tags.includes("marketing")) return "marketing";
-    return "nenhuma";
-  })();
+  const categoriaAtual = categoriaDe(acc);
+  const listaAtual: "carteira" | "marketing" | "nenhuma" = categoriaAtual ?? "nenhuma";
 
-  const setLista = async (nova: "carteira" | "marketing" | "nenhuma") => {
-    const base = ((acc.tags ?? []) as string[]).filter(
-      (t) => t.toLowerCase() !== "carteira" && t.toLowerCase() !== "marketing"
-    );
-    const tags = nova === "nenhuma" ? base : [...base, nova];
-    const { error } = await supabase.from("contas").update({ tags }).eq("id", acc.id);
-    if (error) return toast.error(error.message);
-    toast.success(nova === "nenhuma" ? "Removida das listas" : `Movida para ${nova === "carteira" ? "Carteira" : "Marketing"}`);
+  const confirmarCategoria = async ({ nova, motivo, reiniciar }: CategoriaData) => {
+    const anterior = categoriaAtual;
+    const patch: Record<string, any> = { categoria: nova };
+    const tags = new Set(((acc.tags ?? []) as string[]).filter((t) => !["carteira", "marketing"].includes(t.toLowerCase())));
+    tags.add(nova);
+    patch.tags = Array.from(tags);
+    if (reiniciar) patch.etapa_funil = "a_contatar";
+    const { error } = await supabase.from("contas").update(patch as any).eq("id", acc.id);
+    if (error) { toast.error(error.message); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("interacoes").insert({
+      conta_id: acc.id,
+      tipo: "nota",
+      descricao: `Categoria alterada de ${anterior ? CATEGORIA_LABEL[anterior] : "Pendente de revisão"} para ${CATEGORIA_LABEL[nova]}. Motivo: ${motivo}.${reiniciar ? " Atendimento reiniciado em A contatar." : " Etapa atual mantida."}`,
+      resultado: "transferencia_categoria",
+      created_by: user?.id ?? null,
+    } as any);
+    toast.success(`Conta transferida para ${CATEGORIA_LABEL[nova]}`);
     load();
   };
 
@@ -143,6 +152,7 @@ export default function AccountDetail() {
     const novaLista = editing.lista as "carteira" | "marketing" | "nenhuma" | undefined;
     const tags = !novaLista || novaLista === "nenhuma" ? baseTags : [...baseTags, novaLista];
     const { error } = await supabase.from("contas").update({
+      categoria: !novaLista || novaLista === "nenhuma" ? null : novaLista,
       nome: editing.nome.trim(),
       email: editing.email?.trim() || null,
       telefone: editing.telefone?.trim() || null,
@@ -251,14 +261,9 @@ export default function AccountDetail() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Select value={listaAtual} onValueChange={(v) => setLista(v as any)}>
-            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="nenhuma">Sem lista</SelectItem>
-              <SelectItem value="carteira">Carteira</SelectItem>
-              <SelectItem value="marketing">Marketing</SelectItem>
-            </SelectContent>
-          </Select>
+          <Button variant="outline" onClick={() => setCatOpen(true)}>
+            <ArrowLeftRight className="h-4 w-4 mr-1" /> Alterar categoria
+          </Button>
           <Button variant="outline" onClick={() => setEditing({ ...acc, lista: listaAtual })}><Pencil className="h-4 w-4 mr-1" /> Editar dados</Button>
         </div>
       </div>
@@ -279,6 +284,8 @@ export default function AccountDetail() {
           )}
         </Card>
       </div>
+
+      <ContaFluxoAtendimento conta={acc} corretores={corretores} onChanged={load} />
 
       <ContaAgendaQuickAdd contaId={acc.id} responsavelId={acc.responsavel_id} onCreated={load} />
 
@@ -421,6 +428,14 @@ export default function AccountDetail() {
         <EntityDocumentsTab contaId={acc.id} defaultSigner={{ name: acc.nome, email: acc.email }} />
       </Card>
 
+      <AlterarCategoriaDialog
+        contaNome={acc.nome}
+        categoriaAtual={categoriaAtual}
+        open={catOpen}
+        onOpenChange={setCatOpen}
+        onConfirm={confirmarCategoria}
+      />
+
       <Dialog open={!!editing} onOpenChange={o => !o && setEditing(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Editar conta</DialogTitle></DialogHeader>
@@ -510,6 +525,9 @@ export default function AccountDetail() {
                 >
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
+                    {editing.etapa_funil && isEtapaLegado(editing.etapa_funil) && (
+                      <SelectItem value={editing.etapa_funil}>{etapaLabel(editing.etapa_funil)} (legado)</SelectItem>
+                    )}
                     {ETAPAS.map(e => (
                       <SelectItem key={e.id} value={e.id}>{e.label}</SelectItem>
                     ))}

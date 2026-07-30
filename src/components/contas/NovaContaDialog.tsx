@@ -10,15 +10,17 @@ import { toast } from "sonner";
 import { findDuplicates, DuplicateMatch } from "@/lib/duplicates";
 import DuplicateAlert from "@/components/DuplicateAlert";
 import { SearchableSelect } from "@/components/SearchableSelect";
+import { ORIGENS_CARTEIRA } from "@/lib/contasFunil";
 
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onCreated: (newId?: string) => void;
   defaultTags?: string[];
+  defaultCategoria?: "carteira" | "marketing" | null;
 }
 
-export default function NovaContaDialog({ open, onOpenChange, onCreated, defaultTags }: Props) {
+export default function NovaContaDialog({ open, onOpenChange, onCreated, defaultTags, defaultCategoria }: Props) {
   const [saving, setSaving] = useState(false);
   const [duplicates, setDuplicates] = useState<DuplicateMatch[]>([]);
   const [forceCreate, setForceCreate] = useState(false);
@@ -34,6 +36,8 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
     interesse: "",
     observacoes: "",
     parceiro_origem_id: "none",
+    origem: "",
+    data_entrada: "",
   });
   const [parceiros, setParceiros] = useState<{ id: string; nome: string }[]>([]);
 
@@ -75,6 +79,8 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
     }
     setSaving(true);
     const { data: auth } = await supabase.auth.getUser();
+    const tags = new Set(defaultTags ?? []);
+    if (defaultCategoria) tags.add(defaultCategoria);
     const { data: inserted, error } = await supabase.from("contas").insert({
       nome: form.nome.trim(),
       tipo: form.tipo,
@@ -87,14 +93,17 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
       interesse: form.interesse || null,
       observacoes: form.observacoes || null,
       parceiro_origem_id: form.parceiro_origem_id !== "none" ? form.parceiro_origem_id : null,
-      tags: defaultTags && defaultTags.length ? defaultTags : null,
+      categoria: defaultCategoria ?? null,
+      origem: defaultCategoria === "carteira" ? (form.origem || null) : null,
+      data_entrada_carteira: defaultCategoria === "carteira" && form.data_entrada ? form.data_entrada : null,
+      tags: tags.size ? Array.from(tags) : null,
       created_by: auth.user?.id,
       responsavel_id: auth.user?.id,
-    }).select("id").single();
+    } as any).select("id").single();
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Conta criada");
-    setForm({ nome: "", tipo: "PF", documento: "", email: "", telefone: "", endereco: "", ramo_atividade: "", temperatura: "", interesse: "", observacoes: "", parceiro_origem_id: "none" });
+    setForm({ nome: "", tipo: "PF", documento: "", email: "", telefone: "", endereco: "", ramo_atividade: "", temperatura: "", interesse: "", observacoes: "", parceiro_origem_id: "none", origem: "", data_entrada: "" });
     setDuplicates([]);
     setForceCreate(false);
     onOpenChange(false);
@@ -193,6 +202,26 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
               emptyLabel="Nenhum"
             />
           </div>
+          {defaultCategoria === "carteira" && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Origem</Label>
+                <Select value={form.origem || "none"} onValueChange={(v) => update("origem", v === "none" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Não definida</SelectItem>
+                    {ORIGENS_CARTEIRA.map((o) => (
+                      <SelectItem key={o} value={o}>{o}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Data de entrada na carteira</Label>
+                <Input type="date" value={form.data_entrada} onChange={(e) => update("data_entrada", e.target.value)} />
+              </div>
+            </div>
+          )}
           <div>
             <Label>Observações</Label>
             <Textarea rows={3} value={form.observacoes} onChange={(e) => update("observacoes", e.target.value)} />

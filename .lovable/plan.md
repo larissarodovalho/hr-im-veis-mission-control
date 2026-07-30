@@ -1,73 +1,45 @@
-# Estrutura atual do funil da aba Contas — MAPA INFORMATIVO (sem alterações)
+# Funil da aba Contas (Carteira e Marketing) — REESTRUTURA IMPLEMENTADA
 
-Pedido do usuário: visualizar a estrutura do funil da aba Contas (Carteira e Marketing) antes de decidir alterações. Este documento apenas descreve o estado atual — **nenhuma implementação será feita** até o usuário definir o que quer mudar.
+## Status: concluído
 
-## 1. Organização da aba Contas
+Os dois funis (Carteira e Marketing) usam o mesmo modelo de 5 etapas, separados pela **categoria** da conta (`contas.categoria`: `carteira` | `marketing`, com fallback para tags).
 
-A aba tem 3 listas, separadas pela **tag** salva na conta (`contas.tags`):
-
-- **Todos** (somente visão de lista)
-- **Carteira** (tag `carteira`) — Kanban + Lista
-- **Marketing** (tag `marketing`) — Kanban + Lista
-
-Carteira e Marketing usam **exatamente o mesmo funil** (mesmas 12 colunas); o que muda é apenas quais contas aparecem em cada lista.
-
-## 2. As 12 colunas do Kanban (ordem atual)
+## As 5 colunas ativas (ordem fixa)
 
 ```text
 1. A contatar
 2. Contatado
 3. Sem retorno
 4. Contato estabelecido
-5. Captação/Imóvel
-6. Reunião
-7. Visita
-8. Permuta
-9. Proposta
-10. Fechado
-11. Oportunidade futura   (id interno: "perdido")
-12. Parceiros
+5. Contato cancelado
 ```
 
-- Etapa gravada em `contas.etapa_funil` (campo texto, sem enum no banco).
-- Movimentação: arrastar e soltar no Kanban, menu "⋯" do card ("Mover para etapa") ou seletor na edição da conta.
-- Conta nova sem etapa cai automaticamente em "A contatar".
+## Regras operacionais implementadas
 
-## 3. O que aparece no card do Kanban
+- **A contatar**: ações de 1º e 2º contato (WhatsApp, ligação, e-mail) com resultado (sem resposta / respondeu / contato inválido). Sem resposta na 2ª tentativa → Sem retorno.
+- **Contatado**: agendar tarefa de retorno, enviar link de imóvel, avançar para Contato estabelecido.
+- **Sem retorno**: novas tentativas; resposta → Contatado; cancelamento exige motivo.
+- **Contato estabelecido**: seleção de **Destino comercial** (não é coluna do funil): Captação/Reunião, Comprar — Oportunidade, Vender — HRX Produções, Oportunidade futura. Gravado em `contas.destino_comercial` + interação.
+- **Contato cancelado**: motivo obrigatório (`contas.motivo_cancelamento`, `cancelado_em`, `cancelado_por`) via ContaCancelarDialog; reativação limpa os campos.
 
-- Nome (link para o detalhe da conta), telefone/e-mail
-- Badge de temperatura (🔥 Quente / 🌤️ Morno / ❄️ Frio)
-- Badge de interesse (Compra, Venda, Permuta etc.)
-- Badge do responsável e do criador do cadastro
-- Badge "Parceiro" (quando `is_partner`)
-- Valor total dos imóveis vinculados
+## Categoria
 
-## 4. Como as contas entram no funil hoje
+- Coluna `contas.categoria` é a fonte principal; tags `carteira`/`marketing` mantidas em sincronia.
+- `categoriaDe()` prioriza a coluna e cai para tags em registros antigos (src/lib/contasFunil.ts).
+- Transferência Carteira ↔ Marketing exige motivo (AlterarCategoriaDialog), registra interação `transferencia_categoria` e pode reiniciar em A contatar.
+- Contas Carteira têm `origem` (ORIGENS_CARTEIRA) e `data_entrada_carteira` no cadastro.
 
-| Origem | Onde cai |
-|---|---|
-| Lead convertido em **Conta Cliente** (aba Leads) | Contas › **Marketing** › A contatar (tag `marketing`) |
-| Lead convertido em **Conta Desclassificada** | Fica em A contatar com tag `desclassificado` + motivo registrado (sem tratamento visual próprio ainda) |
-| Cadastro manual (botão Nova Conta) | Lista conforme tag escolhida, etapa A contatar |
-| Importação de planilha | Conforme tags importadas |
+## Legado
 
-## 5. Regras de visibilidade (banco)
+- Etapas comerciais antigas (Captação/Imóvel, Reunião, Visita, Permuta, Proposta, Fechado, Oportunidade futura, Parceiros) permanecem no banco como `ETAPAS_LEGADO`.
+- Contas em etapa legada não aparecem no Kanban; ficam na visão Lista (filtro "Etapas legadas") e podem ser movidas pelo detalhe da conta (ContaFluxoAtendimento → "Mover para o novo funil").
+- 23 contas da coluna "Parceiros" migradas para `is_partner = true` na migração de reestrutura.
 
-- Corretor vê apenas as próprias contas (responsável/criador) e contas vinculadas às suas oportunidades/captações.
-- Admin, gestor e marketing veem todas.
+## Arquivos-chave
 
-## 6. Relatórios ligados a este funil
-
-- Aba Relatórios usa as etapas de **Contas** (não Leads) para performance de conversão.
-- Relatório "Funil de Contas" lê as mesmas 12 etapas.
-
-## 7. Pontos de atenção para futuras alterações
-
-- "Oportunidade futura" é o id `perdido` internamente — renomear exige cuidado com o id, não só o rótulo.
-- A coluna "Parceiros" convive com o filtro "Apenas parceiros" (flag `is_partner`) — são dois mecanismos diferentes hoje.
-- Contas desclassificadas não têm coluna própria — ficam misturadas em "A contatar".
-- As etapas comerciais (Reunião, Visita, Permuta, Proposta, Fechado) hoje vivem aqui em Contas; no funil de Leads elas já foram desativadas e viraram legado.
-
-## Próximo passo
-
-Aguardar o usuário indicar as alterações desejadas (renomear, reordenar, adicionar/remover colunas, tratar desclassificadas, separar funis de Carteira e Marketing etc.). Nenhum arquivo será modificado nesta etapa.
+- `src/lib/contasFunil.ts` — etapas, legado, categoria, destinos, motivos
+- `src/components/contas/ContaFluxoAtendimento.tsx` — fluxo operacional no detalhe
+- `src/components/contas/ContaCancelarDialog.tsx`, `AlterarCategoriaDialog.tsx`
+- `src/pages/Accounts.tsx` — Kanban 5 colunas, filtros, visão Lista
+- `src/pages/AccountDetail.tsx` — fluxo + alteração de categoria
+- `src/pages/LeadDetail.tsx` — conversão gera `categoria: marketing`; desclassificada → Contato cancelado com motivo

@@ -23,9 +23,11 @@ import {
   DropdownMenuSubContent,
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
-import { ETAPAS, EtapaFunil } from "@/lib/contasFunil";
-import { Handshake, Target, User, MoreVertical, Check, UserX, Thermometer, PencilLine } from "lucide-react";
+import { ETAPAS, EtapaFunil, categoriaDe, CATEGORIA_LABEL } from "@/lib/contasFunil";
+import { Handshake, Target, User, MoreVertical, Check, UserX, Thermometer, PencilLine, ArrowLeftRight, Megaphone, Clock } from "lucide-react";
 import { tempInfo, TEMPERATURAS } from "@/lib/contasTemperatura";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 type Account = {
   id: string;
@@ -38,6 +40,9 @@ type Account = {
   responsavel_id: string | null;
   created_by?: string | null;
   temperatura?: string | null;
+  categoria?: string | null;
+  tags?: string[] | null;
+  origem?: string | null;
 };
 
 type Property = { conta_id: string; valor_negocio: number | null };
@@ -48,6 +53,9 @@ interface Props {
   onMoveStage: (contaId: string, etapa: EtapaFunil) => void;
   onChangeOwner?: (contaId: string, userId: string | null) => void;
   onChangeTemperatura?: (contaId: string, temp: string | null) => void;
+  onChangeCategoria?: (contaId: string) => void;
+  lista?: "carteira" | "marketing";
+  lastContactMap?: Record<string, string>;
   ownerMap?: Record<string, string>;
   owners?: { id: string; nome: string }[];
 }
@@ -90,6 +98,9 @@ function ContaCard({
   onMoveStage,
   onChangeOwner,
   onChangeTemperatura,
+  onChangeCategoria,
+  lista,
+  lastContact,
 }: {
   a: Account;
   total: number;
@@ -99,6 +110,9 @@ function ContaCard({
   onMoveStage: (id: string, etapa: EtapaFunil) => void;
   onChangeOwner?: (id: string, userId: string | null) => void;
   onChangeTemperatura?: (id: string, temp: string | null) => void;
+  onChangeCategoria?: (id: string) => void;
+  lista?: "carteira" | "marketing";
+  lastContact?: string | null;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: a.id });
   const style: React.CSSProperties = {
@@ -107,6 +121,8 @@ function ContaCard({
   };
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
   const currentEtapa = (a.etapa_funil ?? "a_contatar") as EtapaFunil;
+  const categoria = categoriaDe(a);
+  const outraLista = lista && categoria && categoria !== lista ? CATEGORIA_LABEL[categoria] : null;
 
   return (
     <Card
@@ -165,6 +181,13 @@ function ContaCard({
                   </DropdownMenuSubContent>
                 </DropdownMenuPortal>
               </DropdownMenuSub>
+
+              {onChangeCategoria && (
+                <DropdownMenuItem onSelect={() => onChangeCategoria(a.id)}>
+                  <ArrowLeftRight className="h-3.5 w-3.5 mr-2" />
+                  Alterar categoria
+                </DropdownMenuItem>
+              )}
 
               {onChangeOwner && (
                 <DropdownMenuSub>
@@ -233,7 +256,27 @@ function ContaCard({
         </div>
       </div>
       <div className="text-xs text-muted-foreground truncate">{a.telefone || a.email || "—"}</div>
+      {lastContact && (
+        <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+          <Clock className="h-3 w-3 shrink-0" />
+          Últ. contato: {format(new Date(lastContact), "dd/MM/yyyy", { locale: ptBR })}
+        </div>
+      )}
       <div className="flex flex-wrap gap-1">
+        {outraLista ? (
+          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px]">
+            {outraLista}
+          </Badge>
+        ) : categoria === "marketing" ? (
+          <Badge variant="outline" className="bg-fuchsia-500/15 text-fuchsia-700 border-fuchsia-500/30 text-[10px]">
+            <Megaphone className="h-3 w-3 mr-1" /> Marketing
+          </Badge>
+        ) : null}
+        {lista === "carteira" && a.origem && (
+          <Badge variant="outline" className="text-[10px] text-muted-foreground" title="Origem da conta">
+            {a.origem}
+          </Badge>
+        )}
         {(() => {
           const t = tempInfo(a.temperatura);
           return t ? (
@@ -293,7 +336,7 @@ function Column({
   );
 }
 
-export default function ContasKanban({ accounts, propsByAccount, onMoveStage, onChangeOwner, onChangeTemperatura, ownerMap, owners }: Props) {
+export default function ContasKanban({ accounts, propsByAccount, onMoveStage, onChangeOwner, onChangeTemperatura, onChangeCategoria, lista, lastContactMap, ownerMap, owners }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const onDragEnd = (e: DragEndEvent) => {
@@ -330,6 +373,9 @@ export default function ContasKanban({ accounts, propsByAccount, onMoveStage, on
                     onMoveStage={onMoveStage}
                     onChangeOwner={onChangeOwner}
                     onChangeTemperatura={onChangeTemperatura}
+                    onChangeCategoria={onChangeCategoria}
+                    lista={lista}
+                    lastContact={lastContactMap?.[a.id]}
                   />
                 );
               })}
