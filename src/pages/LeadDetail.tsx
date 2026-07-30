@@ -257,7 +257,8 @@ export default function LeadDetail() {
     }).select("id").single();
     if (error) { setSavingDesclass(false); return toast.error(error.message); }
     if (created?.id) {
-      await supabase.from("interacoes").update({ conta_id: created.id }).eq("lead_id", lead.id).is("conta_id", null);
+      // As interações do lead são vinculadas à conta automaticamente
+      // pelo trigger trg_migrar_interacoes_para_conta (mesma transação do insert).
       await supabase.from("interacoes").insert({
         lead_id: lead.id, conta_id: created.id, tipo: "nota", resultado: "desclassificado",
         descricao: `Lead desclassificado. Motivo: ${motivo}`,
@@ -453,12 +454,8 @@ export default function LeadDetail() {
     }).select("id").single();
     setConverting(false);
     if (error) return toast.error(error.message);
-    if (created?.id) {
-      await supabase.from("interacoes")
-        .update({ conta_id: created.id })
-        .eq("lead_id", lead.id)
-        .is("conta_id", null);
-    }
+    // As interações do lead são vinculadas à conta automaticamente
+    // pelo trigger trg_migrar_interacoes_para_conta (mesma transação do insert).
     setConvertOpen(false);
     toast.success("Lead convertido em conta! Adicionado ao funil de Marketing.");
     navigate("/crm/contas?lista=marketing");

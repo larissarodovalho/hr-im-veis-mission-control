@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.migrar_interacoes_para_conta() FROM public, anon, authenticated;
