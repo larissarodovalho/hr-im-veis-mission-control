@@ -14,8 +14,10 @@ import {
   STAGES, SOURCES, INTERESTS, TEMPERATURES,
   ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, formatDateBR,
   initials, Stage, Temperature,
+  isLegacyStage, stageLabel, TENTATIVA_SEQ, TENTATIVA_TIPOS, TENTATIVA_RESULTADOS,
+  INTERACAO_CANAIS, MOTIVOS_DESCLASSIFICACAO,
 } from "@/lib/leads";
-import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Plus, Building2, FileSignature, Pencil } from "lucide-react";
+import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Plus, Building2, FileSignature, Pencil, PhoneCall, CheckCircle2, PhoneOff, XCircle, Check } from "lucide-react";
 import EntityDocumentsTab from "@/components/EntityDocumentsTab";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -34,9 +36,12 @@ const INTERACTION_TYPE_LABEL: Record<string, string> = {
   reuniao: "Reunião",
   videochamada: "Videochamada",
   mensagem: "Mensagem",
+  audio: "Áudio",
   email: "Email",
   visita: "Visita",
   nota: "Nota",
+  whatsapp_ia: "WhatsApp (IA)",
+  followup_manual: "Follow-up manual",
 };
 const inferFormat = (m: any): MeetingFormat => {
   if (m.tipo === "ligacao") return "ligacao";
@@ -68,6 +73,19 @@ export default function LeadDetail() {
   const [converting, setConverting] = useState(false);
   const [convertDups, setConvertDups] = useState<DuplicateMatch[]>([]);
   const [forceConvert, setForceConvert] = useState(false);
+  const [tentOpen, setTentOpen] = useState(false);
+  const [tentForm, setTentForm] = useState({ tipo: "mensagem", resultado: "", canal: "WhatsApp", descricao: "", proxima_acao: "" });
+  const [savingTent, setSavingTent] = useState(false);
+  const [sucessoOpen, setSucessoOpen] = useState(false);
+  const [sucessoCorretor, setSucessoCorretor] = useState("");
+  const [savingSucesso, setSavingSucesso] = useState(false);
+  const [semContatoOpen, setSemContatoOpen] = useState(false);
+  const [semContatoCorretor, setSemContatoCorretor] = useState("");
+  const [savingSemContato, setSavingSemContato] = useState(false);
+  const [desclassOpen, setDesclassOpen] = useState(false);
+  const [desclassMotivo, setDesclassMotivo] = useState("");
+  const [desclassOutro, setDesclassOutro] = useState("");
+  const [savingDesclass, setSavingDesclass] = useState(false);
 
   const load = async () => {
     if (!id) return;
@@ -135,6 +153,120 @@ export default function LeadDetail() {
     setInteraction({ tipo: "ligacao", resultado: "", descricao: "", proxima_acao: "" });
     toast.success("Interação registrada");
     load();
+  };
+
+  const openTentativa = () => {
+    const feitas = interacoes.filter(i => TENTATIVA_TIPOS.includes(i.tipo)).length;
+    const prox = TENTATIVA_SEQ[Math.min(feitas, TENTATIVA_SEQ.length - 1)];
+    setTentForm({ tipo: prox.tipo, resultado: "", canal: prox.tipo === "ligacao" ? "Ligação" : "WhatsApp", descricao: "", proxima_acao: "" });
+    setTentOpen(true);
+  };
+
+  const registerTentativa = async () => {
+    setSavingTent(true);
+    const seqItem = TENTATIVA_SEQ.find(t => t.tipo === tentForm.tipo);
+    const { error } = await supabase.from("interacoes").insert({
+      lead_id: id!, tipo: tentForm.tipo, canal: tentForm.canal || null,
+      resultado: tentForm.resultado || null,
+      descricao: tentForm.descricao.trim() ? `${seqItem?.titulo ?? "Tentativa"} — ${tentForm.descricao.trim()}` : (seqItem?.titulo ?? "Tentativa de contato"),
+      proxima_acao: tentForm.proxima_acao || null,
+      created_by: user?.id,
+    });
+    setSavingTent(false);
+    if (error) return toast.error(error.message);
+    await supabase.from("leads").update({ ultima_interacao: new Date().toISOString() }).eq("id", id);
+    toast.success("Tentativa registrada no histórico");
+    setTentOpen(false);
+    load();
+  };
+
+  const confirmSucesso = async () => {
+    if (!sucessoCorretor) return toast.error("Selecione o corretor responsável");
+    setSavingSucesso(true);
+    const nome = brokers[sucessoCorretor] || "corretor";
+    const { error } = await supabase.from("leads").update({
+      corretor_id: sucessoCorretor,
+      etapa_funil: "Conversa Ativa",
+      tipo_acompanhamento: "corretor",
+      ultima_interacao: new Date().toISOString(),
+    }).eq("id", id);
+    if (error) { setSavingSucesso(false); return toast.error(error.message); }
+    await supabase.from("interacoes").insert({
+      lead_id: id!, tipo: "nota", resultado: "encaminhado",
+      descricao: `Sucesso no contato — lead encaminhado para o corretor ${nome}. Conversa ativa iniciada.`,
+      created_by: user?.id,
+    });
+    setSavingSucesso(false);
+    toast.success(`Lead em Conversa Ativa com ${nome}`);
+    setSucessoOpen(false);
+    load();
+  };
+
+  const confirmSemContato = async () => {
+    if (!semContatoCorretor) return toast.error("Selecione o corretor responsável");
+    setSavingSemContato(true);
+    const nome = brokers[semContatoCorretor] || "corretor";
+    const { error } = await supabase.from("leads").update({
+      corretor_id: semContatoCorretor,
+      tipo_acompanhamento: "corretor",
+    }).eq("id", id);
+    if (error) { setSavingSemContato(false); return toast.error(error.message); }
+    await supabase.from("tarefas").insert({
+      titulo: `Tentar contato manual com ${lead.nome}`,
+      descricao: "A sequência inicial (mensagem, áudio, ligação) terminou sem resposta. Realizar tentativa manual de contato com o lead.",
+      responsavel_id: semContatoCorretor,
+      lead_id: id,
+      prioridade: "Alta",
+      status: "A fazer",
+      prazo: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+      created_by: user?.id,
+    });
+    await supabase.from("interacoes").insert({
+      lead_id: id!, tipo: "nota", resultado: "sem_resposta",
+      descricao: `Sequência inicial de tentativas encerrada sem resposta. Encaminhado para tentativa manual do corretor ${nome} (tarefa criada).`,
+      proxima_acao: "Contato manual pelo corretor",
+      created_by: user?.id,
+    });
+    setSavingSemContato(false);
+    toast.success(`Tarefa criada para ${nome}`);
+    setSemContatoOpen(false);
+    load();
+  };
+
+  const confirmDesclass = async () => {
+    if (!desclassMotivo) return toast.error("Selecione o motivo da desclassificação");
+    const motivo = desclassMotivo === "Outro" ? `Outro: ${desclassOutro.trim()}` : desclassMotivo;
+    if (desclassMotivo === "Outro" && !desclassOutro.trim()) return toast.error("Descreva o motivo");
+    setSavingDesclass(true);
+    const { data: created, error } = await supabase.from("contas").insert({
+      lead_id_origem: lead.id,
+      nome: lead.nome,
+      email: lead.email ?? null,
+      telefone: lead.telefone ?? null,
+      endereco: lead.regiao ?? null,
+      tipo: "PF",
+      observacoes: lead.observacoes ?? null,
+      tags: ["desclassificada"],
+      etapa_funil: "desclassificada",
+      desclassificada: true,
+      motivo_desclassificacao: motivo,
+      created_by: user?.id,
+      responsavel_id: lead.corretor_id ?? user?.id,
+    }).select("id").single();
+    if (error) { setSavingDesclass(false); return toast.error(error.message); }
+    if (created?.id) {
+      await supabase.from("interacoes").update({ conta_id: created.id }).eq("lead_id", lead.id).is("conta_id", null);
+      await supabase.from("interacoes").insert({
+        lead_id: lead.id, conta_id: created.id, tipo: "nota", resultado: "desclassificado",
+        descricao: `Lead desclassificado. Motivo: ${motivo}`,
+        created_by: user?.id,
+      });
+    }
+    await supabase.from("leads").update({ motivo_desclassificacao: motivo }).eq("id", lead.id);
+    setSavingDesclass(false);
+    toast.success("Conta desclassificada registrada — cadastro e histórico preservados.");
+    setDesclassOpen(false);
+    navigate("/crm/leads");
   };
 
   const addMeeting = async (e: React.FormEvent) => {
