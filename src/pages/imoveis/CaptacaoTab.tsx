@@ -246,7 +246,7 @@ export default function CaptacaoTab() {
           <Badge variant="secondary">{items.filter((i) => i.estagio !== "concluido").length} ativas</Badge>
         </div>
         <p className="text-xs text-muted-foreground">
-          Cards criados automaticamente quando uma conta entra em "Captação/Imóvel".
+          Cards criados automaticamente quando uma conta em "Contato estabelecido" recebe o destino comercial "Captação / Reunião".
         </p>
       </div>
 
