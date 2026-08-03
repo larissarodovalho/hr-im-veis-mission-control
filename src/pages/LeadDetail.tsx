@@ -14,7 +14,7 @@ import {
   STAGES, SOURCES, INTERESTS, TEMPERATURES,
   ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, formatDateBR,
   initials, Stage, Temperature,
-  stageLabel, TENTATIVA_SEQ, TENTATIVA_TIPOS, TENTATIVA_RESULTADOS,
+  TENTATIVA_SEQ, TENTATIVA_TIPOS, TENTATIVA_RESULTADOS,
   INTERACAO_CANAIS, MOTIVOS_DESCLASSIFICACAO,
   tentativaStatus, tentativaPrazo, prazoDataLabel, prazoCountdown, TENTATIVA_TONE_CLASS,
   tentativaPontualidade, PONTUALIDADE_INFO, Pontualidade,
