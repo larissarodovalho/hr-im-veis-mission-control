@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
 import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature, TIPO_ACOMPANHAMENTO, TipoAcompanhamento, isLegacyStage, stageLabel, TENTATIVA_TIPOS, TENTATIVA_SEQ, TENTATIVA_EMOJI, prazoCountdown, TENTATIVA_TONE_CLASS } from "@/lib/leads";
-import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2, User as UserIcon, PencilLine } from "lucide-react";
+import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2, User as UserIcon, PencilLine, Archive } from "lucide-react";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
@@ -46,6 +46,7 @@ export default function Leads() {
   const [open, setOpen] = useState(false);
   const { isAdmin, isGestor } = useRole();
   const canDelete = isAdmin;
+  const navigate = useNavigate();
 
   const remove = async (id: string, name: string) => {
     const { error } = await supabase.from("leads").delete().eq("id", id);
@@ -84,6 +85,7 @@ export default function Leads() {
   }, []);
 
   const legacyCount = leads.filter(l => !convertedIds.has(l.id) && isLegacyStage(l.etapa_funil)).length;
+  const convertedCount = leads.filter(l => convertedIds.has(l.id)).length;
 
   const needsNurtureCount = leads.filter(l => {
     if (convertedIds.has(l.id)) return false;
@@ -138,7 +140,31 @@ export default function Leads() {
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-semibold">Leads</h1>
-          <p className="text-muted-foreground mt-1 text-sm">{filtered.length} de {leads.length}</p>
+          <div className="mt-1 flex items-center gap-2 flex-wrap">
+            <p className="text-muted-foreground text-sm">{filtered.length} de {leads.length}</p>
+            {convertedCount > 0 && (
+              <button
+                type="button"
+                onClick={() => navigate("/crm/contas")}
+                title="Leads que viraram Conta e por isso saíram do funil — clique para abrir a aba Contas"
+                className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success/10 text-success px-2 py-0.5 text-[11px] font-medium transition hover:bg-success/20"
+              >
+                <Building2 className="h-3 w-3" />
+                {convertedCount} convertido{convertedCount > 1 ? "s" : ""} em Conta
+              </button>
+            )}
+            {legacyCount > 0 && (
+              <button
+                type="button"
+                onClick={() => { setView("list"); setListScope("legados"); }}
+                title="Leads em etapas antigas do funil que não viram coluna no Kanban — clique para ver na lista"
+                className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-700 px-2 py-0.5 text-[11px] font-medium transition hover:bg-amber-500/20"
+              >
+                <Archive className="h-3 w-3" />
+                {legacyCount} em etapas legadas (fora do Kanban)
+              </button>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
           <div className="relative w-full md:w-56 order-1">
