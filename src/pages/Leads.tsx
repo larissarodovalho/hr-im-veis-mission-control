@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
-import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature, TIPO_ACOMPANHAMENTO, TipoAcompanhamento, stageLabel, TENTATIVA_TIPOS, TENTATIVA_SEQ, TENTATIVA_EMOJI, prazoCountdown, tentativaPrazo, prazoDataLabel, tentativaPontualidade, TENTATIVA_TONE_CLASS, ETAPAS_FLUXO_ATENDIMENTO } from "@/lib/leads";
+import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature, TIPO_ACOMPANHAMENTO, TipoAcompanhamento, stageLabel, TENTATIVA_TIPOS, TENTATIVA_SEQ, TENTATIVA_EMOJI, prazoCountdown, tentativaPrazo, prazoDataLabel, tentativaPontualidade, TENTATIVA_TONE_CLASS, ETAPAS_FLUXO_ATENDIMENTO, classificaFluxoAtendimento, FLUXO_ATENDIMENTO_CLASSE_INFO, FluxoAtendimentoClasse } from "@/lib/leads";
 import { Plus, Search, KanbanSquare, List as ListIcon, Headphones, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2, User as UserIcon, PencilLine, CalendarClock, Check } from "lucide-react";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { toast } from "sonner";
@@ -401,22 +401,12 @@ function TentativasTags({ lead, tentativas }: { lead: Lead; tentativas: Tentativ
   );
 }
 
-type AtClasse = "sem_tentativa" | "atrasado" | "no_prazo" | "concluido";
+type AtClasse = FluxoAtendimentoClasse;
 
-const AT_CLASSE_INFO: Record<AtClasse, { label: string; emoji: string; cls: string }> = {
-  sem_tentativa: { label: "Sem nenhuma tentativa", emoji: "🕐", cls: "bg-muted text-muted-foreground border-border" },
-  atrasado: { label: "Atrasados", emoji: "🔴", cls: "bg-danger/15 text-danger border-danger/30" },
-  no_prazo: { label: "No prazo", emoji: "🟢", cls: "bg-success/15 text-success border-success/30" },
-  concluido: { label: "Fluxo concluído (3/3)", emoji: "✅", cls: "bg-muted text-muted-foreground border-border" },
-};
+const AT_CLASSE_INFO = FLUXO_ATENDIMENTO_CLASSE_INFO;
 
-function classificaAtendimento(lead: Lead, tentativas: TentativaReg[]): AtClasse {
-  const feitas = Math.min(tentativas.length, TENTATIVA_SEQ.length);
-  if (feitas >= TENTATIVA_SEQ.length) return "concluido";
-  const cd = prazoCountdown(lead, feitas);
-  if (cd.tone === "danger") return "atrasado";
-  return feitas === 0 ? "sem_tentativa" : "no_prazo";
-}
+const classificaAtendimento = (lead: Lead, tentativas: TentativaReg[]): AtClasse =>
+  classificaFluxoAtendimento(lead, tentativas.length);
 
 /** Painel de acompanhamento do fluxo de atendimento (msg imediata, áudio +24h, ligação +48h). */
 function AtendimentoPanel({ leads, convertedIds, tentativasMap, brokers, search }: { leads: Lead[]; convertedIds: Set<string>; tentativasMap: Record<string, TentativaReg[]>; brokers: Record<string, string>; search: string }) {
