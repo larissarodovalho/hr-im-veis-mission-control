@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
 import { ETAPAS, etapaLabel, categoriaDe, QUALIFICACAO_LABEL, QUALIFICACAO_BADGE, type QualificacaoStatus } from "@/lib/contasFunil";
+import { nextTaskCountdown } from "@/lib/tarefas";
 import {
   ResponsiveContainer,
   BarChart,
@@ -38,6 +39,7 @@ type Conta = {
   qualificacao_status: string | null;
 };
 type Profile = { user_id: string; nome: string | null };
+type Tarefa = { conta_id: string | null; prazo: string | null };
 
 type Lista = "carteira" | "marketing" | "todas";
 
@@ -63,6 +65,7 @@ export default function FunilContasReport() {
   const { inicioISO, fimISO, label } = useReportsPeriod();
   const [contas, setContas] = useState<Conta[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [tarefas, setTarefas] = useState<Tarefa[]>([]);
   const [lista, setLista] = useState<Lista>("carteira");
   const [corretor, setCorretor] = useState<string>("todos");
   const [loading, setLoading] = useState(true);
@@ -84,8 +87,18 @@ export default function FunilContasReport() {
         all.push(...rows);
         if (rows.length < PAGE) break;
       }
+      // Próxima tarefa pendente por conta (mesma origem da tag de countdown do kanban)
+      const { data: t } = await supabase
+        .from("tarefas")
+        .select("conta_id, prazo")
+        .not("conta_id", "is", null)
+        .not("prazo", "is", null)
+        .neq("status", "Concluída")
+        .order("prazo", { ascending: true })
+        .limit(1000);
       const { data: p } = await supabase.from("profiles").select("user_id, nome");
       setContas(all);
+      setTarefas((t ?? []) as Tarefa[]);
       setProfiles((p ?? []) as Profile[]);
       setLoading(false);
     })();
@@ -113,6 +126,31 @@ export default function FunilContasReport() {
   const semRetorno = byEtapa["sem_retorno"] ?? 0;
   const estabelecidos = byEtapa["contato_estabelecido"] ?? 0;
   const ativos = total - cancelados - semRetorno;
+
+  // Atendimento programado: contas ativas com tarefa futura/hoje vs. tarefa atrasada
+  const tarefaPorConta = useMemo(() => {
+    const m = new Map<string, string>();
+    tarefas.forEach((t) => {
+      if (t.conta_id && t.prazo && !m.has(t.conta_id)) m.set(t.conta_id, t.prazo);
+    });
+    return m;
+  }, [tarefas]);
+
+  const atendimentoKpis = useMemo(() => {
+    let programado = 0;
+    let atrasada = 0;
+    filtered.forEach((a) => {
+      const etapa = a.etapa_funil ?? "a_contatar";
+      if (etapa === "contato_cancelado" || etapa === "sem_retorno") return;
+      const prazo = tarefaPorConta.get(a.id);
+      if (!prazo) return;
+      const cd = nextTaskCountdown(prazo);
+      if (!cd) return;
+      if (cd.tom === "atrasada") atrasada++;
+      else programado++;
+    });
+    return { programado, atrasada };
+  }, [filtered, tarefaPorConta]);
 
   // Funil acumulado: contas naquela etapa OU posteriores no fluxo ativo
   const fluxoData = useMemo(() => {
@@ -187,7 +225,7 @@ export default function FunilContasReport() {
         <div>
           <h2 className="font-display text-lg md:text-xl font-semibold">Funil de Contas · {label}</h2>
           <p className="text-sm text-muted-foreground">
-            Distribuição por etapa, taxas de conversão e comparação entre listas.
+            Distribuição por etapa, atendimento programado e comparação entre listas.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -216,7 +254,7 @@ export default function FunilContasReport() {
       </Tabs>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
         <Kpi label="Total" value={total} link={`/crm/contas?lista=${listaQuery}`} />
         <Kpi label="Em andamento" value={ativos} />
         <Kpi label="Sem retorno" value={semRetorno} />
@@ -225,6 +263,20 @@ export default function FunilContasReport() {
           value={estabelecidos}
           tone="success"
           hint="Contas que responderam e têm conversa efetiva."
+        />
+        <Kpi
+          label="Com atendimento programado"
+          value={atendimentoKpis.programado}
+          tone="primary"
+          link={`/crm/contas?lista=${listaQuery}`}
+          hint="Contas ativas com tarefa de contato futura ou para hoje/amanhã (tag azul/amarela do kanban)."
+        />
+        <Kpi
+          label="Tarefa de contato atrasada"
+          value={atendimentoKpis.atrasada}
+          tone="danger"
+          link={`/crm/contas?lista=${listaQuery}`}
+          hint="Contas ativas cuja próxima tarefa de contato já venceu (tag vermelha do kanban)."
         />
       </div>
 
@@ -417,12 +469,12 @@ function Kpi({
 }: {
   label: string;
   value: number | string;
-  tone?: "success" | "primary";
+  tone?: "success" | "primary" | "danger";
   link?: string;
   hint?: string;
 }) {
   const color =
-    tone === "success" ? "text-success" : tone === "primary" ? "text-primary" : "text-foreground";
+    tone === "success" ? "text-success" : tone === "primary" ? "text-primary" : tone === "danger" ? "text-danger" : "text-foreground";
   const content = (
     <Card className="p-4">
       <div className="flex items-center gap-1 text-xs text-muted-foreground">

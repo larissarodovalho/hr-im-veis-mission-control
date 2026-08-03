@@ -34,6 +34,9 @@ export const ALL_STAGES: { id: Stage; label: string; color: string }[] = STAGES;
 // Etapas em que o fluxo de atendimento (3 tentativas de contato) é acompanhado — desde a chegada do lead
 export const ETAPAS_FLUXO_ATENDIMENTO: string[] = ['Novo Lead', 'Pré-atendimento', 'Em Contato'];
 
+// Etapas ativas do funil de leads (progressão — sem Perdido)
+export const ETAPAS_ATIVAS_FUNIL: string[] = ['Novo Lead', 'Pré-atendimento', 'Em Contato', 'Conversa Ativa'];
+
 export const stageLabel = (id: string | null | undefined): string =>
   ALL_STAGES.find((s) => s.id === id)?.label ?? id ?? '—';
 
@@ -137,6 +140,26 @@ export function prazoCountdown(lead: LeadPrazoRef, idx: number): { texto: string
   const atraso = -diff;
   if (atraso < 3600000) return { texto: 'fazer agora', tone: 'warning' };
   return { texto: `atrasada há ${fmtDuracao(atraso)}`, tone: 'danger' };
+}
+
+// ===== Fluxo de atendimento (situação consolidada das 3 tentativas) =====
+
+export type FluxoAtendimentoClasse = 'sem_tentativa' | 'atrasado' | 'no_prazo' | 'concluido';
+
+export const FLUXO_ATENDIMENTO_CLASSE_INFO: Record<FluxoAtendimentoClasse, { label: string; emoji: string; cls: string }> = {
+  sem_tentativa: { label: 'Sem nenhuma tentativa', emoji: '🕐', cls: 'bg-muted text-muted-foreground border-border' },
+  atrasado: { label: 'Atrasados', emoji: '🔴', cls: 'bg-danger/15 text-danger border-danger/30' },
+  no_prazo: { label: 'No prazo', emoji: '🟢', cls: 'bg-success/15 text-success border-success/30' },
+  concluido: { label: 'Fluxo concluído (3/3)', emoji: '✅', cls: 'bg-muted text-muted-foreground border-border' },
+};
+
+/** Situação do lead no fluxo de atendimento (mesma regra do painel "Atendimento" da aba Leads). */
+export function classificaFluxoAtendimento(lead: LeadPrazoRef, tentativasFeitas: number): FluxoAtendimentoClasse {
+  const feitas = Math.min(tentativasFeitas, TENTATIVA_SEQ.length);
+  if (feitas >= TENTATIVA_SEQ.length) return 'concluido';
+  const cd = prazoCountdown(lead, feitas);
+  if (cd.tone === 'danger') return 'atrasado';
+  return feitas === 0 ? 'sem_tentativa' : 'no_prazo';
 }
 
 // ===== Pontualidade das tentativas (check de cumprimento do cronograma) =====
