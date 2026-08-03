@@ -1,4 +1,4 @@
-import { AlertTriangle, Building2, User } from "lucide-react";
+import { AlertTriangle, Building2, GitMerge, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { DuplicateMatch } from "@/lib/duplicates";
 import { Button } from "@/components/ui/button";
@@ -7,10 +7,12 @@ interface Props {
   matches: DuplicateMatch[];
   onIgnore?: () => void;
   onCancel?: () => void;
+  onMerge?: (match: DuplicateMatch) => void;
+  merging?: boolean;
   showActions?: boolean;
 }
 
-export default function DuplicateAlert({ matches, onIgnore, onCancel, showActions }: Props) {
+export default function DuplicateAlert({ matches, onIgnore, onCancel, onMerge, merging, showActions }: Props) {
   if (!matches.length) return null;
   return (
     <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
@@ -38,6 +40,18 @@ export default function DuplicateAlert({ matches, onIgnore, onCancel, showAction
                   {m.responsavel_nome ? ` · resp: ${m.responsavel_nome}` : ""})
                 </span>
               </div>
+              {onMerge && m.table === "contas" && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-7 px-2 text-xs shrink-0"
+                  disabled={merging}
+                  onClick={() => onMerge(m)}
+                >
+                  <GitMerge className="h-3.5 w-3.5 mr-1" />
+                  {merging ? "Unificando…" : "Unificar"}
+                </Button>
+              )}
             </li>
           );
         })}
