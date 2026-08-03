@@ -21,6 +21,7 @@ import {
 } from "@/lib/leads";
 import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Plus, Building2, FileSignature, Pencil, PhoneCall, CheckCircle2, PhoneOff, XCircle, Check } from "lucide-react";
 import EntityDocumentsTab from "@/components/EntityDocumentsTab";
+import ContaTarefas from "@/components/contas/ContaTarefas";
 import { toast } from "sonner";
 import { findDuplicates, onlyDigits, normEmail, DuplicateMatch } from "@/lib/duplicates";
 import DuplicateAlert from "@/components/DuplicateAlert";
@@ -983,6 +984,10 @@ export default function LeadDetail() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+        </Card>
+
+        <Card className="p-5">
+          <ContaTarefas leadId={id!} responsavelId={lead.corretor_id} />
         </Card>
 
         <Card className="p-5">
