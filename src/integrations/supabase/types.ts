@@ -3414,6 +3414,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      unificar_lead_em_conta: {
+        Args: { p_conta_id: string; p_lead_id: string }
+        Returns: Json
+      }
       user_has_menu_override: {
         Args: { _menu_key: string; _user_id: string }
         Returns: boolean
