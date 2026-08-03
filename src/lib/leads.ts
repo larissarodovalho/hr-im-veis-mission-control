@@ -7,19 +7,19 @@ export type ActiveStage =
   | 'Novo Lead'
   | 'Pré-atendimento'
   | 'Em Contato'
-  | 'Conversa Ativa';
+  | 'Conversa Ativa'
+  | 'Manual de acompanhamento'
+  | 'Permuta'
+  | 'Perdido';
 
-// Etapas retiradas da visualização principal (mantidas no banco como legado
-// até a criação do módulo de Oportunidades e Negócios).
+// Etapas antigas sem leads visíveis — mantidas no banco apenas como histórico
+// (exibidas na visão Lista, sem coluna no Kanban).
 export type LegacyStage =
   | 'IA de acompanhamento'
-  | 'Manual de acompanhamento'
   | 'Reunião Agendada'
   | 'Visita'
   | 'Proposta'
-  | 'Permuta'
-  | 'Fechado'
-  | 'Perdido';
+  | 'Fechado';
 
 export type Stage = ActiveStage | LegacyStage;
 
@@ -31,24 +31,24 @@ export const TEMPERATURES: Record<Temperature, { label: string; emoji: string; c
   quente: { label: 'Quente', emoji: '🔥', className: 'bg-red-500/15 text-red-600 border-red-500/30' },
 };
 
-// Funil principal da aba Leads (4 colunas)
+// Funil principal da aba Leads (7 colunas — todas visíveis no Kanban)
 export const STAGES: { id: ActiveStage; label: string; color: string }[] = [
   { id: 'Novo Lead', label: 'Novo Lead', color: 'bg-blue-500' },
   { id: 'Pré-atendimento', label: 'Pré-atendimento', color: 'bg-cyan-500' },
   { id: 'Em Contato', label: 'Em Contato', color: 'bg-indigo-500' },
   { id: 'Conversa Ativa', label: 'Conversa Ativa', color: 'bg-violet-500' },
+  { id: 'Manual de acompanhamento', label: '👤 Manual de acompanhamento', color: 'bg-fuchsia-500' },
+  { id: 'Permuta', label: 'Permuta', color: 'bg-amber-600' },
+  { id: 'Perdido', label: 'Perdido', color: 'bg-danger' },
 ];
 
-// Etapas legadas: não aparecem como colunas, mas os registros continuam no banco
+// Etapas históricas sem leads visíveis: não viram coluna, mas os registros continuam no banco
 export const LEGACY_STAGES: { id: LegacyStage; label: string; color: string }[] = [
   { id: 'IA de acompanhamento', label: '🤖 IA de acompanhamento', color: 'bg-violet-500' },
-  { id: 'Manual de acompanhamento', label: '👤 Manual de acompanhamento', color: 'bg-fuchsia-500' },
   { id: 'Reunião Agendada', label: 'Reunião Agendada', color: 'bg-purple-500' },
   { id: 'Visita', label: 'Visita', color: 'bg-amber-500' },
   { id: 'Proposta', label: 'Proposta', color: 'bg-orange-500' },
-  { id: 'Permuta', label: 'Permuta', color: 'bg-amber-600' },
   { id: 'Fechado', label: 'Fechado', color: 'bg-success' },
-  { id: 'Perdido', label: 'Perdido', color: 'bg-danger' },
 ];
 
 export const ALL_STAGES: { id: Stage; label: string; color: string }[] = [...STAGES, ...LEGACY_STAGES];
