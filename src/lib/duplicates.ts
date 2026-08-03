@@ -2,6 +2,14 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const onlyDigits = (s?: string | null) => (s || "").replace(/\D/g, "");
 export const normEmail = (s?: string | null) => (s || "").trim().toLowerCase();
+// Nome normalizado para comparar duplicidades: sem acento, minúsculo, espaços simples.
+export const normName = (s?: string | null) =>
+  (s || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
 
 export type DuplicateMatch = {
   table: "leads" | "contas";
@@ -12,7 +20,7 @@ export type DuplicateMatch = {
   documento?: string | null;
   etapa?: string | null;
   responsavel_nome?: string | null;
-  matchedBy: ("email" | "telefone" | "documento")[];
+  matchedBy: ("email" | "telefone" | "documento" | "nome")[];
 };
 
 /**
@@ -105,7 +113,7 @@ export async function findDuplicates(input: {
 export function describeMatch(m: DuplicateMatch): string {
   const where = m.table === "leads" ? "Lead" : "Conta";
   const by = m.matchedBy
-    .map((b) => (b === "email" ? "e-mail" : b === "telefone" ? "telefone" : "documento"))
+    .map((b) => (b === "email" ? "e-mail" : b === "telefone" ? "telefone" : b === "documento" ? "documento" : "nome"))
     .join(" e ");
   const resp = m.responsavel_nome ? ` — responsável: ${m.responsavel_nome}` : "";
   return `${where} já cadastrado(a) (${by}): ${m.nome}${resp}`;
