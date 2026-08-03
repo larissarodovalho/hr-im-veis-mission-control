@@ -330,12 +330,14 @@ export default function Accounts() {
   useEffect(() => {
     load();
     fetchLastContacts();
+    fetchNextTasks();
     const ch = supabase
       .channel("accounts-stream")
       .on("postgres_changes", { event: "*", schema: "public", table: "contas" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "conta_propriedades" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "interacoes" }, fetchLastContacts)
       .on("postgres_changes", { event: "*", schema: "public", table: "oportunidades" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "tarefas" }, fetchNextTasks)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
@@ -433,9 +435,12 @@ export default function Accounts() {
     if (contactFilter !== "todos") {
       const days = parseInt(contactFilter, 10);
       const last = lastContactMap[a.id];
-      if (!last) return false;
-      const diffDays = (Date.now() - new Date(last).getTime()) / 86400000;
-      if (diffDays > days) return false;
+      const tarefaFutura = nextTaskMap[a.id]?.prazo && new Date(nextTaskMap[a.id].prazo).getTime() >= Date.now();
+      if (!tarefaFutura) {
+        if (!last) return false;
+        const diffDays = (Date.now() - new Date(last).getTime()) / 86400000;
+        if (diffDays > days) return false;
+      }
     }
     if (typeFilter === "cliente" && a.is_partner) return false;
     if (typeFilter === "parceiro" && !a.is_partner) return false;
