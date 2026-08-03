@@ -352,7 +352,51 @@ function shortName(name: string) {
   return `${parts[0]} ${parts[parts.length - 1][0]}.`;
 }
 
-function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, brokers, tentativas, nextTask }: { lead: Lead; canDelete: boolean; onDelete: (id: string, name: string) => void; converted: boolean; userId?: string; onChanged: () => void; brokers: Record<string, string>; tentativas?: number; nextTask?: NextTaskResumo | null }) {
+/** Cronograma das 3 tentativas de contato (msg imediata, áudio +24h, ligação +48h) como mini-tags. */
+function TentativasTags({ lead, tentativas }: { lead: Lead; tentativas: TentativaReg[] }) {
+  if (lead.etapa_funil !== "Em Contato") return null;
+  const feitas = Math.min(tentativas.length, TENTATIVA_SEQ.length);
+  return (
+    <TooltipProvider delayDuration={150}>
+      {TENTATIVA_SEQ.map((t, idx) => {
+        const prazo = tentativaPrazo(lead, idx);
+        const inter = tentativas
+          .filter(i => i.tipo === t.tipo)
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0];
+        const isFeita = idx < feitas;
+        const isNext = !isFeita && idx === feitas;
+        const cd = !isFeita ? prazoCountdown(lead, idx) : null;
+        const pont = isFeita ? tentativaPontualidade(prazo, inter?.created_at) : null;
+        const cls = isFeita
+          ? TENTATIVA_TONE_CLASS[pont?.tone ?? "success"]
+          : isNext
+            ? TENTATIVA_TONE_CLASS[cd!.tone]
+            : TENTATIVA_TONE_CLASS.muted;
+        const tip = isFeita
+          ? `${t.titulo} — registrada em ${prazoDataLabel(inter ? new Date(inter.created_at) : null)} · Vencia: ${prazoDataLabel(prazo)}${pont ? ` · ${pont.label} (${pont.detalhe})` : ""}`
+          : `${t.titulo} — prazo: ${prazoDataLabel(prazo)} (entrada do lead + ${t.prazoHoras}h)`;
+        return (
+          <Tooltip key={t.tipo}>
+            <TooltipTrigger asChild>
+              <Badge variant="outline" className={`border text-[10px] gap-0.5 ${cls} ${isNext && cd?.tone === "danger" ? "animate-pulse" : ""}`}>
+                {isFeita && <Check className="h-2.5 w-2.5" />}
+                {TENTATIVA_EMOJI[t.tipo]} {t.label}
+                {isFeita
+                  ? (pont ? <span className="font-semibold">· {pont.label}</span> : null)
+                  : isNext
+                    ? <span className="font-semibold">· {cd!.texto}</span>
+                    : <span className="opacity-70">· +{t.prazoHoras}h</span>}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[260px]"><p className="text-xs">{tip}</p></TooltipContent>
+          </Tooltip>
+        );
+      })}
+    </TooltipProvider>
+  );
+}
+
+function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, brokers, tentativas, nextTask }: { lead: Lead; canDelete: boolean; onDelete: (id: string, name: string) => void; converted: boolean; userId?: string; onChanged: () => void; brokers: Record<string, string>; tentativas?: TentativaReg[]; nextTask?: NextTaskResumo | null }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
   const age = ageInDays(lead.created_at);
@@ -378,23 +422,7 @@ function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, bro
         {lead.origem && <Badge variant="secondary" className="text-[10px]">{SOURCES[lead.origem]?.emoji} {SOURCES[lead.origem]?.label || lead.origem}</Badge>}
         {lead.temperatura && <Badge className={TEMPERATURES[lead.temperatura].className + " border text-[10px]"}>{TEMPERATURES[lead.temperatura].emoji} {TEMPERATURES[lead.temperatura].label}</Badge>}
         {converted && <Badge className="bg-success/15 text-success border-success/30 border text-[10px] gap-0.5"><Building2 className="h-2.5 w-2.5" /> Conta</Badge>}
-        {lead.etapa_funil === "Em Contato" && (() => {
-          const feitas = Math.min(tentativas ?? 0, TENTATIVA_SEQ.length);
-          if (feitas >= TENTATIVA_SEQ.length) {
-            return (
-              <Badge className="border text-[10px] bg-danger/15 text-danger border-danger/30">
-                📞 Tentativas: {TENTATIVA_SEQ.length} de {TENTATIVA_SEQ.length}
-              </Badge>
-            );
-          }
-          const t = TENTATIVA_SEQ[feitas];
-          const cd = prazoCountdown(lead, feitas);
-          return (
-            <Badge className={"border text-[10px] " + TENTATIVA_TONE_CLASS[cd.tone]}>
-              {TENTATIVA_EMOJI[t.tipo]} {t.label}: {cd.texto}
-            </Badge>
-          );
-        })()}
+        {lead.etapa_funil === "Em Contato" && <TentativasTags lead={lead} tentativas={tentativas ?? []} />}
         {lead.tipo_acompanhamento && (
           <Badge className={TIPO_ACOMPANHAMENTO[lead.tipo_acompanhamento].className + " border text-[10px]"}>
             {TIPO_ACOMPANHAMENTO[lead.tipo_acompanhamento].emoji} {TIPO_ACOMPANHAMENTO[lead.tipo_acompanhamento].label}
