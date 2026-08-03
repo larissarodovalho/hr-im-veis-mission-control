@@ -133,7 +133,7 @@ export default function Accounts() {
   const canDelete = isAdmin;
   const [searchParams, setSearchParams] = useSearchParams();
   const listaParam = searchParams.get("lista");
-  const lista = (listaParam === "marketing" ? "marketing" : listaParam === "carteira" ? "carteira" : "todos") as "todos" | "carteira" | "marketing";
+  const lista = (listaParam === "marketing" ? "marketing" : listaParam === "todos" ? "todos" : "carteira") as "todos" | "carteira" | "marketing";
   const setLista = (v: "todos" | "carteira" | "marketing") => {
     const sp = new URLSearchParams(searchParams);
     sp.set("lista", v);

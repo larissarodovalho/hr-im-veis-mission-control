@@ -140,8 +140,8 @@ export default function Leads() {
             {convertedCount > 0 && (
               <button
                 type="button"
-                onClick={() => navigate("/crm/contas")}
-                title="Leads que viraram Conta e por isso saíram do funil — clique para abrir a aba Contas"
+                onClick={() => navigate("/crm/contas?lista=todos")}
+                title="Leads que viraram Conta e por isso saíram do funil — clique para ver todas as Contas"
                 className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success/10 text-success px-2 py-0.5 text-[11px] font-medium transition hover:bg-success/20"
               >
                 <Building2 className="h-3 w-3" />
