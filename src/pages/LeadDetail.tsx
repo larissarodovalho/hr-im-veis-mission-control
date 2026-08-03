@@ -408,10 +408,14 @@ export default function LeadDetail() {
           }));
       }
       const map = new Map<string, DuplicateMatch>();
-      [...matches, ...extra].forEach((m) => {
-        const k = `${m.table}:${m.id}`;
-        if (!map.has(k)) map.set(k, m);
-      });
+      [...matches, ...extra]
+        // Ignora auto-correspondência: o formulário vem pré-preenchido com os
+        // dados do próprio lead, então ele sempre apareceria como duplicidade.
+        .filter((m) => !(m.table === "leads" && m.id === lead.id))
+        .forEach((m) => {
+          const k = `${m.table}:${m.id}`;
+          if (!map.has(k)) map.set(k, m);
+        });
       setConvertDups(Array.from(map.values()));
       setForceConvert(false);
     }, 400);
