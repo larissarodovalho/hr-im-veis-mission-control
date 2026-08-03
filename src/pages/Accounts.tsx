@@ -218,6 +218,33 @@ export default function Accounts() {
   const [ownerMap, setOwnerMap] = useState<Record<string, string>>({});
   const [owners, setOwners] = useState<{ id: string; nome: string }[]>([]);
   const [lastContactMap, setLastContactMap] = useState<Record<string, string>>({});
+  const [nextTaskMap, setNextTaskMap] = useState<Record<string, NextTaskResumo>>({});
+
+  const fetchNextTasks = async () => {
+    const PAGE = 1000;
+    let from = 0;
+    const map: Record<string, NextTaskResumo> = {};
+    while (true) {
+      const { data, error } = await supabase
+        .from("tarefas")
+        .select("conta_id, titulo, prazo, prioridade")
+        .not("conta_id", "is", null)
+        .not("prazo", "is", null)
+        .neq("status", "Concluída")
+        .order("prazo", { ascending: true })
+        .range(from, from + PAGE - 1);
+      if (error) break;
+      if (!data?.length) break;
+      for (const row of data as any[]) {
+        if (row.conta_id && !map[row.conta_id]) {
+          map[row.conta_id] = { titulo: row.titulo, prazo: row.prazo, prioridade: row.prioridade };
+        }
+      }
+      if (data.length < PAGE) break;
+      from += PAGE;
+    }
+    setNextTaskMap(map);
+  };
 
   const fetchLastContacts = async () => {
     const PAGE = 1000;
