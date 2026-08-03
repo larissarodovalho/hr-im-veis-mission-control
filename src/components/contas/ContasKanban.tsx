@@ -24,7 +24,9 @@ import {
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { ETAPAS, EtapaFunil, categoriaDe, CATEGORIA_LABEL, qualificacaoInfo } from "@/lib/contasFunil";
-import { Handshake, Target, User, MoreVertical, Check, UserX, Thermometer, PencilLine, ArrowLeftRight, Megaphone, Clock, HandCoins, ExternalLink } from "lucide-react";
+import { Handshake, Target, User, MoreVertical, Check, UserX, Thermometer, PencilLine, ArrowLeftRight, Megaphone, Clock, HandCoins, ExternalLink, CalendarClock } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { dayKeyCRM, fmtDateTime, todayCRM } from "@/lib/datetime";
 import { tempInfo, TEMPERATURAS } from "@/lib/contasTemperatura";
 import { estagioLabel } from "@/lib/oportunidadesFunil";
 import { format } from "date-fns";
@@ -58,6 +60,19 @@ export type OpAtivaResumo = {
   corretor_id: string | null;
 };
 
+export type NextTaskResumo = { titulo: string; prazo: string; prioridade: string };
+
+function nextTaskCountdown(prazo: string): { texto: string; tom: "futuro" | "hoje" | "atrasada" } | null {
+  const hoje = todayCRM();
+  const dia = dayKeyCRM(prazo);
+  if (!dia) return null;
+  const diff = Math.round((new Date(dia + "T12:00:00").getTime() - new Date(hoje + "T12:00:00").getTime()) / 86400000);
+  if (diff < 0) return { texto: `atrasada há ${-diff} dia${-diff > 1 ? "s" : ""}`, tom: "atrasada" };
+  if (diff === 0) return { texto: "contatar hoje", tom: "hoje" };
+  if (diff === 1) return { texto: "contatar amanhã", tom: "hoje" };
+  return { texto: `em ${diff} dias`, tom: "futuro" };
+}
+
 interface Props {
   accounts: Account[];
   propsByAccount: Record<string, Property[]>;
@@ -69,6 +84,7 @@ interface Props {
   opAtivaPorConta?: Record<string, OpAtivaResumo>;
   lista?: "carteira" | "marketing";
   lastContactMap?: Record<string, string>;
+  nextTaskMap?: Record<string, NextTaskResumo>;
   ownerMap?: Record<string, string>;
   owners?: { id: string; nome: string }[];
 }
@@ -117,6 +133,7 @@ function ContaCard({
   ownerMap,
   lista,
   lastContact,
+  nextTask,
 }: {
   a: Account;
   total: number;
@@ -132,6 +149,7 @@ function ContaCard({
   ownerMap?: Record<string, string>;
   lista?: "carteira" | "marketing";
   lastContact?: string | null;
+  nextTask?: NextTaskResumo | null;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: a.id });
   const style: React.CSSProperties = {
@@ -290,6 +308,34 @@ function ContaCard({
           Últ. contato: {format(new Date(lastContact), "dd/MM/yyyy", { locale: ptBR })}
         </div>
       )}
+      {nextTask && (() => {
+        const cd = nextTaskCountdown(nextTask.prazo);
+        if (!cd) return null;
+        const tom = cd.tom === "atrasada"
+          ? "bg-rose-500/15 text-rose-700 border-rose-500/30"
+          : cd.tom === "hoje"
+            ? "bg-amber-500/15 text-amber-700 border-amber-500/30"
+            : "bg-sky-500/15 text-sky-700 border-sky-500/30";
+        const tituloCurto = nextTask.titulo.length > 18 ? nextTask.titulo.slice(0, 18).trimEnd() + "…" : nextTask.titulo;
+        return (
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div onPointerDown={stop} onClick={stop}>
+                  <Badge variant="outline" className={`${tom} text-[10px] max-w-full`}>
+                    <CalendarClock className="h-3 w-3 mr-1 shrink-0" />
+                    <span className="truncate">{tituloCurto} · {cd.texto}</span>
+                  </Badge>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[240px]">
+                <p className="font-medium">{nextTask.titulo}</p>
+                <p className="text-xs text-muted-foreground">Prazo: {fmtDateTime(nextTask.prazo)} · Prioridade: {nextTask.prioridade}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      })()}
       <div className="flex flex-wrap gap-1">
         {outraLista ? (
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px]">
@@ -414,7 +460,7 @@ function Column({
   );
 }
 
-export default function ContasKanban({ accounts, propsByAccount, onMoveStage, onChangeOwner, onChangeTemperatura, onChangeCategoria, onQualificar, opAtivaPorConta, lista, lastContactMap, ownerMap, owners }: Props) {
+export default function ContasKanban({ accounts, propsByAccount, onMoveStage, onChangeOwner, onChangeTemperatura, onChangeCategoria, onQualificar, opAtivaPorConta, lista, lastContactMap, nextTaskMap, ownerMap, owners }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const onDragEnd = (e: DragEndEvent) => {
@@ -457,6 +503,7 @@ export default function ContasKanban({ accounts, propsByAccount, onMoveStage, on
                     ownerMap={ownerMap}
                     lista={lista}
                     lastContact={lastContactMap?.[a.id]}
+                    nextTask={nextTaskMap?.[a.id] ?? null}
                   />
                 );
               })}

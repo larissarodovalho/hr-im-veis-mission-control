@@ -33,6 +33,7 @@ import { TEMPERATURAS, tempInfo } from "@/lib/contasTemperatura";
 
 type Operation = "compra" | "venda" | "arrendamento" | "outro";
 type Status = "ativo" | "inativo";
+type NextTaskResumo = { titulo: string; prazo: string; prioridade: string };
 type Interest = "compra" | "venda" | "arrendamento" | "compra_arrendamento" | "outro";
 type Aptitude = "agricultura" | "pecuaria" | "arrendamento" | "misto" | "outro";
 
@@ -218,6 +219,33 @@ export default function Accounts() {
   const [ownerMap, setOwnerMap] = useState<Record<string, string>>({});
   const [owners, setOwners] = useState<{ id: string; nome: string }[]>([]);
   const [lastContactMap, setLastContactMap] = useState<Record<string, string>>({});
+  const [nextTaskMap, setNextTaskMap] = useState<Record<string, NextTaskResumo>>({});
+
+  const fetchNextTasks = async () => {
+    const PAGE = 1000;
+    let from = 0;
+    const map: Record<string, NextTaskResumo> = {};
+    while (true) {
+      const { data, error } = await supabase
+        .from("tarefas")
+        .select("conta_id, titulo, prazo, prioridade")
+        .not("conta_id", "is", null)
+        .not("prazo", "is", null)
+        .neq("status", "Concluída")
+        .order("prazo", { ascending: true })
+        .range(from, from + PAGE - 1);
+      if (error) break;
+      if (!data?.length) break;
+      for (const row of data as any[]) {
+        if (row.conta_id && !map[row.conta_id]) {
+          map[row.conta_id] = { titulo: row.titulo, prazo: row.prazo, prioridade: row.prioridade };
+        }
+      }
+      if (data.length < PAGE) break;
+      from += PAGE;
+    }
+    setNextTaskMap(map);
+  };
 
   const fetchLastContacts = async () => {
     const PAGE = 1000;
@@ -302,12 +330,14 @@ export default function Accounts() {
   useEffect(() => {
     load();
     fetchLastContacts();
+    fetchNextTasks();
     const ch = supabase
       .channel("accounts-stream")
       .on("postgres_changes", { event: "*", schema: "public", table: "contas" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "conta_propriedades" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "interacoes" }, fetchLastContacts)
       .on("postgres_changes", { event: "*", schema: "public", table: "oportunidades" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "tarefas" }, fetchNextTasks)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
@@ -405,9 +435,12 @@ export default function Accounts() {
     if (contactFilter !== "todos") {
       const days = parseInt(contactFilter, 10);
       const last = lastContactMap[a.id];
-      if (!last) return false;
-      const diffDays = (Date.now() - new Date(last).getTime()) / 86400000;
-      if (diffDays > days) return false;
+      const tarefaFutura = nextTaskMap[a.id]?.prazo && new Date(nextTaskMap[a.id].prazo).getTime() >= Date.now();
+      if (!tarefaFutura) {
+        if (!last) return false;
+        const diffDays = (Date.now() - new Date(last).getTime()) / 86400000;
+        if (diffDays > days) return false;
+      }
     }
     if (typeFilter === "cliente" && a.is_partner) return false;
     if (typeFilter === "parceiro" && !a.is_partner) return false;
@@ -924,7 +957,7 @@ export default function Accounts() {
               className="hidden md:block overflow-hidden"
               style={{ height: "calc(100dvh - var(--kanban-top, 260px) - 8px)" }}
             >
-              <ContasKanban accounts={filtered as any} propsByAccount={propsByAccount} onMoveStage={moveStage} onChangeOwner={changeOwner} onChangeTemperatura={changeTemperatura} onChangeCategoria={(id) => setCatTarget(accounts.find((a) => a.id === id) ?? null)} onQualificar={abrirQualificacao} opAtivaPorConta={opAtivas} lista={lista} lastContactMap={lastContactMap} ownerMap={ownerMap} owners={owners} />
+              <ContasKanban accounts={filtered as any} propsByAccount={propsByAccount} onMoveStage={moveStage} onChangeOwner={changeOwner} onChangeTemperatura={changeTemperatura} onChangeCategoria={(id) => setCatTarget(accounts.find((a) => a.id === id) ?? null)} onQualificar={abrirQualificacao} opAtivaPorConta={opAtivas} lista={lista} lastContactMap={lastContactMap} nextTaskMap={nextTaskMap} ownerMap={ownerMap} owners={owners} />
             </div>
           </>
         )
