@@ -593,7 +593,21 @@ export default function LeadDetail() {
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Telefone</Label><Input ref={convertTelRef} value={convertForm.telefone} onChange={e => setConvertForm({ ...convertForm, telefone: e.target.value })} /></div>
                 <div><Label>Email</Label><Input value={convertForm.email} onChange={e => setConvertForm({ ...convertForm, email: e.target.value })} /></div>
-...
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Tipo</Label>
+                  <Select value={convertForm.tipo} onValueChange={v => setConvertForm({ ...convertForm, tipo: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PF">Pessoa Física</SelectItem>
+                      <SelectItem value="PJ">Pessoa Jurídica</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>CPF/CNPJ</Label><Input value={convertForm.documento} onChange={e => setConvertForm({ ...convertForm, documento: e.target.value })} /></div>
+              </div>
+              <div><Label>Endereço</Label><Input value={convertForm.endereco} onChange={e => setConvertForm({ ...convertForm, endereco: e.target.value })} /></div>
+              <div><Label>Observações</Label><Textarea rows={3} value={convertForm.observacoes} onChange={e => setConvertForm({ ...convertForm, observacoes: e.target.value })} /></div>
               {convertDups.length > 0 && (
                 <DuplicateAlert
                   matches={convertDups}
