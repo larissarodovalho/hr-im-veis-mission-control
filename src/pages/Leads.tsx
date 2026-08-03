@@ -11,8 +11,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
-import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature, TIPO_ACOMPANHAMENTO, TipoAcompanhamento, stageLabel, TENTATIVA_TIPOS, TENTATIVA_SEQ, TENTATIVA_EMOJI, prazoCountdown, tentativaPrazo, prazoDataLabel, tentativaPontualidade, TENTATIVA_TONE_CLASS } from "@/lib/leads";
-import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2, User as UserIcon, PencilLine, CalendarClock, Check } from "lucide-react";
+import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature, TIPO_ACOMPANHAMENTO, TipoAcompanhamento, stageLabel, TENTATIVA_TIPOS, TENTATIVA_SEQ, TENTATIVA_EMOJI, prazoCountdown, tentativaPrazo, prazoDataLabel, tentativaPontualidade, TENTATIVA_TONE_CLASS, ETAPAS_FLUXO_ATENDIMENTO } from "@/lib/leads";
+import { Plus, Search, KanbanSquare, List as ListIcon, Headphones, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2, User as UserIcon, PencilLine, CalendarClock, Check } from "lucide-react";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
@@ -44,7 +44,7 @@ export default function Leads() {
   const [brokers, setBrokers] = useState<Record<string, string>>({});
   const [tentativasMap, setTentativasMap] = useState<Record<string, TentativaReg[]>>({});
   const [nextTaskMap, setNextTaskMap] = useState<Record<string, NextTaskResumo>>({});
-  const [view, setView] = useState<"kanban" | "list">("kanban");
+  const [view, setView] = useState<"kanban" | "list" | "atendimento">("kanban");
   
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"recent" | "idle">("recent");
@@ -83,10 +83,10 @@ export default function Leads() {
     setLeads(rows);
     const { data: accs } = await supabase.from("contas").select("lead_id_origem").not("lead_id_origem", "is", null);
     setConvertedIds(new Set((accs ?? []).map((a: any) => a.lead_id_origem)));
-    // Tentativas (mensagem/áudio/ligação) dos leads em "Em Contato"
-    const emContatoIds = rows.filter(l => l.etapa_funil === "Em Contato").map(l => l.id);
-    if (emContatoIds.length) {
-      const { data: ints } = await supabase.from("interacoes").select("lead_id, tipo, created_at").in("lead_id", emContatoIds).in("tipo", TENTATIVA_TIPOS);
+    // Tentativas (mensagem/áudio/ligação) dos leads em atendimento (desde a chegada)
+    const fluxoIds = rows.filter(l => ETAPAS_FLUXO_ATENDIMENTO.includes(l.etapa_funil)).map(l => l.id);
+    if (fluxoIds.length) {
+      const { data: ints } = await supabase.from("interacoes").select("lead_id, tipo, created_at").in("lead_id", fluxoIds).in("tipo", TENTATIVA_TIPOS);
       const map: Record<string, TentativaReg[]> = {};
       ((ints ?? []) as any[]).forEach(r => { (map[r.lead_id] = map[r.lead_id] ?? []).push({ tipo: r.tipo, created_at: r.created_at }); });
       setTentativasMap(map);
@@ -191,8 +191,9 @@ export default function Leads() {
           </div>
           <Tabs value={view} onValueChange={v => setView(v as any)} className="order-2">
             <TabsList>
-              <TabsTrigger value="kanban"><KanbanSquare className="h-4 w-4" /></TabsTrigger>
-              <TabsTrigger value="list"><ListIcon className="h-4 w-4" /></TabsTrigger>
+              <TabsTrigger value="kanban" title="Kanban"><KanbanSquare className="h-4 w-4" /></TabsTrigger>
+              <TabsTrigger value="list" title="Lista"><ListIcon className="h-4 w-4" /></TabsTrigger>
+              <TabsTrigger value="atendimento" title="Acompanhamento do fluxo de atendimento"><Headphones className="h-4 w-4" /></TabsTrigger>
             </TabsList>
           </Tabs>
           <Button
@@ -230,6 +231,8 @@ export default function Leads() {
             ))}
           </div>
         </DndContext>
+      ) : view === "atendimento" ? (
+        <AtendimentoPanel leads={leads} convertedIds={convertedIds} tentativasMap={tentativasMap} brokers={brokers} search={search} />
       ) : (
         <>
           {/* Mobile: cards */}
@@ -356,7 +359,7 @@ function shortName(name: string) {
 
 /** Cronograma das 3 tentativas de contato (msg imediata, áudio +24h, ligação +48h) como mini-tags. */
 function TentativasTags({ lead, tentativas }: { lead: Lead; tentativas: TentativaReg[] }) {
-  if (lead.etapa_funil !== "Em Contato") return null;
+  if (!ETAPAS_FLUXO_ATENDIMENTO.includes(lead.etapa_funil)) return null;
   const feitas = Math.min(tentativas.length, TENTATIVA_SEQ.length);
   return (
     <TooltipProvider delayDuration={150}>
@@ -398,6 +401,85 @@ function TentativasTags({ lead, tentativas }: { lead: Lead; tentativas: Tentativ
   );
 }
 
+type AtClasse = "sem_tentativa" | "atrasado" | "no_prazo" | "concluido";
+
+const AT_CLASSE_INFO: Record<AtClasse, { label: string; emoji: string; cls: string }> = {
+  sem_tentativa: { label: "Sem nenhuma tentativa", emoji: "🕐", cls: "bg-muted text-muted-foreground border-border" },
+  atrasado: { label: "Atrasados", emoji: "🔴", cls: "bg-danger/15 text-danger border-danger/30" },
+  no_prazo: { label: "No prazo", emoji: "🟢", cls: "bg-success/15 text-success border-success/30" },
+  concluido: { label: "Fluxo concluído (3/3)", emoji: "✅", cls: "bg-muted text-muted-foreground border-border" },
+};
+
+function classificaAtendimento(lead: Lead, tentativas: TentativaReg[]): AtClasse {
+  const feitas = Math.min(tentativas.length, TENTATIVA_SEQ.length);
+  if (feitas >= TENTATIVA_SEQ.length) return "concluido";
+  const cd = prazoCountdown(lead, feitas);
+  if (cd.tone === "danger") return "atrasado";
+  return feitas === 0 ? "sem_tentativa" : "no_prazo";
+}
+
+/** Painel de acompanhamento do fluxo de atendimento (msg imediata, áudio +24h, ligação +48h). */
+function AtendimentoPanel({ leads, convertedIds, tentativasMap, brokers, search }: { leads: Lead[]; convertedIds: Set<string>; tentativasMap: Record<string, TentativaReg[]>; brokers: Record<string, string>; search: string }) {
+  const [filtro, setFiltro] = useState<AtClasse | "todos">("todos");
+  const ativos = leads.filter(l => {
+    if (convertedIds.has(l.id)) return false;
+    if (!ETAPAS_FLUXO_ATENDIMENTO.includes(l.etapa_funil)) return false;
+    if (search) {
+      const s = search.toLowerCase();
+      if (!(l.nome.toLowerCase().includes(s) || l.telefone?.includes(search) || l.email?.toLowerCase().includes(s))) return false;
+    }
+    return true;
+  });
+  const classes: Record<AtClasse, Lead[]> = { sem_tentativa: [], atrasado: [], no_prazo: [], concluido: [] };
+  ativos.forEach(l => classes[classificaAtendimento(l, tentativasMap[l.id] ?? [])].push(l));
+  const prazoMs = (l: Lead) => {
+    const feitas = Math.min((tentativasMap[l.id] ?? []).length, TENTATIVA_SEQ.length);
+    if (feitas >= TENTATIVA_SEQ.length) return Number.POSITIVE_INFINITY;
+    return tentativaPrazo(l, feitas)?.getTime() ?? Number.POSITIVE_INFINITY;
+  };
+  (Object.keys(classes) as AtClasse[]).forEach(k => classes[k].sort((a, b) => prazoMs(a) - prazoMs(b)));
+  const chipsOrdem: AtClasse[] = ["sem_tentativa", "atrasado", "no_prazo", "concluido"];
+  const listaOrdem: AtClasse[] = ["atrasado", "sem_tentativa", "no_prazo", "concluido"];
+  const lista = filtro === "todos" ? listaOrdem.flatMap(k => classes[k]) : classes[filtro];
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" size="sm" variant={filtro === "todos" ? "default" : "outline"} onClick={() => setFiltro("todos")}>
+          Todos <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-[10px]">{ativos.length}</Badge>
+        </Button>
+        {chipsOrdem.map(k => (
+          <Button key={k} type="button" size="sm" variant={filtro === k ? "default" : "outline"} onClick={() => setFiltro(filtro === k ? "todos" : k)}>
+            {AT_CLASSE_INFO[k].emoji} {AT_CLASSE_INFO[k].label} <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-[10px]">{classes[k].length}</Badge>
+          </Button>
+        ))}
+      </div>
+      {lista.length === 0 && <Card className="p-6 text-center text-sm text-muted-foreground">Nenhum lead nesta situação.</Card>}
+      <div className="space-y-2">
+        {lista.map(l => {
+          const classe = classificaAtendimento(l, tentativasMap[l.id] ?? []);
+          const responsavel = l.corretor_id ? brokers[l.corretor_id] : null;
+          return (
+            <Card key={l.id} className="p-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+              <div className="min-w-0 sm:w-52 shrink-0">
+                <Link to={`/crm/leads/${l.id}`} className="font-medium text-sm hover:underline block truncate">{l.nome}</Link>
+                {l.telefone && <div className="text-xs text-muted-foreground truncate">{l.telefone}</div>}
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <Badge variant="outline" className="text-[10px]">{stageLabel(l.etapa_funil)}</Badge>
+                <Badge className={AT_CLASSE_INFO[classe].cls + " border text-[10px]"}>{AT_CLASSE_INFO[classe].emoji} {AT_CLASSE_INFO[classe].label}</Badge>
+                {responsavel && <Badge variant="secondary" className="text-[10px]">🧑‍💼 {responsavel}</Badge>}
+              </div>
+              <div className="flex flex-wrap gap-1 sm:ml-auto">
+                <TentativasTags lead={l} tentativas={tentativasMap[l.id] ?? []} />
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, brokers, tentativas, nextTask }: { lead: Lead; canDelete: boolean; onDelete: (id: string, name: string) => void; converted: boolean; userId?: string; onChanged: () => void; brokers: Record<string, string>; tentativas?: TentativaReg[]; nextTask?: NextTaskResumo | null }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
@@ -424,7 +506,7 @@ function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, bro
         {lead.origem && <Badge variant="secondary" className="text-[10px]">{SOURCES[lead.origem]?.emoji} {SOURCES[lead.origem]?.label || lead.origem}</Badge>}
         {lead.temperatura && <Badge className={TEMPERATURES[lead.temperatura].className + " border text-[10px]"}>{TEMPERATURES[lead.temperatura].emoji} {TEMPERATURES[lead.temperatura].label}</Badge>}
         {converted && <Badge className="bg-success/15 text-success border-success/30 border text-[10px] gap-0.5"><Building2 className="h-2.5 w-2.5" /> Conta</Badge>}
-        {lead.etapa_funil === "Em Contato" && <TentativasTags lead={lead} tentativas={tentativas ?? []} />}
+        <TentativasTags lead={lead} tentativas={tentativas ?? []} />
         {lead.tipo_acompanhamento && (
           <Badge className={TIPO_ACOMPANHAMENTO[lead.tipo_acompanhamento].className + " border text-[10px]"}>
             {TIPO_ACOMPANHAMENTO[lead.tipo_acompanhamento].emoji} {TIPO_ACOMPANHAMENTO[lead.tipo_acompanhamento].label}

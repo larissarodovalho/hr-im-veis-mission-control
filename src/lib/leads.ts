@@ -31,6 +31,9 @@ export const STAGES: { id: ActiveStage; label: string; color: string }[] = [
 
 export const ALL_STAGES: { id: Stage; label: string; color: string }[] = STAGES;
 
+// Etapas em que o fluxo de atendimento (3 tentativas de contato) é acompanhado — desde a chegada do lead
+export const ETAPAS_FLUXO_ATENDIMENTO: string[] = ['Novo Lead', 'Pré-atendimento', 'Em Contato'];
+
 export const stageLabel = (id: string | null | undefined): string =>
   ALL_STAGES.find((s) => s.id === id)?.label ?? id ?? '—';
 
