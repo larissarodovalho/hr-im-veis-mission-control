@@ -14,7 +14,7 @@ import {
   STAGES, SOURCES, INTERESTS, TEMPERATURES,
   ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, formatDateBR,
   initials, Stage, Temperature,
-  isLegacyStage, stageLabel, TENTATIVA_SEQ, TENTATIVA_TIPOS, TENTATIVA_RESULTADOS,
+  stageLabel, TENTATIVA_SEQ, TENTATIVA_TIPOS, TENTATIVA_RESULTADOS,
   INTERACAO_CANAIS, MOTIVOS_DESCLASSIFICACAO,
   tentativaStatus, tentativaPrazo, prazoDataLabel, prazoCountdown, TENTATIVA_TONE_CLASS,
   tentativaPontualidade, PONTUALIDADE_INFO, Pontualidade,
@@ -558,9 +558,6 @@ export default function LeadDetail() {
           <Select value={lead.etapa_funil} onValueChange={v => updateLead({ etapa_funil: v as Stage })}>
             <SelectTrigger className="w-full sm:w-52 lg:w-56"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {isLegacyStage(lead.etapa_funil) && (
-                <SelectItem value={lead.etapa_funil}>{stageLabel(lead.etapa_funil)} (legado)</SelectItem>
-              )}
               {STAGES.map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
             </SelectContent>
           </Select>

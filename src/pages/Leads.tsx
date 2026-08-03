@@ -11,8 +11,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
-import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature, TIPO_ACOMPANHAMENTO, TipoAcompanhamento, isLegacyStage, stageLabel, TENTATIVA_TIPOS, TENTATIVA_SEQ, TENTATIVA_EMOJI, prazoCountdown, TENTATIVA_TONE_CLASS } from "@/lib/leads";
-import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2, User as UserIcon, PencilLine, Archive } from "lucide-react";
+import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature, TIPO_ACOMPANHAMENTO, TipoAcompanhamento, stageLabel, TENTATIVA_TIPOS, TENTATIVA_SEQ, TENTATIVA_EMOJI, prazoCountdown, TENTATIVA_TONE_CLASS } from "@/lib/leads";
+import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2, User as UserIcon, PencilLine } from "lucide-react";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
@@ -39,7 +39,7 @@ export default function Leads() {
   const [brokers, setBrokers] = useState<Record<string, string>>({});
   const [tentativasCount, setTentativasCount] = useState<Record<string, number>>({});
   const [view, setView] = useState<"kanban" | "list">("kanban");
-  const [listScope, setListScope] = useState<"todas" | "funil" | "legados">("todas");
+  
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"recent" | "idle">("recent");
   const [needsNurture, setNeedsNurture] = useState(false);
@@ -84,27 +84,22 @@ export default function Leads() {
     return () => { supabase.removeChannel(ch); };
   }, []);
 
-  const legacyCount = leads.filter(l => !convertedIds.has(l.id) && isLegacyStage(l.etapa_funil)).length;
   const convertedCount = leads.filter(l => convertedIds.has(l.id)).length;
 
   const needsNurtureCount = leads.filter(l => {
     if (convertedIds.has(l.id)) return false;
-    if (isLegacyStage(l.etapa_funil)) return false;
     const id = idleDays(l.ultima_interacao);
     return id === null || id >= 4;
   }).length;
 
   let filtered = leads.filter(l => {
     if (convertedIds.has(l.id)) return false;
-    if (listScope === "funil" && isLegacyStage(l.etapa_funil)) return false;
-    if (listScope === "legados" && !isLegacyStage(l.etapa_funil)) return false;
     if (search) {
       const s = search.toLowerCase();
       const match = l.nome.toLowerCase().includes(s) || l.telefone?.includes(search) || l.email?.toLowerCase().includes(s);
       if (!match) return false;
     }
     if (needsNurture) {
-      if (isLegacyStage(l.etapa_funil)) return false;
       const id = idleDays(l.ultima_interacao);
       if (!(id === null || id >= 4)) return false;
     }
@@ -153,17 +148,6 @@ export default function Leads() {
                 {convertedCount} convertido{convertedCount > 1 ? "s" : ""} em Conta
               </button>
             )}
-            {legacyCount > 0 && (
-              <button
-                type="button"
-                onClick={() => { setView("list"); setListScope("legados"); }}
-                title="Leads em etapas antigas do funil que não viram coluna no Kanban — clique para ver na lista"
-                className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-700 px-2 py-0.5 text-[11px] font-medium transition hover:bg-amber-500/20"
-              >
-                <Archive className="h-3 w-3" />
-                {legacyCount} em etapas legadas (fora do Kanban)
-              </button>
-            )}
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
@@ -189,16 +173,6 @@ export default function Leads() {
             <span className="hidden sm:inline">Precisam nutrição</span>
             <Badge variant="secondary" className="ml-0.5 h-5 px-1.5 text-[10px]">{needsNurtureCount}</Badge>
           </Button>
-          {view === "list" && (
-            <Select value={listScope} onValueChange={v => setListScope(v as any)}>
-              <SelectTrigger className="order-2 w-48 h-9 text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todas as etapas</SelectItem>
-                <SelectItem value="funil">Somente funil atual</SelectItem>
-                <SelectItem value="legados">Somente legados ({legacyCount})</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
           {view === "list" && (
             <Select value={sortBy} onValueChange={v => setSortBy(v as any)}>
               <SelectTrigger className="order-2 w-44 h-9 text-sm"><SelectValue /></SelectTrigger>
@@ -242,7 +216,7 @@ export default function Leads() {
                     {isUrgent(l) && <Badge className="bg-destructive text-destructive-foreground border-destructive border text-[10px] animate-pulse">🔥 Contato Imediato</Badge>}
                     {l.origem && <Badge variant="secondary" className="text-[10px]">{SOURCES[l.origem]?.emoji} {SOURCES[l.origem]?.label || l.origem}</Badge>}
                     {l.imovel_interesse && <Badge variant="outline" className="text-[10px]">{INTERESTS[l.imovel_interesse] || l.imovel_interesse}</Badge>}
-                    <Badge variant="outline" className="text-[10px]">{stageLabel(l.etapa_funil)}{isLegacyStage(l.etapa_funil) ? " (legado)" : ""}</Badge>
+                    <Badge variant="outline" className="text-[10px]">{stageLabel(l.etapa_funil)}</Badge>
                     <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
                     <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
                     
@@ -274,7 +248,7 @@ export default function Leads() {
                       </td>
                       <td className="p-3"><Badge variant="secondary">{SOURCES[l.origem || ""]?.emoji} {SOURCES[l.origem || ""]?.label || l.origem}</Badge></td>
                       <td className="p-3 text-muted-foreground">{l.imovel_interesse ? (INTERESTS[l.imovel_interesse] || l.imovel_interesse) : "—"}</td>
-                      <td className="p-3"><Badge variant="outline">{stageLabel(l.etapa_funil)}{isLegacyStage(l.etapa_funil) ? " (legado)" : ""}</Badge></td>
+                      <td className="p-3"><Badge variant="outline">{stageLabel(l.etapa_funil)}</Badge></td>
                       <td className="p-3">
                         <div className="flex flex-col gap-1 items-start">
                           <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
@@ -395,8 +369,7 @@ function FollowUpCell({ lead, onChanged, userId, compact }: { lead: Lead; onChan
   const [nota, setNota] = useState("");
   const [savingManual, setSavingManual] = useState(false);
   const idle = idleDays(lead.ultima_interacao);
-  const isClosed = isLegacyStage(lead.etapa_funil);
-  const iaEligible = !isClosed && (idle === null || idle >= 3) && !!lead.telefone;
+  const iaEligible = (idle === null || idle >= 3) && !!lead.telefone;
 
   const sendIa = async () => {
     if (!iaEligible) return;
