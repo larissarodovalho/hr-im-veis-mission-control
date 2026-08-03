@@ -160,7 +160,7 @@ export default function Dashboard() {
 
 
       {(() => {
-        const ATENDIMENTO_STAGES = new Set(["Em Contato","Conversa Ativa","IA de acompanhamento","Manual de acompanhamento","Reunião Agendada","Visita","Proposta"]);
+        const ATENDIMENTO_STAGES = new Set(["Em Contato","Conversa Ativa","IA de acompanhamento","Reunião Agendada","Visita","Proposta"]);
         const emAtendimento = leads.filter(l => ATENDIMENTO_STAGES.has(l.etapa_funil)).length;
         const novosSemContato = leads.filter(l => l.etapa_funil === "Novo Lead").length;
         const fechados = leads.filter(l => l.etapa_funil === "Fechado").length;
