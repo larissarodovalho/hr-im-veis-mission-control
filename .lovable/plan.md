@@ -1,37 +1,31 @@
-# Integrar destino comercial "Captação / Reunião" com a aba Captação (Imóveis)
+# Tag de tarefa futura no card da Conta (contagem regressiva)
 
 ## Objetivo
-Quando uma conta em **Contato estabelecido** receber o destino comercial **"Captação / Reunião"** (`captacao_reuniao`), um card de captação deve ser criado automaticamente na aba **Imóveis > Captação** (tabela `captacoes_imovel`), iniciando no estágio "Novo (recebido)".
+Quando uma tarefa pendente com prazo existe dentro de uma conta, o card do cliente no funil de Contas (Carteira e Marketing) passa a exibir uma tag com a contagem regressiva até o contato (ex.: "Retorno em 3 dias", "Contatar hoje", "Atrasada há 2 dias"). Assim o cliente deixa de parecer "sem atendimento" — fica visível que já existe um contato agendado.
 
 ## Estado atual (verificado)
-- A tabela `captacoes_imovel` e a aba Captação já existem e funcionam.
-- O trigger `sync_captacao_from_conta` só dispara quando `contas.etapa_funil = 'captacao_imovel'` — etapa legada que não existe mais no funil novo. Ou seja, hoje **nenhum card novo é criado** pelo fluxo de Contato estabelecido.
-- O destino comercial é salvo em `contas.destino_comercial` pelo botão "Definir destino comercial" em `ContaFluxoAtendimento.tsx` (valores permitidos pela constraint: `captacao_reuniao`, `comprar_oportunidade`, `vender_hrx_producoes`, `oportunidade_futura`).
-- O texto de ajuda da aba Captação ainda diz "Cards criados automaticamente quando uma conta entra em 'Captação/Imóvel'" (desatualizado).
+- Tarefas da conta ficam na tabela `tarefas` (`titulo`, `prazo`, `prioridade`, `status`, `conta_id`), gerenciadas por `src/components/contas/ContaTarefas.tsx` na página da conta.
+- O card do funil (`src/components/contas/ContasKanban.tsx`) mostra "Últ. contato: dd/MM/aaaa" (mapa montado em `src/pages/Accounts.tsx` a partir de `interacoes`) — hoje não há nenhuma indicação de contato futuro agendado.
+- O filtro "Contato" da aba Contas (`contactFilter`, em dias) só considera interações passadas; contas sem interação recente somem da visão filtrada, parecendo abandonadas.
 
 ## Implementação
 
-### 1. Migration — atualizar o trigger de sincronização
-- Reescrever a função `public.sync_captacao_from_conta()` para criar o card em **duas** condições:
-  - `etapa_funil = 'captacao_imovel'` (comportamento legado, mantido); **ou**
-  - `destino_comercial = 'captacao_reuniao'` (novo), quando o valor acabou de mudar para esse destino.
-- Recriar o trigger para observar as duas colunas: `AFTER INSERT OR UPDATE OF etapa_funil, destino_comercial ON public.contas`.
-- **Sem duplicidade**: só insere se não existir captação ativa (`estagio <> 'concluido'`) para a conta — mesmo padrão já usado hoje.
-- O card nasce com `estagio = 'novo'`, `responsavel_id` e `created_by` herdados da conta.
-- **Reversão segura**: se o destino sair de `captacao_reuniao` para outro, remover apenas cards "intocados" (ainda em `novo`, sem data agendada, sem checklist, sem imóvel vinculado). Cards já trabalhados permanecem.
-- **Backfill**: criar cards para contas que já estão hoje com `destino_comercial = 'captacao_reuniao'` e não têm captação ativa.
+### 1. `src/pages/Accounts.tsx`
+- Nova busca paginada `tarefas` pendentes (`status != 'Concluída'`, `conta_id` preenchido, `prazo` preenchido), ordenada por prazo, montando `nextTaskMap: conta_id -> { titulo, prazo, prioridade }` com a tarefa mais próxima de cada conta.
+- Passar `nextTaskMap` para o `ContasKanban` e recarregar junto com os demais dados.
+- Filtro "Contato": contas com tarefa futura pendente continuam aparecendo (tratadas como atendimento programado, não como "sem atendimento").
 
-### 2. Ajustes de frontend
-- `src/pages/imoveis/CaptacaoTab.tsx`: atualizar o texto de ajuda para refletir a nova regra ("Cards criados automaticamente quando uma conta em Contato estabelecido recebe o destino comercial 'Captação / Reunião'").
-- `src/components/contas/ContaFluxoAtendimento.tsx`: ao salvar o destino `captacao_reuniao`, mostrar no toast que a conta foi enviada para a aba Captação em Imóveis.
+### 2. `src/components/contas/ContasKanban.tsx`
+- Nova prop opcional `nextTask` no card, renderizando um badge com ícone de calendário/relógio e o título da tarefa abreviado:
+  - Futuro: "em X dias" (azul), "amanhã" ou "hoje" (âmbar)
+  - Vencido: "atrasada há X dias" (vermelho)
+- Tooltip no badge com título completo, data/hora do prazo e prioridade.
+- Cálculo de dias no fuso America/Cuiaba via helpers de `src/lib/datetime.ts` (`todayCRM`, `dayKeyCRM`), seguindo o padrão do CRM.
 
-## Notas técnicas
-- A criação acontece 100% no banco (trigger), então funciona independentemente de onde o destino for alterado (fluxo de atendimento, edição futura etc.).
-- RLS de `captacoes_imovel` já permite que o responsável/criador da conta veja e edite o card — nenhuma policy nova é necessária.
-- A aba Captação já tem realtime subscription; o card novo aparece sem recarregar a página.
+### 3. Sem mudanças de banco
+- Reaproveita a tabela `tarefas` e as permissões já existentes (qualquer equipe já lê tarefas na página da conta).
 
 ## Validação
-- Definir destino "Captação / Reunião" numa conta em Contato estabelecido → conferir card na aba Captação no estágio "Novo (recebido)".
-- Repetir a ação → confirmar que não duplica.
-- Mudar o destino para outro → card intocado some; card já trabalhado permanece.
-- Verificar o backfill nas contas já marcadas com esse destino.
+- Criar uma tarefa com prazo futuro numa conta e conferir a tag no card do funil (Carteira e Marketing).
+- Conferir os casos "hoje", "amanhã" e tarefa vencida.
+- Verificar que a conta com tarefa futura continua aparecendo ao usar o filtro de contato.
