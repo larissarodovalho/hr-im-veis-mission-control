@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -76,8 +76,10 @@ export default function LeadDetail() {
   const [convertOpen, setConvertOpen] = useState(false);
   const [convertForm, setConvertForm] = useState<any>(null);
   const [converting, setConverting] = useState(false);
+  const [merging, setMerging] = useState(false);
   const [convertDups, setConvertDups] = useState<DuplicateMatch[]>([]);
   const [forceConvert, setForceConvert] = useState(false);
+  const convertTelRef = useRef<HTMLInputElement>(null);
   const [tentOpen, setTentOpen] = useState(false);
   const [tentForm, setTentForm] = useState({ tipo: "mensagem", resultado: "", canal: "WhatsApp", descricao: "", proxima_acao: "" });
   const [savingTent, setSavingTent] = useState(false);
@@ -482,6 +484,23 @@ export default function LeadDetail() {
     navigate("/crm/contas?lista=marketing");
   };
 
+  // Unifica o lead a uma conta já existente: não cria conta nova,
+  // apenas vincula o lead e transfere o histórico (interações, tarefas e reuniões).
+  const confirmMerge = async (contaId: string) => {
+    setMerging(true);
+    const { data, error } = await supabase.rpc("unificar_lead_em_conta", {
+      p_lead_id: lead.id,
+      p_conta_id: contaId,
+    });
+    setMerging(false);
+    if (error) return toast.error(error.message);
+    setConvertOpen(false);
+    const resumo = data as any;
+    const movidos = (resumo?.interacoes_movidas ?? 0) + (resumo?.tarefas_movidas ?? 0) + (resumo?.reunioes_movidas ?? 0);
+    toast.success(`Lead unificado à conta existente — ${movidos} registro(s) de histórico transferido(s).`);
+    navigate(`/crm/contas/${contaId}`);
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <button
@@ -572,25 +591,18 @@ export default function LeadDetail() {
             <div className="space-y-3">
               <div><Label>Nome do cliente*</Label><Input value={convertForm.nome} onChange={e => setConvertForm({ ...convertForm, nome: e.target.value })} /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><Label>Telefone</Label><Input value={convertForm.telefone} onChange={e => setConvertForm({ ...convertForm, telefone: e.target.value })} /></div>
+                <div><Label>Telefone</Label><Input ref={convertTelRef} value={convertForm.telefone} onChange={e => setConvertForm({ ...convertForm, telefone: e.target.value })} /></div>
                 <div><Label>Email</Label><Input value={convertForm.email} onChange={e => setConvertForm({ ...convertForm, email: e.target.value })} /></div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label>Tipo</Label>
-                  <Select value={convertForm.tipo} onValueChange={v => setConvertForm({ ...convertForm, tipo: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="PF">Pessoa Física</SelectItem>
-                      <SelectItem value="PJ">Pessoa Jurídica</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div><Label>CPF/CNPJ</Label><Input value={convertForm.documento} onChange={e => setConvertForm({ ...convertForm, documento: e.target.value })} /></div>
-              </div>
-              <div><Label>Endereço</Label><Input value={convertForm.endereco} onChange={e => setConvertForm({ ...convertForm, endereco: e.target.value })} /></div>
-              <div><Label>Observações</Label><Textarea rows={3} value={convertForm.observacoes} onChange={e => setConvertForm({ ...convertForm, observacoes: e.target.value })} /></div>
+...
               {convertDups.length > 0 && (
-                <DuplicateAlert matches={convertDups} showActions onIgnore={() => setForceConvert(true)} />
+                <DuplicateAlert
+                  matches={convertDups}
+                  showActions
+                  merging={merging}
+                  onMerge={(m) => confirmMerge(m.id)}
+                  onIgnore={() => setForceConvert(true)}
+                  onCancel={() => convertTelRef.current?.focus()}
+                />
               )}
               {forceConvert && (
                 <p className="text-xs text-amber-600">Conta será criada mesmo com duplicidade detectada.</p>
@@ -598,10 +610,10 @@ export default function LeadDetail() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConvertOpen(false)} disabled={converting}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setConvertOpen(false)} disabled={converting || merging}>Cancelar</Button>
             <Button
               onClick={confirmConvert}
-              disabled={converting || (convertDups.length > 0 && !forceConvert)}
+              disabled={converting || merging || (convertDups.length > 0 && !forceConvert)}
               className="bg-success hover:bg-success/90 text-success-foreground"
             >
               {converting ? "Convertendo…" : "Converter em Conta Cliente"}
