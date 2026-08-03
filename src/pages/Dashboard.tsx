@@ -40,7 +40,7 @@ export default function Dashboard() {
         supabase.from("interacoes").select("id,resultado,agendado_para,created_at").eq("tipo", "visita").gte("created_at", monthStart.toISOString()).lt("created_at", monthEnd.toISOString()),
         supabase.from("interacoes").select("id,resultado,agendado_para,created_at").eq("tipo", "ligacao").gte("created_at", monthStart.toISOString()).lt("created_at", monthEnd.toISOString()),
         // Mesmos dados da aba Leads: convertidos em conta e tarefas pendentes com prazo
-        supabase.from("contas").select("lead_id_origem").not("lead_id_origem", "is", null),
+        supabase.from("contas").select("lead_id_origem, desclassificada").not("lead_id_origem", "is", null),
         supabase.from("tarefas").select("lead_id, prazo").not("lead_id", "is", null).not("prazo", "is", null).neq("status", "Concluída").limit(1000),
       ]);
       const vMerged = [
@@ -52,7 +52,8 @@ export default function Dashboard() {
         ...((ic.data ?? []).map((x: any) => ({ id: `ic-${x.id}`, resultado: x.resultado, data: x.agendado_para ?? x.created_at }))),
       ];
       setLeads(l.data ?? []); setReunioes(r.data ?? []); setVisitas(vMerged); setLigacoes(cMerged);
-      setConvertedIds(new Set(((contasRes.data ?? []) as any[]).map((x) => x.lead_id_origem).filter(Boolean)));
+      // Conta desclassificada devolve o lead ao funil (mesma regra do FunilLeadsReport)
+      setConvertedIds(new Set(((contasRes.data ?? []) as any[]).filter((x) => x.lead_id_origem && !x.desclassificada).map((x) => x.lead_id_origem as string)));
       const nowTs = Date.now();
       setFutureTaskIds(new Set(
         ((tarefasRes.data ?? []) as any[])
@@ -177,11 +178,14 @@ export default function Dashboard() {
 
       {(() => {
         // Mesmas etapas ativas do funil da aba Leads / relatório (Novo Lead, Pré-atendimento, Em Contato, Conversa Ativa)
+        // Leads convertidos em conta não entram nos KPIs de etapa — o kanban da aba Leads os esconde
+        // (aparecem apenas no KPI "Convertidos em conta"), então o Dashboard segue a mesma regra.
+        const ativos = leads.filter(l => !convertedIds.has(l.id));
         const ATENDIMENTO_STAGES = new Set(ETAPAS_ATIVAS_FUNIL);
-        const emAtendimento = leads.filter(l => ATENDIMENTO_STAGES.has(l.etapa_funil)).length;
-        const novosSemContato = leads.filter(l => l.etapa_funil === "Novo Lead").length;
-        const fechados = leads.filter(l => l.etapa_funil === "Fechado").length;
-        const perdidos = leads.filter(l => l.etapa_funil === "Perdido").length;
+        const emAtendimento = ativos.filter(l => ATENDIMENTO_STAGES.has(l.etapa_funil)).length;
+        const novosSemContato = ativos.filter(l => l.etapa_funil === "Novo Lead").length;
+        const fechados = ativos.filter(l => l.etapa_funil === "Fechado").length;
+        const perdidos = ativos.filter(l => l.etapa_funil === "Perdido").length;
         return (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <KPI icon={Users} label="Total de leads" value={total} />
