@@ -616,6 +616,7 @@ export default function LeadDetail() {
                   onMerge={(m) => confirmMerge(m.id)}
                   onIgnore={() => setForceConvert(true)}
                   onCancel={() => convertTelRef.current?.focus()}
+                  cancelLabel="Editar dados"
                 />
               )}
               {forceConvert && (

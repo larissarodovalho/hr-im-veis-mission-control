@@ -61,7 +61,7 @@ export default function DuplicateAlert({ matches, onIgnore, onCancel, cancelLabe
         <div className="flex gap-2 pt-1">
           {onCancel && (
             <Button size="sm" variant="outline" onClick={onCancel}>
-              Cancelar
+              {cancelLabel}
             </Button>
           )}
           {onIgnore && (
