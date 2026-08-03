@@ -389,12 +389,15 @@ export default function LeadDetail() {
   useEffect(() => {
     if (!convertOpen || !convertForm) return;
     const t = setTimeout(async () => {
+      setCheckingDups(true);
+      setDupsChecked(false);
       const matches = await findDuplicates({
         email: convertForm.email,
         telefone: convertForm.telefone,
         documento: convertForm.documento,
       });
       const nome = (convertForm.nome || "").trim().toLowerCase();
+      const nomeNorm = normName(convertForm.nome);
       const telTail = onlyDigits(convertForm.telefone).slice(-8);
       let extra: DuplicateMatch[] = [];
       if (nome && telTail.length >= 8) {
@@ -411,6 +414,24 @@ export default function LeadDetail() {
             matchedBy: ["telefone" as const],
           }));
       }
+      // Correspondência apenas por nome na base de contas: vira aviso com opção
+      // de Unificar, mas não bloqueia a conversão (pode ser pessoa diferente).
+      if (nomeNorm.length >= 5) {
+        const { data: byName } = await supabase.rpc("check_duplicate_conta_name" as any, { _name: convertForm.nome.trim() });
+        for (const row of (byName ?? []) as any[]) {
+          if (normName(row.nome) !== nomeNorm) continue;
+          extra.push({
+            table: "contas",
+            id: row.id,
+            nome: row.nome,
+            email: null,
+            telefone: null,
+            etapa: row.etapa,
+            responsavel_nome: row.responsavel_nome,
+            matchedBy: ["nome" as const],
+          });
+        }
+      }
       const map = new Map<string, DuplicateMatch>();
       [...matches, ...extra]
         // Ignora auto-correspondência: o formulário vem pré-preenchido com os
@@ -418,10 +439,19 @@ export default function LeadDetail() {
         .filter((m) => !(m.table === "leads" && m.id === lead.id))
         .forEach((m) => {
           const k = `${m.table}:${m.id}`;
-          if (!map.has(k)) map.set(k, m);
+          const existing = map.get(k);
+          if (existing) {
+            m.matchedBy.forEach((b) => {
+              if (!existing.matchedBy.includes(b)) existing.matchedBy.push(b);
+            });
+          } else {
+            map.set(k, { ...m, matchedBy: [...m.matchedBy] });
+          }
         });
       setConvertDups(Array.from(map.values()));
       setForceConvert(false);
+      setCheckingDups(false);
+      setDupsChecked(true);
     }, 400);
     return () => clearTimeout(t);
   }, [convertOpen, convertForm?.nome, convertForm?.email, convertForm?.telefone, convertForm?.documento]);
@@ -430,9 +460,13 @@ export default function LeadDetail() {
 
   const tentativasFeitas = interacoes.filter(i => TENTATIVA_TIPOS.includes(i.tipo)).length;
 
+  // Só bloqueia a conversão com evidência forte (telefone/e-mail/documento);
+  // correspondência apenas por nome é aviso — pode ser pessoa diferente.
+  const hasBlockingDups = convertDups.some((m) => m.matchedBy.some((b) => b !== "nome"));
+
   const confirmConvert = async () => {
     if (!convertForm.nome?.trim()) return toast.error("Nome obrigatório");
-    if (convertDups.length && !forceConvert) {
+    if (hasBlockingDups && !forceConvert) {
       return toast.error("Conta já existe. Confirme abaixo para prosseguir mesmo assim.");
     }
     setConverting(true);
@@ -627,6 +661,18 @@ export default function LeadDetail() {
                   cancelLabel="Editar dados"
                 />
               )}
+              {checkingDups && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground" />
+                  Verificando duplicidade na base de contas…
+                </p>
+              )}
+              {!checkingDups && dupsChecked && convertDups.length === 0 && (
+                <p className="text-xs text-success flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Nenhuma conta duplicada encontrada na base — pode converter com segurança.
+                </p>
+              )}
               {forceConvert && (
                 <p className="text-xs text-amber-600">Conta será criada mesmo com duplicidade detectada.</p>
               )}
@@ -636,7 +682,7 @@ export default function LeadDetail() {
             <Button variant="outline" onClick={() => setConvertOpen(false)} disabled={converting || merging}>Cancelar</Button>
             <Button
               onClick={confirmConvert}
-              disabled={converting || merging || (convertDups.length > 0 && !forceConvert)}
+              disabled={converting || merging || (hasBlockingDups && !forceConvert)}
               className="bg-success hover:bg-success/90 text-success-foreground"
             >
               {converting ? "Convertendo…" : "Converter em Conta Cliente"}
