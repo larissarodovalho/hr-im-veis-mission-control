@@ -253,6 +253,7 @@ export default function Leads() {
                     <Badge variant="outline" className="text-[10px]">{stageLabel(l.etapa_funil)}</Badge>
                     <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
                     <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
+                    <TentativasTags lead={l} tentativas={tentativasMap[l.id] ?? []} />
                     <NextTaskBadge task={nextTaskMap[l.id]} />
                     
                   </div>
@@ -288,6 +289,7 @@ export default function Leads() {
                         <div className="flex flex-col gap-1 items-start">
                           <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
                           <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
+                          <TentativasTags lead={l} tentativas={tentativasMap[l.id] ?? []} />
                           <NextTaskBadge task={nextTaskMap[l.id]} />
                         </div>
                       </td>
