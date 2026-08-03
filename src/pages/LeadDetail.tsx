@@ -23,7 +23,7 @@ import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Plus, Building
 import EntityDocumentsTab from "@/components/EntityDocumentsTab";
 import ContaTarefas from "@/components/contas/ContaTarefas";
 import { toast } from "sonner";
-import { findDuplicates, onlyDigits, normEmail, DuplicateMatch } from "@/lib/duplicates";
+import { findDuplicates, onlyDigits, normEmail, normName, DuplicateMatch } from "@/lib/duplicates";
 import DuplicateAlert from "@/components/DuplicateAlert";
 import { useRole } from "@/hooks/useRole";
 import InteracaoAdminActions from "@/components/interacoes/InteracaoAdminActions";
@@ -79,6 +79,8 @@ export default function LeadDetail() {
   const [merging, setMerging] = useState(false);
   const [convertDups, setConvertDups] = useState<DuplicateMatch[]>([]);
   const [forceConvert, setForceConvert] = useState(false);
+  const [checkingDups, setCheckingDups] = useState(false);
+  const [dupsChecked, setDupsChecked] = useState(false);
   const convertTelRef = useRef<HTMLInputElement>(null);
   const [tentOpen, setTentOpen] = useState(false);
   const [tentForm, setTentForm] = useState({ tipo: "mensagem", resultado: "", canal: "WhatsApp", descricao: "", proxima_acao: "" });
@@ -378,6 +380,8 @@ export default function LeadDetail() {
     });
     setConvertDups([]);
     setForceConvert(false);
+    setCheckingDups(false);
+    setDupsChecked(false);
     setConvertOpen(true);
   };
 

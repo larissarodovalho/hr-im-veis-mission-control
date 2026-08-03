@@ -26,7 +26,7 @@ export default function DuplicateAlert({ matches, onIgnore, onCancel, cancelLabe
           const Icon = m.table === "leads" ? User : Building2;
           const path = m.table === "leads" ? `/crm/leads/${m.id}` : `/crm/contas/${m.id}`;
           const by = m.matchedBy
-            .map((b) => (b === "email" ? "e-mail" : b === "telefone" ? "telefone" : "documento"))
+            .map((b) => (b === "email" ? "e-mail" : b === "telefone" ? "telefone" : b === "documento" ? "documento" : "nome"))
             .join(" + ");
           return (
             <li key={`${m.table}:${m.id}`} className="flex items-start gap-2">
