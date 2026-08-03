@@ -12,13 +12,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
 import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature, TIPO_ACOMPANHAMENTO, TipoAcompanhamento, stageLabel, TENTATIVA_TIPOS, TENTATIVA_SEQ, TENTATIVA_EMOJI, prazoCountdown, TENTATIVA_TONE_CLASS } from "@/lib/leads";
-import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2, User as UserIcon, PencilLine } from "lucide-react";
+import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2, User as UserIcon, PencilLine, CalendarClock } from "lucide-react";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/contexts/AuthContext";
 import { findDuplicates, DuplicateMatch } from "@/lib/duplicates";
 import { useNavigate } from "react-router-dom";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { nextTaskCountdown, NextTaskResumo } from "@/lib/tarefas";
+import { fmtDateTime } from "@/lib/datetime";
 
 type Lead = {
   id: string; nome: string; email: string | null; telefone: string | null;
@@ -38,6 +41,7 @@ export default function Leads() {
   const [convertedIds, setConvertedIds] = useState<Set<string>>(new Set());
   const [brokers, setBrokers] = useState<Record<string, string>>({});
   const [tentativasCount, setTentativasCount] = useState<Record<string, number>>({});
+  const [nextTaskMap, setNextTaskMap] = useState<Record<string, NextTaskResumo>>({});
   const [view, setView] = useState<"kanban" | "list">("kanban");
   
   const [search, setSearch] = useState("");
@@ -53,6 +57,22 @@ export default function Leads() {
     if (error) return toast.error(error.message);
     toast.success(`Lead "${name}" excluído`);
     setLeads(prev => prev.filter(l => l.id !== id));
+  };
+
+  const fetchNextTasks = async () => {
+    const { data } = await supabase
+      .from("tarefas")
+      .select("lead_id, titulo, prazo, prioridade")
+      .not("lead_id", "is", null)
+      .not("prazo", "is", null)
+      .neq("status", "Concluída")
+      .order("prazo", { ascending: true })
+      .limit(1000);
+    const map: Record<string, NextTaskResumo> = {};
+    ((data ?? []) as any[]).forEach((r) => {
+      if (r.lead_id && !map[r.lead_id]) map[r.lead_id] = { titulo: r.titulo, prazo: r.prazo, prioridade: r.prioridade };
+    });
+    setNextTaskMap(map);
   };
 
   const load = async () => {
@@ -71,6 +91,7 @@ export default function Leads() {
     } else {
       setTentativasCount({});
     }
+    fetchNextTasks();
   };
 
   useEffect(() => {
@@ -80,14 +101,23 @@ export default function Leads() {
       (data ?? []).forEach((p: any) => { if (p.user_id) m[p.user_id] = p.nome || "Sem nome"; });
       setBrokers(m);
     });
-    const ch = supabase.channel("leads-stream").on("postgres_changes", { event: "*", schema: "public", table: "leads" }, load).subscribe();
+    const ch = supabase.channel("leads-stream")
+      .on("postgres_changes", { event: "*", schema: "public", table: "leads" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "tarefas" }, fetchNextTasks)
+      .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
 
   const convertedCount = leads.filter(l => convertedIds.has(l.id)).length;
 
+  const temTarefaFutura = (leadId: string) => {
+    const p = nextTaskMap[leadId]?.prazo;
+    return !!p && new Date(p).getTime() >= Date.now();
+  };
+
   const needsNurtureCount = leads.filter(l => {
     if (convertedIds.has(l.id)) return false;
+    if (temTarefaFutura(l.id)) return false;
     const id = idleDays(l.ultima_interacao);
     return id === null || id >= 4;
   }).length;
@@ -100,6 +130,7 @@ export default function Leads() {
       if (!match) return false;
     }
     if (needsNurture) {
+      if (temTarefaFutura(l.id)) return false;
       const id = idleDays(l.ultima_interacao);
       if (!(id === null || id >= 4)) return false;
     }
