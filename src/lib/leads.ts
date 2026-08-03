@@ -10,16 +10,7 @@ export type ActiveStage =
   | 'Conversa Ativa'
   | 'Perdido';
 
-// Etapas antigas sem leads visíveis — mantidas no banco apenas como histórico
-// (exibidas na visão Lista, sem coluna no Kanban).
-export type LegacyStage =
-  | 'IA de acompanhamento'
-  | 'Reunião Agendada'
-  | 'Visita'
-  | 'Proposta'
-  | 'Fechado';
-
-export type Stage = ActiveStage | LegacyStage;
+export type Stage = ActiveStage;
 
 export type Temperature = 'frio' | 'morno' | 'quente';
 
@@ -38,19 +29,8 @@ export const STAGES: { id: ActiveStage; label: string; color: string }[] = [
   { id: 'Perdido', label: 'Perdido', color: 'bg-danger' },
 ];
 
-// Etapas históricas sem leads visíveis: não viram coluna, mas os registros continuam no banco
-export const LEGACY_STAGES: { id: LegacyStage; label: string; color: string }[] = [
-  { id: 'IA de acompanhamento', label: '🤖 IA de acompanhamento', color: 'bg-violet-500' },
-  { id: 'Reunião Agendada', label: 'Reunião Agendada', color: 'bg-purple-500' },
-  { id: 'Visita', label: 'Visita', color: 'bg-amber-500' },
-  { id: 'Proposta', label: 'Proposta', color: 'bg-orange-500' },
-  { id: 'Fechado', label: 'Fechado', color: 'bg-success' },
-];
+export const ALL_STAGES: { id: Stage; label: string; color: string }[] = STAGES;
 
-export const ALL_STAGES: { id: Stage; label: string; color: string }[] = [...STAGES, ...LEGACY_STAGES];
-
-const LEGACY_IDS = new Set<string>(LEGACY_STAGES.map((s) => s.id));
-export const isLegacyStage = (stage: string | null | undefined): boolean => !!stage && LEGACY_IDS.has(stage);
 export const stageLabel = (id: string | null | undefined): string =>
   ALL_STAGES.find((s) => s.id === id)?.label ?? id ?? '—';
 
