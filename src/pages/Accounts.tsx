@@ -33,6 +33,7 @@ import { TEMPERATURAS, tempInfo } from "@/lib/contasTemperatura";
 
 type Operation = "compra" | "venda" | "arrendamento" | "outro";
 type Status = "ativo" | "inativo";
+type NextTaskResumo = { titulo: string; prazo: string; prioridade: string };
 type Interest = "compra" | "venda" | "arrendamento" | "compra_arrendamento" | "outro";
 type Aptitude = "agricultura" | "pecuaria" | "arrendamento" | "misto" | "outro";
 
