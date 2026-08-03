@@ -469,12 +469,12 @@ function Kpi({
 }: {
   label: string;
   value: number | string;
-  tone?: "success" | "primary";
+  tone?: "success" | "primary" | "danger";
   link?: string;
   hint?: string;
 }) {
   const color =
-    tone === "success" ? "text-success" : tone === "primary" ? "text-primary" : "text-foreground";
+    tone === "success" ? "text-success" : tone === "primary" ? "text-primary" : tone === "danger" ? "text-danger" : "text-foreground";
   const content = (
     <Card className="p-4">
       <div className="flex items-center gap-1 text-xs text-muted-foreground">
