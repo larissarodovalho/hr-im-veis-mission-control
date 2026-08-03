@@ -8,8 +8,6 @@ export type ActiveStage =
   | 'Pré-atendimento'
   | 'Em Contato'
   | 'Conversa Ativa'
-  | 'Manual de acompanhamento'
-  | 'Permuta'
   | 'Perdido';
 
 // Etapas antigas sem leads visíveis — mantidas no banco apenas como histórico
@@ -31,14 +29,12 @@ export const TEMPERATURES: Record<Temperature, { label: string; emoji: string; c
   quente: { label: 'Quente', emoji: '🔥', className: 'bg-red-500/15 text-red-600 border-red-500/30' },
 };
 
-// Funil principal da aba Leads (7 colunas — todas visíveis no Kanban)
+// Funil principal da aba Leads (5 colunas — todas visíveis no Kanban)
 export const STAGES: { id: ActiveStage; label: string; color: string }[] = [
   { id: 'Novo Lead', label: 'Novo Lead', color: 'bg-blue-500' },
   { id: 'Pré-atendimento', label: 'Pré-atendimento', color: 'bg-cyan-500' },
   { id: 'Em Contato', label: 'Em Contato', color: 'bg-indigo-500' },
   { id: 'Conversa Ativa', label: 'Conversa Ativa', color: 'bg-violet-500' },
-  { id: 'Manual de acompanhamento', label: '👤 Manual de acompanhamento', color: 'bg-fuchsia-500' },
-  { id: 'Permuta', label: 'Permuta', color: 'bg-amber-600' },
   { id: 'Perdido', label: 'Perdido', color: 'bg-danger' },
 ];
 
