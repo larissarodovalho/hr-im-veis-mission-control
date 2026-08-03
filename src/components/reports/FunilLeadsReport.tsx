@@ -15,7 +15,7 @@ import {
   Cell,
   CartesianGrid,
 } from "recharts";
-import { STAGES, TENTATIVA_SEQ } from "@/lib/leads";
+import { TENTATIVA_SEQ, TENTATIVA_TIPOS, ETAPAS_ATIVAS_FUNIL, ETAPAS_FLUXO_ATENDIMENTO, classificaFluxoAtendimento, FLUXO_ATENDIMENTO_CLASSE_INFO, FluxoAtendimentoClasse, stageLabel } from "@/lib/leads";
 import { useReportsPeriod } from "@/hooks/useReportsPeriod";
 
 type Lead = {
@@ -28,12 +28,14 @@ type Lead = {
 type ContaRef = { lead_id_origem: string | null; desclassificada: boolean | null };
 type Tentativa = { lead_id: string | null; tipo: string | null; pontualidade: string | null };
 type Profile = { user_id: string; nome: string | null };
+type FluxoLead = { id: string; corretor_id: string | null; data_entrada: string | null; created_at: string | null; etapa_funil: string | null };
 
 const STAGE_COLORS: Record<string, string> = {
   "Novo Lead": "hsl(217 91% 60%)",
   "Pré-atendimento": "hsl(189 94% 43%)",
   "Em Contato": "hsl(243 75% 59%)",
   "Conversa Ativa": "hsl(262 83% 58%)",
+  "Perdido": "hsl(0 72% 51%)",
 };
 
 const PONT_COLORS: Record<string, string> = {
@@ -50,6 +52,8 @@ export default function FunilLeadsReport() {
   const [contasRef, setContasRef] = useState<ContaRef[]>([]);
   const [tentativas, setTentativas] = useState<Tentativa[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [fluxoLeads, setFluxoLeads] = useState<FluxoLead[]>([]);
+  const [tentCount, setTentCount] = useState<Record<string, number>>({});
   const [corretor, setCorretor] = useState<string>("todos");
   const [loading, setLoading] = useState(true);
 
@@ -98,11 +102,41 @@ export default function FunilLeadsReport() {
         allTent.push(...rows);
         if (rows.length < PAGE) break;
       }
+      // Snapshot atual do fluxo de atendimento (independe do período selecionado)
+      const allFluxo: FluxoLead[] = [];
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await supabase
+          .from("leads")
+          .select("id, corretor_id, data_entrada, created_at, etapa_funil")
+          .in("etapa_funil", ETAPAS_FLUXO_ATENDIMENTO)
+          .range(from, from + PAGE - 1);
+        if (error) break;
+        const rows = (data ?? []) as FluxoLead[];
+        allFluxo.push(...rows);
+        if (rows.length < PAGE) break;
+      }
+      const tentCounts: Record<string, number> = {};
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await supabase
+          .from("interacoes")
+          .select("lead_id")
+          .not("lead_id", "is", null)
+          .in("tipo", TENTATIVA_TIPOS)
+          .range(from, from + PAGE - 1);
+        if (error) break;
+        const rows = (data ?? []) as { lead_id: string | null }[];
+        rows.forEach((r) => {
+          if (r.lead_id) tentCounts[r.lead_id] = (tentCounts[r.lead_id] ?? 0) + 1;
+        });
+        if (rows.length < PAGE) break;
+      }
       const { data: profs } = await supabase.from("profiles").select("user_id, nome");
       if (cancel) return;
       setLeads(allLeads);
       setContasRef(allContas);
       setTentativas(allTent);
+      setFluxoLeads(allFluxo);
+      setTentCount(tentCounts);
       setProfiles((profs ?? []) as Profile[]);
       setLoading(false);
     })();
@@ -124,6 +158,15 @@ export default function FunilLeadsReport() {
     return s;
   }, [contasRef]);
 
+  // Qualquer conta vinculada tira o lead do acompanhamento do fluxo (mesma regra da aba Leads)
+  const vinculadasIds = useMemo(() => {
+    const s = new Set<string>();
+    contasRef.forEach((c) => {
+      if (c.lead_id_origem) s.add(c.lead_id_origem);
+    });
+    return s;
+  }, [contasRef]);
+
   const total = filtered.length;
   const convertidos = filtered.filter((l) => convertidasIds.has(l.id)).length;
   const desclassificados = filtered.filter((l) => !!l.motivo_desclassificacao).length;
@@ -137,22 +180,38 @@ export default function FunilLeadsReport() {
     return m;
   }, [filtered]);
 
-  const emAtendimento = STAGES.reduce((s, e) => s + (byStage[e.id] ?? 0), 0);
+  const perdidos = byStage["Perdido"] ?? 0;
 
+  const emAtendimento = ETAPAS_ATIVAS_FUNIL.reduce((s, e) => s + (byStage[e] ?? 0), 0);
+
+  // Funil de progressão: apenas as 4 etapas ativas (Perdido fica fora, como linha informativa)
   const funilData = useMemo(() => {
-    const accum: number[] = new Array(STAGES.length).fill(0);
-    for (let i = STAGES.length - 1; i >= 0; i--) {
-      accum[i] = (byStage[STAGES[i].id] ?? 0) + (accum[i + 1] ?? 0);
+    const accum: number[] = new Array(ETAPAS_ATIVAS_FUNIL.length).fill(0);
+    for (let i = ETAPAS_ATIVAS_FUNIL.length - 1; i >= 0; i--) {
+      accum[i] = (byStage[ETAPAS_ATIVAS_FUNIL[i]] ?? 0) + (accum[i + 1] ?? 0);
     }
-    return STAGES.map((s, i) => ({
-      id: s.id as string,
-      label: s.label,
-      quantidade: byStage[s.id] ?? 0,
+    return ETAPAS_ATIVAS_FUNIL.map((id, i) => ({
+      id,
+      label: stageLabel(id),
+      quantidade: byStage[id] ?? 0,
       acumulado: accum[i],
-      avanco: i < STAGES.length - 1 && accum[i] > 0 ? (accum[i + 1] / accum[i]) * 100 : null,
-      color: STAGE_COLORS[s.id],
+      avanco: i < ETAPAS_ATIVAS_FUNIL.length - 1 && accum[i] > 0 ? (accum[i + 1] / accum[i]) * 100 : null,
+      color: STAGE_COLORS[id],
     }));
   }, [byStage]);
+
+  // Snapshot do fluxo de atendimento (situação atual dos leads ativos, respeita filtro de corretor)
+  const fluxoSnapshot = useMemo(() => {
+    const countsByClasse: Record<FluxoAtendimentoClasse, number> = { sem_tentativa: 0, atrasado: 0, no_prazo: 0, concluido: 0 };
+    let totalAtivos = 0;
+    fluxoLeads.forEach((l) => {
+      if (vinculadasIds.has(l.id)) return;
+      if (corretor !== "todos" && l.corretor_id !== corretor) return;
+      totalAtivos++;
+      countsByClasse[classificaFluxoAtendimento(l, tentCount[l.id] ?? 0)]++;
+    });
+    return { total: totalAtivos, countsByClasse };
+  }, [fluxoLeads, tentCount, vinculadasIds, corretor]);
 
   // SLA das tentativas de contato (mensagem imediata, áudio +24h, ligação +48h)
   const slaData = useMemo(() => {
@@ -285,6 +344,18 @@ export default function FunilLeadsReport() {
                   </TableCell>
                 </TableRow>
               ))}
+              <TableRow>
+                <TableCell>
+                  <Badge variant="outline" style={{ borderColor: STAGE_COLORS["Perdido"], color: STAGE_COLORS["Perdido"] }}>
+                    Perdido
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right font-medium">{perdidos}</TableCell>
+                <TableCell className="text-right text-muted-foreground">
+                  {total ? ((perdidos / total) * 100).toFixed(1) : "0.0"}%
+                </TableCell>
+                <TableCell className="text-right text-muted-foreground text-xs">fora da progressão</TableCell>
+              </TableRow>
             </TableBody>
           </Table>
           <div className="mt-3 text-right">
@@ -337,6 +408,35 @@ export default function FunilLeadsReport() {
               )}
             </TableBody>
           </Table>
+        </div>
+      </Card>
+
+      {/* Fluxo de atendimento · situação atual */}
+      <Card className="p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-3">
+          <div>
+            <h3 className="font-semibold">Fluxo de atendimento · situação atual</h3>
+            <p className="text-sm text-muted-foreground">
+              Retrato do momento (independe do período selecionado): leads ativos nas etapas Novo Lead, Pré-atendimento e Em Contato, por situação no cronograma de 3 tentativas (mensagem imediata, áudio em 24h, ligação em 48h).
+            </p>
+          </div>
+          <Link to="/crm/leads" className="text-xs text-primary hover:underline whitespace-nowrap">
+            Abrir painel de atendimento →
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {(Object.keys(FLUXO_ATENDIMENTO_CLASSE_INFO) as FluxoAtendimentoClasse[]).map((k) => {
+            const info = FLUXO_ATENDIMENTO_CLASSE_INFO[k];
+            return (
+              <div key={k} className="rounded-lg border p-4">
+                <Badge variant="outline" className={info.cls}>{info.emoji} {info.label}</Badge>
+                <p className="text-2xl font-semibold mt-2">{fluxoSnapshot.countsByClasse[k]}</p>
+                <p className="text-xs text-muted-foreground">
+                  {fluxoSnapshot.total ? ((fluxoSnapshot.countsByClasse[k] / fluxoSnapshot.total) * 100).toFixed(1) : "0.0"}% de {fluxoSnapshot.total} leads ativos
+                </p>
+              </div>
+            );
+          })}
         </div>
       </Card>
 
