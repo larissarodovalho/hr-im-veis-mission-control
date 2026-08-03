@@ -6,7 +6,7 @@ export const normEmail = (s?: string | null) => (s || "").trim().toLowerCase();
 export const normName = (s?: string | null) =>
   (s || "")
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/\s+/g, " ")
     .trim();
