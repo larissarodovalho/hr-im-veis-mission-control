@@ -11,8 +11,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
-import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature, TIPO_ACOMPANHAMENTO, TipoAcompanhamento, stageLabel, TENTATIVA_TIPOS, TENTATIVA_SEQ, TENTATIVA_EMOJI, prazoCountdown, TENTATIVA_TONE_CLASS } from "@/lib/leads";
-import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2, User as UserIcon, PencilLine, CalendarClock } from "lucide-react";
+import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature, TIPO_ACOMPANHAMENTO, TipoAcompanhamento, stageLabel, TENTATIVA_TIPOS, TENTATIVA_SEQ, TENTATIVA_EMOJI, prazoCountdown, tentativaPrazo, prazoDataLabel, tentativaPontualidade, TENTATIVA_TONE_CLASS } from "@/lib/leads";
+import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2, User as UserIcon, PencilLine, CalendarClock, Check } from "lucide-react";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
@@ -35,12 +35,14 @@ const isUrgent = (l: { tags?: string[] | null; etapa_funil: Stage }) =>
   (Array.isArray(l.tags) && l.tags.includes("urgente")) || (l.etapa_funil as string) === "Contato Imediato";
 
 
+type TentativaReg = { tipo: string; created_at: string };
+
 export default function Leads() {
   const { user } = useAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [convertedIds, setConvertedIds] = useState<Set<string>>(new Set());
   const [brokers, setBrokers] = useState<Record<string, string>>({});
-  const [tentativasCount, setTentativasCount] = useState<Record<string, number>>({});
+  const [tentativasMap, setTentativasMap] = useState<Record<string, TentativaReg[]>>({});
   const [nextTaskMap, setNextTaskMap] = useState<Record<string, NextTaskResumo>>({});
   const [view, setView] = useState<"kanban" | "list">("kanban");
   
@@ -81,15 +83,15 @@ export default function Leads() {
     setLeads(rows);
     const { data: accs } = await supabase.from("contas").select("lead_id_origem").not("lead_id_origem", "is", null);
     setConvertedIds(new Set((accs ?? []).map((a: any) => a.lead_id_origem)));
-    // Contagem de tentativas (mensagem/áudio/ligação) dos leads em "Em Contato"
+    // Tentativas (mensagem/áudio/ligação) dos leads em "Em Contato"
     const emContatoIds = rows.filter(l => l.etapa_funil === "Em Contato").map(l => l.id);
     if (emContatoIds.length) {
-      const { data: ints } = await supabase.from("interacoes").select("lead_id").in("lead_id", emContatoIds).in("tipo", TENTATIVA_TIPOS);
-      const counts: Record<string, number> = {};
-      ((ints ?? []) as any[]).forEach(r => { counts[r.lead_id] = (counts[r.lead_id] ?? 0) + 1; });
-      setTentativasCount(counts);
+      const { data: ints } = await supabase.from("interacoes").select("lead_id, tipo, created_at").in("lead_id", emContatoIds).in("tipo", TENTATIVA_TIPOS);
+      const map: Record<string, TentativaReg[]> = {};
+      ((ints ?? []) as any[]).forEach(r => { (map[r.lead_id] = map[r.lead_id] ?? []).push({ tipo: r.tipo, created_at: r.created_at }); });
+      setTentativasMap(map);
     } else {
-      setTentativasCount({});
+      setTentativasMap({});
     }
     fetchNextTasks();
   };
@@ -104,6 +106,7 @@ export default function Leads() {
     const ch = supabase.channel("leads-stream")
       .on("postgres_changes", { event: "*", schema: "public", table: "leads" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "tarefas" }, fetchNextTasks)
+      .on("postgres_changes", { event: "*", schema: "public", table: "interacoes" }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
