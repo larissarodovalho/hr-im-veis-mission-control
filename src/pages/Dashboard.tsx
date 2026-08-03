@@ -188,11 +188,11 @@ export default function Dashboard() {
         const perdidos = ativos.filter(l => l.etapa_funil === "Perdido").length;
         return (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <KPI icon={Users} label="Total de leads" value={total} />
-            <KPI icon={Activity} label="Em atendimento" value={emAtendimento} variant="accent" />
+            <KPI icon={Users} label="Total de leads" value={total} hint={`${emAtendimento} no funil · ${convertidosEmConta} convertidos em conta`} />
+            <KPI icon={Activity} label="Em atendimento" value={emAtendimento} variant="accent" hint={`${emAtendimento - overdue.length} em dia · ${overdue.length} sem contato há 3+ dias`} />
             <KPI icon={UserPlus} label="Novos sem contato" value={novosSemContato} variant={novosSemContato > 0 ? "warning" : "default"} />
-            <KPI icon={Clock} label="Sem atendimento (3d+)" value={overdue.length} variant={overdue.length > 0 ? "danger" : "default"} />
-            <KPI icon={UserCheck} label="Convertidos em conta" value={convertidosEmConta} variant="success" to="/crm/contas" />
+            <KPI icon={Clock} label="Sem atendimento (3d+)" value={overdue.length} variant={overdue.length > 0 ? "danger" : "default"} hint={`dentro dos ${emAtendimento} em atendimento`} />
+            <KPI icon={UserCheck} label="Convertidos em conta" value={convertidosEmConta} variant="success" to="/crm/contas" hint="saíram do funil de leads" />
             <KPI icon={TrendingUp} label="Taxa de conversão" value={`${rate}%`} />
             <KPI icon={Calendar} label="Reuniões este mês" value={reunioesMes} />
             <KPI icon={CheckCircle2} label="Fechados" value={fechados} variant="success" />
