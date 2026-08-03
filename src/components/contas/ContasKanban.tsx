@@ -503,6 +503,7 @@ export default function ContasKanban({ accounts, propsByAccount, onMoveStage, on
                     ownerMap={ownerMap}
                     lista={lista}
                     lastContact={lastContactMap?.[a.id]}
+                    nextTask={nextTaskMap?.[a.id] ?? null}
                   />
                 );
               })}
