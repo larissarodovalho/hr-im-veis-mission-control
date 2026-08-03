@@ -413,7 +413,7 @@ const KPI_STYLES: Record<KPIVariant, { card: string; icon: string }> = {
   danger: { card: "border-danger/30", icon: "bg-danger/10 text-danger" },
 };
 
-function KPI({ icon: Icon, label, value, variant = "default", to }: { icon: any; label: string; value: any; variant?: KPIVariant; to?: string }) {
+function KPI({ icon: Icon, label, value, hint, variant = "default", to }: { icon: any; label: string; value: any; hint?: string; variant?: KPIVariant; to?: string }) {
   const s = KPI_STYLES[variant];
   const card = (
     <Card className={"p-5 " + s.card + (to ? " hover:shadow-soft transition cursor-pointer" : "")}>
@@ -421,6 +421,7 @@ function KPI({ icon: Icon, label, value, variant = "default", to }: { icon: any;
         <div>
           <div className="text-sm text-muted-foreground">{label}</div>
           <div className="text-3xl font-display font-semibold mt-1">{value}</div>
+          {hint && <div className="text-xs text-muted-foreground mt-1">{hint}</div>}
         </div>
         <div className={"flex h-10 w-10 items-center justify-center rounded-lg " + s.icon}>
           <Icon className="h-5 w-5" />
