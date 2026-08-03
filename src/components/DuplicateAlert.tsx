@@ -7,12 +7,13 @@ interface Props {
   matches: DuplicateMatch[];
   onIgnore?: () => void;
   onCancel?: () => void;
+  cancelLabel?: string;
   onMerge?: (match: DuplicateMatch) => void;
   merging?: boolean;
   showActions?: boolean;
 }
 
-export default function DuplicateAlert({ matches, onIgnore, onCancel, onMerge, merging, showActions }: Props) {
+export default function DuplicateAlert({ matches, onIgnore, onCancel, cancelLabel = "Cancelar", onMerge, merging, showActions }: Props) {
   if (!matches.length) return null;
   return (
     <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
