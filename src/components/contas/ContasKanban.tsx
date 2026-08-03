@@ -308,6 +308,34 @@ function ContaCard({
           Últ. contato: {format(new Date(lastContact), "dd/MM/yyyy", { locale: ptBR })}
         </div>
       )}
+      {nextTask && (() => {
+        const cd = nextTaskCountdown(nextTask.prazo);
+        if (!cd) return null;
+        const tom = cd.tom === "atrasada"
+          ? "bg-rose-500/15 text-rose-700 border-rose-500/30"
+          : cd.tom === "hoje"
+            ? "bg-amber-500/15 text-amber-700 border-amber-500/30"
+            : "bg-sky-500/15 text-sky-700 border-sky-500/30";
+        const tituloCurto = nextTask.titulo.length > 18 ? nextTask.titulo.slice(0, 18).trimEnd() + "…" : nextTask.titulo;
+        return (
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div onPointerDown={stop} onClick={stop}>
+                  <Badge variant="outline" className={`${tom} text-[10px] max-w-full`}>
+                    <CalendarClock className="h-3 w-3 mr-1 shrink-0" />
+                    <span className="truncate">{tituloCurto} · {cd.texto}</span>
+                  </Badge>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[240px]">
+                <p className="font-medium">{nextTask.titulo}</p>
+                <p className="text-xs text-muted-foreground">Prazo: {fmtDateTime(nextTask.prazo)} · Prioridade: {nextTask.prioridade}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      })()}
       <div className="flex flex-wrap gap-1">
         {outraLista ? (
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px]">
@@ -432,7 +460,7 @@ function Column({
   );
 }
 
-export default function ContasKanban({ accounts, propsByAccount, onMoveStage, onChangeOwner, onChangeTemperatura, onChangeCategoria, onQualificar, opAtivaPorConta, lista, lastContactMap, ownerMap, owners }: Props) {
+export default function ContasKanban({ accounts, propsByAccount, onMoveStage, onChangeOwner, onChangeTemperatura, onChangeCategoria, onQualificar, opAtivaPorConta, lista, lastContactMap, nextTaskMap, ownerMap, owners }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const onDragEnd = (e: DragEndEvent) => {
