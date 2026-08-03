@@ -223,7 +223,7 @@ export default function Leads() {
         <DndContext sensors={sensors} onDragEnd={onDragEnd}>
           <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
             {STAGES.map(s => (
-              <Column key={s.id} stage={s.id} label={s.label} color={s.color} leads={filtered.filter(l => l.etapa_funil === s.id)} canDelete={canDelete} onDelete={remove} convertedIds={convertedIds} userId={user?.id} onChanged={load} brokers={brokers} tentativasCount={tentativasCount} />
+              <Column key={s.id} stage={s.id} label={s.label} color={s.color} leads={filtered.filter(l => l.etapa_funil === s.id)} canDelete={canDelete} onDelete={remove} convertedIds={convertedIds} userId={user?.id} onChanged={load} brokers={brokers} tentativasCount={tentativasCount} nextTaskMap={nextTaskMap} />
             ))}
           </div>
         </DndContext>
@@ -250,6 +250,7 @@ export default function Leads() {
                     <Badge variant="outline" className="text-[10px]">{stageLabel(l.etapa_funil)}</Badge>
                     <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
                     <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
+                    <NextTaskBadge task={nextTaskMap[l.id]} />
                     
                   </div>
                   <div className="mt-3"><FollowUpCell lead={l} onChanged={load} userId={user?.id} /></div>
@@ -284,6 +285,7 @@ export default function Leads() {
                         <div className="flex flex-col gap-1 items-start">
                           <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
                           <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
+                          <NextTaskBadge task={nextTaskMap[l.id]} />
                         </div>
                       </td>
                       <td className="p-3"><FollowUpCell lead={l} onChanged={load} userId={user?.id} /></td>
@@ -300,7 +302,7 @@ export default function Leads() {
   );
 }
 
-function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds, userId, onChanged, brokers, tentativasCount }: any) {
+function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds, userId, onChanged, brokers, tentativasCount, nextTaskMap }: any) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   return (
     <div ref={setNodeRef} className={"min-w-[280px] w-72 flex-shrink-0 rounded-xl bg-muted/40 p-3 transition flex flex-col h-[calc(100vh-220px)] " + (isOver ? "ring-2 ring-primary/40" : "")}>
@@ -308,8 +310,36 @@ function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds,
         <div className="flex items-center gap-2"><span className={"h-2 w-2 rounded-full " + color} /><span className="font-medium text-sm">{label}</span></div>
         <span className="text-xs text-muted-foreground">{leads.length}</span>
       </div>
-      <div className="space-y-2 flex-1 overflow-y-auto pr-1">{leads.map((l: Lead) => <LeadCard key={l.id} lead={l} canDelete={canDelete} onDelete={onDelete} converted={convertedIds.has(l.id)} userId={userId} onChanged={onChanged} brokers={brokers} tentativas={tentativasCount?.[l.id] ?? 0} />)}</div>
+      <div className="space-y-2 flex-1 overflow-y-auto pr-1">{leads.map((l: Lead) => <LeadCard key={l.id} lead={l} canDelete={canDelete} onDelete={onDelete} converted={convertedIds.has(l.id)} userId={userId} onChanged={onChanged} brokers={brokers} tentativas={tentativasCount?.[l.id] ?? 0} nextTask={nextTaskMap?.[l.id] ?? null} />)}</div>
     </div>
+  );
+}
+
+function NextTaskBadge({ task }: { task?: NextTaskResumo | null }) {
+  if (!task) return null;
+  const cd = nextTaskCountdown(task.prazo);
+  if (!cd) return null;
+  const tom = cd.tom === "atrasada"
+    ? "bg-rose-500/15 text-rose-700 border-rose-500/30"
+    : cd.tom === "hoje"
+      ? "bg-amber-500/15 text-amber-700 border-amber-500/30"
+      : "bg-sky-500/15 text-sky-700 border-sky-500/30";
+  const tituloCurto = task.titulo.length > 18 ? task.titulo.slice(0, 18).trimEnd() + "…" : task.titulo;
+  return (
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge variant="outline" className={`${tom} text-[10px] max-w-full`}>
+            <CalendarClock className="h-3 w-3 mr-1 shrink-0" />
+            <span className="truncate">{tituloCurto} · {cd.texto}</span>
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[240px]">
+          <p className="font-medium">{task.titulo}</p>
+          <p className="text-xs text-muted-foreground">Prazo: {fmtDateTime(task.prazo)} · Prioridade: {task.prioridade}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -319,7 +349,7 @@ function shortName(name: string) {
   return `${parts[0]} ${parts[parts.length - 1][0]}.`;
 }
 
-function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, brokers, tentativas }: { lead: Lead; canDelete: boolean; onDelete: (id: string, name: string) => void; converted: boolean; userId?: string; onChanged: () => void; brokers: Record<string, string>; tentativas?: number }) {
+function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, brokers, tentativas, nextTask }: { lead: Lead; canDelete: boolean; onDelete: (id: string, name: string) => void; converted: boolean; userId?: string; onChanged: () => void; brokers: Record<string, string>; tentativas?: number; nextTask?: NextTaskResumo | null }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
   const age = ageInDays(lead.created_at);
@@ -386,6 +416,11 @@ function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, bro
           </Badge>
         )}
       </div>
+      {nextTask && (
+        <div className="mt-1.5" onPointerDown={e => e.stopPropagation()}>
+          <NextTaskBadge task={nextTask} />
+        </div>
+      )}
       <div className="mt-2.5 pt-2 border-t flex items-center justify-between gap-2" onPointerDown={e => e.stopPropagation()}>
         <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Follow-up</span>
         <FollowUpCell lead={lead} onChanged={onChanged} userId={userId} compact />
