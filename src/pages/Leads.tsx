@@ -12,13 +12,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
 import { STAGES, SOURCES, INTERESTS, TEMPERATURES, daysSince, slaColor, slaLabel, initials, ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, Stage, Temperature, TIPO_ACOMPANHAMENTO, TipoAcompanhamento, stageLabel, TENTATIVA_TIPOS, TENTATIVA_SEQ, TENTATIVA_EMOJI, prazoCountdown, TENTATIVA_TONE_CLASS } from "@/lib/leads";
-import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2, User as UserIcon, PencilLine } from "lucide-react";
+import { Plus, Search, KanbanSquare, List as ListIcon, Trash2, Building2, Flame, AlertTriangle, Sparkles, ClipboardCheck, Loader2, User as UserIcon, PencilLine, CalendarClock } from "lucide-react";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/contexts/AuthContext";
 import { findDuplicates, DuplicateMatch } from "@/lib/duplicates";
 import { useNavigate } from "react-router-dom";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { nextTaskCountdown, NextTaskResumo } from "@/lib/tarefas";
+import { fmtDateTime } from "@/lib/datetime";
 
 type Lead = {
   id: string; nome: string; email: string | null; telefone: string | null;
@@ -38,6 +41,7 @@ export default function Leads() {
   const [convertedIds, setConvertedIds] = useState<Set<string>>(new Set());
   const [brokers, setBrokers] = useState<Record<string, string>>({});
   const [tentativasCount, setTentativasCount] = useState<Record<string, number>>({});
+  const [nextTaskMap, setNextTaskMap] = useState<Record<string, NextTaskResumo>>({});
   const [view, setView] = useState<"kanban" | "list">("kanban");
   
   const [search, setSearch] = useState("");
@@ -53,6 +57,22 @@ export default function Leads() {
     if (error) return toast.error(error.message);
     toast.success(`Lead "${name}" excluído`);
     setLeads(prev => prev.filter(l => l.id !== id));
+  };
+
+  const fetchNextTasks = async () => {
+    const { data } = await supabase
+      .from("tarefas")
+      .select("lead_id, titulo, prazo, prioridade")
+      .not("lead_id", "is", null)
+      .not("prazo", "is", null)
+      .neq("status", "Concluída")
+      .order("prazo", { ascending: true })
+      .limit(1000);
+    const map: Record<string, NextTaskResumo> = {};
+    ((data ?? []) as any[]).forEach((r) => {
+      if (r.lead_id && !map[r.lead_id]) map[r.lead_id] = { titulo: r.titulo, prazo: r.prazo, prioridade: r.prioridade };
+    });
+    setNextTaskMap(map);
   };
 
   const load = async () => {
@@ -71,6 +91,7 @@ export default function Leads() {
     } else {
       setTentativasCount({});
     }
+    fetchNextTasks();
   };
 
   useEffect(() => {
@@ -80,14 +101,23 @@ export default function Leads() {
       (data ?? []).forEach((p: any) => { if (p.user_id) m[p.user_id] = p.nome || "Sem nome"; });
       setBrokers(m);
     });
-    const ch = supabase.channel("leads-stream").on("postgres_changes", { event: "*", schema: "public", table: "leads" }, load).subscribe();
+    const ch = supabase.channel("leads-stream")
+      .on("postgres_changes", { event: "*", schema: "public", table: "leads" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "tarefas" }, fetchNextTasks)
+      .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
 
   const convertedCount = leads.filter(l => convertedIds.has(l.id)).length;
 
+  const temTarefaFutura = (leadId: string) => {
+    const p = nextTaskMap[leadId]?.prazo;
+    return !!p && new Date(p).getTime() >= Date.now();
+  };
+
   const needsNurtureCount = leads.filter(l => {
     if (convertedIds.has(l.id)) return false;
+    if (temTarefaFutura(l.id)) return false;
     const id = idleDays(l.ultima_interacao);
     return id === null || id >= 4;
   }).length;
@@ -100,6 +130,7 @@ export default function Leads() {
       if (!match) return false;
     }
     if (needsNurture) {
+      if (temTarefaFutura(l.id)) return false;
       const id = idleDays(l.ultima_interacao);
       if (!(id === null || id >= 4)) return false;
     }
@@ -192,7 +223,7 @@ export default function Leads() {
         <DndContext sensors={sensors} onDragEnd={onDragEnd}>
           <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
             {STAGES.map(s => (
-              <Column key={s.id} stage={s.id} label={s.label} color={s.color} leads={filtered.filter(l => l.etapa_funil === s.id)} canDelete={canDelete} onDelete={remove} convertedIds={convertedIds} userId={user?.id} onChanged={load} brokers={brokers} tentativasCount={tentativasCount} />
+              <Column key={s.id} stage={s.id} label={s.label} color={s.color} leads={filtered.filter(l => l.etapa_funil === s.id)} canDelete={canDelete} onDelete={remove} convertedIds={convertedIds} userId={user?.id} onChanged={load} brokers={brokers} tentativasCount={tentativasCount} nextTaskMap={nextTaskMap} />
             ))}
           </div>
         </DndContext>
@@ -219,6 +250,7 @@ export default function Leads() {
                     <Badge variant="outline" className="text-[10px]">{stageLabel(l.etapa_funil)}</Badge>
                     <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
                     <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
+                    <NextTaskBadge task={nextTaskMap[l.id]} />
                     
                   </div>
                   <div className="mt-3"><FollowUpCell lead={l} onChanged={load} userId={user?.id} /></div>
@@ -253,6 +285,7 @@ export default function Leads() {
                         <div className="flex flex-col gap-1 items-start">
                           <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
                           <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
+                          <NextTaskBadge task={nextTaskMap[l.id]} />
                         </div>
                       </td>
                       <td className="p-3"><FollowUpCell lead={l} onChanged={load} userId={user?.id} /></td>
@@ -269,7 +302,7 @@ export default function Leads() {
   );
 }
 
-function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds, userId, onChanged, brokers, tentativasCount }: any) {
+function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds, userId, onChanged, brokers, tentativasCount, nextTaskMap }: any) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   return (
     <div ref={setNodeRef} className={"min-w-[280px] w-72 flex-shrink-0 rounded-xl bg-muted/40 p-3 transition flex flex-col h-[calc(100vh-220px)] " + (isOver ? "ring-2 ring-primary/40" : "")}>
@@ -277,8 +310,36 @@ function Column({ stage, label, color, leads, canDelete, onDelete, convertedIds,
         <div className="flex items-center gap-2"><span className={"h-2 w-2 rounded-full " + color} /><span className="font-medium text-sm">{label}</span></div>
         <span className="text-xs text-muted-foreground">{leads.length}</span>
       </div>
-      <div className="space-y-2 flex-1 overflow-y-auto pr-1">{leads.map((l: Lead) => <LeadCard key={l.id} lead={l} canDelete={canDelete} onDelete={onDelete} converted={convertedIds.has(l.id)} userId={userId} onChanged={onChanged} brokers={brokers} tentativas={tentativasCount?.[l.id] ?? 0} />)}</div>
+      <div className="space-y-2 flex-1 overflow-y-auto pr-1">{leads.map((l: Lead) => <LeadCard key={l.id} lead={l} canDelete={canDelete} onDelete={onDelete} converted={convertedIds.has(l.id)} userId={userId} onChanged={onChanged} brokers={brokers} tentativas={tentativasCount?.[l.id] ?? 0} nextTask={nextTaskMap?.[l.id] ?? null} />)}</div>
     </div>
+  );
+}
+
+function NextTaskBadge({ task }: { task?: NextTaskResumo | null }) {
+  if (!task) return null;
+  const cd = nextTaskCountdown(task.prazo);
+  if (!cd) return null;
+  const tom = cd.tom === "atrasada"
+    ? "bg-rose-500/15 text-rose-700 border-rose-500/30"
+    : cd.tom === "hoje"
+      ? "bg-amber-500/15 text-amber-700 border-amber-500/30"
+      : "bg-sky-500/15 text-sky-700 border-sky-500/30";
+  const tituloCurto = task.titulo.length > 18 ? task.titulo.slice(0, 18).trimEnd() + "…" : task.titulo;
+  return (
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge variant="outline" className={`${tom} text-[10px] max-w-full`}>
+            <CalendarClock className="h-3 w-3 mr-1 shrink-0" />
+            <span className="truncate">{tituloCurto} · {cd.texto}</span>
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[240px]">
+          <p className="font-medium">{task.titulo}</p>
+          <p className="text-xs text-muted-foreground">Prazo: {fmtDateTime(task.prazo)} · Prioridade: {task.prioridade}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -288,7 +349,7 @@ function shortName(name: string) {
   return `${parts[0]} ${parts[parts.length - 1][0]}.`;
 }
 
-function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, brokers, tentativas }: { lead: Lead; canDelete: boolean; onDelete: (id: string, name: string) => void; converted: boolean; userId?: string; onChanged: () => void; brokers: Record<string, string>; tentativas?: number }) {
+function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, brokers, tentativas, nextTask }: { lead: Lead; canDelete: boolean; onDelete: (id: string, name: string) => void; converted: boolean; userId?: string; onChanged: () => void; brokers: Record<string, string>; tentativas?: number; nextTask?: NextTaskResumo | null }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
   const age = ageInDays(lead.created_at);
@@ -355,6 +416,11 @@ function LeadCard({ lead, canDelete, onDelete, converted, userId, onChanged, bro
           </Badge>
         )}
       </div>
+      {nextTask && (
+        <div className="mt-1.5" onPointerDown={e => e.stopPropagation()}>
+          <NextTaskBadge task={nextTask} />
+        </div>
+      )}
       <div className="mt-2.5 pt-2 border-t flex items-center justify-between gap-2" onPointerDown={e => e.stopPropagation()}>
         <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Follow-up</span>
         <FollowUpCell lead={lead} onChanged={onChanged} userId={userId} compact />

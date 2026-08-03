@@ -24,6 +24,7 @@ type Tarefa = {
   responsavel_id: string | null;
   created_by: string | null;
   conta_id: string | null;
+  lead_id: string | null;
 };
 
 const PRIO_COLOR: Record<string, string> = {
@@ -41,11 +42,14 @@ const amanha9h = () => {
 };
 
 interface Props {
-  contaId: string;
+  contaId?: string;
+  leadId?: string;
   responsavelId?: string | null;
 }
 
-export default function ContaTarefas({ contaId, responsavelId }: Props) {
+export default function ContaTarefas({ contaId, leadId, responsavelId }: Props) {
+  const entityCol = leadId ? "lead_id" : "conta_id";
+  const entityId = (leadId ?? contaId)!;
   const { isAdmin } = useRole();
   const [items, setItems] = useState<Tarefa[]>([]);
   const [profiles, setProfiles] = useState<{ user_id: string; nome: string | null }[]>([]);
@@ -57,7 +61,7 @@ export default function ContaTarefas({ contaId, responsavelId }: Props) {
 
   const load = async () => {
     const [{ data }, { data: profs }, { data: { user } }] = await Promise.all([
-      supabase.from("tarefas").select("*").eq("conta_id", contaId).order("prazo", { ascending: true, nullsFirst: false }),
+      supabase.from("tarefas").select("*").eq(entityCol, entityId).order("prazo", { ascending: true, nullsFirst: false }),
       supabase.from("profiles").select("user_id, nome").eq("ativo", true).order("nome"),
       supabase.auth.getUser(),
     ]);
@@ -69,12 +73,12 @@ export default function ContaTarefas({ contaId, responsavelId }: Props) {
   useEffect(() => {
     load();
     const ch = supabase
-      .channel(`tarefas-conta-${contaId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "tarefas", filter: `conta_id=eq.${contaId}` }, load)
+      .channel(`tarefas-${entityCol}-${entityId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "tarefas", filter: `${entityCol}=eq.${entityId}` }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contaId]);
+  }, [entityCol, entityId]);
 
   const novaTarefa = () => {
     setEditingId(null);
@@ -112,7 +116,7 @@ export default function ContaTarefas({ contaId, responsavelId }: Props) {
     };
     const { error } = editingId
       ? await supabase.from("tarefas").update(payload).eq("id", editingId)
-      : await supabase.from("tarefas").insert({ ...payload, conta_id: contaId, status: "A fazer", created_by: userId });
+      : await supabase.from("tarefas").insert({ ...payload, [entityCol]: entityId, status: "A fazer", created_by: userId });
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success(editingId ? "Tarefa atualizada" : "Tarefa criada");
