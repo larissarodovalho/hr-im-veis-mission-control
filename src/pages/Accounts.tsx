@@ -957,7 +957,7 @@ export default function Accounts() {
               className="hidden md:block overflow-hidden"
               style={{ height: "calc(100dvh - var(--kanban-top, 260px) - 8px)" }}
             >
-              <ContasKanban accounts={filtered as any} propsByAccount={propsByAccount} onMoveStage={moveStage} onChangeOwner={changeOwner} onChangeTemperatura={changeTemperatura} onChangeCategoria={(id) => setCatTarget(accounts.find((a) => a.id === id) ?? null)} onQualificar={abrirQualificacao} opAtivaPorConta={opAtivas} lista={lista} lastContactMap={lastContactMap} ownerMap={ownerMap} owners={owners} />
+              <ContasKanban accounts={filtered as any} propsByAccount={propsByAccount} onMoveStage={moveStage} onChangeOwner={changeOwner} onChangeTemperatura={changeTemperatura} onChangeCategoria={(id) => setCatTarget(accounts.find((a) => a.id === id) ?? null)} onQualificar={abrirQualificacao} opAtivaPorConta={opAtivas} lista={lista} lastContactMap={lastContactMap} nextTaskMap={nextTaskMap} ownerMap={ownerMap} owners={owners} />
             </div>
           </>
         )
