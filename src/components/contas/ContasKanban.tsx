@@ -26,7 +26,8 @@ import {
 import { ETAPAS, EtapaFunil, categoriaDe, CATEGORIA_LABEL, qualificacaoInfo } from "@/lib/contasFunil";
 import { Handshake, Target, User, MoreVertical, Check, UserX, Thermometer, PencilLine, ArrowLeftRight, Megaphone, Clock, HandCoins, ExternalLink, CalendarClock } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { dayKeyCRM, fmtDateTime, todayCRM } from "@/lib/datetime";
+import { fmtDateTime } from "@/lib/datetime";
+import { nextTaskCountdown, NextTaskResumo } from "@/lib/tarefas";
 import { tempInfo, TEMPERATURAS } from "@/lib/contasTemperatura";
 import { estagioLabel } from "@/lib/oportunidadesFunil";
 import { format } from "date-fns";
@@ -60,18 +61,7 @@ export type OpAtivaResumo = {
   corretor_id: string | null;
 };
 
-export type NextTaskResumo = { titulo: string; prazo: string; prioridade: string };
-
-function nextTaskCountdown(prazo: string): { texto: string; tom: "futuro" | "hoje" | "atrasada" } | null {
-  const hoje = todayCRM();
-  const dia = dayKeyCRM(prazo);
-  if (!dia) return null;
-  const diff = Math.round((new Date(dia + "T12:00:00").getTime() - new Date(hoje + "T12:00:00").getTime()) / 86400000);
-  if (diff < 0) return { texto: `atrasada há ${-diff} dia${-diff > 1 ? "s" : ""}`, tom: "atrasada" };
-  if (diff === 0) return { texto: "contatar hoje", tom: "hoje" };
-  if (diff === 1) return { texto: "contatar amanhã", tom: "hoje" };
-  return { texto: `em ${diff} dias`, tom: "futuro" };
-}
+export type { NextTaskResumo };
 
 interface Props {
   accounts: Account[];
