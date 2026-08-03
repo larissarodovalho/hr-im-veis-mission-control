@@ -1,0 +1,1 @@
+UPDATE leads SET etapa_funil = 'Em Contato' WHERE id = '859d372f-7ef7-4bc0-b2ec-f14bb994a27c'; INSERT INTO interacoes (lead_id, tipo, resultado, descricao, created_by) SELECT '859d372f-7ef7-4bc0-b2ec-f14bb994a27c', 'mensagem', 'enviado', 'TESTE VALIDACAO TAGS', id FROM auth.users LIMIT 1;
