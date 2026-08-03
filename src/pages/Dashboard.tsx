@@ -3,10 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { STAGES, daysSince, slaColor, slaLabel, SOURCES } from "@/lib/leads";
+import { STAGES, ETAPAS_ATIVAS_FUNIL, daysSince, slaColor, slaLabel, SOURCES } from "@/lib/leads";
 import { dayKeyCRM, todayCRM } from "@/lib/datetime";
 import { Link, useNavigate } from "react-router-dom";
-import { TrendingUp, Users, Clock, Calendar, AlertTriangle, Phone, MapPin, Globe, UserPlus, Activity, CheckCircle2, XCircle } from "lucide-react";
+import { TrendingUp, Users, Clock, Calendar, AlertTriangle, Phone, MapPin, Globe, UserPlus, UserCheck, Activity, CheckCircle2, XCircle } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   BarChart, Bar, Cell, LineChart, Line,
@@ -24,19 +24,24 @@ export default function Dashboard() {
   const [visitas, setVisitas] = useState<any[]>([]);
   const [ligacoes, setLigacoes] = useState<any[]>([]);
   const [siteVisits, setSiteVisits] = useState<Array<{ dia: string; visitas: number; visitantes_unicos: number }>>([]);
+  const [convertedIds, setConvertedIds] = useState<Set<string>>(new Set());
+  const [futureTaskIds, setFutureTaskIds] = useState<Set<string>>(new Set());
 
   const monthStart = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); d.setDate(1); return d; }, []);
   const monthEnd = useMemo(() => { const d = new Date(monthStart); d.setMonth(d.getMonth() + 1); return d; }, [monthStart]);
 
   useEffect(() => {
     (async () => {
-      const [l, r, v, c, iv, ic] = await Promise.all([
+      const [l, r, v, c, iv, ic, contasRes, tarefasRes] = await Promise.all([
         supabase.from("leads").select("id,nome,etapa_funil,origem,ultima_interacao,created_at").order("created_at", { ascending: false }),
         supabase.from("reunioes").select("id,status,agendada_para,lead_id"),
         supabase.from("visitas").select("id,status,data_visita").gte("data_visita", monthStart.toISOString()).lt("data_visita", monthEnd.toISOString()),
         supabase.from("ligacoes").select("id,resultado,data").gte("data", monthStart.toISOString()).lt("data", monthEnd.toISOString()),
         supabase.from("interacoes").select("id,resultado,agendado_para,created_at").eq("tipo", "visita").gte("created_at", monthStart.toISOString()).lt("created_at", monthEnd.toISOString()),
         supabase.from("interacoes").select("id,resultado,agendado_para,created_at").eq("tipo", "ligacao").gte("created_at", monthStart.toISOString()).lt("created_at", monthEnd.toISOString()),
+        // Mesmos dados da aba Leads: convertidos em conta e tarefas pendentes com prazo
+        supabase.from("contas").select("lead_id_origem").not("lead_id_origem", "is", null),
+        supabase.from("tarefas").select("lead_id, prazo").not("lead_id", "is", null).not("prazo", "is", null).neq("status", "Concluída").limit(1000),
       ]);
       const vMerged = [
         ...((v.data ?? []).map((x: any) => ({ id: `v-${x.id}`, status: x.status, data_visita: x.data_visita }))),
@@ -47,6 +52,13 @@ export default function Dashboard() {
         ...((ic.data ?? []).map((x: any) => ({ id: `ic-${x.id}`, resultado: x.resultado, data: x.agendado_para ?? x.created_at }))),
       ];
       setLeads(l.data ?? []); setReunioes(r.data ?? []); setVisitas(vMerged); setLigacoes(cMerged);
+      setConvertedIds(new Set(((contasRes.data ?? []) as any[]).map((x) => x.lead_id_origem).filter(Boolean)));
+      const nowTs = Date.now();
+      setFutureTaskIds(new Set(
+        ((tarefasRes.data ?? []) as any[])
+          .filter((t) => t.lead_id && t.prazo && new Date(t.prazo).getTime() >= nowTs)
+          .map((t) => t.lead_id as string)
+      ));
     })();
   }, [monthStart, monthEnd]);
 
@@ -99,10 +111,14 @@ export default function Dashboard() {
       .filter(Boolean)
   ).size;
   const rate = total ? Math.round((leadsComReuniao / total) * 100) : 0;
+  // Mesma regra da aba Leads ("Precisam nutrição"): fora convertidos em conta e leads com tarefa futura agendada
   const overdue = leads.filter(l => {
+    if (convertedIds.has(l.id)) return false;
+    if (futureTaskIds.has(l.id)) return false;
     const d = daysSince(l.ultima_interacao ?? l.created_at);
     return d !== null && d > 3 && !["Fechado", "Perdido"].includes(l.etapa_funil);
   });
+  const convertidosEmConta = leads.filter(l => convertedIds.has(l.id)).length;
   const reunioesMes = reunioesMesList.length;
   const bySource = leads.reduce<Record<string, number>>((acc, l) => { const k = l.origem || "manual"; acc[k] = (acc[k] || 0) + 1; return acc; }, {});
 
@@ -160,7 +176,8 @@ export default function Dashboard() {
 
 
       {(() => {
-        const ATENDIMENTO_STAGES = new Set(["Em Contato","Conversa Ativa"]);
+        // Mesmas etapas ativas do funil da aba Leads / relatório (Novo Lead, Pré-atendimento, Em Contato, Conversa Ativa)
+        const ATENDIMENTO_STAGES = new Set(ETAPAS_ATIVAS_FUNIL);
         const emAtendimento = leads.filter(l => ATENDIMENTO_STAGES.has(l.etapa_funil)).length;
         const novosSemContato = leads.filter(l => l.etapa_funil === "Novo Lead").length;
         const fechados = leads.filter(l => l.etapa_funil === "Fechado").length;
@@ -171,6 +188,7 @@ export default function Dashboard() {
             <KPI icon={Activity} label="Em atendimento" value={emAtendimento} variant="accent" />
             <KPI icon={UserPlus} label="Novos sem contato" value={novosSemContato} variant={novosSemContato > 0 ? "warning" : "default"} />
             <KPI icon={Clock} label="Sem atendimento (3d+)" value={overdue.length} variant={overdue.length > 0 ? "danger" : "default"} />
+            <KPI icon={UserCheck} label="Convertidos em conta" value={convertidosEmConta} variant="success" to="/crm/contas" />
             <KPI icon={TrendingUp} label="Taxa de conversão" value={`${rate}%`} />
             <KPI icon={Calendar} label="Reuniões este mês" value={reunioesMes} />
             <KPI icon={CheckCircle2} label="Fechados" value={fechados} variant="success" />
@@ -391,10 +409,10 @@ const KPI_STYLES: Record<KPIVariant, { card: string; icon: string }> = {
   danger: { card: "border-danger/30", icon: "bg-danger/10 text-danger" },
 };
 
-function KPI({ icon: Icon, label, value, variant = "default" }: { icon: any; label: string; value: any; variant?: KPIVariant }) {
+function KPI({ icon: Icon, label, value, variant = "default", to }: { icon: any; label: string; value: any; variant?: KPIVariant; to?: string }) {
   const s = KPI_STYLES[variant];
-  return (
-    <Card className={"p-5 " + s.card}>
+  const card = (
+    <Card className={"p-5 " + s.card + (to ? " hover:shadow-soft transition cursor-pointer" : "")}>
       <div className="flex items-center justify-between">
         <div>
           <div className="text-sm text-muted-foreground">{label}</div>
@@ -406,4 +424,5 @@ function KPI({ icon: Icon, label, value, variant = "default" }: { icon: any; lab
       </div>
     </Card>
   );
+  return to ? <Link to={to}>{card}</Link> : card;
 }
