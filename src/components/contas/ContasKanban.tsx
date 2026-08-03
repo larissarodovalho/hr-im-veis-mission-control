@@ -135,7 +135,16 @@ function ContaCard({
   lastContact,
   nextTask,
 }: {
-...
+  a: Account;
+  total: number;
+  responsavelNome?: string | null;
+  criadorNome?: string | null;
+  owners?: { id: string; nome: string }[];
+  onMoveStage: (id: string, etapa: EtapaFunil) => void;
+  onChangeOwner?: (id: string, userId: string | null) => void;
+  onChangeTemperatura?: (id: string, temp: string | null) => void;
+  onChangeCategoria?: (id: string) => void;
+  onQualificar?: (id: string) => void;
   opAtiva?: OpAtivaResumo;
   ownerMap?: Record<string, string>;
   lista?: "carteira" | "marketing";
