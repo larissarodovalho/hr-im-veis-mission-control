@@ -1,0 +1,1 @@
+DELETE FROM interacoes WHERE id = '16d23f50-4ec4-433d-9d1b-7b8663ef816e'; UPDATE leads SET etapa_funil = 'Pré-atendimento' WHERE id = '859d372f-7ef7-4bc0-b2ec-f14bb994a27c';
