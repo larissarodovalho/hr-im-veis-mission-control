@@ -14,7 +14,7 @@ import {
   STAGES, SOURCES, INTERESTS, TEMPERATURES,
   ageInDays, ageLabel, ageColor, idleDays, idleLabel, idleColor, formatDateBR,
   initials, Stage, Temperature,
-  TENTATIVA_SEQ, TENTATIVA_TIPOS, TENTATIVA_RESULTADOS,
+  TENTATIVA_SEQ, TENTATIVA_TIPOS, TENTATIVA_RESULTADOS, ETAPAS_FLUXO_ATENDIMENTO,
   INTERACAO_CANAIS, MOTIVOS_DESCLASSIFICACAO,
   tentativaStatus, tentativaPrazo, prazoDataLabel, prazoCountdown, TENTATIVA_TONE_CLASS,
   tentativaPontualidade, PONTUALIDADE_INFO, Pontualidade,
@@ -766,11 +766,11 @@ export default function LeadDetail() {
         </DialogContent>
       </Dialog>
 
-      {lead.etapa_funil === "Em Contato" && !conta && (
+      {ETAPAS_FLUXO_ATENDIMENTO.includes(lead.etapa_funil) && !conta && (
         <Card className="p-5 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <h3 className="font-display text-lg font-semibold flex items-center gap-2">
-              <PhoneCall className="h-5 w-5" /> Tentativas de contato
+              <PhoneCall className="h-5 w-5" /> Fluxo de atendimento
             </h3>
             <Badge className={"border " + (tentativasFeitas >= 3 ? "bg-danger/15 text-danger border-danger/30" : "bg-muted text-muted-foreground border-border")}>
               Tentativas: {Math.min(tentativasFeitas, 3)} de 3
