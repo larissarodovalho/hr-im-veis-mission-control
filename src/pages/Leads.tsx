@@ -289,7 +289,7 @@ export default function Leads() {
                         <div className="flex flex-col gap-1 items-start">
                           <Badge className={ageColor(age) + " border text-[10px]"}>📅 {ageLabel(age)}</Badge>
                           <Badge className={idleColor(idle) + " border text-[10px]"}>⏱️ {idleLabel(idle)}</Badge>
-                          <TentativasTags lead={l} tentativas={tentativasMap[l.id] ?? []} />
+                          <div className="flex flex-wrap gap-1"><TentativasTags lead={l} tentativas={tentativasMap[l.id] ?? []} /></div>
                           <NextTaskBadge task={nextTaskMap[l.id]} />
                         </div>
                       </td>
