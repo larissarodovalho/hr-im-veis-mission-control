@@ -3331,6 +3331,16 @@ export type Database = {
       }
     }
     Functions: {
+      check_duplicate_conta_name: {
+        Args: { _name: string }
+        Returns: {
+          entidade: string
+          etapa: string
+          id: string
+          nome: string
+          responsavel_nome: string
+        }[]
+      }
       check_duplicate_contact: {
         Args: { _email: string; _phone: string }
         Returns: {
