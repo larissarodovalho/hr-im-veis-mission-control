@@ -90,8 +90,10 @@ Ao clicar em "Converter em Conta Cliente":
 
 1. **Verificação automática na base de Contas** por telefone, e-mail, CPF/CNPJ **e nome** (normalizado, sem acentos), em toda a base (todos os corretores).
 2. **Duplicidade forte** (telefone/e-mail/documento): a conversão é **bloqueada** e o alerta oferece dois caminhos:
-   - **Unificar** — mantém a conta existente, vincula o lead a ela e migra todo o histórico (interações, tarefas e reuniões). Não cria conta duplicada.
-   - **Editar dados** — corrige os dados do formulário (foco automático no campo).
+
+    - **Unificar** — mantém a conta existente, vincula o lead a ela e migra todo o histórico (interações, tarefas e reuniões). Não cria conta duplicada.
+    - **Editar dados** — corrige os dados do formulário (foco automático no campo).
+
 3. **Duplicidade só por nome**: apenas aviso — mostra o botão Unificar, mas permite converter (pode ser homônimo).
 4. **Sem duplicidade**: confirmação em verde "Nenhuma conta duplicada encontrada — pode converter com segurança".
 5. Na conversão: a Conta nasce com categoria **Marketing**, etapa **A contatar**, referência ao lead de origem (`lead_id_origem`), e **as interações do lead migram automaticamente** para a conta (trigger no banco, mesma transação).
