@@ -3440,6 +3440,13 @@ export type Database = {
           read_ct: number
         }[]
       }
+      search_contas_min: {
+        Args: { _limit?: number; _q?: string }
+        Returns: {
+          id: string
+          nome: string
+        }[]
+      }
       unificar_lead_em_conta: {
         Args: { p_conta_id: string; p_lead_id: string }
         Returns: Json
