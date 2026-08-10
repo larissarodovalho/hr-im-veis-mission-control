@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -13,18 +13,33 @@ export function SearchableSelect({
   options,
   placeholder,
   emptyLabel,
+  onSearch,
+  loading,
 }: {
   value: string;
   onChange: (v: string) => void;
   options: SearchableOption[];
   placeholder: string;
   emptyLabel: string;
+  /** Quando informado, a busca é feita no servidor (debounce ~250ms) em vez de filtrar localmente. */
+  onSearch?: (query: string) => void;
+  loading?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const serverSearch = typeof onSearch === "function";
+
+  useEffect(() => {
+    if (!serverSearch || !open) return;
+    const t = setTimeout(() => onSearch!(query.trim()), 250);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, open, serverSearch]);
+
   const selected = options.find((o) => o.id === value);
   const label = value === "none" || !value ? emptyLabel : selected?.nome ?? emptyLabel;
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setQuery(""); }}>
       <PopoverTrigger asChild>
         <Button
           type="button"
@@ -38,10 +53,14 @@ export function SearchableSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <Command>
-          <CommandInput placeholder={placeholder} />
+        <Command shouldFilter={!serverSearch}>
+          <CommandInput
+            placeholder={placeholder}
+            value={serverSearch ? query : undefined}
+            onValueChange={serverSearch ? setQuery : undefined}
+          />
           <CommandList>
-            <CommandEmpty>Nenhum resultado.</CommandEmpty>
+            <CommandEmpty>{loading ? "Buscando..." : "Nenhum resultado."}</CommandEmpty>
             <CommandGroup>
               <CommandItem
                 value={emptyLabel}
@@ -53,8 +72,8 @@ export function SearchableSelect({
               {options.map((o) => (
                 <CommandItem
                   key={o.id}
-                  value={o.nome}
-                  onSelect={() => { onChange(o.id); setOpen(false); }}
+                  value={serverSearch ? o.id : o.nome}
+                  onSelect={() => { onChange(o.id); setOpen(false); setQuery(""); }}
                 >
                   <Check className={cn("mr-2 h-4 w-4", value === o.id ? "opacity-100" : "opacity-0")} />
                   {o.nome}
