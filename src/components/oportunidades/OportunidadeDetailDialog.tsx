@@ -66,6 +66,7 @@ export default function OportunidadeDetailDialog({
   const [rejeitandoId, setRejeitandoId] = useState<string | null>(null);
   const [motivoRejeicao, setMotivoRejeicao] = useState("");
   const [visitaForm, setVisitaForm] = useState<any | null>(null);
+  const [resultadoForm, setResultadoForm] = useState<Record<string, any>>({});
   const [propostaForm, setPropostaForm] = useState<any | null>(null);
   const [tarefaForm, setTarefaForm] = useState<any | null>(null);
   const [vincularContaId, setVincularContaId] = useState("none");
