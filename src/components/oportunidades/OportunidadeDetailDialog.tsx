@@ -18,7 +18,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   AlertTriangle, Trash2, CheckCircle2, Circle, CalendarCheck, FileText, Home as HomeIcon,
-  ClipboardList, History as HistoryIcon, ListChecks, Trophy, XCircle, Building2, ExternalLink,
+  ClipboardList, History as HistoryIcon, ListChecks, Trophy, XCircle, Building2, ExternalLink, Save,
 } from "lucide-react";
 import {
   ESTAGIOS, estagioLabel, isEstagioFinal, diagnosticoPendencias, categoriaLabel,
@@ -911,6 +911,9 @@ export default function OportunidadeDetailDialog({
           {isAdmin && <Button variant="destructive" onClick={excluir} className="mr-auto">Excluir</Button>}
           {!finalizada && (
             <>
+              <Button variant="secondary" onClick={salvarDiagnostico} disabled={saving}>
+                <Save className="h-4 w-4 mr-1" /> Salvar
+              </Button>
               <Button variant="outline" className="text-zinc-600" onClick={() => setPerdidaOpen(true)}>
                 <XCircle className="h-4 w-4 mr-1" /> Perdida
               </Button>
