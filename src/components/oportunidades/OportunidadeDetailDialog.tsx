@@ -682,10 +682,15 @@ export default function OportunidadeDetailDialog({
                     </Select>
                   </div>
                   {v.observacao && <p className="text-xs text-muted-foreground">{v.observacao}</p>}
-                  {v.status === "realizada" && (
+                  {v.status === "realizada" && (() => {
+                    const draft = resultadoForm[v.id] ?? {};
+                    const setDraft = (patch: any) => setResultadoForm((prev) => ({ ...prev, [v.id]: { ...(prev[v.id] ?? {}), ...patch } }));
+                    const interesse = draft.interesse_cliente ?? v.interesse_cliente ?? "";
+                    const podeAvancar = !!interesse;
+                    return (
                     <div className="border-t pt-2 space-y-2">
                       <div className="grid grid-cols-2 gap-2">
-                        <Select value={v.interesse_cliente || ""} onValueChange={(val) => updateVisita(v.id, { interesse_cliente: val })}>
+                        <Select value={interesse} onValueChange={(val) => setDraft({ interesse_cliente: val })}>
                           <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Interesse do cliente" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="baixo">Interesse baixo</SelectItem>
@@ -693,21 +698,26 @@ export default function OportunidadeDetailDialog({
                             <SelectItem value="alto">Interesse alto</SelectItem>
                           </SelectContent>
                         </Select>
-                        <Input className="h-8 text-xs" placeholder="Próxima ação" defaultValue={v.proxima_acao || ""} onBlur={(e) => e.target.value !== (v.proxima_acao || "") && updateVisita(v.id, { proxima_acao: e.target.value })} />
+                        <Input className="h-8 text-xs" placeholder="Próxima ação" defaultValue={v.proxima_acao || ""} onChange={(e) => setDraft({ proxima_acao: e.target.value })} onBlur={(e) => e.target.value !== (v.proxima_acao || "") && updateVisita(v.id, { proxima_acao: e.target.value })} />
                       </div>
-                      <Textarea rows={1} className="text-xs" placeholder="Feedback" defaultValue={v.feedback || ""} onBlur={(e) => e.target.value !== (v.feedback || "") && updateVisita(v.id, { feedback: e.target.value })} />
+                      <Textarea rows={1} className="text-xs" placeholder="Feedback" defaultValue={v.feedback || ""} onChange={(e) => setDraft({ feedback: e.target.value })} onBlur={(e) => e.target.value !== (v.feedback || "") && updateVisita(v.id, { feedback: e.target.value })} />
                       <div className="grid grid-cols-2 gap-2">
-                        <Textarea rows={1} className="text-xs" placeholder="Pontos positivos" defaultValue={v.pontos_positivos || ""} onBlur={(e) => e.target.value !== (v.pontos_positivos || "") && updateVisita(v.id, { pontos_positivos: e.target.value })} />
-                        <Textarea rows={1} className="text-xs" placeholder="Objeções" defaultValue={v.objeções || ""} onBlur={(e) => e.target.value !== (v.objeções || "") && updateVisita(v.id, { objeções: e.target.value })} />
+                        <Textarea rows={1} className="text-xs" placeholder="Pontos positivos" defaultValue={v.pontos_positivos || ""} onChange={(e) => setDraft({ pontos_positivos: e.target.value })} onBlur={(e) => e.target.value !== (v.pontos_positivos || "") && updateVisita(v.id, { pontos_positivos: e.target.value })} />
+                        <Textarea rows={1} className="text-xs" placeholder="Objeções" defaultValue={v.objeções || ""} onChange={(e) => setDraft({ objeções: e.target.value })} onBlur={(e) => e.target.value !== (v.objeções || "") && updateVisita(v.id, { objeções: e.target.value })} />
                       </div>
                       {!finalizada && (
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap items-center">
+                          <Button size="sm" variant="secondary" className="h-8 text-xs" onClick={() => salvarResultadoVisita(v)} disabled={saving}>
+                            Salvar resultado da visita
+                          </Button>
                           <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => moverEstagio("buscando")}>Voltar p/ Buscando imóvel</Button>
-                          <Button size="sm" className="h-8 text-xs" onClick={() => moverEstagio("proposta")}>Avançar p/ Proposta</Button>
+                          <Button size="sm" className="h-8 text-xs" onClick={() => moverEstagio("proposta")} disabled={!podeAvancar} title={podeAvancar ? undefined : "Registre o interesse do cliente na visita realizada antes de avançar"}>Avançar p/ Proposta</Button>
+                          {!podeAvancar && <span className="text-[11px] text-muted-foreground">Registre o resultado da visita para avançar.</span>}
                         </div>
                       )}
                     </div>
-                  )}
+                    );
+                  })()}
                 </Card>
               ))}
             </div>
