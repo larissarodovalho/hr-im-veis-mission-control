@@ -197,6 +197,18 @@ export default function Leads() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Buscar…" className="pl-8 w-full" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
+          <Select value={periodo} onValueChange={v => setPeriodo(v as any)}>
+            <SelectTrigger className="order-2 w-40 h-9 text-sm gap-1.5">
+              <CalendarClock className="h-4 w-4 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os períodos</SelectItem>
+              <SelectItem value="7">Últimos 7 dias</SelectItem>
+              <SelectItem value="15">Últimos 15 dias</SelectItem>
+              <SelectItem value="30">Últimos 30 dias</SelectItem>
+            </SelectContent>
+          </Select>
           <Tabs value={view} onValueChange={v => setView(v as any)} className="order-2">
             <TabsList>
               <TabsTrigger value="kanban" title="Kanban"><KanbanSquare className="h-4 w-4" /></TabsTrigger>
