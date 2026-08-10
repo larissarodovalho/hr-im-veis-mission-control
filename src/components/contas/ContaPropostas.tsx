@@ -19,35 +19,48 @@ import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/format";
 import { useRole } from "@/hooks/useRole";
 
+type StatusProposta =
+  | "pendente" | "em_preparacao" | "enviada" | "em_analise"
+  | "contraproposta" | "aceita" | "recusada" | "expirada" | "cancelada";
+
 type Proposta = {
   id: string;
   conta_id: string;
   data_proposta: string;
   valor: number | null;
-  status: "pendente" | "aceita" | "recusada";
+  status: StatusProposta;
   descricao: string | null;
   corretor_id: string | null;
   created_by: string | null;
   imovel_id: string | null;
+  oportunidade_id: string | null;
+  oportunidade_proposta_id: string | null;
   created_at: string;
 };
 
 type ImovelLite = { id: string; codigo: string | null; titulo: string | null };
+type OportunidadeLite = { id: string; titulo: string; estagio: string };
 
 const schema = z.object({
   data_proposta: z.date({ required_error: "Data obrigatória" }),
   valor: z.number().min(0).nullable().optional(),
-  status: z.enum(["pendente", "aceita", "recusada"]),
+  status: z.enum(["pendente", "em_preparacao", "enviada", "em_analise", "contraproposta", "aceita", "recusada", "expirada", "cancelada"]),
   descricao: z.string().trim().max(2000).nullable().optional(),
   imovel_id: z.string().uuid().nullable().optional(),
+  oportunidade_id: z.string().uuid().nullable().optional(),
 });
 
-const STATUS_META: Record<Proposta["status"], { label: string; badge: string; icon: JSX.Element }> = {
+const neutral = "bg-muted/60 text-muted-foreground border-border";
+const STATUS_META: Record<StatusProposta, { label: string; badge: string; icon: JSX.Element }> = {
   pendente: {
     label: "Pendente",
     badge: "bg-amber-500/15 text-amber-700 border-amber-500/30",
     icon: <Clock className="h-3 w-3 mr-1" />,
   },
+  em_preparacao: { label: "Em preparação", badge: neutral, icon: <Clock className="h-3 w-3 mr-1" /> },
+  enviada: { label: "Enviada", badge: "bg-blue-500/15 text-blue-700 border-blue-500/30", icon: <Clock className="h-3 w-3 mr-1" /> },
+  em_analise: { label: "Em análise", badge: "bg-amber-500/15 text-amber-700 border-amber-500/30", icon: <Clock className="h-3 w-3 mr-1" /> },
+  contraproposta: { label: "Contraproposta", badge: "bg-indigo-500/15 text-indigo-700 border-indigo-500/30", icon: <Clock className="h-3 w-3 mr-1" /> },
   aceita: {
     label: "Aceita",
     badge: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
@@ -58,7 +71,15 @@ const STATUS_META: Record<Proposta["status"], { label: string; badge: string; ic
     badge: "bg-destructive/15 text-destructive border-destructive/30",
     icon: <XCircle className="h-3 w-3 mr-1" />,
   },
+  expirada: { label: "Expirada", badge: neutral, icon: <XCircle className="h-3 w-3 mr-1" /> },
+  cancelada: { label: "Cancelada", badge: neutral, icon: <XCircle className="h-3 w-3 mr-1" /> },
 };
+
+const STATUS_OPCOES: StatusProposta[] = [
+  "em_preparacao", "enviada", "em_analise", "contraproposta", "aceita", "recusada", "expirada", "cancelada",
+];
+
+const EM_ABERTO: StatusProposta[] = ["pendente", "em_preparacao", "enviada", "em_analise", "contraproposta"];
 
 export default function ContaPropostas({ contaId }: { contaId: string }) {
   const { isAdmin } = useRole();
