@@ -485,6 +485,8 @@ export type Database = {
           descricao: string | null
           id: string
           imovel_id: string | null
+          oportunidade_id: string | null
+          oportunidade_proposta_id: string | null
           status: string
           updated_at: string
           valor: number | null
@@ -498,6 +500,8 @@ export type Database = {
           descricao?: string | null
           id?: string
           imovel_id?: string | null
+          oportunidade_id?: string | null
+          oportunidade_proposta_id?: string | null
           status?: string
           updated_at?: string
           valor?: number | null
@@ -511,6 +515,8 @@ export type Database = {
           descricao?: string | null
           id?: string
           imovel_id?: string | null
+          oportunidade_id?: string | null
+          oportunidade_proposta_id?: string | null
           status?: string
           updated_at?: string
           valor?: number | null
@@ -535,6 +541,13 @@ export type Database = {
             columns: ["imovel_id"]
             isOneToOne: false
             referencedRelation: "imoveis_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conta_propostas_oportunidade_id_fkey"
+            columns: ["oportunidade_id"]
+            isOneToOne: false
+            referencedRelation: "oportunidades"
             referencedColumns: ["id"]
           },
         ]
@@ -1945,6 +1958,7 @@ export type Database = {
         Row: {
           condicoes: string | null
           conta_id: string | null
+          conta_proposta_id: string | null
           created_at: string
           created_by: string | null
           entrada: number | null
@@ -1968,6 +1982,7 @@ export type Database = {
         Insert: {
           condicoes?: string | null
           conta_id?: string | null
+          conta_proposta_id?: string | null
           created_at?: string
           created_by?: string | null
           entrada?: number | null
@@ -1991,6 +2006,7 @@ export type Database = {
         Update: {
           condicoes?: string | null
           conta_id?: string | null
+          conta_proposta_id?: string | null
           created_at?: string
           created_by?: string | null
           entrada?: number | null

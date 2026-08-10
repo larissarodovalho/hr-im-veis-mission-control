@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, FileText, Pencil, Trash2, Save, CalendarIcon, CheckCircle2, XCircle, Clock, Building2 } from "lucide-react";
+import { Plus, FileText, Pencil, Trash2, Save, CalendarIcon, CheckCircle2, XCircle, Clock, Building2, Target } from "lucide-react";
+import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -19,35 +20,48 @@ import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/format";
 import { useRole } from "@/hooks/useRole";
 
+type StatusProposta =
+  | "pendente" | "em_preparacao" | "enviada" | "em_analise"
+  | "contraproposta" | "aceita" | "recusada" | "expirada" | "cancelada";
+
 type Proposta = {
   id: string;
   conta_id: string;
   data_proposta: string;
   valor: number | null;
-  status: "pendente" | "aceita" | "recusada";
+  status: StatusProposta;
   descricao: string | null;
   corretor_id: string | null;
   created_by: string | null;
   imovel_id: string | null;
+  oportunidade_id: string | null;
+  oportunidade_proposta_id: string | null;
   created_at: string;
 };
 
 type ImovelLite = { id: string; codigo: string | null; titulo: string | null };
+type OportunidadeLite = { id: string; titulo: string; estagio: string };
 
 const schema = z.object({
   data_proposta: z.date({ required_error: "Data obrigatória" }),
   valor: z.number().min(0).nullable().optional(),
-  status: z.enum(["pendente", "aceita", "recusada"]),
+  status: z.enum(["pendente", "em_preparacao", "enviada", "em_analise", "contraproposta", "aceita", "recusada", "expirada", "cancelada"]),
   descricao: z.string().trim().max(2000).nullable().optional(),
   imovel_id: z.string().uuid().nullable().optional(),
+  oportunidade_id: z.string().uuid().nullable().optional(),
 });
 
-const STATUS_META: Record<Proposta["status"], { label: string; badge: string; icon: JSX.Element }> = {
+const neutral = "bg-muted/60 text-muted-foreground border-border";
+const STATUS_META: Record<StatusProposta, { label: string; badge: string; icon: JSX.Element }> = {
   pendente: {
     label: "Pendente",
     badge: "bg-amber-500/15 text-amber-700 border-amber-500/30",
     icon: <Clock className="h-3 w-3 mr-1" />,
   },
+  em_preparacao: { label: "Em preparação", badge: neutral, icon: <Clock className="h-3 w-3 mr-1" /> },
+  enviada: { label: "Enviada", badge: "bg-blue-500/15 text-blue-700 border-blue-500/30", icon: <Clock className="h-3 w-3 mr-1" /> },
+  em_analise: { label: "Em análise", badge: "bg-amber-500/15 text-amber-700 border-amber-500/30", icon: <Clock className="h-3 w-3 mr-1" /> },
+  contraproposta: { label: "Contraproposta", badge: "bg-indigo-500/15 text-indigo-700 border-indigo-500/30", icon: <Clock className="h-3 w-3 mr-1" /> },
   aceita: {
     label: "Aceita",
     badge: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
@@ -58,18 +72,29 @@ const STATUS_META: Record<Proposta["status"], { label: string; badge: string; ic
     badge: "bg-destructive/15 text-destructive border-destructive/30",
     icon: <XCircle className="h-3 w-3 mr-1" />,
   },
+  expirada: { label: "Expirada", badge: neutral, icon: <XCircle className="h-3 w-3 mr-1" /> },
+  cancelada: { label: "Cancelada", badge: neutral, icon: <XCircle className="h-3 w-3 mr-1" /> },
 };
+
+const STATUS_OPCOES: StatusProposta[] = [
+  "em_preparacao", "enviada", "em_analise", "contraproposta", "aceita", "recusada", "expirada", "cancelada",
+];
+
+const EM_ABERTO: StatusProposta[] = ["pendente", "em_preparacao", "enviada", "em_analise", "contraproposta"];
 
 export default function ContaPropostas({ contaId }: { contaId: string }) {
   const { isAdmin } = useRole();
   const [items, setItems] = useState<Proposta[]>([]);
   const [imoveis, setImoveis] = useState<ImovelLite[]>([]);
+  const [oportunidades, setOportunidades] = useState<OportunidadeLite[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [editing, setEditing] = useState<(Partial<Proposta> & { _date?: Date }) | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const ativas = oportunidades.filter((o) => !["ganha", "perdida"].includes(o.estagio));
+
   const load = async () => {
-    const [{ data }, { data: { user } }, { data: imv }] = await Promise.all([
+    const [{ data }, { data: { user } }, { data: imv }, { data: ops }] = await Promise.all([
       supabase
         .from("conta_propostas" as any)
         .select("*")
@@ -77,9 +102,11 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
         .order("data_proposta", { ascending: false }),
       supabase.auth.getUser(),
       supabase.from("imoveis").select("id, codigo, titulo").order("codigo", { ascending: true }),
+      supabase.from("oportunidades").select("id, titulo, estagio").eq("conta_id", contaId).order("created_at", { ascending: false }),
     ]);
     setItems(((data as any) ?? []) as Proposta[]);
     setImoveis(((imv as any) ?? []) as ImovelLite[]);
+    setOportunidades(((ops as any) ?? []) as OportunidadeLite[]);
     setUserId(user?.id ?? null);
   };
 
@@ -94,8 +121,17 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contaId]);
 
-  const openNew = () =>
-    setEditing({ _date: new Date(), status: "pendente", valor: null, descricao: "", imovel_id: null });
+  const openNew = () => {
+    const unica = oportunidades.filter((o) => !["ganha", "perdida"].includes(o.estagio));
+    setEditing({
+      _date: new Date(),
+      status: "em_analise",
+      valor: null,
+      descricao: "",
+      imovel_id: null,
+      oportunidade_id: unica.length === 1 ? unica[0].id : null,
+    });
+  };
   const openEdit = (p: Proposta) =>
     setEditing({ ...p, _date: new Date(p.data_proposta + "T00:00:00") });
 
@@ -104,9 +140,10 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
     const parsed = schema.safeParse({
       data_proposta: editing._date,
       valor: editing.valor != null && editing.valor !== ("" as any) ? Number(editing.valor) : null,
-      status: (editing.status ?? "pendente") as Proposta["status"],
+      status: (editing.status ?? "em_analise") as StatusProposta,
       descricao: editing.descricao?.toString().trim() || null,
       imovel_id: editing.imovel_id || null,
+      oportunidade_id: editing.oportunidade_id || null,
     });
     if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Dados inválidos");
 
@@ -118,6 +155,7 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
       status: parsed.data.status,
       descricao: parsed.data.descricao,
       imovel_id: parsed.data.imovel_id,
+      oportunidade_id: parsed.data.oportunidade_id,
     };
     let error;
     if (editing.id) {
@@ -142,7 +180,7 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
     setItems((prev) => prev.filter((i) => i.id !== id));
   };
 
-  const alterarStatus = async (p: Proposta, novo: Proposta["status"]) => {
+  const alterarStatus = async (p: Proposta, novo: StatusProposta) => {
     if (p.status === novo) return;
     const { error } = await supabase
       .from("conta_propostas" as any)
@@ -172,7 +210,8 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
         <div className="space-y-2">
           {items.map((p) => {
             const canEdit = isAdmin || p.created_by === userId || p.corretor_id === userId;
-            const meta = STATUS_META[p.status];
+            const meta = STATUS_META[p.status] ?? STATUS_META.pendente;
+            const op = oportunidades.find((o) => o.id === p.oportunidade_id);
             return (
               <div key={p.id} className="flex items-start justify-between gap-3 border rounded-md p-3">
                 <div className="space-y-1 min-w-0 flex-1">
@@ -198,11 +237,19 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
                         </Badge>
                       );
                     })()}
+                    {op && (
+                      <Link to="/crm/oportunidades" className="no-underline">
+                        <Badge variant="outline" className="text-[11px] bg-primary/10 text-primary border-primary/30">
+                          <Target className="h-3 w-3 mr-1" />
+                          {op.titulo}
+                        </Badge>
+                      </Link>
+                    )}
                   </div>
                   {p.descricao && (
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">{p.descricao}</p>
                   )}
-                  {canEdit && p.status === "pendente" && (
+                  {canEdit && EM_ABERTO.includes(p.status) && (
                     <div className="flex gap-2 pt-1">
                       <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => alterarStatus(p, "aceita")}>
                         <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Marcar aceita
@@ -275,17 +322,37 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
                 <div>
                   <Label>Status *</Label>
                   <Select
-                    value={(editing.status ?? "pendente") as string}
-                    onValueChange={(v) => setEditing({ ...editing, status: v as Proposta["status"] })}
+                    value={(editing.status ?? "em_analise") as string}
+                    onValueChange={(v) => setEditing({ ...editing, status: v as StatusProposta })}
                   >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pendente">Pendente</SelectItem>
-                      <SelectItem value="aceita">Aceita</SelectItem>
-                      <SelectItem value="recusada">Recusada</SelectItem>
+                      {editing.status === "pendente" && <SelectItem value="pendente">Pendente</SelectItem>}
+                      {STATUS_OPCOES.map((s) => (
+                        <SelectItem key={s} value={s}>{STATUS_META[s].label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              <div>
+                <Label>Oportunidade vinculada</Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={editing.oportunidade_id ?? ""}
+                  onChange={(e) => setEditing({ ...editing, oportunidade_id: e.target.value || null })}
+                >
+                  <option value="">— Nenhuma (só nesta conta) —</option>
+                  {(editing.oportunidade_id && !ativas.some((o) => o.id === editing.oportunidade_id)
+                    ? oportunidades
+                    : ativas
+                  ).map((o) => (
+                    <option key={o.id} value={o.id}>{o.titulo}</option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Ao vincular, a proposta aparece também na aba Propostas da oportunidade e os status ficam sincronizados.
+                </p>
               </div>
               <div>
                 <Label>Imóvel vinculado</Label>
