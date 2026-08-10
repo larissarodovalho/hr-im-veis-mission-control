@@ -179,7 +179,7 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
     setItems((prev) => prev.filter((i) => i.id !== id));
   };
 
-  const alterarStatus = async (p: Proposta, novo: Proposta["status"]) => {
+  const alterarStatus = async (p: Proposta, novo: StatusProposta) => {
     if (p.status === novo) return;
     const { error } = await supabase
       .from("conta_propostas" as any)
