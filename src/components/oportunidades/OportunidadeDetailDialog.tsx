@@ -71,6 +71,13 @@ export default function OportunidadeDetailDialog({
   const [tarefaForm, setTarefaForm] = useState<any | null>(null);
   const [vincularContaId, setVincularContaId] = useState("none");
   const [contasMin, setContasMin] = useState<{ id: string; nome: string }[]>([]);
+  const [buscandoContas, setBuscandoContas] = useState(false);
+  const buscarContas = async (q: string) => {
+    setBuscandoContas(true);
+    const { data } = await supabase.rpc("search_contas_min", { _q: q || null, _limit: 30 });
+    setContasMin(((data ?? []) as any[]).map((r) => ({ id: r.id, nome: r.nome || "Sem nome" })));
+    setBuscandoContas(false);
+  };
   const [ganhaOpen, setGanhaOpen] = useState(false);
   const [perdidaOpen, setPerdidaOpen] = useState(false);
 
@@ -117,9 +124,7 @@ export default function OportunidadeDetailDialog({
     supabase.from("imoveis").select("id,titulo,codigo").order("created_at", { ascending: false }).then(({ data }) => {
       setImoveis((data ?? []).map((i: any) => ({ id: i.id, nome: `${i.codigo ? i.codigo + " · " : ""}${i.titulo}` })));
     });
-    supabase.rpc("list_contas_min").then(({ data }) => {
-      setContasMin(((data ?? []) as any[]).map((r) => ({ id: r.id, nome: r.nome || "Sem nome" })));
-    });
+    buscarContas("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, oportunidade]);
 
@@ -411,7 +416,7 @@ export default function OportunidadeDetailDialog({
             </p>
             <div className="flex items-center gap-2 flex-wrap">
               <div className="min-w-[240px] flex-1">
-                <SearchableSelect value={vincularContaId} onChange={setVincularContaId} options={contasMin} placeholder="Buscar conta..." emptyLabel="Selecione a conta" />
+                <SearchableSelect value={vincularContaId} onChange={setVincularContaId} options={contasMin} onSearch={buscarContas} loading={buscandoContas} placeholder="Buscar conta por nome, telefone ou e-mail..." emptyLabel="Selecione a conta" />
               </div>
               <Button size="sm" onClick={vincularConta}>Vincular conta</Button>
             </div>

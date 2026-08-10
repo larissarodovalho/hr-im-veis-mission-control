@@ -58,13 +58,20 @@ export default function CriarOportunidadeDialog({
     setChave(crypto.randomUUID());
   };
 
+  const [buscandoContas, setBuscandoContas] = useState(false);
+  const buscarContas = async (q: string) => {
+    setBuscandoContas(true);
+    const { data } = await supabase.rpc("search_contas_min", { _q: q || null, _limit: 30 });
+    setContas(((data ?? []) as any[]).map((r) => ({ id: r.id, nome: r.nome || "Sem nome" })));
+    setBuscandoContas(false);
+  };
+
+
   // Carrega listas base
   useEffect(() => {
     if (!open) return;
     if (!conta) {
-      supabase.rpc("list_contas_min").then(({ data }) => {
-        setContas(((data ?? []) as any[]).map((r) => ({ id: r.id, nome: r.nome || "Sem nome" })));
-      });
+      buscarContas("");
     }
     supabase.from("imoveis").select("id,titulo,codigo").order("created_at", { ascending: false }).then(({ data }) => {
       setImoveis((data ?? []).map((i: any) => ({ id: i.id, nome: `${i.codigo ? i.codigo + " · " : ""}${i.titulo}` })));
@@ -194,7 +201,9 @@ export default function CriarOportunidadeDialog({
                   });
                 }}
                 options={contas}
-                placeholder="Buscar conta..."
+                onSearch={buscarContas}
+                loading={buscandoContas}
+                placeholder="Buscar conta por nome, telefone ou e-mail..."
                 emptyLabel="Selecione a conta"
               />
               <p className="text-[11px] text-muted-foreground mt-1">
