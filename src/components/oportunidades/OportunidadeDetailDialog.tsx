@@ -653,7 +653,9 @@ export default function OportunidadeDetailDialog({
                   <Textarea rows={2} value={visitaForm.observacao ?? ""} onChange={(e) => setVisitaForm({ ...visitaForm, observacao: e.target.value })} />
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={salvarVisita} disabled={saving}>Agendar</Button>
+                  <Button size="sm" onClick={salvarVisita} disabled={saving}>
+                    <CalendarCheck className="h-4 w-4 mr-1" /> Agendar e mover p/ Visita agendada
+                  </Button>
                   <Button size="sm" variant="ghost" onClick={() => setVisitaForm(null)}>Cancelar</Button>
                 </div>
               </Card>
