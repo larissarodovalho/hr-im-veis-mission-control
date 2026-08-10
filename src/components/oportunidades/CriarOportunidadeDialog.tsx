@@ -62,9 +62,7 @@ export default function CriarOportunidadeDialog({
   useEffect(() => {
     if (!open) return;
     if (!conta) {
-      supabase.rpc("list_contas_min").then(({ data }) => {
-        setContas(((data ?? []) as any[]).map((r) => ({ id: r.id, nome: r.nome || "Sem nome" })));
-      });
+      buscarContas("");
     }
     supabase.from("imoveis").select("id,titulo,codigo").order("created_at", { ascending: false }).then(({ data }) => {
       setImoveis((data ?? []).map((i: any) => ({ id: i.id, nome: `${i.codigo ? i.codigo + " · " : ""}${i.titulo}` })));
