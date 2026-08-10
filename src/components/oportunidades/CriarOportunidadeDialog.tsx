@@ -201,7 +201,9 @@ export default function CriarOportunidadeDialog({
                   });
                 }}
                 options={contas}
-                placeholder="Buscar conta..."
+                onSearch={buscarContas}
+                loading={buscandoContas}
+                placeholder="Buscar conta por nome, telefone ou e-mail..."
                 emptyLabel="Selecione a conta"
               />
               <p className="text-[11px] text-muted-foreground mt-1">
