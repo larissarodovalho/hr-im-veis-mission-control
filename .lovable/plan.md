@@ -8,6 +8,8 @@ Quando a interação é registrada a partir de uma **oportunidade que não tem c
 
 Situação atual: das 33 oportunidades, **3 estão sem conta vinculada**. Só nessas o erro aparece.
 
+Foi exatamente o que aconteceu na tela da imagem: ao apagar a conta duplicada, a oportunidade "Cliente quer dar uma entrada de 300 mil" ficou com o aviso "Vínculo pendente — esta oportunidade legada ainda não está ligada a uma Conta". Sem conta, qualquer ação que grave histórico (salvar diagnóstico, mover de etapa, marcar ganha/perdida) é recusada pelo banco.
+
 ## Correção proposta
 
 1. Ajustar a regra do banco para aceitar também interações ligadas apenas a uma oportunidade (lead OU conta OU oportunidade).
