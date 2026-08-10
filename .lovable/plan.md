@@ -1,23 +1,25 @@
-# Erro "interacoes_check" ao registrar interação na oportunidade
+# Liberar todas as contas no seletor de vínculo da oportunidade
 
-## O que a mensagem significa
+## O que está acontecendo
 
-O banco exige que toda interação do histórico esteja ligada a **um lead ou a uma conta de cliente**. A regra é literalmente: "lead preenchido OU conta preenchida".
+A conta "Sandra Pires" existe no sistema, mas não aparece no campo de busca do dialog da oportunidade.
 
-Quando a interação é registrada a partir de uma **oportunidade que não tem conta vinculada**, ela vai só com o vínculo da oportunidade — nenhum dos dois campos exigidos é preenchido — e o banco recusa o registro com essa mensagem.
+Causa confirmada: hoje existem 1.451 contas e a lista carregada pela tela é cortada em 1.000 registros pelo limite padrão da API. Em ordem alfabética, "Sandra Pires" é a posição 1.295 — ou seja, ela (e todas as contas da letra ~R em diante) simplesmente nunca chegam ao navegador. A busca do campo filtra só o que já foi carregado, por isso mostra "Nenhum resultado".
 
-Situação atual: das 33 oportunidades, **3 estão sem conta vinculada**. Só nessas o erro aparece.
+## Solução
 
-Foi exatamente o que aconteceu na tela da imagem: ao apagar a conta duplicada, a oportunidade "Cliente quer dar uma entrada de 300 mil" ficou com o aviso "Vínculo pendente — esta oportunidade legada ainda não está ligada a uma Conta". Sem conta, qualquer ação que grave histórico (salvar diagnóstico, mover de etapa, marcar ganha/perdida) é recusada pelo banco.
+Fazer a busca de contas acontecer no servidor, com o texto digitado, em vez de baixar a lista inteira:
 
-## Correção proposta
+1. Criar uma busca de contas por nome/telefone/e-mail no backend, que devolve no máximo ~30 resultados por consulta e respeita as mesmas permissões atuais (somente equipe autenticada).
+2. Ajustar o seletor de busca para consultar o servidor conforme o usuário digita (com pequeno atraso para não consultar a cada tecla), mantendo o comportamento visual atual.
+3. Aplicar nos dois pontos que usam a lista de contas nas Oportunidades: o dialog de vincular conta e o dialog de criar oportunidade.
+4. Enquanto nada foi digitado, mostrar as contas mais recentes como sugestão inicial.
 
-1. Ajustar a regra do banco para aceitar também interações ligadas apenas a uma oportunidade (lead OU conta OU oportunidade).
-2. Nas telas de oportunidade (detalhe, ganha, perdida, qualificação), quando a oportunidade tiver conta, continuar gravando a conta junto — assim o histórico segue aparecendo na ficha do cliente.
-3. Como as 3 oportunidades sem conta são um sintoma, sinalizar na tela da oportunidade quando não houver cliente vinculado, para o time completar o cadastro.
+Resultado: qualquer conta cadastrada passa a ser encontrada, independentemente do tamanho da base.
 
 ## Detalhes técnicos
 
-- Migração: substituir o `CHECK (lead_id IS NOT NULL OR conta_id IS NOT NULL)` de `public.interacoes` por `CHECK (lead_id IS NOT NULL OR conta_id IS NOT NULL OR oportunidade_id IS NOT NULL)`.
-- Sem mudança de RLS: as políticas de leitura/escrita de `interacoes` continuam as mesmas; conferir se alguma delas depende só de `conta_id`/`lead_id` e, se depender, estender para o caminho da oportunidade.
-- Arquivos envolvidos no frontend: `src/components/oportunidades/OportunidadeDetailDialog.tsx`, `GanhaDialog.tsx`, `PerdidaDialog.tsx`, `QualificacaoOportunidadeDialog.tsx`.
+- Nova função `search_contas_min(_q text, _limit int)` (SQL, STABLE, SECURITY DEFINER, `search_path = public`), filtrando por `nome ILIKE` + `normalize_br_phone(telefone)` + `email`, com guarda `public.is_staff()` e `LIMIT` — mesmo padrão de `list_contas_min()`.
+- `src/components/SearchableSelect.tsx`: props opcionais `onSearch(query)` e `loading`; quando presentes, `CommandInput` fica controlado e o filtro interno do `Command` é desativado (`shouldFilter={false}`), com debounce de ~250 ms.
+- `OportunidadeDetailDialog.tsx` e `CriarOportunidadeDialog.tsx`: trocar o `supabase.rpc("list_contas_min")` inicial por `search_contas_min` (carga inicial vazia = últimas contas) e passar `onSearch`.
+- `list_contas_min()` permanece para os demais usos; nenhum dado é excluído ou alterado.
