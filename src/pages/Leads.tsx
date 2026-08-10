@@ -49,6 +49,7 @@ export default function Leads() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"recent" | "idle">("recent");
   const [needsNurture, setNeedsNurture] = useState(false);
+  const [periodo, setPeriodo] = useState<"todos" | "7" | "15" | "30">("todos");
   const [open, setOpen] = useState(false);
   const { isAdmin, isGestor } = useRole();
   const canDelete = isAdmin;
@@ -137,6 +138,13 @@ export default function Leads() {
       const id = idleDays(l.ultima_interacao);
       if (!(id === null || id >= 4)) return false;
     }
+    if (periodo !== "todos") {
+      const base = l.data_entrada ?? l.created_at;
+      if (!base) return false;
+      const dias = Math.floor((Date.now() - new Date(base).getTime()) / 86400000);
+      const limite = Number(periodo);
+      if (dias > limite) return false;
+    }
     return true;
   });
 
@@ -189,6 +197,18 @@ export default function Leads() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Buscar…" className="pl-8 w-full" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
+          <Select value={periodo} onValueChange={v => setPeriodo(v as any)}>
+            <SelectTrigger className="order-2 w-40 h-9 text-sm gap-1.5">
+              <CalendarClock className="h-4 w-4 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os períodos</SelectItem>
+              <SelectItem value="7">Últimos 7 dias</SelectItem>
+              <SelectItem value="15">Últimos 15 dias</SelectItem>
+              <SelectItem value="30">Últimos 30 dias</SelectItem>
+            </SelectContent>
+          </Select>
           <Tabs value={view} onValueChange={v => setView(v as any)} className="order-2">
             <TabsList>
               <TabsTrigger value="kanban" title="Kanban"><KanbanSquare className="h-4 w-4" /></TabsTrigger>
@@ -232,7 +252,7 @@ export default function Leads() {
           </div>
         </DndContext>
       ) : view === "atendimento" ? (
-        <AtendimentoPanel leads={leads} convertedIds={convertedIds} tentativasMap={tentativasMap} brokers={brokers} search={search} />
+        <AtendimentoPanel leads={leads} convertedIds={convertedIds} tentativasMap={tentativasMap} brokers={brokers} search={search} periodo={periodo} />
       ) : (
         <>
           {/* Mobile: cards */}
@@ -409,7 +429,7 @@ const classificaAtendimento = (lead: Lead, tentativas: TentativaReg[]): AtClasse
   classificaFluxoAtendimento(lead, tentativas.length);
 
 /** Painel de acompanhamento do fluxo de atendimento (msg imediata, áudio +24h, ligação +48h). */
-function AtendimentoPanel({ leads, convertedIds, tentativasMap, brokers, search }: { leads: Lead[]; convertedIds: Set<string>; tentativasMap: Record<string, TentativaReg[]>; brokers: Record<string, string>; search: string }) {
+function AtendimentoPanel({ leads, convertedIds, tentativasMap, brokers, search, periodo }: { leads: Lead[]; convertedIds: Set<string>; tentativasMap: Record<string, TentativaReg[]>; brokers: Record<string, string>; search: string; periodo: "todos" | "7" | "15" | "30" }) {
   const [filtro, setFiltro] = useState<AtClasse | "todos">("todos");
   const ativos = leads.filter(l => {
     if (convertedIds.has(l.id)) return false;
@@ -417,6 +437,13 @@ function AtendimentoPanel({ leads, convertedIds, tentativasMap, brokers, search 
     if (search) {
       const s = search.toLowerCase();
       if (!(l.nome.toLowerCase().includes(s) || l.telefone?.includes(search) || l.email?.toLowerCase().includes(s))) return false;
+    }
+    if (periodo !== "todos") {
+      const base = l.data_entrada ?? l.created_at;
+      if (!base) return false;
+      const dias = Math.floor((Date.now() - new Date(base).getTime()) / 86400000);
+      const limite = Number(periodo);
+      if (dias > limite) return false;
     }
     return true;
   });
