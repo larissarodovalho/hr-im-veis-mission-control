@@ -911,6 +911,9 @@ export default function OportunidadeDetailDialog({
           {isAdmin && <Button variant="destructive" onClick={excluir} className="mr-auto">Excluir</Button>}
           {!finalizada && (
             <>
+              <Button variant="secondary" onClick={salvarDiagnostico} disabled={saving}>
+                <Save className="h-4 w-4 mr-1" /> Salvar
+              </Button>
               <Button variant="outline" className="text-zinc-600" onClick={() => setPerdidaOpen(true)}>
                 <XCircle className="h-4 w-4 mr-1" /> Perdida
               </Button>
