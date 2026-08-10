@@ -58,6 +58,15 @@ export default function CriarOportunidadeDialog({
     setChave(crypto.randomUUID());
   };
 
+  const [buscandoContas, setBuscandoContas] = useState(false);
+  const buscarContas = async (q: string) => {
+    setBuscandoContas(true);
+    const { data } = await supabase.rpc("search_contas_min", { _q: q || null, _limit: 30 });
+    setContas(((data ?? []) as any[]).map((r) => ({ id: r.id, nome: r.nome || "Sem nome" })));
+    setBuscandoContas(false);
+  };
+
+
   // Carrega listas base
   useEffect(() => {
     if (!open) return;
