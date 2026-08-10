@@ -117,9 +117,7 @@ export default function OportunidadeDetailDialog({
     supabase.from("imoveis").select("id,titulo,codigo").order("created_at", { ascending: false }).then(({ data }) => {
       setImoveis((data ?? []).map((i: any) => ({ id: i.id, nome: `${i.codigo ? i.codigo + " · " : ""}${i.titulo}` })));
     });
-    supabase.rpc("list_contas_min").then(({ data }) => {
-      setContasMin(((data ?? []) as any[]).map((r) => ({ id: r.id, nome: r.nome || "Sem nome" })));
-    });
+    buscarContas("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, oportunidade]);
 
