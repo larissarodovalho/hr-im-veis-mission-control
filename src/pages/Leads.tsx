@@ -252,7 +252,7 @@ export default function Leads() {
           </div>
         </DndContext>
       ) : view === "atendimento" ? (
-        <AtendimentoPanel leads={leads} convertedIds={convertedIds} tentativasMap={tentativasMap} brokers={brokers} search={search} />
+        <AtendimentoPanel leads={leads} convertedIds={convertedIds} tentativasMap={tentativasMap} brokers={brokers} search={search} periodo={periodo} />
       ) : (
         <>
           {/* Mobile: cards */}
