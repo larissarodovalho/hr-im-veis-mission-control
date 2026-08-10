@@ -18,7 +18,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   AlertTriangle, Trash2, CheckCircle2, Circle, CalendarCheck, FileText, Home as HomeIcon,
-  ClipboardList, History as HistoryIcon, ListChecks, Trophy, XCircle, Building2, ExternalLink,
+  ClipboardList, History as HistoryIcon, ListChecks, Trophy, XCircle, Building2, ExternalLink, Save,
 } from "lucide-react";
 import {
   ESTAGIOS, estagioLabel, isEstagioFinal, diagnosticoPendencias, categoriaLabel,
