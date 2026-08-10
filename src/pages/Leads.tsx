@@ -49,6 +49,7 @@ export default function Leads() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"recent" | "idle">("recent");
   const [needsNurture, setNeedsNurture] = useState(false);
+  const [periodo, setPeriodo] = useState<"todos" | "7" | "15" | "30">("todos");
   const [open, setOpen] = useState(false);
   const { isAdmin, isGestor } = useRole();
   const canDelete = isAdmin;
