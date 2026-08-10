@@ -85,12 +85,15 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
   const { isAdmin } = useRole();
   const [items, setItems] = useState<Proposta[]>([]);
   const [imoveis, setImoveis] = useState<ImovelLite[]>([]);
+  const [oportunidades, setOportunidades] = useState<OportunidadeLite[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [editing, setEditing] = useState<(Partial<Proposta> & { _date?: Date }) | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const ativas = oportunidades.filter((o) => !["ganha", "perdida"].includes(o.estagio));
+
   const load = async () => {
-    const [{ data }, { data: { user } }, { data: imv }] = await Promise.all([
+    const [{ data }, { data: { user } }, { data: imv }, { data: ops }] = await Promise.all([
       supabase
         .from("conta_propostas" as any)
         .select("*")
@@ -98,9 +101,11 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
         .order("data_proposta", { ascending: false }),
       supabase.auth.getUser(),
       supabase.from("imoveis").select("id, codigo, titulo").order("codigo", { ascending: true }),
+      supabase.from("oportunidades").select("id, titulo, estagio").eq("conta_id", contaId).order("created_at", { ascending: false }),
     ]);
     setItems(((data as any) ?? []) as Proposta[]);
     setImoveis(((imv as any) ?? []) as ImovelLite[]);
+    setOportunidades(((ops as any) ?? []) as OportunidadeLite[]);
     setUserId(user?.id ?? null);
   };
 
@@ -115,8 +120,17 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contaId]);
 
-  const openNew = () =>
-    setEditing({ _date: new Date(), status: "pendente", valor: null, descricao: "", imovel_id: null });
+  const openNew = () => {
+    const unica = oportunidades.filter((o) => !["ganha", "perdida"].includes(o.estagio));
+    setEditing({
+      _date: new Date(),
+      status: "em_analise",
+      valor: null,
+      descricao: "",
+      imovel_id: null,
+      oportunidade_id: unica.length === 1 ? unica[0].id : null,
+    });
+  };
   const openEdit = (p: Proposta) =>
     setEditing({ ...p, _date: new Date(p.data_proposta + "T00:00:00") });
 
@@ -125,9 +139,10 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
     const parsed = schema.safeParse({
       data_proposta: editing._date,
       valor: editing.valor != null && editing.valor !== ("" as any) ? Number(editing.valor) : null,
-      status: (editing.status ?? "pendente") as Proposta["status"],
+      status: (editing.status ?? "em_analise") as StatusProposta,
       descricao: editing.descricao?.toString().trim() || null,
       imovel_id: editing.imovel_id || null,
+      oportunidade_id: editing.oportunidade_id || null,
     });
     if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Dados inválidos");
 
@@ -139,6 +154,7 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
       status: parsed.data.status,
       descricao: parsed.data.descricao,
       imovel_id: parsed.data.imovel_id,
+      oportunidade_id: parsed.data.oportunidade_id,
     };
     let error;
     if (editing.id) {
