@@ -429,7 +429,7 @@ const classificaAtendimento = (lead: Lead, tentativas: TentativaReg[]): AtClasse
   classificaFluxoAtendimento(lead, tentativas.length);
 
 /** Painel de acompanhamento do fluxo de atendimento (msg imediata, áudio +24h, ligação +48h). */
-function AtendimentoPanel({ leads, convertedIds, tentativasMap, brokers, search }: { leads: Lead[]; convertedIds: Set<string>; tentativasMap: Record<string, TentativaReg[]>; brokers: Record<string, string>; search: string }) {
+function AtendimentoPanel({ leads, convertedIds, tentativasMap, brokers, search, periodo }: { leads: Lead[]; convertedIds: Set<string>; tentativasMap: Record<string, TentativaReg[]>; brokers: Record<string, string>; search: string; periodo: "todos" | "7" | "15" | "30" }) {
   const [filtro, setFiltro] = useState<AtClasse | "todos">("todos");
   const ativos = leads.filter(l => {
     if (convertedIds.has(l.id)) return false;
@@ -437,6 +437,13 @@ function AtendimentoPanel({ leads, convertedIds, tentativasMap, brokers, search 
     if (search) {
       const s = search.toLowerCase();
       if (!(l.nome.toLowerCase().includes(s) || l.telefone?.includes(search) || l.email?.toLowerCase().includes(s))) return false;
+    }
+    if (periodo !== "todos") {
+      const base = l.data_entrada ?? l.created_at;
+      if (!base) return false;
+      const dias = Math.floor((Date.now() - new Date(base).getTime()) / 86400000);
+      const limite = Number(periodo);
+      if (dias > limite) return false;
     }
     return true;
   });
