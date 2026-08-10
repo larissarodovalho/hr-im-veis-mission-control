@@ -71,6 +71,13 @@ export default function OportunidadeDetailDialog({
   const [tarefaForm, setTarefaForm] = useState<any | null>(null);
   const [vincularContaId, setVincularContaId] = useState("none");
   const [contasMin, setContasMin] = useState<{ id: string; nome: string }[]>([]);
+  const [buscandoContas, setBuscandoContas] = useState(false);
+  const buscarContas = async (q: string) => {
+    setBuscandoContas(true);
+    const { data } = await supabase.rpc("search_contas_min", { _q: q || null, _limit: 30 });
+    setContasMin(((data ?? []) as any[]).map((r) => ({ id: r.id, nome: r.nome || "Sem nome" })));
+    setBuscandoContas(false);
+  };
   const [ganhaOpen, setGanhaOpen] = useState(false);
   const [perdidaOpen, setPerdidaOpen] = useState(false);
 
