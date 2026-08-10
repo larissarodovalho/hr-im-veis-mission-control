@@ -416,7 +416,7 @@ export default function OportunidadeDetailDialog({
             </p>
             <div className="flex items-center gap-2 flex-wrap">
               <div className="min-w-[240px] flex-1">
-                <SearchableSelect value={vincularContaId} onChange={setVincularContaId} options={contasMin} placeholder="Buscar conta..." emptyLabel="Selecione a conta" />
+                <SearchableSelect value={vincularContaId} onChange={setVincularContaId} options={contasMin} onSearch={buscarContas} loading={buscandoContas} placeholder="Buscar conta por nome, telefone ou e-mail..." emptyLabel="Selecione a conta" />
               </div>
               <Button size="sm" onClick={vincularConta}>Vincular conta</Button>
             </div>
