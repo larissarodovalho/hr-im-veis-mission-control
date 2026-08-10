@@ -138,6 +138,13 @@ export default function Leads() {
       const id = idleDays(l.ultima_interacao);
       if (!(id === null || id >= 4)) return false;
     }
+    if (periodo !== "todos") {
+      const base = l.data_entrada ?? l.created_at;
+      if (!base) return false;
+      const dias = Math.floor((Date.now() - new Date(base).getTime()) / 86400000);
+      const limite = Number(periodo);
+      if (dias > limite) return false;
+    }
     return true;
   });
 
