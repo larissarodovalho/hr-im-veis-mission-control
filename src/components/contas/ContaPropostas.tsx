@@ -322,17 +322,37 @@ export default function ContaPropostas({ contaId }: { contaId: string }) {
                 <div>
                   <Label>Status *</Label>
                   <Select
-                    value={(editing.status ?? "pendente") as string}
-                    onValueChange={(v) => setEditing({ ...editing, status: v as Proposta["status"] })}
+                    value={(editing.status ?? "em_analise") as string}
+                    onValueChange={(v) => setEditing({ ...editing, status: v as StatusProposta })}
                   >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pendente">Pendente</SelectItem>
-                      <SelectItem value="aceita">Aceita</SelectItem>
-                      <SelectItem value="recusada">Recusada</SelectItem>
+                      {editing.status === "pendente" && <SelectItem value="pendente">Pendente</SelectItem>}
+                      {STATUS_OPCOES.map((s) => (
+                        <SelectItem key={s} value={s}>{STATUS_META[s].label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              <div>
+                <Label>Oportunidade vinculada</Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={editing.oportunidade_id ?? ""}
+                  onChange={(e) => setEditing({ ...editing, oportunidade_id: e.target.value || null })}
+                >
+                  <option value="">— Nenhuma (só nesta conta) —</option>
+                  {(editing.oportunidade_id && !ativas.some((o) => o.id === editing.oportunidade_id)
+                    ? oportunidades
+                    : ativas
+                  ).map((o) => (
+                    <option key={o.id} value={o.id}>{o.titulo}</option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Ao vincular, a proposta aparece também na aba Propostas da oportunidade e os status ficam sincronizados.
+                </p>
               </div>
               <div>
                 <Label>Imóvel vinculado</Label>
