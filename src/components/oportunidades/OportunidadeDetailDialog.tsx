@@ -260,12 +260,25 @@ export default function OportunidadeDetailDialog({
     await registrar(`Visita agendada para ${fmtDt(new Date(visitaForm.data_visita).toISOString())}.`);
     setVisitaForm(null);
     toast.success("Visita agendada");
-    if (op.estagio === "buscando") moverEstagio("visita");
+    if (!isEstagioFinal(op.estagio) && op.estagio !== "visita") moverEstagio("visita");
     else reload(op.id);
   };
   const updateVisita = async (id: string, patch: any, log?: string) => {
     await supabase.from("oportunidade_visitas").update(patch).eq("id", id);
     if (log) await registrar(log);
+    reload(op.id);
+  };
+  const salvarResultadoVisita = async (v: any) => {
+    const patch = resultadoForm[v.id];
+    setSaving(true);
+    if (patch && Object.keys(patch).length) {
+      const { error } = await supabase.from("oportunidade_visitas").update(patch).eq("id", v.id);
+      if (error) { setSaving(false); return toast.error(error.message); }
+    }
+    await registrar(`Resultado da visita de ${fmtD(v.data_visita)} registrado.`);
+    setSaving(false);
+    setResultadoForm((prev) => { const n = { ...prev }; delete n[v.id]; return n; });
+    toast.success("Resultado da visita salvo");
     reload(op.id);
   };
 
