@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, FileText, Pencil, Trash2, Save, CalendarIcon, CheckCircle2, XCircle, Clock, Building2 } from "lucide-react";
+import { Plus, FileText, Pencil, Trash2, Save, CalendarIcon, CheckCircle2, XCircle, Clock, Building2, Target } from "lucide-react";
+import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
