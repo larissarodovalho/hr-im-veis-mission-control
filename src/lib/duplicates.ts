@@ -115,8 +115,40 @@ export async function findDuplicates(input: {
     });
   }
 
+  // Nome — apenas aviso (não bloqueia). Função SECURITY DEFINER para corretores também verem.
+  if (nome.length >= 4) {
+    const { data } = await supabase.rpc("check_duplicate_conta_name", { _name: nome });
+    for (const row of (data ?? []) as any[]) {
+      const table: "leads" | "contas" = row.entidade === "lead" ? "leads" : "contas";
+      addOrMerge(
+        `${table}:${row.id}`,
+        {
+          table,
+          id: row.id,
+          nome: row.nome,
+          email: null,
+          telefone: null,
+          etapa: row.etapa,
+          responsavel_nome: row.responsavel_nome,
+        },
+        "nome",
+      );
+    }
+  }
+
+  // Enriquecimento: em qual funil a conta está (Carteira / Marketing)
+  const contaIds = Array.from(matches.values()).filter((m) => m.table === "contas").map((m) => m.id);
+  if (contaIds.length) {
+    const { data } = await supabase.from("contas").select("id,categoria").in("id", contaIds);
+    (data ?? []).forEach((c: any) => {
+      const m = matches.get(`contas:${c.id}`);
+      if (m) m.categoria = c.categoria ?? null;
+    });
+  }
+
   return Array.from(matches.values());
 }
+
 
 export function describeMatch(m: DuplicateMatch): string {
   const where = m.table === "leads" ? "Lead" : "Conta";
