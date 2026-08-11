@@ -58,6 +58,8 @@ export default function OportunidadeDetailDialog({
   const [propostas, setPropostas] = useState<any[]>([]);
   const [tarefas, setTarefas] = useState<any[]>([]);
   const [historico, setHistorico] = useState<any[]>([]);
+  const [reunioes, setReunioes] = useState<any[]>([]);
+  const [ligacoes, setLigacoes] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
@@ -93,8 +95,8 @@ export default function OportunidadeDetailDialog({
       supabase.from("oportunidade_propostas").select("*").eq("oportunidade_id", id).order("created_at", { ascending: false }),
       supabase.from("tarefas").select("*").or(orFiltro).order("prazo", { ascending: true }),
       supabase.from("interacoes").select("*").or(orFiltro).order("created_at", { ascending: false }).limit(100),
-      supabase.from("reunioes").select("*").or(orFiltro).order("data_reuniao", { ascending: false }).limit(50),
-      supabase.from("ligacoes").select("*").or(orFiltro).order("created_at", { ascending: false }).limit(50),
+      supabase.from("reunioes").select("*").or(orFiltro).order("agendada_para", { ascending: false }).limit(50),
+      supabase.from("ligacoes").select("*").or(orFiltro).order("data", { ascending: false }).limit(50),
     ]);
     if (o) { setOp(o); setForm(o); }
     setVinculos(vi ?? []);
