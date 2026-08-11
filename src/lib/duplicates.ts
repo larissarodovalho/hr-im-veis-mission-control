@@ -39,10 +39,13 @@ export async function findDuplicates(input: {
   email?: string | null;
   telefone?: string | null;
   documento?: string | null;
+  nome?: string | null;
 }): Promise<DuplicateMatch[]> {
   const email = normEmail(input.email);
   const telDigits = onlyDigits(input.telefone);
   const docDigits = onlyDigits(input.documento);
+  const nome = normName(input.nome);
+
 
   const matches = new Map<string, DuplicateMatch>();
   const addOrMerge = (
