@@ -25,6 +25,7 @@ type Tarefa = {
   created_by: string | null;
   conta_id: string | null;
   lead_id: string | null;
+  oportunidade_id?: string | null;
 };
 
 const PRIO_COLOR: Record<string, string> = {
