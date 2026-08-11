@@ -45,7 +45,6 @@ const CRM_SUBTABS = [
   { label: "Leads", value: "leads", icon: Users },
   { label: "Contatos", value: "contatos", icon: Phone },
   { label: "Kanban", value: "kanban", icon: Building2 },
-  { label: "Distribuição de Carteira", value: "carteira", icon: Briefcase },
   { label: "Minha Carteira", value: "minha-carteira", icon: Briefcase },
   { label: "Imóveis", value: "imoveis", icon: Home },
   { label: "Funil de Vendas", value: "funil", icon: TrendingUp },
@@ -56,6 +55,7 @@ const CRM_SUBTABS = [
   { label: "Agenda", value: "agenda", icon: Calendar },
   { label: "Tarefas", value: "tarefas", icon: CheckCircle2 },
   { label: "Relatórios", value: "relatorios", icon: FileDown },
+  { label: "Distribuição de Carteira", value: "carteira", icon: Briefcase },
   { label: "Propostas", value: "propostas", icon: FileTextIcon },
   { label: "WhatsApp", value: "whatsapp", icon: MessageCircle },
 ];
