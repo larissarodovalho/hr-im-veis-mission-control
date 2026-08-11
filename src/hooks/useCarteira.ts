@@ -437,3 +437,137 @@ export async function salvarCarteiraConfig(valores: CarteiraConfig) {
     .eq("id", true);
   if (error) throw error;
 }
+
+/* ============ Fase 5: ranking e gamificação ============ */
+
+export interface LinhaRanking {
+  corretor_id: string;
+  corretor_nome: string;
+  posicao: number;
+  score: number;
+  recebidas: number;
+  contato_estabelecido: number;
+  no_prazo: number;
+  oportunidades: number;
+  fechamentos: number;
+  devolvidas: number;
+  transferidas: number;
+  ativas: number;
+  pct_contato: number;
+  pct_no_prazo: number;
+  pct_oportunidade: number;
+  pct_fechamento: number;
+  pct_devolucao: number;
+  horas_medias: number | null;
+}
+
+export function useRankingCorretores(inicioISO: string, fimISO: string) {
+  const [rows, setRows] = useState<LinhaRanking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase.rpc("carteira_ranking_corretores" as any, {
+      _inicio: inicioISO, _fim: fimISO,
+    });
+    if (error) {
+      console.error("carteira_ranking_corretores:", error.message);
+      setRows([]);
+    } else {
+      setRows(((data ?? []) as unknown) as LinhaRanking[]);
+    }
+    setLoading(false);
+  }, [inicioISO, fimISO]);
+  useEffect(() => { load(); }, [load]);
+  return { rows, loading, reload: load };
+}
+
+export interface MinhaPosicao {
+  corretor_id: string;
+  corretor_nome: string;
+  posicao: number;
+  score: number;
+  recebidas: number;
+  contato_estabelecido: number;
+  no_prazo: number;
+  oportunidades: number;
+  fechamentos: number;
+  pct_contato: number;
+  pct_no_prazo: number;
+  pct_oportunidade: number;
+  pct_fechamento: number;
+  pct_devolucao: number;
+  meta_contatos: number;
+  meta_oportunidades: number;
+  meta_fechamentos: number;
+  total_corretores: number;
+}
+
+export function useMinhaPosicao(corretor?: string | null) {
+  const [dados, setDados] = useState<MinhaPosicao | null>(null);
+  const load = useCallback(async () => {
+    const { data, error } = await supabase.rpc("carteira_minha_posicao" as any, {
+      _corretor: corretor || null,
+    });
+    if (error) {
+      console.error("carteira_minha_posicao:", error.message);
+      setDados(null);
+      return;
+    }
+    const row = Array.isArray(data) ? (data[0] as any) : (data as any);
+    setDados((row as MinhaPosicao) ?? null);
+  }, [corretor]);
+  useEffect(() => { load(); }, [load]);
+  return { dados, reload: load };
+}
+
+export interface CarteiraMeta {
+  id: string;
+  corretor_id: string;
+  ano_mes: string;
+  meta_contatos: number;
+  meta_oportunidades: number;
+  meta_fechamentos: number;
+}
+
+export function useCarteiraMetas(anoMes: string) {
+  const [rows, setRows] = useState<CarteiraMeta[]>([]);
+  const [loading, setLoading] = useState(true);
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("carteira_metas" as any)
+      .select("id, corretor_id, ano_mes, meta_contatos, meta_oportunidades, meta_fechamentos")
+      .eq("ano_mes", anoMes);
+    if (error) {
+      console.error("carteira_metas:", error.message);
+      setRows([]);
+    } else {
+      setRows(((data ?? []) as unknown) as CarteiraMeta[]);
+    }
+    setLoading(false);
+  }, [anoMes]);
+  useEffect(() => { load(); }, [load]);
+  return { rows, loading, reload: load };
+}
+
+export async function salvarMetaCorretor(corretorId: string, anoMes: string, contatos: number, oportunidades: number, fechamentos: number) {
+  const { error } = await supabase.rpc("carteira_metas_upsert" as any, {
+    _corretor: corretorId,
+    _ano_mes: anoMes,
+    _contatos: contatos,
+    _oportunidades: oportunidades,
+    _fechamentos: fechamentos,
+  });
+  if (error) throw error;
+}
+
+/** Selos automáticos derivados dos dados do ranking. */
+export function selosDoRanking(r: LinhaRanking | MinhaPosicao): string[] {
+  const selos: string[] = [];
+  if (r.pct_no_prazo >= 90) selos.push("Pontual");
+  if (r.pct_contato >= 80) selos.push("Contato firme");
+  if (r.pct_oportunidade >= 40) selos.push("Conversor");
+  if ("fechamentos" in r && r.fechamentos >= 3) selos.push("Fechador");
+  if (r.pct_devolucao < 10 && r.recebidas > 0) selos.push("Baixa devolução");
+  return selos;
+}
