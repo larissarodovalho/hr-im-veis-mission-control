@@ -920,7 +920,10 @@ export default function OportunidadeDetailDialog({
                 <div key={t.id} className="flex items-center justify-between gap-2 border rounded-md p-2.5 text-sm">
                   <div className="min-w-0">
                     <p className={t.status === "Concluída" ? "line-through text-muted-foreground" : ""}>{t.titulo}</p>
-                    <p className="text-[11px] text-muted-foreground">{fmtDt(t.prazo)} · {nomeDe(t.responsavel_id)}</p>
+                    <p className="text-[11px] text-muted-foreground flex items-center gap-2 flex-wrap">
+                      <span>{fmtDt(t.prazo)} · {nomeDe(t.responsavel_id)}</span>
+                      <Badge variant="outline" className="text-[10px]">{t.oportunidade_id ? "Oportunidade" : "Conta"}</Badge>
+                    </p>
                   </div>
                   {t.status !== "Concluída" && (
                     <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => concluirTarefa(t.id)}>Concluir</Button>
@@ -937,7 +940,10 @@ export default function OportunidadeDetailDialog({
               {historico.map((h) => (
                 <div key={h.id} className="border-l-2 border-border pl-3 py-1">
                   <p className="text-sm">{h.descricao}</p>
-                  <p className="text-[11px] text-muted-foreground">{fmtDt(h.created_at)} · {nomeDe(h.created_by)}</p>
+                  <p className="text-[11px] text-muted-foreground flex items-center gap-2 flex-wrap">
+                    <span>{fmtDt(h.created_at)} · {nomeDe(h.created_by)}</span>
+                    <Badge variant="outline" className="text-[10px]">{h.oportunidade_id ? "Oportunidade" : "Conta"}</Badge>
+                  </p>
                 </div>
               ))}
               {historico.length === 0 && <p className="text-sm text-muted-foreground">Nenhum registro ainda.</p>}
