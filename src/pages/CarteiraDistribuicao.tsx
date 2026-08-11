@@ -15,7 +15,7 @@ import { Shield, Plus, Trash2, Shuffle, RefreshCw, CheckCircle2, Search, ArrowRi
 import { toast } from "sonner";
 import { ETAPAS, etapaLabel } from "@/lib/contasFunil";
 import {
-  buscarElegiveis, criarOperacao, usePreviaOperacao, useCorretores, useProfilesMap,
+  buscarElegiveis, contarElegiveis, criarOperacao, usePreviaOperacao, useCorretores, useProfilesMap,
   type ContaElegivel, type FiltrosCarteira, type LoteConfig, type ModoSelecao,
 } from "@/hooks/useCarteira";
 
@@ -46,6 +46,7 @@ export default function CarteiraDistribuicao() {
   const [lotesCfg, setLotesCfg] = useState<LoteConfig[]>([novoLote(), novoLote()]);
   const [filtros, setFiltros] = useState<FiltrosCarteira>({});
   const [elegiveis, setElegiveis] = useState<ContaElegivel[]>([]);
+  const [totalElegiveis, setTotalElegiveis] = useState(0);
   const [carregandoElegiveis, setCarregandoElegiveis] = useState(false);
   const [busca, setBusca] = useState("");
   const [operacaoId, setOperacaoId] = useState<string | null>(null);
@@ -62,7 +63,9 @@ export default function CarteiraDistribuicao() {
   const recarregarElegiveis = async (f = filtros, q = busca) => {
     setCarregandoElegiveis(true);
     try {
-      setElegiveis(await buscarElegiveis(f, q));
+      const [lista, total] = await Promise.all([buscarElegiveis(f, q), contarElegiveis(f, q)]);
+      setElegiveis(lista);
+      setTotalElegiveis(total);
     } catch (e: any) {
       toast.error("Erro ao buscar contas elegíveis: " + e.message);
     }
@@ -100,9 +103,9 @@ export default function CarteiraDistribuicao() {
       return toast.error("Os corretores devem ser diferentes entre si.");
     if (validos.some((l) => !l.quantidade || l.quantidade < 1))
       return toast.error("Informe a quantidade de contas de cada corretor.");
-    if (modo !== "manual" && totalDefinido > elegiveis.length)
+    if (modo !== "manual" && totalDefinido > totalElegiveis)
       return toast.error(
-        `Foram encontradas ${elegiveis.length} contas elegíveis, mas são necessárias ${totalDefinido} para esta distribuição.`
+        `Foram encontradas ${totalElegiveis} contas elegíveis, mas são necessárias ${totalDefinido} para esta distribuição.`
       );
 
     setProcessando(true);
@@ -207,7 +210,7 @@ export default function CarteiraDistribuicao() {
           </p>
         </div>
         <Badge variant="secondary" className="w-fit">
-          {carregandoElegiveis ? "Calculando…" : `${elegiveis.length} contas elegíveis`}
+          {carregandoElegiveis ? "Calculando…" : `${totalElegiveis} contas elegíveis`}
         </Badge>
       </div>
 
@@ -267,8 +270,8 @@ export default function CarteiraDistribuicao() {
               </Button>
               <div className="text-sm">
                 Total da operação: <span className="font-semibold">{totalDefinido}</span> contas ·{" "}
-                <span className={totalDefinido > elegiveis.length ? "text-destructive" : "text-muted-foreground"}>
-                  {elegiveis.length} elegíveis
+                <span className={totalDefinido > totalElegiveis ? "text-destructive" : "text-muted-foreground"}>
+                  {totalElegiveis} elegíveis
                 </span>
               </div>
             </div>
@@ -386,7 +389,7 @@ export default function CarteiraDistribuicao() {
             {/* Pool de contas elegíveis */}
             <Card className="p-4 space-y-3">
               <div className="flex items-center justify-between gap-2">
-                <h2 className="font-semibold text-sm">Carteira elegível ({elegiveis.length})</h2>
+                <h2 className="font-semibold text-sm">Carteira elegível ({totalElegiveis})</h2>
                 <div className="flex gap-2">
                   <Input
                     className="h-8 w-40" placeholder="Buscar…" value={busca}
@@ -445,9 +448,9 @@ export default function CarteiraDistribuicao() {
                     ))}
                   </TableBody>
                 </Table>
-                {elegiveis.length > 300 && (
+                {totalElegiveis > elegiveis.length && (
                   <p className="p-2 text-xs text-muted-foreground">
-                    Mostrando 300 de {elegiveis.length}. Use os filtros ou a busca para refinar.
+                    Mostrando {elegiveis.length} de {totalElegiveis}. Use os filtros ou a busca para refinar.
                   </p>
                 )}
               </div>
