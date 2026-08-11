@@ -3776,6 +3776,21 @@ export type Database = {
       }
     }
     Functions: {
+      carteira_agendar_proxima: {
+        Args: {
+          _atribuicao_id: string
+          _descricao?: string
+          _quando: string
+          _titulo?: string
+        }
+        Returns: Json
+      }
+      carteira_atrib_permitida: {
+        Args: {
+          _a: Database["public"]["Tables"]["carteira_atribuicoes"]["Row"]
+        }
+        Returns: boolean
+      }
       carteira_confirmar_distribuicao: {
         Args: { _operacao_id: string }
         Returns: Json
@@ -3803,6 +3818,91 @@ export type Database = {
         Returns: number
       }
       carteira_gerar_selecao: { Args: { _operacao_id: string }; Returns: Json }
+      carteira_gestor_acao: {
+        Args: {
+          _acao: string
+          _atribuicao_id: string
+          _motivo?: string
+          _novo_corretor?: string
+        }
+        Returns: Json
+      }
+      carteira_marcar_contato: {
+        Args: { _atribuicao_id: string; _descricao?: string }
+        Returns: Json
+      }
+      carteira_minha_carteira: {
+        Args: { _corretor?: string }
+        Returns: {
+          atribuicao_id: string
+          atribuida_em: string
+          categoria: string
+          conta_id: string
+          conta_nome: string
+          contato_estabelecido_em: string
+          corretor_id: string
+          email: string
+          encerrada_em: string
+          etapa_funil: string
+          gestor_id: string
+          interesse: string
+          lote_id: string
+          lote_nome: string
+          lote_numero: number
+          motivo_encerramento: string
+          origem: string
+          prazo_primeiro_contato: string
+          primeira_atividade_em: string
+          proxima_acao: string
+          proxima_acao_em: string
+          solicitacao_em: string
+          solicitacao_motivo: string
+          solicitacao_tipo: string
+          status: string
+          telefone: string
+          tem_oportunidade: boolean
+          tentativas: number
+          ultima_atividade_em: string
+        }[]
+      }
+      carteira_registrar_tentativa: {
+        Args: {
+          _atribuicao_id: string
+          _descricao?: string
+          _resultado?: string
+          _tipo: string
+        }
+        Returns: Json
+      }
+      carteira_resolver_solicitacao: {
+        Args: {
+          _acao: string
+          _atribuicao_id: string
+          _novo_corretor?: string
+          _observacao?: string
+        }
+        Returns: Json
+      }
+      carteira_resumo_lotes: {
+        Args: never
+        Returns: {
+          atrasadas: number
+          com_oportunidade: number
+          contato_estabelecido: number
+          corretor_id: string
+          criado_em: string
+          devolvidas: number
+          em_atendimento: number
+          lote_id: string
+          lote_nome: string
+          numero: number
+          operacao_id: string
+          pendentes: number
+          solicitacoes: number
+          total: number
+          transferidas: number
+        }[]
+      }
       carteira_selecao_adicionar: {
         Args: { _conta_ids: string[]; _lote_id: string }
         Returns: Json
@@ -3821,6 +3921,10 @@ export type Database = {
           _nova_conta_id?: string
           _operacao_id: string
         }
+        Returns: Json
+      }
+      carteira_solicitar: {
+        Args: { _atribuicao_id: string; _motivo: string; _tipo: string }
         Returns: Json
       }
       check_duplicate_conta_name: {
