@@ -45,11 +45,13 @@ const baseNav: NavItem[] = [
   { to: "/crm/visitas", icon: MapPin, label: "Visitas", key: "visitas" },
   { to: "/crm/agenda", icon: CalendarRange, label: "Agenda", key: "agenda" },
   { to: "/crm/tarefas", icon: ListTodo, label: "Tarefas", key: "tarefas" },
+  { to: "/crm/minha-carteira", icon: Briefcase, label: "Minha Carteira", key: "minha-carteira" },
   { to: "/crm/documentos", icon: FileSignature, label: "Documentos", key: "documentos" },
   { to: "/crm/contratos", icon: FileSignature, label: "Contratos", key: "contratos" },
 ];
 const adminNav: NavItem[] = [
   { to: "/crm/relatorios", icon: BarChart3, label: "Relatórios", key: "relatorios" },
+  { to: "/crm/carteira", icon: Briefcase, label: "Distribuição de Carteira", key: "carteira" },
   { to: "/crm/newsletter", icon: Mail, label: "Newsletter", key: "newsletter" },
   { to: "/crm/usuarios", icon: UserCog, label: "Usuários", key: "usuarios" },
   { to: "/crm/configuracoes", icon: Settings, label: "Configurações", key: "configuracoes" },
