@@ -84,13 +84,17 @@ export default function OportunidadeDetailDialog({
   const nomeDe = (uid?: string | null) => (uid ? profiles[uid] ?? "—" : "—");
 
   const reload = async (id: string) => {
-    const [{ data: o }, { data: vi }, { data: vs }, { data: pr }, { data: ta }, { data: hi }] = await Promise.all([
-      supabase.from("oportunidades").select("*").eq("id", id).single(),
+    const { data: o } = await supabase.from("oportunidades").select("*").eq("id", id).single();
+    const contaId = (o as any)?.conta_id || ((o as any)?.cliente_tipo === "conta" ? (o as any)?.cliente_id : null);
+    const orFiltro = contaId ? `oportunidade_id.eq.${id},conta_id.eq.${contaId}` : `oportunidade_id.eq.${id}`;
+    const [{ data: vi }, { data: vs }, { data: pr }, { data: ta }, { data: hi }, { data: re }, { data: li }] = await Promise.all([
       supabase.from("oportunidade_imoveis").select("*").eq("oportunidade_id", id).order("created_at"),
       supabase.from("oportunidade_visitas").select("*").eq("oportunidade_id", id).order("data_visita", { ascending: false }),
       supabase.from("oportunidade_propostas").select("*").eq("oportunidade_id", id).order("created_at", { ascending: false }),
-      supabase.from("tarefas").select("*").eq("oportunidade_id", id).order("prazo", { ascending: true }),
-      supabase.from("interacoes").select("*").eq("oportunidade_id", id).order("created_at", { ascending: false }).limit(100),
+      supabase.from("tarefas").select("*").or(orFiltro).order("prazo", { ascending: true }),
+      supabase.from("interacoes").select("*").or(orFiltro).order("created_at", { ascending: false }).limit(100),
+      supabase.from("reunioes").select("*").or(orFiltro).order("data_reuniao", { ascending: false }).limit(50),
+      supabase.from("ligacoes").select("*").or(orFiltro).order("created_at", { ascending: false }).limit(50),
     ]);
     if (o) { setOp(o); setForm(o); }
     setVinculos(vi ?? []);
@@ -98,17 +102,19 @@ export default function OportunidadeDetailDialog({
     setPropostas((pr ?? []) as any[]);
     setTarefas((ta ?? []) as any[]);
     setHistorico((hi ?? []) as any[]);
-    const contaId = o?.conta_id || (o?.cliente_tipo === "conta" ? o?.cliente_id : null);
+    setReunioes((re ?? []) as any[]);
+    setLigacoes((li ?? []) as any[]);
     if (contaId) {
       const { data: c } = await supabase.from("contas").select("id,nome,categoria,origem,telefone,email").eq("id", contaId).maybeSingle();
       setConta(c);
     } else setConta(null);
-    const leadId = o?.lead_id_origem || (o?.cliente_tipo === "lead" ? o?.cliente_id : null);
+    const leadId = (o as any)?.lead_id_origem || ((o as any)?.cliente_tipo === "lead" ? (o as any)?.cliente_id : null);
     if (leadId) {
       const { data: l } = await supabase.from("leads").select("nome").eq("id", leadId).maybeSingle();
       setLeadNome(l?.nome ?? "");
     } else setLeadNome("");
   };
+
 
   useEffect(() => {
     if (!open || !oportunidade) return;
