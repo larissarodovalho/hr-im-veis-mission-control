@@ -161,6 +161,7 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
                   <TableHead>Em atendimento</TableHead><TableHead>Contato feito</TableHead>
                   <TableHead>Oportunidades</TableHead><TableHead>Devolvidas</TableHead>
                   <TableHead>Transferidas</TableHead><TableHead>Solicitações</TableHead><TableHead>Criado em</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -179,6 +180,13 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
                     <TableCell>{l.transferidas}</TableCell>
                     <TableCell>{l.solicitacoes}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{fmtDate(l.criado_em)}</TableCell>
+                    <TableCell>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive hover:text-destructive"
+                        disabled={cancelando}
+                        onClick={() => { setLoteCancelar(l); setMotivoCancel(""); }}>
+                        Cancelar
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
