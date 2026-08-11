@@ -22,6 +22,7 @@ import {
   Shield,
   UserCircle,
   Calendar,
+  Briefcase,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { NavLink, useLocation, useSearchParams, useNavigate } from "react-router-dom";
@@ -44,6 +45,7 @@ const CRM_SUBTABS = [
   { label: "Leads", value: "leads", icon: Users },
   { label: "Contatos", value: "contatos", icon: Phone },
   { label: "Kanban", value: "kanban", icon: Building2 },
+  { label: "Distribuição de Carteira", value: "carteira", icon: Briefcase },
   { label: "Imóveis", value: "imoveis", icon: Home },
   { label: "Funil de Vendas", value: "funil", icon: TrendingUp },
   { label: "Controle de Criação", value: "criacao", icon: ClipboardList },
@@ -75,7 +77,7 @@ const ALL_ITEMS = [
 ];
 
 const CORRETOR_ALLOWED_CRM = new Set(["leads", "contatos", "whatsapp", "tarefas", "agenda", "oportunidades"]);
-const CRM_SUBTAB_ROUTES: Record<string, string> = { tarefas: "/crm/tarefas", agenda: "/crm/agenda", oportunidades: "/crm/oportunidades" };
+const CRM_SUBTAB_ROUTES: Record<string, string> = { tarefas: "/crm/tarefas", agenda: "/crm/agenda", oportunidades: "/crm/oportunidades", carteira: "/crm/carteira" };
 
 export function AppSidebar() {
   const { state } = useSidebar();
