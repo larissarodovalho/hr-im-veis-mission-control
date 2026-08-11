@@ -13,7 +13,8 @@ import { toast } from "sonner";
 import { fmtDate, fmtDateTime } from "@/lib/datetime";
 import {
   useMinhaCarteira, useResumoLotes, useCorretores, gestorAcaoCarteira, resolverSolicitacaoCarteira,
-  situacaoAtribuicao, useAlertasGestor, useDevolucoesAutomaticas, type AtribuicaoCarteira,
+  situacaoAtribuicao, useAlertasGestor, useDevolucoesAutomaticas, cancelarLote,
+  type AtribuicaoCarteira, type ResumoLote,
 } from "@/hooks/useCarteira";
 
 export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<string, string> }) {
@@ -29,6 +30,11 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
   const [novoCorretor, setNovoCorretor] = useState("");
   const [obs, setObs] = useState("");
   const [salvando, setSalvando] = useState(false);
+
+  // Cancelar lote ativo
+  const [loteCancelar, setLoteCancelar] = useState<ResumoLote | null>(null);
+  const [motivoCancel, setMotivoCancel] = useState("");
+  const [cancelando, setCancelando] = useState(false);
 
   const solicitacoes = useMemo(
     () => rows.filter((r) => r.solicitacao_tipo && !r.encerrada_em),
@@ -65,6 +71,22 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
   const precisaCorretor =
     (modo === "gestor" && acao === "transferir") ||
     (modo === "solicitacao" && acao === "aprovar" && alvo?.solicitacao_tipo === "transferencia");
+
+  const confirmarCancelamentoLote = async () => {
+    if (!loteCancelar) return;
+    if (!motivoCancel.trim()) return toast.error("Informe o motivo do cancelamento.");
+    setCancelando(true);
+    try {
+      await cancelarLote(loteCancelar.lote_id, motivoCancel);
+      toast.success(`Lote cancelado. ${loteCancelar.total} conta(s) devolvida(s) à carteira.`);
+      setLoteCancelar(null);
+      setMotivoCancel("");
+      reload(); reloadLotes();
+    } catch (e: any) {
+      toast.error("Erro ao cancelar lote: " + e.message);
+    }
+    setCancelando(false);
+  };
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -139,6 +161,7 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
                   <TableHead>Em atendimento</TableHead><TableHead>Contato feito</TableHead>
                   <TableHead>Oportunidades</TableHead><TableHead>Devolvidas</TableHead>
                   <TableHead>Transferidas</TableHead><TableHead>Solicitações</TableHead><TableHead>Criado em</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -157,6 +180,13 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
                     <TableCell>{l.transferidas}</TableCell>
                     <TableCell>{l.solicitacoes}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{fmtDate(l.criado_em)}</TableCell>
+                    <TableCell>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive hover:text-destructive"
+                        disabled={cancelando}
+                        onClick={() => { setLoteCancelar(l); setMotivoCancel(""); }}>
+                        Cancelar
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -276,6 +306,30 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
             <Button variant="ghost" onClick={() => setAlvo(null)}>Cancelar</Button>
             <Button onClick={confirmar} disabled={salvando || (precisaCorretor && !novoCorretor)}>
               {salvando && <Loader2 className="h-4 w-4 mr-1 animate-spin" />} Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Cancelar lote ativo */}
+      <Dialog open={!!loteCancelar} onOpenChange={(v) => !v && setLoteCancelar(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base">Cancelar lote</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Cancelar <strong>{loteCancelar?.lote_nome}</strong>? As {loteCancelar?.total ?? 0} conta(s) atribuídas serão devolvidas à carteira e o lote será encerrado.
+          </p>
+          <div>
+            <Label className="text-xs">Motivo (obrigatório)</Label>
+            <Textarea rows={3} value={motivoCancel}
+              onChange={(e) => setMotivoCancel(e.target.value)}
+              placeholder="Ex.: Corretor desligado, redistribuição, etc." />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setLoteCancelar(null)}>Voltar</Button>
+            <Button variant="destructive" onClick={confirmarCancelamentoLote} disabled={cancelando || !motivoCancel.trim()}>
+              {cancelando && <Loader2 className="h-4 w-4 mr-1 animate-spin" />} Cancelar lote
             </Button>
           </DialogFooter>
         </DialogContent>

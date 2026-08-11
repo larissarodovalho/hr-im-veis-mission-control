@@ -330,6 +330,20 @@ export const resolverSolicitacaoCarteira = (
   _novo_corretor: novoCorretor || null, _observacao: observacao?.trim() || null,
 });
 
+export const editarLote = (
+  loteId: string, corretorId: string, quantidade: number, prazo: number,
+  objetivo: string, observacoes: string
+) => rpc("carteira_editar_lote", {
+  _lote_id: loteId, _corretor_id: corretorId, _quantidade: quantidade,
+  _prazo: prazo, _objetivo: objetivo?.trim() || null, _observacoes: observacoes?.trim() || null,
+});
+
+export const excluirLote = (loteId: string) =>
+  rpc("carteira_excluir_lote", { _lote_id: loteId });
+
+export const cancelarLote = (loteId: string, motivo: string) =>
+  rpc("carteira_cancelar_lote", { _lote_id: loteId, _motivo: motivo?.trim() || "Cancelado pelo gestor" });
+
 /** Situação derivada da atribuição, usada nas telas de carteira. */
 export type SituacaoCarteira = "pendente" | "atrasada" | "em_atendimento" | "estabelecido" | "encerrada";
 

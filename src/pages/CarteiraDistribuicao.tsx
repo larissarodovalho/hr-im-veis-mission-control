@@ -11,12 +11,14 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Shield, Plus, Trash2, Shuffle, RefreshCw, CheckCircle2, Search, ArrowRightLeft, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Shield, Plus, Trash2, Shuffle, RefreshCw, CheckCircle2, Search, ArrowRightLeft, Loader2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { ETAPAS, etapaLabel } from "@/lib/contasFunil";
 import {
   buscarElegiveis, contarElegiveis, criarOperacao, usePreviaOperacao, useCorretores, useProfilesMap,
-  type ContaElegivel, type FiltrosCarteira, type LoteConfig, type ModoSelecao,
+  editarLote, excluirLote,
+  type ContaElegivel, type FiltrosCarteira, type LoteConfig, type ModoSelecao, type LotePreview,
 } from "@/hooks/useCarteira";
 import AcompanhamentoCarteira from "@/components/carteira/AcompanhamentoCarteira";
 import HistoricoDistribuicoes from "@/components/carteira/HistoricoDistribuicoes";
@@ -58,6 +60,15 @@ export default function CarteiraDistribuicao() {
   const [loteDestino, setLoteDestino] = useState<string>("");
   const [buscaLote, setBuscaLote] = useState("");
   const [processando, setProcessando] = useState(false);
+
+  // Edição/exclusão de lote
+  const [loteEditando, setLoteEditando] = useState<LotePreview | null>(null);
+  const [editCorretor, setEditCorretor] = useState("");
+  const [editQuantidade, setEditQuantidade] = useState(0);
+  const [editPrazo, setEditPrazo] = useState(3);
+  const [editObjetivo, setEditObjetivo] = useState("");
+  const [editObs, setEditObs] = useState("");
+  const [loteExcluindo, setLoteExcluindo] = useState<LotePreview | null>(null);
 
   const { lotes, itens, reload } = usePreviaOperacao(operacaoId);
 
@@ -186,6 +197,51 @@ export default function CarteiraDistribuicao() {
     });
     if (error) toast.error(error.message);
     await reload();
+  };
+
+  const abrirEditarLote = (l: LotePreview) => {
+    setLoteEditando(l);
+    setEditCorretor(l.corretor_id);
+    setEditQuantidade(l.quantidade_definida);
+    setEditPrazo(l.prazo_primeiro_contato_dias);
+    setEditObjetivo("");
+    setEditObs(l.observacoes_internas ?? "");
+  };
+
+  const salvarEdicaoLote = async () => {
+    if (!loteEditando) return;
+    if (!editCorretor) return toast.error("Selecione um corretor.");
+    if (editQuantidade < 1) return toast.error("A quantidade deve ser maior que zero.");
+    if (editPrazo < 1) return toast.error("O prazo deve ser maior que zero.");
+    setProcessando(true);
+    try {
+      const r: any = await editarLote(
+        loteEditando.id, editCorretor, editQuantidade, editPrazo, editObjetivo, editObs
+      );
+      const removidas = r?.removidas ?? 0;
+      toast.success(`Lote atualizado.${removidas > 0 ? ` ${removidas} conta(s) excedente(s) removida(s).` : ""}`);
+      setLoteEditando(null);
+      await reload();
+      await recarregarElegiveis();
+    } catch (e: any) {
+      toast.error("Erro ao editar lote: " + e.message);
+    }
+    setProcessando(false);
+  };
+
+  const confirmarExcluirLote = async () => {
+    if (!loteExcluindo) return;
+    setProcessando(true);
+    try {
+      await excluirLote(loteExcluindo.id);
+      toast.success("Lote excluído. As contas voltaram para a carteira elegível.");
+      setLoteExcluindo(null);
+      await reload();
+      await recarregarElegiveis();
+    } catch (e: any) {
+      toast.error("Erro ao excluir lote: " + e.message);
+    }
+    setProcessando(false);
   };
 
   const confirmar = async () => {
@@ -505,13 +561,25 @@ export default function CarteiraDistribuicao() {
                             {total} de {l.quantidade_definida} contas · prazo {l.prazo_primeiro_contato_dias} dia(s)
                           </p>
                         </div>
-                        {falta > 0 ? (
-                          <Badge variant="destructive">{falta} vaga(s)</Badge>
-                        ) : falta < 0 ? (
-                          <Badge variant="secondary">{Math.abs(falta)} excedente(s)</Badge>
-                        ) : (
-                          <Badge variant="secondary">Completo</Badge>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {falta > 0 ? (
+                            <Badge variant="destructive">{falta} vaga(s)</Badge>
+                          ) : falta < 0 ? (
+                            <Badge variant="secondary">{Math.abs(falta)} excedente(s)</Badge>
+                          ) : (
+                            <Badge variant="secondary">Completo</Badge>
+                          )}
+                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Editar lote"
+                            onClick={() => abrirEditarLote(l)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          {lotes.length > 1 && (
+                            <Button size="icon" variant="ghost" className="h-7 w-7" title="Excluir lote"
+                              onClick={() => setLoteExcluindo(l)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                       <div className="max-h-56 overflow-auto divide-y">
                         {its.map((i) => (
@@ -575,6 +643,72 @@ export default function CarteiraDistribuicao() {
       )}
 
       {aba === "distribuir" && <HistoricoOperacoes profiles={profiles} />}
+
+      {/* Dialog: Editar lote */}
+      <Dialog open={!!loteEditando} onOpenChange={(v) => !v && setLoteEditando(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base">Editar lote</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Corretor</Label>
+              <Select value={editCorretor} onValueChange={setEditCorretor}>
+                <SelectTrigger><SelectValue placeholder="Selecionar corretor" /></SelectTrigger>
+                <SelectContent>
+                  {corretores.map((c) => (
+                    <SelectItem key={c.user_id} value={c.user_id}>{c.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Quantidade</Label>
+                <Input type="number" min={1} value={editQuantidade}
+                  onChange={(e) => setEditQuantidade(Number(e.target.value))} />
+              </div>
+              <div>
+                <Label className="text-xs">Prazo 1º contato (dias)</Label>
+                <Input type="number" min={1} value={editPrazo}
+                  onChange={(e) => setEditPrazo(Number(e.target.value))} />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Objetivo</Label>
+              <Input value={editObjetivo} onChange={(e) => setEditObjetivo(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs">Observação interna</Label>
+              <Textarea rows={2} value={editObs} onChange={(e) => setEditObs(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setLoteEditando(null)}>Cancelar</Button>
+            <Button onClick={salvarEdicaoLote} disabled={processando}>
+              {processando && <Loader2 className="h-4 w-4 mr-1 animate-spin" />} Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Excluir lote */}
+      <Dialog open={!!loteExcluindo} onOpenChange={(v) => !v && setLoteExcluindo(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base">Excluir lote</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Excluir <strong>{loteExcluindo?.nome}</strong>? As contas selecionadas neste lote voltarão para a carteira elegível.
+          </p>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setLoteExcluindo(null)}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmarExcluirLote} disabled={processando}>
+              {processando && <Loader2 className="h-4 w-4 mr-1 animate-spin" />} Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

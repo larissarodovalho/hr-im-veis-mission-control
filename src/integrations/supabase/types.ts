@@ -3890,6 +3890,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      carteira_cancelar_lote: {
+        Args: { _lote_id: string; _motivo: string }
+        Returns: Json
+      }
       carteira_confirmar_distribuicao: {
         Args: { _operacao_id: string }
         Returns: Json
@@ -3904,6 +3908,17 @@ export type Database = {
           lote_nome: string
           observacao: string
         }[]
+      }
+      carteira_editar_lote: {
+        Args: {
+          _corretor_id: string
+          _lote_id: string
+          _objetivo: string
+          _observacoes: string
+          _prazo: number
+          _quantidade: number
+        }
+        Returns: Json
       }
       carteira_elegiveis: {
         Args: { _filtros?: Json; _q?: string }
@@ -3943,6 +3958,7 @@ export type Database = {
           tipo: string
         }[]
       }
+      carteira_excluir_lote: { Args: { _lote_id: string }; Returns: Json }
       carteira_gerar_selecao: { Args: { _operacao_id: string }; Returns: Json }
       carteira_gestor_acao: {
         Args: {
