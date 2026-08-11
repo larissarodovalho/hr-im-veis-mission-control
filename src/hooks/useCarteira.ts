@@ -410,6 +410,7 @@ export interface CarteiraConfig {
   dias_devolucao_automatica: number;
   dias_sem_proxima_acao: number;
   emails_resumo: boolean;
+  ranking_visivel: boolean;
 }
 
 export function useCarteiraConfig() {
@@ -419,7 +420,7 @@ export function useCarteiraConfig() {
     setLoading(true);
     const { data } = await supabase
       .from("carteira_config" as any)
-      .select("devolucao_automatica, dias_devolucao_automatica, dias_sem_proxima_acao, emails_resumo")
+      .select("devolucao_automatica, dias_devolucao_automatica, dias_sem_proxima_acao, emails_resumo, ranking_visivel")
       .eq("id", true)
       .maybeSingle();
     setConfig((data as any) ?? null);
