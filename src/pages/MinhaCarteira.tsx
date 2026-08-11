@@ -217,7 +217,7 @@ export default function MinhaCarteira() {
         atribuicao={aberta}
         open={!!aberta}
         onOpenChange={(v) => !v && setAberta(null)}
-        onDone={reload}
+        onDone={() => { reload(); reloadAlertas(); }}
       />
     </div>
   );
