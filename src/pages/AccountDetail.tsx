@@ -25,6 +25,8 @@ import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
 import { tempInfo, TEMPERATURAS } from "@/lib/contasTemperatura";
 import { ETAPAS, categoriaDe, isEtapaLegado, etapaLabel, CATEGORIA_LABEL } from "@/lib/contasFunil";
+import CarteiraTimelineConta from "@/components/carteira/CarteiraTimelineConta";
+import CarteiraLoteBadge from "@/components/carteira/CarteiraLoteBadge";
 
 type Propriedade = {
   id: string;
@@ -249,6 +251,7 @@ export default function AccountDetail() {
                 {listaAtual === "carteira" ? "Carteira" : "Marketing"}
               </Badge>
             )}
+            <CarteiraLoteBadge contaId={acc.id} />
             {acc.lead_id_origem && <Link to={`/crm/leads/${acc.lead_id_origem}`} className="text-primary hover:underline">Ver lead original</Link>}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
@@ -300,6 +303,8 @@ export default function AccountDetail() {
       <ContaPropostas contaId={acc.id} />
 
       <ContaFechamentos contaId={acc.id} />
+
+      <CarteiraTimelineConta contaId={acc.id} />
 
 
       <div>
