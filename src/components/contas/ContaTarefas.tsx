@@ -150,6 +150,7 @@ export default function ContaTarefas({ contaId, leadId, responsavelId }: Props) 
           <div className="flex items-center gap-2 flex-wrap">
             <span className={`font-medium ${t.status === "Concluída" ? "line-through text-muted-foreground" : ""}`}>{t.titulo}</span>
             <Badge variant="outline" className={PRIO_COLOR[t.prioridade] ?? PRIO_COLOR.Média}>{t.prioridade}</Badge>
+            {t.oportunidade_id && t.conta_id && <Badge variant="outline" className="text-[10px]">Sincronizada com a oportunidade</Badge>}
             {atrasada && <Badge variant="outline" className="bg-rose-500/15 text-rose-700 border-rose-500/30"><AlertCircle className="h-3 w-3 mr-1" />Atrasada</Badge>}
           </div>
           <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3">
