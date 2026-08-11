@@ -12,7 +12,7 @@ import { SearchableSelect } from "@/components/SearchableSelect";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { categoriaLabel, isAtiva } from "@/lib/oportunidadesFunil";
+import { categoriaLabel, isAtiva, estagioLabel } from "@/lib/oportunidadesFunil";
 import { format } from "date-fns";
 
 /**
