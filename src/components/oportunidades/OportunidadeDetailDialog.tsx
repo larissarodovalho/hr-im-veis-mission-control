@@ -734,7 +734,32 @@ export default function OportunidadeDetailDialog({
                 </Card>
               ))}
             </div>
+
+            {(reunioes.length > 0 || ligacoes.length > 0) && (
+              <div className="border-t pt-3 space-y-2">
+                <p className="text-sm font-medium">Reuniões e ligações da conta</p>
+                {reunioes.map((r) => (
+                  <div key={r.id} className="flex items-center justify-between gap-2 border rounded-md p-2.5 text-sm">
+                    <div className="min-w-0">
+                      <p className="truncate">{r.titulo || "Reunião"}</p>
+                      <p className="text-[11px] text-muted-foreground">{fmtDt(r.agendada_para)} · {nomeDe(r.corretor_id)}{r.local ? ` · ${r.local}` : ""}</p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px]">{r.status || "agendada"}</Badge>
+                  </div>
+                ))}
+                {ligacoes.map((l) => (
+                  <div key={l.id} className="flex items-center justify-between gap-2 border rounded-md p-2.5 text-sm">
+                    <div className="min-w-0">
+                      <p className="truncate">{l.notas || "Ligação"}</p>
+                      <p className="text-[11px] text-muted-foreground">{fmtDt(l.data)} · {nomeDe(l.corretor_id)}</p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px]">{l.resultado || "—"}</Badge>
+                  </div>
+                ))}
+              </div>
+            )}
           </TabsContent>
+
 
           {/* ================= PROPOSTAS ================= */}
           <TabsContent value="propostas" className="mt-4 space-y-3">
