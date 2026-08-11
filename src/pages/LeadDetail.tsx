@@ -301,7 +301,7 @@ export default function LeadDetail() {
     if (!startIso) return toast.error("Data/hora inválida");
     if (meeting.format === "ligacao") {
       // Ligação vai para a tabela `ligacoes` (aparece na aba Ligações e na Agenda)
-      const { error } = await supabase.from("ligacoes").insert({
+      const { data: created, error } = await supabase.from("ligacoes").insert({
         lead_id: id!,
         data: startIso,
         duracao_seg: 30 * 60,
@@ -309,12 +309,16 @@ export default function LeadDetail() {
         notas: meeting.notas || null,
         created_by: user?.id,
         corretor_id: user?.id,
-      });
+      }).select("id").single();
       if (error) return toast.error(error.message);
+      supabase.functions.invoke("gcal-push", {
+        body: { entity_type: "ligacao", entity_id: created.id, action: "create" },
+      }).catch(() => {});
     } else {
       const tipo = meeting.format === "virtual" ? "videochamada" : "presencial";
       const payload: any = {
         lead_id: id!,
+        titulo: meeting.notas.trim() || `${meeting.format === "virtual" ? "Reunião virtual" : "Reunião no escritório"} com ${lead.nome}`,
         agendada_para: startIso,
         tipo,
         duracao_min: 60,
@@ -325,8 +329,11 @@ export default function LeadDetail() {
         corretor_id: user?.id,
         status: "agendada",
       };
-      const { error } = await supabase.from("reunioes").insert(payload);
+      const { data: created, error } = await supabase.from("reunioes").insert(payload).select("id").single();
       if (error) return toast.error(error.message);
+      supabase.functions.invoke("gcal-push", {
+        body: { entity_type: "reuniao", entity_id: created.id, action: "create" },
+      }).catch(() => {});
     }
     setMeeting({ agendada_para: "", local: "", link: "", notas: "", format: "escritorio" });
     toast.success(meeting.format === "ligacao" ? "Ligação agendada" : "Reunião agendada");
@@ -346,18 +353,25 @@ export default function LeadDetail() {
         notas: editingMeeting.notas || null,
       }).eq("id", editingMeeting.id);
       if (error) return toast.error(error.message);
+      supabase.functions.invoke("gcal-push", {
+        body: { entity_type: "ligacao", entity_id: editingMeeting.id, action: "update" },
+      }).catch(() => {});
     } else {
       const tipo = editingMeeting.format === "ligacao" ? "ligacao" : editingMeeting.format === "virtual" ? "videochamada" : "presencial";
       const duracao_min = editingMeeting.format === "ligacao" ? 30 : 60;
       const { error } = await supabase.from("reunioes").update({
         agendada_para: startIso,
         tipo, duracao_min,
+        titulo: editingMeeting.notas?.trim() || null,
         local: editingMeeting.format === "virtual" ? null : (editingMeeting.local || null),
         link: editingMeeting.format === "virtual" ? (editingMeeting.link || null) : null,
         notas: editingMeeting.notas || null,
         status: editingMeeting.status,
       }).eq("id", editingMeeting.id);
       if (error) return toast.error(error.message);
+      supabase.functions.invoke("gcal-push", {
+        body: { entity_type: "reuniao", entity_id: editingMeeting.id, action: "update" },
+      }).catch(() => {});
     }
     setEditingMeeting(null);
     toast.success("Agendamento atualizado");
@@ -995,7 +1009,7 @@ export default function LeadDetail() {
             </div>
             {meeting.format === "escritorio" && <div><Label>Local</Label><Input value={meeting.local} onChange={e => setMeeting({ ...meeting, local: e.target.value })} placeholder="Endereço, sala…" /></div>}
             {meeting.format === "virtual" && <div><Label>Link</Label><Input value={meeting.link} onChange={e => setMeeting({ ...meeting, link: e.target.value })} placeholder="Meet, Zoom…" /></div>}
-            <div><Label>Notas</Label><Textarea value={meeting.notas} onChange={e => setMeeting({ ...meeting, notas: e.target.value })} rows={2} /></div>
+            <div><Label>Atividade</Label><Textarea value={meeting.notas} onChange={e => setMeeting({ ...meeting, notas: e.target.value })} rows={2} placeholder="Ex.: Apresentar proposta ao cliente" /></div>
             <Button type="submit" size="sm"><Plus className="h-4 w-4 mr-1" />Agendar</Button>
           </form>
           <div className="mt-4 space-y-2">

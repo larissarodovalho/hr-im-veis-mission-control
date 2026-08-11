@@ -58,6 +58,7 @@ export default function ContaAgendaQuickAdd({ contaId, responsavelId, onCreated 
     if (open === "reuniao") {
       const res = await supabase.from("reunioes").insert({
         conta_id: contaId,
+        titulo: form.notas?.trim() || null,
         agendada_para: whenISO,
         duracao_min: Number(form.duracao) || 60,
         tipo: form.tipo || "presencial",
@@ -228,7 +229,7 @@ export default function ContaAgendaQuickAdd({ contaId, responsavelId, onCreated 
             )}
 
             <div>
-              <Label>{open === "visita" || open === "captacao" ? "Observações" : "Notas"}</Label>
+              <Label>{open === "reuniao" ? "Atividade" : open === "visita" || open === "captacao" ? "Observações" : "Notas"}</Label>
               <Textarea rows={3} value={form.notas ?? ""} onChange={e => setForm({ ...form, notas: e.target.value })} />
             </div>
           </div>
