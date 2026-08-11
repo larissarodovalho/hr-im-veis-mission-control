@@ -311,6 +311,30 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
         </DialogContent>
       </Dialog>
 
+      {/* Dialog: Cancelar lote ativo */}
+      <Dialog open={!!loteCancelar} onOpenChange={(v) => !v && setLoteCancelar(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base">Cancelar lote</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Cancelar <strong>{loteCancelar?.lote_nome}</strong>? As {loteCancelar?.total ?? 0} conta(s) atribuídas serão devolvidas à carteira e o lote será encerrado.
+          </p>
+          <div>
+            <Label className="text-xs">Motivo (obrigatório)</Label>
+            <Textarea rows={3} value={motivoCancel}
+              onChange={(e) => setMotivoCancel(e.target.value)}
+              placeholder="Ex.: Corretor desligado, redistribuição, etc." />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setLoteCancelar(null)}>Voltar</Button>
+            <Button variant="destructive" onClick={confirmarCancelamentoLote} disabled={cancelando || !motivoCancel.trim()}>
+              {cancelando && <Loader2 className="h-4 w-4 mr-1 animate-spin" />} Cancelar lote
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <CarteiraMetasCard />
     </div>
   );
