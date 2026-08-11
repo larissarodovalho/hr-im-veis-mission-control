@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Loader2, AlertTriangle, RotateCcw, ArrowLeftRight } from "lucide-react";
+import CarteiraMetasCard from "@/components/carteira/CarteiraMetasCard";
 import { toast } from "sonner";
 import { fmtDate, fmtDateTime } from "@/lib/datetime";
 import {
@@ -279,6 +280,8 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CarteiraMetasCard />
     </div>
   );
 }

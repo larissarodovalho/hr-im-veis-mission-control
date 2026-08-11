@@ -15,6 +15,7 @@ import {
 } from "@/hooks/useCarteira";
 import AtendimentoCarteiraDialog from "@/components/carteira/AtendimentoCarteiraDialog";
 import CarteiraAlertas from "@/components/carteira/CarteiraAlertas";
+import CarteiraMinhaPosicao from "@/components/carteira/CarteiraMinhaPosicao";
 
 const SITUACOES: { id: SituacaoCarteira | "todas"; label: string }[] = [
   { id: "todas", label: "Todas" },
@@ -124,6 +125,8 @@ export default function MinhaCarteira() {
       </div>
 
       <CarteiraAlertas dados={alertas} filtro={alerta} onFiltrar={setAlerta} />
+
+      <CarteiraMinhaPosicao corretorId={gestor ? corretorFiltro || null : null} />
 
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
         {[

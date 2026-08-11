@@ -545,6 +545,7 @@ export type Database = {
           dias_sem_proxima_acao: number
           emails_resumo: boolean
           id: boolean
+          ranking_visivel: boolean
           updated_at: string
           updated_by: string | null
         }
@@ -554,6 +555,7 @@ export type Database = {
           dias_sem_proxima_acao?: number
           emails_resumo?: boolean
           id?: boolean
+          ranking_visivel?: boolean
           updated_at?: string
           updated_by?: string | null
         }
@@ -563,6 +565,7 @@ export type Database = {
           dias_sem_proxima_acao?: number
           emails_resumo?: boolean
           id?: boolean
+          ranking_visivel?: boolean
           updated_at?: string
           updated_by?: string | null
         }
@@ -711,6 +714,50 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "carteira_operacoes"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      carteira_metas: {
+        Row: {
+          ano_mes: string
+          corretor_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          meta_contatos: number
+          meta_fechamentos: number
+          meta_oportunidades: number
+          updated_at: string
+        }
+        Insert: {
+          ano_mes: string
+          corretor_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          meta_contatos?: number
+          meta_fechamentos?: number
+          meta_oportunidades?: number
+          updated_at?: string
+        }
+        Update: {
+          ano_mes?: string
+          corretor_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          meta_contatos?: number
+          meta_fechamentos?: number
+          meta_oportunidades?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carteira_metas_corretor_id_fkey"
+            columns: ["corretor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -3918,6 +3965,16 @@ export type Database = {
         Args: { _atribuicao_id: string; _descricao?: string }
         Returns: Json
       }
+      carteira_metas_upsert: {
+        Args: {
+          _ano_mes: string
+          _contatos: number
+          _corretor: string
+          _fechamentos: number
+          _oportunidades: number
+        }
+        Returns: undefined
+      }
       carteira_minha_carteira: {
         Args: { _corretor?: string }
         Returns: {
@@ -3950,6 +4007,52 @@ export type Database = {
           tem_oportunidade: boolean
           tentativas: number
           ultima_atividade_em: string
+        }[]
+      }
+      carteira_minha_posicao: {
+        Args: { _corretor?: string }
+        Returns: {
+          contato_estabelecido: number
+          corretor_id: string
+          corretor_nome: string
+          fechamentos: number
+          meta_contatos: number
+          meta_fechamentos: number
+          meta_oportunidades: number
+          no_prazo: number
+          oportunidades: number
+          pct_contato: number
+          pct_devolucao: number
+          pct_fechamento: number
+          pct_no_prazo: number
+          pct_oportunidade: number
+          posicao: number
+          recebidas: number
+          score: number
+          total_corretores: number
+        }[]
+      }
+      carteira_ranking_corretores: {
+        Args: { _fim?: string; _inicio?: string }
+        Returns: {
+          ativas: number
+          contato_estabelecido: number
+          corretor_id: string
+          corretor_nome: string
+          devolvidas: number
+          fechamentos: number
+          horas_medias: number
+          no_prazo: number
+          oportunidades: number
+          pct_contato: number
+          pct_devolucao: number
+          pct_fechamento: number
+          pct_no_prazo: number
+          pct_oportunidade: number
+          posicao: number
+          recebidas: number
+          score: number
+          transferidas: number
         }[]
       }
       carteira_registrar_tentativa: {
