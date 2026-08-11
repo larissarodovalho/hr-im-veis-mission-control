@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { STAGES, ETAPAS_ATIVAS_FUNIL, daysSince, slaColor, slaLabel, SOURCES } from "@/lib/leads";
 import { dayKeyCRM, todayCRM } from "@/lib/datetime";
 import { Link, useNavigate } from "react-router-dom";
-import { TrendingUp, Users, Clock, Calendar, AlertTriangle, Phone, MapPin, Globe, UserPlus, UserCheck, Activity, CheckCircle2, XCircle } from "lucide-react";
+import { TrendingUp, Users, Clock, Calendar, AlertTriangle, Phone, MapPin, Globe, UserPlus, UserCheck, Activity, CheckCircle2, XCircle, Briefcase } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   BarChart, Bar, Cell, LineChart, Line,
