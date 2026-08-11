@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,7 +52,7 @@ export default function CarteiraMetasCard() {
   const [salvando, setSalvando] = useState<string | null>(null);
 
   // sincroniza draft com metas carregadas
-  useMemo(() => {
+  useEffect(() => {
     const d: Record<string, { c: number; o: number; f: number }> = {};
     metas.forEach((m: CarteiraMeta) => { d[m.corretor_id] = { c: m.meta_contatos, o: m.meta_oportunidades, f: m.meta_fechamentos }; });
     setDraft(d);
