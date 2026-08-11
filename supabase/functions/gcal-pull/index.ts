@@ -34,11 +34,11 @@ async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string
       if (isPrimaryCalendar && conn.sync_token) params.set("syncToken", conn.sync_token);
       else {
         // Janela limitada para evitar estouro de CPU em agendas com muitos eventos.
+        // Sem orderBy, para o Google devolver nextSyncToken e as próximas rodadas serem incrementais.
         const now = new Date();
         const max = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000); // próximos 90 dias
         params.set("timeMin", now.toISOString());
         params.set("timeMax", max.toISOString());
-        params.set("orderBy", "startTime");
       }
       if (pageToken) params.set("pageToken", pageToken);
 
@@ -54,13 +54,16 @@ async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string
       if (!r.ok) throw new Error(formatGoogleCalendarApiError(r.status, j));
 
       for (const ev of j.items ?? []) {
-        // Na agenda compartilhada, o mapeamento pode pertencer ao dono da agenda.
-        // Na agenda pessoal, "primary" não é global, então precisa ficar escopado ao usuário.
-        const mapQuery = supa.from("google_calendar_sync")
+        // O vínculo é procurado pelo ID do evento no Google, independente do calendário:
+        // o mesmo evento pode aparecer na agenda pessoal e na compartilhada, e filtrar por
+        // calendário fazia o CRM duplicar a reunião a cada rodada.
+        const { data: maps } = await supa.from("google_calendar_sync")
           .select("*")
-          .eq("calendar_id", calendarId)
-          .eq("google_event_id", ev.id);
-        const { data: map } = await (isSharedCalendar ? mapQuery : mapQuery.eq("user_id", user_id)).maybeSingle();
+          .eq("google_event_id", ev.id)
+          .order("created_at", { ascending: true });
+        const map = (maps ?? []).find((m: any) => m.user_id === user_id)
+          ?? (isSharedCalendar ? (maps ?? [])[0] : undefined);
+
 
         if (map && map.entity_type !== "reuniao") continue;
 
