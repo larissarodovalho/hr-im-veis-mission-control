@@ -39,6 +39,8 @@ export default function CriarOportunidadeDialog({
   const [imoveis, setImoveis] = useState<{ id: string; nome: string }[]>([]);
   const [corretores, setCorretores] = useState<{ id: string; nome: string }[]>([]);
   const [ativas, setAtivas] = useState<any[]>([]);
+  const [encerradas, setEncerradas] = useState<any[]>([]);
+
   const [confirmarOutra, setConfirmarOutra] = useState(false);
   const [saving, setSaving] = useState(false);
   // Chave de idempotência: gerada por abertura do modal; reenvios/duplo clique retornam a mesma oportunidade
@@ -54,9 +56,11 @@ export default function CriarOportunidadeDialog({
     setNovoImovel("none");
     setContaSel(null);
     setAtivas([]);
+    setEncerradas([]);
     setConfirmarOutra(false);
     setChave(crypto.randomUUID());
   };
+
 
   const [buscandoContas, setBuscandoContas] = useState(false);
   const buscarContas = async (q: string) => {
