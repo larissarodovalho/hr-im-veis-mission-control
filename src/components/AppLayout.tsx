@@ -7,6 +7,7 @@ import {
   Calendar,
   Phone,
   MapPin,
+  Briefcase,
   LogOut,
   Settings,
   BarChart3,
