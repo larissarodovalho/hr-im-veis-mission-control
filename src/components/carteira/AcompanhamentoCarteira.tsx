@@ -12,13 +12,15 @@ import { toast } from "sonner";
 import { fmtDate, fmtDateTime } from "@/lib/datetime";
 import {
   useMinhaCarteira, useResumoLotes, useCorretores, gestorAcaoCarteira, resolverSolicitacaoCarteira,
-  situacaoAtribuicao, type AtribuicaoCarteira,
+  situacaoAtribuicao, useAlertasGestor, useDevolucoesAutomaticas, type AtribuicaoCarteira,
 } from "@/hooks/useCarteira";
 
 export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<string, string> }) {
   const { rows: lotes, loading: loadingLotes, reload: reloadLotes } = useResumoLotes();
   const { rows, loading, reload } = useMinhaCarteira(null);
   const { corretores } = useCorretores();
+  const { rows: alertasGestor } = useAlertasGestor();
+  const { rows: devolucoesAuto } = useDevolucoesAutomaticas(7);
 
   const [alvo, setAlvo] = useState<AtribuicaoCarteira | null>(null);
   const [modo, setModo] = useState<"solicitacao" | "gestor">("solicitacao");
@@ -65,6 +67,61 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
 
   return (
     <div className="space-y-4 md:space-y-6">
+      {(alertasGestor.some((a) => a.atrasadas > 0 || a.solicitacoes > 0) || devolucoesAuto.length > 0) && (
+        <Card className="p-4 md:p-6 border-amber-500/40 bg-amber-500/5">
+          <h2 className="font-semibold mb-3 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-600" /> Alertas de SLA da carteira
+          </h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Atrasos por corretor</p>
+              {alertasGestor.filter((a) => a.atrasadas > 0 || a.acao_vencida > 0 || a.solicitacoes > 0).length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum atraso no momento.</p>
+              ) : (
+                <div className="space-y-1">
+                  {alertasGestor
+                    .filter((a) => a.atrasadas > 0 || a.acao_vencida > 0 || a.solicitacoes > 0)
+                    .map((a) => (
+                      <div key={a.corretor_id} className="flex flex-wrap items-center gap-2 text-sm">
+                        <span className="font-medium">{a.corretor_nome}</span>
+                        {a.atrasadas > 0 && <Badge variant="destructive">{a.atrasadas} atrasada(s)</Badge>}
+                        {a.acao_vencida > 0 && (
+                          <Badge className="bg-amber-500/15 text-amber-700 border-amber-500/30">
+                            {a.acao_vencida} ação(ões) vencida(s)
+                          </Badge>
+                        )}
+                        {a.solicitacoes > 0 && <Badge variant="outline">{a.solicitacoes} solicitação(ões)</Badge>}
+                        {a.ativas > 0 && Math.round((a.atrasadas / a.ativas) * 100) >= 30 && (
+                          <Badge variant="destructive">
+                            {Math.round((a.atrasadas / a.ativas) * 100)}% da carteira em atraso
+                          </Badge>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Devoluções automáticas (últimos 7 dias)</p>
+              {devolucoesAuto.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma devolução automática recente.</p>
+              ) : (
+                <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
+                  {devolucoesAuto.map((d) => (
+                    <div key={`${d.conta_id}-${d.devolvida_em}`} className="text-sm">
+                      <span className="font-medium">{d.conta_nome}</span>{" "}
+                      <span className="text-muted-foreground text-xs">
+                        · {d.corretor_nome ?? "—"} · {d.lote_nome ?? "sem lote"} · {fmtDateTime(d.devolvida_em)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
+
       <Card className="p-4 md:p-6">
         <h2 className="font-semibold mb-3">Desempenho dos lotes ativos</h2>
         {loadingLotes ? (
@@ -85,7 +142,8 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
               </TableHeader>
               <TableBody>
                 {lotes.map((l) => (
-                  <TableRow key={l.lote_id}>
+                  <TableRow key={l.lote_id}
+                    className={l.total > 0 && l.atrasadas / l.total >= 0.3 ? "bg-destructive/5" : undefined}>
                     <TableCell className="font-medium">{l.lote_nome}</TableCell>
                     <TableCell>{profiles[l.corretor_id] ?? "—"}</TableCell>
                     <TableCell>{l.total}</TableCell>

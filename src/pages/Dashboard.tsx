@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAlertasCorretor } from "@/hooks/useCarteira";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { STAGES, ETAPAS_ATIVAS_FUNIL, daysSince, slaColor, slaLabel, SOURCES } from "@/lib/leads";
 import { dayKeyCRM, todayCRM } from "@/lib/datetime";
 import { Link, useNavigate } from "react-router-dom";
-import { TrendingUp, Users, Clock, Calendar, AlertTriangle, Phone, MapPin, Globe, UserPlus, UserCheck, Activity, CheckCircle2, XCircle } from "lucide-react";
+import { TrendingUp, Users, Clock, Calendar, AlertTriangle, Phone, MapPin, Globe, UserPlus, UserCheck, Activity, CheckCircle2, XCircle, Briefcase } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   BarChart, Bar, Cell, LineChart, Line,
@@ -14,6 +15,35 @@ import {
 
 const CHART_COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--success))", "hsl(var(--warning))", "hsl(var(--danger))", "hsl(var(--muted-foreground))"];
 
+
+function CarteiraResumoCard() {
+  const { dados } = useAlertasCorretor(null);
+  if (!dados || dados.total_ativas === 0) return null;
+  return (
+    <Card className="p-4 md:p-6">
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2">
+          <Briefcase className="h-5 w-5 text-primary" />
+          <h2 className="font-display text-xl font-semibold">Carteira HR Imóveis</h2>
+        </div>
+        <Link to="/crm/minha-carteira" className="text-sm text-primary hover:underline">Abrir carteira</Link>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { l: "Contas ativas", v: dados.total_ativas, tom: "" },
+          { l: "Atrasadas", v: dados.atrasadas, tom: dados.atrasadas > 0 ? "text-destructive" : "" },
+          { l: "Ações vencidas", v: dados.acao_vencida, tom: dados.acao_vencida > 0 ? "text-amber-600" : "" },
+          { l: "Sem próxima ação", v: dados.sem_proxima_acao, tom: "" },
+        ].map((k) => (
+          <div key={k.l} className="rounded-lg border p-3">
+            <p className="text-xs text-muted-foreground">{k.l}</p>
+            <p className={`text-2xl font-semibold ${k.tom}`}>{k.v}</p>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -200,6 +230,8 @@ export default function Dashboard() {
           </div>
         );
       })()}
+
+      <CarteiraResumoCard />
 
       {overdue.length > 0 && (
         <Card className="p-4 md:p-6 border-danger/30 bg-danger/5">

@@ -10,10 +10,11 @@ import { useRole } from "@/hooks/useRole";
 import { etapaLabel } from "@/lib/contasFunil";
 import { fmtDate, fmtDateTime } from "@/lib/datetime";
 import {
-  useMinhaCarteira, useCorretores, situacaoAtribuicao,
+  useMinhaCarteira, useCorretores, situacaoAtribuicao, useAlertasCorretor,
   type AtribuicaoCarteira, type SituacaoCarteira,
 } from "@/hooks/useCarteira";
 import AtendimentoCarteiraDialog from "@/components/carteira/AtendimentoCarteiraDialog";
+import CarteiraAlertas from "@/components/carteira/CarteiraAlertas";
 
 const SITUACOES: { id: SituacaoCarteira | "todas"; label: string }[] = [
   { id: "todas", label: "Todas" },
@@ -53,6 +54,8 @@ export default function MinhaCarteira() {
   const [lote, setLote] = useState("todos");
   const [busca, setBusca] = useState("");
   const [aberta, setAberta] = useState<AtribuicaoCarteira | null>(null);
+  const [alerta, setAlerta] = useState<"atrasadas" | "acao_vencida" | "prazo_hoje" | null>(null);
+  const { dados: alertas, reload: reloadAlertas } = useAlertasCorretor(gestor ? corretorFiltro || null : null);
 
   const lotes = useMemo(() => {
     const m = new Map<string, string>();
@@ -79,10 +82,24 @@ export default function MinhaCarteira() {
     return rows
       .filter((r) => (situacao === "todas" ? true : situacaoAtribuicao(r) === situacao))
       .filter((r) => (lote === "todos" ? true : r.lote_id === lote))
+      .filter((r) => {
+        if (!alerta) return true;
+        if (r.encerrada_em) return false;
+        const agora = Date.now();
+        if (alerta === "atrasadas")
+          return r.tentativas === 0 && !!r.prazo_primeiro_contato && Date.parse(r.prazo_primeiro_contato) < agora;
+        if (alerta === "acao_vencida")
+          return !!r.proxima_acao_em && Date.parse(r.proxima_acao_em) < agora;
+        if (!r.prazo_primeiro_contato || r.tentativas > 0) return false;
+        const prazo = new Date(r.prazo_primeiro_contato);
+        const hoje = new Date();
+        const fmt = (d: Date) => d.toLocaleDateString("pt-BR", { timeZone: "America/Cuiaba" });
+        return Date.parse(r.prazo_primeiro_contato) >= agora && fmt(prazo) === fmt(hoje);
+      })
       .filter((r) => !q || r.conta_nome.toLowerCase().includes(q) || (r.telefone ?? "").includes(q))
       .sort((a, b) => PESO[situacaoAtribuicao(a)] - PESO[situacaoAtribuicao(b)] ||
         Date.parse(a.prazo_primeiro_contato ?? a.atribuida_em) - Date.parse(b.prazo_primeiro_contato ?? b.atribuida_em));
-  }, [rows, situacao, lote, busca]);
+  }, [rows, situacao, lote, busca, alerta]);
 
   return (
     <div className="p-4 md:p-8 space-y-4 md:space-y-6">
@@ -105,6 +122,8 @@ export default function MinhaCarteira() {
           </Select>
         )}
       </div>
+
+      <CarteiraAlertas dados={alertas} filtro={alerta} onFiltrar={setAlerta} />
 
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
         {[
@@ -198,7 +217,7 @@ export default function MinhaCarteira() {
         atribuicao={aberta}
         open={!!aberta}
         onOpenChange={(v) => !v && setAberta(null)}
-        onDone={reload}
+        onDone={() => { reload(); reloadAlertas(); }}
       />
     </div>
   );

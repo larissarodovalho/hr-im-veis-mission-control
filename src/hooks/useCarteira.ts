@@ -341,3 +341,98 @@ export function situacaoAtribuicao(a: AtribuicaoCarteira): SituacaoCarteira {
   if (a.tentativas > 0) return "em_atendimento";
   return "pendente";
 }
+
+/* ============ Fase 4: alertas e configuração ============ */
+
+export interface AlertasCorretor {
+  atrasadas: number;
+  acao_vencida: number;
+  sem_proxima_acao: number;
+  prazo_hoje: number;
+  total_ativas: number;
+}
+
+export function useAlertasCorretor(corretor?: string | null) {
+  const [dados, setDados] = useState<AlertasCorretor | null>(null);
+  const load = useCallback(async () => {
+    const { data } = await supabase.rpc("carteira_alertas_corretor" as any, { _corretor: corretor || null });
+    const row = Array.isArray(data) ? (data[0] as any) : (data as any);
+    setDados(row ?? null);
+  }, [corretor]);
+  useEffect(() => { load(); }, [load]);
+  return { dados, reload: load };
+}
+
+export interface AlertaGestor {
+  corretor_id: string;
+  corretor_nome: string;
+  ativas: number;
+  atrasadas: number;
+  acao_vencida: number;
+  solicitacoes: number;
+  devolucoes_automaticas_7d: number;
+}
+
+export function useAlertasGestor() {
+  const [rows, setRows] = useState<AlertaGestor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase.rpc("carteira_alertas_gestor" as any);
+    setRows(((data ?? []) as unknown) as AlertaGestor[]);
+    setLoading(false);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+  return { rows, loading, reload: load };
+}
+
+export interface DevolucaoAutomatica {
+  conta_id: string;
+  conta_nome: string;
+  corretor_nome: string | null;
+  lote_nome: string | null;
+  devolvida_em: string;
+  observacao: string | null;
+}
+
+export function useDevolucoesAutomaticas(dias = 7) {
+  const [rows, setRows] = useState<DevolucaoAutomatica[]>([]);
+  const load = useCallback(async () => {
+    const { data } = await supabase.rpc("carteira_devolucoes_automaticas" as any, { _dias: dias });
+    setRows(((data ?? []) as unknown) as DevolucaoAutomatica[]);
+  }, [dias]);
+  useEffect(() => { load(); }, [load]);
+  return { rows, reload: load };
+}
+
+export interface CarteiraConfig {
+  devolucao_automatica: boolean;
+  dias_devolucao_automatica: number;
+  dias_sem_proxima_acao: number;
+  emails_resumo: boolean;
+}
+
+export function useCarteiraConfig() {
+  const [config, setConfig] = useState<CarteiraConfig | null>(null);
+  const [loading, setLoading] = useState(true);
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("carteira_config" as any)
+      .select("devolucao_automatica, dias_devolucao_automatica, dias_sem_proxima_acao, emails_resumo")
+      .eq("id", true)
+      .maybeSingle();
+    setConfig((data as any) ?? null);
+    setLoading(false);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+  return { config, loading, reload: load };
+}
+
+export async function salvarCarteiraConfig(valores: CarteiraConfig) {
+  const { error } = await supabase
+    .from("carteira_config" as any)
+    .update({ ...valores, updated_at: new Date().toISOString() } as any)
+    .eq("id", true);
+  if (error) throw error;
+}
