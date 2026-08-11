@@ -27,8 +27,8 @@ export default function Meetings() {
   const [imoveis, setImoveis] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
-  const [form, setForm] = useState({ lead_id: "none", conta_id: "none", imovel_id: "none", agendada_para: "", local: "", link: "", notas: "" });
-  const [editForm, setEditForm] = useState({ tipo: "presencial", lead_id: "none", conta_id: "none", imovel_id: "none", agendada_para: "", local: "", link: "", notas: "", status: "agendada" });
+  const [form, setForm] = useState({ titulo: "", lead_id: "none", conta_id: "none", imovel_id: "none", agendada_para: "", local: "", link: "", notas: "" });
+  const [editForm, setEditForm] = useState({ titulo: "", tipo: "presencial", lead_id: "none", conta_id: "none", imovel_id: "none", agendada_para: "", local: "", link: "", notas: "", status: "agendada" });
 
   const load = async () => {
     const { data: meetings, error } = await supabase.from("reunioes").select("*").order("agendada_para");
@@ -68,17 +68,21 @@ export default function Meetings() {
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.agendada_para) return toast.error("Informe data");
-    const { error } = await supabase.from("reunioes").insert({
+    const { data: created, error } = await supabase.from("reunioes").insert({
+      titulo: form.titulo.trim() || form.notas.trim() || null,
       lead_id: form.lead_id === "none" ? null : form.lead_id,
       conta_id: form.conta_id === "none" ? null : form.conta_id,
       imovel_id: form.imovel_id === "none" ? null : form.imovel_id,
       agendada_para: new Date(form.agendada_para).toISOString(),
       local: form.local || null, link: form.link || null, notas: form.notas || null,
       created_by: user?.id, corretor_id: user?.id,
-    });
+    }).select("id").single();
     if (error) return toast.error(error.message);
+    supabase.functions.invoke("gcal-push", {
+      body: { entity_type: "reuniao", entity_id: created.id, action: "create" },
+    }).catch(() => {});
     toast.success("Reunião adicionada");
-    setForm({ lead_id: "none", conta_id: "none", imovel_id: "none", agendada_para: "", local: "", link: "", notas: "" });
+    setForm({ titulo: "", lead_id: "none", conta_id: "none", imovel_id: "none", agendada_para: "", local: "", link: "", notas: "" });
     setOpen(false);
     load();
   };
@@ -88,6 +92,7 @@ export default function Meetings() {
     const dt = new Date(m.agendada_para);
     const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     setEditForm({
+      titulo: m.titulo || "",
       tipo: m.tipo || "presencial",
       lead_id: m.lead_id || "none",
       conta_id: m.conta_id || "none",
@@ -104,6 +109,7 @@ export default function Meetings() {
     e.preventDefault();
     if (!editing) return;
     const { error } = await supabase.from("reunioes").update({
+      titulo: editForm.titulo.trim() || editForm.notas.trim() || null,
       tipo: editForm.tipo,
       lead_id: editForm.lead_id === "none" ? null : editForm.lead_id,
       conta_id: editForm.conta_id === "none" ? null : editForm.conta_id,
@@ -115,6 +121,9 @@ export default function Meetings() {
       status: editForm.status,
     }).eq("id", editing.id);
     if (error) return toast.error(error.message);
+    supabase.functions.invoke("gcal-push", {
+      body: { entity_type: "reuniao", entity_id: editing.id, action: "update" },
+    }).catch(() => {});
     toast.success("Reunião atualizada");
     setEditing(null);
     load();
@@ -150,6 +159,7 @@ export default function Meetings() {
 
             <DialogHeader><DialogTitle>Nova reunião</DialogTitle></DialogHeader>
             <form onSubmit={add} className="space-y-3">
+              <div><Label>Atividade</Label><Input value={form.titulo} onChange={e => setForm({ ...form, titulo: e.target.value })} placeholder="Ex.: Apresentar proposta ao cliente" /></div>
               <div>
                 <Label>Lead</Label>
                 <SearchableSelect
