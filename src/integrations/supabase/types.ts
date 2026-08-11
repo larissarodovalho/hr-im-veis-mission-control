@@ -3798,6 +3798,10 @@ export type Database = {
           temperatura: string
         }[]
       }
+      carteira_elegiveis_count: {
+        Args: { _filtros?: Json; _q?: string }
+        Returns: number
+      }
       carteira_gerar_selecao: { Args: { _operacao_id: string }; Returns: Json }
       carteira_selecao_adicionar: {
         Args: { _conta_ids: string[]; _lote_id: string }
