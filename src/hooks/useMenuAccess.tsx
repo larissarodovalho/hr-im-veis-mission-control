@@ -14,9 +14,11 @@ export type MenuKey =
   | "visitas"
   | "agenda"
   | "tarefas"
+  | "minha-carteira"
   | "documentos"
   | "contratos"
   | "relatorios"
+  | "carteira"
   | "newsletter"
   | "usuarios"
   | "configuracoes"
@@ -34,9 +36,11 @@ export const MENU_ITEMS: { key: MenuKey; label: string; group: "CRM" | "Administ
   { key: "visitas", label: "Visitas", group: "CRM" },
   { key: "agenda", label: "Agenda", group: "CRM" },
   { key: "tarefas", label: "Tarefas", group: "CRM" },
+  { key: "minha-carteira", label: "Minha Carteira", group: "CRM" },
   { key: "documentos", label: "Documentos", group: "CRM" },
   { key: "contratos", label: "Contratos", group: "CRM" },
   { key: "relatorios", label: "Relatórios", group: "Administração" },
+  { key: "carteira", label: "Distribuição de Carteira", group: "Administração" },
   { key: "newsletter", label: "Newsletter", group: "Administração" },
   { key: "usuarios", label: "Usuários", group: "Administração" },
   { key: "configuracoes", label: "Configurações", group: "Administração" },
@@ -56,6 +60,7 @@ export function defaultForRole(key: MenuKey, roles: AppRole[]): boolean {
     hasSecretaria && !isAdmin && !roles.includes("gestor") && !hasCorretor && !hasMarketing;
 
   if (secretariaOnly) return key === "agenda" || key === "minha-conta";
+  if (key === "carteira") return isAdmin || isGestor;
   if (marketingOnly)
     return (
       key === "dashboard" ||
@@ -72,6 +77,7 @@ export function defaultForRole(key: MenuKey, roles: AppRole[]): boolean {
   if (
     key === "dashboard" ||
     key === "relatorios" ||
+    key === "carteira" ||
     key === "newsletter" ||
     key === "usuarios" ||
     key === "configuracoes"
