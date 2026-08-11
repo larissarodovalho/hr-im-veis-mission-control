@@ -199,3 +199,12 @@ export function usePreviaOperacao(operacaoId: string | null) {
 
   return { lotes, itens, loading, reload: load };
 }
+
+export async function contarElegiveis(filtros: FiltrosCarteira, q?: string) {
+  const { data, error } = await supabase.rpc("carteira_elegiveis_count" as any, {
+    _filtros: limparFiltros(filtros) as any,
+    _q: q?.trim() || null,
+  });
+  if (error) throw error;
+  return (data as unknown as number) ?? 0;
+}
