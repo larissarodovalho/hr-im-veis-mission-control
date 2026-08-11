@@ -3776,6 +3776,49 @@ export type Database = {
       }
     }
     Functions: {
+      carteira_confirmar_distribuicao: {
+        Args: { _operacao_id: string }
+        Returns: Json
+      }
+      carteira_elegiveis: {
+        Args: { _filtros?: Json; _q?: string }
+        Returns: {
+          categoria: string
+          created_at: string
+          email: string
+          endereco: string
+          etapa_funil: string
+          id: string
+          interesse: string
+          nome: string
+          origem: string
+          responsavel_id: string
+          tags: string[]
+          telefone: string
+          temperatura: string
+        }[]
+      }
+      carteira_gerar_selecao: { Args: { _operacao_id: string }; Returns: Json }
+      carteira_selecao_adicionar: {
+        Args: { _conta_ids: string[]; _lote_id: string }
+        Returns: Json
+      }
+      carteira_selecao_mover: {
+        Args: { _conta_id: string; _lote_destino: string; _operacao_id: string }
+        Returns: Json
+      }
+      carteira_selecao_remover: {
+        Args: { _conta_ids: string[]; _operacao_id: string }
+        Returns: Json
+      }
+      carteira_selecao_substituir: {
+        Args: {
+          _conta_id: string
+          _nova_conta_id?: string
+          _operacao_id: string
+        }
+        Returns: Json
+      }
       check_duplicate_conta_name: {
         Args: { _name: string }
         Returns: {
