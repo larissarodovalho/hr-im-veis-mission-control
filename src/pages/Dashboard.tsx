@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAlertasCorretor } from "@/hooks/useCarteira";
+import { useRole } from "@/hooks/useRole";
+import { useAlertasCorretor, useRankingCorretores, selosDoRanking } from "@/hooks/useCarteira";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { STAGES, ETAPAS_ATIVAS_FUNIL, daysSince, slaColor, slaLabel, SOURCES } from "@/lib/leads";
@@ -41,7 +42,39 @@ function CarteiraResumoCard() {
           </div>
         ))}
       </div>
+      <CarteiraTop3 />
     </Card>
+  );
+}
+
+function CarteiraTop3() {
+  const { isAdmin, isGestor } = useRole();
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth() + 1;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const inicioISO = `${y}-${pad(m)}-01T00:00:00`;
+  const fimISO = `${y}-${pad(m)}-${pad(new Date(y, m, 0).getDate())}T23:59:59`;
+  const { rows, loading } = useRankingCorretores(inicioISO, fimISO);
+  if (!isAdmin && !isGestor) return null;
+  if (loading) return <p className="text-xs text-muted-foreground mt-3">Carregando top 3…</p>;
+  if (rows.length === 0) return null;
+  const top = rows.slice(0, 3);
+  const medalha = ["🥇", "🥈", "🥉"];
+  return (
+    <div className="mt-3 pt-3 border-t">
+      <p className="text-xs text-muted-foreground mb-2">Top 3 corretores do mês</p>
+      <div className="space-y-1.5">
+        {top.map((r, i) => (
+          <div key={r.corretor_id} className="flex items-center gap-2 text-sm">
+            <span className="w-5">{medalha[i]}</span>
+            <span className="font-medium flex-1 truncate">{r.corretor_nome}</span>
+            <span className="text-xs text-muted-foreground">{selosDoRanking(r)[0] ?? ""}</span>
+            <span className="tabular-nums font-semibold">{r.score.toFixed(0)} pts</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
