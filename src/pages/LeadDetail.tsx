@@ -301,7 +301,7 @@ export default function LeadDetail() {
     if (!startIso) return toast.error("Data/hora inválida");
     if (meeting.format === "ligacao") {
       // Ligação vai para a tabela `ligacoes` (aparece na aba Ligações e na Agenda)
-      const { error } = await supabase.from("ligacoes").insert({
+      const { data: created, error } = await supabase.from("ligacoes").insert({
         lead_id: id!,
         data: startIso,
         duracao_seg: 30 * 60,
@@ -309,8 +309,11 @@ export default function LeadDetail() {
         notas: meeting.notas || null,
         created_by: user?.id,
         corretor_id: user?.id,
-      });
+      }).select("id").single();
       if (error) return toast.error(error.message);
+      supabase.functions.invoke("gcal-push", {
+        body: { entity_type: "ligacao", entity_id: created.id, action: "create" },
+      }).catch(() => {});
     } else {
       const tipo = meeting.format === "virtual" ? "videochamada" : "presencial";
       const payload: any = {
@@ -350,6 +353,9 @@ export default function LeadDetail() {
         notas: editingMeeting.notas || null,
       }).eq("id", editingMeeting.id);
       if (error) return toast.error(error.message);
+      supabase.functions.invoke("gcal-push", {
+        body: { entity_type: "ligacao", entity_id: editingMeeting.id, action: "update" },
+      }).catch(() => {});
     } else {
       const tipo = editingMeeting.format === "ligacao" ? "ligacao" : editingMeeting.format === "virtual" ? "videochamada" : "presencial";
       const duracao_min = editingMeeting.format === "ligacao" ? 30 : 60;

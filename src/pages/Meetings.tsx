@@ -356,6 +356,7 @@ export default function Meetings() {
             </div>
           )}
           <form onSubmit={saveEdit} className="space-y-3">
+            <div><Label>Atividade</Label><Input value={editForm.titulo} onChange={e => setEditForm({ ...editForm, titulo: e.target.value })} placeholder="Ex.: Apresentar proposta ao cliente" /></div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Lead</Label>
