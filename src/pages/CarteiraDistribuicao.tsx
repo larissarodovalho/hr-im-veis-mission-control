@@ -643,6 +643,72 @@ export default function CarteiraDistribuicao() {
       )}
 
       {aba === "distribuir" && <HistoricoOperacoes profiles={profiles} />}
+
+      {/* Dialog: Editar lote */}
+      <Dialog open={!!loteEditando} onOpenChange={(v) => !v && setLoteEditando(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base">Editar lote</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Corretor</Label>
+              <Select value={editCorretor} onValueChange={setEditCorretor}>
+                <SelectTrigger><SelectValue placeholder="Selecionar corretor" /></SelectTrigger>
+                <SelectContent>
+                  {corretores.map((c) => (
+                    <SelectItem key={c.user_id} value={c.user_id}>{c.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Quantidade</Label>
+                <Input type="number" min={1} value={editQuantidade}
+                  onChange={(e) => setEditQuantidade(Number(e.target.value))} />
+              </div>
+              <div>
+                <Label className="text-xs">Prazo 1º contato (dias)</Label>
+                <Input type="number" min={1} value={editPrazo}
+                  onChange={(e) => setEditPrazo(Number(e.target.value))} />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Objetivo</Label>
+              <Input value={editObjetivo} onChange={(e) => setEditObjetivo(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs">Observação interna</Label>
+              <Textarea rows={2} value={editObs} onChange={(e) => setEditObs(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setLoteEditando(null)}>Cancelar</Button>
+            <Button onClick={salvarEdicaoLote} disabled={processando}>
+              {processando && <Loader2 className="h-4 w-4 mr-1 animate-spin" />} Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Excluir lote */}
+      <Dialog open={!!loteExcluindo} onOpenChange={(v) => !v && setLoteExcluindo(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base">Excluir lote</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Excluir <strong>{loteExcluindo?.nome}</strong>? As contas selecionadas neste lote voltarão para a carteira elegível.
+          </p>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setLoteExcluindo(null)}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmarExcluirLote} disabled={processando}>
+              {processando && <Loader2 className="h-4 w-4 mr-1 animate-spin" />} Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
