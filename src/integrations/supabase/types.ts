@@ -407,6 +407,389 @@ export type Database = {
         }
         Relationships: []
       }
+      carteira_atribuicoes: {
+        Row: {
+          atribuida_em: string
+          conta_id: string
+          contato_estabelecido_em: string | null
+          corretor_id: string
+          corretor_original_id: string
+          created_at: string
+          created_by: string | null
+          encerrada_em: string | null
+          gestor_id: string | null
+          id: string
+          lote_id: string | null
+          lote_origem_id: string | null
+          modo_selecao: string | null
+          motivo_devolucao: string | null
+          motivo_encerramento: string | null
+          motivo_transferencia: string | null
+          observacoes_internas: string | null
+          operacao_id: string | null
+          oportunidade_id: string | null
+          prazo_primeiro_contato: string | null
+          primeira_atividade_em: string | null
+          proxima_acao: string | null
+          proxima_acao_em: string | null
+          resultado: string | null
+          solicitacao_em: string | null
+          solicitacao_motivo: string | null
+          solicitacao_tipo: string | null
+          status: string
+          tentativas: number
+          ultima_atividade_em: string | null
+          updated_at: string
+        }
+        Insert: {
+          atribuida_em?: string
+          conta_id: string
+          contato_estabelecido_em?: string | null
+          corretor_id: string
+          corretor_original_id: string
+          created_at?: string
+          created_by?: string | null
+          encerrada_em?: string | null
+          gestor_id?: string | null
+          id?: string
+          lote_id?: string | null
+          lote_origem_id?: string | null
+          modo_selecao?: string | null
+          motivo_devolucao?: string | null
+          motivo_encerramento?: string | null
+          motivo_transferencia?: string | null
+          observacoes_internas?: string | null
+          operacao_id?: string | null
+          oportunidade_id?: string | null
+          prazo_primeiro_contato?: string | null
+          primeira_atividade_em?: string | null
+          proxima_acao?: string | null
+          proxima_acao_em?: string | null
+          resultado?: string | null
+          solicitacao_em?: string | null
+          solicitacao_motivo?: string | null
+          solicitacao_tipo?: string | null
+          status?: string
+          tentativas?: number
+          ultima_atividade_em?: string | null
+          updated_at?: string
+        }
+        Update: {
+          atribuida_em?: string
+          conta_id?: string
+          contato_estabelecido_em?: string | null
+          corretor_id?: string
+          corretor_original_id?: string
+          created_at?: string
+          created_by?: string | null
+          encerrada_em?: string | null
+          gestor_id?: string | null
+          id?: string
+          lote_id?: string | null
+          lote_origem_id?: string | null
+          modo_selecao?: string | null
+          motivo_devolucao?: string | null
+          motivo_encerramento?: string | null
+          motivo_transferencia?: string | null
+          observacoes_internas?: string | null
+          operacao_id?: string | null
+          oportunidade_id?: string | null
+          prazo_primeiro_contato?: string | null
+          primeira_atividade_em?: string | null
+          proxima_acao?: string | null
+          proxima_acao_em?: string | null
+          resultado?: string | null
+          solicitacao_em?: string | null
+          solicitacao_motivo?: string | null
+          solicitacao_tipo?: string | null
+          status?: string
+          tentativas?: number
+          ultima_atividade_em?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carteira_atribuicoes_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carteira_atribuicoes_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "carteira_lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carteira_atribuicoes_operacao_id_fkey"
+            columns: ["operacao_id"]
+            isOneToOne: false
+            referencedRelation: "carteira_operacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carteira_atribuicoes_oportunidade_id_fkey"
+            columns: ["oportunidade_id"]
+            isOneToOne: false
+            referencedRelation: "oportunidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      carteira_eventos: {
+        Row: {
+          atribuicao_id: string | null
+          conta_id: string | null
+          created_at: string
+          created_by: string | null
+          gestor_id: string | null
+          id: string
+          lote_anterior_id: string | null
+          lote_id: string | null
+          lote_novo_id: string | null
+          metadata: Json
+          motivo: string | null
+          observacao: string | null
+          operacao_id: string | null
+          responsavel_anterior_id: string | null
+          responsavel_novo_id: string | null
+          status_anterior: string | null
+          status_novo: string | null
+          tipo: string
+        }
+        Insert: {
+          atribuicao_id?: string | null
+          conta_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          gestor_id?: string | null
+          id?: string
+          lote_anterior_id?: string | null
+          lote_id?: string | null
+          lote_novo_id?: string | null
+          metadata?: Json
+          motivo?: string | null
+          observacao?: string | null
+          operacao_id?: string | null
+          responsavel_anterior_id?: string | null
+          responsavel_novo_id?: string | null
+          status_anterior?: string | null
+          status_novo?: string | null
+          tipo: string
+        }
+        Update: {
+          atribuicao_id?: string | null
+          conta_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          gestor_id?: string | null
+          id?: string
+          lote_anterior_id?: string | null
+          lote_id?: string | null
+          lote_novo_id?: string | null
+          metadata?: Json
+          motivo?: string | null
+          observacao?: string | null
+          operacao_id?: string | null
+          responsavel_anterior_id?: string | null
+          responsavel_novo_id?: string | null
+          status_anterior?: string | null
+          status_novo?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carteira_eventos_atribuicao_id_fkey"
+            columns: ["atribuicao_id"]
+            isOneToOne: false
+            referencedRelation: "carteira_atribuicoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carteira_eventos_operacao_id_fkey"
+            columns: ["operacao_id"]
+            isOneToOne: false
+            referencedRelation: "carteira_operacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      carteira_lotes: {
+        Row: {
+          corretor_id: string
+          created_at: string
+          created_by: string | null
+          filtros: Json
+          gestor_id: string
+          id: string
+          modo: string
+          nome: string
+          numero: number
+          objetivo: string | null
+          observacoes_internas: string | null
+          operacao_id: string
+          prazo_primeiro_contato_dias: number
+          quantidade_definida: number
+          quantidade_inicial: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          corretor_id: string
+          created_at?: string
+          created_by?: string | null
+          filtros?: Json
+          gestor_id: string
+          id?: string
+          modo?: string
+          nome: string
+          numero?: number
+          objetivo?: string | null
+          observacoes_internas?: string | null
+          operacao_id: string
+          prazo_primeiro_contato_dias?: number
+          quantidade_definida?: number
+          quantidade_inicial?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          corretor_id?: string
+          created_at?: string
+          created_by?: string | null
+          filtros?: Json
+          gestor_id?: string
+          id?: string
+          modo?: string
+          nome?: string
+          numero?: number
+          objetivo?: string | null
+          observacoes_internas?: string | null
+          operacao_id?: string
+          prazo_primeiro_contato_dias?: number
+          quantidade_definida?: number
+          quantidade_inicial?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carteira_lotes_operacao_id_fkey"
+            columns: ["operacao_id"]
+            isOneToOne: false
+            referencedRelation: "carteira_operacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      carteira_operacoes: {
+        Row: {
+          ajustes_manuais: number
+          confirmada_em: string | null
+          created_at: string
+          created_by: string | null
+          filtros: Json
+          geracoes_automaticas: number
+          gestor_id: string
+          id: string
+          modo: string
+          nome: string | null
+          observacoes: string | null
+          status: string
+          total_definido: number
+          total_selecionado: number
+          updated_at: string
+        }
+        Insert: {
+          ajustes_manuais?: number
+          confirmada_em?: string | null
+          created_at?: string
+          created_by?: string | null
+          filtros?: Json
+          geracoes_automaticas?: number
+          gestor_id: string
+          id?: string
+          modo?: string
+          nome?: string | null
+          observacoes?: string | null
+          status?: string
+          total_definido?: number
+          total_selecionado?: number
+          updated_at?: string
+        }
+        Update: {
+          ajustes_manuais?: number
+          confirmada_em?: string | null
+          created_at?: string
+          created_by?: string | null
+          filtros?: Json
+          geracoes_automaticas?: number
+          gestor_id?: string
+          id?: string
+          modo?: string
+          nome?: string | null
+          observacoes?: string | null
+          status?: string
+          total_definido?: number
+          total_selecionado?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      carteira_selecao_itens: {
+        Row: {
+          conta_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          lote_id: string
+          operacao_id: string
+          origem: string
+        }
+        Insert: {
+          conta_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lote_id: string
+          operacao_id: string
+          origem?: string
+        }
+        Update: {
+          conta_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lote_id?: string
+          operacao_id?: string
+          origem?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carteira_selecao_itens_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carteira_selecao_itens_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "carteira_lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carteira_selecao_itens_operacao_id_fkey"
+            columns: ["operacao_id"]
+            isOneToOne: false
+            referencedRelation: "carteira_operacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conta_fechamentos: {
         Row: {
           conta_id: string
@@ -1386,6 +1769,7 @@ export type Database = {
       interacoes: {
         Row: {
           agendado_para: string | null
+          atribuicao_id: string | null
           canal: string | null
           conta_id: string | null
           created_at: string
@@ -1401,6 +1785,7 @@ export type Database = {
         }
         Insert: {
           agendado_para?: string | null
+          atribuicao_id?: string | null
           canal?: string | null
           conta_id?: string | null
           created_at?: string
@@ -1416,6 +1801,7 @@ export type Database = {
         }
         Update: {
           agendado_para?: string | null
+          atribuicao_id?: string | null
           canal?: string | null
           conta_id?: string | null
           created_at?: string
@@ -1430,6 +1816,13 @@ export type Database = {
           tipo?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "interacoes_atribuicao_id_fkey"
+            columns: ["atribuicao_id"]
+            isOneToOne: false
+            referencedRelation: "carteira_atribuicoes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "interacoes_oportunidade_id_fkey"
             columns: ["oportunidade_id"]
@@ -2149,6 +2542,7 @@ export type Database = {
       }
       oportunidades: {
         Row: {
+          atribuicao_id: string | null
           bairro: string | null
           caracteristicas_indispensaveis: string | null
           categoria_origem: string | null
@@ -2157,7 +2551,9 @@ export type Database = {
           cliente_id: string
           cliente_tipo: string
           conta_id: string | null
+          corretor_gerador_id: string | null
           corretor_id: string | null
+          corretor_original_id: string | null
           created_at: string
           created_by: string | null
           data_diagnostico: string | null
@@ -2174,9 +2570,11 @@ export type Database = {
           imovel_fechamento_id: string | null
           imovel_permuta: string | null
           lead_id_origem: string | null
+          lote_id: string | null
           motivo_perda: string | null
           obs_perda: string | null
           observacoes: string | null
+          operacao_id: string | null
           origem: string | null
           possibilidade_financiamento: boolean
           possui_permuta: boolean
@@ -2191,6 +2589,7 @@ export type Database = {
           valor_final: number | null
         }
         Insert: {
+          atribuicao_id?: string | null
           bairro?: string | null
           caracteristicas_indispensaveis?: string | null
           categoria_origem?: string | null
@@ -2199,7 +2598,9 @@ export type Database = {
           cliente_id: string
           cliente_tipo: string
           conta_id?: string | null
+          corretor_gerador_id?: string | null
           corretor_id?: string | null
+          corretor_original_id?: string | null
           created_at?: string
           created_by?: string | null
           data_diagnostico?: string | null
@@ -2216,9 +2617,11 @@ export type Database = {
           imovel_fechamento_id?: string | null
           imovel_permuta?: string | null
           lead_id_origem?: string | null
+          lote_id?: string | null
           motivo_perda?: string | null
           obs_perda?: string | null
           observacoes?: string | null
+          operacao_id?: string | null
           origem?: string | null
           possibilidade_financiamento?: boolean
           possui_permuta?: boolean
@@ -2233,6 +2636,7 @@ export type Database = {
           valor_final?: number | null
         }
         Update: {
+          atribuicao_id?: string | null
           bairro?: string | null
           caracteristicas_indispensaveis?: string | null
           categoria_origem?: string | null
@@ -2241,7 +2645,9 @@ export type Database = {
           cliente_id?: string
           cliente_tipo?: string
           conta_id?: string | null
+          corretor_gerador_id?: string | null
           corretor_id?: string | null
+          corretor_original_id?: string | null
           created_at?: string
           created_by?: string | null
           data_diagnostico?: string | null
@@ -2258,9 +2664,11 @@ export type Database = {
           imovel_fechamento_id?: string | null
           imovel_permuta?: string | null
           lead_id_origem?: string | null
+          lote_id?: string | null
           motivo_perda?: string | null
           obs_perda?: string | null
           observacoes?: string | null
+          operacao_id?: string | null
           origem?: string | null
           possibilidade_financiamento?: boolean
           possui_permuta?: boolean
@@ -2275,6 +2683,13 @@ export type Database = {
           valor_final?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "oportunidades_atribuicao_id_fkey"
+            columns: ["atribuicao_id"]
+            isOneToOne: false
+            referencedRelation: "carteira_atribuicoes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "oportunidades_conta_id_fkey"
             columns: ["conta_id"]
@@ -2301,6 +2716,20 @@ export type Database = {
             columns: ["lead_id_origem"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oportunidades_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "carteira_lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oportunidades_operacao_id_fkey"
+            columns: ["operacao_id"]
+            isOneToOne: false
+            referencedRelation: "carteira_operacoes"
             referencedColumns: ["id"]
           },
           {
@@ -3347,6 +3776,53 @@ export type Database = {
       }
     }
     Functions: {
+      carteira_confirmar_distribuicao: {
+        Args: { _operacao_id: string }
+        Returns: Json
+      }
+      carteira_elegiveis: {
+        Args: { _filtros?: Json; _q?: string }
+        Returns: {
+          categoria: string
+          created_at: string
+          email: string
+          endereco: string
+          etapa_funil: string
+          id: string
+          interesse: string
+          nome: string
+          origem: string
+          responsavel_id: string
+          tags: string[]
+          telefone: string
+          temperatura: string
+        }[]
+      }
+      carteira_elegiveis_count: {
+        Args: { _filtros?: Json; _q?: string }
+        Returns: number
+      }
+      carteira_gerar_selecao: { Args: { _operacao_id: string }; Returns: Json }
+      carteira_selecao_adicionar: {
+        Args: { _conta_ids: string[]; _lote_id: string }
+        Returns: Json
+      }
+      carteira_selecao_mover: {
+        Args: { _conta_id: string; _lote_destino: string; _operacao_id: string }
+        Returns: Json
+      }
+      carteira_selecao_remover: {
+        Args: { _conta_ids: string[]; _operacao_id: string }
+        Returns: Json
+      }
+      carteira_selecao_substituir: {
+        Args: {
+          _conta_id: string
+          _nova_conta_id?: string
+          _operacao_id: string
+        }
+        Returns: Json
+      }
       check_duplicate_conta_name: {
         Args: { _name: string }
         Returns: {
