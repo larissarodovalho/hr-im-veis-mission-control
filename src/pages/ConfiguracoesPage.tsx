@@ -20,6 +20,7 @@ import SiteSettingsTab from "@/components/configuracoes/SiteSettingsTab";
 import MetaLeadAdsTab from "@/components/configuracoes/MetaLeadAdsTab";
 import { fetchAiAssistant, saveAiAssistant } from "@/lib/siteSettings";
 import GoogleCalendarConnect from "@/components/configuracoes/GoogleCalendarConnect";
+import CarteiraConfigCard from "@/components/carteira/CarteiraConfigCard";
 import SharedCalendarCard from "@/components/configuracoes/SharedCalendarCard";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -268,6 +269,7 @@ export default function ConfiguracoesPage() {
 
         <TabsContent value="sistema">
           <div className="space-y-4">
+            <CarteiraConfigCard />
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
