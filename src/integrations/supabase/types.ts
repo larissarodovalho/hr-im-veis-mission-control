@@ -4308,6 +4308,27 @@ export type Database = {
         Args: { _conta_id: string }
         Returns: string
       }
+      oportunidades_duplicadas: {
+        Args: never
+        Returns: {
+          cliente_nome: string
+          corretor_id: string
+          created_at: string
+          estagio: string
+          grupo_id: string
+          grupo_tipo: string
+          n_interacoes: number
+          n_propostas: number
+          n_visitas: number
+          oportunidade_id: string
+          titulo: string
+          valor_alvo: number
+        }[]
+      }
+      oportunidades_unificar: {
+        Args: { _duplicada: string; _principal: string }
+        Returns: Json
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {

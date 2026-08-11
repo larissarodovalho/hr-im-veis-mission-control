@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, AlertTriangle, Link2, Plus, SlidersHorizontal } from "lucide-react";
+import { Search, AlertTriangle, Link2, Plus, SlidersHorizontal, Merge } from "lucide-react";
 import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
@@ -17,6 +17,7 @@ import {
 import OportunidadeDetailDialog from "@/components/oportunidades/OportunidadeDetailDialog";
 import CriarOportunidadeDialog from "@/components/oportunidades/CriarOportunidadeDialog";
 import MigracaoLegadasPanel from "@/components/oportunidades/MigracaoLegadasPanel";
+import UnificarOportunidadesDialog from "@/components/oportunidades/UnificarOportunidadesDialog";
 
 type Op = any;
 
@@ -37,6 +38,7 @@ function OpCard({
   vincs,
   lastActionIso,
   corretorNome,
+  duplicada,
   onClick,
 }: {
   o: Op;
@@ -44,6 +46,7 @@ function OpCard({
   vincs: any[];
   lastActionIso?: string;
   corretorNome: string;
+  duplicada?: boolean;
   onClick: () => void;
 }) {
   const pend = !isEstagioFinal(o.estagio) ? diagnosticoPendencias(o).length : 0;
@@ -54,6 +57,11 @@ function OpCard({
         <p className="text-sm font-medium leading-tight line-clamp-2">{o.titulo}</p>
       </div>
       <div className="flex flex-wrap gap-1 mt-1.5">
+        {duplicada && (
+          <Badge variant="outline" className="text-[10px] bg-purple-500/10 text-purple-600 border-purple-500/30">
+            <Merge className="h-3 w-3 mr-0.5" /> Possível duplicidade
+          </Badge>
+        )}
         <Badge variant="outline" className={`text-[10px] ${prioridadeBadge(o.prioridade)}`}>{prioridadeLabel(o.prioridade)}</Badge>
         {categoriaLabel(o.categoria_origem ?? cli.categoria) && (
           <Badge variant="outline" className="text-[10px]">{categoriaLabel(o.categoria_origem ?? cli.categoria)}</Badge>
@@ -121,6 +129,7 @@ export default function Oportunidades() {
 
   const [selected, setSelected] = useState<Op | null>(null);
   const [criarOpen, setCriarOpen] = useState(false);
+  const [dupOpen, setDupOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -235,6 +244,24 @@ export default function Oportunidades() {
   const paradas = ativas ? filtradas.filter((o) => !isEstagioFinal(o.estagio) && diasSemAcao(lastAction[o.id], o.created_at) > 7).length : 0;
   const vinculoPendente = filtradas.filter((o) => !o.conta_id && !isEstagioFinal(o.estagio)).length;
 
+  // Duplicidade: mesma conta (ou mesmo lead, quando não há conta)
+  const { duplicadasIds, gruposDuplicados } = useMemo(() => {
+    const porChave: Record<string, string[]> = {};
+    ops.forEach((o) => {
+      const chave =
+        o.conta_id || (o.cliente_tipo === "conta" ? o.cliente_id : null) ||
+        o.lead_id_origem || (o.cliente_tipo === "lead" ? o.cliente_id : null);
+      if (!chave) return;
+      (porChave[chave] = porChave[chave] ?? []).push(o.id);
+    });
+    const ids = new Set<string>();
+    let grupos = 0;
+    Object.values(porChave).forEach((arr) => {
+      if (arr.length > 1) { grupos++; arr.forEach((id) => ids.add(id)); }
+    });
+    return { duplicadasIds: ids, gruposDuplicados: grupos };
+  }, [ops]);
+
   const activeFilterCount =
     (fCorretor !== "todos" ? 1 : 0) +
     (fCategoria !== "todas" ? 1 : 0) +
@@ -254,6 +281,7 @@ export default function Oportunidades() {
       vincs={imoveisPorOp[o.id] ?? []}
       lastActionIso={lastAction[o.id]}
       corretorNome={o.corretor_id ? corretores[o.corretor_id] ?? "—" : "—"}
+      duplicada={duplicadasIds.has(o.id)}
       onClick={() => setSelected(o)}
     />
   );
@@ -368,6 +396,13 @@ export default function Oportunidades() {
         <Badge variant="secondary">{ativas} ativas</Badge>
         {paradas > 0 && <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30">{paradas} sem ação &gt; 7 dias</Badge>}
         {vinculoPendente > 0 && <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/30">{vinculoPendente} sem conta vinculada</Badge>}
+        {gruposDuplicados > 0 && (isAdmin || isGestor) && (
+          <button onClick={() => setDupOpen(true)}>
+            <Badge variant="outline" className="bg-purple-500/10 text-purple-600 border-purple-500/30 cursor-pointer hover:bg-purple-500/20">
+              <Merge className="h-3 w-3 mr-1" /> {gruposDuplicados} cliente{gruposDuplicados > 1 ? "s" : ""} com oportunidades duplicadas — unificar
+            </Badge>
+          </button>
+        )}
       </div>
 
       {(isAdmin || isGestor) && <MigracaoLegadasPanel />}
@@ -441,6 +476,13 @@ export default function Oportunidades() {
         onOpenChange={setCriarOpen}
         onCreated={() => load()}
       />
+      <UnificarOportunidadesDialog
+        open={dupOpen}
+        onOpenChange={setDupOpen}
+        corretores={corretores}
+        onUnified={load}
+      />
+
     </div>
   );
 }
