@@ -73,17 +73,25 @@ async function buildEventPayload(supa: ReturnType<typeof adminClient>, entity_ty
     };
   }
   if (entity_type === "visita") {
-    const { data: r } = await supa.from("visitas").select("*, imoveis(titulo, endereco, cidade), contas(nome), leads(nome)").eq("id", entity_id).maybeSingle();
+    const { data: r } = await supa.from("visitas").select("*, imoveis(titulo, endereco, cidade)").eq("id", entity_id).maybeSingle();
     if (!r) return null;
     const start = new Date(r.data_visita);
     const end = new Date(start.getTime() + 60 * 60000);
     const im: any = (r as any).imoveis;
+    let relatedName: string | null = null;
+    if (r.conta_id) {
+      const { data: conta } = await supa.from("contas").select("nome").eq("id", r.conta_id).maybeSingle();
+      relatedName = conta?.nome ?? null;
+    } else if (r.lead_id) {
+      const { data: lead } = await supa.from("leads").select("nome").eq("id", r.lead_id).maybeSingle();
+      relatedName = lead?.nome ?? null;
+    }
     return {
       ownerUserId: r.corretor_id ?? r.created_by,
       contaId: r.conta_id,
       payload: {
         summary: (typeof r.observacoes === "string" ? r.observacoes.trim() : "")
-          || `Visita — ${im?.titulo ?? (r as any).contas?.nome ?? (r as any).leads?.nome ?? "Imóvel"}`,
+          || `Visita — ${im?.titulo ?? relatedName ?? "Imóvel"}`,
         description: r.observacoes || "",
         location: im ? [im.endereco, im.cidade].filter(Boolean).join(", ") : undefined,
         start: { dateTime: start.toISOString(), timeZone: TIMEZONE },
