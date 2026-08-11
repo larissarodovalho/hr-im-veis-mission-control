@@ -73,11 +73,14 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
     }
   }, [open]);
 
+  const bloqueantes = duplicates.filter(isStrongMatch);
+
   const submit = async () => {
     if (!form.nome.trim()) return toast.error("Nome é obrigatório");
-    if (duplicates.length && !forceCreate) {
+    if (bloqueantes.length && !forceCreate) {
       return toast.error("Contato já cadastrado. Confirme abaixo para prosseguir.");
     }
+
     setSaving(true);
     const { data: auth } = await supabase.auth.getUser();
     const tags = new Set(defaultTags ?? []);
