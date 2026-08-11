@@ -124,36 +124,61 @@ async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string
           console.log(`[gcal-pull] evento sem creator/organizer email (event ${ev.id}) — usando dono do calendário`);
         }
 
-        const { data: novaReuniao, error: insErr } = await supa.from("reunioes").insert({
-          titulo: ev.summary || "Evento Google",
-          agendada_para: startISO,
-          duracao_min,
-          local: ev.location ?? null,
-          link: ev.hangoutLink ?? null,
-          notas: ev.description ?? null,
-          corretor_id: user_id,
-          created_by: realCreator,
-          tipo: "presencial",
-          status: "agendada",
-          origem: "google_calendar",
-          google_owner_user_id: user_id,
-        }).select("id").single();
-        if (insErr || !novaReuniao) {
-          console.error("Falha ao criar reuniao a partir do Google", insErr);
-          continue;
+        const titulo = ev.summary || "Evento Google";
+
+        // Guarda extra contra duplicação: se já existe reunião equivalente desse usuário, só revincula.
+        const { data: existente } = await supa.from("reunioes")
+          .select("id")
+          .eq("origem", "google_calendar")
+          .eq("google_owner_user_id", user_id)
+          .eq("titulo", titulo)
+          .eq("agendada_para", startISO)
+          .maybeSingle();
+
+        let reuniaoId = existente?.id as string | undefined;
+
+        if (!reuniaoId) {
+          const { data: novaReuniao, error: insErr } = await supa.from("reunioes").insert({
+            titulo,
+            agendada_para: startISO,
+            duracao_min,
+            local: ev.location ?? null,
+            link: ev.hangoutLink ?? null,
+            notas: ev.description ?? null,
+            corretor_id: user_id,
+            created_by: realCreator,
+            tipo: "presencial",
+            status: "agendada",
+            origem: "google_calendar",
+            google_owner_user_id: user_id,
+          }).select("id").single();
+          if (insErr || !novaReuniao) {
+            console.error("Falha ao criar reuniao a partir do Google", insErr);
+            continue;
+          }
+          reuniaoId = novaReuniao.id;
         }
-        await supa.from("google_calendar_sync").insert({
+
+        const { error: mapErr } = await supa.from("google_calendar_sync").upsert({
           user_id,
           entity_type: "reuniao",
-          entity_id: novaReuniao.id,
+          entity_id: reuniaoId,
           google_event_id: ev.id,
           calendar_id: calendarId,
           etag: ev.etag ?? null,
           html_link: ev.htmlLink ?? null,
           last_synced_at: new Date().toISOString(),
-        });
+        }, { onConflict: "user_id,google_event_id" });
+
+        if (mapErr) {
+          // Sem vínculo gravado o evento voltaria a ser importado toda rodada: desfaz a criação.
+          console.error("Falha ao vincular evento Google, revertendo reuniao", mapErr);
+          if (!existente && reuniaoId) await supa.from("reunioes").delete().eq("id", reuniaoId);
+          continue;
+        }
         imported++;
       }
+
 
     }
     pageToken = j.nextPageToken;
