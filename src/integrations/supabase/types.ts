@@ -3817,6 +3817,22 @@ export type Database = {
         Args: { _filtros?: Json; _q?: string }
         Returns: number
       }
+      carteira_eventos_conta: {
+        Args: { _conta_id: string }
+        Returns: {
+          autor: string
+          created_at: string
+          id: string
+          lote_nome: string
+          motivo: string
+          observacao: string
+          responsavel_anterior: string
+          responsavel_novo: string
+          status_anterior: string
+          status_novo: string
+          tipo: string
+        }[]
+      }
       carteira_gerar_selecao: { Args: { _operacao_id: string }; Returns: Json }
       carteira_gestor_acao: {
         Args: {
@@ -3826,6 +3842,14 @@ export type Database = {
           _novo_corretor?: string
         }
         Returns: Json
+      }
+      carteira_lote_da_conta: {
+        Args: { _conta_id: string }
+        Returns: {
+          atribuida_em: string
+          corretor_id: string
+          lote_nome: string
+        }[]
       }
       carteira_marcar_contato: {
         Args: { _atribuicao_id: string; _descricao?: string }
@@ -3873,6 +3897,52 @@ export type Database = {
           _tipo: string
         }
         Returns: Json
+      }
+      carteira_relatorio_corretores: {
+        Args: { _fim?: string; _inicio?: string }
+        Returns: {
+          ativas: number
+          com_tentativa: number
+          contato_estabelecido: number
+          corretor_id: string
+          corretor_nome: string
+          devolvidas: number
+          fechamentos: number
+          fora_prazo: number
+          horas_medias: number
+          no_prazo: number
+          oportunidades: number
+          recebidas: number
+          sem_tentativa: number
+          transferidas: number
+        }[]
+      }
+      carteira_relatorio_lotes: {
+        Args: { _fim?: string; _inicio?: string }
+        Returns: {
+          com_tentativa: number
+          contato_estabelecido: number
+          corretor_nome: string
+          criado_em: string
+          encerradas: number
+          fechamentos: number
+          lote_id: string
+          lote_nome: string
+          modo: string
+          no_prazo: number
+          numero: number
+          oportunidades: number
+          recebidas: number
+          status: string
+        }[]
+      }
+      carteira_relatorio_motivos: {
+        Args: { _fim?: string; _inicio?: string }
+        Returns: {
+          motivo: string
+          tipo: string
+          total: number
+        }[]
       }
       carteira_resolver_solicitacao: {
         Args: {

@@ -1,0 +1,10 @@
+REVOKE EXECUTE ON FUNCTION public.carteira_relatorio_corretores(timestamptz, timestamptz) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.carteira_relatorio_lotes(timestamptz, timestamptz) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.carteira_relatorio_motivos(timestamptz, timestamptz) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.carteira_eventos_conta(uuid) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.carteira_lote_da_conta(uuid) FROM anon, public;
+GRANT EXECUTE ON FUNCTION public.carteira_relatorio_corretores(timestamptz, timestamptz) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.carteira_relatorio_lotes(timestamptz, timestamptz) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.carteira_relatorio_motivos(timestamptz, timestamptz) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.carteira_eventos_conta(uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.carteira_lote_da_conta(uuid) TO authenticated, service_role;
