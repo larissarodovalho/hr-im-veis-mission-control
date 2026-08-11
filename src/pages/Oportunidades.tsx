@@ -244,6 +244,24 @@ export default function Oportunidades() {
   const paradas = ativas ? filtradas.filter((o) => !isEstagioFinal(o.estagio) && diasSemAcao(lastAction[o.id], o.created_at) > 7).length : 0;
   const vinculoPendente = filtradas.filter((o) => !o.conta_id && !isEstagioFinal(o.estagio)).length;
 
+  // Duplicidade: mesma conta (ou mesmo lead, quando não há conta)
+  const { duplicadasIds, gruposDuplicados } = useMemo(() => {
+    const porChave: Record<string, string[]> = {};
+    ops.forEach((o) => {
+      const chave =
+        o.conta_id || (o.cliente_tipo === "conta" ? o.cliente_id : null) ||
+        o.lead_id_origem || (o.cliente_tipo === "lead" ? o.cliente_id : null);
+      if (!chave) return;
+      (porChave[chave] = porChave[chave] ?? []).push(o.id);
+    });
+    const ids = new Set<string>();
+    let grupos = 0;
+    Object.values(porChave).forEach((arr) => {
+      if (arr.length > 1) { grupos++; arr.forEach((id) => ids.add(id)); }
+    });
+    return { duplicadasIds: ids, gruposDuplicados: grupos };
+  }, [ops]);
+
   const activeFilterCount =
     (fCorretor !== "todos" ? 1 : 0) +
     (fCategoria !== "todas" ? 1 : 0) +
@@ -263,6 +281,7 @@ export default function Oportunidades() {
       vincs={imoveisPorOp[o.id] ?? []}
       lastActionIso={lastAction[o.id]}
       corretorNome={o.corretor_id ? corretores[o.corretor_id] ?? "—" : "—"}
+      duplicada={duplicadasIds.has(o.id)}
       onClick={() => setSelected(o)}
     />
   );
