@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, AlertTriangle, Link2, Plus, SlidersHorizontal } from "lucide-react";
+import { Search, AlertTriangle, Link2, Plus, SlidersHorizontal, Merge } from "lucide-react";
 import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
@@ -17,6 +17,7 @@ import {
 import OportunidadeDetailDialog from "@/components/oportunidades/OportunidadeDetailDialog";
 import CriarOportunidadeDialog from "@/components/oportunidades/CriarOportunidadeDialog";
 import MigracaoLegadasPanel from "@/components/oportunidades/MigracaoLegadasPanel";
+import UnificarOportunidadesDialog from "@/components/oportunidades/UnificarOportunidadesDialog";
 
 type Op = any;
 
