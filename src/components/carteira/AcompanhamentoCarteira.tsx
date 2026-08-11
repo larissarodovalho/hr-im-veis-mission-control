@@ -13,7 +13,8 @@ import { toast } from "sonner";
 import { fmtDate, fmtDateTime } from "@/lib/datetime";
 import {
   useMinhaCarteira, useResumoLotes, useCorretores, gestorAcaoCarteira, resolverSolicitacaoCarteira,
-  situacaoAtribuicao, useAlertasGestor, useDevolucoesAutomaticas, type AtribuicaoCarteira,
+  situacaoAtribuicao, useAlertasGestor, useDevolucoesAutomaticas, cancelarLote,
+  type AtribuicaoCarteira, type ResumoLote,
 } from "@/hooks/useCarteira";
 
 export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<string, string> }) {
