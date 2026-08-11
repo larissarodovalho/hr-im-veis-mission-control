@@ -11,12 +11,14 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Shield, Plus, Trash2, Shuffle, RefreshCw, CheckCircle2, Search, ArrowRightLeft, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Shield, Plus, Trash2, Shuffle, RefreshCw, CheckCircle2, Search, ArrowRightLeft, Loader2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { ETAPAS, etapaLabel } from "@/lib/contasFunil";
 import {
   buscarElegiveis, contarElegiveis, criarOperacao, usePreviaOperacao, useCorretores, useProfilesMap,
-  type ContaElegivel, type FiltrosCarteira, type LoteConfig, type ModoSelecao,
+  editarLote, excluirLote,
+  type ContaElegivel, type FiltrosCarteira, type LoteConfig, type ModoSelecao, type LotePreview,
 } from "@/hooks/useCarteira";
 import AcompanhamentoCarteira from "@/components/carteira/AcompanhamentoCarteira";
 import HistoricoDistribuicoes from "@/components/carteira/HistoricoDistribuicoes";
