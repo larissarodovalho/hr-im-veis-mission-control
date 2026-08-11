@@ -38,6 +38,7 @@ function OpCard({
   vincs,
   lastActionIso,
   corretorNome,
+  duplicada,
   onClick,
 }: {
   o: Op;
@@ -45,6 +46,7 @@ function OpCard({
   vincs: any[];
   lastActionIso?: string;
   corretorNome: string;
+  duplicada?: boolean;
   onClick: () => void;
 }) {
   const pend = !isEstagioFinal(o.estagio) ? diagnosticoPendencias(o).length : 0;
@@ -55,6 +57,11 @@ function OpCard({
         <p className="text-sm font-medium leading-tight line-clamp-2">{o.titulo}</p>
       </div>
       <div className="flex flex-wrap gap-1 mt-1.5">
+        {duplicada && (
+          <Badge variant="outline" className="text-[10px] bg-purple-500/10 text-purple-600 border-purple-500/30">
+            <Merge className="h-3 w-3 mr-0.5" /> Possível duplicidade
+          </Badge>
+        )}
         <Badge variant="outline" className={`text-[10px] ${prioridadeBadge(o.prioridade)}`}>{prioridadeLabel(o.prioridade)}</Badge>
         {categoriaLabel(o.categoria_origem ?? cli.categoria) && (
           <Badge variant="outline" className="text-[10px]">{categoriaLabel(o.categoria_origem ?? cli.categoria)}</Badge>
@@ -122,6 +129,7 @@ export default function Oportunidades() {
 
   const [selected, setSelected] = useState<Op | null>(null);
   const [criarOpen, setCriarOpen] = useState(false);
+  const [dupOpen, setDupOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
