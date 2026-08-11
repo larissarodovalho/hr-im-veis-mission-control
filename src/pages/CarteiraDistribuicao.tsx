@@ -20,6 +20,7 @@ import {
 } from "@/hooks/useCarteira";
 import AcompanhamentoCarteira from "@/components/carteira/AcompanhamentoCarteira";
 import HistoricoDistribuicoes from "@/components/carteira/HistoricoDistribuicoes";
+import CarteiraRanking from "@/components/carteira/CarteiraRanking";
 
 const MODOS: { id: ModoSelecao; titulo: string; desc: string }[] = [
   { id: "automatico", titulo: "Automática aleatória", desc: "O sistema sorteia as contas elegíveis e divide entre os lotes." },
@@ -43,7 +44,7 @@ export default function CarteiraDistribuicao() {
   const { corretores } = useCorretores();
   const profiles = useProfilesMap();
 
-  const [aba, setAba] = useState<"distribuir" | "acompanhamento" | "historico">("distribuir");
+  const [aba, setAba] = useState<"distribuir" | "acompanhamento" | "historico" | "ranking">("distribuir");
   const [etapa, setEtapa] = useState<"config" | "selecao">("config");
   const [modo, setModo] = useState<ModoSelecao>("automatico");
   const [lotesCfg, setLotesCfg] = useState<LoteConfig[]>([novoLote(), novoLote()]);
@@ -218,7 +219,7 @@ export default function CarteiraDistribuicao() {
       </div>
 
       <div className="flex gap-2 border-b">
-        {([["distribuir","Distribuir"],["acompanhamento","Acompanhamento"],["historico","Histórico"]] as const).map(([id, label]) => (
+        {([["distribuir","Distribuir"],["acompanhamento","Acompanhamento"],["historico","Histórico"],["ranking","Ranking"]] as const).map(([id, label]) => (
           <button
             key={id}
             onClick={() => setAba(id)}
