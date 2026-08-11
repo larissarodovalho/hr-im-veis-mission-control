@@ -61,6 +61,15 @@ export default function CarteiraDistribuicao() {
   const [buscaLote, setBuscaLote] = useState("");
   const [processando, setProcessando] = useState(false);
 
+  // Edição/exclusão de lote
+  const [loteEditando, setLoteEditando] = useState<LotePreview | null>(null);
+  const [editCorretor, setEditCorretor] = useState("");
+  const [editQuantidade, setEditQuantidade] = useState(0);
+  const [editPrazo, setEditPrazo] = useState(3);
+  const [editObjetivo, setEditObjetivo] = useState("");
+  const [editObs, setEditObs] = useState("");
+  const [loteExcluindo, setLoteExcluindo] = useState<LotePreview | null>(null);
+
   const { lotes, itens, reload } = usePreviaOperacao(operacaoId);
 
   const totalDefinido = lotesCfg.reduce((s, l) => s + (Number(l.quantidade) || 0), 0);
