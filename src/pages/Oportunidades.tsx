@@ -476,6 +476,13 @@ export default function Oportunidades() {
         onOpenChange={setCriarOpen}
         onCreated={() => load()}
       />
+      <UnificarOportunidadesDialog
+        open={dupOpen}
+        onOpenChange={setDupOpen}
+        corretores={corretores}
+        onUnified={load}
+      />
+
     </div>
   );
 }
