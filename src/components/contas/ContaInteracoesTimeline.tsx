@@ -19,6 +19,7 @@ type Interacao = {
   created_at: string;
   created_by: string | null;
   pontualidade: string | null;
+  oportunidade_id?: string | null;
 };
 
 const TIPOS = [
@@ -45,7 +46,7 @@ export default function ContaInteracoesTimeline({ contaId }: { contaId: string }
     const [{ data }, { data: profs }, { data: { user } }] = await Promise.all([
       supabase
         .from("interacoes")
-        .select("id, tipo, resultado, descricao, created_at, created_by, pontualidade")
+        .select("id, tipo, resultado, descricao, created_at, created_by, pontualidade, oportunidade_id")
         .eq("conta_id", contaId)
         .order("created_at", { ascending: false }),
       supabase.from("profiles").select("user_id, nome"),
@@ -143,6 +144,9 @@ export default function ContaInteracoesTimeline({ contaId }: { contaId: string }
                       {fmtDateTimeLong(it.created_at)}
                     </span>
                     <span className="text-xs text-muted-foreground">• {autor}</span>
+                    {it.oportunidade_id && (
+                      <Badge variant="outline" className="text-[10px]">Sincronizado com a oportunidade</Badge>
+                    )}
                   </div>
                   {canDelete && (
                     <InteracaoAdminActions interacao={it} onChanged={load} />
