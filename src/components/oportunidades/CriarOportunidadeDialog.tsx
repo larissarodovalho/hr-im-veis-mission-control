@@ -97,10 +97,13 @@ export default function CriarOportunidadeDialog({
     }));
     const { data } = await supabase
       .from("oportunidades")
-      .select("id,titulo,estagio,created_at")
+      .select("id,titulo,estagio,created_at,corretor_id")
       .or(`conta_id.eq.${c.id},and(cliente_tipo.eq.conta,cliente_id.eq.${c.id})`);
-    setAtivas(((data ?? []) as any[]).filter(isAtiva));
+    const todas = (data ?? []) as any[];
+    setAtivas(todas.filter(isAtiva));
+    setEncerradas(todas.filter((o) => !isAtiva(o)));
   };
+
 
   const addImovel = (id: string) => {
     if (id === "none" || imoveisVinculados.includes(id)) return;
