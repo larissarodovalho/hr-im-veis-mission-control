@@ -561,13 +561,25 @@ export default function CarteiraDistribuicao() {
                             {total} de {l.quantidade_definida} contas · prazo {l.prazo_primeiro_contato_dias} dia(s)
                           </p>
                         </div>
-                        {falta > 0 ? (
-                          <Badge variant="destructive">{falta} vaga(s)</Badge>
-                        ) : falta < 0 ? (
-                          <Badge variant="secondary">{Math.abs(falta)} excedente(s)</Badge>
-                        ) : (
-                          <Badge variant="secondary">Completo</Badge>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {falta > 0 ? (
+                            <Badge variant="destructive">{falta} vaga(s)</Badge>
+                          ) : falta < 0 ? (
+                            <Badge variant="secondary">{Math.abs(falta)} excedente(s)</Badge>
+                          ) : (
+                            <Badge variant="secondary">Completo</Badge>
+                          )}
+                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Editar lote"
+                            onClick={() => abrirEditarLote(l)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          {lotes.length > 1 && (
+                            <Button size="icon" variant="ghost" className="h-7 w-7" title="Excluir lote"
+                              onClick={() => setLoteExcluindo(l)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                       <div className="max-h-56 overflow-auto divide-y">
                         {its.map((i) => (
