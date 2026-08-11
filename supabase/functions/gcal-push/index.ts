@@ -47,16 +47,24 @@ async function buildEventPayload(supa: ReturnType<typeof adminClient>, entity_ty
     };
   }
   if (entity_type === "ligacao") {
-    const { data: r } = await supa.from("ligacoes").select("*, contas(nome), leads(nome)").eq("id", entity_id).maybeSingle();
+    const { data: r } = await supa.from("ligacoes").select("*").eq("id", entity_id).maybeSingle();
     if (!r) return null;
     const start = new Date(r.data);
     const end = new Date(start.getTime() + Math.max(15, Math.round((r.duracao_seg ?? 1800) / 60)) * 60000);
+    let relatedName: string | null = null;
+    if (r.conta_id) {
+      const { data: conta } = await supa.from("contas").select("nome").eq("id", r.conta_id).maybeSingle();
+      relatedName = conta?.nome ?? null;
+    } else if (r.lead_id) {
+      const { data: lead } = await supa.from("leads").select("nome").eq("id", r.lead_id).maybeSingle();
+      relatedName = lead?.nome ?? null;
+    }
     return {
       ownerUserId: r.corretor_id ?? r.created_by,
       contaId: r.conta_id,
       payload: {
         summary: (typeof r.notas === "string" ? r.notas.trim() : "")
-          || `Ligação com ${(r as any).contas?.nome ?? (r as any).leads?.nome ?? "cliente"}`,
+          || `Ligação com ${relatedName ?? "cliente"}`,
         description: r.notas || "",
         start: { dateTime: start.toISOString(), timeZone: TIMEZONE },
         end: { dateTime: end.toISOString(), timeZone: TIMEZONE },
@@ -85,7 +93,7 @@ async function buildEventPayload(supa: ReturnType<typeof adminClient>, entity_ty
     };
   }
   if (entity_type === "captacao") {
-    const { data: r } = await supa.from("captacoes_imovel").select("*, contas(nome)").eq("id", entity_id).maybeSingle();
+    const { data: r } = await supa.from("captacoes_imovel").select("*").eq("id", entity_id).maybeSingle();
     if (!r) return null;
     if (!r.data_agendada) return null;
     const start = new Date(r.data_agendada);
@@ -93,12 +101,15 @@ async function buildEventPayload(supa: ReturnType<typeof adminClient>, entity_ty
     const { data: im } = r.imovel_id
       ? await supa.from("imoveis").select("titulo, endereco, cidade").eq("id", r.imovel_id).maybeSingle()
       : { data: null };
+    const { data: conta } = r.conta_id
+      ? await supa.from("contas").select("nome").eq("id", r.conta_id).maybeSingle()
+      : { data: null };
     return {
       ownerUserId: r.responsavel_id ?? r.created_by,
       contaId: r.conta_id,
       payload: {
         summary: (typeof r.observacoes === "string" ? r.observacoes.trim() : "")
-          || `Captação — ${im?.titulo ?? (r as any).contas?.nome ?? "Imóvel"}`,
+          || `Captação — ${im?.titulo ?? conta?.nome ?? "Imóvel"}`,
         description: r.observacoes || "",
         location: im ? [im.endereco, im.cidade].filter(Boolean).join(", ") : undefined,
         start: { dateTime: start.toISOString(), timeZone: TIMEZONE },
