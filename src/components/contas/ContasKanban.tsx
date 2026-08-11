@@ -124,6 +124,7 @@ function ContaCard({
   lista,
   lastContact,
   nextTask,
+  loteNome,
 }: {
   a: Account;
   total: number;
@@ -336,6 +337,11 @@ function ContaCard({
             <Megaphone className="h-3 w-3 mr-1" /> Marketing
           </Badge>
         ) : null}
+        {loteNome && (
+          <Badge variant="outline" className="bg-blue-500/10 text-blue-700 border-blue-500/30 text-[10px]" title="Conta recebida na distribuição de carteira">
+            <Briefcase className="h-3 w-3 mr-1" /> {loteNome}
+          </Badge>
+        )}
         {lista === "carteira" && a.origem && (
           <Badge variant="outline" className="text-[10px] text-muted-foreground" title="Origem da conta">
             {a.origem}
@@ -452,6 +458,25 @@ function Column({
 
 export default function ContasKanban({ accounts, propsByAccount, onMoveStage, onChangeOwner, onChangeTemperatura, onChangeCategoria, onQualificar, opAtivaPorConta, lista, lastContactMap, nextTaskMap, ownerMap, owners }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const [loteMap, setLoteMap] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let vivo = true;
+    supabase
+      .from("carteira_atribuicoes" as any)
+      .select("conta_id, carteira_lotes!carteira_atribuicoes_lote_id_fkey(nome)")
+      .is("encerrada_em", null)
+      .then(({ data }) => {
+        if (!vivo) return;
+        const m: Record<string, string> = {};
+        ((data ?? []) as any[]).forEach((r) => {
+          const nome = r.carteira_lotes?.nome;
+          if (nome) m[r.conta_id] = nome;
+        });
+        setLoteMap(m);
+      });
+    return () => { vivo = false; };
+  }, []);
 
   const onDragEnd = (e: DragEndEvent) => {
     const id = String(e.active.id);
@@ -494,6 +519,7 @@ export default function ContasKanban({ accounts, propsByAccount, onMoveStage, on
                     lista={lista}
                     lastContact={lastContactMap?.[a.id]}
                     nextTask={nextTaskMap?.[a.id] ?? null}
+                    loteNome={loteMap[a.id]}
                   />
                 );
               })}
