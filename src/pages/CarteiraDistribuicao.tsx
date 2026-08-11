@@ -120,7 +120,7 @@ export default function CarteiraDistribuicao() {
         toast.success(`Seleção gerada: ${r?.selecionadas ?? 0} contas.`);
         if (r?.faltando > 0) toast.warning(`Faltaram ${r.faltando} contas elegíveis para completar os lotes.`);
       }
-      await reload();
+      await reload(id);
       await recarregarElegiveis();
     } catch (e: any) {
       toast.error("Erro ao iniciar a distribuição: " + e.message);
@@ -450,7 +450,7 @@ export default function CarteiraDistribuicao() {
                 </Table>
                 {totalElegiveis > elegiveis.length && (
                   <p className="p-2 text-xs text-muted-foreground">
-                    Mostrando {elegiveis.length} de {totalElegiveis}. Use os filtros ou a busca para refinar.
+                    Mostrando {Math.min(300, elegiveis.length)} de {totalElegiveis}. Use os filtros ou a busca para refinar.
                   </p>
                 )}
               </div>

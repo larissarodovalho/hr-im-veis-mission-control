@@ -173,15 +173,16 @@ export function usePreviaOperacao(operacaoId: string | null) {
   const [itens, setItens] = useState<ItemPreview[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const load = useCallback(async () => {
-    if (!operacaoId) { setLotes([]); setItens([]); return; }
+  const load = useCallback(async (idOverride?: string) => {
+    const opId = idOverride ?? operacaoId;
+    if (!opId) { setLotes([]); setItens([]); return; }
     setLoading(true);
     const [{ data: l }, { data: s }] = await Promise.all([
-      supabase.from("carteira_lotes" as any).select("*").eq("operacao_id", operacaoId).order("numero"),
+      supabase.from("carteira_lotes" as any).select("*").eq("operacao_id", opId).order("numero"),
       supabase
         .from("carteira_selecao_itens" as any)
         .select("conta_id, lote_id, origem, contas(nome, telefone, email, etapa_funil, responsavel_id)")
-        .eq("operacao_id", operacaoId),
+        .eq("operacao_id", opId),
     ]);
     setLotes(((l ?? []) as unknown) as LotePreview[]);
     setItens(
