@@ -538,6 +538,36 @@ export type Database = {
           },
         ]
       }
+      carteira_config: {
+        Row: {
+          devolucao_automatica: boolean
+          dias_devolucao_automatica: number
+          dias_sem_proxima_acao: number
+          emails_resumo: boolean
+          id: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          devolucao_automatica?: boolean
+          dias_devolucao_automatica?: number
+          dias_sem_proxima_acao?: number
+          emails_resumo?: boolean
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          devolucao_automatica?: boolean
+          dias_devolucao_automatica?: number
+          dias_sem_proxima_acao?: number
+          emails_resumo?: boolean
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       carteira_eventos: {
         Row: {
           atribuicao_id: string | null
@@ -3785,6 +3815,28 @@ export type Database = {
         }
         Returns: Json
       }
+      carteira_alertas_corretor: {
+        Args: { _corretor?: string }
+        Returns: {
+          acao_vencida: number
+          atrasadas: number
+          prazo_hoje: number
+          sem_proxima_acao: number
+          total_ativas: number
+        }[]
+      }
+      carteira_alertas_gestor: {
+        Args: never
+        Returns: {
+          acao_vencida: number
+          ativas: number
+          atrasadas: number
+          corretor_id: string
+          corretor_nome: string
+          devolucoes_automaticas_7d: number
+          solicitacoes: number
+        }[]
+      }
       carteira_atrib_permitida: {
         Args: {
           _a: Database["public"]["Tables"]["carteira_atribuicoes"]["Row"]
@@ -3794,6 +3846,17 @@ export type Database = {
       carteira_confirmar_distribuicao: {
         Args: { _operacao_id: string }
         Returns: Json
+      }
+      carteira_devolucoes_automaticas: {
+        Args: { _dias?: number }
+        Returns: {
+          conta_id: string
+          conta_nome: string
+          corretor_nome: string
+          devolvida_em: string
+          lote_nome: string
+          observacao: string
+        }[]
       }
       carteira_elegiveis: {
         Args: { _filtros?: Json; _q?: string }
@@ -3973,6 +4036,7 @@ export type Database = {
           transferidas: number
         }[]
       }
+      carteira_rotina_diaria: { Args: never; Returns: Json }
       carteira_selecao_adicionar: {
         Args: { _conta_ids: string[]; _lote_id: string }
         Returns: Json
