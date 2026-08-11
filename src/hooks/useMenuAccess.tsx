@@ -77,7 +77,6 @@ export function defaultForRole(key: MenuKey, roles: AppRole[]): boolean {
   if (
     key === "dashboard" ||
     key === "relatorios" ||
-    key === "carteira" ||
     key === "newsletter" ||
     key === "usuarios" ||
     key === "configuracoes"
