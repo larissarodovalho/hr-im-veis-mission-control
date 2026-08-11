@@ -1,7 +1,8 @@
 import { AlertTriangle, Building2, GitMerge, User } from "lucide-react";
 import { Link } from "react-router-dom";
-import { DuplicateMatch } from "@/lib/duplicates";
+import { DuplicateMatch, isStrongMatch } from "@/lib/duplicates";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface Props {
   matches: DuplicateMatch[];
@@ -13,13 +14,19 @@ interface Props {
   showActions?: boolean;
 }
 
+const categoriaBadge = (c?: string | null) =>
+  c === "carteira" ? "Carteira" : c === "marketing" ? "Marketing" : null;
+
 export default function DuplicateAlert({ matches, onIgnore, onCancel, cancelLabel = "Cancelar", onMerge, merging, showActions }: Props) {
   if (!matches.length) return null;
+  const temForte = matches.some(isStrongMatch);
   return (
     <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
       <div className="flex items-center gap-2 text-sm font-medium text-amber-700 dark:text-amber-400">
         <AlertTriangle className="h-4 w-4" />
-        Possível duplicidade encontrada
+        {temForte
+          ? "Este contato já existe na base (Carteira/Marketing)"
+          : "Já existe um contato com nome parecido"}
       </div>
       <ul className="space-y-1 text-sm">
         {matches.map((m) => {
@@ -28,6 +35,7 @@ export default function DuplicateAlert({ matches, onIgnore, onCancel, cancelLabe
           const by = m.matchedBy
             .map((b) => (b === "email" ? "e-mail" : b === "telefone" ? "telefone" : b === "documento" ? "documento" : "nome"))
             .join(" + ");
+          const cat = categoriaBadge(m.categoria);
           return (
             <li key={`${m.table}:${m.id}`} className="flex items-start gap-2">
               <Icon className="h-3.5 w-3.5 mt-0.5 text-muted-foreground" />
@@ -35,6 +43,12 @@ export default function DuplicateAlert({ matches, onIgnore, onCancel, cancelLabe
                 <Link to={path} className="font-medium hover:underline" target="_blank">
                   {m.nome}
                 </Link>
+                {m.table === "contas" && (
+                  <Badge variant="outline" className="ml-2 text-[10px]">{cat ?? "Sem categoria"}</Badge>
+                )}
+                {!isStrongMatch(m) && (
+                  <Badge variant="outline" className="ml-1 text-[10px] text-muted-foreground">só aviso</Badge>
+                )}
                 <span className="text-xs text-muted-foreground ml-2">
                   ({m.table === "leads" ? "Lead" : "Conta"} · {by}
                   {m.etapa ? ` · ${m.etapa}` : ""}
@@ -42,6 +56,7 @@ export default function DuplicateAlert({ matches, onIgnore, onCancel, cancelLabe
                 </span>
               </div>
               {onMerge && m.table === "contas" && (
+
                 <Button
                   size="sm"
                   variant="secondary"
