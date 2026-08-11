@@ -199,21 +199,52 @@ export default function CarteiraDistribuicao() {
     await reload();
   };
 
-  const confirmar = async () => {
-    if (!operacaoId) return;
+  const abrirEditarLote = (l: LotePreview) => {
+    setLoteEditando(l);
+    setEditCorretor(l.corretor_id);
+    setEditQuantidade(l.quantidade_definida);
+    setEditPrazo(l.prazo_primeiro_contato_dias);
+    setEditObjetivo("");
+    setEditObs(l.observacoes_internas ?? "");
+  };
+
+  const salvarEdicaoLote = async () => {
+    if (!loteEditando) return;
+    if (!editCorretor) return toast.error("Selecione um corretor.");
+    if (editQuantidade < 1) return toast.error("A quantidade deve ser maior que zero.");
+    if (editPrazo < 1) return toast.error("O prazo deve ser maior que zero.");
     setProcessando(true);
-    const { data, error } = await supabase.rpc("carteira_confirmar_distribuicao" as any, { _operacao_id: operacaoId });
-    if (error) {
-      toast.error("Distribuição não confirmada: " + error.message);
-    } else {
-      toast.success(`Distribuição confirmada: ${(data as any)?.atribuicoes ?? 0} contas atribuídas.`);
-      setOperacaoId(null);
-      setEtapa("config");
-      setLotesCfg([novoLote(), novoLote()]);
-      recarregarElegiveis();
+    try {
+      const r: any = await editarLote(
+        loteEditando.id, editCorretor, editQuantidade, editPrazo, editObjetivo, editObs
+      );
+      const removidas = r?.removidas ?? 0;
+      toast.success(`Lote atualizado.${removidas > 0 ? ` ${removidas} conta(s) excedente(s) removida(s).` : ""}`);
+      setLoteEditando(null);
+      await reload();
+      await recarregarElegiveis();
+    } catch (e: any) {
+      toast.error("Erro ao editar lote: " + e.message);
     }
     setProcessando(false);
   };
+
+  const confirmarExcluirLote = async () => {
+    if (!loteExcluindo) return;
+    setProcessando(true);
+    try {
+      await excluirLote(loteExcluindo.id);
+      toast.success("Lote excluído. As contas voltaram para a carteira elegível.");
+      setLoteExcluindo(null);
+      await reload();
+      await recarregarElegiveis();
+    } catch (e: any) {
+      toast.error("Erro ao excluir lote: " + e.message);
+    }
+    setProcessando(false);
+  };
+
+  const confirmar = async () => {
 
   return (
     <div className="p-4 md:p-8 space-y-4 md:space-y-6">
