@@ -18,6 +18,7 @@ import {
   buscarElegiveis, contarElegiveis, criarOperacao, usePreviaOperacao, useCorretores, useProfilesMap,
   type ContaElegivel, type FiltrosCarteira, type LoteConfig, type ModoSelecao,
 } from "@/hooks/useCarteira";
+import AcompanhamentoCarteira from "@/components/carteira/AcompanhamentoCarteira";
 
 const MODOS: { id: ModoSelecao; titulo: string; desc: string }[] = [
   { id: "automatico", titulo: "Automática aleatória", desc: "O sistema sorteia as contas elegíveis e divide entre os lotes." },
@@ -41,6 +42,7 @@ export default function CarteiraDistribuicao() {
   const { corretores } = useCorretores();
   const profiles = useProfilesMap();
 
+  const [aba, setAba] = useState<"distribuir" | "acompanhamento">("distribuir");
   const [etapa, setEtapa] = useState<"config" | "selecao">("config");
   const [modo, setModo] = useState<ModoSelecao>("automatico");
   const [lotesCfg, setLotesCfg] = useState<LoteConfig[]>([novoLote(), novoLote()]);
@@ -214,7 +216,23 @@ export default function CarteiraDistribuicao() {
         </Badge>
       </div>
 
-      {etapa === "config" && (
+      <div className="flex gap-2 border-b">
+        {([["distribuir","Distribuir"],["acompanhamento","Acompanhamento"]] as const).map(([id, label]) => (
+          <button
+            key={id}
+            onClick={() => setAba(id)}
+            className={`px-3 py-2 text-sm border-b-2 -mb-px transition-colors ${
+              aba === id ? "border-primary text-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {aba === "acompanhamento" && <AcompanhamentoCarteira profiles={profiles} />}
+
+      {aba === "distribuir" && etapa === "config" && (
         <>
           <Card className="p-4 md:p-6 space-y-4">
             <h2 className="font-semibold">1. Corretores e quantidades</h2>
@@ -383,7 +401,7 @@ export default function CarteiraDistribuicao() {
         </>
       )}
 
-      {etapa === "selecao" && (
+      {aba === "distribuir" && etapa === "selecao" && (
         <>
           <div className="grid gap-4 lg:grid-cols-2">
             {/* Pool de contas elegíveis */}
@@ -550,7 +568,7 @@ export default function CarteiraDistribuicao() {
         </>
       )}
 
-      <HistoricoOperacoes profiles={profiles} />
+      {aba === "distribuir" && <HistoricoOperacoes profiles={profiles} />}
     </div>
   );
 }

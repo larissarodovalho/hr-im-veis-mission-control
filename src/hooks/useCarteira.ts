@@ -209,3 +209,135 @@ export async function contarElegiveis(filtros: FiltrosCarteira, q?: string) {
   if (error) throw error;
   return (data as unknown as number) ?? 0;
 }
+
+// ===================== Fase 2: atendimento da carteira =====================
+
+export interface AtribuicaoCarteira {
+  atribuicao_id: string;
+  conta_id: string;
+  conta_nome: string;
+  telefone: string | null;
+  email: string | null;
+  etapa_funil: string | null;
+  categoria: string | null;
+  origem: string | null;
+  interesse: string | null;
+  lote_id: string | null;
+  lote_nome: string | null;
+  lote_numero: number | null;
+  corretor_id: string;
+  gestor_id: string | null;
+  atribuida_em: string;
+  prazo_primeiro_contato: string | null;
+  primeira_atividade_em: string | null;
+  contato_estabelecido_em: string | null;
+  ultima_atividade_em: string | null;
+  tentativas: number;
+  proxima_acao: string | null;
+  proxima_acao_em: string | null;
+  status: string;
+  solicitacao_tipo: string | null;
+  solicitacao_motivo: string | null;
+  solicitacao_em: string | null;
+  encerrada_em: string | null;
+  motivo_encerramento: string | null;
+  tem_oportunidade: boolean;
+}
+
+export function useMinhaCarteira(corretorFiltro?: string | null) {
+  const [rows, setRows] = useState<AtribuicaoCarteira[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase.rpc("carteira_minha_carteira" as any, {
+      _corretor: corretorFiltro || null,
+    });
+    if (!error) setRows(((data ?? []) as unknown) as AtribuicaoCarteira[]);
+    setLoading(false);
+  }, [corretorFiltro]);
+
+  useEffect(() => { load(); }, [load]);
+  return { rows, loading, reload: load };
+}
+
+export interface ResumoLote {
+  lote_id: string;
+  lote_nome: string;
+  numero: number;
+  corretor_id: string;
+  operacao_id: string | null;
+  criado_em: string;
+  total: number;
+  pendentes: number;
+  atrasadas: number;
+  em_atendimento: number;
+  contato_estabelecido: number;
+  com_oportunidade: number;
+  devolvidas: number;
+  transferidas: number;
+  solicitacoes: number;
+}
+
+export function useResumoLotes() {
+  const [rows, setRows] = useState<ResumoLote[]>([]);
+  const [loading, setLoading] = useState(true);
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase.rpc("carteira_resumo_lotes" as any);
+    setRows(((data ?? []) as unknown) as ResumoLote[]);
+    setLoading(false);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+  return { rows, loading, reload: load };
+}
+
+async function rpc(fn: string, args: Record<string, unknown>) {
+  const { data, error } = await supabase.rpc(fn as any, args as any);
+  if (error) throw error;
+  return data;
+}
+
+export const registrarTentativa = (atribuicaoId: string, tipo: string, descricao?: string, resultado?: string) =>
+  rpc("carteira_registrar_tentativa", {
+    _atribuicao_id: atribuicaoId, _tipo: tipo,
+    _descricao: descricao?.trim() || null, _resultado: resultado?.trim() || null,
+  });
+
+export const marcarContatoEstabelecido = (atribuicaoId: string, descricao?: string) =>
+  rpc("carteira_marcar_contato", { _atribuicao_id: atribuicaoId, _descricao: descricao?.trim() || null });
+
+export const agendarProximaAcao = (atribuicaoId: string, quandoISO: string, titulo?: string, descricao?: string) =>
+  rpc("carteira_agendar_proxima", {
+    _atribuicao_id: atribuicaoId, _quando: quandoISO,
+    _titulo: titulo?.trim() || null, _descricao: descricao?.trim() || null,
+  });
+
+export const solicitarCarteira = (atribuicaoId: string, tipo: "devolucao" | "transferencia", motivo: string) =>
+  rpc("carteira_solicitar", { _atribuicao_id: atribuicaoId, _tipo: tipo, _motivo: motivo });
+
+export const gestorAcaoCarteira = (
+  atribuicaoId: string, acao: "transferir" | "devolver", novoCorretor?: string | null, motivo?: string
+) => rpc("carteira_gestor_acao", {
+  _atribuicao_id: atribuicaoId, _acao: acao,
+  _novo_corretor: novoCorretor || null, _motivo: motivo?.trim() || null,
+});
+
+export const resolverSolicitacaoCarteira = (
+  atribuicaoId: string, acao: "aprovar" | "recusar", novoCorretor?: string | null, observacao?: string
+) => rpc("carteira_resolver_solicitacao", {
+  _atribuicao_id: atribuicaoId, _acao: acao,
+  _novo_corretor: novoCorretor || null, _observacao: observacao?.trim() || null,
+});
+
+/** Situação derivada da atribuição, usada nas telas de carteira. */
+export type SituacaoCarteira = "pendente" | "atrasada" | "em_atendimento" | "estabelecido" | "encerrada";
+
+export function situacaoAtribuicao(a: AtribuicaoCarteira): SituacaoCarteira {
+  if (a.encerrada_em) return "encerrada";
+  if (a.contato_estabelecido_em) return "estabelecido";
+  const atrasada = a.prazo_primeiro_contato ? Date.parse(a.prazo_primeiro_contato) < Date.now() : false;
+  if (atrasada) return "atrasada";
+  if (a.tentativas > 0) return "em_atendimento";
+  return "pendente";
+}

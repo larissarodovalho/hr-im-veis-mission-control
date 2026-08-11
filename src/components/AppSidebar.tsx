@@ -46,6 +46,7 @@ const CRM_SUBTABS = [
   { label: "Contatos", value: "contatos", icon: Phone },
   { label: "Kanban", value: "kanban", icon: Building2 },
   { label: "Distribuição de Carteira", value: "carteira", icon: Briefcase },
+  { label: "Minha Carteira", value: "minha-carteira", icon: Briefcase },
   { label: "Imóveis", value: "imoveis", icon: Home },
   { label: "Funil de Vendas", value: "funil", icon: TrendingUp },
   { label: "Controle de Criação", value: "criacao", icon: ClipboardList },
@@ -76,8 +77,8 @@ const ALL_ITEMS = [
   { title: "Saúde do Sistema", url: "/saude", icon: Activity, restricted: true },
 ];
 
-const CORRETOR_ALLOWED_CRM = new Set(["leads", "contatos", "whatsapp", "tarefas", "agenda", "oportunidades"]);
-const CRM_SUBTAB_ROUTES: Record<string, string> = { tarefas: "/crm/tarefas", agenda: "/crm/agenda", oportunidades: "/crm/oportunidades", carteira: "/crm/carteira" };
+const CORRETOR_ALLOWED_CRM = new Set(["leads", "contatos", "whatsapp", "tarefas", "agenda", "oportunidades", "minha-carteira"]);
+const CRM_SUBTAB_ROUTES: Record<string, string> = { tarefas: "/crm/tarefas", agenda: "/crm/agenda", oportunidades: "/crm/oportunidades", carteira: "/crm/carteira", "minha-carteira": "/crm/minha-carteira" };
 
 export function AppSidebar() {
   const { state } = useSidebar();
