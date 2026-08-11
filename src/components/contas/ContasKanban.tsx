@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DndContext,
   DragEndEvent,
@@ -24,7 +26,7 @@ import {
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { ETAPAS, EtapaFunil, categoriaDe, CATEGORIA_LABEL, qualificacaoInfo } from "@/lib/contasFunil";
-import { Handshake, Target, User, MoreVertical, Check, UserX, Thermometer, PencilLine, ArrowLeftRight, Megaphone, Clock, HandCoins, ExternalLink, CalendarClock } from "lucide-react";
+import { Handshake, Target, User, MoreVertical, Check, UserX, Thermometer, PencilLine, ArrowLeftRight, Megaphone, Clock, HandCoins, ExternalLink, CalendarClock, Briefcase } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { fmtDateTime } from "@/lib/datetime";
 import { nextTaskCountdown, NextTaskResumo } from "@/lib/tarefas";
@@ -141,6 +143,7 @@ function ContaCard({
   lista?: "carteira" | "marketing";
   lastContact?: string | null;
   nextTask?: NextTaskResumo | null;
+  loteNome?: string;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: a.id });
   const style: React.CSSProperties = {
