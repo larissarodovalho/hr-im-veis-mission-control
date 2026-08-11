@@ -12,7 +12,7 @@ import { SearchableSelect } from "@/components/SearchableSelect";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { categoriaLabel, isAtiva } from "@/lib/oportunidadesFunil";
+import { categoriaLabel, isAtiva, estagioLabel } from "@/lib/oportunidadesFunil";
 import { format } from "date-fns";
 
 /**
@@ -39,6 +39,8 @@ export default function CriarOportunidadeDialog({
   const [imoveis, setImoveis] = useState<{ id: string; nome: string }[]>([]);
   const [corretores, setCorretores] = useState<{ id: string; nome: string }[]>([]);
   const [ativas, setAtivas] = useState<any[]>([]);
+  const [encerradas, setEncerradas] = useState<any[]>([]);
+
   const [confirmarOutra, setConfirmarOutra] = useState(false);
   const [saving, setSaving] = useState(false);
   // Chave de idempotência: gerada por abertura do modal; reenvios/duplo clique retornam a mesma oportunidade
@@ -54,9 +56,11 @@ export default function CriarOportunidadeDialog({
     setNovoImovel("none");
     setContaSel(null);
     setAtivas([]);
+    setEncerradas([]);
     setConfirmarOutra(false);
     setChave(crypto.randomUUID());
   };
+
 
   const [buscandoContas, setBuscandoContas] = useState(false);
   const buscarContas = async (q: string) => {
@@ -97,10 +101,13 @@ export default function CriarOportunidadeDialog({
     }));
     const { data } = await supabase
       .from("oportunidades")
-      .select("id,titulo,estagio,created_at")
+      .select("id,titulo,estagio,created_at,corretor_id")
       .or(`conta_id.eq.${c.id},and(cliente_tipo.eq.conta,cliente_id.eq.${c.id})`);
-    setAtivas(((data ?? []) as any[]).filter(isAtiva));
+    const todas = (data ?? []) as any[];
+    setAtivas(todas.filter(isAtiva));
+    setEncerradas(todas.filter((o) => !isAtiva(o)));
   };
+
 
   const addImovel = (id: string) => {
     if (id === "none" || imoveisVinculados.includes(id)) return;
@@ -194,7 +201,7 @@ export default function CriarOportunidadeDialog({
               <SearchableSelect
                 value={contaSel?.id ?? "none"}
                 onChange={(id) => {
-                  if (id === "none") { setContaSel(null); setAtivas([]); return; }
+                  if (id === "none") { setContaSel(null); setAtivas([]); setEncerradas([]); return; }
                   supabase.from("contas").select("*").eq("id", id).single().then(({ data }) => {
                     if (data) selecionarConta(data);
                     else toast.error("Conta não encontrada ou sem permissão");
@@ -215,14 +222,25 @@ export default function CriarOportunidadeDialog({
           {/* Aviso de oportunidade ativa existente */}
           {contaSel && ativas.length > 0 && (
             <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
-              <p className="text-sm flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-600 shrink-0" />
-                Esta conta já possui {ativas.length === 1 ? "uma oportunidade ativa" : `${ativas.length} oportunidades ativas`}:
+              <p className="text-sm flex items-start gap-2 font-medium text-amber-700 dark:text-amber-400">
+                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                Esta conta já possui {ativas.length === 1 ? "uma oportunidade aberta" : `${ativas.length} oportunidades abertas`}:
               </p>
-              <ul className="text-xs space-y-1 pl-6 list-disc">
+              <ul className="text-xs space-y-1 pl-6">
                 {ativas.map((o) => (
-                  <li key={o.id}>
-                    {o.titulo} — {format(new Date(o.created_at), "dd/MM/yyyy")}
+                  <li key={o.id} className="flex flex-wrap items-center gap-1.5">
+                    <a
+                      href={`/crm/oportunidades?op=${o.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-medium hover:underline"
+                    >
+                      {o.titulo}
+                    </a>
+                    <Badge variant="outline" className="text-[10px]">{estagioLabel(o.estagio)}</Badge>
+                    <span className="text-muted-foreground">
+                      resp.: {corretores.find((c) => c.id === o.corretor_id)?.nome ?? "—"} · criada em {format(new Date(o.created_at), "dd/MM/yyyy")}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -231,6 +249,14 @@ export default function CriarOportunidadeDialog({
                 É uma busca realmente diferente — criar outra oportunidade
               </label>
             </div>
+          )}
+
+          {contaSel && encerradas.length > 0 && (
+            <p className="text-[11px] text-muted-foreground">
+              Esta conta já teve {encerradas.length} oportunidade{encerradas.length > 1 ? "s" : ""} encerrada{encerradas.length > 1 ? "s" : ""}
+              {" "}({encerradas.map((o) => `${o.titulo} · ${estagioLabel(o.estagio)}`).join("; ")}).
+            </p>
+
           )}
 
           <div>

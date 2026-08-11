@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { findDuplicates, DuplicateMatch } from "@/lib/duplicates";
+import { findDuplicates, DuplicateMatch, isStrongMatch } from "@/lib/duplicates";
 import DuplicateAlert from "@/components/DuplicateAlert";
 import { SearchableSelect } from "@/components/SearchableSelect";
 import { ORIGENS_CARTEIRA } from "@/lib/contasFunil";
@@ -55,15 +55,16 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
   useEffect(() => {
     if (!open) return;
     const t = setTimeout(async () => {
-      if (!form.email && !form.telefone && !form.documento) {
+      if (!form.email && !form.telefone && !form.documento && form.nome.trim().length < 4) {
         setDuplicates([]);
         return;
       }
-      const m = await findDuplicates({ email: form.email, telefone: form.telefone, documento: form.documento });
+      const m = await findDuplicates({ email: form.email, telefone: form.telefone, documento: form.documento, nome: form.nome });
       setDuplicates(m);
     }, 400);
     return () => clearTimeout(t);
-  }, [form.email, form.telefone, form.documento, open]);
+  }, [form.email, form.telefone, form.documento, form.nome, open]);
+
 
   useEffect(() => {
     if (!open) {
@@ -72,11 +73,14 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
     }
   }, [open]);
 
+  const bloqueantes = duplicates.filter(isStrongMatch);
+
   const submit = async () => {
     if (!form.nome.trim()) return toast.error("Nome é obrigatório");
-    if (duplicates.length && !forceCreate) {
+    if (bloqueantes.length && !forceCreate) {
       return toast.error("Contato já cadastrado. Confirme abaixo para prosseguir.");
     }
+
     setSaving(true);
     const { data: auth } = await supabase.auth.getUser();
     const tags = new Set(defaultTags ?? []);
@@ -229,7 +233,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
           {duplicates.length > 0 && (
             <DuplicateAlert
               matches={duplicates}
-              showActions
+              showActions={bloqueantes.length > 0}
               onIgnore={() => setForceCreate(true)}
             />
           )}
@@ -239,7 +243,8 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
-          <Button onClick={submit} disabled={saving || (duplicates.length > 0 && !forceCreate)}>
+          <Button onClick={submit} disabled={saving || (bloqueantes.length > 0 && !forceCreate)}>
+
             {saving ? "Salvando…" : "Salvar"}
           </Button>
         </DialogFooter>
