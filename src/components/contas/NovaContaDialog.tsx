@@ -55,15 +55,16 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
   useEffect(() => {
     if (!open) return;
     const t = setTimeout(async () => {
-      if (!form.email && !form.telefone && !form.documento) {
+      if (!form.email && !form.telefone && !form.documento && form.nome.trim().length < 4) {
         setDuplicates([]);
         return;
       }
-      const m = await findDuplicates({ email: form.email, telefone: form.telefone, documento: form.documento });
+      const m = await findDuplicates({ email: form.email, telefone: form.telefone, documento: form.documento, nome: form.nome });
       setDuplicates(m);
     }, 400);
     return () => clearTimeout(t);
-  }, [form.email, form.telefone, form.documento, open]);
+  }, [form.email, form.telefone, form.documento, form.nome, open]);
+
 
   useEffect(() => {
     if (!open) {
