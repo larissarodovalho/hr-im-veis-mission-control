@@ -233,7 +233,7 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
           {duplicates.length > 0 && (
             <DuplicateAlert
               matches={duplicates}
-              showActions
+              showActions={bloqueantes.length > 0}
               onIgnore={() => setForceCreate(true)}
             />
           )}
@@ -243,7 +243,8 @@ export default function NovaContaDialog({ open, onOpenChange, onCreated, default
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
-          <Button onClick={submit} disabled={saving || (duplicates.length > 0 && !forceCreate)}>
+          <Button onClick={submit} disabled={saving || (bloqueantes.length > 0 && !forceCreate)}>
+
             {saving ? "Salvando…" : "Salvar"}
           </Button>
         </DialogFooter>
