@@ -245,6 +245,20 @@ export default function CarteiraDistribuicao() {
   };
 
   const confirmar = async () => {
+    if (!operacaoId) return;
+    setProcessando(true);
+    const { data, error } = await supabase.rpc("carteira_confirmar_distribuicao" as any, { _operacao_id: operacaoId });
+    if (error) {
+      toast.error("Distribuição não confirmada: " + error.message);
+    } else {
+      toast.success(`Distribuição confirmada: ${(data as any)?.atribuicoes ?? 0} contas atribuídas.`);
+      setOperacaoId(null);
+      setEtapa("config");
+      setLotesCfg([novoLote(), novoLote()]);
+      recarregarElegiveis();
+    }
+    setProcessando(false);
+  };
 
   return (
     <div className="p-4 md:p-8 space-y-4 md:space-y-6">
