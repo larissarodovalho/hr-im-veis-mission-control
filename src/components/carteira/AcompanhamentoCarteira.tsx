@@ -72,6 +72,22 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
     (modo === "gestor" && acao === "transferir") ||
     (modo === "solicitacao" && acao === "aprovar" && alvo?.solicitacao_tipo === "transferencia");
 
+  const confirmarCancelamentoLote = async () => {
+    if (!loteCancelar) return;
+    if (!motivoCancel.trim()) return toast.error("Informe o motivo do cancelamento.");
+    setCancelando(true);
+    try {
+      await cancelarLote(loteCancelar.lote_id, motivoCancel);
+      toast.success(`Lote cancelado. ${loteCancelar.total} conta(s) devolvida(s) à carteira.`);
+      setLoteCancelar(null);
+      setMotivoCancel("");
+      reload(); reloadLotes();
+    } catch (e: any) {
+      toast.error("Erro ao cancelar lote: " + e.message);
+    }
+    setCancelando(false);
+  };
+
   return (
     <div className="space-y-4 md:space-y-6">
       {(alertasGestor.some((a) => a.atrasadas > 0 || a.solicitacoes > 0) || devolucoesAuto.length > 0) && (
