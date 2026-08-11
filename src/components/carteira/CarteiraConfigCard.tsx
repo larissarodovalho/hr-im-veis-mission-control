@@ -99,6 +99,19 @@ export default function CarteiraConfigCard() {
               />
             </div>
 
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label>Placar visível para corretores</Label>
+                <p className="text-xs text-muted-foreground">
+                  Quando ligado, todos os corretores veem o ranking completo. Desligado, cada corretor vê apenas a própria posição.
+                </p>
+              </div>
+              <Switch
+                checked={form.ranking_visivel}
+                onCheckedChange={(v) => setForm({ ...form, ranking_visivel: v })}
+              />
+            </div>
+
             <Button onClick={salvar} disabled={salvando}>
               {salvando && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Salvar regras
