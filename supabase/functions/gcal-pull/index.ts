@@ -34,11 +34,11 @@ async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string
       if (isPrimaryCalendar && conn.sync_token) params.set("syncToken", conn.sync_token);
       else {
         // Janela limitada para evitar estouro de CPU em agendas com muitos eventos.
+        // Sem orderBy, para o Google devolver nextSyncToken e as próximas rodadas serem incrementais.
         const now = new Date();
         const max = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000); // próximos 90 dias
         params.set("timeMin", now.toISOString());
         params.set("timeMax", max.toISOString());
-        params.set("orderBy", "startTime");
       }
       if (pageToken) params.set("pageToken", pageToken);
 
@@ -54,13 +54,16 @@ async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string
       if (!r.ok) throw new Error(formatGoogleCalendarApiError(r.status, j));
 
       for (const ev of j.items ?? []) {
-        // Na agenda compartilhada, o mapeamento pode pertencer ao dono da agenda.
-        // Na agenda pessoal, "primary" não é global, então precisa ficar escopado ao usuário.
-        const mapQuery = supa.from("google_calendar_sync")
+        // O vínculo é procurado pelo ID do evento no Google, independente do calendário:
+        // o mesmo evento pode aparecer na agenda pessoal e na compartilhada, e filtrar por
+        // calendário fazia o CRM duplicar a reunião a cada rodada.
+        const { data: maps } = await supa.from("google_calendar_sync")
           .select("*")
-          .eq("calendar_id", calendarId)
-          .eq("google_event_id", ev.id);
-        const { data: map } = await (isSharedCalendar ? mapQuery : mapQuery.eq("user_id", user_id)).maybeSingle();
+          .eq("google_event_id", ev.id)
+          .order("created_at", { ascending: true });
+        const map = (maps ?? []).find((m: any) => m.user_id === user_id)
+          ?? (isSharedCalendar ? (maps ?? [])[0] : undefined);
+
 
         if (map && map.entity_type !== "reuniao") continue;
 
@@ -121,36 +124,61 @@ async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string
           console.log(`[gcal-pull] evento sem creator/organizer email (event ${ev.id}) — usando dono do calendário`);
         }
 
-        const { data: novaReuniao, error: insErr } = await supa.from("reunioes").insert({
-          titulo: ev.summary || "Evento Google",
-          agendada_para: startISO,
-          duracao_min,
-          local: ev.location ?? null,
-          link: ev.hangoutLink ?? null,
-          notas: ev.description ?? null,
-          corretor_id: user_id,
-          created_by: realCreator,
-          tipo: "presencial",
-          status: "agendada",
-          origem: "google_calendar",
-          google_owner_user_id: user_id,
-        }).select("id").single();
-        if (insErr || !novaReuniao) {
-          console.error("Falha ao criar reuniao a partir do Google", insErr);
-          continue;
+        const titulo = ev.summary || "Evento Google";
+
+        // Guarda extra contra duplicação: se já existe reunião equivalente desse usuário, só revincula.
+        const { data: existente } = await supa.from("reunioes")
+          .select("id")
+          .eq("origem", "google_calendar")
+          .eq("google_owner_user_id", user_id)
+          .eq("titulo", titulo)
+          .eq("agendada_para", startISO)
+          .maybeSingle();
+
+        let reuniaoId = existente?.id as string | undefined;
+
+        if (!reuniaoId) {
+          const { data: novaReuniao, error: insErr } = await supa.from("reunioes").insert({
+            titulo,
+            agendada_para: startISO,
+            duracao_min,
+            local: ev.location ?? null,
+            link: ev.hangoutLink ?? null,
+            notas: ev.description ?? null,
+            corretor_id: user_id,
+            created_by: realCreator,
+            tipo: "presencial",
+            status: "agendada",
+            origem: "google_calendar",
+            google_owner_user_id: user_id,
+          }).select("id").single();
+          if (insErr || !novaReuniao) {
+            console.error("Falha ao criar reuniao a partir do Google", insErr);
+            continue;
+          }
+          reuniaoId = novaReuniao.id;
         }
-        await supa.from("google_calendar_sync").insert({
+
+        const { error: mapErr } = await supa.from("google_calendar_sync").upsert({
           user_id,
           entity_type: "reuniao",
-          entity_id: novaReuniao.id,
+          entity_id: reuniaoId,
           google_event_id: ev.id,
           calendar_id: calendarId,
           etag: ev.etag ?? null,
           html_link: ev.htmlLink ?? null,
           last_synced_at: new Date().toISOString(),
-        });
+        }, { onConflict: "user_id,google_event_id" });
+
+        if (mapErr) {
+          // Sem vínculo gravado o evento voltaria a ser importado toda rodada: desfaz a criação.
+          console.error("Falha ao vincular evento Google, revertendo reuniao", mapErr);
+          if (!existente && reuniaoId) await supa.from("reunioes").delete().eq("id", reuniaoId);
+          continue;
+        }
         imported++;
       }
+
 
     }
     pageToken = j.nextPageToken;
