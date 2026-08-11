@@ -234,6 +234,8 @@ export default function CarteiraDistribuicao() {
 
       {aba === "acompanhamento" && <AcompanhamentoCarteira profiles={profiles} />}
 
+      {aba === "ranking" && <CarteiraRanking />}
+
       {aba === "historico" && <HistoricoDistribuicoes profiles={profiles} />}
 
       {aba === "distribuir" && etapa === "config" && (
