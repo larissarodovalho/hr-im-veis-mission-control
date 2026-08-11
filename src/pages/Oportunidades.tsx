@@ -396,6 +396,13 @@ export default function Oportunidades() {
         <Badge variant="secondary">{ativas} ativas</Badge>
         {paradas > 0 && <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30">{paradas} sem ação &gt; 7 dias</Badge>}
         {vinculoPendente > 0 && <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/30">{vinculoPendente} sem conta vinculada</Badge>}
+        {gruposDuplicados > 0 && (isAdmin || isGestor) && (
+          <button onClick={() => setDupOpen(true)}>
+            <Badge variant="outline" className="bg-purple-500/10 text-purple-600 border-purple-500/30 cursor-pointer hover:bg-purple-500/20">
+              <Merge className="h-3 w-3 mr-1" /> {gruposDuplicados} cliente{gruposDuplicados > 1 ? "s" : ""} com oportunidades duplicadas — unificar
+            </Badge>
+          </button>
+        )}
       </div>
 
       {(isAdmin || isGestor) && <MigracaoLegadasPanel />}
