@@ -58,6 +58,8 @@ export default function OportunidadeDetailDialog({
   const [propostas, setPropostas] = useState<any[]>([]);
   const [tarefas, setTarefas] = useState<any[]>([]);
   const [historico, setHistorico] = useState<any[]>([]);
+  const [reunioes, setReunioes] = useState<any[]>([]);
+  const [ligacoes, setLigacoes] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
@@ -84,13 +86,17 @@ export default function OportunidadeDetailDialog({
   const nomeDe = (uid?: string | null) => (uid ? profiles[uid] ?? "—" : "—");
 
   const reload = async (id: string) => {
-    const [{ data: o }, { data: vi }, { data: vs }, { data: pr }, { data: ta }, { data: hi }] = await Promise.all([
-      supabase.from("oportunidades").select("*").eq("id", id).single(),
+    const { data: o } = await supabase.from("oportunidades").select("*").eq("id", id).single();
+    const contaId = (o as any)?.conta_id || ((o as any)?.cliente_tipo === "conta" ? (o as any)?.cliente_id : null);
+    const orFiltro = contaId ? `oportunidade_id.eq.${id},conta_id.eq.${contaId}` : `oportunidade_id.eq.${id}`;
+    const [{ data: vi }, { data: vs }, { data: pr }, { data: ta }, { data: hi }, { data: re }, { data: li }] = await Promise.all([
       supabase.from("oportunidade_imoveis").select("*").eq("oportunidade_id", id).order("created_at"),
       supabase.from("oportunidade_visitas").select("*").eq("oportunidade_id", id).order("data_visita", { ascending: false }),
       supabase.from("oportunidade_propostas").select("*").eq("oportunidade_id", id).order("created_at", { ascending: false }),
-      supabase.from("tarefas").select("*").eq("oportunidade_id", id).order("prazo", { ascending: true }),
-      supabase.from("interacoes").select("*").eq("oportunidade_id", id).order("created_at", { ascending: false }).limit(100),
+      supabase.from("tarefas").select("*").or(orFiltro).order("prazo", { ascending: true }),
+      supabase.from("interacoes").select("*").or(orFiltro).order("created_at", { ascending: false }).limit(100),
+      supabase.from("reunioes").select("*").or(orFiltro).order("agendada_para", { ascending: false }).limit(50),
+      supabase.from("ligacoes").select("*").or(orFiltro).order("data", { ascending: false }).limit(50),
     ]);
     if (o) { setOp(o); setForm(o); }
     setVinculos(vi ?? []);
@@ -98,17 +104,19 @@ export default function OportunidadeDetailDialog({
     setPropostas((pr ?? []) as any[]);
     setTarefas((ta ?? []) as any[]);
     setHistorico((hi ?? []) as any[]);
-    const contaId = o?.conta_id || (o?.cliente_tipo === "conta" ? o?.cliente_id : null);
+    setReunioes((re ?? []) as any[]);
+    setLigacoes((li ?? []) as any[]);
     if (contaId) {
       const { data: c } = await supabase.from("contas").select("id,nome,categoria,origem,telefone,email").eq("id", contaId).maybeSingle();
       setConta(c);
     } else setConta(null);
-    const leadId = o?.lead_id_origem || (o?.cliente_tipo === "lead" ? o?.cliente_id : null);
+    const leadId = (o as any)?.lead_id_origem || ((o as any)?.cliente_tipo === "lead" ? (o as any)?.cliente_id : null);
     if (leadId) {
       const { data: l } = await supabase.from("leads").select("nome").eq("id", leadId).maybeSingle();
       setLeadNome(l?.nome ?? "");
     } else setLeadNome("");
   };
+
 
   useEffect(() => {
     if (!open || !oportunidade) return;
@@ -726,7 +734,32 @@ export default function OportunidadeDetailDialog({
                 </Card>
               ))}
             </div>
+
+            {(reunioes.length > 0 || ligacoes.length > 0) && (
+              <div className="border-t pt-3 space-y-2">
+                <p className="text-sm font-medium">Reuniões e ligações da conta</p>
+                {reunioes.map((r) => (
+                  <div key={r.id} className="flex items-center justify-between gap-2 border rounded-md p-2.5 text-sm">
+                    <div className="min-w-0">
+                      <p className="truncate">{r.titulo || "Reunião"}</p>
+                      <p className="text-[11px] text-muted-foreground">{fmtDt(r.agendada_para)} · {nomeDe(r.corretor_id)}{r.local ? ` · ${r.local}` : ""}</p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px]">{r.status || "agendada"}</Badge>
+                  </div>
+                ))}
+                {ligacoes.map((l) => (
+                  <div key={l.id} className="flex items-center justify-between gap-2 border rounded-md p-2.5 text-sm">
+                    <div className="min-w-0">
+                      <p className="truncate">{l.notas || "Ligação"}</p>
+                      <p className="text-[11px] text-muted-foreground">{fmtDt(l.data)} · {nomeDe(l.corretor_id)}</p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px]">{l.resultado || "—"}</Badge>
+                  </div>
+                ))}
+              </div>
+            )}
           </TabsContent>
+
 
           {/* ================= PROPOSTAS ================= */}
           <TabsContent value="propostas" className="mt-4 space-y-3">
@@ -887,7 +920,10 @@ export default function OportunidadeDetailDialog({
                 <div key={t.id} className="flex items-center justify-between gap-2 border rounded-md p-2.5 text-sm">
                   <div className="min-w-0">
                     <p className={t.status === "Concluída" ? "line-through text-muted-foreground" : ""}>{t.titulo}</p>
-                    <p className="text-[11px] text-muted-foreground">{fmtDt(t.prazo)} · {nomeDe(t.responsavel_id)}</p>
+                    <p className="text-[11px] text-muted-foreground flex items-center gap-2 flex-wrap">
+                      <span>{fmtDt(t.prazo)} · {nomeDe(t.responsavel_id)}</span>
+                      <Badge variant="outline" className="text-[10px]">{t.oportunidade_id ? "Oportunidade" : "Conta"}</Badge>
+                    </p>
                   </div>
                   {t.status !== "Concluída" && (
                     <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => concluirTarefa(t.id)}>Concluir</Button>
@@ -904,7 +940,10 @@ export default function OportunidadeDetailDialog({
               {historico.map((h) => (
                 <div key={h.id} className="border-l-2 border-border pl-3 py-1">
                   <p className="text-sm">{h.descricao}</p>
-                  <p className="text-[11px] text-muted-foreground">{fmtDt(h.created_at)} · {nomeDe(h.created_by)}</p>
+                  <p className="text-[11px] text-muted-foreground flex items-center gap-2 flex-wrap">
+                    <span>{fmtDt(h.created_at)} · {nomeDe(h.created_by)}</span>
+                    <Badge variant="outline" className="text-[10px]">{h.oportunidade_id ? "Oportunidade" : "Conta"}</Badge>
+                  </p>
                 </div>
               ))}
               {historico.length === 0 && <p className="text-sm text-muted-foreground">Nenhum registro ainda.</p>}

@@ -2035,6 +2035,7 @@ export type Database = {
           id: string
           lead_id: string | null
           notas: string | null
+          oportunidade_id: string | null
           origem: string
           publicado_no_crm: boolean
           resultado: string | null
@@ -2051,6 +2052,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           notas?: string | null
+          oportunidade_id?: string | null
           origem?: string
           publicado_no_crm?: boolean
           resultado?: string | null
@@ -2067,11 +2069,20 @@ export type Database = {
           id?: string
           lead_id?: string | null
           notas?: string | null
+          oportunidade_id?: string | null
           origem?: string
           publicado_no_crm?: boolean
           resultado?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ligacoes_oportunidade_id_fkey"
+            columns: ["oportunidade_id"]
+            isOneToOne: false
+            referencedRelation: "oportunidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       meta_ads_imoveis: {
         Row: {
@@ -2547,6 +2558,7 @@ export type Database = {
           proxima_acao: string | null
           status: string
           updated_at: string
+          visita_id: string | null
         }
         Insert: {
           conta_id?: string | null
@@ -2566,6 +2578,7 @@ export type Database = {
           proxima_acao?: string | null
           status?: string
           updated_at?: string
+          visita_id?: string | null
         }
         Update: {
           conta_id?: string | null
@@ -2585,6 +2598,7 @@ export type Database = {
           proxima_acao?: string | null
           status?: string
           updated_at?: string
+          visita_id?: string | null
         }
         Relationships: [
           {
@@ -2952,6 +2966,7 @@ export type Database = {
           link: string | null
           local: string | null
           notas: string | null
+          oportunidade_id: string | null
           origem: string
           publicado_no_crm: boolean
           recorrencia_id: string | null
@@ -2976,6 +2991,7 @@ export type Database = {
           link?: string | null
           local?: string | null
           notas?: string | null
+          oportunidade_id?: string | null
           origem?: string
           publicado_no_crm?: boolean
           recorrencia_id?: string | null
@@ -3000,6 +3016,7 @@ export type Database = {
           link?: string | null
           local?: string | null
           notas?: string | null
+          oportunidade_id?: string | null
           origem?: string
           publicado_no_crm?: boolean
           recorrencia_id?: string | null
@@ -3009,7 +3026,15 @@ export type Database = {
           titulo?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "reunioes_oportunidade_id_fkey"
+            columns: ["oportunidade_id"]
+            isOneToOne: false
+            referencedRelation: "oportunidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       signed_documents: {
         Row: {
@@ -3587,6 +3612,8 @@ export type Database = {
           imovel_id: string | null
           lead_id: string | null
           observacoes: string | null
+          oportunidade_id: string | null
+          oportunidade_visita_id: string | null
           origem: string
           publicado_no_crm: boolean
           status: string
@@ -3603,6 +3630,8 @@ export type Database = {
           imovel_id?: string | null
           lead_id?: string | null
           observacoes?: string | null
+          oportunidade_id?: string | null
+          oportunidade_visita_id?: string | null
           origem?: string
           publicado_no_crm?: boolean
           status?: string
@@ -3619,6 +3648,8 @@ export type Database = {
           imovel_id?: string | null
           lead_id?: string | null
           observacoes?: string | null
+          oportunidade_id?: string | null
+          oportunidade_visita_id?: string | null
           origem?: string
           publicado_no_crm?: boolean
           status?: string
@@ -3651,6 +3682,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitas_oportunidade_id_fkey"
+            columns: ["oportunidade_id"]
+            isOneToOne: false
+            referencedRelation: "oportunidades"
             referencedColumns: ["id"]
           },
         ]
@@ -4200,6 +4238,7 @@ export type Database = {
           responsavel_nome: string
         }[]
       }
+      conta_da_oportunidade: { Args: { _op_id: string }; Returns: string }
       conta_tem_captacao: { Args: { _conta_id: string }; Returns: boolean }
       criar_oportunidade_qualificada: {
         Args: { p_chave: string; p_conta_id: string; p_payload: Json }
@@ -4265,6 +4304,10 @@ export type Database = {
         Returns: number
       }
       normalize_br_phone: { Args: { p: string }; Returns: string }
+      oportunidade_ativa_da_conta: {
+        Args: { _conta_id: string }
+        Returns: string
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -4288,6 +4331,8 @@ export type Database = {
         Args: { _menu_key: string; _user_id: string }
         Returns: boolean
       }
+      visita_status_para_conta: { Args: { _s: string }; Returns: string }
+      visita_status_para_oportunidade: { Args: { _s: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "gestor" | "corretor" | "marketing" | "secretaria"
