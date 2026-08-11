@@ -19,9 +19,14 @@ export type DuplicateMatch = {
   telefone: string | null;
   documento?: string | null;
   etapa?: string | null;
+  categoria?: string | null;
   responsavel_nome?: string | null;
   matchedBy: ("email" | "telefone" | "documento" | "nome")[];
 };
+
+/** Match forte (telefone/e-mail/documento) bloqueia o cadastro; só nome apenas avisa. */
+export const isStrongMatch = (m: DuplicateMatch) => m.matchedBy.some((b) => b !== "nome");
+
 
 /**
  * Procura duplicidades em leads e contas por telefone (normalizado) e e-mail.
