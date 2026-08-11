@@ -24,6 +24,7 @@ import Leads from "@/pages/Leads";
 import LeadDetail from "@/pages/LeadDetail";
 import Accounts from "@/pages/Accounts";
 import AccountDetail from "@/pages/AccountDetail";
+import MinhaCarteira from "./pages/MinhaCarteira";
 import CarteiraDistribuicao from "@/pages/CarteiraDistribuicao";
 import Imoveis from "@/pages/Imoveis";
 import Oportunidades from "@/pages/Oportunidades";
@@ -105,6 +106,7 @@ const App = () => (
               <Route path="contas" element={<MarketingRoute menuKey="contas"><Accounts /></MarketingRoute>} />
               <Route path="contas/:id" element={<AccountDetail />} />
               <Route path="carteira" element={<StaffRoute><CarteiraDistribuicao /></StaffRoute>} />
+              <Route path="minha-carteira" element={<MinhaCarteira />} />
               <Route path="imoveis" element={<Imoveis />} />
               <Route path="oportunidades" element={<MarketingRoute menuKey="oportunidades"><Oportunidades /></MarketingRoute>} />
               <Route path="whatsapp" element={<MarketingRoute menuKey="whatsapp"><WhatsApp /></MarketingRoute>} />

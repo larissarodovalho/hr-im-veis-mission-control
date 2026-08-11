@@ -18,6 +18,7 @@ import {
   buscarElegiveis, contarElegiveis, criarOperacao, usePreviaOperacao, useCorretores, useProfilesMap,
   type ContaElegivel, type FiltrosCarteira, type LoteConfig, type ModoSelecao,
 } from "@/hooks/useCarteira";
+import AcompanhamentoCarteira from "@/components/carteira/AcompanhamentoCarteira";
 
 const MODOS: { id: ModoSelecao; titulo: string; desc: string }[] = [
   { id: "automatico", titulo: "Automática aleatória", desc: "O sistema sorteia as contas elegíveis e divide entre os lotes." },
@@ -41,6 +42,7 @@ export default function CarteiraDistribuicao() {
   const { corretores } = useCorretores();
   const profiles = useProfilesMap();
 
+  const [aba, setAba] = useState<"distribuir" | "acompanhamento">("distribuir");
   const [etapa, setEtapa] = useState<"config" | "selecao">("config");
   const [modo, setModo] = useState<ModoSelecao>("automatico");
   const [lotesCfg, setLotesCfg] = useState<LoteConfig[]>([novoLote(), novoLote()]);
