@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Loader2, AlertTriangle, RotateCcw, ArrowLeftRight } from "lucide-react";
 import CarteiraMetasCard from "@/components/carteira/CarteiraMetasCard";
+import LoteContatosDialog from "@/components/carteira/LoteContatosDialog";
 import { toast } from "sonner";
 import { fmtDate, fmtDateTime } from "@/lib/datetime";
 import {
@@ -33,6 +34,7 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
 
   // Cancelar lote ativo
   const [loteCancelar, setLoteCancelar] = useState<ResumoLote | null>(null);
+  const [loteAberto, setLoteAberto] = useState<ResumoLote | null>(null);
   const [motivoCancel, setMotivoCancel] = useState("");
   const [cancelando, setCancelando] = useState(false);
 
@@ -168,7 +170,11 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
                 {lotes.map((l) => (
                   <TableRow key={l.lote_id}
                     className={l.total > 0 && l.atrasadas / l.total >= 0.3 ? "bg-destructive/5" : undefined}>
-                    <TableCell className="font-medium">{l.lote_nome}</TableCell>
+                    <TableCell className="font-medium">
+                      <button className="text-left hover:underline text-primary" onClick={() => setLoteAberto(l)}>
+                        {l.lote_nome}
+                      </button>
+                    </TableCell>
                     <TableCell>{profiles[l.corretor_id] ?? "—"}</TableCell>
                     <TableCell>{l.total}</TableCell>
                     <TableCell>{l.pendentes}</TableCell>
@@ -180,7 +186,11 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
                     <TableCell>{l.transferidas}</TableCell>
                     <TableCell>{l.solicitacoes}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{fmtDate(l.criado_em)}</TableCell>
-                    <TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <Button size="sm" variant="ghost" className="h-7 text-xs"
+                        onClick={() => setLoteAberto(l)}>
+                        Ver contatos
+                      </Button>
                       <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive hover:text-destructive"
                         disabled={cancelando}
                         onClick={() => { setLoteCancelar(l); setMotivoCancel(""); }}>
@@ -310,6 +320,14 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <LoteContatosDialog
+        loteId={loteAberto?.lote_id ?? null}
+        loteNome={loteAberto?.lote_nome}
+        corretorId={loteAberto?.corretor_id}
+        corretorNome={loteAberto ? profiles[loteAberto.corretor_id] : null}
+        onClose={() => setLoteAberto(null)}
+      />
 
       {/* Dialog: Cancelar lote ativo */}
       <Dialog open={!!loteCancelar} onOpenChange={(v) => !v && setLoteCancelar(null)}>
