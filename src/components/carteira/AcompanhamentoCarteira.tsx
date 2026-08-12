@@ -321,6 +321,14 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
         </DialogContent>
       </Dialog>
 
+      <LoteContatosDialog
+        loteId={loteAberto?.lote_id ?? null}
+        loteNome={loteAberto?.lote_nome}
+        corretorId={loteAberto?.corretor_id}
+        corretorNome={loteAberto ? profiles[loteAberto.corretor_id] : null}
+        onClose={() => setLoteAberto(null)}
+      />
+
       {/* Dialog: Cancelar lote ativo */}
       <Dialog open={!!loteCancelar} onOpenChange={(v) => !v && setLoteCancelar(null)}>
         <DialogContent className="max-w-sm">
