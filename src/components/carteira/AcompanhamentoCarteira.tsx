@@ -33,6 +33,7 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
 
   // Cancelar lote ativo
   const [loteCancelar, setLoteCancelar] = useState<ResumoLote | null>(null);
+  const [loteAberto, setLoteAberto] = useState<ResumoLote | null>(null);
   const [motivoCancel, setMotivoCancel] = useState("");
   const [cancelando, setCancelando] = useState(false);
 
