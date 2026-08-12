@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Loader2, AlertTriangle, RotateCcw, ArrowLeftRight } from "lucide-react";
 import CarteiraMetasCard from "@/components/carteira/CarteiraMetasCard";
+import LoteContatosDialog from "@/components/carteira/LoteContatosDialog";
 import { toast } from "sonner";
 import { fmtDate, fmtDateTime } from "@/lib/datetime";
 import {
