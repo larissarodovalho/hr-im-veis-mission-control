@@ -185,7 +185,11 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
                     <TableCell>{l.transferidas}</TableCell>
                     <TableCell>{l.solicitacoes}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{fmtDate(l.criado_em)}</TableCell>
-                    <TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <Button size="sm" variant="ghost" className="h-7 text-xs"
+                        onClick={() => setLoteAberto(l)}>
+                        Ver contatos
+                      </Button>
                       <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive hover:text-destructive"
                         disabled={cancelando}
                         onClick={() => { setLoteCancelar(l); setMotivoCancel(""); }}>
