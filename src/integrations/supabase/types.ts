@@ -410,12 +410,14 @@ export type Database = {
       carteira_atribuicoes: {
         Row: {
           atribuida_em: string
+          categoria_anterior: string | null
           conta_id: string
           contato_estabelecido_em: string | null
           corretor_id: string
           corretor_original_id: string
           created_at: string
           created_by: string | null
+          data_entrada_carteira_anterior: string | null
           encerrada_em: string | null
           gestor_id: string | null
           id: string
@@ -432,6 +434,7 @@ export type Database = {
           primeira_atividade_em: string | null
           proxima_acao: string | null
           proxima_acao_em: string | null
+          responsavel_anterior_id: string | null
           resultado: string | null
           solicitacao_em: string | null
           solicitacao_motivo: string | null
@@ -443,12 +446,14 @@ export type Database = {
         }
         Insert: {
           atribuida_em?: string
+          categoria_anterior?: string | null
           conta_id: string
           contato_estabelecido_em?: string | null
           corretor_id: string
           corretor_original_id: string
           created_at?: string
           created_by?: string | null
+          data_entrada_carteira_anterior?: string | null
           encerrada_em?: string | null
           gestor_id?: string | null
           id?: string
@@ -465,6 +470,7 @@ export type Database = {
           primeira_atividade_em?: string | null
           proxima_acao?: string | null
           proxima_acao_em?: string | null
+          responsavel_anterior_id?: string | null
           resultado?: string | null
           solicitacao_em?: string | null
           solicitacao_motivo?: string | null
@@ -476,12 +482,14 @@ export type Database = {
         }
         Update: {
           atribuida_em?: string
+          categoria_anterior?: string | null
           conta_id?: string
           contato_estabelecido_em?: string | null
           corretor_id?: string
           corretor_original_id?: string
           created_at?: string
           created_by?: string | null
+          data_entrada_carteira_anterior?: string | null
           encerrada_em?: string | null
           gestor_id?: string | null
           id?: string
@@ -498,6 +506,7 @@ export type Database = {
           primeira_atividade_em?: string | null
           proxima_acao?: string | null
           proxima_acao_em?: string | null
+          responsavel_anterior_id?: string | null
           resultado?: string | null
           solicitacao_em?: string | null
           solicitacao_motivo?: string | null
