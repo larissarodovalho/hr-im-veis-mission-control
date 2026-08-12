@@ -168,7 +168,11 @@ export default function AcompanhamentoCarteira({ profiles }: { profiles: Record<
                 {lotes.map((l) => (
                   <TableRow key={l.lote_id}
                     className={l.total > 0 && l.atrasadas / l.total >= 0.3 ? "bg-destructive/5" : undefined}>
-                    <TableCell className="font-medium">{l.lote_nome}</TableCell>
+                    <TableCell className="font-medium">
+                      <button className="text-left hover:underline text-primary" onClick={() => setLoteAberto(l)}>
+                        {l.lote_nome}
+                      </button>
+                    </TableCell>
                     <TableCell>{profiles[l.corretor_id] ?? "—"}</TableCell>
                     <TableCell>{l.total}</TableCell>
                     <TableCell>{l.pendentes}</TableCell>
