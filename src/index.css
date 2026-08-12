@@ -114,7 +114,7 @@
 
   h1, h2, h3, h4 {
     font-family: 'Montserrat', system-ui, sans-serif;
-    font-weight: 300;
+    font-weight: 500;
     @apply tracking-tight;
   }
 }
@@ -127,7 +127,7 @@
   .section-title {
     @apply text-2xl tracking-tight text-foreground;
     font-family: 'Montserrat', system-ui, sans-serif;
-    font-weight: 300;
+    font-weight: 500;
   }
 
   .gold-accent { color: hsl(var(--accent)); }
