@@ -184,8 +184,48 @@ export async function gerarPdfApresentacao(
     if (!estreito) doc.text(`${pagina}/${total}`, (esquerda + PAGE_W - MARGIN) / 2, PAGE_H - 8, { align: "center" });
   };
 
+  /** Desenha a faixa de contato escura no rodapé da última página. */
+  const desenharFaixaContato = (colW: number) => {
+    const faixaH = 26;
+    const faixaY = PAGE_H - 20 - faixaH;
+    doc.setFillColor(...PRETO);
+    doc.roundedRect(MARGIN, faixaY, PAGE_W - MARGIN * 2, faixaH, 3, 3, "F");
+    doc.setTextColor(255, 255, 255);
+    kickerBranco(doc, "FALE COM O CORRETOR", MARGIN + 10, faixaY + 9);
+    doc.setFontSize(11);
+    doc.setTextColor(255, 255, 255);
+    doc.text(doc.splitTextToSize(corretor?.nome || "HR Imóveis", colW)[0], MARGIN + 10, faixaY + 18);
+    const contatoDir = [corretor?.telefone, corretor?.email].filter(Boolean).join("  ·  ");
+    if (contatoDir) {
+      doc.setFontSize(9);
+      doc.text(contatoDir, MARGIN + 95, faixaY + 18);
+    }
+    doc.setFontSize(9);
+    doc.text("HR Imóveis · hrimoveis.com", PAGE_W - MARGIN - 10, faixaY + 12, { align: "right" });
+    doc.setFontSize(8);
+    doc.text(CRECI_HR, PAGE_W - MARGIN - 10, faixaY + 19, { align: "right" });
+  };
+
+  // ---- Pré-cálculo: quantas páginas de overflow a descrição precisa -------------------
+  const colW = (PAGE_W - MARGIN * 2 - 14) / 2;
+  const topoConteudo = 38;
+  const limiteInferior = PAGE_H - 52;
+  const maxLinhasDesc = Math.floor((limiteInferior - topoConteudo - 22) / 5.6);
+  const todasLinhasDesc = descricao ? doc.splitTextToSize(descricao, colW - 16) : [];
+  const linhasDescCol = descricao
+    ? todasLinhasDesc.slice(0, maxLinhasDesc)
+    : ["Fale com o corretor para mais detalhes."];
+  const linhasDescOverflow = descricao ? todasLinhasDesc.slice(maxLinhasDesc) : [];
+
+  // Capacidade de uma página de continuação (largura total)
+  const maxLinhasCont = Math.floor((PAGE_H - 52 - 38) / 5.6);
+  const numPaginasOverflow = linhasDescOverflow.length > 0
+    ? Math.ceil(linhasDescOverflow.length / maxLinhasCont)
+    : 0;
+
   const temGaleria = fotos.length > 1;
-  const totalPaginas = 2 + (temGaleria ? 1 : 0);
+  const totalPaginas = 2 + (temGaleria ? 1 : 0) + numPaginasOverflow;
+  let paginaAtual = 1;
 
   // ---------------------------------------------------------------- PÁGINA 1 — CAPA
   const capaW = 165;
@@ -301,11 +341,12 @@ export async function gerarPdfApresentacao(
     doc.text(doc.splitTextToSize(contatoLinha, pw - 14)[0], px + 7, cardY + 21.5);
   }
 
-  rodape(1, totalPaginas, px);
+  rodape(paginaAtual, totalPaginas, px);
 
   // ---------------------------------------------------------------- PÁGINA 2 — GALERIA
   if (temGaleria) {
     doc.addPage();
+    paginaAtual++;
     kicker("GALERIA", MARGIN, 20);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
@@ -339,12 +380,12 @@ export async function gerarPdfApresentacao(
       const dataUrl = await imagemRecortada(restantes[i], s.w, s.h, 2.5);
       if (dataUrl) doc.addImage(dataUrl, "JPEG", s.x, s.y, s.w, s.h);
     }
-    rodape(2, totalPaginas);
+    rodape(paginaAtual, totalPaginas);
   }
 
-  // ---------------------------------------------------------------- PÁGINA FINAL — DETALHES
+  // ---------------------------------------------------------------- PÁGINA DE DETALHES
   doc.addPage();
-  const colW = (PAGE_W - MARGIN * 2 - 14) / 2;
+  paginaAtual++;
   const colDir = MARGIN + colW + 14;
 
   kicker("DETALHES DO IMÓVEL", MARGIN, 20);
@@ -355,24 +396,16 @@ export async function gerarPdfApresentacao(
   doc.setFont("helvetica", "normal");
   desenharLogo(PAGE_W - MARGIN, 14, 13, "right");
 
-  const topoConteudo = 38;
-  const limiteInferior = PAGE_H - 52;
-
-  // Coluna esquerda — descrição
-  doc.setFontSize(9.5);
-  const maxLinhasDesc = Math.floor((limiteInferior - topoConteudo - 22) / 5.6);
-  const linhasDesc = descricao
-    ? doc.splitTextToSize(descricao, colW - 16).slice(0, maxLinhasDesc)
-    : ["Fale com o corretor para mais detalhes."];
-  const alturaPainel = Math.min(limiteInferior - topoConteudo, 26 + linhasDesc.length * 5.6);
+  // Coluna esquerda — descrição (parcial se houver overflow)
+  const alturaPainel = Math.min(limiteInferior - topoConteudo, 26 + linhasDescCol.length * 5.6);
   doc.setFillColor(...AREIA);
   doc.roundedRect(MARGIN, topoConteudo, colW, alturaPainel, 3, 3, "F");
   kicker("SOBRE O IMÓVEL", MARGIN + 8, topoConteudo + 10);
   doc.setFontSize(9.5);
   doc.setTextColor(descricao ? PRETO[0] : CINZA[0], descricao ? PRETO[1] : CINZA[1], descricao ? PRETO[2] : CINZA[2]);
-  doc.text(linhasDesc, MARGIN + 8, topoConteudo + 18, { lineHeightFactor: 1.5 });
+  doc.text(linhasDescCol, MARGIN + 8, topoConteudo + 18, { lineHeightFactor: 1.5 });
 
-  // Coluna direita
+  // Coluna direita — condições e características
   let dy = topoConteudo;
   const tituloSecao = (texto: string, yy: number) => {
     kicker(texto, colDir, yy);
@@ -418,27 +451,51 @@ export async function gerarPdfApresentacao(
     });
   }
 
-  // Faixa de contato
-  const faixaH = 26;
-  const faixaY = PAGE_H - 20 - faixaH;
-  doc.setFillColor(...PRETO);
-  doc.roundedRect(MARGIN, faixaY, PAGE_W - MARGIN * 2, faixaH, 3, 3, "F");
-  doc.setTextColor(255, 255, 255);
-  kickerBranco(doc, "FALE COM O CORRETOR", MARGIN + 10, faixaY + 9);
-  doc.setFontSize(11);
-  doc.setTextColor(255, 255, 255);
-  doc.text(doc.splitTextToSize(corretor?.nome || "HR Imóveis", colW)[0], MARGIN + 10, faixaY + 18);
-  const contatoDir = [corretor?.telefone, corretor?.email].filter(Boolean).join("  ·  ");
-  if (contatoDir) {
-    doc.setFontSize(9);
-    doc.text(contatoDir, MARGIN + 95, faixaY + 18);
+  if (numPaginasOverflow > 0) {
+    // A descrição continua nas próximas páginas — apenas rodapé aqui
+    rodape(paginaAtual, totalPaginas);
+  } else {
+    // Sem overflow: faixa de contato + rodapé na própria página de detalhes
+    desenharFaixaContato(colW);
+    rodape(paginaAtual, totalPaginas);
   }
-  doc.setFontSize(9);
-  doc.text("HR Imóveis · hrimoveis.com", PAGE_W - MARGIN - 10, faixaY + 12, { align: "right" });
-  doc.setFontSize(8);
-  doc.text(CRECI_HR, PAGE_W - MARGIN - 10, faixaY + 19, { align: "right" });
 
-  rodape(totalPaginas, totalPaginas);
+  // ---------------------------------------------------------------- PÁGINAS DE CONTINUAÇÃO DA DESCRIÇÃO
+  if (linhasDescOverflow.length > 0) {
+    const fullW = PAGE_W - MARGIN * 2;
+    let idx = 0;
+    for (let p = 0; p < numPaginasOverflow; p++) {
+      doc.addPage();
+      paginaAtual++;
+      const isLast = p === numPaginasOverflow - 1;
+      const linhasPagina = linhasDescOverflow.slice(idx, idx + maxLinhasCont);
+      idx += maxLinhasCont;
+
+      // Cabeçalho
+      kicker("SOBRE O IMÓVEL · CONTINUAÇÃO", MARGIN, 20);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(...PRETO);
+      doc.text(doc.splitTextToSize(String(imovel.titulo || ""), fullW - 60)[0], MARGIN, 28);
+      doc.setFont("helvetica", "normal");
+      desenharLogo(PAGE_W - MARGIN, 14, 13, "right");
+
+      // Painel da descrição — altura ajustada conforme é a última página (precisa espaço para a faixa)
+      const yDesc = 38;
+      const limiteDesc = isLast ? PAGE_H - 52 - 32 : PAGE_H - 30;
+      const alturaPainelCont = Math.min(limiteDesc - yDesc, 14 + linhasPagina.length * 5.6);
+      doc.setFillColor(...AREIA);
+      doc.roundedRect(MARGIN, yDesc, fullW, alturaPainelCont, 3, 3, "F");
+      doc.setFontSize(9.5);
+      doc.setTextColor(...PRETO);
+      doc.text(linhasPagina, MARGIN + 8, yDesc + 14, { lineHeightFactor: 1.5 });
+
+      if (isLast) {
+        desenharFaixaContato(colW);
+      }
+      rodape(paginaAtual, totalPaginas);
+    }
+  }
 
   doc.save(`apresentacao-${slug(imovel.codigo || imovel.titulo)}.pdf`);
 }
