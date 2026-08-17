@@ -182,8 +182,12 @@ export default function ApresentacaoImovelDialog({ open, onOpenChange, imovel, o
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="gap-2 sm:gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button variant="secondary" onClick={gerarPdf} disabled={gerando || saving || loading}>
+            {gerando ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
+            Gerar PDF
+          </Button>
           <Button onClick={salvar} disabled={saving || loading}>
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Salvar apresentação
           </Button>
