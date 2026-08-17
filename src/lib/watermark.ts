@@ -31,8 +31,8 @@ export async function applyWatermark(
   const {
     opacity = 0.35,
     widthRatio = 0.38,
-    quality = 0.9,
-    maxDimension = 2400,
+    quality = 0.8,
+    maxDimension = 1920,
   } = opts;
 
   // Só processa imagens raster
