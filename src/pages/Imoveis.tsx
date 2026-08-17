@@ -541,6 +541,8 @@ export default function Imoveis() {
           <TabsTrigger value="oportunidades">Oportunidades de Negócio</TabsTrigger>
           <TabsTrigger value="captacao">Captação</TabsTrigger>
           <TabsTrigger value="parceiros">Parceiros</TabsTrigger>
+          <TabsTrigger value="links">Links temporários</TabsTrigger>
+
         </TabsList>
 
 
@@ -590,7 +592,18 @@ export default function Imoveis() {
         <TabsContent value="parceiros" className="mt-4">
           <ParceirosTab />
         </TabsContent>
+
+        <TabsContent value="links" className="mt-4">
+          <LinksCompartilhadosTab />
+        </TabsContent>
       </Tabs>
+
+      <CompartilharImovelDialog
+        open={!!sharing}
+        onOpenChange={(v) => { if (!v) setSharing(null); }}
+        imoveis={sharing ? [{ id: sharing.id, titulo: sharing.titulo }] : []}
+      />
+
 
       <NovoImovelDialog open={openNew} onOpenChange={setOpenNew} onCreated={load} />
       <EditarImovelDialog
