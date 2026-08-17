@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.imovel_links_performance(timestamptz,timestamptz,uuid,text,uuid,uuid,text,text,text,text,text) TO service_role, postgres;
