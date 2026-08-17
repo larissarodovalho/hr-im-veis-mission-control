@@ -198,7 +198,10 @@ Deno.serve(async (req) => {
     sistema_operacional,
     referrer: req.headers.get("referer"),
     user_agent: ua.slice(0, 500),
-    metadata: (body.metadata && typeof body.metadata === "object") ? body.metadata : {},
+    metadata: {
+      ...((body.metadata && typeof body.metadata === "object") ? body.metadata : {}),
+      bot: ehBot, // prévias e crawlers ficam marcados e fora das métricas
+    },
   });
 
   if (action === "open" && !ehBot) {
