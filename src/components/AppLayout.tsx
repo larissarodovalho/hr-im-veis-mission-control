@@ -29,6 +29,7 @@ import { useMenuAccess, MenuKey } from "@/hooks/useMenuAccess";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import NotificacoesBell from "@/components/NotificacoesBell";
 import logoWhite from "@/assets/brand/hr-imoveis-logo-white.png";
 import logoBlack from "@/assets/brand/hr-imoveis-logo.png";
 
@@ -171,6 +172,9 @@ export default function AppLayout() {
             <Menu className="h-5 w-5" />
           </Button>
           <img src={logoBlack} alt="HR Imóveis" className="h-8 w-auto object-contain md:hidden" />
+          <div className="ml-auto">
+            <NotificacoesBell />
+          </div>
         </header>
         <main className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y [-webkit-overflow-scrolling:touch]">
           <Outlet />

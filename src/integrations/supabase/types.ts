@@ -2749,6 +2749,81 @@ export type Database = {
         }
         Relationships: []
       }
+      notificacao_preferencias: {
+        Row: {
+          imovel_indisponivel: boolean
+          link_expirou_sem_abertura: boolean
+          link_feedback: boolean
+          link_primeiro_acesso: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          imovel_indisponivel?: boolean
+          link_expirou_sem_abertura?: boolean
+          link_feedback?: boolean
+          link_primeiro_acesso?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          imovel_indisponivel?: boolean
+          link_expirou_sem_abertura?: boolean
+          link_feedback?: boolean
+          link_primeiro_acesso?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notificacoes: {
+        Row: {
+          chave_unica: string | null
+          conta_id: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          imovel_id: string | null
+          lida_em: string | null
+          link_id: string | null
+          metadata: Json
+          oportunidade_id: string | null
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          chave_unica?: string | null
+          conta_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          imovel_id?: string | null
+          lida_em?: string | null
+          link_id?: string | null
+          metadata?: Json
+          oportunidade_id?: string | null
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          chave_unica?: string | null
+          conta_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          imovel_id?: string | null
+          lida_em?: string | null
+          link_id?: string | null
+          metadata?: Json
+          oportunidade_id?: string | null
+          tipo?: string
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       oportunidade_imoveis: {
         Row: {
           apresentado_em: string | null
@@ -4727,6 +4802,21 @@ export type Database = {
       }
       conta_da_oportunidade: { Args: { _op_id: string }; Returns: string }
       conta_tem_captacao: { Args: { _conta_id: string }; Returns: boolean }
+      criar_notificacao: {
+        Args: {
+          _chave?: string
+          _conta_id?: string
+          _descricao: string
+          _imovel_id?: string
+          _link_id?: string
+          _oportunidade_id?: string
+          _pref?: string
+          _tipo: string
+          _titulo: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       criar_oportunidade_qualificada: {
         Args: { p_chave: string; p_conta_id: string; p_payload: Json }
         Returns: Json
