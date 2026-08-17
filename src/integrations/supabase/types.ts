@@ -1934,22 +1934,7 @@ export type Database = {
           id?: string
           link_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "imovel_link_auditoria_link_id_fkey"
-            columns: ["link_id"]
-            isOneToOne: false
-            referencedRelation: "imovel_links_compartilhados"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "imovel_link_auditoria_link_id_fkey"
-            columns: ["link_id"]
-            isOneToOne: false
-            referencedRelation: "imovel_links_status"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       imovel_link_eventos: {
         Row: {
@@ -2076,6 +2061,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      imovel_link_rate_limit: {
+        Row: {
+          chave: string
+          contador: number
+          janela_inicio: string
+        }
+        Insert: {
+          chave: string
+          contador?: number
+          janela_inicio?: string
+        }
+        Update: {
+          chave?: string
+          contador?: number
+          janela_inicio?: string
+        }
+        Relationships: []
       }
       imovel_links_compartilhados: {
         Row: {
@@ -4852,6 +4855,11 @@ export type Database = {
       imovel_link_marcar_apresentado: {
         Args: { _link_id: string; _por: string }
         Returns: undefined
+      }
+      imovel_link_pode_ver: { Args: { _link_id: string }; Returns: boolean }
+      imovel_link_rate_ok: {
+        Args: { _chave: string; _janela_seg: number; _limite: number }
+        Returns: boolean
       }
       imovel_links_expirados_sem_abertura: { Args: never; Returns: number }
       imovel_links_performance: {
