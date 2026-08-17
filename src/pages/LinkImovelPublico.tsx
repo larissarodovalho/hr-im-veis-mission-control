@@ -263,7 +263,14 @@ export default function LinkImovelPublico() {
         </section>
 
         {itens.map((item) => (
-          <ItemCard key={item.item_id} item={item} token={token!} telefone={data.corretor?.telefone ?? null} />
+          <ItemCard
+            key={item.item_id}
+            item={item}
+            token={token!}
+            telefone={data.corretor?.telefone ?? null}
+            codigoReferencia={data.codigo_referencia}
+            bloqueado={expirouAgora}
+          />
         ))}
 
         <footer className="py-6 text-center text-xs text-muted-foreground">
