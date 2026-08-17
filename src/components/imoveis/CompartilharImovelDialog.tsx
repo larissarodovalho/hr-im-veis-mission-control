@@ -24,7 +24,7 @@ export default function CompartilharImovelDialog({ open, onOpenChange, imoveis, 
   const [validade, setValidade] = useState("1440");
   const [inicio, setInicio] = useState<"criacao" | "primeiro_acesso">("criacao");
   const [exibirValor, setExibirValor] = useState(true);
-  const [localizacao, setLocalizacao] = useState<"bairro_cidade" | "cidade" | "oculta">("bairro_cidade");
+  const [localizacao, setLocalizacao] = useState<"bairro_cidade" | "cidade" | "oculto">("bairro_cidade");
   const [whats, setWhats] = useState(true);
   const [visita, setVisita] = useState(true);
   const [titulo, setTitulo] = useState("");
@@ -128,7 +128,7 @@ export default function CompartilharImovelDialog({ open, onOpenChange, imoveis, 
                 <SelectContent>
                   <SelectItem value="bairro_cidade">Bairro e cidade</SelectItem>
                   <SelectItem value="cidade">Somente cidade</SelectItem>
-                  <SelectItem value="oculta">Não exibir</SelectItem>
+                  <SelectItem value="oculto">Não exibir</SelectItem>
                 </SelectContent>
               </Select>
             </div>
