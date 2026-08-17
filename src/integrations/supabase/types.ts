@@ -4854,6 +4854,22 @@ export type Database = {
         Returns: undefined
       }
       imovel_links_expirados_sem_abertura: { Args: never; Returns: number }
+      imovel_links_performance: {
+        Args: {
+          _conta?: string
+          _corretor?: string
+          _dispositivo?: string
+          _duracao?: string
+          _fim: string
+          _imovel?: string
+          _inicio: string
+          _oportunidade?: string
+          _resultado?: string
+          _status?: string
+          _tipo?: string
+        }
+        Returns: Json
+      }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       list_contas_min: {
