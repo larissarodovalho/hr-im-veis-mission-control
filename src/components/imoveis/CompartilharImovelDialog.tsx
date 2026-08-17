@@ -38,6 +38,8 @@ export default function CompartilharImovelDialog({
   const { isAdmin, isGestor } = useRole();
   const podeEndereco = isAdmin || isGestor; // endereço completo exige autorização
   const [validade, setValidade] = useState("1440");
+  const [validadeCustom, setValidadeCustom] = useState("120");
+
   const [inicio, setInicio] = useState<"criacao" | "primeiro_acesso">("criacao");
   const [exibirValor, setExibirValor] = useState(true);
   const [localizacao, setLocalizacao] = useState<"bairro_cidade" | "cidade" | "oculto" | "endereco_completo">("bairro_cidade");
