@@ -325,6 +325,16 @@ export default function Imoveis() {
               <Presentation className="h-4 w-4" />
             </Button>
           )}
+          <Button
+            size="icon"
+            variant="secondary"
+            className="h-8 w-8"
+            disabled={pdfId === i.id}
+            onClick={() => baixarPdf(i)}
+            title="PDF de apresentação"
+          >
+            <FileDown className="h-4 w-4" />
+          </Button>
 
 
           <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setHistFor(i)} title="Histórico do imóvel">
