@@ -407,13 +407,13 @@ export default function LinksCompartilhadosTab() {
                     <div className="mt-1 flex flex-wrap gap-1.5">
                       {l.conta_id && (
                         <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]"
-                          onClick={() => navigate(`/crm/contas?conta=${l.conta_id}`)}>
+                          onClick={() => navigate(`/crm/contas/${l.conta_id}`)}>
                           <ExternalLink className="h-3 w-3 mr-1" /> {contas[l.conta_id] || "Conta"}
                         </Button>
                       )}
                       {l.oportunidade_id && (
                         <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]"
-                          onClick={() => navigate(`/crm/oportunidades?oportunidade=${l.oportunidade_id}`)}>
+                          onClick={() => navigate(`/crm/oportunidades?op=${l.oportunidade_id}`)}>
                           <ExternalLink className="h-3 w-3 mr-1" /> {oportunidades[l.oportunidade_id] || "Oportunidade"}
                         </Button>
                       )}
