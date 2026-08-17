@@ -268,7 +268,19 @@ Deno.serve(async (req) => {
     const paths = fontes.map(extractPath).filter(Boolean) as string[];
     let fotos: string[] = [];
     if (paths.length) {
-      const { data: signed } = await supabase.storage.from(SHARED_BUCKET).createSignedUrls(paths, signedTtl);
+      let { data: signed } = await supabase.storage.from(SHARED_BUCKET).createSignedUrls(paths, signedTtl);
+      const faltando = paths.filter((p, i) => !signed?.[i]?.signedUrl);
+      if (faltando.length) {
+        // Espelha sob demanda no bucket privado (nunca serve a URL pública permanente).
+        await Promise.all(faltando.map(async (p) => {
+          const { data: blob } = await supabase.storage.from("imoveis").download(p);
+          if (blob) {
+            await supabase.storage.from(SHARED_BUCKET)
+              .upload(p, blob, { contentType: blob.type || "image/jpeg", upsert: true });
+          }
+        }));
+        ({ data: signed } = await supabase.storage.from(SHARED_BUCKET).createSignedUrls(paths, signedTtl));
+      }
       // Sem fallback para URL pública permanente: só entram fotos assinadas do bucket privado.
       fotos = (signed ?? []).map((s) => s?.signedUrl).filter(Boolean) as string[];
     }
