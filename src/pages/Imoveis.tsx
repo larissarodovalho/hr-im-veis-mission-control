@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2, FileDown, History, Eye, EyeOff, Info } from "lucide-react";
+import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2, FileDown, History, Eye, EyeOff, Info, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import NovoImovelDialog from "@/components/imoveis/NovoImovelDialog";
@@ -23,10 +23,13 @@ import EditarImovelDialog from "@/components/imoveis/EditarImovelDialog";
 import NovaPropostaDialog from "@/components/imoveis/NovaPropostaDialog";
 import ImovelHistoricoDrawer from "@/components/imoveis/ImovelHistoricoDrawer";
 import DetalhesImovelDialog from "@/components/imoveis/DetalhesImovelDialog";
+import CompartilharImovelDialog from "@/components/imoveis/CompartilharImovelDialog";
 import VendidosTab from "@/pages/imoveis/VendidosTab";
 import ParceirosTab from "@/pages/imoveis/ParceirosTab";
+import LinksCompartilhadosTab from "@/pages/imoveis/LinksCompartilhadosTab";
 
 import CaptacaoTab from "@/pages/imoveis/CaptacaoTab";
+
 
 type Imovel = any;
 type Proposta = any;
@@ -48,6 +51,8 @@ export default function Imoveis() {
   const [propostaFor, setPropostaFor] = useState<Imovel | null>(null);
   const [histFor, setHistFor] = useState<Imovel | null>(null);
   const [viewing, setViewing] = useState<Imovel | null>(null);
+  const [sharing, setSharing] = useState<Imovel | null>(null);
+
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [contas, setContas] = useState<Record<string, string>>({});
   const [searchParams, setSearchParams] = useSearchParams();
@@ -286,6 +291,10 @@ export default function Imoveis() {
           <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setViewing(i)} title="Ver detalhes">
             <Info className="h-4 w-4" />
           </Button>
+          <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setSharing(i)} title="Gerar link temporário para o cliente">
+            <Share2 className="h-4 w-4" />
+          </Button>
+
           <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setHistFor(i)} title="Histórico do imóvel">
             <History className="h-4 w-4" />
           </Button>
@@ -532,6 +541,8 @@ export default function Imoveis() {
           <TabsTrigger value="oportunidades">Oportunidades de Negócio</TabsTrigger>
           <TabsTrigger value="captacao">Captação</TabsTrigger>
           <TabsTrigger value="parceiros">Parceiros</TabsTrigger>
+          <TabsTrigger value="links">Links temporários</TabsTrigger>
+
         </TabsList>
 
 
@@ -581,7 +592,18 @@ export default function Imoveis() {
         <TabsContent value="parceiros" className="mt-4">
           <ParceirosTab />
         </TabsContent>
+
+        <TabsContent value="links" className="mt-4">
+          <LinksCompartilhadosTab />
+        </TabsContent>
       </Tabs>
+
+      <CompartilharImovelDialog
+        open={!!sharing}
+        onOpenChange={(v) => { if (!v) setSharing(null); }}
+        imoveis={sharing ? [{ id: sharing.id, titulo: sharing.titulo }] : []}
+      />
+
 
       <NovoImovelDialog open={openNew} onOpenChange={setOpenNew} onCreated={load} />
       <EditarImovelDialog
