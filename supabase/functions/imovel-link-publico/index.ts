@@ -2,19 +2,34 @@
 // Nunca expõe dados internos: endereço completo, proprietário, corretor, matrícula, etc.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, cache-control, pragma",
-};
+// CORS restrito: apenas o app da HR (preview, publicado e domínios próprios).
+const ORIGENS_PERMITIDAS = [/^https?:\/\/localhost(:\d+)?$/, /\.lovable\.app$/, /^https:\/\/(www\.)?hrimoveis\.com$/];
+
+function cors(origin: string | null) {
+  const ok = !!origin && ORIGENS_PERMITIDAS.some((r) => r.test(origin));
+  return {
+    "Access-Control-Allow-Origin": ok ? origin! : "null",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, cache-control, pragma",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    Vary: "Origin",
+    // Dados do link nunca ficam em cache de navegador, CDN ou proxy.
+    "Cache-Control": "no-store, no-cache, must-revalidate, private",
+    Pragma: "no-cache",
+  };
+}
+
+// Prévias automáticas e crawlers não contam como acesso humano.
+const BOT_RE = /bot|crawler|spider|preview|facebookexternalhit|whatsapp|telegram|slack|discord|twitterbot|linkedinbot|embedly|quora|pinterest|vkshare|redditbot|applebot|bingpreview|headless|curl|wget|python-requests|postman/i;
 
 const SHARED_BUCKET = "imoveis-compartilhados";
-const SIGNED_TTL = 60 * 60; // 1h
+const SIGNED_TTL_MAX = 60 * 60; // teto de 1h — sempre limitado ao tempo restante do link
 
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+function jsonWith(headers: Record<string, string>) {
+  return (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...headers, "Content-Type": "application/json" },
+    });
 }
 
 async function sha256(text: string) {
@@ -54,6 +69,8 @@ const EVENTOS_VALIDOS = new Set([
 const EVENTOS_UNICOS = new Set(["gostei", "rejeitou", "solicitou_informacoes", "solicitou_visita"]);
 
 Deno.serve(async (req) => {
+  const corsHeaders = cors(req.headers.get("origin"));
+  const json = jsonWith(corsHeaders);
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Método não permitido" }, 405);
 
@@ -82,6 +99,17 @@ Deno.serve(async (req) => {
     ? await sha256(`${token}|${body.session_id}`)
     : null;
   const { dispositivo, navegador, sistema_operacional } = parseUA(ua);
+  const ehBot = BOT_RE.test(ua) || !ua;
+
+  // Rate limit no servidor: 60 chamadas/min por visitante e 240/min por token.
+  const ipHash = await sha256(ip || visitorSeed);
+  const [okVisitante, okToken] = await Promise.all([
+    supabase.rpc("imovel_link_rate_ok", { _chave: `v:${ipHash}`, _limite: 60, _janela_seg: 60 }),
+    supabase.rpc("imovel_link_rate_ok", { _chave: `t:${await sha256(token)}`, _limite: 240, _janela_seg: 60 }),
+  ]);
+  if (okVisitante.data === false || okToken.data === false) {
+    return json({ error: "Muitas requisições. Tente novamente em instantes." }, 429);
+  }
 
   const { data: link, error: linkErr } = await supabase
     .from("imovel_links_compartilhados")
@@ -106,7 +134,7 @@ Deno.serve(async (req) => {
   if (!validadeIniciadaEm) {
     if (link.inicio_validade === "criacao") {
       validadeIniciadaEm = link.created_at;
-    } else if (action === "open") {
+    } else if (action === "open" && !ehBot) {
       validadeIniciadaEm = now.toISOString();
     }
   }
@@ -173,7 +201,7 @@ Deno.serve(async (req) => {
     metadata: (body.metadata && typeof body.metadata === "object") ? body.metadata : {},
   });
 
-  if (action === "open") {
+  if (action === "open" && !ehBot) {
     const { count } = await supabase
       .from("imovel_link_eventos")
       .select("visitor_id_hash", { count: "exact", head: true })
@@ -205,7 +233,7 @@ Deno.serve(async (req) => {
   const ids = (itens ?? []).map((i) => i.imovel_id);
   const [{ data: imoveis }, { data: configs }] = await Promise.all([
     supabase.from("imoveis").select(
-      "id, titulo, tipo, finalidade, valor, valor_condominio, valor_iptu, bairro, cidade, estado, area_util, area_total, area_construida, quartos, suites, banheiros, vagas, caracteristicas, fotos, descricao",
+      "id, status, titulo, tipo, finalidade, valor, valor_condominio, valor_iptu, bairro, cidade, estado, area_util, area_total, area_construida, quartos, suites, banheiros, vagas, caracteristicas, fotos, descricao",
     ).in("id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]),
     supabase.from("imovel_apresentacao_config").select("*")
       .in("imovel_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]),
@@ -214,10 +242,19 @@ Deno.serve(async (req) => {
   const cfgMap = new Map((configs ?? []).map((c) => [c.imovel_id, c]));
   const imovelMap = new Map((imoveis ?? []).map((i) => [i.id, i]));
 
+  // Fotos assinadas nunca sobrevivem ao link.
+  const restanteSeg = expiraEm
+    ? Math.max(30, Math.floor((new Date(expiraEm).getTime() - now.getTime()) / 1000))
+    : minutos > 0 ? minutos * 60 : SIGNED_TTL_MAX;
+  const signedTtl = Math.min(SIGNED_TTL_MAX, restanteSeg);
+
   const payloadItens = [];
   for (const item of itens ?? []) {
     const im = imovelMap.get(item.imovel_id);
     if (!im) continue;
+    // Imóvel vendido ou indisponível nunca volta no payload público.
+    const st = String(im.status ?? "").toLowerCase();
+    if (st && !st.startsWith("dispon")) continue;
     const cfg = cfgMap.get(item.imovel_id) ?? {};
     const over = (item.configuracao_publica ?? {}) as Record<string, unknown>;
 
@@ -228,7 +265,7 @@ Deno.serve(async (req) => {
     const paths = fontes.map(extractPath).filter(Boolean) as string[];
     let fotos: string[] = [];
     if (paths.length) {
-      const { data: signed } = await supabase.storage.from(SHARED_BUCKET).createSignedUrls(paths, SIGNED_TTL);
+      const { data: signed } = await supabase.storage.from(SHARED_BUCKET).createSignedUrls(paths, signedTtl);
       fotos = (signed ?? []).map((s, idx) => s?.signedUrl || fontes[idx]).filter(Boolean) as string[];
     }
     if (!fotos.length) fotos = fontes;
@@ -266,6 +303,10 @@ Deno.serve(async (req) => {
     const { data: p } = await supabase.from("profiles")
       .select("nome, telefone").or(`user_id.eq.${link.corretor_id},id.eq.${link.corretor_id}`).maybeSingle();
     if (p) corretor = { nome: p.nome ?? null, telefone: p.telefone ?? null };
+  }
+
+  if (!payloadItens.length) {
+    return json({ status: "indisponivel", codigo_referencia: link.codigo_referencia });
   }
 
   return json({
