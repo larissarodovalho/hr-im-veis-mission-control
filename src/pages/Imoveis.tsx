@@ -606,6 +606,13 @@ export default function Imoveis() {
         </TabsContent>
       </Tabs>
 
+      <ApresentacaoImovelDialog
+        open={!!apresentando}
+        onOpenChange={(v) => { if (!v) setApresentando(null); }}
+        imovel={apresentando}
+      />
+
+
       <CompartilharImovelDialog
         open={!!sharing}
         onOpenChange={(v) => { if (!v) setSharing(null); }}
