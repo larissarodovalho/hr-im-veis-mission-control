@@ -293,7 +293,7 @@ export async function gerarPdfApresentacao(
   const colW = (PAGE_W - MARGIN * 2 - 14) / 2;
   const colDir = MARGIN + colW + 14;
 
-  if (logo) doc.addImage(logo, "PNG", PAGE_W - MARGIN - 28, 16, 28, 28 * 0.28, undefined, "FAST");
+  desenharLogo(PAGE_W - MARGIN, 14, 14, "right");
 
   // painel da descrição — altura acompanha o texto
   doc.setFontSize(10);
