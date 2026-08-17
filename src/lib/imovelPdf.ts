@@ -18,7 +18,11 @@ export interface CorretorPdf {
   nome?: string | null;
   telefone?: string | null;
   email?: string | null;
+  creci?: string | null;
 }
+
+/** CRECI jurídico da HR Imóveis (mesmo exibido no site). */
+export const CRECI_HR = "CRECI J 18.050";
 
 const PAGE_W = 297;
 const PAGE_H = 210;
