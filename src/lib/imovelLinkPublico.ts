@@ -60,6 +60,7 @@ function sessionId() {
 async function post(body: Record<string, unknown>) {
   const res = await fetch(FN_URL, {
     method: "POST",
+    cache: "no-store", // o conteúdo do link nunca fica em cache do navegador
     headers: { "Content-Type": "application/json", apikey: ANON, Authorization: `Bearer ${ANON}` },
     body: JSON.stringify({ ...body, visitor_id: visitorId(), session_id: sessionId() }),
   });
