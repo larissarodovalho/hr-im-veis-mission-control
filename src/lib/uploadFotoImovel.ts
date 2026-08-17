@@ -3,6 +3,8 @@ import { applyWatermark } from "@/lib/watermark";
 
 export const IMOVEIS_BUCKET = "imoveis";
 export const ORIGINAIS_BUCKET = "imoveis-originais";
+/** Bucket privado usado pelos links temporários (fotos com marca d'água, servidas por URL assinada) */
+export const COMPARTILHADOS_BUCKET = "imoveis-compartilhados";
 
 /**
  * Faz upload de uma foto de imóvel salvando 2 versões:
