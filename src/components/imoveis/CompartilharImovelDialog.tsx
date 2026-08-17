@@ -118,12 +118,15 @@ export default function CompartilharImovelDialog({
 
 
   const criar = async () => {
+    if (!alvo.length) { toast.error("Selecione o imóvel"); return; }
     setSaving(true);
     try {
       const link = await criarLinkCompartilhado({
-        imovelIds: imoveis.map((i) => i.id),
+        imovelIds: alvo.map((i) => i.id),
         tituloSelecao: titulo || null,
         mensagem: mensagem || null,
+        contaId: conta !== "none" ? conta : null,
+        oportunidadeId: oportunidade !== "none" ? oportunidade : null,
         validadeMinutos: Number(validade),
         inicioValidade: inicio,
         exibirValor,
@@ -148,20 +151,60 @@ export default function CompartilharImovelDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Link2 className="h-4 w-4" /> Link temporário</DialogTitle>
           <DialogDescription>
-            {imoveis.length > 1
-              ? `${imoveis.length} imóveis selecionados`
-              : imoveis[0]?.titulo || "Imóvel"} — apresentação sem dados internos.
+            {alvo.length > 1
+              ? `${alvo.length} imóveis selecionados`
+              : alvo[0]?.titulo || "Selecione o imóvel"} — apresentação sem dados internos.
           </DialogDescription>
         </DialogHeader>
 
         {!criado ? (
           <div className="space-y-4">
-            {imoveis.length > 1 && (
+            {escolherImovel && (
+              <div className="space-y-1.5">
+                <Label>Imóvel *</Label>
+                <SearchableSelect
+                  value={imovelSel}
+                  onChange={setImovelSel}
+                  options={catalogo.map((i) => ({ id: i.id, nome: `${i.codigo ? i.codigo + " · " : ""}${i.titulo}` }))}
+                  placeholder="Buscar imóvel…"
+                  emptyLabel="Selecione o imóvel"
+                />
+              </div>
+            )}
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>Conta (opcional)</Label>
+                <SearchableSelect
+                  value={conta}
+                  onChange={(v) => { setConta(v); setOportunidade("none"); }}
+                  options={[{ id: "none", nome: "Sem conta vinculada" }, ...contas]}
+                  placeholder="Buscar conta…"
+                  emptyLabel="Sem conta vinculada"
+                  onSearch={buscarContas}
+                  loading={buscandoContas}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Oportunidade (opcional)</Label>
+                <Select value={oportunidade} onValueChange={setOportunidade} disabled={conta === "none"}>
+                  <SelectTrigger><SelectValue placeholder="Sem oportunidade" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem oportunidade</SelectItem>
+                    {ops.map((o) => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {alvo.length > 1 && (
               <div className="space-y-1.5">
                 <Label>Título da seleção</Label>
                 <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ex.: Opções em Jardim das Américas" />
               </div>
             )}
+
+
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
