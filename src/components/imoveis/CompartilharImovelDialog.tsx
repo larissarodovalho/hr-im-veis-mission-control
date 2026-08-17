@@ -219,6 +219,7 @@ export default function CompartilharImovelDialog({
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {VALIDADES.map((v) => <SelectItem key={v.valor} value={String(v.valor)}>{v.label}</SelectItem>)}
+                    <SelectItem value="custom">Personalizado…</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -232,6 +233,24 @@ export default function CompartilharImovelDialog({
                 </Select>
               </div>
             </div>
+
+            {validade === "custom" && (
+              <div className="space-y-1.5">
+                <Label>Prazo personalizado (minutos)</Label>
+                <Input
+                  type="number"
+                  min={VALIDADE_MIN}
+                  max={VALIDADE_MAX}
+                  value={validadeCustom}
+                  onChange={(e) => setValidadeCustom(e.target.value)}
+                  placeholder={`Entre ${VALIDADE_MIN} e ${VALIDADE_MAX} minutos`}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Mínimo {VALIDADE_MIN} minutos, máximo 30 dias.
+                </p>
+              </div>
+            )}
+
 
             <div className="space-y-1.5">
               <Label>Localização exibida</Label>
