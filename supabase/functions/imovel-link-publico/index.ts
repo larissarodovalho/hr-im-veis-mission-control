@@ -45,9 +45,13 @@ function extractPath(url: string): string | null {
 }
 
 const EVENTOS_VALIDOS = new Set([
-  "abertura", "visualizacao_imovel", "galeria", "video",
-  "clique_whatsapp", "pedido_visita", "compartilhamento_tentativa",
+  "abertura", "visualizacao_imovel", "clique_whatsapp",
+  "copiar_link", "compartilhamento_nativo",
+  "gostei", "rejeitou", "solicitou_informacoes", "solicitou_visita",
 ]);
+
+// Ações do cliente: 1 registro por visitante/item/tipo (idempotência)
+const EVENTOS_UNICOS = new Set(["gostei", "rejeitou", "solicitou_informacoes", "solicitou_visita"]);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -111,6 +115,35 @@ Deno.serve(async (req) => {
   }
 
   if (expiraEm && new Date(expiraEm) <= now) {
+    if (action !== "open") {
+      // Idempotência das ações do cliente
+  if (tipoEvento && EVENTOS_UNICOS.has(tipoEvento)) {
+    let q = supabase
+      .from("imovel_link_eventos")
+      .select("id", { count: "exact", head: true })
+      .eq("link_id", link.id)
+      .eq("tipo_evento", tipoEvento)
+      .eq("visitor_id_hash", visitorHash);
+    q = typeof body.item_id === "string"
+      ? q.eq("item_id", body.item_id)
+      : q.is("item_id", null);
+    const { count: jaExiste } = await q;
+    if ((jaExiste ?? 0) > 0) return json({ status: "ok", duplicado: true });
+  }
+
+  await supabase.from("imovel_link_eventos").insert({
+        link_id: link.id,
+        item_id: typeof body.item_id === "string" ? body.item_id : null,
+        tipo_evento: "tentativa_apos_expiracao",
+        visitor_id_hash: visitorHash,
+        session_id_hash: sessionHash,
+        dispositivo,
+        navegador,
+        sistema_operacional,
+        user_agent: ua.slice(0, 500),
+        metadata: { acao: typeof body.tipo_evento === "string" ? body.tipo_evento : null },
+      });
+    }
     if (link.estado_operacional !== "expirado") {
       await supabase.from("imovel_links_compartilhados")
         .update({ estado_operacional: "expirado", expira_em: expiraEm, validade_iniciada_em: validadeIniciadaEm })
@@ -125,6 +158,21 @@ Deno.serve(async (req) => {
     : (typeof body.tipo_evento === "string" && EVENTOS_VALIDOS.has(body.tipo_evento) ? body.tipo_evento : null);
 
   if (action !== "open" && !tipoEvento) return json({ error: "Evento inválido" }, 400);
+
+  // Idempotência das ações do cliente
+  if (tipoEvento && EVENTOS_UNICOS.has(tipoEvento)) {
+    let q = supabase
+      .from("imovel_link_eventos")
+      .select("id", { count: "exact", head: true })
+      .eq("link_id", link.id)
+      .eq("tipo_evento", tipoEvento)
+      .eq("visitor_id_hash", visitorHash);
+    q = typeof body.item_id === "string"
+      ? q.eq("item_id", body.item_id)
+      : q.is("item_id", null);
+    const { count: jaExiste } = await q;
+    if ((jaExiste ?? 0) > 0) return json({ status: "ok", duplicado: true });
+  }
 
   await supabase.from("imovel_link_eventos").insert({
     link_id: link.id,
