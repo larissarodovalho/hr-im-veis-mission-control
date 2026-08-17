@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { imagemOtimizada, IMG_CARD } from "@/lib/imagemOtimizada";
 import { ArrowRight, MapPin, ArrowUpRight, MessageCircle, Building2 } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
@@ -304,7 +305,8 @@ export default function HomePage() {
                 >
                   <div className="aspect-[4/3] overflow-hidden">
                     <motion.img
-                      src={imovel.fotos?.[0] || propertyImages[i] || property1}
+                      src={imovel.fotos?.[0] ? imagemOtimizada(imovel.fotos[0], IMG_CARD) : (propertyImages[i] || property1)}
+                      decoding="async"
                       alt={imovel.titulo}
                       whileHover={{ scale: 1.04 }}
                       transition={{ duration: 0.8, ease: smoothEase }}

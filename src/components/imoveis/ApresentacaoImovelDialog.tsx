@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { imagemOtimizada, IMG_THUMB } from "@/lib/imagemOtimizada";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -116,7 +117,7 @@ export default function ApresentacaoImovelDialog({ open, onOpenChange, imovel, o
                         onClick={() => toggleFoto(url)}
                         className={`relative rounded-md overflow-hidden border-2 transition ${on ? "border-primary" : "border-transparent opacity-50"}`}
                       >
-                        <img src={url} alt="" className="h-20 w-full object-cover" />
+                        <img src={imagemOtimizada(url, IMG_THUMB)} alt="" loading="lazy" decoding="async" className="h-20 w-full object-cover" />
                         {on && (
                           <span className="absolute top-1 right-1 rounded-full bg-primary text-primary-foreground p-0.5">
                             <Check className="h-3 w-3" />

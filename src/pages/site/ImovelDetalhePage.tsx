@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import { imagemOtimizada, IMG_THUMB, IMG_HERO } from "@/lib/imagemOtimizada";
 import { useRef, useEffect, useState } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { MapPin, BedDouble, Bath, Car, Maximize2, ArrowLeft, ArrowUpRight, Home, Phone, MessageCircle, ChevronLeft, ChevronRight, X, Images } from "lucide-react";
@@ -139,6 +140,7 @@ export default function ImovelDetalhePage() {
     : [getImageForImovel(imovel.id, imovel.tipo)];
   const safeIdx = Math.min(activePhoto, fotos.length - 1);
   const image = fotos[safeIdx];
+  const imageGaleria = imagemOtimizada(image, IMG_HERO);
   const prevPhoto = () => setActivePhoto((i) => (i - 1 + fotos.length) % fotos.length);
   const nextPhoto = () => setActivePhoto((i) => (i + 1) % fotos.length);
   const specs = [
@@ -162,8 +164,9 @@ export default function ImovelDetalhePage() {
           <AnimatePresence mode="wait">
             <motion.img
               key={image}
-              src={image}
+              src={imageGaleria}
               alt={imovel.nome}
+              decoding="async"
               className="w-full h-full object-cover cursor-zoom-in"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -242,7 +245,7 @@ export default function ImovelDetalhePage() {
                   }`}
                   aria-label={`Ver foto ${i + 1}`}
                 >
-                  <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                  <img src={imagemOtimizada(src, IMG_THUMB)} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" loading="lazy" decoding="async" />
                 </button>
               ))}
             </div>
@@ -295,7 +298,7 @@ export default function ImovelDetalhePage() {
             <AnimatePresence mode="wait">
               <motion.img
                 key={image}
-                src={image}
+                src={imagemOtimizada(image, IMG_HERO)}
                 alt={imovel.nome}
                 onClick={(e) => e.stopPropagation()}
                 initial={{ opacity: 0, scale: 0.98 }}

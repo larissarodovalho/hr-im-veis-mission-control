@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { imagemOtimizada, IMG_THUMB } from "@/lib/imagemOtimizada";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -463,7 +464,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
                       }}
                       className="relative group rounded cursor-move"
                     >
-                      <img src={url} alt="" className="w-full h-20 object-cover rounded pointer-events-none" />
+                      <img src={imagemOtimizada(url, IMG_THUMB)} alt="" loading="lazy" decoding="async" className="w-full h-20 object-cover rounded pointer-events-none" />
                       {idx === 0 && (
                         <span className="absolute bottom-1 left-1 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded">
                           Capa
