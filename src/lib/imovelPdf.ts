@@ -280,24 +280,24 @@ export async function gerarPdfApresentacao(
 
   if (logo) doc.addImage(logo, "PNG", PAGE_W - MARGIN - 28, 16, 28, 28 * 0.28, undefined, "FAST");
 
-  // painel da descrição
+  // painel da descrição — altura acompanha o texto
+  doc.setFontSize(10);
+  const linhasDesc = descricao
+    ? doc.splitTextToSize(descricao, colW - 20).slice(0, 20)
+    : ["Fale com o corretor para mais detalhes."];
+  const alturaPainel = Math.max(70, 34 + linhasDesc.length * 6.2);
   doc.setFillColor(...AREIA);
-  doc.roundedRect(MARGIN, 16, colW, PAGE_H - 62, 3, 3, "F");
+  doc.roundedRect(MARGIN, 16, colW, alturaPainel, 3, 3, "F");
 
   doc.setFontSize(7);
   doc.setTextColor(...CINZA);
   doc.text("SOBRE O IMÓVEL", MARGIN + 10, 30, { charSpace: 0.9 });
 
   doc.setFontSize(10);
-  doc.setTextColor(...PRETO);
-  if (descricao) {
-    doc.text(doc.splitTextToSize(descricao, colW - 20).slice(0, 22), MARGIN + 10, 42, { lineHeightFactor: 1.6 });
-  } else {
-    doc.setTextColor(...CINZA);
-    doc.text("Fale com o corretor para mais detalhes.", MARGIN + 10, 42);
-  }
+  doc.setTextColor(descricao ? PRETO[0] : CINZA[0], descricao ? PRETO[1] : CINZA[1], descricao ? PRETO[2] : CINZA[2]);
+  doc.text(linhasDesc, MARGIN + 10, 42, { lineHeightFactor: 1.6 });
 
-  let dy = 30;
+  let dy = 36;
   if (condicoes) {
     doc.setFontSize(7);
     doc.setTextColor(...CINZA);
@@ -339,13 +339,15 @@ export async function gerarPdfApresentacao(
   // Faixa de contato
   const faixaY = PAGE_H - 42;
   doc.setFillColor(...PRETO);
-  doc.roundedRect(colDir, faixaY, colW, 22, 3, 3, "F");
+  doc.roundedRect(MARGIN, faixaY, PAGE_W - MARGIN * 2, 22, 3, 3, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(7);
-  doc.text("FALE COM O CORRETOR", colDir + 8, faixaY + 8, { charSpace: 0.8 });
+  doc.text("FALE COM O CORRETOR", MARGIN + 10, faixaY + 8, { charSpace: 0.8 });
   doc.setFontSize(11);
   const contato = [corretor?.nome, corretor?.telefone].filter(Boolean).join("  ·  ");
-  doc.text(doc.splitTextToSize(contato || "HR Imóveis", colW - 16)[0], colDir + 8, faixaY + 16);
+  doc.text(doc.splitTextToSize(contato || "HR Imóveis", colW)[0], MARGIN + 10, faixaY + 16);
+  doc.setFontSize(9);
+  doc.text("HR Imóveis · hrimoveis.com", PAGE_W - MARGIN - 10, faixaY + 16, { align: "right" });
 
   rodape(totalPaginas, totalPaginas);
 
