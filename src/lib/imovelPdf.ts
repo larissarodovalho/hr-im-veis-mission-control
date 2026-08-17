@@ -185,7 +185,7 @@ export async function gerarPdfApresentacao(
   const px = capaW + 16; // início do painel
   const pw = PAGE_W - px - MARGIN;
 
-  if (logo) doc.addImage(logo, "PNG", px, 18, 34, 34 * 0.28, undefined, "FAST");
+  desenharLogo(px, 16, 18);
 
   doc.setFontSize(7);
   doc.setTextColor(...CINZA);
