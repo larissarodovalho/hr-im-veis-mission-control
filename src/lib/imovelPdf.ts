@@ -146,6 +146,17 @@ export async function gerarPdfApresentacao(
 
   const logo = await dataUrlSimples(logoHR);
 
+  /** Desenha a logo mantendo a proporção original do arquivo. */
+  const desenharLogo = (x: number, y: number, altura: number, align: "left" | "right" = "left") => {
+    if (!logo) return { w: 0, h: 0 };
+    const largura = altura * (logo.w / logo.h);
+    const px0 = align === "right" ? x - largura : x;
+    doc.addImage(logo.dataUrl, "PNG", px0, y, largura, altura, undefined, "FAST");
+    return { w: largura, h: altura };
+  };
+
+
+
   const rodape = (pagina: number, total: number, esquerda = MARGIN) => {
     doc.setDrawColor(...CINZA_CLARO);
     doc.setLineWidth(0.2);
