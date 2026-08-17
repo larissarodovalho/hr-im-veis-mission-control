@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Copy, Link2, MessageCircle, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   criarLinkCompartilhado, urlDoLink, marcarCompartilhado,
   VALIDADES, INICIOS, type LinkCompartilhado,
@@ -24,7 +25,7 @@ export default function CompartilharImovelDialog({ open, onOpenChange, imoveis, 
   const [validade, setValidade] = useState("1440");
   const [inicio, setInicio] = useState<"criacao" | "primeiro_acesso">("criacao");
   const [exibirValor, setExibirValor] = useState(true);
-  const [localizacao, setLocalizacao] = useState<"bairro_cidade" | "cidade" | "oculta">("bairro_cidade");
+  const [localizacao, setLocalizacao] = useState<"bairro_cidade" | "cidade" | "oculto">("bairro_cidade");
   const [whats, setWhats] = useState(true);
   const [visita, setVisita] = useState(true);
   const [titulo, setTitulo] = useState("");
@@ -37,8 +38,22 @@ export default function CompartilharImovelDialog({ open, onOpenChange, imoveis, 
       setCriado(null);
       setTitulo(imoveis.length > 1 ? "Seleção de imóveis" : "");
       setMensagem("");
+      // Usa os padrões de apresentação do imóvel, quando houver um só
+      if (imoveis.length === 1) {
+        supabase
+          .from("imovel_apresentacao_config")
+          .select("exibir_valor_padrao, localizacao_padrao")
+          .eq("imovel_id", imoveis[0].id)
+          .maybeSingle()
+          .then(({ data }: any) => {
+            if (!data) return;
+            setExibirValor(data.exibir_valor_padrao ?? true);
+            setLocalizacao((data.localizacao_padrao as any) ?? "bairro_cidade");
+          });
+      }
     }
   }, [open, imoveis.length]);
+
 
   const criar = async () => {
     setSaving(true);
@@ -128,7 +143,7 @@ export default function CompartilharImovelDialog({ open, onOpenChange, imoveis, 
                 <SelectContent>
                   <SelectItem value="bairro_cidade">Bairro e cidade</SelectItem>
                   <SelectItem value="cidade">Somente cidade</SelectItem>
-                  <SelectItem value="oculta">Não exibir</SelectItem>
+                  <SelectItem value="oculto">Não exibir</SelectItem>
                 </SelectContent>
               </Select>
             </div>

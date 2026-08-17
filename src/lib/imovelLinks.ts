@@ -91,7 +91,7 @@ export interface CriarLinkInput {
   validadeMinutos: number;
   inicioValidade: "criacao" | "primeiro_acesso";
   exibirValor: boolean;
-  localizacao: "bairro_cidade" | "cidade" | "oculta";
+  localizacao: "bairro_cidade" | "cidade" | "oculto";
   permitirWhatsapp: boolean;
   permitirAgendarVisita: boolean;
   substituiLinkId?: string | null;

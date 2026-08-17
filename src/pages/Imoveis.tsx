@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2, FileDown, History, Eye, EyeOff, Info, Share2 } from "lucide-react";
+import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2, FileDown, History, Eye, EyeOff, Info, Share2, Presentation } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import NovoImovelDialog from "@/components/imoveis/NovoImovelDialog";
@@ -24,6 +24,7 @@ import NovaPropostaDialog from "@/components/imoveis/NovaPropostaDialog";
 import ImovelHistoricoDrawer from "@/components/imoveis/ImovelHistoricoDrawer";
 import DetalhesImovelDialog from "@/components/imoveis/DetalhesImovelDialog";
 import CompartilharImovelDialog from "@/components/imoveis/CompartilharImovelDialog";
+import ApresentacaoImovelDialog from "@/components/imoveis/ApresentacaoImovelDialog";
 import VendidosTab from "@/pages/imoveis/VendidosTab";
 import ParceirosTab from "@/pages/imoveis/ParceirosTab";
 import LinksCompartilhadosTab from "@/pages/imoveis/LinksCompartilhadosTab";
@@ -52,6 +53,7 @@ export default function Imoveis() {
   const [histFor, setHistFor] = useState<Imovel | null>(null);
   const [viewing, setViewing] = useState<Imovel | null>(null);
   const [sharing, setSharing] = useState<Imovel | null>(null);
+  const [apresentando, setApresentando] = useState<Imovel | null>(null);
 
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [contas, setContas] = useState<Record<string, string>>({});
@@ -294,6 +296,12 @@ export default function Imoveis() {
           <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setSharing(i)} title="Gerar link temporário para o cliente">
             <Share2 className="h-4 w-4" />
           </Button>
+          {canEdit && (
+            <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setApresentando(i)} title="Apresentação para o cliente (link temporário)">
+              <Presentation className="h-4 w-4" />
+            </Button>
+          )}
+
 
           <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setHistFor(i)} title="Histórico do imóvel">
             <History className="h-4 w-4" />
@@ -597,6 +605,13 @@ export default function Imoveis() {
           <LinksCompartilhadosTab />
         </TabsContent>
       </Tabs>
+
+      <ApresentacaoImovelDialog
+        open={!!apresentando}
+        onOpenChange={(v) => { if (!v) setApresentando(null); }}
+        imovel={apresentando}
+      />
+
 
       <CompartilharImovelDialog
         open={!!sharing}
