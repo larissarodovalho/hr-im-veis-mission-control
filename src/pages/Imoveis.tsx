@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2, FileDown, History, Eye, EyeOff, Info, Share2, Presentation } from "lucide-react";
+import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2, FileDown, History, Eye, EyeOff, Info, Share2, Presentation, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import NovoImovelDialog from "@/components/imoveis/NovoImovelDialog";
@@ -25,6 +25,8 @@ import ImovelHistoricoDrawer from "@/components/imoveis/ImovelHistoricoDrawer";
 import DetalhesImovelDialog from "@/components/imoveis/DetalhesImovelDialog";
 import CompartilharImovelDialog from "@/components/imoveis/CompartilharImovelDialog";
 import ApresentacaoImovelDialog from "@/components/imoveis/ApresentacaoImovelDialog";
+import SelecaoImoveisAcoes from "@/components/imoveis/SelecaoImoveisAcoes";
+import { Checkbox } from "@/components/ui/checkbox";
 import VendidosTab from "@/pages/imoveis/VendidosTab";
 import ParceirosTab from "@/pages/imoveis/ParceirosTab";
 import LinksCompartilhadosTab from "@/pages/imoveis/LinksCompartilhadosTab";
@@ -54,6 +56,18 @@ export default function Imoveis() {
   const [viewing, setViewing] = useState<Imovel | null>(null);
   const [sharing, setSharing] = useState<Imovel | null>(null);
   const [apresentando, setApresentando] = useState<Imovel | null>(null);
+  // Seleção múltipla (Etapa 11): monta um único link com vários imóveis
+  const MAX_SELECAO = 20;
+  const [selMode, setSelMode] = useState(false);
+  const [selIds, setSelIds] = useState<string[]>([]);
+  const [sharingSelecao, setSharingSelecao] = useState(false);
+  const toggleSel = (id: string) => {
+    setSelIds((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= MAX_SELECAO) { toast.error(`Máximo de ${MAX_SELECAO} imóveis por link`); return prev; }
+      return [...prev, id];
+    });
+  };
 
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [contas, setContas] = useState<Record<string, string>>({});
@@ -289,6 +303,15 @@ export default function Imoveis() {
             {publicado ? "Publicado" : "Não publicado"}
           </span>
         )}
+        {selMode && (
+          <label
+            className="absolute bottom-2 left-2 z-10 flex items-center gap-1.5 rounded-md border bg-background/90 px-2 py-1 text-[11px] font-medium cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Checkbox checked={selIds.includes(i.id)} onCheckedChange={() => toggleSel(i.id)} />
+            {selIds.includes(i.id) ? `Selecionado ${selIds.indexOf(i.id) + 1}º` : "Selecionar"}
+          </label>
+        )}
         <div className="absolute top-2 right-2 flex gap-1">
           <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setViewing(i)} title="Ver detalhes">
             <Info className="h-4 w-4" />
@@ -481,11 +504,20 @@ export default function Imoveis() {
             <h1 className="font-display text-2xl sm:text-3xl font-semibold flex items-center gap-2"><HomeIcon className="h-6 w-6 sm:h-7 sm:w-7 text-primary" /> Imóveis</h1>
             <p className="text-muted-foreground mt-1 text-sm">{counts.d} disponíveis · {counts.p} em proposta · {counts.f} em fechamento · {counts.v} vendidos</p>
           </div>
-          {canEdit && (
-            <Button onClick={() => setOpenNew(true)} className="w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-1" /> Cadastrar imóvel
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant={selMode ? "secondary" : "outline"}
+              className="w-full sm:w-auto"
+              onClick={() => { setSelMode((v) => !v); setSelIds([]); }}
+            >
+              <ListChecks className="h-4 w-4 mr-1" /> {selMode ? "Cancelar seleção" : "Criar seleção"}
             </Button>
-          )}
+            {canEdit && (
+              <Button onClick={() => setOpenNew(true)} className="w-full sm:w-auto">
+                <Plus className="h-4 w-4 mr-1" /> Cadastrar imóvel
+              </Button>
+            )}
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative w-full sm:w-64">
@@ -612,6 +644,26 @@ export default function Imoveis() {
         imovel={apresentando}
       />
 
+
+      {selMode && (
+        <SelecaoImoveisAcoes
+          quantidade={selIds.length}
+          maximo={MAX_SELECAO}
+          onLimpar={() => setSelIds([])}
+          onSair={() => { setSelMode(false); setSelIds([]); }}
+          onCriar={() => setSharingSelecao(true)}
+        />
+      )}
+
+      <CompartilharImovelDialog
+        open={sharingSelecao}
+        onOpenChange={(v) => { if (!v) setSharingSelecao(false); }}
+        imoveis={selIds
+          .map((id) => items.find((x) => x.id === id))
+          .filter(Boolean)
+          .map((i: any) => ({ id: i.id, titulo: i.titulo, codigo: i.codigo }))}
+        onCreated={() => { setSelMode(false); setSelIds([]); }}
+      />
 
       <CompartilharImovelDialog
         open={!!sharing}
