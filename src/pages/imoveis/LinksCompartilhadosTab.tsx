@@ -5,10 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, Ban, Eye, Users, MessageCircle, CalendarCheck, Link2, Timer, BarChart3 } from "lucide-react";
+import { Copy, Ban, Share2, Eye, Users, MessageCircle, CalendarCheck, Link2, Timer, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { fmtDateTime } from "@/lib/datetime";
 import LinkMetricasDialog from "@/components/imoveis/LinkMetricasDialog";
+import CompartilharAcoes from "@/components/imoveis/CompartilharAcoes";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { copiarTexto, registrarEventoInterno } from "@/lib/imovelLinkShare";
 import { estadoAtual, tempoRestante, urlDoLink, revogarLink, type LinkCompartilhado } from "@/lib/imovelLinks";
 
 type Metricas = { whatsapp: number; visita: number };
@@ -18,6 +21,7 @@ export default function LinksCompartilhadosTab() {
   const [itens, setItens] = useState<Record<string, string[]>>({});
   const [metricas, setMetricas] = useState<Record<string, Metricas>>({});
   const [profiles, setProfiles] = useState<Record<string, string>>({});
+  const [compartilhar, setCompartilhar] = useState<LinkCompartilhado | null>(null);
   const [busca, setBusca] = useState("");
   const [estado, setEstado] = useState("all");
   const [loading, setLoading] = useState(true);
@@ -90,7 +94,9 @@ export default function LinksCompartilhadosTab() {
   }, [links, metricas]);
 
   const copiar = async (l: LinkCompartilhado) => {
-    await navigator.clipboard.writeText(urlDoLink(l.token));
+    const ok = await copiarTexto(urlDoLink(l.token));
+    if (!ok) return toast.error("Não foi possível copiar o link");
+    registrarEventoInterno(l.id, "copia_link_interno");
     toast.success("Link copiado");
   };
 
@@ -176,6 +182,9 @@ export default function LinksCompartilhadosTab() {
                   <div className="flex gap-1.5">
                     <Button size="sm" variant="outline" onClick={() => setMetricasDe(l)}>
                       <BarChart3 className="h-3.5 w-3.5 mr-1" /> Métricas
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setCompartilhar(l)}>
+                      <Share2 className="h-3.5 w-3.5 mr-1" /> Compartilhar
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => copiar(l)}>
                       <Copy className="h-3.5 w-3.5 mr-1" /> Copiar

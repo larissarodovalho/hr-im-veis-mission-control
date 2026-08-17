@@ -616,7 +616,7 @@ export default function Imoveis() {
       <CompartilharImovelDialog
         open={!!sharing}
         onOpenChange={(v) => { if (!v) setSharing(null); }}
-        imoveis={sharing ? [{ id: sharing.id, titulo: sharing.titulo }] : []}
+        imoveis={sharing ? [{ id: sharing.id, titulo: sharing.titulo, codigo: sharing.codigo }] : []}
       />
 
 
