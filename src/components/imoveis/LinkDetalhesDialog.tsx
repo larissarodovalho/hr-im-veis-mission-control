@@ -87,7 +87,12 @@ export default function LinkDetalhesDialog({
     ["Oportunidade", oportunidade || "—"],
     ["Criado em", fmtDateTime(link.created_at)],
     ["Compartilhado em", link.compartilhado_em ? fmtDateTime(link.compartilhado_em) : "—"],
-    ["Prazo", `${Math.round(link.validade_minutos / 60)}h`],
+    ["Prazo", link.validade_minutos < 60
+      ? `${link.validade_minutos} min`
+      : link.validade_minutos % 60 === 0
+        ? `${link.validade_minutos / 60}h`
+        : `${Math.floor(link.validade_minutos / 60)}h${link.validade_minutos % 60}`],
+
     ["Expira em", link.expira_em ? fmtDateTime(link.expira_em) : "Inicia no 1º acesso"],
     ["Tempo restante", tempoRestante(link)],
     ["Primeiro acesso", link.primeiro_acesso_em ? fmtDateTime(link.primeiro_acesso_em) : "—"],
