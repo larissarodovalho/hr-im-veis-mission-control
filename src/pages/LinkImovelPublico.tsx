@@ -17,8 +17,6 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import hrLogo from "@/assets/logo-hr-branco.png";
 import AcoesClienteLink from "@/components/imoveis/publico/AcoesClienteLink";
 
