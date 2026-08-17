@@ -72,6 +72,18 @@ export default function Imoveis() {
 
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [contas, setContas] = useState<Record<string, string>>({});
+  const [pdfId, setPdfId] = useState<string | null>(null);
+  const baixarPdf = async (i: Imovel) => {
+    setPdfId(i.id);
+    try {
+      const cfg = await carregarConfigApresentacao(i.id);
+      await gerarPdfApresentacao(i, cfg, { nome: profile?.nome, telefone: profile?.telefone, email: profile?.email });
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao gerar o PDF");
+    } finally {
+      setPdfId(null);
+    }
+  };
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = searchParams.get("tab") || "disponiveis";
   const setTab = (v: string) => {
