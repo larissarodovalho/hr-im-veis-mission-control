@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import {
   abrirLink,
   registrarEventoLink,
@@ -190,14 +191,20 @@ export default function LinkImovelPublico() {
     return () => { document.head.removeChild(meta); };
   }, []);
 
-  useEffect(() => {
-    if (!token || abriu.current) return;
-    abriu.current = true;
+  const carregar = useCallback(() => {
+    if (!token) return;
+    setLoading(true);
     abrirLink(token).then((r) => {
       setData(r);
       setLoading(false);
     });
   }, [token]);
+
+  useEffect(() => {
+    if (!token || abriu.current) return;
+    abriu.current = true;
+    carregar();
+  }, [token, carregar]);
 
   const restante = useCountdown(data?.expira_em);
   const expirouAgora = restante != null && restante <= 0;
@@ -212,16 +219,29 @@ export default function LinkImovelPublico() {
     );
   }
 
-  const indisponivel =
-    !data || data.status !== "ativo" || expirouAgora;
+  // Falha de conexão não é link inexistente: oferece nova tentativa.
+  if (!data || data.status === "erro_rede") {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-3 p-6 text-center">
+        <AlertCircle className="h-10 w-10 text-muted-foreground" />
+        <h1 className="text-xl font-medium">Não foi possível carregar a apresentação.</h1>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          Verifique sua conexão e tente novamente.
+        </p>
+        <Button onClick={carregar} className="mt-2">Tentar novamente</Button>
+      </main>
+    );
+  }
+
+  const indisponivel = data.status !== "ativo" || expirouAgora;
 
   if (indisponivel) {
     const msg =
-      data?.status === "revogado"
+      data.status === "revogado"
         ? "Este link foi encerrado pelo corretor."
-        : data?.status === "expirado" || expirouAgora
+        : data.status === "expirado" || expirouAgora
           ? "Este link expirou."
-          : data?.status === "indisponivel"
+          : data.status === "indisponivel"
             ? "Este imóvel não está mais disponível."
             : "Link não encontrado.";
     return (
@@ -231,7 +251,7 @@ export default function LinkImovelPublico() {
         <p className="max-w-sm text-sm text-muted-foreground">
           Fale com o seu corretor da HR Imóveis para receber um novo acesso à apresentação.
         </p>
-        {data?.codigo_referencia && (
+        {data.codigo_referencia && (
           <p className="text-xs text-muted-foreground">Referência: {data.codigo_referencia}</p>
         )}
       </main>

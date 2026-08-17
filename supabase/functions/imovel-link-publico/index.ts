@@ -3,7 +3,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 // CORS restrito: apenas o app da HR (preview, publicado e domínios próprios).
-const ORIGENS_PERMITIDAS = [/^https?:\/\/localhost(:\d+)?$/, /\.lovable\.app$/, /^https:\/\/(www\.)?hrimoveis\.com$/];
+const ORIGENS_PERMITIDAS = [
+  /^https?:\/\/localhost(:\d+)?$/,
+  /\.lovable\.app$/,
+  /\.lovableproject\.com$/,
+  /\.sandbox\.lovable\.dev$/,
+  /^https:\/\/(www\.)?hrimoveis\.com$/,
+];
 
 function cors(origin: string | null) {
   const ok = !!origin && ORIGENS_PERMITIDAS.some((r) => r.test(origin));
