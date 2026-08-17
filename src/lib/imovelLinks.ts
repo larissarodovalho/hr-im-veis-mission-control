@@ -131,8 +131,14 @@ export const INICIOS = [
   { valor: "primeiro_acesso", label: "No primeiro acesso do cliente" },
 ];
 
+/** Domínio público onde o cliente final abre a apresentação (sem login). */
+export const DOMINIO_PUBLICO = "https://www.hrimoveis.com";
+
 export function urlDoLink(token: string) {
-  return `${window.location.origin}/l/${token}`;
+  const host = typeof window !== "undefined" ? window.location.hostname : "";
+  const local = host === "localhost" || host === "127.0.0.1";
+  const base = local ? window.location.origin : DOMINIO_PUBLICO;
+  return `${base}/l/${token}`;
 }
 
 export function estadoAtual(l: LinkCompartilhado): LinkEstado {
