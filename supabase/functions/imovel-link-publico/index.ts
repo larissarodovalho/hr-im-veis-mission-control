@@ -266,9 +266,9 @@ Deno.serve(async (req) => {
     let fotos: string[] = [];
     if (paths.length) {
       const { data: signed } = await supabase.storage.from(SHARED_BUCKET).createSignedUrls(paths, signedTtl);
-      fotos = (signed ?? []).map((s, idx) => s?.signedUrl || fontes[idx]).filter(Boolean) as string[];
+      // Sem fallback para URL pública permanente: só entram fotos assinadas do bucket privado.
+      fotos = (signed ?? []).map((s) => s?.signedUrl).filter(Boolean) as string[];
     }
-    if (!fotos.length) fotos = fontes;
 
     payloadItens.push({
       item_id: item.id,
