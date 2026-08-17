@@ -269,7 +269,8 @@ export async function gerarPdfApresentacao(
     doc.setFontSize(11);
     doc.setTextColor(...PRETO);
     doc.text(doc.splitTextToSize(String(imovel.titulo || ""), 200)[0], MARGIN, 28);
-    if (logo) doc.addImage(logo, "PNG", PAGE_W - MARGIN - 28, 16, 28, 28 * 0.28, undefined, "FAST");
+    desenharLogo(PAGE_W - MARGIN, 14, 14, "right");
+
 
     const cols = 3;
     const gap = 5;
