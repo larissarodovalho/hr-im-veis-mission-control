@@ -80,7 +80,9 @@ async function imagemRecortada(
   }
 }
 
-async function dataUrlSimples(src: string): Promise<string | null> {
+type ImagemCarregada = { dataUrl: string; w: number; h: number };
+
+async function dataUrlSimples(src: string): Promise<ImagemCarregada | null> {
   try {
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
       const el = new Image();
@@ -93,11 +95,12 @@ async function dataUrlSimples(src: string): Promise<string | null> {
     canvas.width = img.naturalWidth;
     canvas.height = img.naturalHeight;
     canvas.getContext("2d")!.drawImage(img, 0, 0);
-    return canvas.toDataURL("image/png");
+    return { dataUrl: canvas.toDataURL("image/png"), w: img.naturalWidth, h: img.naturalHeight };
   } catch {
     return null;
   }
 }
+
 
 const brl = (v: any) =>
   v === null || v === undefined || isNaN(Number(v))
@@ -143,6 +146,17 @@ export async function gerarPdfApresentacao(
 
   const logo = await dataUrlSimples(logoHR);
 
+  /** Desenha a logo mantendo a proporção original do arquivo. */
+  const desenharLogo = (x: number, y: number, altura: number, align: "left" | "right" = "left") => {
+    if (!logo) return { w: 0, h: 0 };
+    const largura = altura * (logo.w / logo.h);
+    const px0 = align === "right" ? x - largura : x;
+    doc.addImage(logo.dataUrl, "PNG", px0, y, largura, altura, undefined, "FAST");
+    return { w: largura, h: altura };
+  };
+
+
+
   const rodape = (pagina: number, total: number, esquerda = MARGIN) => {
     doc.setDrawColor(...CINZA_CLARO);
     doc.setLineWidth(0.2);
@@ -171,7 +185,7 @@ export async function gerarPdfApresentacao(
   const px = capaW + 16; // início do painel
   const pw = PAGE_W - px - MARGIN;
 
-  if (logo) doc.addImage(logo, "PNG", px, 18, 34, 34 * 0.28, undefined, "FAST");
+  desenharLogo(px, 16, 18);
 
   doc.setFontSize(7);
   doc.setTextColor(...CINZA);
@@ -255,7 +269,8 @@ export async function gerarPdfApresentacao(
     doc.setFontSize(11);
     doc.setTextColor(...PRETO);
     doc.text(doc.splitTextToSize(String(imovel.titulo || ""), 200)[0], MARGIN, 28);
-    if (logo) doc.addImage(logo, "PNG", PAGE_W - MARGIN - 28, 16, 28, 28 * 0.28, undefined, "FAST");
+    desenharLogo(PAGE_W - MARGIN, 14, 14, "right");
+
 
     const cols = 3;
     const gap = 5;
@@ -278,7 +293,7 @@ export async function gerarPdfApresentacao(
   const colW = (PAGE_W - MARGIN * 2 - 14) / 2;
   const colDir = MARGIN + colW + 14;
 
-  if (logo) doc.addImage(logo, "PNG", PAGE_W - MARGIN - 28, 16, 28, 28 * 0.28, undefined, "FAST");
+  desenharLogo(PAGE_W - MARGIN, 14, 14, "right");
 
   // painel da descrição — altura acompanha o texto
   doc.setFontSize(10);
