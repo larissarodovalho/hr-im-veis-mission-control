@@ -135,6 +135,7 @@ export default function CompartilharImovelDialog({
         localizacao,
         permitirWhatsapp: whats,
         permitirAgendarVisita: visita,
+        substituiLinkId: substituiLinkId || null,
       });
       setCriado(link);
       marcarCompartilhado(link.id, "link");
