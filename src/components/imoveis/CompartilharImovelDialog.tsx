@@ -15,6 +15,7 @@ import {
 } from "@/lib/imovelLinks";
 import CompartilharAcoes from "@/components/imoveis/CompartilharAcoes";
 import { SearchableSelect } from "@/components/SearchableSelect";
+import { useRole } from "@/hooks/useRole";
 
 interface Props {
   open: boolean;
@@ -33,10 +34,12 @@ interface Props {
 export default function CompartilharImovelDialog({
   open, onOpenChange, imoveis, onCreated, contaId, contaNome, oportunidadeId, substituiLinkId,
 }: Props) {
+  const { isAdmin, isGestor } = useRole();
+  const podeEndereco = isAdmin || isGestor; // endereço completo exige autorização
   const [validade, setValidade] = useState("1440");
   const [inicio, setInicio] = useState<"criacao" | "primeiro_acesso">("criacao");
   const [exibirValor, setExibirValor] = useState(true);
-  const [localizacao, setLocalizacao] = useState<"bairro_cidade" | "cidade" | "oculto">("bairro_cidade");
+  const [localizacao, setLocalizacao] = useState<"bairro_cidade" | "cidade" | "oculto" | "endereco_completo">("bairro_cidade");
   const [whats, setWhats] = useState(true);
   const [visita, setVisita] = useState(true);
   const [titulo, setTitulo] = useState("");
@@ -238,6 +241,9 @@ export default function CompartilharImovelDialog({
                   <SelectItem value="bairro_cidade">Bairro e cidade</SelectItem>
                   <SelectItem value="cidade">Somente cidade</SelectItem>
                   <SelectItem value="oculto">Não exibir</SelectItem>
+                  {podeEndereco && (
+                    <SelectItem value="endereco_completo">Endereço completo (autorizado)</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -261,6 +267,11 @@ export default function CompartilharImovelDialog({
               <Label>Mensagem de apresentação (opcional)</Label>
               <Textarea rows={3} value={mensagem} onChange={(e) => setMensagem(e.target.value)} placeholder="Texto que aparece no topo da página do cliente" />
             </div>
+
+            <p className="rounded-md border border-amber-500/40 bg-amber-500/10 p-2.5 text-[11px] text-foreground">
+              Se este imóvel estiver publicado no site permanente, ele continuará acessível pelo site
+              independentemente da expiração deste link.
+            </p>
 
             <p className="flex items-start gap-2 text-[11px] text-muted-foreground">
               <ShieldCheck className="h-3.5 w-3.5 mt-0.5 shrink-0" />

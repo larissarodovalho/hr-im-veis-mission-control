@@ -153,7 +153,8 @@ export interface CriarLinkInput {
   validadeMinutos: number;
   inicioValidade: "criacao" | "primeiro_acesso";
   exibirValor: boolean;
-  localizacao: "bairro_cidade" | "cidade" | "oculto";
+  /** endereco_completo exige autorização de admin/gestor (validado por trigger no banco). */
+  localizacao: "bairro_cidade" | "cidade" | "oculto" | "endereco_completo";
   permitirWhatsapp: boolean;
   permitirAgendarVisita: boolean;
   substituiLinkId?: string | null;
