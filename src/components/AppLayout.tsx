@@ -29,6 +29,7 @@ import { useMenuAccess, MenuKey } from "@/hooks/useMenuAccess";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import NotificacoesBell from "@/components/NotificacoesBell";
 import logoWhite from "@/assets/brand/hr-imoveis-logo-white.png";
 import logoBlack from "@/assets/brand/hr-imoveis-logo.png";
 
