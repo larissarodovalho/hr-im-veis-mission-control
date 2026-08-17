@@ -294,6 +294,12 @@ export default function Imoveis() {
           <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setSharing(i)} title="Gerar link temporário para o cliente">
             <Share2 className="h-4 w-4" />
           </Button>
+          {canEdit && (
+            <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setApresentando(i)} title="Apresentação para o cliente (link temporário)">
+              <Presentation className="h-4 w-4" />
+            </Button>
+          )}
+
 
           <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setHistFor(i)} title="Histórico do imóvel">
             <History className="h-4 w-4" />
