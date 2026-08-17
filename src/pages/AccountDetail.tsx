@@ -17,6 +17,7 @@ import ContaAgendamentosList from "@/components/contas/ContaAgendamentosList";
 import ContaTarefas from "@/components/contas/ContaTarefas";
 import ContaFechamentos from "@/components/contas/ContaFechamentos";
 import ContaPropostas from "@/components/contas/ContaPropostas";
+import ContaImoveisVinculados from "@/components/contas/ContaImoveisVinculados";
 import ContaFluxoAtendimento from "@/components/contas/ContaFluxoAtendimento";
 import AlterarCategoriaDialog, { CategoriaData } from "@/components/contas/AlterarCategoriaDialog";
 import { format } from "date-fns";
@@ -301,6 +302,8 @@ export default function AccountDetail() {
       </Card>
 
       <ContaPropostas contaId={acc.id} />
+
+      <ContaImoveisVinculados contaId={acc.id} />
 
       <ContaFechamentos contaId={acc.id} />
 

@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, Calendar, Trophy, FileDown, Handshake, History } from "lucide-react";
+import { FileText, Calendar, Trophy, FileDown, Handshake, History, Link2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -17,7 +17,7 @@ type Props = {
 type Item = {
   id: string;
   date: string;
-  kind: "proposta" | "visita" | "venda";
+  kind: "proposta" | "visita" | "venda" | "link";
   title: string;
   subtitle?: string;
   status?: string;
@@ -36,11 +36,12 @@ export default function ImovelHistoricoDrawer({ open, onOpenChange, imovel }: Pr
     if (!open || !imovel) return;
     setLoading(true);
     (async () => {
-      const [propRes, reuRes, visRes, actRes] = await Promise.all([
+      const [propRes, reuRes, visRes, actRes, linkItRes] = await Promise.all([
         supabase.from("propostas").select("*").eq("imovel_id", imovel.id),
         supabase.from("reunioes").select("*").eq("imovel_id", imovel.id),
         (supabase.from("visitas" as any).select("*").eq("imovel_id", imovel.id) as any),
         supabase.from("activity_log").select("*").eq("tipo", "venda").contains("metadata", { imovel_id: imovel.id }),
+        supabase.from("imovel_link_itens").select("id, link_id").eq("imovel_id", imovel.id),
       ]);
       const leadIds = new Set<string>();
       (propRes.data ?? []).forEach((p: any) => p.lead_id && leadIds.add(p.lead_id));
@@ -96,6 +97,41 @@ export default function ImovelHistoricoDrawer({ open, onOpenChange, imovel }: Pr
           subtitle: a.descricao,
         });
       });
+      // Links compartilhados do imóvel (Etapa 10)
+      const linkIds = Array.from(new Set(((linkItRes as any).data ?? []).map((i: any) => i.link_id)));
+      if (linkIds.length) {
+        const [{ data: linksData }, { data: evData }] = await Promise.all([
+          supabase.from("imovel_links_compartilhados").select("*").in("id", linkIds),
+          supabase.from("imovel_link_eventos").select("link_id, tipo_evento").in("link_id", linkIds),
+        ]);
+        const fbLabels: Record<string, string> = {
+          gostei: "gostou", rejeitou: "rejeitou",
+          solicitou_informacoes: "pediu informações", solicitou_visita: "pediu visita",
+        };
+        const fbPorLink: Record<string, string[]> = {};
+        (evData ?? []).forEach((e: any) => {
+          const lb = fbLabels[e.tipo_evento];
+          if (!lb) return;
+          const arr = (fbPorLink[e.link_id] ||= []);
+          if (!arr.includes(lb)) arr.push(lb);
+        });
+        (linksData ?? []).forEach((l: any) => {
+          const partes = [
+            l.primeiro_acesso_em ? `aberto ${format(new Date(l.primeiro_acesso_em), "dd/MM HH:mm", { locale: ptBR })}` : "sem abertura",
+            `${l.total_acessos ?? 0} acesso(s)`,
+            ...(fbPorLink[l.id] ?? []),
+          ];
+          merged.push({
+            id: `l-${l.id}`,
+            date: l.compartilhado_em || l.created_at,
+            kind: "link",
+            title: `Link compartilhado · ${l.codigo_referencia}`,
+            subtitle: partes.join(" · "),
+            status: l.revogado_em ? "revogado" : l.expira_em && new Date(l.expira_em) <= new Date() ? "expirado" : "ativo",
+          });
+        });
+      }
+
       merged.sort((a, b) => +new Date(b.date) - +new Date(a.date));
       setItems(merged);
       setLoading(false);
@@ -111,6 +147,7 @@ export default function ImovelHistoricoDrawer({ open, onOpenChange, imovel }: Pr
   const icon = (k: Item["kind"]) =>
     k === "proposta" ? <Handshake className="h-4 w-4 text-amber-600" /> :
     k === "visita"   ? <Calendar className="h-4 w-4 text-blue-600" /> :
+    k === "link"     ? <Link2 className="h-4 w-4 text-primary" /> :
                        <Trophy className="h-4 w-4 text-emerald-600" />;
 
   return (
@@ -126,7 +163,7 @@ export default function ImovelHistoricoDrawer({ open, onOpenChange, imovel }: Pr
           {loading && <div className="text-sm text-muted-foreground">Carregando…</div>}
           {!loading && items.length === 0 && (
             <div className="text-sm text-muted-foreground text-center py-12">
-              Sem movimentações ainda. Visitas, propostas e a venda aparecerão aqui.
+              Sem movimentações ainda. Visitas, propostas, links compartilhados e a venda aparecerão aqui.
             </div>
           )}
           {items.map(it => (

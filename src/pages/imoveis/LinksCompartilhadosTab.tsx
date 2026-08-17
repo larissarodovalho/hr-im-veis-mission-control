@@ -29,6 +29,8 @@ export default function LinksCompartilhadosTab() {
 
   const load = async () => {
     setLoading(true);
+    // Registra na linha do tempo os links que expiraram sem nenhuma abertura
+    try { await supabase.rpc("imovel_links_expirados_sem_abertura" as any); } catch { /* não bloqueia */ }
     const { data: ls } = await supabase
       .from("imovel_links_compartilhados")
       .select("*")

@@ -21,6 +21,7 @@ import {
 } from "@/lib/contasFunil";
 import ContaCancelarDialog, { CancelamentoData } from "@/components/contas/ContaCancelarDialog";
 import QualificacaoOportunidadeDialog from "@/components/oportunidades/QualificacaoOportunidadeDialog";
+import CompartilharImovelDialog from "@/components/imoveis/CompartilharImovelDialog";
 
 interface Props {
   conta: any;
@@ -39,6 +40,7 @@ export default function ContaFluxoAtendimento({ conta, corretores, onChanged }: 
   const [saving, setSaving] = useState(false);
   const [dlg, setDlg] = useState<null | "contato1" | "contato2" | "tentativa" | "link" | "retorno" | "destino" | "moverLegado">(null);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
   const [qualifOpen, setQualifOpen] = useState(false);
   const [form, setForm] = useState<any>({});
   const [legacyTarget, setLegacyTarget] = useState<EtapaFunil | "">("");
@@ -137,16 +139,6 @@ export default function ContaFluxoAtendimento({ conta, corretores, onChanged }: 
     setSaving(false);
     setDlg(null);
     toast.success("Tentativa registrada");
-    onChanged();
-  };
-
-  const salvarLink = async () => {
-    if (!form.link?.trim()) return toast.error("Informe o link enviado");
-    setSaving(true);
-    await registrar("mensagem", `Link enviado: ${form.link.trim()}${form.obs ? `. Obs: ${form.obs}` : ""}`, { resultado: "link_enviado" });
-    setSaving(false);
-    setDlg(null);
-    toast.success("Envio de link registrado");
     onChanged();
   };
 
@@ -309,8 +301,8 @@ export default function ContaFluxoAtendimento({ conta, corretores, onChanged }: 
             <Button size="sm" variant="outline" onClick={() => openDlg("tentativa", { tipo: "mensagem" })}>
               <Phone className="h-4 w-4 mr-1" /> Registrar nova tentativa
             </Button>
-            <Button size="sm" variant="outline" onClick={() => openDlg("link")}>
-              <Link2 className="h-4 w-4 mr-1" /> Registrar envio de link
+            <Button size="sm" variant="outline" onClick={() => setLinkOpen(true)}>
+              <Link2 className="h-4 w-4 mr-1" /> Enviar link de imóvel
             </Button>
             <Button size="sm" variant="outline" onClick={() => openDlg("retorno")}>
               <CalendarClock className="h-4 w-4 mr-1" /> Criar tarefa de retorno
@@ -471,22 +463,6 @@ export default function ContaFluxoAtendimento({ conta, corretores, onChanged }: 
         salvarTentativa
       )}
 
-      {dlg === "link" && dialogComum(
-        "Registrar envio de link",
-        "O link enviado fica registrado na linha do tempo da conta.",
-        <>
-          <div>
-            <Label>Link enviado *</Label>
-            <Input placeholder="https://…" value={form.link ?? ""} onChange={(e) => setForm({ ...form, link: e.target.value })} />
-          </div>
-          <div>
-            <Label>Observação</Label>
-            <Textarea rows={2} value={form.obs ?? ""} onChange={(e) => setForm({ ...form, obs: e.target.value })} />
-          </div>
-        </>,
-        salvarLink
-      )}
-
       {dlg === "retorno" && dialogComum(
         "Criar tarefa de retorno",
         "Define a próxima data de contato e cria uma tarefa para o responsável.",
@@ -523,6 +499,15 @@ export default function ContaFluxoAtendimento({ conta, corretores, onChanged }: 
         onOpenChange={setCancelOpen}
         contaNome={conta.nome}
         onConfirm={confirmarCancelamento}
+      />
+
+      <CompartilharImovelDialog
+        open={linkOpen}
+        onOpenChange={setLinkOpen}
+        imoveis={[]}
+        contaId={conta.id}
+        contaNome={conta.nome}
+        onCreated={onChanged}
       />
 
       <QualificacaoOportunidadeDialog

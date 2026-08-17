@@ -2089,6 +2089,7 @@ export type Database = {
           created_by: string
           estado_operacional: string
           expira_em: string | null
+          expiracao_notificada_em: string | null
           id: string
           inicio_validade: string
           mensagem_apresentacao: string | null
@@ -2119,6 +2120,7 @@ export type Database = {
           created_by: string
           estado_operacional?: string
           expira_em?: string | null
+          expiracao_notificada_em?: string | null
           id?: string
           inicio_validade?: string
           mensagem_apresentacao?: string | null
@@ -2149,6 +2151,7 @@ export type Database = {
           created_by?: string
           estado_operacional?: string
           expira_em?: string | null
+          expiracao_notificada_em?: string | null
           id?: string
           inicio_validade?: string
           mensagem_apresentacao?: string | null
@@ -4752,6 +4755,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      imovel_link_descricao_itens: {
+        Args: { _link_id: string }
+        Returns: string
+      }
+      imovel_link_marcar_apresentado: {
+        Args: { _link_id: string; _por: string }
+        Returns: undefined
+      }
+      imovel_links_expirados_sem_abertura: { Args: never; Returns: number }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       list_contas_min: {
