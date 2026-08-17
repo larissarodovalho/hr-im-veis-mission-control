@@ -21,8 +21,10 @@ interface Props {
 }
 
 export default function ApresentacaoImovelDialog({ open, onOpenChange, imovel, onSaved }: Props) {
+  const { profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [gerando, setGerando] = useState(false);
   const [descricao, setDescricao] = useState("");
   const [video, setVideo] = useState("");
   const [condicoes, setCondicoes] = useState("");
@@ -31,6 +33,28 @@ export default function ApresentacaoImovelDialog({ open, onOpenChange, imovel, o
   const [fotosPublicas, setFotosPublicas] = useState<string[]>([]);
 
   const fotos = imovel?.fotos ?? [];
+
+  const gerarPdf = async () => {
+    if (!imovel) return;
+    setGerando(true);
+    try {
+      await gerarPdfApresentacao(
+        imovel as any,
+        {
+          fotos_publicas: fotosPublicas,
+          descricao_publica: descricao.trim() || null,
+          condicoes_comerciais_publicas: condicoes.trim() || null,
+          exibir_valor_padrao: exibirValor,
+          localizacao_padrao: localizacao,
+        },
+        { nome: profile?.nome, telefone: profile?.telefone, email: profile?.email },
+      );
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao gerar o PDF");
+    } finally {
+      setGerando(false);
+    }
+  };
 
   useEffect(() => {
     if (!open || !imovel) return;
