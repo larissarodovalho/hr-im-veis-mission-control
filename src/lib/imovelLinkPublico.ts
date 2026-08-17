@@ -26,7 +26,7 @@ export interface LinkItemPublico {
 }
 
 export interface LinkPublicoResponse {
-  status: "ativo" | "expirado" | "revogado" | "invalido";
+  status: "ativo" | "expirado" | "revogado" | "invalido" | "indisponivel";
   tipo?: string;
   codigo_referencia?: string;
   titulo?: string | null;
