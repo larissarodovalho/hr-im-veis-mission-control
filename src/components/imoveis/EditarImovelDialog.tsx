@@ -195,6 +195,8 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
         await supabase.storage.from("imoveis").remove(removerPaths);
         await supabase.storage.from("imoveis-originais").remove(removerPaths).catch(() => {});
         await supabase.storage.from("imoveis-compartilhados").remove(removerPaths).catch(() => {});
+      }
+
 
       const num = (s: string) => (s.trim() === "" ? null : Number(s.replace(",", ".")));
       const int = (s: string) => (s.trim() === "" ? null : parseInt(s, 10));
