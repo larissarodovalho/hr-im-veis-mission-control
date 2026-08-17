@@ -143,16 +143,16 @@ export async function gerarPdfApresentacao(
 
   const logo = await dataUrlSimples(logoHR);
 
-  const rodape = (pagina: number, total: number) => {
+  const rodape = (pagina: number, total: number, esquerda = MARGIN) => {
     doc.setDrawColor(...CINZA_CLARO);
     doc.setLineWidth(0.2);
-    doc.line(MARGIN, PAGE_H - 13, PAGE_W - MARGIN, PAGE_H - 13);
+    doc.line(esquerda, PAGE_H - 13, PAGE_W - MARGIN, PAGE_H - 13);
     doc.setFontSize(7);
     doc.setTextColor(...CINZA);
-    doc.text("HR IMÓVEIS · hrimoveis.com", MARGIN, PAGE_H - 8);
+    doc.text("HR IMÓVEIS · hrimoveis.com", esquerda, PAGE_H - 8);
     const ref = imovel.codigo ? `REF ${imovel.codigo}` : "";
-    if (ref) doc.text(ref, PAGE_W / 2, PAGE_H - 8, { align: "center" });
-    doc.text(`${pagina}/${total}`, PAGE_W - MARGIN, PAGE_H - 8, { align: "right" });
+    if (ref) doc.text(ref, PAGE_W - MARGIN, PAGE_H - 8, { align: "right" });
+    doc.text(`${pagina}/${total}`, (esquerda + PAGE_W - MARGIN) / 2, PAGE_H - 8, { align: "center" });
   };
 
   const temGaleria = fotos.length > 1;
@@ -234,7 +234,17 @@ export async function gerarPdfApresentacao(
     cx += w + 4;
   });
 
-  rodape(1, totalPaginas);
+  const contatoCapa = [corretor?.nome, corretor?.telefone].filter(Boolean).join("  ·  ");
+  if (contatoCapa) {
+    doc.setFontSize(7);
+    doc.setTextColor(...CINZA);
+    doc.text("SEU CORRETOR", px, PAGE_H - 32, { charSpace: 0.8 });
+    doc.setFontSize(10);
+    doc.setTextColor(...PRETO);
+    doc.text(doc.splitTextToSize(contatoCapa, pw)[0], px, PAGE_H - 24);
+  }
+
+  rodape(1, totalPaginas, px);
 
   // ---------------------------------------------------------------- PÁGINA 2 — GALERIA
   if (temGaleria) {
@@ -245,17 +255,18 @@ export async function gerarPdfApresentacao(
     doc.setFontSize(11);
     doc.setTextColor(...PRETO);
     doc.text(doc.splitTextToSize(String(imovel.titulo || ""), 200)[0], MARGIN, 28);
+    if (logo) doc.addImage(logo, "PNG", PAGE_W - MARGIN - 28, 16, 28, 28 * 0.28, undefined, "FAST");
 
     const cols = 3;
     const gap = 5;
     const gw = (PAGE_W - MARGIN * 2 - gap * (cols - 1)) / cols;
-    const gh = 58;
+    const gh = 71;
     const selecionadas = fotos.slice(1, 7);
     for (let i = 0; i < selecionadas.length; i++) {
       const col = i % cols;
       const row = Math.floor(i / cols);
       const gx = MARGIN + col * (gw + gap);
-      const gy = 36 + row * (gh + gap);
+      const gy = 38 + row * (gh + gap);
       const dataUrl = await imagemRecortada(selecionadas[i], gw, gh, 2.5);
       if (dataUrl) doc.addImage(dataUrl, "JPEG", gx, gy, gw, gh);
     }
@@ -264,23 +275,29 @@ export async function gerarPdfApresentacao(
 
   // ---------------------------------------------------------------- PÁGINA FINAL — DETALHES
   doc.addPage();
-  doc.setFontSize(7);
-  doc.setTextColor(...CINZA);
-  doc.text("SOBRE O IMÓVEL", MARGIN, 20, { charSpace: 0.9 });
-
   const colW = (PAGE_W - MARGIN * 2 - 14) / 2;
   const colDir = MARGIN + colW + 14;
+
+  if (logo) doc.addImage(logo, "PNG", PAGE_W - MARGIN - 28, 16, 28, 28 * 0.28, undefined, "FAST");
+
+  // painel da descrição
+  doc.setFillColor(...AREIA);
+  doc.roundedRect(MARGIN, 16, colW, PAGE_H - 62, 3, 3, "F");
+
+  doc.setFontSize(7);
+  doc.setTextColor(...CINZA);
+  doc.text("SOBRE O IMÓVEL", MARGIN + 10, 30, { charSpace: 0.9 });
 
   doc.setFontSize(10);
   doc.setTextColor(...PRETO);
   if (descricao) {
-    doc.text(doc.splitTextToSize(descricao, colW).slice(0, 26), MARGIN, 32, { lineHeightFactor: 1.6 });
+    doc.text(doc.splitTextToSize(descricao, colW - 20).slice(0, 22), MARGIN + 10, 42, { lineHeightFactor: 1.6 });
   } else {
     doc.setTextColor(...CINZA);
-    doc.text("Fale com o corretor para mais detalhes.", MARGIN, 32);
+    doc.text("Fale com o corretor para mais detalhes.", MARGIN + 10, 42);
   }
 
-  let dy = 32;
+  let dy = 30;
   if (condicoes) {
     doc.setFontSize(7);
     doc.setTextColor(...CINZA);
@@ -322,15 +339,13 @@ export async function gerarPdfApresentacao(
   // Faixa de contato
   const faixaY = PAGE_H - 42;
   doc.setFillColor(...PRETO);
-  doc.rect(MARGIN, faixaY, PAGE_W - MARGIN * 2, 22, "F");
+  doc.roundedRect(colDir, faixaY, colW, 22, 3, 3, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(7);
-  doc.text("FALE COM O CORRETOR", MARGIN + 8, faixaY + 8, { charSpace: 0.8 });
+  doc.text("FALE COM O CORRETOR", colDir + 8, faixaY + 8, { charSpace: 0.8 });
   doc.setFontSize(11);
   const contato = [corretor?.nome, corretor?.telefone].filter(Boolean).join("  ·  ");
-  doc.text(contato || "HR Imóveis", MARGIN + 8, faixaY + 16);
-  doc.setFontSize(9);
-  doc.text("HR Imóveis · hrimoveis.com", PAGE_W - MARGIN - 8, faixaY + 16, { align: "right" });
+  doc.text(doc.splitTextToSize(contato || "HR Imóveis", colW - 16)[0], colDir + 8, faixaY + 16);
 
   rodape(totalPaginas, totalPaginas);
 
