@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
+import { imagemOtimizada, IMG_CARD } from "@/lib/imagemOtimizada";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { MapPin, BedDouble, Bath, Car, Search, X, ArrowUpRight, Maximize2, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -397,7 +398,8 @@ export default function ImoveisPage() {
                     {/* Image */}
                     <div className="aspect-[16/10] relative overflow-hidden">
                       <motion.img
-                        src={im.imagem || getImageForImovel(im.id, im.tipo)}
+                        src={im.imagem ? imagemOtimizada(im.imagem, IMG_CARD) : getImageForImovel(im.id, im.tipo)}
+                        decoding="async"
                         alt={im.nome}
                         loading="lazy"
                         width={800}

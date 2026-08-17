@@ -276,9 +276,19 @@ Deno.serve(async (req) => {
   const todosPaths = [...new Set([...pathsPorItem.values()].flat())];
   const urlPorPath = new Map<string, string>();
   if (todosPaths.length) {
+    // Assina já com redimensionamento: a foto chega ~8x menor ao cliente.
+    const TRANSFORM = { width: 1400, quality: 75, resize: "cover" as const };
+    const LOTE = 12;
     const assinar = async (lista: string[]) => {
-      const { data } = await supabase.storage.from(SHARED_BUCKET).createSignedUrls(lista, signedTtl);
-      (data ?? []).forEach((s, i) => { if (s?.signedUrl) urlPorPath.set(lista[i], s.signedUrl); });
+      for (let i = 0; i < lista.length; i += LOTE) {
+        const bloco = lista.slice(i, i + LOTE);
+        await Promise.all(bloco.map(async (p) => {
+          const { data } = await supabase.storage
+            .from(SHARED_BUCKET)
+            .createSignedUrl(p, signedTtl, { transform: TRANSFORM });
+          if (data?.signedUrl) urlPorPath.set(p, data.signedUrl);
+        }));
+      }
     };
     await assinar(todosPaths);
     const faltando = todosPaths.filter((p) => !urlPorPath.has(p));

@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { imagemOtimizada, IMG_THUMB } from "@/lib/imagemOtimizada";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/lib/format";
@@ -41,7 +42,7 @@ export default function DetalhesImovelDialog({ open, onOpenChange, imovel, corre
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {i.fotos.map((url: string, idx: number) => (
                 <a key={idx} href={url} target="_blank" rel="noreferrer" className="block">
-                  <img src={url} alt={`${i.titulo} ${idx + 1}`} className="w-full h-32 object-cover rounded-md border" />
+                  <img src={imagemOtimizada(url, IMG_THUMB)} alt={`${i.titulo} ${idx + 1}`} loading="lazy" decoding="async" className="w-full h-32 object-cover rounded-md border" />
                 </a>
               ))}
             </div>

@@ -48,6 +48,16 @@ function formatRestante(ms: number) {
 
 function Galeria({ fotos, onView }: { fotos: string[]; onView: () => void }) {
   const [i, setI] = useState(0);
+
+  // Pré-carrega apenas a próxima e a anterior: troca instantânea sem baixar tudo.
+  useEffect(() => {
+    if (fotos.length < 2) return;
+    [(i + 1) % fotos.length, (i - 1 + fotos.length) % fotos.length].forEach((idx) => {
+      const img = new Image();
+      img.src = fotos[idx];
+    });
+  }, [i, fotos]);
+
   if (!fotos.length) {
     return <div className="aspect-[4/3] w-full rounded-xl bg-muted" />;
   }
@@ -56,7 +66,8 @@ function Galeria({ fotos, onView }: { fotos: string[]; onView: () => void }) {
       <img
         src={fotos[i]}
         alt={`Foto ${i + 1} do imóvel`}
-        loading="lazy"
+        loading={i === 0 ? "eager" : "lazy"}
+        decoding="async"
         className="aspect-[4/3] w-full object-cover"
         onClick={onView}
       />

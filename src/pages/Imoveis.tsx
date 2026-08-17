@@ -6,6 +6,7 @@
 // (`imoveis_public`) filtra por status = 'Disponível', então o imóvel continua visível
 // no site durante todo o ciclo de proposta/fechamento.
 import { useEffect, useMemo, useState } from "react";
+import { imagemOtimizada, IMG_CARD } from "@/lib/imagemOtimizada";
 import { formatBRL } from "@/lib/format";
 import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -270,7 +271,7 @@ export default function Imoveis() {
     return (
       <div className="relative">
         {i.fotos?.[0] ? (
-          <img src={i.fotos[0]} alt={i.titulo} className="w-full h-36 object-cover" />
+          <img src={imagemOtimizada(i.fotos[0], IMG_CARD)} alt={i.titulo} loading="lazy" decoding="async" className="w-full h-36 object-cover" />
         ) : (
           <div className="w-full h-36 bg-muted flex items-center justify-center text-muted-foreground">
             <HomeIcon className="h-10 w-10 opacity-30" />

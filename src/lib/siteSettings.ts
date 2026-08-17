@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { imagemOtimizada, IMG_HERO } from "@/lib/imagemOtimizada";
 
 export type SiteImageKey =
   | "hero_home"
@@ -159,6 +160,8 @@ export function useSiteImages() {
       .then((m) => setMap(m))
       .finally(() => setLoaded(true));
   }, []);
-  const img = (key: SiteImageKey, fallback: string) => map[key] || fallback;
+  // Imagens de capa vêm do storage: entrega redimensionada (hero) em vez do original.
+  const img = (key: SiteImageKey, fallback: string) =>
+    map[key] ? imagemOtimizada(map[key], IMG_HERO) : fallback;
   return { img, map, loaded };
 }
