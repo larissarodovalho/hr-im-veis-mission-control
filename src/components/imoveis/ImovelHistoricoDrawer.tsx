@@ -98,7 +98,9 @@ export default function ImovelHistoricoDrawer({ open, onOpenChange, imovel }: Pr
         });
       });
       // Links compartilhados do imóvel (Etapa 10)
-      const linkIds = Array.from(new Set(((linkItRes as any).data ?? []).map((i: any) => i.link_id)));
+      const linkIds = Array.from(
+        new Set(((linkItRes as any).data ?? []).map((i: any) => String(i.link_id)))
+      ) as string[];
       if (linkIds.length) {
         const [{ data: linksData }, { data: evData }] = await Promise.all([
           supabase.from("imovel_links_compartilhados").select("*").in("id", linkIds),
