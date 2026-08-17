@@ -109,7 +109,10 @@ export function gerarCodigoReferencia(): string {
 }
 
 export const VALIDADES = [
+  { valor: 30, label: "30 minutos" },
   { valor: 60, label: "1 hora" },
+  { valor: 90, label: "1 hora e 30" },
+  { valor: 120, label: "2 horas" },
   { valor: 60 * 6, label: "6 horas" },
   { valor: 60 * 24, label: "24 horas" },
   { valor: 60 * 24 * 3, label: "3 dias" },
@@ -117,6 +120,11 @@ export const VALIDADES = [
   { valor: 60 * 24 * 15, label: "15 dias" },
   { valor: 60 * 24 * 30, label: "30 dias" },
 ];
+
+/** Limites do prazo personalizado (em minutos). */
+export const VALIDADE_MIN = 15;
+export const VALIDADE_MAX = 60 * 24 * 30;
+
 
 export const INICIOS = [
   { valor: "criacao", label: "Na criação do link" },
