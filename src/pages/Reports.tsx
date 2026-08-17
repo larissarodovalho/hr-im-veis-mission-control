@@ -18,6 +18,7 @@ import FechamentosReport from "@/components/reports/FechamentosReport";
 import PropostasReport from "@/components/reports/PropostasReport";
 import OportunidadesReport from "@/components/reports/OportunidadesReport";
 import CarteiraReport from "@/components/reports/CarteiraReport";
+import LinksImoveisReport from "@/components/reports/LinksImoveisReport";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReportsPeriodProvider, useReportsPeriod, MESES_LABELS } from "@/hooks/useReportsPeriod";
 
@@ -138,6 +139,7 @@ function ReportsInner() {
           <TabsTrigger value="propostas">Propostas</TabsTrigger>
           <TabsTrigger value="carteira">Carteira</TabsTrigger>
           <TabsTrigger value="imoveis">Imóveis</TabsTrigger>
+          <TabsTrigger value="links">Links dos imóveis</TabsTrigger>
           <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
         </TabsList>
 
@@ -214,6 +216,10 @@ function ReportsInner() {
 
         <TabsContent value="imoveis" className="mt-4">
           <ImoveisReport />
+        </TabsContent>
+
+        <TabsContent value="links" className="mt-4">
+          <LinksImoveisReport />
         </TabsContent>
 
         <TabsContent value="faturamento" className="mt-4">
