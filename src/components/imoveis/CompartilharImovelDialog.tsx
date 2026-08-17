@@ -37,8 +37,22 @@ export default function CompartilharImovelDialog({ open, onOpenChange, imoveis, 
       setCriado(null);
       setTitulo(imoveis.length > 1 ? "Seleção de imóveis" : "");
       setMensagem("");
+      // Usa os padrões de apresentação do imóvel, quando houver um só
+      if (imoveis.length === 1) {
+        supabase
+          .from("imovel_apresentacao_config")
+          .select("exibir_valor_padrao, localizacao_padrao")
+          .eq("imovel_id", imoveis[0].id)
+          .maybeSingle()
+          .then(({ data }: any) => {
+            if (!data) return;
+            setExibirValor(data.exibir_valor_padrao ?? true);
+            setLocalizacao((data.localizacao_padrao as any) ?? "bairro_cidade");
+          });
+      }
     }
   }, [open, imoveis.length]);
+
 
   const criar = async () => {
     setSaving(true);
