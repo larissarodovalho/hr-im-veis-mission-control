@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Copy, Ban, Eye, Users, MessageCircle, CalendarCheck, Link2, Timer } from "lucide-react";
 import { toast } from "sonner";
-import { formatDateTime } from "@/lib/datetime";
+import { fmtDateTime } from "@/lib/datetime";
 import { estadoAtual, tempoRestante, urlDoLink, revogarLink, type LinkCompartilhado } from "@/lib/imovelLinks";
 
 type Metricas = { whatsapp: number; visita: number };
@@ -168,7 +168,7 @@ export default function LinksCompartilhadosTab() {
                     </div>
                     <div className="text-[11px] text-muted-foreground truncate">
                       {(itens[l.id] || []).length > 1 ? `${itens[l.id].length} imóveis · ` : ""}
-                      Corretor: {profiles[l.corretor_id] || "—"} · Criado em {formatDateTime(l.created_at)}
+                      Corretor: {profiles[l.corretor_id] || "—"} · Criado em {fmtDateTime(l.created_at)}
                     </div>
                   </div>
                   <div className="flex gap-1.5">
@@ -188,7 +188,7 @@ export default function LinksCompartilhadosTab() {
                   <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {l.visitantes_unicos} únicos</span>
                   <span className="flex items-center gap-1"><MessageCircle className="h-3 w-3" /> {m.whatsapp} WhatsApp</span>
                   <span className="flex items-center gap-1"><CalendarCheck className="h-3 w-3" /> {m.visita} visitas pedidas</span>
-                  {l.ultimo_acesso_em && <span>Último acesso: {formatDateTime(l.ultimo_acesso_em)}</span>}
+                  {l.ultimo_acesso_em && <span>Último acesso: {fmtDateTime(l.ultimo_acesso_em)}</span>}
                 </div>
               </Card>
             );
