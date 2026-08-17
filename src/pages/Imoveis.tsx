@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { gerarPdfApresentacao, carregarConfigApresentacao } from "@/lib/imovelPdf";
-import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2, FileDown, History, Eye, EyeOff, Info, Share2, Presentation, ListChecks } from "lucide-react";
+import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2, FileDown, History, Eye, EyeOff, Info, Share2, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import NovoImovelDialog from "@/components/imoveis/NovoImovelDialog";
@@ -26,7 +26,6 @@ import NovaPropostaDialog from "@/components/imoveis/NovaPropostaDialog";
 import ImovelHistoricoDrawer from "@/components/imoveis/ImovelHistoricoDrawer";
 import DetalhesImovelDialog from "@/components/imoveis/DetalhesImovelDialog";
 import CompartilharImovelDialog from "@/components/imoveis/CompartilharImovelDialog";
-import ApresentacaoImovelDialog from "@/components/imoveis/ApresentacaoImovelDialog";
 import SelecaoImoveisAcoes from "@/components/imoveis/SelecaoImoveisAcoes";
 import { Checkbox } from "@/components/ui/checkbox";
 import VendidosTab from "@/pages/imoveis/VendidosTab";
@@ -57,7 +56,6 @@ export default function Imoveis() {
   const [histFor, setHistFor] = useState<Imovel | null>(null);
   const [viewing, setViewing] = useState<Imovel | null>(null);
   const [sharing, setSharing] = useState<Imovel | null>(null);
-  const [apresentando, setApresentando] = useState<Imovel | null>(null);
   // Seleção múltipla (Etapa 11): monta um único link com vários imóveis
   const MAX_SELECAO = 20;
   const [selMode, setSelMode] = useState(false);
@@ -333,11 +331,6 @@ export default function Imoveis() {
           <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setSharing(i)} title="Gerar link temporário para o cliente">
             <Share2 className="h-4 w-4" />
           </Button>
-          {canEdit && (
-            <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setApresentando(i)} title="Apresentação para o cliente (link temporário)">
-              <Presentation className="h-4 w-4" />
-            </Button>
-          )}
           <Button
             size="icon"
             variant="secondary"
@@ -662,11 +655,6 @@ export default function Imoveis() {
         </TabsContent>
       </Tabs>
 
-      <ApresentacaoImovelDialog
-        open={!!apresentando}
-        onOpenChange={(v) => { if (!v) setApresentando(null); }}
-        imovel={apresentando}
-      />
 
 
       {selMode && (
