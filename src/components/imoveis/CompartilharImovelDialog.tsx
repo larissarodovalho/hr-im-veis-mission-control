@@ -11,8 +11,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   criarLinkCompartilhado, marcarCompartilhado,
-  VALIDADES, INICIOS, type LinkCompartilhado,
+  VALIDADES, INICIOS, VALIDADE_MIN, VALIDADE_MAX, type LinkCompartilhado,
 } from "@/lib/imovelLinks";
+
 import CompartilharAcoes from "@/components/imoveis/CompartilharAcoes";
 import { SearchableSelect } from "@/components/SearchableSelect";
 import { useRole } from "@/hooks/useRole";
@@ -37,6 +38,8 @@ export default function CompartilharImovelDialog({
   const { isAdmin, isGestor } = useRole();
   const podeEndereco = isAdmin || isGestor; // endereço completo exige autorização
   const [validade, setValidade] = useState("1440");
+  const [validadeCustom, setValidadeCustom] = useState("120");
+
   const [inicio, setInicio] = useState<"criacao" | "primeiro_acesso">("criacao");
   const [exibirValor, setExibirValor] = useState(true);
   const [localizacao, setLocalizacao] = useState<"bairro_cidade" | "cidade" | "oculto" | "endereco_completo">("bairro_cidade");
@@ -124,6 +127,11 @@ export default function CompartilharImovelDialog({
 
   const criar = async () => {
     if (!alvo.length) { toast.error("Selecione o imóvel"); return; }
+    const minutos = validade === "custom" ? Number(validadeCustom) : Number(validade);
+    if (!Number.isFinite(minutos) || minutos < VALIDADE_MIN || minutos > VALIDADE_MAX) {
+      toast.error(`Informe um prazo entre ${VALIDADE_MIN} minutos e 30 dias`);
+      return;
+    }
     setSaving(true);
     try {
       const link = await criarLinkCompartilhado({
@@ -132,7 +140,8 @@ export default function CompartilharImovelDialog({
         mensagem: mensagem || null,
         contaId: conta !== "none" ? conta : null,
         oportunidadeId: oportunidade !== "none" ? oportunidade : null,
-        validadeMinutos: Number(validade),
+        validadeMinutos: minutos,
+
         inicioValidade: inicio,
         exibirValor,
         localizacao,
@@ -219,6 +228,7 @@ export default function CompartilharImovelDialog({
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {VALIDADES.map((v) => <SelectItem key={v.valor} value={String(v.valor)}>{v.label}</SelectItem>)}
+                    <SelectItem value="custom">Personalizado…</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -232,6 +242,24 @@ export default function CompartilharImovelDialog({
                 </Select>
               </div>
             </div>
+
+            {validade === "custom" && (
+              <div className="space-y-1.5">
+                <Label>Prazo personalizado (minutos)</Label>
+                <Input
+                  type="number"
+                  min={VALIDADE_MIN}
+                  max={VALIDADE_MAX}
+                  value={validadeCustom}
+                  onChange={(e) => setValidadeCustom(e.target.value)}
+                  placeholder={`Entre ${VALIDADE_MIN} e ${VALIDADE_MAX} minutos`}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Mínimo {VALIDADE_MIN} minutos, máximo 30 dias.
+                </p>
+              </div>
+            )}
+
 
             <div className="space-y-1.5">
               <Label>Localização exibida</Label>
