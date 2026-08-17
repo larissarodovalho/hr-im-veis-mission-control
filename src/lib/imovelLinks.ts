@@ -27,7 +27,69 @@ export interface LinkCompartilhado {
   configuracao_publica: Record<string, unknown>;
   revogado_em: string | null;
   motivo_revogacao: string | null;
+  compartilhado_em: string | null;
+  canal_compartilhamento: string | null;
+  substitui_link_id: string | null;
   created_at: string;
+}
+
+/** Status operacional exibido na central de links (Etapa 13). */
+export type LinkStatusUI =
+  | "aguardando_inicio" | "nao_aberto" | "aberto" | "ativo"
+  | "proximo_expirar" | "expirado" | "revogado" | "substituido"
+  | "convertido_interesse" | "convertido_oportunidade" | "convertido_venda";
+
+export const STATUS_LABEL: Record<LinkStatusUI, string> = {
+  aguardando_inicio: "Aguardando início",
+  nao_aberto: "Não aberto",
+  aberto: "Aberto",
+  ativo: "Ativo",
+  proximo_expirar: "Próximo de expirar",
+  expirado: "Expirado",
+  revogado: "Revogado",
+  substituido: "Substituído",
+  convertido_interesse: "Convertido em interesse",
+  convertido_oportunidade: "Convertido em oportunidade",
+  convertido_venda: "Convertido em venda",
+};
+
+/**
+ * Status apresentado na central. `conversao` vem dos eventos/vínculos do link
+ * e tem prioridade sobre o ciclo de vida quando existe resultado comercial.
+ */
+export function statusUI(
+  l: LinkCompartilhado,
+  conversao?: "interesse" | "oportunidade" | "venda" | null,
+): LinkStatusUI {
+  const base = estadoAtual(l);
+  if (base === "revogado") return "revogado";
+  if (base === "substituido") return "substituido";
+  if (conversao === "venda") return "convertido_venda";
+  if (conversao === "oportunidade") return "convertido_oportunidade";
+  if (conversao === "interesse") return "convertido_interesse";
+  if (base === "expirado") return l.primeiro_acesso_em ? "expirado" : "nao_aberto";
+  if (!l.expira_em && l.inicio_validade === "primeiro_acesso" && !l.primeiro_acesso_em)
+    return "aguardando_inicio";
+  if (l.expira_em) {
+    const restante = new Date(l.expira_em).getTime() - Date.now();
+    if (restante <= 2 * 3_600_000) return "proximo_expirar";
+  }
+  return l.primeiro_acesso_em ? "aberto" : "ativo";
+}
+
+/** Exclusão definitiva (apenas admin, conforme política do banco). */
+export async function excluirLink(id: string) {
+  const { error } = await supabase.from("imovel_links_compartilhados").delete().eq("id", id);
+  if (error) throw error;
+}
+
+/** Marca manualmente um link como substituído, preservando o histórico. */
+export async function marcarSubstituido(id: string) {
+  const { error } = await supabase
+    .from("imovel_links_compartilhados")
+    .update({ estado_operacional: "substituido" } as any)
+    .eq("id", id);
+  if (error) throw error;
 }
 
 /** Token opaco de 43 caracteres (256 bits em base64url). */

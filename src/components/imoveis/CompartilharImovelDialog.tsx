@@ -26,10 +26,12 @@ interface Props {
   contaNome?: string | null;
   /** Oportunidade pré-selecionada. */
   oportunidadeId?: string | null;
+  /** Link que está sendo renovado — o antigo vira "substituído" e fica no histórico. */
+  substituiLinkId?: string | null;
 }
 
 export default function CompartilharImovelDialog({
-  open, onOpenChange, imoveis, onCreated, contaId, contaNome, oportunidadeId,
+  open, onOpenChange, imoveis, onCreated, contaId, contaNome, oportunidadeId, substituiLinkId,
 }: Props) {
   const [validade, setValidade] = useState("1440");
   const [inicio, setInicio] = useState<"criacao" | "primeiro_acesso">("criacao");
@@ -133,6 +135,7 @@ export default function CompartilharImovelDialog({
         localizacao,
         permitirWhatsapp: whats,
         permitirAgendarVisita: visita,
+        substituiLinkId: substituiLinkId || null,
       });
       setCriado(link);
       marcarCompartilhado(link.id, "link");
