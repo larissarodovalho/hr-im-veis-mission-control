@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { gerarPdfApresentacao, carregarConfigApresentacao } from "@/lib/imovelPdf";
 import { Search, Home as HomeIcon, Plus, Pencil, CheckCircle2, Trophy, FileText, Handshake, XCircle, FileSignature, Undo2, FileDown, History, Eye, EyeOff, Info, Share2, Presentation, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,7 +45,7 @@ const isEmAnalise = (p: Proposta) => ["em análise", "em analise"].includes(stat
 const isAceita = (p: Proposta) => statusLower(p.status) === "aceita";
 
 export default function Imoveis() {
-  const { isAdmin, isGestor, isMarketing } = useAuth();
+  const { isAdmin, isGestor, isMarketing, profile } = useAuth();
   const canEdit = isAdmin || isGestor || isMarketing;
   const [items, setItems] = useState<Imovel[]>([]);
   const [propostas, setPropostas] = useState<Proposta[]>([]);
@@ -72,6 +73,18 @@ export default function Imoveis() {
 
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [contas, setContas] = useState<Record<string, string>>({});
+  const [pdfId, setPdfId] = useState<string | null>(null);
+  const baixarPdf = async (i: Imovel) => {
+    setPdfId(i.id);
+    try {
+      const cfg = await carregarConfigApresentacao(i.id);
+      await gerarPdfApresentacao(i, cfg, { nome: profile?.nome, telefone: profile?.telefone, email: profile?.email });
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao gerar o PDF");
+    } finally {
+      setPdfId(null);
+    }
+  };
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = searchParams.get("tab") || "disponiveis";
   const setTab = (v: string) => {
@@ -325,6 +338,16 @@ export default function Imoveis() {
               <Presentation className="h-4 w-4" />
             </Button>
           )}
+          <Button
+            size="icon"
+            variant="secondary"
+            className="h-8 w-8"
+            disabled={pdfId === i.id}
+            onClick={() => baixarPdf(i)}
+            title="PDF de apresentação"
+          >
+            <FileDown className="h-4 w-4" />
+          </Button>
 
 
           <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setHistFor(i)} title="Histórico do imóvel">

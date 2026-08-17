@@ -7,9 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Check, Loader2, Presentation } from "lucide-react";
+import { Check, FileDown, Loader2, Presentation } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { gerarPdfApresentacao } from "@/lib/imovelPdf";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Props {
   open: boolean;
@@ -19,8 +21,10 @@ interface Props {
 }
 
 export default function ApresentacaoImovelDialog({ open, onOpenChange, imovel, onSaved }: Props) {
+  const { profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [gerando, setGerando] = useState(false);
   const [descricao, setDescricao] = useState("");
   const [video, setVideo] = useState("");
   const [condicoes, setCondicoes] = useState("");
@@ -29,6 +33,28 @@ export default function ApresentacaoImovelDialog({ open, onOpenChange, imovel, o
   const [fotosPublicas, setFotosPublicas] = useState<string[]>([]);
 
   const fotos = imovel?.fotos ?? [];
+
+  const gerarPdf = async () => {
+    if (!imovel) return;
+    setGerando(true);
+    try {
+      await gerarPdfApresentacao(
+        imovel as any,
+        {
+          fotos_publicas: fotosPublicas,
+          descricao_publica: descricao.trim() || null,
+          condicoes_comerciais_publicas: condicoes.trim() || null,
+          exibir_valor_padrao: exibirValor,
+          localizacao_padrao: localizacao,
+        },
+        { nome: profile?.nome, telefone: profile?.telefone, email: profile?.email },
+      );
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao gerar o PDF");
+    } finally {
+      setGerando(false);
+    }
+  };
 
   useEffect(() => {
     if (!open || !imovel) return;
@@ -182,8 +208,12 @@ export default function ApresentacaoImovelDialog({ open, onOpenChange, imovel, o
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="gap-2 sm:gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button variant="secondary" onClick={gerarPdf} disabled={gerando || saving || loading}>
+            {gerando ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
+            Gerar PDF
+          </Button>
           <Button onClick={salvar} disabled={saving || loading}>
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Salvar apresentação
           </Button>
