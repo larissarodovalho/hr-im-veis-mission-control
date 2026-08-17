@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Copy, Link2, MessageCircle, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   criarLinkCompartilhado, urlDoLink, marcarCompartilhado,
   VALIDADES, INICIOS, type LinkCompartilhado,
