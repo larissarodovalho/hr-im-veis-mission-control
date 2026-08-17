@@ -13,15 +13,14 @@ import {
   Car,
   Clock,
   Loader2,
-  MessageCircle,
   Ruler,
-  CalendarCheck,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import hrLogo from "@/assets/logo-hr-branco.png";
+import AcoesClienteLink from "@/components/imoveis/publico/AcoesClienteLink";
 
 function brl(v: number | null) {
   if (v == null) return null;
@@ -91,10 +90,14 @@ function ItemCard({
   item,
   token,
   telefone,
+  codigoReferencia,
+  bloqueado,
 }: {
   item: LinkItemPublico;
   token: string;
   telefone: string | null;
+  codigoReferencia?: string;
+  bloqueado?: boolean;
 }) {
   const specs = [
     item.quartos ? { icon: BedDouble, label: `${item.quartos} quarto${item.quartos > 1 ? "s" : ""}` } : null,
@@ -104,18 +107,6 @@ function ItemCard({
       ? { icon: Ruler, label: `${item.area_util ?? item.area_total} m²` }
       : null,
   ].filter(Boolean) as { icon: typeof BedDouble; label: string }[];
-
-  const whatsapp = () => {
-    registrarEventoLink(token, "clique_whatsapp", { item_id: item.item_id });
-    const texto = encodeURIComponent(`Olá! Tenho interesse no imóvel "${item.titulo ?? ""}" que você me enviou.`);
-    const fone = (telefone ?? "").replace(/\D/g, "");
-    window.open(fone ? `https://wa.me/55${fone}?text=${texto}` : `https://wa.me/?text=${texto}`, "_blank");
-  };
-
-  const pedirVisita = () => {
-    registrarEventoLink(token, "pedido_visita", { item_id: item.item_id });
-    toast.success("Pedido de visita enviado! O corretor entrará em contato.");
-  };
 
   const jaContado = useRef(false);
   useEffect(() => {
@@ -173,14 +164,14 @@ function ItemCard({
             Assistir ao vídeo do imóvel
           </a>
         )}
-        <div className="flex flex-col gap-2 pt-3 sm:flex-row">
-          <Button onClick={whatsapp} className="flex-1">
-            <MessageCircle className="mr-2 h-4 w-4" /> Falar com o corretor
-          </Button>
-          <Button variant="outline" onClick={pedirVisita} className="flex-1">
-            <CalendarCheck className="mr-2 h-4 w-4" /> Quero agendar uma visita
-          </Button>
-        </div>
+        <AcoesClienteLink
+          token={token}
+          itemId={item.item_id}
+          titulo={item.titulo ?? "Imóvel"}
+          telefone={telefone}
+          codigoReferencia={codigoReferencia}
+          bloqueado={bloqueado}
+        />
       </div>
     </article>
   );
