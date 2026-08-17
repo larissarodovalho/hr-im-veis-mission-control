@@ -173,10 +173,15 @@ export async function gerarPdfApresentacao(
     doc.line(esquerda, PAGE_H - 13, PAGE_W - MARGIN, PAGE_H - 13);
     doc.setFontSize(7);
     doc.setTextColor(...CINZA);
-    doc.text(`HR IMÓVEIS · ${CRECI_HR} · hrimoveis.com`, esquerda, PAGE_H - 8);
+    const estreito = esquerda > MARGIN;
+    doc.text(
+      estreito ? `HR IMÓVEIS · ${CRECI_HR}` : `HR IMÓVEIS · ${CRECI_HR} · hrimoveis.com`,
+      esquerda,
+      PAGE_H - 8,
+    );
     const ref = imovel.codigo ? `REF ${imovel.codigo}` : "";
     if (ref) doc.text(ref, PAGE_W - MARGIN, PAGE_H - 8, { align: "right" });
-    doc.text(`${pagina}/${total}`, (esquerda + PAGE_W - MARGIN) / 2, PAGE_H - 8, { align: "center" });
+    if (!estreito) doc.text(`${pagina}/${total}`, (esquerda + PAGE_W - MARGIN) / 2, PAGE_H - 8, { align: "center" });
   };
 
   const temGaleria = fotos.length > 1;
