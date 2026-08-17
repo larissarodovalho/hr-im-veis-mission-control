@@ -25,6 +25,11 @@ const LABEL: Record<string, string> = {
   video: "Assistiu ao vídeo",
   clique_whatsapp: "Clicou em falar no WhatsApp",
   pedido_visita: "Pediu agendamento de visita",
+  solicitou_visita: "Pediu agendamento de visita",
+  solicitou_informacoes: "Pediu mais informações",
+  gostei: "Gostou do imóvel",
+  rejeitou: "Sem interesse",
+  tentativa_apos_expiracao: "Tentou acessar após expirar",
   compartilhamento_tentativa: "Tentou compartilhar",
 };
 
@@ -81,7 +86,7 @@ export default function LinkMetricasDialog({ open, onOpenChange, link }: Props) 
         if (e.tipo_evento === "visualizacao_imovel") r.views++;
         if (e.tipo_evento === "galeria") r.galeria++;
         if (e.tipo_evento === "clique_whatsapp") r.whats++;
-        if (e.tipo_evento === "pedido_visita") r.visita++;
+        if (e.tipo_evento === "solicitou_visita" || e.tipo_evento === "pedido_visita") r.visita++;
       }
     });
     return {
@@ -90,7 +95,7 @@ export default function LinkMetricasDialog({ open, onOpenChange, link }: Props) 
       galeria: conta("galeria"),
       video: conta("video"),
       whats: conta("clique_whatsapp"),
-      visita: conta("pedido_visita"),
+      visita: conta("solicitou_visita") + conta("pedido_visita"),
       dispositivos,
       navegadores,
       porImovel: Object.entries(porImovel).sort((a, b) => b[1].views - a[1].views),

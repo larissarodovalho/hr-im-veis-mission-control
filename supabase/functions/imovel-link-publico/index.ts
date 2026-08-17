@@ -45,7 +45,7 @@ function extractPath(url: string): string | null {
 }
 
 const EVENTOS_VALIDOS = new Set([
-  "abertura", "visualizacao_imovel", "clique_whatsapp",
+  "abertura", "visualizacao_imovel", "galeria", "video", "clique_whatsapp",
   "copiar_link", "compartilhamento_nativo",
   "gostei", "rejeitou", "solicitou_informacoes", "solicitou_visita",
 ]);
