@@ -117,6 +117,14 @@ function ItemCard({
     toast.success("Pedido de visita enviado! O corretor entrará em contato.");
   };
 
+  const jaContado = useRef(false);
+  useEffect(() => {
+    if (jaContado.current) return;
+    jaContado.current = true;
+    registrarEventoLink(token, "visualizacao_imovel", { item_id: item.item_id });
+  }, [token, item.item_id]);
+
+
   return (
     <article className="rounded-2xl border bg-card p-4 shadow-sm">
       <Galeria
