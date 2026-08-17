@@ -215,6 +215,22 @@ export default function LinksCompartilhadosTab() {
         onOpenChange={(v) => { if (!v) setMetricasDe(null); }}
         link={metricasDe}
       />
+
+      <Dialog open={!!compartilhar} onOpenChange={(v) => { if (!v) setCompartilhar(null); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Compartilhar link</DialogTitle>
+          </DialogHeader>
+          {compartilhar && (
+            <CompartilharAcoes
+              link={compartilhar}
+              titulo={compartilhar.titulo_selecao || itens[compartilhar.id]?.[0] || "Imóvel"}
+              quantidade={(itens[compartilhar.id] || []).length || 1}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
