@@ -34,6 +34,8 @@ interface Props {
 export default function CompartilharImovelDialog({
   open, onOpenChange, imoveis, onCreated, contaId, contaNome, oportunidadeId, substituiLinkId,
 }: Props) {
+  const { isAdmin, isGestor } = useRole();
+  const podeEndereco = isAdmin || isGestor; // endereço completo exige autorização
   const [validade, setValidade] = useState("1440");
   const [inicio, setInicio] = useState<"criacao" | "primeiro_acesso">("criacao");
   const [exibirValor, setExibirValor] = useState(true);
