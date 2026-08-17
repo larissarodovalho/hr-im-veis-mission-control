@@ -51,6 +51,8 @@ export default function Imoveis() {
   const [propostaFor, setPropostaFor] = useState<Imovel | null>(null);
   const [histFor, setHistFor] = useState<Imovel | null>(null);
   const [viewing, setViewing] = useState<Imovel | null>(null);
+  const [sharing, setSharing] = useState<Imovel | null>(null);
+
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [contas, setContas] = useState<Record<string, string>>({});
   const [searchParams, setSearchParams] = useSearchParams();
@@ -289,6 +291,10 @@ export default function Imoveis() {
           <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setViewing(i)} title="Ver detalhes">
             <Info className="h-4 w-4" />
           </Button>
+          <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setSharing(i)} title="Gerar link temporário para o cliente">
+            <Share2 className="h-4 w-4" />
+          </Button>
+
           <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setHistFor(i)} title="Histórico do imóvel">
             <History className="h-4 w-4" />
           </Button>
