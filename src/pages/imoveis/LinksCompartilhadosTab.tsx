@@ -61,7 +61,7 @@ export default function LinksCompartilhadosTab() {
       (evs ?? []).forEach((e: any) => {
         const m = (mapMet[e.link_id] ||= { whatsapp: 0, visita: 0 });
         if (e.tipo_evento === "clique_whatsapp") m.whatsapp++;
-        if (e.tipo_evento === "pedido_visita") m.visita++;
+        if (e.tipo_evento === "solicitou_visita" || e.tipo_evento === "pedido_visita") m.visita++;
       });
       setMetricas(mapMet);
 
