@@ -119,7 +119,10 @@ export default function ContaImoveisVinculados({ contaId }: { contaId: string })
                 <span className="text-[11px] text-muted-foreground">Ref. {l.codigo_referencia}</span>
                 <Button
                   size="sm" variant="ghost" className="h-7 px-2 text-xs"
-                  onClick={async () => toast[(await copiarTexto(url)) ? "success" : "error"]((await copiarTexto(url)) ? "Link copiado" : "Não foi possível copiar")}
+                  onClick={async () => {
+                    const ok = await copiarTexto(url);
+                    ok ? toast.success("Link copiado") : toast.error("Não foi possível copiar");
+                  }}
                 >
                   <Copy className="h-3.5 w-3.5 mr-1" /> Copiar
                 </Button>
