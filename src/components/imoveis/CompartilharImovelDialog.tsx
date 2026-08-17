@@ -14,15 +14,23 @@ import {
   VALIDADES, INICIOS, type LinkCompartilhado,
 } from "@/lib/imovelLinks";
 import CompartilharAcoes from "@/components/imoveis/CompartilharAcoes";
+import { SearchableSelect } from "@/components/SearchableSelect";
 
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   imoveis: { id: string; titulo: string; codigo?: string | null }[];
   onCreated?: () => void;
+  /** Conta pré-selecionada (ex.: fluxo "envio de link" na Conta). */
+  contaId?: string | null;
+  contaNome?: string | null;
+  /** Oportunidade pré-selecionada. */
+  oportunidadeId?: string | null;
 }
 
-export default function CompartilharImovelDialog({ open, onOpenChange, imoveis, onCreated }: Props) {
+export default function CompartilharImovelDialog({
+  open, onOpenChange, imoveis, onCreated, contaId, contaNome, oportunidadeId,
+}: Props) {
   const [validade, setValidade] = useState("1440");
   const [inicio, setInicio] = useState<"criacao" | "primeiro_acesso">("criacao");
   const [exibirValor, setExibirValor] = useState(true);
@@ -34,11 +42,46 @@ export default function CompartilharImovelDialog({ open, onOpenChange, imoveis, 
   const [saving, setSaving] = useState(false);
   const [criado, setCriado] = useState<LinkCompartilhado | null>(null);
 
+  // Vínculo comercial (Etapa 10)
+  const [contas, setContas] = useState<{ id: string; nome: string }[]>([]);
+  const [conta, setConta] = useState<string>("none");
+  const [ops, setOps] = useState<{ id: string; nome: string }[]>([]);
+  const [oportunidade, setOportunidade] = useState<string>("none");
+  const [buscandoContas, setBuscandoContas] = useState(false);
+
+  // Seleção de imóvel quando o diálogo é aberto sem imóvel definido (fluxo da Conta)
+  const [catalogo, setCatalogo] = useState<{ id: string; titulo: string; codigo?: string | null }[]>([]);
+  const [imovelSel, setImovelSel] = useState<string>("none");
+  const escolherImovel = imoveis.length === 0;
+  const alvo = escolherImovel
+    ? catalogo.filter((i) => i.id === imovelSel)
+    : imoveis;
+
+  const buscarContas = async (q: string) => {
+    setBuscandoContas(true);
+    const { data } = await supabase.rpc("search_contas_min", { _q: q || null, _limit: 30 });
+    setContas(((data ?? []) as any[]).map((r) => ({ id: r.id, nome: r.nome || "Sem nome" })));
+    setBuscandoContas(false);
+  };
+
   useEffect(() => {
     if (open) {
       setCriado(null);
       setTitulo(imoveis.length > 1 ? "Seleção de imóveis" : "");
       setMensagem("");
+      setImovelSel("none");
+      setConta(contaId || "none");
+      setOportunidade(oportunidadeId || "none");
+      if (contaId && contaNome) setContas([{ id: contaId, nome: contaNome }]);
+      else buscarContas("");
+      if (escolherImovel) {
+        supabase
+          .from("imoveis")
+          .select("id,titulo,codigo")
+          .order("created_at", { ascending: false })
+          .limit(300)
+          .then(({ data }) => setCatalogo((data ?? []) as any[]));
+      }
       // Usa os padrões de apresentação do imóvel, quando houver um só
       if (imoveis.length === 1) {
         supabase
@@ -53,7 +96,25 @@ export default function CompartilharImovelDialog({ open, onOpenChange, imoveis, 
           });
       }
     }
-  }, [open, imoveis.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, imoveis.length, contaId, oportunidadeId]);
+
+  // Oportunidades da conta selecionada
+  useEffect(() => {
+    if (!open || conta === "none") { setOps([]); return; }
+    supabase
+      .from("oportunidades")
+      .select("id,titulo,estagio,status")
+      .eq("conta_id", conta)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        setOps(((data ?? []) as any[]).map((o) => ({
+          id: o.id,
+          nome: `${o.titulo || "Oportunidade"}${o.estagio ? ` · ${o.estagio}` : ""}`,
+        })));
+      });
+  }, [open, conta]);
+
 
 
   const criar = async () => {
