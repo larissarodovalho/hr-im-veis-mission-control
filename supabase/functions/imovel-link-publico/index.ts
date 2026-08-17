@@ -231,7 +231,7 @@ Deno.serve(async (req) => {
   let corretor: { nome: string | null; telefone: string | null } | null = null;
   if (link.corretor_id) {
     const { data: p } = await supabase.from("profiles")
-      .select("nome, telefone").eq("id", link.corretor_id).maybeSingle();
+      .select("nome, telefone").or(`user_id.eq.${link.corretor_id},id.eq.${link.corretor_id}`).maybeSingle();
     if (p) corretor = { nome: p.nome ?? null, telefone: p.telefone ?? null };
   }
 

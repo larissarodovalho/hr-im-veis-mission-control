@@ -45,3 +45,5 @@ verify_jwt = false
 [functions.notify-new-lead]
 verify_jwt = false
 
+[functions.imovel-link-publico]
+verify_jwt = false
