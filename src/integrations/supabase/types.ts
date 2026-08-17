@@ -1819,6 +1819,60 @@ export type Database = {
         }
         Relationships: []
       }
+      imovel_apresentacao_config: {
+        Row: {
+          condicoes_comerciais_publicas: string | null
+          created_at: string
+          descricao_publica: string | null
+          exibir_valor_padrao: boolean
+          fotos_publicas: string[] | null
+          imovel_id: string
+          localizacao_padrao: string
+          updated_at: string
+          updated_by: string | null
+          video_url: string | null
+        }
+        Insert: {
+          condicoes_comerciais_publicas?: string | null
+          created_at?: string
+          descricao_publica?: string | null
+          exibir_valor_padrao?: boolean
+          fotos_publicas?: string[] | null
+          imovel_id: string
+          localizacao_padrao?: string
+          updated_at?: string
+          updated_by?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          condicoes_comerciais_publicas?: string | null
+          created_at?: string
+          descricao_publica?: string | null
+          exibir_valor_padrao?: boolean
+          fotos_publicas?: string[] | null
+          imovel_id?: string
+          localizacao_padrao?: string
+          updated_at?: string
+          updated_by?: string | null
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imovel_apresentacao_config_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: true
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imovel_apresentacao_config_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: true
+            referencedRelation: "imoveis_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       imovel_documentos: {
         Row: {
           created_at: string
@@ -1851,6 +1905,299 @@ export type Database = {
           tamanho_bytes?: number | null
         }
         Relationships: []
+      }
+      imovel_link_auditoria: {
+        Row: {
+          acao: string
+          created_at: string
+          dados_anteriores: Json | null
+          dados_novos: Json | null
+          executado_por: string | null
+          id: string
+          link_id: string | null
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
+          executado_por?: string | null
+          id?: string
+          link_id?: string | null
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
+          executado_por?: string | null
+          id?: string
+          link_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imovel_link_auditoria_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "imovel_links_compartilhados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imovel_link_auditoria_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "imovel_links_status"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      imovel_link_eventos: {
+        Row: {
+          created_at: string
+          dispositivo: string | null
+          id: string
+          item_id: string | null
+          link_id: string
+          metadata: Json
+          navegador: string | null
+          referrer: string | null
+          session_id_hash: string | null
+          sistema_operacional: string | null
+          tipo_evento: string
+          user_agent: string | null
+          visitor_id_hash: string | null
+        }
+        Insert: {
+          created_at?: string
+          dispositivo?: string | null
+          id?: string
+          item_id?: string | null
+          link_id: string
+          metadata?: Json
+          navegador?: string | null
+          referrer?: string | null
+          session_id_hash?: string | null
+          sistema_operacional?: string | null
+          tipo_evento: string
+          user_agent?: string | null
+          visitor_id_hash?: string | null
+        }
+        Update: {
+          created_at?: string
+          dispositivo?: string | null
+          id?: string
+          item_id?: string | null
+          link_id?: string
+          metadata?: Json
+          navegador?: string | null
+          referrer?: string | null
+          session_id_hash?: string | null
+          sistema_operacional?: string | null
+          tipo_evento?: string
+          user_agent?: string | null
+          visitor_id_hash?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imovel_link_eventos_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "imovel_link_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imovel_link_eventos_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "imovel_links_compartilhados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imovel_link_eventos_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "imovel_links_status"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      imovel_link_itens: {
+        Row: {
+          configuracao_publica: Json
+          created_at: string
+          id: string
+          imovel_id: string
+          link_id: string
+          ordem: number
+        }
+        Insert: {
+          configuracao_publica?: Json
+          created_at?: string
+          id?: string
+          imovel_id: string
+          link_id: string
+          ordem?: number
+        }
+        Update: {
+          configuracao_publica?: Json
+          created_at?: string
+          id?: string
+          imovel_id?: string
+          link_id?: string
+          ordem?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imovel_link_itens_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imovel_link_itens_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imovel_link_itens_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "imovel_links_compartilhados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imovel_link_itens_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "imovel_links_status"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      imovel_links_compartilhados: {
+        Row: {
+          canal_compartilhamento: string | null
+          codigo_referencia: string
+          compartilhado_em: string | null
+          configuracao_publica: Json
+          conta_id: string | null
+          corretor_id: string
+          created_at: string
+          created_by: string
+          estado_operacional: string
+          expira_em: string | null
+          id: string
+          inicio_validade: string
+          mensagem_apresentacao: string | null
+          motivo_revogacao: string | null
+          oportunidade_id: string | null
+          primeiro_acesso_em: string | null
+          revogado_em: string | null
+          revogado_por: string | null
+          substitui_link_id: string | null
+          tipo: string
+          titulo_selecao: string | null
+          token: string
+          total_acessos: number
+          ultimo_acesso_em: string | null
+          updated_at: string
+          validade_iniciada_em: string | null
+          validade_minutos: number
+          visitantes_unicos: number
+        }
+        Insert: {
+          canal_compartilhamento?: string | null
+          codigo_referencia: string
+          compartilhado_em?: string | null
+          configuracao_publica?: Json
+          conta_id?: string | null
+          corretor_id: string
+          created_at?: string
+          created_by: string
+          estado_operacional?: string
+          expira_em?: string | null
+          id?: string
+          inicio_validade?: string
+          mensagem_apresentacao?: string | null
+          motivo_revogacao?: string | null
+          oportunidade_id?: string | null
+          primeiro_acesso_em?: string | null
+          revogado_em?: string | null
+          revogado_por?: string | null
+          substitui_link_id?: string | null
+          tipo: string
+          titulo_selecao?: string | null
+          token: string
+          total_acessos?: number
+          ultimo_acesso_em?: string | null
+          updated_at?: string
+          validade_iniciada_em?: string | null
+          validade_minutos: number
+          visitantes_unicos?: number
+        }
+        Update: {
+          canal_compartilhamento?: string | null
+          codigo_referencia?: string
+          compartilhado_em?: string | null
+          configuracao_publica?: Json
+          conta_id?: string | null
+          corretor_id?: string
+          created_at?: string
+          created_by?: string
+          estado_operacional?: string
+          expira_em?: string | null
+          id?: string
+          inicio_validade?: string
+          mensagem_apresentacao?: string | null
+          motivo_revogacao?: string | null
+          oportunidade_id?: string | null
+          primeiro_acesso_em?: string | null
+          revogado_em?: string | null
+          revogado_por?: string | null
+          substitui_link_id?: string | null
+          tipo?: string
+          titulo_selecao?: string | null
+          token?: string
+          total_acessos?: number
+          ultimo_acesso_em?: string | null
+          updated_at?: string
+          validade_iniciada_em?: string | null
+          validade_minutos?: number
+          visitantes_unicos?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imovel_links_compartilhados_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imovel_links_compartilhados_oportunidade_id_fkey"
+            columns: ["oportunidade_id"]
+            isOneToOne: false
+            referencedRelation: "oportunidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imovel_links_compartilhados_substitui_link_id_fkey"
+            columns: ["substitui_link_id"]
+            isOneToOne: false
+            referencedRelation: "imovel_links_compartilhados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imovel_links_compartilhados_substitui_link_id_fkey"
+            columns: ["substitui_link_id"]
+            isOneToOne: false
+            referencedRelation: "imovel_links_status"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       interacoes: {
         Row: {
@@ -3897,6 +4244,134 @@ export type Database = {
           valor_iptu?: number | null
         }
         Relationships: []
+      }
+      imovel_links_status: {
+        Row: {
+          canal_compartilhamento: string | null
+          codigo_referencia: string | null
+          compartilhado_em: string | null
+          configuracao_publica: Json | null
+          conta_id: string | null
+          corretor_id: string | null
+          created_at: string | null
+          created_by: string | null
+          estado_operacional: string | null
+          expira_em: string | null
+          id: string | null
+          inicio_validade: string | null
+          mensagem_apresentacao: string | null
+          motivo_revogacao: string | null
+          oportunidade_id: string | null
+          primeiro_acesso_em: string | null
+          revogado_em: string | null
+          revogado_por: string | null
+          status_calculado: string | null
+          substitui_link_id: string | null
+          tipo: string | null
+          titulo_selecao: string | null
+          token: string | null
+          total_acessos: number | null
+          total_itens: number | null
+          ultimo_acesso_em: string | null
+          updated_at: string | null
+          validade_iniciada_em: string | null
+          validade_minutos: number | null
+          visitantes_unicos: number | null
+        }
+        Insert: {
+          canal_compartilhamento?: string | null
+          codigo_referencia?: string | null
+          compartilhado_em?: string | null
+          configuracao_publica?: Json | null
+          conta_id?: string | null
+          corretor_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          estado_operacional?: string | null
+          expira_em?: string | null
+          id?: string | null
+          inicio_validade?: string | null
+          mensagem_apresentacao?: string | null
+          motivo_revogacao?: string | null
+          oportunidade_id?: string | null
+          primeiro_acesso_em?: string | null
+          revogado_em?: string | null
+          revogado_por?: string | null
+          status_calculado?: never
+          substitui_link_id?: string | null
+          tipo?: string | null
+          titulo_selecao?: string | null
+          token?: string | null
+          total_acessos?: number | null
+          total_itens?: never
+          ultimo_acesso_em?: string | null
+          updated_at?: string | null
+          validade_iniciada_em?: string | null
+          validade_minutos?: number | null
+          visitantes_unicos?: number | null
+        }
+        Update: {
+          canal_compartilhamento?: string | null
+          codigo_referencia?: string | null
+          compartilhado_em?: string | null
+          configuracao_publica?: Json | null
+          conta_id?: string | null
+          corretor_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          estado_operacional?: string | null
+          expira_em?: string | null
+          id?: string | null
+          inicio_validade?: string | null
+          mensagem_apresentacao?: string | null
+          motivo_revogacao?: string | null
+          oportunidade_id?: string | null
+          primeiro_acesso_em?: string | null
+          revogado_em?: string | null
+          revogado_por?: string | null
+          status_calculado?: never
+          substitui_link_id?: string | null
+          tipo?: string | null
+          titulo_selecao?: string | null
+          token?: string | null
+          total_acessos?: number | null
+          total_itens?: never
+          ultimo_acesso_em?: string | null
+          updated_at?: string | null
+          validade_iniciada_em?: string | null
+          validade_minutos?: number | null
+          visitantes_unicos?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imovel_links_compartilhados_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imovel_links_compartilhados_oportunidade_id_fkey"
+            columns: ["oportunidade_id"]
+            isOneToOne: false
+            referencedRelation: "oportunidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imovel_links_compartilhados_substitui_link_id_fkey"
+            columns: ["substitui_link_id"]
+            isOneToOne: false
+            referencedRelation: "imovel_links_compartilhados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imovel_links_compartilhados_substitui_link_id_fkey"
+            columns: ["substitui_link_id"]
+            isOneToOne: false
+            referencedRelation: "imovel_links_status"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
