@@ -251,39 +251,58 @@ Deno.serve(async (req) => {
     : minutos > 0 ? minutos * 60 : SIGNED_TTL_MAX;
   const signedTtl = Math.min(SIGNED_TTL_MAX, restanteSeg);
 
-  const payloadItens = [];
-  for (const item of itens ?? []) {
+  // Visíveis = imóveis disponíveis. Vendido/indisponível nunca volta no payload público.
+  const visiveis = (itens ?? []).filter((item) => {
     const im = imovelMap.get(item.imovel_id);
-    if (!im) continue;
-    // Imóvel vendido ou indisponível nunca volta no payload público.
+    if (!im) return false;
     const st = String(im.status ?? "").toLowerCase();
-    if (st && !st.startsWith("dispon")) continue;
+    return !st || st.startsWith("dispon");
+  });
+
+  // Todas as fotos de todos os itens são assinadas numa única chamada (evita ida e volta por imóvel).
+  const pathsPorItem = new Map<string, string[]>();
+  for (const item of visiveis) {
+    const im = imovelMap.get(item.imovel_id);
+    const cfg = cfgMap.get(item.imovel_id) ?? {};
+    const fontes: string[] = (cfg.fotos_publicas?.length ? cfg.fotos_publicas : im.fotos) ?? [];
+    pathsPorItem.set(item.id, fontes.map(extractPath).filter(Boolean) as string[]);
+  }
+  const todosPaths = [...new Set([...pathsPorItem.values()].flat())];
+  const urlPorPath = new Map<string, string>();
+  if (todosPaths.length) {
+    const assinar = async (lista: string[]) => {
+      const { data } = await supabase.storage.from(SHARED_BUCKET).createSignedUrls(lista, signedTtl);
+      (data ?? []).forEach((s, i) => { if (s?.signedUrl) urlPorPath.set(lista[i], s.signedUrl); });
+    };
+    await assinar(todosPaths);
+    const faltando = todosPaths.filter((p) => !urlPorPath.has(p));
+    if (faltando.length) {
+      // Espelha sob demanda no bucket privado (nunca serve a URL pública permanente).
+      await Promise.all(faltando.map(async (p) => {
+        const { data: blob } = await supabase.storage.from("imoveis").download(p);
+        if (blob) {
+          await supabase.storage.from(SHARED_BUCKET)
+            .upload(p, blob, { contentType: blob.type || "image/jpeg", upsert: true });
+        }
+      }));
+      await assinar(faltando);
+    }
+  }
+
+  const payloadItens = [];
+  for (const item of visiveis) {
+    const im = imovelMap.get(item.imovel_id);
     const cfg = cfgMap.get(item.imovel_id) ?? {};
     const over = (item.configuracao_publica ?? {}) as Record<string, unknown>;
 
     const exibirValor = over.exibir_valor ?? cfg.exibir_valor_padrao ?? true;
     const localizacao = (over.localizacao ?? cfg.localizacao_padrao ?? "bairro_cidade") as string;
 
-    const fontes: string[] = (cfg.fotos_publicas?.length ? cfg.fotos_publicas : im.fotos) ?? [];
-    const paths = fontes.map(extractPath).filter(Boolean) as string[];
-    let fotos: string[] = [];
-    if (paths.length) {
-      let { data: signed } = await supabase.storage.from(SHARED_BUCKET).createSignedUrls(paths, signedTtl);
-      const faltando = paths.filter((p, i) => !signed?.[i]?.signedUrl);
-      if (faltando.length) {
-        // Espelha sob demanda no bucket privado (nunca serve a URL pública permanente).
-        await Promise.all(faltando.map(async (p) => {
-          const { data: blob } = await supabase.storage.from("imoveis").download(p);
-          if (blob) {
-            await supabase.storage.from(SHARED_BUCKET)
-              .upload(p, blob, { contentType: blob.type || "image/jpeg", upsert: true });
-          }
-        }));
-        ({ data: signed } = await supabase.storage.from(SHARED_BUCKET).createSignedUrls(paths, signedTtl));
-      }
-      // Sem fallback para URL pública permanente: só entram fotos assinadas do bucket privado.
-      fotos = (signed ?? []).map((s) => s?.signedUrl).filter(Boolean) as string[];
-    }
+    // Sem fallback para URL pública permanente: só entram fotos assinadas do bucket privado.
+    const fotos = (pathsPorItem.get(item.id) ?? [])
+      .map((p) => urlPorPath.get(p))
+      .filter(Boolean) as string[];
+
 
     payloadItens.push({
       item_id: item.id,
