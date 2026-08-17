@@ -24,6 +24,7 @@ import NovaPropostaDialog from "@/components/imoveis/NovaPropostaDialog";
 import ImovelHistoricoDrawer from "@/components/imoveis/ImovelHistoricoDrawer";
 import DetalhesImovelDialog from "@/components/imoveis/DetalhesImovelDialog";
 import CompartilharImovelDialog from "@/components/imoveis/CompartilharImovelDialog";
+import ApresentacaoImovelDialog from "@/components/imoveis/ApresentacaoImovelDialog";
 import VendidosTab from "@/pages/imoveis/VendidosTab";
 import ParceirosTab from "@/pages/imoveis/ParceirosTab";
 import LinksCompartilhadosTab from "@/pages/imoveis/LinksCompartilhadosTab";
