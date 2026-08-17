@@ -6,18 +6,19 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, Link2, MessageCircle, ShieldCheck } from "lucide-react";
+import { Link2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  criarLinkCompartilhado, urlDoLink, marcarCompartilhado,
+  criarLinkCompartilhado, marcarCompartilhado,
   VALIDADES, INICIOS, type LinkCompartilhado,
 } from "@/lib/imovelLinks";
+import CompartilharAcoes from "@/components/imoveis/CompartilharAcoes";
 
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  imoveis: { id: string; titulo: string }[];
+  imoveis: { id: string; titulo: string; codigo?: string | null }[];
   onCreated?: () => void;
 }
 
@@ -70,6 +71,7 @@ export default function CompartilharImovelDialog({ open, onOpenChange, imoveis, 
         permitirAgendarVisita: visita,
       });
       setCriado(link);
+      marcarCompartilhado(link.id, "link");
       onCreated?.();
       toast.success("Link temporário criado");
     } catch (e: any) {
@@ -77,21 +79,6 @@ export default function CompartilharImovelDialog({ open, onOpenChange, imoveis, 
     } finally {
       setSaving(false);
     }
-  };
-
-  const url = criado ? urlDoLink(criado.token) : "";
-
-  const copiar = async () => {
-    await navigator.clipboard.writeText(url);
-    if (criado) marcarCompartilhado(criado.id, "copia");
-    toast.success("Link copiado");
-  };
-
-  const enviarWhats = () => {
-    if (!criado) return;
-    const texto = `${mensagem || "Segue a apresentação do imóvel:"}\n\n${url}\n\nCódigo: ${criado.codigo_referencia}`;
-    marcarCompartilhado(criado.id, "whatsapp");
-    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
   };
 
   return (
@@ -180,17 +167,13 @@ export default function CompartilharImovelDialog({ open, onOpenChange, imoveis, 
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label>Link do cliente</Label>
-              <div className="flex gap-2">
-                <Input readOnly value={url} onFocus={(e) => e.currentTarget.select()} />
-                <Button size="icon" variant="outline" onClick={copiar}><Copy className="h-4 w-4" /></Button>
-              </div>
-              <p className="text-[11px] text-muted-foreground">Código de referência: <span className="font-medium text-foreground">{criado.codigo_referencia}</span></p>
-            </div>
-            <Button className="w-full" onClick={enviarWhats}>
-              <MessageCircle className="h-4 w-4 mr-2" /> Enviar por WhatsApp
-            </Button>
+            <CompartilharAcoes
+              link={criado}
+              titulo={titulo || imoveis[0]?.titulo || "Imóvel"}
+              codigoImovel={imoveis.length === 1 ? imoveis[0]?.codigo : null}
+              quantidade={imoveis.length}
+              onGerarNovo={() => setCriado(null)}
+            />
             <Button variant="outline" className="w-full" onClick={() => onOpenChange(false)}>Fechar</Button>
           </div>
         )}
