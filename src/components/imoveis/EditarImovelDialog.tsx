@@ -125,6 +125,9 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
           upsert: true, cacheControl: "3600", contentType: stamped.type,
         });
         if (upErr) throw upErr;
+        await supabase.storage.from("imoveis-compartilhados").upload(path, stamped, {
+          upsert: true, cacheControl: "3600", contentType: stamped.type,
+        }).then(({ error }) => { if (error) console.warn("espelho compartilhado falhou", error.message); });
         const { data: pub } = supabase.storage.from("imoveis").getPublicUrl(path);
         novasUrls.push(`${pub.publicUrl}?v=${Date.now()}`);
         ok++;
@@ -191,7 +194,9 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
       if (removerPaths.length) {
         await supabase.storage.from("imoveis").remove(removerPaths);
         await supabase.storage.from("imoveis-originais").remove(removerPaths).catch(() => {});
+        await supabase.storage.from("imoveis-compartilhados").remove(removerPaths).catch(() => {});
       }
+
 
       const num = (s: string) => (s.trim() === "" ? null : Number(s.replace(",", ".")));
       const int = (s: string) => (s.trim() === "" ? null : parseInt(s, 10));

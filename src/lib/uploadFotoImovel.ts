@@ -3,6 +3,8 @@ import { applyWatermark } from "@/lib/watermark";
 
 export const IMOVEIS_BUCKET = "imoveis";
 export const ORIGINAIS_BUCKET = "imoveis-originais";
+/** Bucket privado usado pelos links temporários (fotos com marca d'água, servidas por URL assinada) */
+export const COMPARTILHADOS_BUCKET = "imoveis-compartilhados";
 
 /**
  * Faz upload de uma foto de imóvel salvando 2 versões:
@@ -50,8 +52,65 @@ export async function uploadFotoImovel(
     return null;
   }
 
+  // 3) Espelha a versão com marca d'água no bucket privado dos links temporários
+  await supabase.storage
+    .from(COMPARTILHADOS_BUCKET)
+    .upload(path, stamped, {
+      cacheControl: "3600",
+      upsert: true,
+      contentType: stamped.type,
+    })
+    .then(({ error }) => {
+      if (error) console.warn("[uploadFotoImovel] falha ao espelhar compartilhado:", error.message);
+    });
+
   const { data: pub } = supabase.storage.from(IMOVEIS_BUCKET).getPublicUrl(path);
   return { publicUrl: pub.publicUrl, path };
+}
+
+/**
+ * Garante que as fotos informadas (URLs públicas do bucket "imoveis") existam
+ * também no bucket privado "imoveis-compartilhados", usado pelos links temporários.
+ * Retorna os paths disponíveis no bucket privado.
+ */
+export async function sincronizarFotosCompartilhadas(urls: string[]): Promise<string[]> {
+  const paths: string[] = [];
+  for (const url of urls) {
+    const path = extractImovelPath(url);
+    if (!path) continue;
+
+    // Já existe?
+    const dir = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
+    const name = path.split("/").pop()!;
+    const { data: list } = await supabase.storage
+      .from(COMPARTILHADOS_BUCKET)
+      .list(dir, { search: name, limit: 1 });
+    if (list?.some((f) => f.name === name)) {
+      paths.push(path);
+      continue;
+    }
+
+    const { data: file, error } = await supabase.storage.from(IMOVEIS_BUCKET).download(path);
+    if (error || !file) continue;
+    const { error: upErr } = await supabase.storage
+      .from(COMPARTILHADOS_BUCKET)
+      .upload(path, file, { cacheControl: "3600", upsert: true, contentType: file.type || "image/jpeg" });
+    if (!upErr) paths.push(path);
+  }
+  return paths;
+}
+
+/** Gera URLs assinadas temporárias para fotos do bucket privado dos links. */
+export async function assinarFotosCompartilhadas(
+  paths: string[],
+  expiresInSeconds = 3600,
+): Promise<string[]> {
+  if (paths.length === 0) return [];
+  const { data, error } = await supabase.storage
+    .from(COMPARTILHADOS_BUCKET)
+    .createSignedUrls(paths, expiresInSeconds);
+  if (error || !data) return [];
+  return data.map((d) => d.signedUrl).filter(Boolean) as string[];
 }
 
 /**
