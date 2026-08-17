@@ -48,6 +48,7 @@ import AgendarPage from "@/pages/AgendarPage";
 import AgendarErrorBoundary from "@/components/AgendarErrorBoundary";
 import UnsubscribePage from "@/pages/UnsubscribePage";
 import CapturaPage from "@/pages/CapturaPage";
+import LinkImovelPublico from "@/pages/LinkImovelPublico";
 // Site público (mantido)
 import HomePage from "@/pages/site/HomePage";
 import ImoveisPage from "@/pages/site/ImoveisPage";
@@ -71,6 +72,7 @@ const App = () => (
             <Route path="/agendar/:token" element={<AgendarErrorBoundary><AgendarPage /></AgendarErrorBoundary>} />
             <Route path="/unsubscribe" element={<UnsubscribePage />} />
             <Route path="/captura" element={<CapturaPage />} />
+            <Route path="/l/:token" element={<LinkImovelPublico />} />
 
             {/* Site público na raiz */}
             <Route path="/" element={<SiteLayout><HomePage /></SiteLayout>} />
