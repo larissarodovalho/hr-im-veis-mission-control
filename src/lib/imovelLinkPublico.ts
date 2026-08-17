@@ -69,9 +69,12 @@ async function post(body: Record<string, unknown>) {
 
 export async function abrirLink(token: string): Promise<LinkPublicoResponse> {
   try {
-    return await post({ token, action: "open" });
+    const r = await post({ token, action: "open" });
+    // Resposta sem status conhecido = falha de transporte, não link inexistente.
+    return r && typeof r.status === "string" ? r : { status: "erro_rede" };
   } catch {
-    return { status: "invalido" };
+    // Rede, CORS ou servidor indisponível — não é o mesmo que link inválido.
+    return { status: "erro_rede" };
   }
 }
 
