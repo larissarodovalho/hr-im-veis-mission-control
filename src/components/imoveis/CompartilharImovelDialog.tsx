@@ -11,8 +11,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   criarLinkCompartilhado, marcarCompartilhado,
-  VALIDADES, INICIOS, type LinkCompartilhado,
+  VALIDADES, INICIOS, VALIDADE_MIN, VALIDADE_MAX, type LinkCompartilhado,
 } from "@/lib/imovelLinks";
+
 import CompartilharAcoes from "@/components/imoveis/CompartilharAcoes";
 import { SearchableSelect } from "@/components/SearchableSelect";
 import { useRole } from "@/hooks/useRole";
