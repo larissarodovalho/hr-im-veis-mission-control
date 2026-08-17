@@ -221,7 +221,9 @@ export default function LinkImovelPublico() {
         ? "Este link foi encerrado pelo corretor."
         : data?.status === "expirado" || expirouAgora
           ? "Este link expirou."
-          : "Link não encontrado.";
+          : data?.status === "indisponivel"
+            ? "Este imóvel não está mais disponível."
+            : "Link não encontrado.";
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-3 p-6 text-center">
         <AlertCircle className="h-10 w-10 text-muted-foreground" />
