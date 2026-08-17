@@ -80,7 +80,9 @@ async function imagemRecortada(
   }
 }
 
-async function dataUrlSimples(src: string): Promise<string | null> {
+type ImagemCarregada = { dataUrl: string; w: number; h: number };
+
+async function dataUrlSimples(src: string): Promise<ImagemCarregada | null> {
   try {
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
       const el = new Image();
@@ -93,11 +95,12 @@ async function dataUrlSimples(src: string): Promise<string | null> {
     canvas.width = img.naturalWidth;
     canvas.height = img.naturalHeight;
     canvas.getContext("2d")!.drawImage(img, 0, 0);
-    return canvas.toDataURL("image/png");
+    return { dataUrl: canvas.toDataURL("image/png"), w: img.naturalWidth, h: img.naturalHeight };
   } catch {
     return null;
   }
 }
+
 
 const brl = (v: any) =>
   v === null || v === undefined || isNaN(Number(v))
