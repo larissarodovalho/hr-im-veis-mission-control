@@ -266,18 +266,19 @@ export default function CompartilharImovelDialog({
 
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-              <Button onClick={criar} disabled={saving}>{saving ? "Gerando…" : "Gerar link"}</Button>
+              <Button onClick={criar} disabled={saving || !alvo.length}>{saving ? "Gerando…" : "Gerar link"}</Button>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
             <CompartilharAcoes
               link={criado}
-              titulo={titulo || imoveis[0]?.titulo || "Imóvel"}
-              codigoImovel={imoveis.length === 1 ? imoveis[0]?.codigo : null}
-              quantidade={imoveis.length}
+              titulo={titulo || alvo[0]?.titulo || "Imóvel"}
+              codigoImovel={alvo.length === 1 ? alvo[0]?.codigo : null}
+              quantidade={alvo.length}
               onGerarNovo={() => setCriado(null)}
             />
+
             <Button variant="outline" className="w-full" onClick={() => onOpenChange(false)}>Fechar</Button>
           </div>
         )}
