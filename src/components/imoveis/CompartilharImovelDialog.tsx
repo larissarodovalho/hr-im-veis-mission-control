@@ -127,6 +127,11 @@ export default function CompartilharImovelDialog({
 
   const criar = async () => {
     if (!alvo.length) { toast.error("Selecione o imóvel"); return; }
+    const minutos = validade === "custom" ? Number(validadeCustom) : Number(validade);
+    if (!Number.isFinite(minutos) || minutos < VALIDADE_MIN || minutos > VALIDADE_MAX) {
+      toast.error(`Informe um prazo entre ${VALIDADE_MIN} minutos e 30 dias`);
+      return;
+    }
     setSaving(true);
     try {
       const link = await criarLinkCompartilhado({
@@ -135,7 +140,8 @@ export default function CompartilharImovelDialog({
         mensagem: mensagem || null,
         contaId: conta !== "none" ? conta : null,
         oportunidadeId: oportunidade !== "none" ? oportunidade : null,
-        validadeMinutos: Number(validade),
+        validadeMinutos: minutos,
+
         inicioValidade: inicio,
         exibirValor,
         localizacao,
