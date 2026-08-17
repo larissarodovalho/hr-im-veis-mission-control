@@ -282,4 +282,23 @@ Todas as tabelas exigem os `GRANT` correspondentes para `authenticated`/`anon`/`
 
 ---
 
+## 9. Submódulo: Links temporários (aba "Links temporários")
+
+Adicionado em 17/08/2026. Documentação completa em `docs/LINKS-TEMPORARIOS.md` (técnica + manual + troubleshooting) e `docs/SEGURANCA-LINKS-TEMPORARIOS.md` (segurança).
+
+- **Aba:** Imóveis → **Links temporários** (`src/pages/imoveis/LinksCompartilhadosTab.tsx`) — central com KPIs, filtros (status, corretor, tipo, período, abertos/não abertos, dispositivo, resultado) e ações Detalhes, Métricas, Compartilhar, Copiar, Substituir e Revogar.
+- **Componentes:** `CompartilharImovelDialog`, `CompartilharAcoes`, `SelecaoImoveisAcoes`, `LinkDetalhesDialog`, `LinkMetricasDialog`, `publico/AcoesClienteLink`; libs `src/lib/imovelLinks.ts` e `src/lib/imovelLinkPublico.ts`.
+- **Rotas:** pública `/imovel/link/:token` (sem login, `src/pages/ImovelLinkPublico.tsx`); interna na aba de Imóveis.
+- **Tabelas:** `imovel_links_compartilhados`, `imovel_link_itens`, `imovel_link_eventos`, `imovel_link_auditoria`, `imovel_link_rate_limit`, `imovel_apresentacao_config`.
+- **Edge Function:** `imovel-link-publico` (validação de prazo no servidor, assinatura de fotos em lote, eventos, rate limiting, detecção de bots, CORS restrito).
+- **RPCs:** `imovel_link_pode_ver`, `imovel_link_rate_ok`, `imovel_link_auditar`, `imovel_link_evento_comercial`, `imovel_links_performance`, `imovel_links_expirados_sem_abertura`, `notificar_link_evento`.
+- **Bucket privado:** `imovel-links-compartilhados` — fotos servidas somente por URL assinada; o bucket público continua exclusivo do site permanente.
+- **RLS:** nenhuma leitura anônima nas tabelas; corretor vê os próprios links, gestor/admin veem todos; endereço completo restrito a Admin/Gestor.
+- **Integração comercial:** link vinculado a Conta e Oportunidade; eventos entram no histórico e alimentam `oportunidade_imoveis` sem duplicar; feedback de intenção gera notificação e tarefa com prazo (visita +4h, informações +6h, "Gostei" +1 dia).
+- **Relatórios:** aba **Links** com envios, taxa de abertura, tempo até a primeira abertura, imóveis mais vistos, feedbacks, conversão em visita e exportação CSV.
+- **Expiração:** prazo de 30 min a 30 dias (ou personalizado, mínimo 15 min), contagem na criação ou no primeiro acesso, validação sempre no servidor; imóvel vendido some do link.
+- **Auditoria:** criação, alteração, revogação e exclusão registradas com autor e horário em America/Cuiaba, preservadas após exclusão do link.
+
+---
+
 *Documento gerado a partir do código-fonte e do schema do banco em produção. Ao alterar o módulo, atualize também este arquivo.*
