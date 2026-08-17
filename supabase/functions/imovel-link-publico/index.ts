@@ -116,22 +116,7 @@ Deno.serve(async (req) => {
 
   if (expiraEm && new Date(expiraEm) <= now) {
     if (action !== "open") {
-      // Idempotência das ações do cliente
-  if (tipoEvento && EVENTOS_UNICOS.has(tipoEvento)) {
-    let q = supabase
-      .from("imovel_link_eventos")
-      .select("id", { count: "exact", head: true })
-      .eq("link_id", link.id)
-      .eq("tipo_evento", tipoEvento)
-      .eq("visitor_id_hash", visitorHash);
-    q = typeof body.item_id === "string"
-      ? q.eq("item_id", body.item_id)
-      : q.is("item_id", null);
-    const { count: jaExiste } = await q;
-    if ((jaExiste ?? 0) > 0) return json({ status: "ok", duplicado: true });
-  }
-
-  await supabase.from("imovel_link_eventos").insert({
+      await supabase.from("imovel_link_eventos").insert({
         link_id: link.id,
         item_id: typeof body.item_id === "string" ? body.item_id : null,
         tipo_evento: "tentativa_apos_expiracao",
