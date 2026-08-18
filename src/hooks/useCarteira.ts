@@ -75,6 +75,41 @@ export function useCorretores() {
   return { corretores, loading };
 }
 
+/** Todos os usuários que hoje são responsáveis por alguma conta (qualquer perfil), com contagem. */
+export function useResponsaveisContas() {
+  const [responsaveis, setResponsaveis] = useState<(CorretorOption & { total: number })[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: contas }, { data: profiles }] = await Promise.all([
+        supabase.from("contas").select("responsavel_id").not("responsavel_id", "is", null).range(0, 99999),
+        supabase.from("profiles").select("user_id, nome, email"),
+      ]);
+      const counts = new Map<string, number>();
+      (contas ?? []).forEach((c: any) => {
+        if (!c.responsavel_id) return;
+        counts.set(c.responsavel_id, (counts.get(c.responsavel_id) ?? 0) + 1);
+      });
+      const nomes = new Map<string, { nome: string; email?: string }>();
+      (profiles ?? []).forEach((p: any) => nomes.set(p.user_id, { nome: p.nome || p.email || "Sem nome", email: p.email }));
+      setResponsaveis(
+        [...counts.entries()]
+          .map(([user_id, total]) => ({
+            user_id,
+            nome: nomes.get(user_id)?.nome ?? "Usuário removido",
+            email: nomes.get(user_id)?.email,
+            total,
+          }))
+          .sort((a, b) => a.nome.localeCompare(b.nome))
+      );
+      setLoading(false);
+    })();
+  }, []);
+
+  return { responsaveis, loading };
+}
+
 export function useProfilesMap() {
   const [map, setMap] = useState<Record<string, string>>({});
   useEffect(() => {
