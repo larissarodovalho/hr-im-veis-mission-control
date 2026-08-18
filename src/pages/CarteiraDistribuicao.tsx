@@ -16,7 +16,7 @@ import { Shield, Plus, Trash2, Shuffle, RefreshCw, CheckCircle2, Search, ArrowRi
 import { toast } from "sonner";
 import { ETAPAS, etapaLabel } from "@/lib/contasFunil";
 import {
-  buscarElegiveis, contarElegiveis, criarOperacao, usePreviaOperacao, useCorretores, useProfilesMap,
+  buscarElegiveis, contarElegiveis, criarOperacao, usePreviaOperacao, useCorretores, useProfilesMap, useResponsaveisContas,
   editarLote, excluirLote,
   type ContaElegivel, type FiltrosCarteira, type LoteConfig, type ModoSelecao, type LotePreview,
 } from "@/hooks/useCarteira";
@@ -44,6 +44,7 @@ export default function CarteiraDistribuicao() {
   const { isAdmin, isGestor, loading: roleLoading } = useRole();
   const can = isAdmin || isGestor;
   const { corretores } = useCorretores();
+  const { responsaveis } = useResponsaveisContas();
   const profiles = useProfilesMap();
 
   const [aba, setAba] = useState<"distribuir" | "acompanhamento" | "historico" | "ranking">("distribuir");
@@ -423,7 +424,9 @@ export default function CarteiraDistribuicao() {
                   <SelectContent>
                     <SelectItem value="qualquer">Qualquer</SelectItem>
                     <SelectItem value="sem">Sem responsável</SelectItem>
-                    {corretores.map((c) => <SelectItem key={c.user_id} value={c.user_id}>{c.nome}</SelectItem>)}
+                    {responsaveis.map((c) => (
+                      <SelectItem key={c.user_id} value={c.user_id}>{c.nome} ({c.total.toLocaleString("pt-BR")})</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
