@@ -134,6 +134,7 @@ function ReportsInner() {
       <Tabs defaultValue="performance" className="w-full">
         <TabsList className="w-full justify-start overflow-x-auto whitespace-nowrap">
           <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="acompanhamento">Acompanhamento</TabsTrigger>
           <TabsTrigger value="leads">Leads</TabsTrigger>
           <TabsTrigger value="oportunidades">Oportunidades</TabsTrigger>
           <TabsTrigger value="fechamentos">Negócios fechados</TabsTrigger>
