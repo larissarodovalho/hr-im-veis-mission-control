@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Download, Pencil } from "lucide-react";
+import { Download, FileDown, Loader2, Pencil } from "lucide-react";
 import Papa from "papaparse";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,19 +18,16 @@ import { useRole } from "@/hooks/useRole";
 import { useReportsPeriod } from "@/hooks/useReportsPeriod";
 import { fmtDate } from "@/lib/datetime";
 import { etapaLabel } from "@/lib/contasFunil";
+import {
+  CLASSIFICACOES_ACOMPANHAMENTO,
+  GRUPOS_ACOMPANHAMENTO,
+  TERMOS_ACOMPANHAMENTO,
+  gerarPdfAcompanhamento,
+} from "@/lib/acompanhamentoPdf";
 
 type Grupo = "falha_processo" | "desfecho_cliente" | "em_jogo";
 
-const CLASSIFICACOES: { id: string; label: string; grupo: Grupo }[] = [
-  { id: "falta_followup", label: "Falta de follow-up", grupo: "falha_processo" },
-  { id: "crm_desatualizado", label: "CRM desatualizado", grupo: "falha_processo" },
-  { id: "sem_retorno", label: "Sem retorno", grupo: "desfecho_cliente" },
-  { id: "sem_interesse", label: "Sem interesse", grupo: "desfecho_cliente" },
-  { id: "desqualificado", label: "Desqualificado", grupo: "desfecho_cliente" },
-  { id: "encerrado", label: "Encerrado", grupo: "desfecho_cliente" },
-  { id: "virando_oportunidade", label: "Virando oportunidade", grupo: "em_jogo" },
-  { id: "ciclo_andamento", label: "Ciclo em andamento", grupo: "em_jogo" },
-];
+const CLASSIFICACOES = CLASSIFICACOES_ACOMPANHAMENTO;
 
 const GRUPO_LABEL: Record<Grupo, string> = {
   falha_processo: "Falha de processo",
@@ -129,6 +126,7 @@ export default function AcompanhamentoCorretoresReport() {
   const [editCls, setEditCls] = useState("falta_followup");
   const [editObs, setEditObs] = useState("");
   const [salvando, setSalvando] = useState(false);
+  const [gerandoPdf, setGerandoPdf] = useState(false);
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -181,6 +179,26 @@ export default function AcompanhamentoCorretoresReport() {
     carregar();
   };
 
+  const gerarPdf = async () => {
+    if (!dados) return;
+    setGerandoPdf(true);
+    try {
+      await gerarPdfAcompanhamento({
+        dados,
+        contas: contasFiltradas,
+        periodo: label,
+        filtroCorretor: fCorretor === "todos" ? "Todos os corretores" : fCorretor,
+        filtroClassificacao: fClasse === "todas" ? "Todas as classificações" : clsInfo(fClasse)?.label ?? fClasse,
+      });
+      toast.success("Relatório em PDF gerado");
+    } catch (error) {
+      const mensagem = error instanceof Error ? error.message : "Não foi possível gerar o arquivo.";
+      toast.error(`Erro ao gerar PDF: ${mensagem}`);
+    } finally {
+      setGerandoPdf(false);
+    }
+  };
+
   if (loading) return <Card className="p-6 text-muted-foreground">Carregando acompanhamento dos corretores…</Card>;
   if (!dados) return <Card className="p-6 text-muted-foreground">Sem dados no período.</Card>;
 
@@ -204,7 +222,7 @@ export default function AcompanhamentoCorretoresReport() {
             O que aconteceu depois que o lead chegou no corretor
           </h2>
         </div>
-        <div className="flex items-end gap-2">
+        <div className="flex flex-wrap items-end gap-2">
           <div>
             <Label htmlFor="prazo" className="text-xs text-muted-foreground">
               Prazo máximo entre contatos (dias)
@@ -219,6 +237,10 @@ export default function AcompanhamentoCorretoresReport() {
               className="w-28 h-9"
             />
           </div>
+          <Button onClick={gerarPdf} disabled={gerandoPdf} className="h-9">
+            {gerandoPdf ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
+            {gerandoPdf ? "Gerando…" : "Gerar PDF"}
+          </Button>
         </div>
       </Card>
 
@@ -503,6 +525,29 @@ export default function AcompanhamentoCorretoresReport() {
         </p>
       </Card>
 
+      {/* Legenda */}
+      <Card className="p-4 md:p-6 space-y-6">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Legenda</p>
+          <h3 className="font-semibold text-lg">Entenda este relatório</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            Consulte aqui como os números e diagnósticos do acompanhamento são calculados e interpretados.
+          </p>
+        </div>
+
+        <GlossarioSecao titulo="Termos e indicadores" itens={TERMOS_ACOMPANHAMENTO} />
+        <GlossarioSecao titulo="Grupos de diagnóstico" itens={GRUPOS_ACOMPANHAMENTO} />
+        <GlossarioSecao
+          titulo="O que significa cada caixinha"
+          itens={CLASSIFICACOES_ACOMPANHAMENTO.map(({ label: titulo, texto }) => ({ titulo, texto }))}
+        />
+
+        <div className="rounded-md border bg-muted/40 p-4 text-sm text-muted-foreground">
+          A classificação é calculada a partir dos registros do CRM: interações, tarefas, etapa e motivo. Admin e gestor
+          podem reclassificar uma conta manualmente; nesse caso, a classificação manual prevalece.
+        </div>
+      </Card>
+
       <Dialog open={!!edit} onOpenChange={(o) => !o && setEdit(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Reclassificar {edit?.nome}</DialogTitle></DialogHeader>
@@ -569,5 +614,21 @@ function Leitura({ n, titulo, children }: { n: string; titulo: string; children:
       <p className="font-medium mt-1">{titulo}</p>
       <p className="text-sm text-muted-foreground mt-2">{children}</p>
     </div>
+  );
+}
+
+function GlossarioSecao({ titulo, itens }: { titulo: string; itens: Array<{ titulo: string; texto: string }> }) {
+  return (
+    <section className="space-y-3">
+      <h4 className="font-medium">{titulo}</h4>
+      <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+        {itens.map((item) => (
+          <div key={item.titulo} className="border-t pt-3">
+            <dt className="text-sm font-medium">{item.titulo}</dt>
+            <dd className="text-sm text-muted-foreground mt-1 leading-relaxed">{item.texto}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   );
 }
