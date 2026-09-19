@@ -1,4 +1,5 @@
 import { createContext, useContext, useMemo, useState, ReactNode } from "react";
+import { fromCuiabaInputValue } from "@/lib/datetime";
 
 type PeriodCtx = {
   ano: number;
@@ -66,8 +67,8 @@ export function ReportsPeriodProvider({ children }: { children: ReactNode }) {
       setMes,
       inicio,
       fim,
-      inicioISO: `${inicio}T00:00:00.000`,
-      fimISO: `${fim}T23:59:59.999`,
+      inicioISO: fromCuiabaInputValue(`${inicio}T00:00`) ?? `${inicio}T04:00:00.000Z`,
+      fimISO: fromCuiabaInputValue(`${fim}T23:59`)?.replace(":00.000Z", ":59.999Z") ?? `${fim}T03:59:59.999Z`,
       label,
       anos,
     };

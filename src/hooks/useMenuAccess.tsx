@@ -59,6 +59,8 @@ export function defaultForRole(key: MenuKey, roles: AppRole[]): boolean {
   const secretariaOnly =
     hasSecretaria && !isAdmin && !roles.includes("gestor") && !hasCorretor && !hasMarketing;
 
+  if (key === "leads") return isAdmin || isGestor || hasMarketing;
+
   if (secretariaOnly) return key === "agenda" || key === "minha-conta";
   if (key === "carteira") return isAdmin || isGestor;
   if (marketingOnly)
@@ -115,6 +117,9 @@ export function useMenuAccess() {
 
   const canAccess = useCallback(
     (key: MenuKey): boolean => {
+      if (key === "leads" && !roles.some((role) => role === "admin" || role === "gestor" || role === "marketing")) {
+        return false;
+      }
       if (key in overrides) return overrides[key];
       return defaultForRole(key, roles);
     },
