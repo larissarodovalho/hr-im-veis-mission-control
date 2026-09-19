@@ -92,6 +92,12 @@ interface GerarPdfParams {
   filtroOrigens: string;
 }
 
+interface GerarPdfSelecionadosParams {
+  contas: ContaPdf[];
+  periodo: string;
+  filtroOrigens: string;
+}
+
 const PAGE_W = 210;
 const PAGE_H = 297;
 const MARGIN = 14;
@@ -354,4 +360,114 @@ export async function gerarPdfAcompanhamento({ dados, contas, periodo, filtroCor
 
   const slug = periodo.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase();
   doc.save(`acompanhamento-corretores-${slug}.pdf`);
+}
+
+export async function gerarPdfContasSelecionadas({ contas, periodo, filtroOrigens }: GerarPdfSelecionadosParams) {
+  if (!contas.length) throw new Error("Selecione pelo menos um cliente.");
+
+  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const logo = await carregarLogo();
+  const pageW = 297;
+  const pageH = 210;
+  const margin = 14;
+  const contentW = pageW - margin * 2;
+  let y = 18;
+
+  const novaPagina = () => {
+    doc.addPage();
+    y = 18;
+  };
+
+  const desenharCabecalhoTabela = () => {
+    doc.setFillColor(...INK);
+    doc.rect(margin, y, contentW, 9, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(255, 255, 255);
+    const titulos = ["Cliente", "Corretor", "Classificação", "Etapa", "Interações", "Dias sem contato", "Último contato", "Observação"];
+    const larguras = [43, 35, 38, 31, 20, 24, 25, 53];
+    let x = margin + 2;
+    titulos.forEach((titulo, index) => {
+      doc.text(doc.splitTextToSize(titulo, larguras[index] - 4)[0], x, y + 5.7);
+      x += larguras[index];
+    });
+    y += 9;
+    return larguras;
+  };
+
+  if (logo) doc.addImage(logo, "PNG", margin, 10, 18, 21, undefined, "FAST");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(...MUTED);
+  doc.text("HR IMÓVEIS · RELATÓRIO GERENCIAL", logo ? 37 : margin, 16);
+  doc.setFontSize(20);
+  doc.setTextColor(...INK);
+  doc.text("Clientes selecionados", logo ? 37 : margin, 25);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...MUTED);
+  doc.text(`Período: ${periodo}  ·  Gerado em ${fmtDateTime(new Date())}  ·  ${contas.length} clientes`, logo ? 37 : margin, 32);
+  doc.setDrawColor(...RED);
+  doc.setLineWidth(0.8);
+  doc.line(margin, 38, pageW - margin, 38);
+  y = 47;
+
+  doc.setFillColor(...SOFT);
+  doc.roundedRect(margin, y, contentW, 14, 2, 2, "F");
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...INK);
+  const origemLinhas = doc.splitTextToSize(`Origem da carteira: ${filtroOrigens}`, contentW - 10) as string[];
+  doc.text(origemLinhas, margin + 5, y + 6, { lineHeightFactor: 1.25 });
+  y += 20;
+
+  let larguras = desenharCabecalhoTabela();
+  contas.forEach((conta, rowIndex) => {
+    const valores = [
+      conta.nome,
+      conta.corretor_nome,
+      `${classificacaoLabel(conta.classificacao)}${conta.manual ? " (manual)" : ""}`,
+      etapaLabel(conta.etapa_funil ?? "a_contatar"),
+      String(conta.interacoes),
+      String(conta.dias_sem_contato),
+      fmtDate(conta.ultima_interacao),
+      conta.observacao ?? "—",
+    ];
+    const celulas = valores.map((valor, index) => doc.splitTextToSize(valor, larguras[index] - 4) as string[]);
+    const rowH = Math.max(9, Math.max(...celulas.map((celula) => celula.length)) * 3.7 + 3);
+    if (y + rowH > pageH - 18) {
+      novaPagina();
+      larguras = desenharCabecalhoTabela();
+    }
+    if (rowIndex % 2 === 0) {
+      doc.setFillColor(...SOFT);
+      doc.rect(margin, y, contentW, rowH, "F");
+    }
+    doc.setDrawColor(...LINE);
+    doc.line(margin, y + rowH, pageW - margin, y + rowH);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(...INK);
+    let x = margin + 2;
+    celulas.forEach((celula, index) => {
+      doc.text(celula, x, y + 5, { lineHeightFactor: 1.25 });
+      x += larguras[index];
+    });
+    y += rowH;
+  });
+
+  const totalPaginas = doc.getNumberOfPages();
+  for (let pagina = 1; pagina <= totalPaginas; pagina++) {
+    doc.setPage(pagina);
+    doc.setDrawColor(...LINE);
+    doc.line(margin, pageH - 12, pageW - margin, pageH - 12);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(...MUTED);
+    doc.text(`HR Imóveis · Clientes selecionados · ${periodo}`, margin, pageH - 7);
+    doc.text(`${pagina}/${totalPaginas}`, pageW - margin, pageH - 7, { align: "right" });
+  }
+
+  const slug = periodo.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase();
+  doc.save(`clientes-selecionados-${slug}.pdf`);
 }
