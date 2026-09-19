@@ -44,7 +44,6 @@ interface LinhaCorretorPdf {
   falta_followup: number;
   crm_desatualizado: number;
   dias_medios_travadas: number | null;
-  [key: string]: string | number | null;
 }
 
 interface ContaPdf {
@@ -268,7 +267,7 @@ export async function gerarPdfAcompanhamento({ dados, contas, periodo, filtroCor
     doc.setFontSize(7.5);
     doc.setTextColor(...MUTED);
     const incidencias = dados.corretores.map((corretor) => {
-      const qtd = Number(corretor[classificacao.id] ?? 0);
+      const qtd = Number((corretor as unknown as Record<string, string | number | null>)[classificacao.id] ?? 0);
       return `${corretor.corretor_nome}: ${percentual(qtd, corretor.total)} (${qtd})`;
     });
     const linhas = doc.splitTextToSize(incidencias.join("  ·  ") || "Sem contas no período.", CONTENT_W) as string[];
