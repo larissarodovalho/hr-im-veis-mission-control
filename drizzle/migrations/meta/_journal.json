@@ -15,6 +15,13 @@
       "when": 1789836857409,
       "tag": "0001_filter_acompanhamento_by_portfolio_origin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789838545178,
+      "tag": "0002_unify_acompanhamento_activity_and_lead_access",
+      "breakpoints": true
     }
   ]
 }
