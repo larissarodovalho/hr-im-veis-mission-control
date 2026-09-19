@@ -145,6 +145,10 @@ function ReportsInner() {
           <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="acompanhamento" className="mt-4">
+          <AcompanhamentoCorretoresReport />
+        </TabsContent>
+
         <TabsContent value="leads" className="space-y-4 md:space-y-6 mt-4">
           <FunilLeadsReport />
           <LeadsParaContasReport />
