@@ -43,6 +43,13 @@
       "when": 1789839010245,
       "tag": "0005_fix_acompanhamento_task_status",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789839047506,
+      "tag": "0006_fix_acompanhamento_disqualification_field",
+      "breakpoints": true
     }
   ]
 }
