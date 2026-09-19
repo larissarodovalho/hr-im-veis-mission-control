@@ -50,6 +50,13 @@
       "when": 1789839047506,
       "tag": "0006_fix_acompanhamento_disqualification_field",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789839127755,
+      "tag": "0007_fix_acompanhamento_account_grouping",
+      "breakpoints": true
     }
   ]
 }
