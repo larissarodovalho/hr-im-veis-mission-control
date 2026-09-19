@@ -5,4 +5,4 @@
 - [x] Identificar etapas antigas e divergências Conta × Oportunidade
 - [x] Restringir Leads a admin, gestor e marketing
 - [x] Atualizar tela, CSV, PDFs e legenda
-- [ ] Validar dados, acessos, interface e compilação
+- [x] Validar dados, acessos, interface e compilação
