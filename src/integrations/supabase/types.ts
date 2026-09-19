@@ -876,6 +876,38 @@ export type Database = {
           },
         ]
       }
+      conta_acompanhamento: {
+        Row: {
+          autor_id: string | null
+          classificacao: string
+          conta_id: string
+          observacao: string | null
+          updated_at: string
+        }
+        Insert: {
+          autor_id?: string | null
+          classificacao: string
+          conta_id: string
+          observacao?: string | null
+          updated_at?: string
+        }
+        Update: {
+          autor_id?: string | null
+          classificacao?: string
+          conta_id?: string
+          observacao?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conta_acompanhamento_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: true
+            referencedRelation: "contas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conta_fechamentos: {
         Row: {
           conta_id: string
@@ -4456,6 +4488,10 @@ export type Database = {
       }
     }
     Functions: {
+      acompanhamento_corretores: {
+        Args: { _fim: string; _inicio: string; _prazo_dias?: number }
+        Returns: Json
+      }
       carteira_agendar_proxima: {
         Args: {
           _atribuicao_id: string
