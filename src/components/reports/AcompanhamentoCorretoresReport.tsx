@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Download, FileDown, Loader2, Pencil } from "lucide-react";
+import { Download, FileDown, Loader2, Pencil, Search, X } from "lucide-react";
 import Papa from "papaparse";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,6 +24,7 @@ import {
   GRUPOS_ACOMPANHAMENTO,
   TERMOS_ACOMPANHAMENTO,
   gerarPdfAcompanhamento,
+  gerarPdfContasSelecionadas,
 } from "@/lib/acompanhamentoPdf";
 
 type Grupo = "falha_processo" | "desfecho_cliente" | "em_jogo";
@@ -131,11 +132,14 @@ export default function AcompanhamentoCorretoresReport() {
   const [loading, setLoading] = useState(true);
   const [fCorretor, setFCorretor] = useState("todos");
   const [fClasse, setFClasse] = useState("todas");
+  const [buscaConta, setBuscaConta] = useState("");
+  const [contasSelecionadas, setContasSelecionadas] = useState<string[]>([]);
   const [edit, setEdit] = useState<ContaDetalhe | null>(null);
   const [editCls, setEditCls] = useState("falta_followup");
   const [editObs, setEditObs] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [gerandoPdf, setGerandoPdf] = useState(false);
+  const [gerandoPdfSelecionados, setGerandoPdfSelecionados] = useState(false);
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -156,12 +160,36 @@ export default function AcompanhamentoCorretoresReport() {
 
   const contasFiltradas = useMemo(() => {
     const lista = dados?.contas_detalhe ?? [];
+    const busca = buscaConta.trim().toLocaleLowerCase("pt-BR");
+    const consultaAtiva = Boolean(busca) || fCorretor !== "todos" || fClasse !== "todas";
+    if (!consultaAtiva) return [];
     return lista.filter(
       (c) =>
+        (!busca || c.nome.toLocaleLowerCase("pt-BR").includes(busca)) &&
         (fCorretor === "todos" || c.corretor_nome === fCorretor) &&
         (fClasse === "todas" || c.classificacao === fClasse)
     );
-  }, [dados, fCorretor, fClasse]);
+  }, [dados, buscaConta, fCorretor, fClasse]);
+
+  const contasMarcadas = useMemo(() => {
+    const ids = new Set(contasSelecionadas);
+    return (dados?.contas_detalhe ?? []).filter((conta) => ids.has(conta.id));
+  }, [dados, contasSelecionadas]);
+
+  const consultaAtiva = Boolean(buscaConta.trim()) || fCorretor !== "todos" || fClasse !== "todas";
+  const todosVisiveisSelecionados = contasFiltradas.length > 0 && contasFiltradas.every((conta) => contasSelecionadas.includes(conta.id));
+
+  const alternarConta = (contaId: string) => {
+    setContasSelecionadas((atuais) => atuais.includes(contaId) ? atuais.filter((id) => id !== contaId) : [...atuais, contaId]);
+  };
+
+  const alternarResultadosVisiveis = () => {
+    const idsVisiveis = contasFiltradas.map((conta) => conta.id);
+    setContasSelecionadas((atuais) => {
+      if (todosVisiveisSelecionados) return atuais.filter((id) => !idsVisiveis.includes(id));
+      return Array.from(new Set([...atuais, ...idsVisiveis]));
+    });
+  };
 
   const abrirEdicao = (c: ContaDetalhe) => {
     setEdit(c);
@@ -207,6 +235,24 @@ export default function AcompanhamentoCorretoresReport() {
       toast.error(`Erro ao gerar PDF: ${mensagem}`);
     } finally {
       setGerandoPdf(false);
+    }
+  };
+
+  const gerarPdfSelecionados = async () => {
+    if (!contasMarcadas.length) return;
+    setGerandoPdfSelecionados(true);
+    try {
+      await gerarPdfContasSelecionadas({
+        contas: contasMarcadas,
+        periodo: label,
+        filtroOrigens: ORIGENS_CARTEIRA.filter((origem) => origens.includes(origem.id)).map((origem) => origem.label).join(", "),
+      });
+      toast.success("PDF dos clientes selecionados gerado");
+    } catch (error) {
+      const mensagem = error instanceof Error ? error.message : "Não foi possível gerar o arquivo.";
+      toast.error(`Erro ao gerar PDF: ${mensagem}`);
+    } finally {
+      setGerandoPdfSelecionados(false);
     }
   };
 
