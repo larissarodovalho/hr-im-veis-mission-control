@@ -92,6 +92,8 @@ interface ContaDetalhe {
   created_at: string;
   qtd_oportunidades: number;
   qtd_oportunidades_ativas: number;
+  qtd_divergencias: number;
+  divergencias_responsabilidade: string | null;
 }
 
 interface Divergencia {
@@ -436,6 +438,7 @@ export default function AcompanhamentoCorretoresReport() {
                   Corretor: c.corretor_nome, "Total contas": c.total,
                   "% travada": pct(c.falha_processo, c.total), "Falha de processo": c.falha_processo,
                   "Desfecho do cliente": c.desfecho_cliente, "Em jogo": c.em_jogo,
+                   Revisão: c.revisao, Oportunidades: c.oportunidades_conduzidas,
                   "Falta de follow-up": c.falta_followup, "CRM desatualizado": c.crm_desatualizado,
                   "Dias médios travadas": c.dias_medios_travadas ?? "",
                 })),
@@ -640,7 +643,9 @@ export default function AcompanhamentoCorretoresReport() {
                     Cliente: c.nome, Corretor: c.corretor_nome,
                     Classificação: clsInfo(c.classificacao)?.label ?? c.classificacao,
                     Grupo: GRUPO_LABEL[c.grupo], Etapa: etapaLabel(c.etapa_funil ?? "a_contatar"),
-                     Interações: c.interacoes, Oportunidades: c.qtd_oportunidades, "Último contato": fmtDate(c.ultima_interacao),
+                     Interações: c.interacoes, Oportunidades: c.qtd_oportunidades,
+                     "Divergência de responsável": c.divergencias_responsabilidade ?? "",
+                     "Último contato": fmtDate(c.ultima_interacao),
                     "Dias sem contato": c.dias_sem_contato, Observação: c.observacao ?? "",
                   })),
                   `clientes-selecionados-${label.replace("/", "-")}.csv`

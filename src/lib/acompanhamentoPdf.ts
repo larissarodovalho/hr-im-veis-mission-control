@@ -68,6 +68,8 @@ interface ContaPdf {
   ultima_interacao: string | null;
   dias_sem_contato: number;
   qtd_oportunidades?: number;
+  qtd_divergencias?: number;
+  divergencias_responsabilidade?: string | null;
 }
 
 interface DivergenciaPdf {
@@ -327,17 +329,18 @@ export async function gerarPdfAcompanhamento({ dados, contas, periodo, filtroCor
 
   tituloSecao("05 · Conta a conta", "Detalhamento exportado", `${contas.length} contas · filtros: ${filtroCorretor} / ${filtroClassificacao}`);
   tabela(
-    ["Cliente", "Corretor", "Classificação", "Etapa", "Interações", "Dias sem contato", "Observação"],
+    ["Cliente", "Corretor", "Classificação", "Etapa", "Interações", "Oportunidades", "Dias sem contato", "Observação"],
     contas.map((conta) => [
       conta.nome,
       conta.corretor_nome,
       `${classificacaoLabel(conta.classificacao)}${conta.manual ? " (manual)" : ""}`,
       etapaLabel(conta.etapa_funil ?? "a_contatar"),
       String(conta.interacoes),
+      String(conta.qtd_oportunidades ?? 0),
       String(conta.dias_sem_contato),
-      conta.observacao ?? `Último contato: ${fmtDate(conta.ultima_interacao)}`,
+      [conta.observacao, conta.divergencias_responsabilidade ? `Divergência: ${conta.divergencias_responsabilidade}` : null, `Último contato: ${fmtDate(conta.ultima_interacao)}`].filter(Boolean).join(" · "),
     ]),
-    [34, 27, 31, 25, 16, 18, 31],
+    [30, 24, 28, 22, 14, 18, 17, 29],
   );
 
   if (dados.divergencias.length) {
@@ -424,8 +427,8 @@ export async function gerarPdfContasSelecionadas({ contas, periodo, filtroOrigen
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
     doc.setTextColor(255, 255, 255);
-    const titulos = ["Cliente", "Corretor", "Classificação", "Etapa", "Interações", "Dias sem contato", "Último contato", "Observação"];
-    const larguras = [43, 35, 38, 31, 20, 24, 25, 53];
+    const titulos = ["Cliente", "Corretor", "Classificação", "Etapa", "Interações", "Oportunidades", "Dias sem contato", "Último contato", "Observação / auditoria"];
+    const larguras = [38, 31, 34, 27, 17, 21, 22, 25, 54];
     let x = margin + 2;
     titulos.forEach((titulo, index) => {
       doc.text(doc.splitTextToSize(titulo, larguras[index] - 4)[0], x, y + 5.7);
@@ -469,9 +472,10 @@ export async function gerarPdfContasSelecionadas({ contas, periodo, filtroOrigen
       `${classificacaoLabel(conta.classificacao)}${conta.manual ? " (manual)" : ""}`,
       etapaLabel(conta.etapa_funil ?? "a_contatar"),
       String(conta.interacoes),
+      String(conta.qtd_oportunidades ?? 0),
       String(conta.dias_sem_contato),
       fmtDate(conta.ultima_interacao),
-      conta.observacao ?? "—",
+      [conta.observacao, conta.divergencias_responsabilidade ? `Divergência: ${conta.divergencias_responsabilidade}` : null].filter(Boolean).join(" · ") || "—",
     ];
     const celulas = valores.map((valor, index) => doc.splitTextToSize(valor, larguras[index] - 4) as string[]);
     const rowH = Math.max(9, Math.max(...celulas.map((celula) => celula.length)) * 3.7 + 3);
