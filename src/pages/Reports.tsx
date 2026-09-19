@@ -18,6 +18,7 @@ import FechamentosReport from "@/components/reports/FechamentosReport";
 import PropostasReport from "@/components/reports/PropostasReport";
 import OportunidadesReport from "@/components/reports/OportunidadesReport";
 import CarteiraReport from "@/components/reports/CarteiraReport";
+import AcompanhamentoCorretoresReport from "@/components/reports/AcompanhamentoCorretoresReport";
 import LinksImoveisReport from "@/components/reports/LinksImoveisReport";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReportsPeriodProvider, useReportsPeriod, MESES_LABELS } from "@/hooks/useReportsPeriod";
