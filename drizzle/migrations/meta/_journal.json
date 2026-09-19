@@ -22,6 +22,13 @@
       "when": 1789838545178,
       "tag": "0002_unify_acompanhamento_activity_and_lead_access",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789838647604,
+      "tag": "0003_include_account_opportunity_audit_details",
+      "breakpoints": true
     }
   ]
 }
