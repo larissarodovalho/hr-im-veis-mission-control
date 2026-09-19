@@ -15,6 +15,41 @@
       "when": 1789836857409,
       "tag": "0001_filter_acompanhamento_by_portfolio_origin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789838545178,
+      "tag": "0002_unify_acompanhamento_activity_and_lead_access",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789838647604,
+      "tag": "0003_include_account_opportunity_audit_details",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789838872576,
+      "tag": "0004_filter_acompanhamento_operational_roles",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789839010245,
+      "tag": "0005_fix_acompanhamento_task_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789839047506,
+      "tag": "0006_fix_acompanhamento_disqualification_field",
+      "breakpoints": true
     }
   ]
 }

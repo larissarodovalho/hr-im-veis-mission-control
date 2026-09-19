@@ -12,6 +12,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import StaffRoute from "@/components/StaffRoute";
 import MarketingRoute from "@/components/MarketingRoute";
+import LeadsRoute from "@/components/LeadsRoute";
 import AppLayout from "@/components/AppLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import SiteLayout from "@/components/site/SiteLayout";
@@ -103,8 +104,8 @@ const App = () => (
               }
             >
               <Route index element={<StaffRoute allowMarketing><Dashboard /></StaffRoute>} />
-              <Route path="leads" element={<MarketingRoute menuKey="leads"><Leads /></MarketingRoute>} />
-              <Route path="leads/:id" element={<MarketingRoute menuKey="leads"><LeadDetail /></MarketingRoute>} />
+              <Route path="leads" element={<LeadsRoute><Leads /></LeadsRoute>} />
+              <Route path="leads/:id" element={<LeadsRoute><LeadDetail /></LeadsRoute>} />
               <Route path="contas" element={<MarketingRoute menuKey="contas"><Accounts /></MarketingRoute>} />
               <Route path="contas/:id" element={<AccountDetail />} />
               <Route path="carteira" element={<StaffRoute><CarteiraDistribuicao /></StaffRoute>} />

@@ -27,7 +27,7 @@ import {
   gerarPdfContasSelecionadas,
 } from "@/lib/acompanhamentoPdf";
 
-type Grupo = "falha_processo" | "desfecho_cliente" | "em_jogo";
+type Grupo = "falha_processo" | "desfecho_cliente" | "em_jogo" | "revisao";
 type OrigemCarteira = "base_hr" | "marketing" | "carteira_propria";
 
 const ORIGENS_CARTEIRA: Array<{ id: OrigemCarteira; label: string; descricao: string }> = [
@@ -42,12 +42,14 @@ const GRUPO_LABEL: Record<Grupo, string> = {
   falha_processo: "Falha de processo",
   desfecho_cliente: "Desfecho do cliente",
   em_jogo: "Em jogo",
+  revisao: "Revisão",
 };
 
 const GRUPO_BADGE: Record<Grupo, string> = {
   falha_processo: "bg-destructive/15 text-destructive border-destructive/30",
   desfecho_cliente: "bg-muted text-muted-foreground border-border",
   em_jogo: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
+  revisao: "bg-amber-500/15 text-amber-700 border-amber-500/30",
 };
 
 const clsInfo = (id: string) => CLASSIFICACOES.find((c) => c.id === id);
@@ -59,6 +61,7 @@ interface LinhaCorretor {
   falha_processo: number;
   desfecho_cliente: number;
   em_jogo: number;
+  revisao: number;
   falta_followup: number;
   crm_desatualizado: number;
   sem_retorno: number;
@@ -66,7 +69,10 @@ interface LinhaCorretor {
   desqualificado: number;
   encerrado: number;
   virando_oportunidade: number;
+  oportunidade_futura: number;
+  etapa_antiga: number;
   ciclo_andamento: number;
+  oportunidades_conduzidas: number;
   dias_medios_travadas: number | null;
 }
 
@@ -84,6 +90,20 @@ interface ContaDetalhe {
   dias_sem_contato: number;
   proxima_tarefa: string | null;
   created_at: string;
+  qtd_oportunidades: number;
+  qtd_oportunidades_ativas: number;
+  qtd_divergencias: number;
+  divergencias_responsabilidade: string | null;
+}
+
+interface Divergencia {
+  oportunidade_id: string;
+  conta_id: string;
+  cliente: string;
+  responsavel_conta: string;
+  corretor_oportunidade: string;
+  estagio: string;
+  ativa: boolean;
 }
 
 interface Dados {
@@ -91,9 +111,11 @@ interface Dados {
   entrada: {
     leads: number;
     desclassificados: number;
-    perdidos_pos_triagem: number;
-    contas: number;
-    oportunidades: number;
+    leads_com_conta: number;
+    leads_com_oportunidade: number;
+    leads_sem_vinculo: number;
+    contas_trabalhadas: number;
+    oportunidades_conduzidas: number;
     origens: { origem: string; total: number }[];
   };
   totais: {
@@ -101,10 +123,22 @@ interface Dados {
     falha_processo: number;
     desfecho_cliente: number;
     em_jogo: number;
+    revisao: number;
     falta_followup: number;
+    oportunidade_futura: number;
+    etapa_antiga: number;
+    sem_responsavel_valido: number;
     dias_medios_travadas: number | null;
   };
+  operacao: {
+    contas_com_interacao: number;
+    interacoes: number;
+    tarefas: number;
+    movimentacoes: number;
+    oportunidades_conduzidas: number;
+  };
   corretores: LinhaCorretor[];
+  divergencias: Divergencia[];
   contas_detalhe: ContaDetalhe[];
 }
 
@@ -261,7 +295,6 @@ export default function AcompanhamentoCorretoresReport() {
 
   const e = dados.entrada;
   const t = dados.totais;
-  const passaram = e.leads - e.desclassificados;
   const corretores = dados.corretores;
   const piorCorretor = [...corretores].sort(
     (a, b) => b.falha_processo / (b.total || 1) - a.falha_processo / (a.total || 1)
@@ -282,10 +315,10 @@ export default function AcompanhamentoCorretoresReport() {
       <Card className="p-4 md:p-6 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            Diagnóstico · {e.leads} leads · {corretores.length} corretores · {label}
+            Diagnóstico · {e.contas_trabalhadas} contas trabalhadas · {corretores.length} responsáveis · {label}
           </p>
           <h2 className="font-display text-xl md:text-2xl font-semibold mt-1">
-            O que aconteceu depois que o lead chegou no corretor
+            Trabalho registrado em Contas e Oportunidades
           </h2>
         </div>
         <div className="flex flex-wrap items-end gap-2">
@@ -337,42 +370,57 @@ export default function AcompanhamentoCorretoresReport() {
       <Card className="p-4 md:p-6 space-y-4">
         <div>
           <p className="text-xs uppercase tracking-wide text-muted-foreground">01 · Entrada</p>
-          <h3 className="font-semibold text-lg">Para onde foram os leads</h3>
+          <h3 className="font-semibold text-lg">Entrada do Marketing e vínculos comprovados</h3>
+          <p className="text-sm text-muted-foreground">Leads são contexto de entrada; o trabalho dos corretores é medido em Contas e Oportunidades.</p>
         </div>
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
           <Kpi titulo="Leads no período" valor={String(e.leads)} nota={label} />
           <Kpi
-            titulo="Passaram da triagem"
-            valor={pct(passaram, e.leads)}
-            nota={`${passaram} de ${e.leads} · ${e.desclassificados} desclassificados antes`}
+            titulo="Com Conta vinculada"
+            valor={pct(e.leads_com_conta, e.leads)}
+            nota={`${e.leads_com_conta} de ${e.leads}`}
           />
           <Kpi
-            titulo="Viraram oportunidade"
-            valor={pct(e.oportunidades, e.leads)}
-            nota={`${e.oportunidades} de ${e.leads}`}
+            titulo="Com Oportunidade vinculada"
+            valor={pct(e.leads_com_oportunidade, e.leads)}
+            nota={`${e.leads_com_oportunidade} de ${e.leads}`}
           />
           <Kpi
-            titulo="Travados por follow-up"
-            valor={pct(t.falta_followup, e.leads)}
+            titulo="Sem vínculo de Conta"
+            valor={pct(e.leads_sem_vinculo, e.leads)}
             alerta
-            nota={`${t.falta_followup} de ${e.leads} · ${pct(t.falta_followup, t.contas)} das ${t.contas} contas`}
+            nota={`${e.leads_sem_vinculo} de ${e.leads}`}
           />
         </div>
 
         <div className="space-y-3">
-          <Nivel titulo={`${e.leads} leads entraram`} subtitulo="Nível 1 · Origem"
+          <Nivel titulo={`${e.leads} leads entraram`} subtitulo="Origem de entrada"
             itens={e.origens.map((o) => ({ label: o.origem, valor: o.total }))} />
-          <Nivel titulo={`${pct(passaram, e.leads)} chegaram aos corretores`} subtitulo="Nível 2 · Triagem"
+          <Nivel titulo="Vínculos reais no CRM" subtitulo="Conversão comprovada"
             itens={[
-              { label: "Seguiram para os corretores", valor: passaram },
-              { label: "Desclassificados na triagem", valor: e.desclassificados },
+              { label: "Leads com Conta", valor: e.leads_com_conta },
+              { label: "Leads com Oportunidade", valor: e.leads_com_oportunidade },
+              { label: "Leads sem Conta vinculada", valor: e.leads_sem_vinculo },
             ]} />
-          <Nivel titulo={`os ${passaram} que passaram`} subtitulo="Nível 3 · Onde pararam"
+          <Nivel titulo="Trabalho realizado no período" subtitulo="Contas e Oportunidades"
             itens={[
-              { label: "Contas em carteira", valor: e.contas },
-              { label: "Oportunidades", valor: e.oportunidades },
-              { label: "Perdidos após triagem", valor: e.perdidos_pos_triagem },
+              { label: "Contas trabalhadas", valor: e.contas_trabalhadas },
+              { label: "Oportunidades conduzidas", valor: e.oportunidades_conduzidas },
             ]} />
+        </div>
+      </Card>
+
+      <Card className="p-4 md:p-6 space-y-4">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Atividade no período</p>
+          <h3 className="font-semibold text-lg">Trabalho registrado no CRM</h3>
+        </div>
+        <div className="grid grid-cols-2 xl:grid-cols-5 gap-3">
+          <Kpi titulo="Contas com interação" valor={String(dados.operacao.contas_com_interacao)} />
+          <Kpi titulo="Interações" valor={String(dados.operacao.interacoes)} />
+          <Kpi titulo="Tarefas" valor={String(dados.operacao.tarefas)} />
+          <Kpi titulo="Movimentações" valor={String(dados.operacao.movimentacoes)} />
+          <Kpi titulo="Oportunidades conduzidas" valor={String(dados.operacao.oportunidades_conduzidas)} />
         </div>
       </Card>
 
@@ -390,6 +438,7 @@ export default function AcompanhamentoCorretoresReport() {
                   Corretor: c.corretor_nome, "Total contas": c.total,
                   "% travada": pct(c.falha_processo, c.total), "Falha de processo": c.falha_processo,
                   "Desfecho do cliente": c.desfecho_cliente, "Em jogo": c.em_jogo,
+                   Revisão: c.revisao, Oportunidades: c.oportunidades_conduzidas,
                   "Falta de follow-up": c.falta_followup, "CRM desatualizado": c.crm_desatualizado,
                   "Dias médios travadas": c.dias_medios_travadas ?? "",
                 })),
@@ -407,10 +456,12 @@ export default function AcompanhamentoCorretoresReport() {
                 <TableHead>Corretor</TableHead>
                 <TableHead className="text-right">Total contas</TableHead>
                 <TableHead className="min-w-[160px]">Proporção travada</TableHead>
+                <TableHead className="text-right">Oportunidades</TableHead>
                 <TableHead className="text-right">Travadas</TableHead>
                 <TableHead className="text-right">Falha de processo</TableHead>
                 <TableHead className="text-right">Desfecho do cliente</TableHead>
                 <TableHead className="text-right">Em jogo</TableHead>
+                <TableHead className="text-right">Revisão</TableHead>
                 <TableHead>Principal problema</TableHead>
                 <TableHead className="text-right">Dias médios parado</TableHead>
               </TableRow>
@@ -432,10 +483,12 @@ export default function AcompanhamentoCorretoresReport() {
                         <span className="text-xs tabular-nums">{perc.toFixed(1)}%</span>
                       </div>
                     </TableCell>
+                    <TableCell className="text-right">{c.oportunidades_conduzidas}</TableCell>
                     <TableCell className="text-right">{c.falha_processo} de {c.total}</TableCell>
                     <TableCell className="text-right text-destructive">{c.falha_processo}</TableCell>
                     <TableCell className="text-right">{c.desfecho_cliente}</TableCell>
                     <TableCell className="text-right">{c.em_jogo}</TableCell>
+                    <TableCell className="text-right">{c.revisao}</TableCell>
                     <TableCell className="whitespace-nowrap text-sm">
                       {qtdPrincipal > 0 ? `${principal} · ${qtdPrincipal} contas (${pct(qtdPrincipal, c.total)})` : "—"}
                     </TableCell>
@@ -496,8 +549,8 @@ export default function AcompanhamentoCorretoresReport() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <Leitura n="01" titulo="Onde o funil falha">
-            {pct(passaram, e.leads)} dos leads passaram da triagem e {e.perdidos_pos_triagem} foram descartados depois
-            disso. O problema aparece depois que o lead chega no corretor — não na origem.
+            {pct(e.leads_com_conta, e.leads)} dos leads possuem Conta vinculada e {pct(e.leads_com_oportunidade, e.leads)}
+            possuem Oportunidade vinculada. Totais independentes não são tratados como uma jornada única.
           </Leitura>
           <Leitura n="02" titulo="É do escritório ou de um corretor?">
             {piorCorretor
@@ -509,6 +562,32 @@ export default function AcompanhamentoCorretoresReport() {
             configurado em {dados.prazo_dias} dias. Falta cadência, não esforço.
           </Leitura>
         </div>
+      </Card>
+
+      <Card className="p-4 md:p-6 space-y-4">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Auditoria</p>
+          <h3 className="font-semibold text-lg">Pontos para revisão da gestão</h3>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Kpi titulo="Oportunidades futuras" valor={String(t.oportunidade_futura)} nota="Sem Oportunidade criada" />
+          <Kpi titulo="Etapas antigas" valor={String(t.etapa_antiga)} nota="Sem migração automática" alerta={t.etapa_antiga > 0} />
+          <Kpi titulo="Responsáveis divergentes" valor={String(dados.divergencias.length)} nota="O corretor da Oportunidade prevalece" alerta={dados.divergencias.length > 0} />
+        </div>
+        {dados.divergencias.length > 0 && (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader><TableRow><TableHead>Cliente</TableHead><TableHead>Responsável da Conta</TableHead><TableHead>Corretor da Oportunidade</TableHead><TableHead>Etapa</TableHead><TableHead>Situação</TableHead></TableRow></TableHeader>
+              <TableBody>{dados.divergencias.map((item) => (
+                <TableRow key={item.oportunidade_id}>
+                  <TableCell className="font-medium"><Link to={`/crm/contas/${item.conta_id}`} className="hover:underline">{item.cliente}</Link></TableCell>
+                  <TableCell>{item.responsavel_conta}</TableCell><TableCell>{item.corretor_oportunidade}</TableCell>
+                  <TableCell>{item.estagio}</TableCell><TableCell>{item.ativa ? "Ativa" : "Encerrada"}</TableCell>
+                </TableRow>
+              ))}</TableBody>
+            </Table>
+          </div>
+        )}
       </Card>
 
       {/* 05 Conta a conta */}
@@ -564,7 +643,9 @@ export default function AcompanhamentoCorretoresReport() {
                     Cliente: c.nome, Corretor: c.corretor_nome,
                     Classificação: clsInfo(c.classificacao)?.label ?? c.classificacao,
                     Grupo: GRUPO_LABEL[c.grupo], Etapa: etapaLabel(c.etapa_funil ?? "a_contatar"),
-                    Interações: c.interacoes, "Último contato": fmtDate(c.ultima_interacao),
+                     Interações: c.interacoes, Oportunidades: c.qtd_oportunidades,
+                     "Divergência de responsável": c.divergencias_responsabilidade ?? "",
+                     "Último contato": fmtDate(c.ultima_interacao),
                     "Dias sem contato": c.dias_sem_contato, Observação: c.observacao ?? "",
                   })),
                   `clientes-selecionados-${label.replace("/", "-")}.csv`
@@ -626,6 +707,7 @@ export default function AcompanhamentoCorretoresReport() {
                 <TableHead>Classificação</TableHead>
                 <TableHead>Etapa</TableHead>
                 <TableHead className="text-right">Interações</TableHead>
+                <TableHead className="text-right">Oportunidades</TableHead>
                 <TableHead className="text-right">Dias sem contato</TableHead>
                 <TableHead>Observação</TableHead>
                 {podeEditar && <TableHead />}
@@ -655,6 +737,7 @@ export default function AcompanhamentoCorretoresReport() {
                     {etapaLabel(c.etapa_funil ?? "a_contatar")}
                   </TableCell>
                   <TableCell className="text-right">{c.interacoes}</TableCell>
+                  <TableCell className="text-right">{c.qtd_oportunidades}</TableCell>
                   <TableCell className={`text-right ${c.dias_sem_contato > dados.prazo_dias ? "text-destructive" : ""}`}>
                     {c.dias_sem_contato}
                   </TableCell>

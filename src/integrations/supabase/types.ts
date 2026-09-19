@@ -4488,20 +4488,15 @@ export type Database = {
       }
     }
     Functions: {
-      acompanhamento_corretores:
-        | {
-            Args: { _fim: string; _inicio: string; _prazo_dias?: number }
-            Returns: Json
-          }
-        | {
-            Args: {
-              _fim: string
-              _inicio: string
-              _origens_carteira?: string[]
-              _prazo_dias?: number
-            }
-            Returns: Json
-          }
+      acompanhamento_corretores: {
+        Args: {
+          _fim: string
+          _inicio: string
+          _origens_carteira?: string[]
+          _prazo_dias?: number
+        }
+        Returns: Json
+      }
       carteira_agendar_proxima: {
         Args: {
           _atribuicao_id: string

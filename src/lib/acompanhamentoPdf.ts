@@ -3,12 +3,13 @@ import logoHR from "@/assets/brand/hr-imoveis-logo.png";
 import { fmtDate, fmtDateTime } from "@/lib/datetime";
 import { etapaLabel } from "@/lib/contasFunil";
 
-export type GrupoAcompanhamento = "falha_processo" | "desfecho_cliente" | "em_jogo";
+export type GrupoAcompanhamento = "falha_processo" | "desfecho_cliente" | "em_jogo" | "revisao";
 
 export const GRUPOS_ACOMPANHAMENTO: Array<{ titulo: string; texto: string }> = [
   { titulo: "Falha de processo", texto: "A conta exige correção na rotina interna de atendimento, como ausência de contato ou CRM sem atualização." },
   { titulo: "Desfecho do cliente", texto: "O atendimento teve um encerramento relacionado à resposta, ao interesse ou ao perfil do cliente." },
   { titulo: "Em jogo", texto: "A conta continua ativa no ciclo comercial ou está avançando para uma oportunidade." },
+  { titulo: "Revisão", texto: "A conta permanece em uma etapa antiga do CRM e precisa ser revisada pela gestão, sem alteração automática." },
 ];
 
 export const CLASSIFICACOES_ACOMPANHAMENTO: Array<{ id: string; label: string; grupo: GrupoAcompanhamento; texto: string }> = [
@@ -18,17 +19,21 @@ export const CLASSIFICACOES_ACOMPANHAMENTO: Array<{ id: string; label: string; g
   { id: "sem_interesse", label: "Sem interesse", grupo: "desfecho_cliente", texto: "O cliente informou que não deseja seguir com o atendimento." },
   { id: "desqualificado", label: "Desqualificado", grupo: "desfecho_cliente", texto: "O contato não atende aos critérios para continuar no funil comercial." },
   { id: "encerrado", label: "Encerrado", grupo: "desfecho_cliente", texto: "O atendimento foi finalizado por outro motivo registrado no CRM." },
-  { id: "virando_oportunidade", label: "Virando oportunidade", grupo: "em_jogo", texto: "A conta avançou ou está avançando para uma oportunidade de negócio." },
+  { id: "virando_oportunidade", label: "Oportunidade criada", grupo: "em_jogo", texto: "Existe uma Oportunidade realmente vinculada a esta conta." },
+  { id: "oportunidade_futura", label: "Oportunidade futura", grupo: "em_jogo", texto: "A conta foi reservada para uma oportunidade futura, mas ainda não possui Oportunidade criada." },
   { id: "ciclo_andamento", label: "Ciclo em andamento", grupo: "em_jogo", texto: "O atendimento permanece ativo e dentro do prazo esperado entre contatos." },
+  { id: "etapa_antiga", label: "Etapa antiga — revisar", grupo: "revisao", texto: "A conta está em uma etapa antiga preservada no histórico e não foi migrada automaticamente." },
 ];
 
 export const TERMOS_ACOMPANHAMENTO: Array<{ titulo: string; texto: string }> = [
-  { titulo: "Período analisado", texto: "Intervalo escolhido no topo da página. Os indicadores consideram os registros desse período." },
+  { titulo: "Período analisado", texto: "Intervalo escolhido no topo da página, no fuso de Cuiabá. O trabalho inclui contas e oportunidades com criação, atualização, interação, tarefa ou movimentação no período." },
   { titulo: "Prazo máximo entre contatos (dias)", texto: "Quantidade máxima de dias aceita entre um contato e o seguinte. Ao ultrapassá-la, uma conta ativa pode ser diagnosticada como falta de follow-up." },
   { titulo: "Diagnóstico", texto: "Leitura automática do CRM com base em interações, tarefas, etapa do funil e motivo de encerramento." },
   { titulo: "Triagem", texto: "Etapa inicial em que o lead é avaliado antes de seguir para a carteira de um corretor." },
   { titulo: "Conta em carteira", texto: "Cliente que passou da triagem e está sob responsabilidade de um profissional." },
-  { titulo: "Oportunidade", texto: "Conta que avançou para uma negociação comercial ativa." },
+  { titulo: "Oportunidade criada", texto: "Negociação registrada e realmente vinculada a uma conta. Ela é atribuída ao corretor da própria Oportunidade." },
+  { titulo: "Oportunidade futura", texto: "Intenção comercial registrada na conta, ainda sem uma Oportunidade criada." },
+  { titulo: "Divergência de responsável", texto: "A Oportunidade está com um corretor diferente do responsável atual da Conta. A informação é auditada sem reatribuição automática." },
   { titulo: "Travados por follow-up", texto: "Contas cujo atendimento ultrapassou o prazo máximo definido sem novo contato registrado." },
   { titulo: "Proporção travada", texto: "Percentual da carteira do corretor classificado como falha de processo." },
   { titulo: "Dias médios parado", texto: "Média de dias sem contato entre as contas classificadas como falha de processo." },
@@ -44,6 +49,8 @@ interface LinhaCorretorPdf {
   falha_processo: number;
   desfecho_cliente: number;
   em_jogo: number;
+  revisao: number;
+  oportunidades_conduzidas: number;
   falta_followup: number;
   crm_desatualizado: number;
   dias_medios_travadas: number | null;
@@ -60,6 +67,17 @@ interface ContaPdf {
   interacoes: number;
   ultima_interacao: string | null;
   dias_sem_contato: number;
+  qtd_oportunidades?: number;
+  qtd_divergencias?: number;
+  divergencias_responsabilidade?: string | null;
+}
+
+interface DivergenciaPdf {
+  cliente: string;
+  responsavel_conta: string;
+  corretor_oportunidade: string;
+  estagio: string;
+  ativa: boolean;
 }
 
 export interface AcompanhamentoPdfDados {
@@ -67,9 +85,11 @@ export interface AcompanhamentoPdfDados {
   entrada: {
     leads: number;
     desclassificados: number;
-    perdidos_pos_triagem: number;
-    contas: number;
-    oportunidades: number;
+    leads_com_conta: number;
+    leads_com_oportunidade: number;
+    leads_sem_vinculo: number;
+    contas_trabalhadas: number;
+    oportunidades_conduzidas: number;
     origens: Array<{ origem: string; total: number }>;
   };
   totais: {
@@ -77,10 +97,16 @@ export interface AcompanhamentoPdfDados {
     falha_processo: number;
     desfecho_cliente: number;
     em_jogo: number;
+    revisao: number;
+    oportunidade_futura: number;
+    etapa_antiga: number;
+    sem_responsavel_valido: number;
     falta_followup: number;
     dias_medios_travadas: number | null;
   };
   corretores: LinhaCorretorPdf[];
+  operacao: { contas_com_interacao: number; interacoes: number; tarefas: number; movimentacoes: number; oportunidades_conduzidas: number };
+  divergencias: DivergenciaPdf[];
 }
 
 interface GerarPdfParams {
@@ -242,29 +268,35 @@ export async function gerarPdfAcompanhamento({ dados, contas, periodo, filtroCor
 
   const e = dados.entrada;
   const t = dados.totais;
-  const passaram = e.leads - e.desclassificados;
-  tituloSecao("01 · Entrada", "Para onde foram os leads");
+  tituloSecao("01 · Entrada", "Entrada do Marketing e vínculos comprovados");
   tabela(
-    ["Leads no período", "Passaram da triagem", "Viraram oportunidade", "Travados por follow-up"],
-    [[String(e.leads), `${percentual(passaram, e.leads)} · ${passaram}`, `${percentual(e.oportunidades, e.leads)} · ${e.oportunidades}`, `${percentual(t.falta_followup, e.leads)} · ${t.falta_followup}`]],
+    ["Leads no período", "Com Conta vinculada", "Com Oportunidade vinculada", "Sem vínculo de Conta"],
+    [[String(e.leads), `${percentual(e.leads_com_conta, e.leads)} · ${e.leads_com_conta}`, `${percentual(e.leads_com_oportunidade, e.leads)} · ${e.leads_com_oportunidade}`, `${percentual(e.leads_sem_vinculo, e.leads)} · ${e.leads_sem_vinculo}`]],
     [45.5, 45.5, 45.5, 45.5],
   );
-  texto(`Origem: ${e.origens.map((origem) => `${origem.origem} (${origem.total})`).join(" · ") || "sem dados"}. Contas em carteira: ${e.contas}. Perdidos após a triagem: ${e.perdidos_pos_triagem}.`, CONTENT_W, 8.5);
+  texto(`Origem: ${e.origens.map((origem) => `${origem.origem} (${origem.total})`).join(" · ") || "sem dados"}. Os vínculos são reais; Contas e Oportunidades do trabalho no período são medidos separadamente.`, CONTENT_W, 8.5);
   y += 4;
+
+  tituloSecao("Atividade no período", "Trabalho registrado no CRM");
+  tabela(
+    ["Contas trabalhadas", "Contas com interação", "Interações", "Tarefas", "Movimentações", "Oportunidades conduzidas"],
+    [[String(e.contas_trabalhadas), String(dados.operacao.contas_com_interacao), String(dados.operacao.interacoes), String(dados.operacao.tarefas), String(dados.operacao.movimentacoes), String(dados.operacao.oportunidades_conduzidas)]],
+    [31, 31, 30, 30, 30, 30],
+  );
 
   tituloSecao("02 · Retrato por corretor", "Quanto de cada carteira travou por processo");
   tabela(
-    ["Corretor", "Contas", "Travadas", "Falha de processo", "Desfecho cliente", "Em jogo", "Dias parado"],
+    ["Corretor", "Contas", "Oportunidades", "Travadas", "Desfecho", "Em jogo", "Revisão"],
     dados.corretores.map((corretor) => [
       corretor.corretor_nome,
       String(corretor.total),
+      String(corretor.oportunidades_conduzidas),
       `${corretor.falha_processo} · ${percentual(corretor.falha_processo, corretor.total)}`,
-      String(corretor.falha_processo),
       String(corretor.desfecho_cliente),
       String(corretor.em_jogo),
-      corretor.dias_medios_travadas == null ? "—" : String(corretor.dias_medios_travadas),
+      String(corretor.revisao),
     ]),
-    [39, 18, 29, 27, 27, 20, 22],
+    [40, 22, 26, 27, 24, 21, 22],
   );
 
   tituloSecao("03 · Taxa de incidência", "Cada problema, lado a lado", "Percentual calculado sobre a carteira de cada corretor.");
@@ -289,25 +321,36 @@ export async function gerarPdfAcompanhamento({ dados, contas, periodo, filtroCor
 
   const piorCorretor = [...dados.corretores].sort((a, b) => b.falha_processo / (b.total || 1) - a.falha_processo / (a.total || 1))[0];
   tituloSecao("04 · O que fazer", "Três leituras");
-  texto(`1. Onde o funil falha — ${percentual(passaram, e.leads)} dos leads passaram da triagem e ${e.perdidos_pos_triagem} foram descartados depois disso. O problema aparece depois que o lead chega ao corretor, não na origem.`, CONTENT_W, 8.5, INK);
+  texto(`1. Entrada comprovada — ${percentual(e.leads_com_conta, e.leads)} dos leads possuem Conta vinculada e ${percentual(e.leads_com_oportunidade, e.leads)} possuem Oportunidade vinculada. Os demais totais não são tratados como uma jornada única.`, CONTENT_W, 8.5, INK);
   texto(`2. É do escritório ou de um corretor? — Falta de follow-up soma ${t.falta_followup} contas. ${piorCorretor ? `A maior incidência é de ${piorCorretor.corretor_nome} (${percentual(piorCorretor.falha_processo, piorCorretor.total)}), mas as demais carteiras também devem ser acompanhadas.` : "Não há contas classificadas no período."}`, CONTENT_W, 8.5, INK);
   texto(`3. Prazo é o sintoma comum — As contas travadas estão, em média, ${t.dias_medios_travadas ?? "—"} dias sem contato, com prazo máximo configurado em ${dados.prazo_dias} dias.`, CONTENT_W, 8.5, INK);
+  texto(`Auditoria — ${t.oportunidade_futura} contas estão como oportunidade futura sem negócio criado, ${t.etapa_antiga} estão em etapa antiga e ${dados.divergencias.length} Oportunidades têm corretor diferente do responsável da Conta.`, CONTENT_W, 8.5, INK);
   y += 3;
 
   tituloSecao("05 · Conta a conta", "Detalhamento exportado", `${contas.length} contas · filtros: ${filtroCorretor} / ${filtroClassificacao}`);
   tabela(
-    ["Cliente", "Corretor", "Classificação", "Etapa", "Interações", "Dias sem contato", "Observação"],
+    ["Cliente", "Corretor", "Classificação", "Etapa", "Interações", "Oportunidades", "Dias sem contato", "Observação"],
     contas.map((conta) => [
       conta.nome,
       conta.corretor_nome,
       `${classificacaoLabel(conta.classificacao)}${conta.manual ? " (manual)" : ""}`,
       etapaLabel(conta.etapa_funil ?? "a_contatar"),
       String(conta.interacoes),
+      String(conta.qtd_oportunidades ?? 0),
       String(conta.dias_sem_contato),
-      conta.observacao ?? `Último contato: ${fmtDate(conta.ultima_interacao)}`,
+      [conta.observacao, conta.divergencias_responsabilidade ? `Divergência: ${conta.divergencias_responsabilidade}` : null, `Último contato: ${fmtDate(conta.ultima_interacao)}`].filter(Boolean).join(" · "),
     ]),
-    [34, 27, 31, 25, 16, 18, 31],
+    [30, 24, 28, 22, 14, 18, 17, 29],
   );
+
+  if (dados.divergencias.length) {
+    tituloSecao("Auditoria", "Divergências Conta × Oportunidade", "A Oportunidade prevalece e nenhuma responsabilidade é alterada automaticamente.");
+    tabela(
+      ["Cliente", "Responsável da Conta", "Corretor da Oportunidade", "Etapa", "Situação"],
+      dados.divergencias.map((item) => [item.cliente, item.responsavel_conta, item.corretor_oportunidade, item.estagio, item.ativa ? "Ativa" : "Encerrada"]),
+      [40, 40, 40, 32, 30],
+    );
+  }
 
   novaPagina();
   tituloSecao("Legenda", "Entenda este relatório", "Referência para interpretar os números e diagnósticos.");
@@ -384,8 +427,8 @@ export async function gerarPdfContasSelecionadas({ contas, periodo, filtroOrigen
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
     doc.setTextColor(255, 255, 255);
-    const titulos = ["Cliente", "Corretor", "Classificação", "Etapa", "Interações", "Dias sem contato", "Último contato", "Observação"];
-    const larguras = [43, 35, 38, 31, 20, 24, 25, 53];
+    const titulos = ["Cliente", "Corretor", "Classificação", "Etapa", "Interações", "Oportunidades", "Dias sem contato", "Último contato", "Observação / auditoria"];
+    const larguras = [38, 31, 34, 27, 17, 21, 22, 25, 54];
     let x = margin + 2;
     titulos.forEach((titulo, index) => {
       doc.text(doc.splitTextToSize(titulo, larguras[index] - 4)[0], x, y + 5.7);
@@ -429,9 +472,10 @@ export async function gerarPdfContasSelecionadas({ contas, periodo, filtroOrigen
       `${classificacaoLabel(conta.classificacao)}${conta.manual ? " (manual)" : ""}`,
       etapaLabel(conta.etapa_funil ?? "a_contatar"),
       String(conta.interacoes),
+      String(conta.qtd_oportunidades ?? 0),
       String(conta.dias_sem_contato),
       fmtDate(conta.ultima_interacao),
-      conta.observacao ?? "—",
+      [conta.observacao, conta.divergencias_responsabilidade ? `Divergência: ${conta.divergencias_responsabilidade}` : null].filter(Boolean).join(" · ") || "—",
     ];
     const celulas = valores.map((valor, index) => doc.splitTextToSize(valor, larguras[index] - 4) as string[]);
     const rowH = Math.max(9, Math.max(...celulas.map((celula) => celula.length)) * 3.7 + 3);
