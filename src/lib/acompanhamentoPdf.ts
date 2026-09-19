@@ -33,6 +33,9 @@ export const TERMOS_ACOMPANHAMENTO: Array<{ titulo: string; texto: string }> = [
   { titulo: "Proporção travada", texto: "Percentual da carteira do corretor classificado como falha de processo." },
   { titulo: "Dias médios parado", texto: "Média de dias sem contato entre as contas classificadas como falha de processo." },
   { titulo: "Taxa de incidência", texto: "Em cada caixinha, mostra quantas contas receberam aquela classificação e qual percentual representam dentro da carteira do respectivo corretor." },
+  { titulo: "Base HR Imóveis", texto: "Contas que pertenciam originalmente à base da gestão da HR Imóveis, mesmo que depois tenham sido distribuídas a um corretor." },
+  { titulo: "Marketing", texto: "Contas e leads captados pelos canais de marketing da HR Imóveis." },
+  { titulo: "Carteira própria do corretor", texto: "Contas cujo dono original é o próprio corretor, independentemente de quem seja o responsável atual." },
 ];
 
 interface LinhaCorretorPdf {
@@ -86,6 +89,7 @@ interface GerarPdfParams {
   periodo: string;
   filtroCorretor: string;
   filtroClassificacao: string;
+  filtroOrigens: string;
 }
 
 const PAGE_W = 210;
@@ -116,7 +120,7 @@ async function carregarLogo(): Promise<string | null> {
   }
 }
 
-export async function gerarPdfAcompanhamento({ dados, contas, periodo, filtroCorretor, filtroClassificacao }: GerarPdfParams) {
+export async function gerarPdfAcompanhamento({ dados, contas, periodo, filtroCorretor, filtroClassificacao, filtroOrigens }: GerarPdfParams) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const logo = await carregarLogo();
   let y = 18;
@@ -217,7 +221,7 @@ export async function gerarPdfAcompanhamento({ dados, contas, periodo, filtroCor
   doc.text(`Período: ${periodo}  ·  Gerado em ${fmtDateTime(new Date())}`, logo ? 39 : MARGIN, 34);
   y = 45;
   doc.setFillColor(...SOFT);
-  doc.roundedRect(MARGIN, y, CONTENT_W, 24, 2, 2, "F");
+  doc.roundedRect(MARGIN, y, CONTENT_W, 29, 2, 2, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(...INK);
@@ -226,8 +230,9 @@ export async function gerarPdfAcompanhamento({ dados, contas, periodo, filtroCor
   doc.setFontSize(8);
   doc.setTextColor(...MUTED);
   doc.text(`Filtro de corretor: ${filtroCorretor}  ·  Classificação: ${filtroClassificacao}`, MARGIN + 6, y + 14);
-  doc.text(`${contas.length} contas no detalhamento exportado`, MARGIN + 6, y + 20);
-  y += 33;
+  doc.text(`Origem da carteira: ${filtroOrigens}`, MARGIN + 6, y + 20);
+  doc.text(`${contas.length} contas no detalhamento exportado`, MARGIN + 6, y + 26);
+  y += 38;
 
   const e = dados.entrada;
   const t = dados.totais;
