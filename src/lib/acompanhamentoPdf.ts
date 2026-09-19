@@ -319,7 +319,7 @@ export async function gerarPdfAcompanhamento({ dados, contas, periodo, filtroCor
   y += 3;
   tituloSecao("Grupos", "Como os diagnósticos são agrupados");
   glossario(GRUPOS_ACOMPANHAMENTO);
-  y += 3;
+  novaPagina();
   tituloSecao("Classificações", "O que significa cada caixinha");
   glossario(CLASSIFICACOES_ACOMPANHAMENTO.map(({ label, texto: descricao }) => ({ titulo: label, texto: descricao })));
   garantir(18);
