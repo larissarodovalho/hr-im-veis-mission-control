@@ -1,0 +1,573 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Download, Pencil } from "lucide-react";
+import Papa from "papaparse";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRole } from "@/hooks/useRole";
+import { useReportsPeriod } from "@/hooks/useReportsPeriod";
+import { fmtDate } from "@/lib/datetime";
+import { etapaLabel } from "@/lib/contasFunil";
+
+type Grupo = "falha_processo" | "desfecho_cliente" | "em_jogo";
+
+const CLASSIFICACOES: { id: string; label: string; grupo: Grupo }[] = [
+  { id: "falta_followup", label: "Falta de follow-up", grupo: "falha_processo" },
+  { id: "crm_desatualizado", label: "CRM desatualizado", grupo: "falha_processo" },
+  { id: "sem_retorno", label: "Sem retorno", grupo: "desfecho_cliente" },
+  { id: "sem_interesse", label: "Sem interesse", grupo: "desfecho_cliente" },
+  { id: "desqualificado", label: "Desqualificado", grupo: "desfecho_cliente" },
+  { id: "encerrado", label: "Encerrado", grupo: "desfecho_cliente" },
+  { id: "virando_oportunidade", label: "Virando oportunidade", grupo: "em_jogo" },
+  { id: "ciclo_andamento", label: "Ciclo em andamento", grupo: "em_jogo" },
+];
+
+const GRUPO_LABEL: Record<Grupo, string> = {
+  falha_processo: "Falha de processo",
+  desfecho_cliente: "Desfecho do cliente",
+  em_jogo: "Em jogo",
+};
+
+const GRUPO_BADGE: Record<Grupo, string> = {
+  falha_processo: "bg-destructive/15 text-destructive border-destructive/30",
+  desfecho_cliente: "bg-muted text-muted-foreground border-border",
+  em_jogo: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
+};
+
+const clsInfo = (id: string) => CLASSIFICACOES.find((c) => c.id === id);
+
+interface LinhaCorretor {
+  responsavel_id: string | null;
+  corretor_nome: string;
+  total: number;
+  falha_processo: number;
+  desfecho_cliente: number;
+  em_jogo: number;
+  falta_followup: number;
+  crm_desatualizado: number;
+  sem_retorno: number;
+  sem_interesse: number;
+  desqualificado: number;
+  encerrado: number;
+  virando_oportunidade: number;
+  ciclo_andamento: number;
+  dias_medios_travadas: number | null;
+}
+
+interface ContaDetalhe {
+  id: string;
+  nome: string;
+  corretor_nome: string;
+  classificacao: string;
+  grupo: Grupo;
+  observacao: string | null;
+  manual: boolean;
+  etapa_funil: string | null;
+  interacoes: number;
+  ultima_interacao: string | null;
+  dias_sem_contato: number;
+  proxima_tarefa: string | null;
+  created_at: string;
+}
+
+interface Dados {
+  prazo_dias: number;
+  entrada: {
+    leads: number;
+    desclassificados: number;
+    perdidos_pos_triagem: number;
+    contas: number;
+    oportunidades: number;
+    origens: { origem: string; total: number }[];
+  };
+  totais: {
+    contas: number;
+    falha_processo: number;
+    desfecho_cliente: number;
+    em_jogo: number;
+    falta_followup: number;
+    dias_medios_travadas: number | null;
+  };
+  corretores: LinhaCorretor[];
+  contas_detalhe: ContaDetalhe[];
+}
+
+const pct = (parte: number, total: number) => (total ? `${((parte / total) * 100).toFixed(1)}%` : "0,0%");
+
+const baixarCSV = (linhas: Record<string, unknown>[], nome: string) => {
+  const csv = Papa.unparse(linhas);
+  const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = nome;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+export default function AcompanhamentoCorretoresReport() {
+  const { inicioISO, fimISO, label } = useReportsPeriod();
+  const { user } = useAuth();
+  const { isAdmin, isGestor } = useRole();
+  const podeEditar = isAdmin || isGestor;
+
+  const [prazo, setPrazo] = useState(7);
+  const [dados, setDados] = useState<Dados | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [fCorretor, setFCorretor] = useState("todos");
+  const [fClasse, setFClasse] = useState("todas");
+  const [edit, setEdit] = useState<ContaDetalhe | null>(null);
+  const [editCls, setEditCls] = useState("falta_followup");
+  const [editObs, setEditObs] = useState("");
+  const [salvando, setSalvando] = useState(false);
+
+  const carregar = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase.rpc("acompanhamento_corretores" as any, {
+      _inicio: inicioISO,
+      _fim: fimISO,
+      _prazo_dias: prazo,
+    });
+    if (error) toast.error("Erro ao carregar acompanhamento: " + error.message);
+    setDados((data as unknown as Dados) ?? null);
+    setLoading(false);
+  }, [inicioISO, fimISO, prazo]);
+
+  useEffect(() => {
+    carregar();
+  }, [carregar]);
+
+  const contasFiltradas = useMemo(() => {
+    const lista = dados?.contas_detalhe ?? [];
+    return lista.filter(
+      (c) =>
+        (fCorretor === "todos" || c.corretor_nome === fCorretor) &&
+        (fClasse === "todas" || c.classificacao === fClasse)
+    );
+  }, [dados, fCorretor, fClasse]);
+
+  const abrirEdicao = (c: ContaDetalhe) => {
+    setEdit(c);
+    setEditCls(c.classificacao);
+    setEditObs(c.observacao ?? "");
+  };
+
+  const salvar = async () => {
+    if (!edit) return;
+    setSalvando(true);
+    const { error } = await supabase.from("conta_acompanhamento" as any).upsert(
+      {
+        conta_id: edit.id,
+        classificacao: editCls,
+        observacao: editObs || null,
+        autor_id: user?.id ?? null,
+        updated_at: new Date().toISOString(),
+      } as any,
+      { onConflict: "conta_id" }
+    );
+    setSalvando(false);
+    if (error) return toast.error("Erro ao salvar: " + error.message);
+    toast.success("Classificação atualizada");
+    setEdit(null);
+    carregar();
+  };
+
+  if (loading) return <Card className="p-6 text-muted-foreground">Carregando acompanhamento dos corretores…</Card>;
+  if (!dados) return <Card className="p-6 text-muted-foreground">Sem dados no período.</Card>;
+
+  const e = dados.entrada;
+  const t = dados.totais;
+  const passaram = e.leads - e.desclassificados;
+  const corretores = dados.corretores;
+  const piorCorretor = [...corretores].sort(
+    (a, b) => b.falha_processo / (b.total || 1) - a.falha_processo / (a.total || 1)
+  )[0];
+
+  return (
+    <div className="space-y-4 md:space-y-6">
+      {/* Cabeçalho + prazo */}
+      <Card className="p-4 md:p-6 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            Diagnóstico · {e.leads} leads · {corretores.length} corretores · {label}
+          </p>
+          <h2 className="font-display text-xl md:text-2xl font-semibold mt-1">
+            O que aconteceu depois que o lead chegou no corretor
+          </h2>
+        </div>
+        <div className="flex items-end gap-2">
+          <div>
+            <Label htmlFor="prazo" className="text-xs text-muted-foreground">
+              Prazo máximo entre contatos (dias)
+            </Label>
+            <Input
+              id="prazo"
+              type="number"
+              min={1}
+              max={60}
+              value={prazo}
+              onChange={(ev) => setPrazo(Math.max(1, Number(ev.target.value) || 1))}
+              className="w-28 h-9"
+            />
+          </div>
+        </div>
+      </Card>
+
+      {/* 01 Entrada */}
+      <Card className="p-4 md:p-6 space-y-4">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">01 · Entrada</p>
+          <h3 className="font-semibold text-lg">Para onde foram os leads</h3>
+        </div>
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+          <Kpi titulo="Leads no período" valor={String(e.leads)} nota={label} />
+          <Kpi
+            titulo="Passaram da triagem"
+            valor={pct(passaram, e.leads)}
+            nota={`${passaram} de ${e.leads} · ${e.desclassificados} desclassificados antes`}
+          />
+          <Kpi
+            titulo="Viraram oportunidade"
+            valor={pct(e.oportunidades, e.leads)}
+            nota={`${e.oportunidades} de ${e.leads}`}
+          />
+          <Kpi
+            titulo="Travados por follow-up"
+            valor={pct(t.falta_followup, e.leads)}
+            alerta
+            nota={`${t.falta_followup} de ${e.leads} · ${pct(t.falta_followup, t.contas)} das ${t.contas} contas`}
+          />
+        </div>
+
+        <div className="space-y-3">
+          <Nivel titulo={`${e.leads} leads entraram`} subtitulo="Nível 1 · Origem"
+            itens={e.origens.map((o) => ({ label: o.origem, valor: o.total }))} />
+          <Nivel titulo={`${pct(passaram, e.leads)} chegaram aos corretores`} subtitulo="Nível 2 · Triagem"
+            itens={[
+              { label: "Seguiram para os corretores", valor: passaram },
+              { label: "Desclassificados na triagem", valor: e.desclassificados },
+            ]} />
+          <Nivel titulo={`os ${passaram} que passaram`} subtitulo="Nível 3 · Onde pararam"
+            itens={[
+              { label: "Contas em carteira", valor: e.contas },
+              { label: "Oportunidades", valor: e.oportunidades },
+              { label: "Perdidos após triagem", valor: e.perdidos_pos_triagem },
+            ]} />
+        </div>
+      </Card>
+
+      {/* 02 Retrato por corretor */}
+      <Card className="p-4 md:p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">02 · Retrato por corretor</p>
+            <h3 className="font-semibold text-lg">Quanto de cada carteira travou por processo</h3>
+          </div>
+          <Button variant="outline" size="sm" disabled={!corretores.length}
+            onClick={() =>
+              baixarCSV(
+                corretores.map((c) => ({
+                  Corretor: c.corretor_nome, "Total contas": c.total,
+                  "% travada": pct(c.falha_processo, c.total), "Falha de processo": c.falha_processo,
+                  "Desfecho do cliente": c.desfecho_cliente, "Em jogo": c.em_jogo,
+                  "Falta de follow-up": c.falta_followup, "CRM desatualizado": c.crm_desatualizado,
+                  "Dias médios travadas": c.dias_medios_travadas ?? "",
+                })),
+                `acompanhamento-corretores-${label.replace("/", "-")}.csv`
+              )
+            }>
+            <Download className="h-4 w-4 mr-1" /> CSV
+          </Button>
+        </div>
+
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Corretor</TableHead>
+                <TableHead className="text-right">Total contas</TableHead>
+                <TableHead className="min-w-[160px]">Proporção travada</TableHead>
+                <TableHead className="text-right">Travadas</TableHead>
+                <TableHead className="text-right">Falha de processo</TableHead>
+                <TableHead className="text-right">Desfecho do cliente</TableHead>
+                <TableHead className="text-right">Em jogo</TableHead>
+                <TableHead>Principal problema</TableHead>
+                <TableHead className="text-right">Dias médios parado</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {corretores.map((c) => {
+                const principal = c.falta_followup >= c.crm_desatualizado ? "Falta de follow-up" : "CRM desatualizado";
+                const qtdPrincipal = Math.max(c.falta_followup, c.crm_desatualizado);
+                const perc = c.total ? (c.falha_processo / c.total) * 100 : 0;
+                return (
+                  <TableRow key={c.responsavel_id ?? c.corretor_nome}>
+                    <TableCell className="font-medium whitespace-nowrap">{c.corretor_nome}</TableCell>
+                    <TableCell className="text-right">{c.total}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                          <div className="h-full bg-destructive" style={{ width: `${perc}%` }} />
+                        </div>
+                        <span className="text-xs tabular-nums">{perc.toFixed(1)}%</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">{c.falha_processo} de {c.total}</TableCell>
+                    <TableCell className="text-right text-destructive">{c.falha_processo}</TableCell>
+                    <TableCell className="text-right">{c.desfecho_cliente}</TableCell>
+                    <TableCell className="text-right">{c.em_jogo}</TableCell>
+                    <TableCell className="whitespace-nowrap text-sm">
+                      {qtdPrincipal > 0 ? `${principal} · ${qtdPrincipal} contas (${pct(qtdPrincipal, c.total)})` : "—"}
+                    </TableCell>
+                    <TableCell className="text-right">{c.dias_medios_travadas ?? "—"}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+
+        <p className="text-sm text-muted-foreground">
+          Somando as carteiras, <strong className="text-foreground">{pct(t.falha_processo, t.contas)} das {t.contas} contas
+          pararam por falha de processo</strong> — {t.falha_processo} contas. Contra {pct(t.em_jogo, t.contas)} que seguem
+          vivas e {pct(t.desfecho_cliente, t.contas)} com desfecho legítimo do cliente.
+        </p>
+      </Card>
+
+      {/* 03 Taxa de incidência */}
+      <Card className="p-4 md:p-6 space-y-4">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">03 · Taxa de incidência</p>
+          <h3 className="font-semibold text-lg">Cada problema, lado a lado</h3>
+          <p className="text-sm text-muted-foreground">Percentual sobre a carteira de cada corretor.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+          {CLASSIFICACOES.map((cl) => (
+            <div key={cl.id} className="rounded-lg border p-4 space-y-2">
+              <div>
+                <p className="font-medium">{cl.label}</p>
+                <Badge variant="outline" className={GRUPO_BADGE[cl.grupo]}>{GRUPO_LABEL[cl.grupo]}</Badge>
+              </div>
+              <div className="space-y-1">
+                {corretores.map((c) => {
+                  const qtd = (c as unknown as Record<string, number>)[cl.id] ?? 0;
+                  const perc = c.total ? (qtd / c.total) * 100 : 0;
+                  return (
+                    <div key={c.corretor_nome} className="flex items-center gap-2 text-sm">
+                      <span className="w-28 truncate text-muted-foreground">{c.corretor_nome}</span>
+                      <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full bg-primary" style={{ width: `${perc}%` }} />
+                      </div>
+                      <span className="tabular-nums text-xs w-16 text-right">{perc.toFixed(1)}% · {qtd}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* 04 Leituras */}
+      <Card className="p-4 md:p-6 space-y-4">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">04 · O que fazer</p>
+          <h3 className="font-semibold text-lg">Três leituras</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <Leitura n="01" titulo="Onde o funil falha">
+            {pct(passaram, e.leads)} dos leads passaram da triagem e {e.perdidos_pos_triagem} foram descartados depois
+            disso. O problema aparece depois que o lead chega no corretor — não na origem.
+          </Leitura>
+          <Leitura n="02" titulo="É do escritório ou de um corretor?">
+            {piorCorretor
+              ? `Falta de follow-up soma ${t.falta_followup} contas nas carteiras. A maior incidência é de ${piorCorretor.corretor_nome} (${pct(piorCorretor.falha_processo, piorCorretor.total)}), mas tratar como falha individual deixa as demais de pé.`
+              : "Sem contas classificadas no período."}
+          </Leitura>
+          <Leitura n="03" titulo="Prazo é o sintoma comum">
+            As contas travadas estão, em média, {t.dias_medios_travadas ?? "—"} dias sem contato, com prazo máximo
+            configurado em {dados.prazo_dias} dias. Falta cadência, não esforço.
+          </Leitura>
+        </div>
+      </Card>
+
+      {/* 05 Conta a conta */}
+      <Card className="p-4 md:p-6 space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">05 · Conta a conta</p>
+            <h3 className="font-semibold text-lg">Detalhamento</h3>
+            <p className="text-sm text-muted-foreground">
+              {contasFiltradas.length} contas listadas, com a classificação e a observação registrada.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Select value={fCorretor} onValueChange={setFCorretor}>
+              <SelectTrigger className="w-[190px] h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os corretores</SelectItem>
+                {corretores.map((c) => (
+                  <SelectItem key={c.corretor_nome} value={c.corretor_nome}>{c.corretor_nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={fClasse} onValueChange={setFClasse}>
+              <SelectTrigger className="w-[200px] h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas as classificações</SelectItem>
+                {CLASSIFICACOES.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" disabled={!contasFiltradas.length}
+              onClick={() =>
+                baixarCSV(
+                  contasFiltradas.map((c) => ({
+                    Cliente: c.nome, Corretor: c.corretor_nome,
+                    Classificação: clsInfo(c.classificacao)?.label ?? c.classificacao,
+                    Grupo: GRUPO_LABEL[c.grupo], Etapa: etapaLabel(c.etapa_funil ?? "a_contatar"),
+                    Interações: c.interacoes, "Último contato": fmtDate(c.ultima_interacao),
+                    "Dias sem contato": c.dias_sem_contato, Observação: c.observacao ?? "",
+                  })),
+                  `contas-acompanhamento-${label.replace("/", "-")}.csv`
+                )
+              }>
+              <Download className="h-4 w-4 mr-1" /> CSV
+            </Button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Corretor</TableHead>
+                <TableHead>Classificação</TableHead>
+                <TableHead>Etapa</TableHead>
+                <TableHead className="text-right">Interações</TableHead>
+                <TableHead className="text-right">Dias sem contato</TableHead>
+                <TableHead>Observação</TableHead>
+                {podeEditar && <TableHead />}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {contasFiltradas.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell className="font-medium whitespace-nowrap">
+                    <Link to={`/crm/contas/${c.id}`} className="hover:underline">{c.nome}</Link>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">{c.corretor_nome}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={GRUPO_BADGE[c.grupo]}>
+                      {clsInfo(c.classificacao)?.label ?? c.classificacao}
+                    </Badge>
+                    {c.manual && <span className="ml-1 text-[10px] text-muted-foreground">manual</span>}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                    {etapaLabel(c.etapa_funil ?? "a_contatar")}
+                  </TableCell>
+                  <TableCell className="text-right">{c.interacoes}</TableCell>
+                  <TableCell className={`text-right ${c.dias_sem_contato > dados.prazo_dias ? "text-destructive" : ""}`}>
+                    {c.dias_sem_contato}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground max-w-[280px]">
+                    {c.observacao ?? "—"}
+                  </TableCell>
+                  {podeEditar && (
+                    <TableCell>
+                      <Button variant="ghost" size="icon" onClick={() => abrirEdicao(c)} aria-label="Reclassificar">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          A classificação é calculada a partir dos registros do CRM (interações, tarefas, etapa e motivo). Admin e gestor
+          podem reclassificar conta a conta — a classificação manual prevalece.
+        </p>
+      </Card>
+
+      <Dialog open={!!edit} onOpenChange={(o) => !o && setEdit(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Reclassificar {edit?.nome}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs text-muted-foreground">Classificação</Label>
+              <Select value={editCls} onValueChange={setEditCls}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CLASSIFICACOES.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Observação</Label>
+              <Textarea value={editObs} onChange={(ev) => setEditObs(ev.target.value)} rows={3}
+                placeholder="Ex.: 15 dias sem follow up" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEdit(null)}>Cancelar</Button>
+            <Button onClick={salvar} disabled={salvando}>{salvando ? "Salvando…" : "Salvar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function Kpi({ titulo, valor, nota, alerta }: { titulo: string; valor: string; nota?: string; alerta?: boolean }) {
+  return (
+    <Card className="p-4">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{titulo}</p>
+      <p className={`text-2xl font-semibold mt-1 ${alerta ? "text-destructive" : ""}`}>{valor}</p>
+      {nota && <p className="text-xs text-muted-foreground mt-1">{nota}</p>}
+    </Card>
+  );
+}
+
+function Nivel({ titulo, subtitulo, itens }: { titulo: string; subtitulo: string; itens: { label: string; valor: number }[] }) {
+  return (
+    <div className="rounded-lg border p-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-2">
+        <p className="font-medium">{titulo}</p>
+        <p className="text-xs uppercase tracking-wide text-muted-foreground">{subtitulo}</p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {itens.map((i) => (
+          <span key={i.label} className="rounded-md bg-muted px-3 py-1.5 text-sm">
+            {i.label}: <strong>{i.valor}</strong>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Leitura({ n, titulo, children }: { n: string; titulo: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border p-4">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">Leitura {n}</p>
+      <p className="font-medium mt-1">{titulo}</p>
+      <p className="text-sm text-muted-foreground mt-2">{children}</p>
+    </div>
+  );
+}

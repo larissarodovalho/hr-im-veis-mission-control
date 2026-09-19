@@ -18,6 +18,7 @@ import FechamentosReport from "@/components/reports/FechamentosReport";
 import PropostasReport from "@/components/reports/PropostasReport";
 import OportunidadesReport from "@/components/reports/OportunidadesReport";
 import CarteiraReport from "@/components/reports/CarteiraReport";
+import AcompanhamentoCorretoresReport from "@/components/reports/AcompanhamentoCorretoresReport";
 import LinksImoveisReport from "@/components/reports/LinksImoveisReport";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReportsPeriodProvider, useReportsPeriod, MESES_LABELS } from "@/hooks/useReportsPeriod";
@@ -133,6 +134,7 @@ function ReportsInner() {
       <Tabs defaultValue="performance" className="w-full">
         <TabsList className="w-full justify-start overflow-x-auto whitespace-nowrap">
           <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="acompanhamento">Acompanhamento</TabsTrigger>
           <TabsTrigger value="leads">Leads</TabsTrigger>
           <TabsTrigger value="oportunidades">Oportunidades</TabsTrigger>
           <TabsTrigger value="fechamentos">Negócios fechados</TabsTrigger>
@@ -142,6 +144,10 @@ function ReportsInner() {
           <TabsTrigger value="links">Links dos imóveis</TabsTrigger>
           <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="acompanhamento" className="mt-4">
+          <AcompanhamentoCorretoresReport />
+        </TabsContent>
 
         <TabsContent value="leads" className="space-y-4 md:space-y-6 mt-4">
           <FunilLeadsReport />
