@@ -223,7 +223,7 @@ export default function AcompanhamentoCorretoresReport() {
     try {
       await gerarPdfAcompanhamento({
         dados,
-        contas: contasFiltradas,
+        contas: consultaAtiva ? contasFiltradas : dados.contas_detalhe,
         periodo: label,
         filtroCorretor: fCorretor === "todos" ? "Todos os corretores" : fCorretor,
         filtroClassificacao: fClasse === "todas" ? "Todas as classificações" : clsInfo(fClasse)?.label ?? fClasse,
@@ -513,55 +513,114 @@ export default function AcompanhamentoCorretoresReport() {
 
       {/* 05 Conta a conta */}
       <Card className="p-4 md:p-6 space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">05 · Conta a conta</p>
+          <h3 className="font-semibold text-lg">Detalhamento</h3>
+          <p className="text-sm text-muted-foreground">
+            Busque ou filtre os clientes que deseja consultar e marque aqueles que entrarão no relatório separado.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(240px,1fr)_220px_220px] gap-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={buscaConta}
+              onChange={(event) => setBuscaConta(event.target.value)}
+              placeholder="Buscar cliente pelo nome…"
+              className="pl-9"
+            />
+          </div>
+          <Select value={fCorretor} onValueChange={setFCorretor}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os corretores</SelectItem>
+              {corretores.map((c) => (
+                <SelectItem key={c.corretor_nome} value={c.corretor_nome}>{c.corretor_nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={fClasse} onValueChange={setFClasse}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todas">Todas as classificações</SelectItem>
+              {CLASSIFICACOES.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 border-y py-3">
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">05 · Conta a conta</p>
-            <h3 className="font-semibold text-lg">Detalhamento</h3>
-            <p className="text-sm text-muted-foreground">
-              {contasFiltradas.length} contas listadas, com a classificação e a observação registrada.
-            </p>
+            <p className="text-sm font-medium">{contasMarcadas.length} clientes selecionados</p>
+            <p className="text-xs text-muted-foreground">A seleção é mantida quando você muda a busca ou os filtros.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Select value={fCorretor} onValueChange={setFCorretor}>
-              <SelectTrigger className="w-[190px] h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os corretores</SelectItem>
-                {corretores.map((c) => (
-                  <SelectItem key={c.corretor_nome} value={c.corretor_nome}>{c.corretor_nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={fClasse} onValueChange={setFClasse}>
-              <SelectTrigger className="w-[200px] h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todas as classificações</SelectItem>
-                {CLASSIFICACOES.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button variant="outline" size="sm" disabled={!contasFiltradas.length}
+            <Button variant="outline" size="sm" disabled={!contasMarcadas.length}
               onClick={() =>
                 baixarCSV(
-                  contasFiltradas.map((c) => ({
+                  contasMarcadas.map((c) => ({
                     Cliente: c.nome, Corretor: c.corretor_nome,
                     Classificação: clsInfo(c.classificacao)?.label ?? c.classificacao,
                     Grupo: GRUPO_LABEL[c.grupo], Etapa: etapaLabel(c.etapa_funil ?? "a_contatar"),
                     Interações: c.interacoes, "Último contato": fmtDate(c.ultima_interacao),
                     "Dias sem contato": c.dias_sem_contato, Observação: c.observacao ?? "",
                   })),
-                  `contas-acompanhamento-${label.replace("/", "-")}.csv`
+                  `clientes-selecionados-${label.replace("/", "-")}.csv`
                 )
               }>
               <Download className="h-4 w-4 mr-1" /> CSV
             </Button>
+            <Button size="sm" disabled={!contasMarcadas.length || gerandoPdfSelecionados} onClick={gerarPdfSelecionados}>
+              {gerandoPdfSelecionados ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
+              PDF dos selecionados
+            </Button>
+            {contasMarcadas.length > 0 && (
+              <Button variant="ghost" size="sm" onClick={() => setContasSelecionadas([])}>Limpar seleção</Button>
+            )}
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {contasMarcadas.length > 0 && (
+          <div className="flex flex-wrap gap-2" aria-label="Clientes selecionados">
+            {contasMarcadas.map((conta) => (
+              <Badge key={conta.id} variant="secondary" className="gap-1 py-1.5 pl-2.5 pr-1.5">
+                {conta.nome}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5"
+                  onClick={() => alternarConta(conta.id)}
+                  aria-label={`Remover ${conta.nome} da seleção`}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </Badge>
+            ))}
+          </div>
+        )}
+
+        {!consultaAtiva ? (
+          <div className="border border-dashed rounded-md py-10 px-4 text-center text-sm text-muted-foreground">
+            Busque pelo nome do cliente ou escolha um corretor ou classificação para ver os resultados.
+          </div>
+        ) : contasFiltradas.length === 0 ? (
+          <div className="border border-dashed rounded-md py-10 px-4 text-center text-sm text-muted-foreground">
+            Nenhum cliente encontrado com esses critérios.
+          </div>
+        ) : <div className="space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <p className="text-sm text-muted-foreground">{contasFiltradas.length} clientes encontrados</p>
+            <Button variant="outline" size="sm" onClick={alternarResultadosVisiveis}>
+              {todosVisiveisSelecionados ? "Desmarcar resultados" : "Selecionar resultados"}
+            </Button>
+          </div>
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10"><span className="sr-only">Selecionar</span></TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Corretor</TableHead>
                 <TableHead>Classificação</TableHead>
@@ -575,6 +634,13 @@ export default function AcompanhamentoCorretoresReport() {
             <TableBody>
               {contasFiltradas.map((c) => (
                 <TableRow key={c.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={contasSelecionadas.includes(c.id)}
+                      onCheckedChange={() => alternarConta(c.id)}
+                      aria-label={`Selecionar ${c.nome}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium whitespace-nowrap">
                     <Link to={`/crm/contas/${c.id}`} className="hover:underline">{c.nome}</Link>
                   </TableCell>
@@ -606,7 +672,9 @@ export default function AcompanhamentoCorretoresReport() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </div>
+        }
 
         <p className="text-xs text-muted-foreground">
           A classificação é calculada a partir dos registros do CRM (interações, tarefas, etapa e motivo). Admin e gestor
