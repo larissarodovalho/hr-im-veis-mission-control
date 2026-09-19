@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -26,6 +27,13 @@ import {
 } from "@/lib/acompanhamentoPdf";
 
 type Grupo = "falha_processo" | "desfecho_cliente" | "em_jogo";
+type OrigemCarteira = "base_hr" | "marketing" | "carteira_propria";
+
+const ORIGENS_CARTEIRA: Array<{ id: OrigemCarteira; label: string; descricao: string }> = [
+  { id: "base_hr", label: "Base HR Imóveis", descricao: "Contas originalmente pertencentes à base da gestão" },
+  { id: "marketing", label: "Marketing", descricao: "Leads e contas captados pelos canais de marketing" },
+  { id: "carteira_propria", label: "Carteira própria do corretor", descricao: "Contas cujo dono original é o corretor" },
+];
 
 const CLASSIFICACOES = CLASSIFICACOES_ACOMPANHAMENTO;
 
@@ -118,6 +126,7 @@ export default function AcompanhamentoCorretoresReport() {
   const podeEditar = isAdmin || isGestor;
 
   const [prazo, setPrazo] = useState(7);
+  const [origens, setOrigens] = useState<OrigemCarteira[]>(ORIGENS_CARTEIRA.map((origem) => origem.id));
   const [dados, setDados] = useState<Dados | null>(null);
   const [loading, setLoading] = useState(true);
   const [fCorretor, setFCorretor] = useState("todos");
@@ -134,11 +143,12 @@ export default function AcompanhamentoCorretoresReport() {
       _inicio: inicioISO,
       _fim: fimISO,
       _prazo_dias: prazo,
+      _origens_carteira: origens,
     });
     if (error) toast.error("Erro ao carregar acompanhamento: " + error.message);
     setDados((data as unknown as Dados) ?? null);
     setLoading(false);
-  }, [inicioISO, fimISO, prazo]);
+  }, [inicioISO, fimISO, prazo, origens]);
 
   useEffect(() => {
     carregar();
@@ -189,6 +199,7 @@ export default function AcompanhamentoCorretoresReport() {
         periodo: label,
         filtroCorretor: fCorretor === "todos" ? "Todos os corretores" : fCorretor,
         filtroClassificacao: fClasse === "todas" ? "Todas as classificações" : clsInfo(fClasse)?.label ?? fClasse,
+        filtroOrigens: ORIGENS_CARTEIRA.filter((origem) => origens.includes(origem.id)).map((origem) => origem.label).join(", "),
       });
       toast.success("Relatório em PDF gerado");
     } catch (error) {
@@ -209,6 +220,15 @@ export default function AcompanhamentoCorretoresReport() {
   const piorCorretor = [...corretores].sort(
     (a, b) => b.falha_processo / (b.total || 1) - a.falha_processo / (a.total || 1)
   )[0];
+
+  const alternarOrigem = (origem: OrigemCarteira) => {
+    setOrigens((atuais) => {
+      if (atuais.includes(origem)) {
+        return atuais.length === 1 ? atuais : atuais.filter((item) => item !== origem);
+      }
+      return [...atuais, origem];
+    });
+  };
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -241,6 +261,29 @@ export default function AcompanhamentoCorretoresReport() {
             {gerandoPdf ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
             {gerandoPdf ? "Gerando…" : "Gerar PDF"}
           </Button>
+        </div>
+      </Card>
+
+      <Card className="p-4 md:p-6 space-y-3">
+        <div>
+          <Label className="text-sm font-medium">Origem da carteira</Label>
+          <p className="text-sm text-muted-foreground">Escolha quais bases devem entrar em todo o acompanhamento.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {ORIGENS_CARTEIRA.map((origem) => (
+            <label key={origem.id} className="flex items-start gap-3 rounded-md border p-3 cursor-pointer bg-background">
+              <Checkbox
+                checked={origens.includes(origem.id)}
+                onCheckedChange={() => alternarOrigem(origem.id)}
+                aria-label={origem.label}
+                className="mt-0.5"
+              />
+              <span className="min-w-0">
+                <span className="block text-sm font-medium">{origem.label}</span>
+                <span className="block text-xs text-muted-foreground mt-0.5">{origem.descricao}</span>
+              </span>
+            </label>
+          ))}
         </div>
       </Card>
 
