@@ -1,47 +1,39 @@
-# Relatórios: subseção "Atendimento das Contas por corretor"
+# Relatórios: nova aba "Acompanhamento dos corretores"
 
-Nova subseção dentro de Relatórios para acompanhar, corretor a corretor, todo o trabalho feito no funil de atendimento das contas: o que ele registrou, com que velocidade, quantas contas avançaram e quantas estão paradas.
+Nada do que já existe em Relatórios muda. Entra apenas uma aba nova, no mesmo padrão visual do CRM, reproduzindo a leitura do PDF enviado: o que cada corretor fez (ou deixou de fazer) nas contas da carteira dele, dentro do período já selecionado no topo da página.
 
-## Onde entra
+## Estrutura da aba (mesma sequência do PDF)
 
-Nova aba "Atendimento" na barra de abas de Relatórios (entre "Performance" e "Leads"), respeitando o período já selecionado no topo da página e com filtro por lista (Carteira / Marketing / Todas).
+**01 · Entrada — para onde foram os leads**
+Quatro números grandes: leads no período; % que passou da triagem; % que virou oportunidade; % travado por falta de follow-up. Abaixo, o caminho em três níveis: origem (Meta Ads, site, indicação…), triagem (seguiram para corretores x desclassificados) e onde pararam (contas em carteira, oportunidades, perdidos após triagem).
 
-## O que mostra
+**02 · Retrato por corretor**
+Uma linha por corretor com: total de contas, % travada, contas travadas, falha de processo, desfecho do cliente, em jogo, principal problema e quantas contas nele. Barra proporcional para comparar carteiras de tamanhos diferentes. Frase-resumo abaixo com o consolidado das carteiras.
 
-**Indicadores do período**
-- Contas sob responsabilidade dos corretores
-- Contas trabalhadas (com pelo menos um registro de atendimento no período) e contas sem nenhum registro
-- Total de registros de atendimento (ligação, mensagem, visita, reunião, e-mail, nota)
-- Contas que chegaram a "Contato estabelecido"
-- Contas sem retorno e canceladas
-- Tarefas de contato concluídas x atrasadas
+**03 · Taxa de incidência**
+Um quadro por categoria (Falta de follow-up, CRM desatualizado, Sem retorno, Sem interesse, Desqualificado, Encerrado, Virando oportunidade, Ciclo em andamento), cada um com os corretores lado a lado em % da carteira e contagem, e o selo do grupo (falha de processo / desfecho do cliente / em jogo).
 
-**Tabela principal — um corretor por linha**
-- Contas sob responsabilidade
-- Contas trabalhadas e % trabalhadas
-- Contas sem nenhum atendimento
-- Registros por tipo: ligações, mensagens, visitas, reuniões
-- Tempo médio entre a criação da conta e o primeiro atendimento
-- Dias desde o último atendimento (média das contas ativas)
-- Contatos estabelecidos, sem retorno, cancelados
-- Tarefas atrasadas
-- Exportação em CSV
+**04 · Leituras**
+Três blocos de texto gerados a partir dos próprios números: onde o funil falha, se é padrão da casa ou de um corretor, e o prazo médio sem contato nos casos travados.
 
-**Detalhe do corretor**
-Ao clicar na linha, abre um painel com:
-- Distribuição das contas dele por etapa do funil
-- Lista das contas mais paradas (maior tempo sem atendimento), com etapa, último atendimento e link para abrir a conta
-- Lista das contas sem nenhum atendimento no período
-- Gráfico de registros por dia/semana no período
+**05 · Conta a conta**
+Tabela com todas as contas do período: cliente, corretor, classificação (selo colorido), observação e dias sem contato. Filtros por corretor e por classificação, link para abrir a conta e exportação em CSV.
 
-**Gráficos de apoio**
-- Barras comparando registros de atendimento por corretor, separados por tipo
-- Barras comparando contas trabalhadas x sem atendimento por corretor
+## Como a classificação é definida
+
+Cada conta recebe uma classificação automática a partir do que já está no CRM:
+
+- **Virando oportunidade** — qualificada como oportunidade ativa/futura ou já convertida
+- **Ciclo em andamento** — contatos dentro da cadência e tarefa futura agendada
+- **Sem retorno / Sem interesse / Desqualificado / Encerrado** — etapa "Sem retorno" ou "Contato cancelado", separados pelo motivo registrado no cancelamento
+- **CRM desatualizado** — conta avançou de etapa mas sem registro de interação correspondente
+- **Falta de follow-up** — conta ativa com intervalo entre contatos acima do prazo configurado, ou sem contato há mais dias que o limite
+
+O prazo máximo entre contatos fica configurável no topo da aba (padrão 7 dias), já que o PDF aponta a cadência como o problema comum. O gestor também pode reclassificar manualmente uma conta e escrever a observação — a classificação manual prevalece sobre a automática, como o próprio PDF prevê.
 
 ## Detalhes técnicos
 
-- Nova função `SECURITY DEFINER` somente-leitura restrita a admin/gestor: `contas_atendimento_corretores(_inicio, _fim)`, agregando `contas` (responsavel_id, etapa_funil, categoria, created_at), `interacoes` (conta_id, tipo, created_by, created_at) e `tarefas` (conta_id, status, prazo), com nome vindo de `profiles`.
-- Segunda função `contas_atendimento_detalhe(_corretor_id, _inicio, _fim)` devolvendo as contas do corretor com etapa, data do último atendimento, nº de registros e próxima tarefa — usada no painel de detalhe.
-- Novo componente `src/components/reports/AtendimentoContasReport.tsx`, aba registrada em `src/pages/Reports.tsx` usando `useReportsPeriod`.
-- Datas exibidas e calculadas via helpers de `src/lib/datetime.ts` (America/Cuiaba); etapas via `src/lib/contasFunil.ts` e countdown de tarefa via `src/lib/tarefas.ts`, para bater com o kanban de Contas.
-- CSV com Papa.parse, no mesmo padrão dos demais relatórios.
+- Nova tabela `conta_acompanhamento` (conta_id único, classificacao, observacao, autor, updated_at) com RLS de leitura para staff e escrita apenas admin/gestor, mais GRANTs.
+- Função `SECURITY DEFINER` somente-leitura `acompanhamento_corretores(_inicio, _fim, _prazo_dias)` restrita a admin/gestor, agregando `leads`, `contas`, `interacoes`, `tarefas` e `oportunidades`, devolvendo: resumo de entrada, linhas por corretor, incidência por categoria e a lista conta a conta com dias sem contato, classificação automática e a manual quando existir.
+- Novo componente `src/components/reports/AcompanhamentoCorretoresReport.tsx` com as cinco seções e CSV via Papa.parse; aba "Acompanhamento" adicionada à `TabsList` de `src/pages/Reports.tsx` sem alterar as abas existentes.
+- Datas via helpers de `src/lib/datetime.ts` (America/Cuiaba); etapas e motivos via `src/lib/contasFunil.ts`; cadência reaproveitando `src/lib/tarefas.ts`.
