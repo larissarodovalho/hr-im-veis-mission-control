@@ -615,7 +615,7 @@ export default function AcompanhamentoCorretoresReport() {
                 {corretoresDiarios.map((c) => {
                   const qtd = (c as unknown as Record<string, number>)[cl.id] ?? 0;
                   const perc = c.conta_dias_exigiveis ? (qtd / c.conta_dias_exigiveis) * 100 : 0;
-                  const pontos = serieDiaria.filter((dia) => dia.responsavel_id === c.responsavel_id);
+                  const pontos = serieSemanal.filter((semana) => semana.responsavel_id === c.responsavel_id);
                   if (cl.id === "crm_desatualizado") {
                     const status = calcularStatusCrm(c.conta_dias_exigiveis, c.crm_desatualizado);
                     return (
