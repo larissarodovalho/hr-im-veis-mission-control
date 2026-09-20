@@ -23,14 +23,11 @@ import {
   CLASSIFICACOES_ACOMPANHAMENTO,
   GRUPOS_ACOMPANHAMENTO,
   TERMOS_ACOMPANHAMENTO,
-  type PontoSemanal,
-  agruparSeriePorSemana,
   calcularStatusCrm,
-  contarSemanasUteis,
   gerarPdfAcompanhamento,
   gerarPdfContasSelecionadas,
-  rotuloSemana,
 } from "@/lib/acompanhamentoPdf";
+
 
 type Grupo = "falha_processo" | "desfecho_cliente" | "em_jogo" | "revisao";
 type OrigemCarteira = "base_hr" | "marketing" | "carteira_propria";
