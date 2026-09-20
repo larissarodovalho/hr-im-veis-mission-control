@@ -21,4 +21,11 @@ describe("status de atualização do CRM", () => {
   it("limita valores inconsistentes ao total da carteira", () => {
     expect(calcularStatusCrm(2, 5)).toMatchObject({ atualizado: 0, desatualizado: 2 });
   });
+
+  it("fecha 100% também quando o total representa conta-dias exigíveis", () => {
+    const status = calcularStatusCrm(25, 17);
+    expect(status.atualizado).toBe(8);
+    expect(status.percentualAtualizado).toBe(32);
+    expect(status.percentualDesatualizado).toBe(68);
+  });
 });

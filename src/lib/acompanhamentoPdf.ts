@@ -14,7 +14,7 @@ export const GRUPOS_ACOMPANHAMENTO: Array<{ titulo: string; texto: string }> = [
 
 export const CLASSIFICACOES_ACOMPANHAMENTO: Array<{ id: string; label: string; grupo: GrupoAcompanhamento; texto: string }> = [
   { id: "falta_followup", label: "Falta de follow-up", grupo: "falha_processo", texto: "O último contato ultrapassou o prazo máximo definido para a análise." },
-  { id: "crm_desatualizado", label: "CRM desatualizado", grupo: "falha_processo", texto: "Desatualizado é a conta que avançou da etapa inicial sem nenhuma interação registrada para comprovar o atendimento. Atualizado é o restante da carteira analisada que não recebeu esse diagnóstico." },
+  { id: "crm_desatualizado", label: "CRM desatualizado", grupo: "falha_processo", texto: "Em cada dia útil, indica uma conta exigível sem registro suficiente dentro do prazo. Atualizado e desatualizado são consolidados em conta-dias e fecham 100% da base exigível." },
   { id: "sem_retorno", label: "Sem retorno", grupo: "desfecho_cliente", texto: "O corretor realizou tentativas, mas o cliente não respondeu." },
   { id: "sem_interesse", label: "Sem interesse", grupo: "desfecho_cliente", texto: "O cliente informou que não deseja seguir com o atendimento." },
   { id: "desqualificado", label: "Desqualificado", grupo: "desfecho_cliente", texto: "O contato não atende aos critérios para continuar no funil comercial." },
@@ -26,7 +26,8 @@ export const CLASSIFICACOES_ACOMPANHAMENTO: Array<{ id: string; label: string; g
 ];
 
 export const TERMOS_ACOMPANHAMENTO: Array<{ titulo: string; texto: string }> = [
-  { titulo: "Período analisado", texto: "Intervalo escolhido no topo da página, no fuso de Cuiabá. O trabalho inclui contas e oportunidades com criação, atualização, interação, tarefa ou movimentação no período." },
+  { titulo: "Período analisado", texto: "Intervalo escolhido no topo da página, no fuso de Cuiabá. A incidência considera somente os dias úteis já decorridos." },
+  { titulo: "Conta-dia exigível", texto: "Uma conta que, em determinado dia útil, precisava de contato ou atualização por prazo, tarefa ou próxima ação. A mesma conta pode ser contada em mais de um dia." },
   { titulo: "Prazo máximo entre contatos (dias)", texto: "Quantidade máxima de dias aceita entre um contato e o seguinte. Ao ultrapassá-la, uma conta ativa pode ser diagnosticada como falta de follow-up." },
   { titulo: "Diagnóstico", texto: "Leitura automática do CRM com base em interações, tarefas, etapa do funil e motivo de encerramento." },
   { titulo: "Triagem", texto: "Etapa inicial em que o lead é avaliado antes de seguir para a carteira de um corretor." },
@@ -37,7 +38,7 @@ export const TERMOS_ACOMPANHAMENTO: Array<{ titulo: string; texto: string }> = [
   { titulo: "Travados por follow-up", texto: "Contas cujo atendimento ultrapassou o prazo máximo definido sem novo contato registrado." },
   { titulo: "Proporção travada", texto: "Percentual da carteira do corretor classificado como falha de processo." },
   { titulo: "Dias médios parado", texto: "Média de dias sem contato entre as contas classificadas como falha de processo." },
-  { titulo: "Taxa de incidência", texto: "Em cada caixinha, mostra quantas contas receberam aquela classificação e qual percentual representam dentro da carteira do respectivo corretor. Em CRM, a faixa verde mostra o complemento atualizado e a vermelha mostra o desatualizado; juntas, fecham 100% da carteira analisada." },
+  { titulo: "Taxa de incidência", texto: "Em cada caixinha, mostra quantos conta-dias exigíveis receberam aquela classificação e qual percentual representam no período. Em CRM, verde e vermelho fecham 100% da base diária exigível." },
   { titulo: "Base HR Imóveis", texto: "Contas que pertenciam originalmente à base da gestão da HR Imóveis, mesmo que depois tenham sido distribuídas a um corretor." },
   { titulo: "Marketing", texto: "Contas e leads captados pelos canais de marketing da HR Imóveis." },
   { titulo: "Carteira própria do corretor", texto: "Contas cujo dono original é o próprio corretor, independentemente de quem seja o responsável atual." },
@@ -54,6 +55,24 @@ interface LinhaCorretorPdf {
   falta_followup: number;
   crm_desatualizado: number;
   dias_medios_travadas: number | null;
+}
+
+interface LinhaDiariaCorretorPdf {
+  responsavel_id: string | null;
+  corretor_nome: string;
+  conta_dias_exigiveis: number;
+  contas_exigiveis: number;
+  crm_atualizado: number;
+  crm_desatualizado: number;
+  falta_followup: number;
+  sem_retorno: number;
+  sem_interesse: number;
+  desqualificado: number;
+  encerrado: number;
+  virando_oportunidade: number;
+  oportunidade_futura: number;
+  etapa_antiga: number;
+  ciclo_andamento: number;
 }
 
 interface ContaPdf {
@@ -111,6 +130,12 @@ export interface AcompanhamentoPdfDados {
 
 interface GerarPdfParams {
   dados: AcompanhamentoPdfDados;
+  dadosDiarios?: {
+    dias_uteis: number;
+    conta_dias_exigiveis: number;
+    corretores: LinhaDiariaCorretorPdf[];
+    serie: Array<LinhaDiariaCorretorPdf & { dia: string }>;
+  };
   contas: ContaPdf[];
   periodo: string;
   filtroCorretor: string;
@@ -164,7 +189,7 @@ async function carregarLogo(): Promise<string | null> {
   }
 }
 
-export async function gerarPdfAcompanhamento({ dados, contas, periodo, filtroCorretor, filtroClassificacao, filtroOrigens }: GerarPdfParams) {
+export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, periodo, filtroCorretor, filtroClassificacao, filtroOrigens }: GerarPdfParams) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const logo = await carregarLogo();
   let y = 18;
@@ -311,7 +336,8 @@ export async function gerarPdfAcompanhamento({ dados, contas, periodo, filtroCor
     [40, 22, 26, 27, 24, 21, 22],
   );
 
-  tituloSecao("03 · Taxa de incidência", "Cada problema, lado a lado", "Percentual calculado sobre a carteira de cada corretor.");
+  const corretoresIncidencia = dadosDiarios?.corretores ?? [];
+  tituloSecao("03 · Taxa de incidência", "Cada problema, lado a lado", `Medição em conta-dias exigíveis · ${dadosDiarios?.dias_uteis ?? 0} dias úteis no período.`);
   CLASSIFICACOES_ACOMPANHAMENTO.forEach((classificacao) => {
     if (classificacao.id === "crm_desatualizado") {
       garantir(18);
@@ -320,9 +346,9 @@ export async function gerarPdfAcompanhamento({ dados, contas, periodo, filtroCor
       doc.setTextColor(...INK);
       doc.text("CRM atualizado × desatualizado", MARGIN, y);
       y += 5;
-      dados.corretores.forEach((corretor) => {
+      corretoresIncidencia.forEach((corretor) => {
         garantir(10);
-        const status = calcularStatusCrm(corretor.total, corretor.crm_desatualizado);
+        const status = calcularStatusCrm(corretor.conta_dias_exigiveis, corretor.crm_desatualizado);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(7.5);
         doc.setTextColor(...MUTED);
@@ -331,11 +357,11 @@ export async function gerarPdfAcompanhamento({ dados, contas, periodo, filtroCor
         doc.rect(MARGIN + 42, y - 2.5, (CONTENT_W - 42) * status.percentualAtualizado / 100, 3, "F");
         doc.setFillColor(...RED);
         doc.rect(MARGIN + 42 + (CONTENT_W - 42) * status.percentualAtualizado / 100, y - 2.5, (CONTENT_W - 42) * status.percentualDesatualizado / 100, 3, "F");
-        doc.text(`Atualizado ${percentual(status.atualizado, corretor.total)} (${status.atualizado}) · Desatualizado ${percentual(status.desatualizado, corretor.total)} (${status.desatualizado})`, MARGIN + 42, y + 4);
+        doc.text(`Atualizado ${percentual(status.atualizado, corretor.conta_dias_exigiveis)} (${status.atualizado}) · Desatualizado ${percentual(status.desatualizado, corretor.conta_dias_exigiveis)} (${status.desatualizado})`, MARGIN + 42, y + 4);
         y += 10;
       });
-      if (!dados.corretores.length) {
-        texto("Sem contas no período.", CONTENT_W, 7.5);
+      if (!corretoresIncidencia.length) {
+        texto("Sem contas exigíveis nos dias úteis do período.", CONTENT_W, 7.5);
       }
       y += 2;
       return;
@@ -348,14 +374,34 @@ export async function gerarPdfAcompanhamento({ dados, contas, periodo, filtroCor
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
     doc.setTextColor(...MUTED);
-    const incidencias = dados.corretores.map((corretor) => {
+    const incidencias = corretoresIncidencia.map((corretor) => {
       const qtd = Number((corretor as unknown as Record<string, string | number | null>)[classificacao.id] ?? 0);
-      return `${corretor.corretor_nome}: ${percentual(qtd, corretor.total)} (${qtd})`;
+      return `${corretor.corretor_nome}: ${percentual(qtd, corretor.conta_dias_exigiveis)} (${qtd} conta-dias)`;
     });
     const linhas = doc.splitTextToSize(incidencias.join("  ·  ") || "Sem contas no período.", CONTENT_W) as string[];
     doc.text(linhas, MARGIN, y + 4, { lineHeightFactor: 1.3 });
     y += 6 + linhas.length * 3.5;
   });
+  if (dadosDiarios?.serie.length) {
+    garantir(18);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(...INK);
+    doc.text("Evolução diária — CRM desatualizado", MARGIN, y);
+    y += 5;
+    const datas = Array.from(new Set(dadosDiarios.serie.map((item) => item.dia))).sort();
+    const ultimasDatas = datas.slice(-12);
+    const linhas = corretoresIncidencia.map((corretor) => {
+      const valores = ultimasDatas.map((dia) => {
+        const ponto = dadosDiarios.serie.find((item) => item.dia === dia && item.responsavel_id === corretor.responsavel_id);
+        return ponto ? percentual(ponto.crm_desatualizado, ponto.conta_dias_exigiveis) : "—";
+      });
+      return [corretor.corretor_nome, ...valores];
+    });
+    const larguraNome = 38;
+    const larguraDia = (CONTENT_W - larguraNome) / Math.max(1, ultimasDatas.length);
+    tabela(["Corretor", ...ultimasDatas.map((dia) => dia.slice(5).split("-").reverse().join("/"))], linhas, [larguraNome, ...ultimasDatas.map(() => larguraDia)]);
+  }
   y += 3;
 
   const piorCorretor = [...dados.corretores].sort((a, b) => b.falha_processo / (b.total || 1) - a.falha_processo / (a.total || 1))[0];
@@ -421,7 +467,7 @@ export async function gerarPdfAcompanhamento({ dados, contas, periodo, filtroCor
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(...INK);
-  doc.text(doc.splitTextToSize("A classificação é calculada a partir dos registros do CRM. Admin e gestor podem reclassificar uma conta manualmente; nesse caso, a classificação manual prevalece.", CONTENT_W - 10), MARGIN + 5, y + 6, { lineHeightFactor: 1.3 });
+  doc.text(doc.splitTextToSize("A incidência é calculada diariamente, somente em dias úteis e sobre contas exigíveis. Admin e gestor podem reclassificar uma conta; a classificação manual prevalece a partir da data registrada.", CONTENT_W - 10), MARGIN + 5, y + 6, { lineHeightFactor: 1.3 });
 
   const totalPaginas = doc.getNumberOfPages();
   for (let pagina = 1; pagina <= totalPaginas; pagina++) {
