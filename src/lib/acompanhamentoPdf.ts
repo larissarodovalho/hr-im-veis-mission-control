@@ -75,7 +75,7 @@ interface LinhaDiariaCorretorPdf {
   ciclo_andamento: number;
 }
 
-type SerieDiariaPdf = Omit<LinhaDiariaCorretorPdf, "contas_exigiveis"> & { dia: string };
+type SerieDiariaPdf = Omit<LinhaDiariaCorretorPdf, "contas_exigiveis" | "historico_nao_determinavel"> & { dia: string };
 
 interface ContaPdf {
   nome: string;
