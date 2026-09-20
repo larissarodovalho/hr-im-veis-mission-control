@@ -176,6 +176,106 @@ export const calcularStatusCrm = (total: number, desatualizado: number) => {
 };
 const classificacaoLabel = (id: string) => CLASSIFICACOES_ACOMPANHAMENTO.find((item) => item.id === id)?.label ?? id;
 
+const CAMPOS_SEMANA = [
+  "conta_dias_exigiveis",
+  "crm_atualizado",
+  "crm_desatualizado",
+  "falta_followup",
+  "sem_retorno",
+  "sem_interesse",
+  "desqualificado",
+  "encerrado",
+  "virando_oportunidade",
+  "oportunidade_futura",
+  "etapa_antiga",
+  "ciclo_andamento",
+] as const;
+
+export interface PontoSemanal {
+  semana_inicio: string;
+  semana_fim: string;
+  dias: number;
+  responsavel_id: string | null;
+  corretor_nome: string;
+  conta_dias_exigiveis: number;
+  crm_atualizado: number;
+  crm_desatualizado: number;
+  falta_followup: number;
+  sem_retorno: number;
+  sem_interesse: number;
+  desqualificado: number;
+  encerrado: number;
+  virando_oportunidade: number;
+  oportunidade_futura: number;
+  etapa_antiga: number;
+  ciclo_andamento: number;
+}
+
+const somarDias = (dia: string, quantidade: number) => {
+  const data = new Date(`${dia}T00:00:00Z`);
+  data.setUTCDate(data.getUTCDate() + quantidade);
+  return data.toISOString().slice(0, 10);
+};
+
+/** Segunda-feira (ISO) da semana de um dia no formato YYYY-MM-DD. */
+export const inicioDaSemana = (dia: string) => {
+  const data = new Date(`${dia}T00:00:00Z`);
+  const isoDow = data.getUTCDay() === 0 ? 7 : data.getUTCDay();
+  return somarDias(dia, 1 - isoDow);
+};
+
+/** Agrupa a série apurada por dia útil em blocos semanais (segunda a sexta). */
+export function agruparSeriePorSemana<T extends { dia: string; responsavel_id: string | null; corretor_nome: string }>(
+  serie: T[]
+): PontoSemanal[] {
+  const mapa = new Map<string, PontoSemanal & { _dias: Set<string> }>();
+  for (const ponto of serie) {
+    const semana = inicioDaSemana(ponto.dia);
+    const chave = `${semana}|${ponto.responsavel_id ?? "sem"}`;
+    let atual = mapa.get(chave);
+    if (!atual) {
+      atual = {
+        semana_inicio: semana,
+        semana_fim: semana,
+        dias: 0,
+        responsavel_id: ponto.responsavel_id,
+        corretor_nome: ponto.corretor_nome,
+        conta_dias_exigiveis: 0,
+        crm_atualizado: 0,
+        crm_desatualizado: 0,
+        falta_followup: 0,
+        sem_retorno: 0,
+        sem_interesse: 0,
+        desqualificado: 0,
+        encerrado: 0,
+        virando_oportunidade: 0,
+        oportunidade_futura: 0,
+        etapa_antiga: 0,
+        ciclo_andamento: 0,
+        _dias: new Set<string>(),
+      };
+      mapa.set(chave, atual);
+    }
+    const registro = ponto as unknown as Record<string, number | undefined>;
+    for (const campo of CAMPOS_SEMANA) atual[campo] += Number(registro[campo] ?? 0);
+    atual._dias.add(ponto.dia);
+    if (ponto.dia > atual.semana_fim) atual.semana_fim = ponto.dia;
+  }
+  return Array.from(mapa.values())
+    .map(({ _dias, ...resto }) => ({ ...resto, dias: _dias.size }))
+    .sort((a, b) => a.semana_inicio.localeCompare(b.semana_inicio) || a.corretor_nome.localeCompare(b.corretor_nome));
+}
+
+/** Quantidade de semanas do período que tiveram ao menos um dia útil apurado. */
+export const contarSemanasUteis = (serie: Array<{ dia: string }>) =>
+  new Set(serie.map((ponto) => inicioDaSemana(ponto.dia))).size;
+
+const ddmm = (dia: string) => dia.slice(5).split("-").reverse().join("/");
+
+/** Rótulo curto da semana, ex.: "01/09 a 05/09". */
+export const rotuloSemana = (ponto: { semana_inicio: string; semana_fim: string }) =>
+  `${ddmm(ponto.semana_inicio)} a ${ddmm(ponto.semana_fim)}`;
+
 async function carregarLogo(): Promise<string | null> {
   try {
     const response = await fetch(logoHR);
