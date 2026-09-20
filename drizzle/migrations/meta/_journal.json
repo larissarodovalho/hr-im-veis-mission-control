@@ -64,6 +64,13 @@
       "when": 1789934415795,
       "tag": "0008_daily_broker_followup_measurement",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789934524512,
+      "tag": "0009_exclude_indeterminate_daily_history",
+      "breakpoints": true
     }
   ]
 }
