@@ -503,7 +503,9 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
     doc.setTextColor(...MUTED);
     const incidencias = corretoresIncidencia.map((corretor) => {
       const qtd = Number((corretor as unknown as Record<string, string | number | null>)[classificacao.id] ?? 0);
-      return `${corretor.corretor_nome}: ${percentual(qtd, corretor.conta_dias_exigiveis)} (${qtd} ocorrências)`;
+      const porConta = DESFECHOS_POR_CONTA_PDF.has(classificacao.id);
+      const base = porConta ? corretor.contas_exigiveis : corretor.conta_dias_exigiveis;
+      return `${corretor.corretor_nome}: ${percentual(qtd, base)} (${qtd} ${porConta ? `de ${base} clientes` : "ocorrências"})`;
     });
     const linhas = doc.splitTextToSize(incidencias.join("  ·  ") || "Sem contas no período.", CONTENT_W) as string[];
     doc.text(linhas, MARGIN, y + 4, { lineHeightFactor: 1.3 });
