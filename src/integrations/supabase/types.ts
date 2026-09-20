@@ -14,6 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      acompanhamento_conta_diario: {
+        Row: {
+          apurado_em: string
+          ativa: boolean
+          classificacao_base: string | null
+          classificacao_manual: boolean
+          conta_id: string
+          dia: string
+          historico_determinavel: boolean
+          interacao_no_dia: boolean
+          origem_carteira: string
+          proxima_acao_em: string | null
+          responsavel_id: string | null
+          tarefa_vencida: boolean
+          ultima_interacao_em: string | null
+        }
+        Insert: {
+          apurado_em?: string
+          ativa?: boolean
+          classificacao_base?: string | null
+          classificacao_manual?: boolean
+          conta_id: string
+          dia: string
+          historico_determinavel?: boolean
+          interacao_no_dia?: boolean
+          origem_carteira: string
+          proxima_acao_em?: string | null
+          responsavel_id?: string | null
+          tarefa_vencida?: boolean
+          ultima_interacao_em?: string | null
+        }
+        Update: {
+          apurado_em?: string
+          ativa?: boolean
+          classificacao_base?: string | null
+          classificacao_manual?: boolean
+          conta_id?: string
+          dia?: string
+          historico_determinavel?: boolean
+          interacao_no_dia?: boolean
+          origem_carteira?: string
+          proxima_acao_em?: string | null
+          responsavel_id?: string | null
+          tarefa_vencida?: boolean
+          ultima_interacao_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acompanhamento_conta_diario_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activity_log: {
         Row: {
           created_at: string
@@ -4488,6 +4544,15 @@ export type Database = {
       }
     }
     Functions: {
+      acompanhamento_apurar_diario: {
+        Args: {
+          _fim: string
+          _inicio: string
+          _origens_carteira?: string[]
+          _prazo_dias?: number
+        }
+        Returns: Json
+      }
       acompanhamento_corretores: {
         Args: {
           _fim: string

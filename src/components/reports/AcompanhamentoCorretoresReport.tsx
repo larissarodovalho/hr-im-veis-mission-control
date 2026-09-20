@@ -77,6 +77,36 @@ interface LinhaCorretor {
   dias_medios_travadas: number | null;
 }
 
+interface LinhaDiariaCorretor {
+  responsavel_id: string | null;
+  corretor_nome: string;
+  conta_dias_exigiveis: number;
+  contas_exigiveis: number;
+  crm_atualizado: number;
+  crm_desatualizado: number;
+  falta_followup: number;
+  sem_retorno: number;
+  sem_interesse: number;
+  desqualificado: number;
+  encerrado: number;
+  virando_oportunidade: number;
+  oportunidade_futura: number;
+  etapa_antiga: number;
+  ciclo_andamento: number;
+  historico_nao_determinavel: number;
+}
+
+interface SerieDiaria extends Omit<LinhaDiariaCorretor, "contas_exigiveis" | "historico_nao_determinavel"> {
+  dia: string;
+}
+
+interface DadosDiarios {
+  dias_uteis: number;
+  conta_dias_exigiveis: number;
+  corretores: LinhaDiariaCorretor[];
+  serie: SerieDiaria[];
+}
+
 interface ContaDetalhe {
   id: string;
   nome: string;
@@ -164,6 +194,7 @@ export default function AcompanhamentoCorretoresReport() {
   const [prazo, setPrazo] = useState(7);
   const [origens, setOrigens] = useState<OrigemCarteira[]>(ORIGENS_CARTEIRA.map((origem) => origem.id));
   const [dados, setDados] = useState<Dados | null>(null);
+  const [dadosDiarios, setDadosDiarios] = useState<DadosDiarios | null>(null);
   const [loading, setLoading] = useState(true);
   const [fCorretor, setFCorretor] = useState("todos");
   const [fClasse, setFClasse] = useState("todas");
@@ -178,14 +209,15 @@ export default function AcompanhamentoCorretoresReport() {
 
   const carregar = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase.rpc("acompanhamento_corretores" as any, {
-      _inicio: inicioISO,
-      _fim: fimISO,
-      _prazo_dias: prazo,
-      _origens_carteira: origens,
-    });
-    if (error) toast.error("Erro ao carregar acompanhamento: " + error.message);
-    setDados((data as unknown as Dados) ?? null);
+    const parametros = { _inicio: inicioISO, _fim: fimISO, _prazo_dias: prazo, _origens_carteira: origens };
+    const [geral, diario] = await Promise.all([
+      supabase.rpc("acompanhamento_corretores" as any, parametros),
+      supabase.rpc("acompanhamento_apurar_diario" as any, parametros),
+    ]);
+    if (geral.error) toast.error("Erro ao carregar acompanhamento: " + geral.error.message);
+    if (diario.error) toast.error("Erro ao calcular acompanhamento diário: " + diario.error.message);
+    setDados((geral.data as unknown as Dados) ?? null);
+    setDadosDiarios((diario.data as unknown as DadosDiarios) ?? null);
     setLoading(false);
   }, [inicioISO, fimISO, prazo, origens]);
 
@@ -258,6 +290,7 @@ export default function AcompanhamentoCorretoresReport() {
     try {
       await gerarPdfAcompanhamento({
         dados,
+        dadosDiarios: dadosDiarios ?? undefined,
         contas: consultaAtiva ? contasFiltradas : dados.contas_detalhe,
         periodo: label,
         filtroCorretor: fCorretor === "todos" ? "Todos os corretores" : fCorretor,
@@ -297,6 +330,8 @@ export default function AcompanhamentoCorretoresReport() {
   const e = dados.entrada;
   const t = dados.totais;
   const corretores = dados.corretores;
+  const corretoresDiarios = dadosDiarios?.corretores ?? [];
+  const serieDiaria = dadosDiarios?.serie ?? [];
   const piorCorretor = [...corretores].sort(
     (a, b) => b.falha_processo / (b.total || 1) - a.falha_processo / (a.total || 1)
   )[0];
@@ -432,21 +467,28 @@ export default function AcompanhamentoCorretoresReport() {
             <p className="text-xs uppercase tracking-wide text-muted-foreground">02 · Retrato por corretor</p>
             <h3 className="font-semibold text-lg">Quanto de cada carteira travou por processo</h3>
           </div>
-          <Button variant="outline" size="sm" disabled={!corretores.length}
+          <Button variant="outline" size="sm" disabled={!corretoresDiarios.length}
             onClick={() =>
               baixarCSV(
-                corretores.map((c) => ({
-                  Corretor: c.corretor_nome, "Total contas": c.total,
-                  "% travada": pct(c.falha_processo, c.total), "Falha de processo": c.falha_processo,
-                  "Desfecho do cliente": c.desfecho_cliente, "Em jogo": c.em_jogo,
-                   Revisão: c.revisao, Oportunidades: c.oportunidades_conduzidas,
-                   "Falta de follow-up": c.falta_followup,
-                   "CRM atualizado — contas": calcularStatusCrm(c.total, c.crm_desatualizado).atualizado,
-                   "CRM atualizado — %": `${calcularStatusCrm(c.total, c.crm_desatualizado).percentualAtualizado.toFixed(1)}%`,
-                   "CRM desatualizado — contas": calcularStatusCrm(c.total, c.crm_desatualizado).desatualizado,
-                   "CRM desatualizado — %": `${calcularStatusCrm(c.total, c.crm_desatualizado).percentualDesatualizado.toFixed(1)}%`,
-                  "Dias médios travadas": c.dias_medios_travadas ?? "",
-                })),
+                 corretoresDiarios.map((c) => ({
+                   Corretor: c.corretor_nome,
+                   "Contas exigíveis": c.contas_exigiveis,
+                   "Dias úteis com exigência": new Set(serieDiaria.filter((d) => d.responsavel_id === c.responsavel_id).map((d) => d.dia)).size,
+                   "Conta-dias exigíveis": c.conta_dias_exigiveis,
+                   "CRM atualizado — conta-dias": c.crm_atualizado,
+                   "CRM atualizado — %": pct(c.crm_atualizado, c.conta_dias_exigiveis),
+                   "CRM desatualizado — conta-dias": c.crm_desatualizado,
+                   "CRM desatualizado — %": pct(c.crm_desatualizado, c.conta_dias_exigiveis),
+                   "Falta de follow-up — conta-dias": c.falta_followup,
+                   "Sem retorno — conta-dias": c.sem_retorno,
+                   "Sem interesse — conta-dias": c.sem_interesse,
+                   "Desqualificado — conta-dias": c.desqualificado,
+                   "Encerrado — conta-dias": c.encerrado,
+                   "Oportunidade criada — conta-dias": c.virando_oportunidade,
+                   "Oportunidade futura — conta-dias": c.oportunidade_futura,
+                   "Etapa antiga — conta-dias": c.etapa_antiga,
+                   "Ciclo em andamento — conta-dias": c.ciclo_andamento,
+                 })),
                 `acompanhamento-corretores-${label.replace("/", "-")}.csv`
               )
             }>
@@ -517,7 +559,9 @@ export default function AcompanhamentoCorretoresReport() {
         <div>
           <p className="text-xs uppercase tracking-wide text-muted-foreground">03 · Taxa de incidência</p>
           <h3 className="font-semibold text-lg">Cada problema, lado a lado</h3>
-          <p className="text-sm text-muted-foreground">Percentual sobre a carteira de cada corretor.</p>
+          <p className="text-sm text-muted-foreground">
+            Medição por conta-dia exigível em {dadosDiarios?.dias_uteis ?? 0} dias úteis. Cada faixa mostra a constância diária no período.
+          </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
           {CLASSIFICACOES.map((cl) => (
@@ -527,7 +571,7 @@ export default function AcompanhamentoCorretoresReport() {
                 <Badge variant="outline" className={GRUPO_BADGE[cl.grupo]}>{GRUPO_LABEL[cl.grupo]}</Badge>
                 {cl.id === "crm_desatualizado" && (
                   <p className="mt-2 max-w-3xl text-xs leading-relaxed text-muted-foreground">
-                    Desatualizado: conta que avançou da etapa inicial sem interação registrada. Atualizado: restante da carteira analisada. As duas faixas fecham 100%.
+                    Em cada dia útil, entram apenas as contas que exigiam contato ou atualização. Verde e vermelho fecham 100% dos conta-dias exigíveis.
                   </p>
                 )}
               </div>
@@ -538,16 +582,17 @@ export default function AcompanhamentoCorretoresReport() {
                 </div>
               )}
               <div className={cl.id === "crm_desatualizado" ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : "space-y-1"}>
-                {corretores.map((c) => {
+                {corretoresDiarios.map((c) => {
                   const qtd = (c as unknown as Record<string, number>)[cl.id] ?? 0;
-                  const perc = c.total ? (qtd / c.total) * 100 : 0;
+                  const perc = c.conta_dias_exigiveis ? (qtd / c.conta_dias_exigiveis) * 100 : 0;
+                  const pontos = serieDiaria.filter((dia) => dia.responsavel_id === c.responsavel_id);
                   if (cl.id === "crm_desatualizado") {
-                    const status = calcularStatusCrm(c.total, qtd);
+                    const status = calcularStatusCrm(c.conta_dias_exigiveis, c.crm_desatualizado);
                     return (
                       <div key={c.corretor_nome} className="space-y-1.5">
                         <div className="flex items-center justify-between gap-3 text-sm">
                           <span className="truncate font-medium">{c.corretor_nome}</span>
-                          <span className="shrink-0 text-xs text-muted-foreground">{c.total} contas</span>
+                          <span className="shrink-0 text-xs text-muted-foreground">{c.conta_dias_exigiveis} conta-dias</span>
                         </div>
                         <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted" aria-label={`${c.corretor_nome}: ${status.percentualAtualizado.toFixed(1)}% atualizado e ${status.percentualDesatualizado.toFixed(1)}% desatualizado`}>
                           <div className="h-full bg-success" style={{ width: `${status.percentualAtualizado}%` }} />
@@ -557,16 +602,20 @@ export default function AcompanhamentoCorretoresReport() {
                           <span className="text-success">Atualizado {status.percentualAtualizado.toFixed(1)}% · {status.atualizado}</span>
                           <span className="text-destructive">Desatualizado {status.percentualDesatualizado.toFixed(1)}% · {status.desatualizado}</span>
                         </div>
+                        <EvolucaoDiaria pontos={pontos} campo="crm_desatualizado" />
                       </div>
                     );
                   }
                   return (
-                    <div key={c.corretor_nome} className="flex items-center gap-2 text-sm">
-                      <span className="w-28 truncate text-muted-foreground">{c.corretor_nome}</span>
-                      <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
-                        <div className="h-full bg-primary" style={{ width: `${perc}%` }} />
+                    <div key={c.corretor_nome} className="space-y-1.5 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="w-28 truncate text-muted-foreground">{c.corretor_nome}</span>
+                        <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                          <div className="h-full bg-primary" style={{ width: `${perc}%` }} />
+                        </div>
+                        <span className="tabular-nums text-xs w-24 text-right">{perc.toFixed(1)}% · {qtd} dias</span>
                       </div>
-                      <span className="tabular-nums text-xs w-16 text-right">{perc.toFixed(1)}% · {qtd}</span>
+                      <EvolucaoDiaria pontos={pontos} campo={cl.id} />
                     </div>
                   );
                 })}
@@ -818,8 +867,8 @@ export default function AcompanhamentoCorretoresReport() {
         />
 
         <div className="rounded-md border bg-muted/40 p-4 text-sm text-muted-foreground">
-          A classificação é calculada a partir dos registros do CRM: interações, tarefas, etapa e motivo. Admin e gestor
-          podem reclassificar uma conta manualmente; nesse caso, a classificação manual prevalece.
+          A incidência é medida diariamente, apenas em dias úteis e sobre contas exigíveis. Admin e gestor podem
+          reclassificar uma conta; a classificação manual prevalece a partir da data em que foi registrada.
         </div>
       </Card>
 
@@ -905,5 +954,27 @@ function GlossarioSecao({ titulo, itens }: { titulo: string; itens: Array<{ titu
         ))}
       </dl>
     </section>
+  );
+}
+
+function EvolucaoDiaria({ pontos, campo }: { pontos: SerieDiaria[]; campo: string }) {
+  if (!pontos.length) return null;
+  return (
+    <div className="flex h-6 items-end gap-0.5" aria-label="Evolução por dia útil">
+      {pontos.map((ponto) => {
+        const valor = campo === "crm_desatualizado"
+          ? ponto.crm_desatualizado
+          : Number((ponto as unknown as Record<string, string | number>)[campo] ?? 0);
+        const percentualDia = ponto.conta_dias_exigiveis ? (valor / ponto.conta_dias_exigiveis) * 100 : 0;
+        return (
+          <span
+            key={`${ponto.dia}-${campo}`}
+            className={`min-w-1 flex-1 rounded-sm ${percentualDia > 0 ? "bg-destructive/70" : "bg-success/50"}`}
+            style={{ height: `${Math.max(3, percentualDia)}%` }}
+            title={`${fmtDate(ponto.dia)}: ${percentualDia.toFixed(1)}% (${valor}/${ponto.conta_dias_exigiveis})`}
+          />
+        );
+      })}
+    </div>
   );
 }
