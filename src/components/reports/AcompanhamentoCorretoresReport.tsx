@@ -577,7 +577,7 @@ export default function AcompanhamentoCorretoresReport() {
             <div className="flex items-start gap-2">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
               <div>
-                <p className="text-sm font-medium">Não foi possível calcular a produtividade semanal.</p>
+                <p className="text-sm font-medium">Não foi possível calcular a produtividade do período.</p>
                 <p className="text-xs text-muted-foreground">Os quadros abaixo não representam zero ocorrências. Tente carregar novamente.</p>
               </div>
             </div>
