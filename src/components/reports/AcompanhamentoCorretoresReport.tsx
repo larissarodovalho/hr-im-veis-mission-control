@@ -611,49 +611,47 @@ export default function AcompanhamentoCorretoresReport() {
                   <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-destructive" /> Desatualizado</span>
                 </div>
               )}
-              <div className={cl.id === "crm_desatualizado" ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : "space-y-1"}>
+              <div className={cl.id === "crm_desatualizado" || cl.id === "falta_followup" ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : "space-y-2"}>
                 {corretoresDiarios.map((c) => {
                   const qtd = (c as unknown as Record<string, number>)[cl.id] ?? 0;
                   const perc = c.conta_dias_exigiveis ? (qtd / c.conta_dias_exigiveis) * 100 : 0;
-                  const pontos = serieSemanal.filter((semana) => semana.responsavel_id === c.responsavel_id);
                   if (cl.id === "crm_desatualizado") {
                     const status = calcularStatusCrm(c.conta_dias_exigiveis, c.crm_desatualizado);
                     return (
-                      <div key={c.corretor_nome} className="space-y-1.5">
-                        <div className="flex items-center justify-between gap-3 text-sm">
-                          <span className="truncate font-medium">{c.corretor_nome}</span>
-                          <span className="shrink-0 text-xs text-muted-foreground">{c.conta_dias_exigiveis} ocorrências exigíveis</span>
-                        </div>
-                        <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted" aria-label={`${c.corretor_nome}: ${status.percentualAtualizado.toFixed(1)}% atualizado e ${status.percentualDesatualizado.toFixed(1)}% desatualizado`}>
-                          <div className="h-full bg-success" style={{ width: `${status.percentualAtualizado}%` }} />
-                          <div className="h-full bg-destructive" style={{ width: `${status.percentualDesatualizado}%` }} />
-                        </div>
-                        <div className="flex justify-between gap-3 text-xs tabular-nums">
-                          <span className="text-success">Atualizado {status.percentualAtualizado.toFixed(1)}% · {status.atualizado}</span>
-                          <span className="text-destructive">Desatualizado {status.percentualDesatualizado.toFixed(1)}% · {status.desatualizado}</span>
-                        </div>
-                        <BarrasSemanais pontos={pontos} campoProblema="crm_desatualizado" rotuloOk="Atualizado" rotuloProblema="Desatualizado" />
-                      </div>
+                      <BarraGeral
+                        key={c.corretor_nome}
+                        nome={c.corretor_nome}
+                        total={c.conta_dias_exigiveis}
+                        problema={status.desatualizado}
+                        rotuloOk="Atualizado"
+                        rotuloProblema="Desatualizado"
+                      />
+                    );
+                  }
+                  if (cl.id === "falta_followup") {
+                    return (
+                      <BarraGeral
+                        key={c.corretor_nome}
+                        nome={c.corretor_nome}
+                        total={c.conta_dias_exigiveis}
+                        problema={qtd}
+                        rotuloOk="Follow-up feito"
+                        rotuloProblema="Não feito"
+                      />
                     );
                   }
                   return (
-                    <div key={c.corretor_nome} className="space-y-1.5 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="w-28 truncate text-muted-foreground">{c.corretor_nome}</span>
-                        <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
-                          <div className="h-full bg-primary" style={{ width: `${perc}%` }} />
-                        </div>
-                        <span className="tabular-nums text-xs w-24 text-right">{perc.toFixed(1)}% · {qtd}</span>
+                    <div key={c.corretor_nome} className="flex items-center gap-2 text-sm">
+                      <span className="w-28 truncate text-muted-foreground">{c.corretor_nome}</span>
+                      <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full bg-primary" style={{ width: `${perc}%` }} />
                       </div>
-                      {cl.id === "falta_followup" ? (
-                        <BarrasSemanais pontos={pontos} campoProblema="falta_followup" rotuloOk="Feito" rotuloProblema="Não feito" />
-                      ) : (
-                        <EvolucaoSemanal pontos={pontos} campo={cl.id} />
-                      )}
+                      <span className="tabular-nums text-xs w-24 text-right">{perc.toFixed(1)}% · {qtd}</span>
                     </div>
                   );
                 })}
               </div>
+
             </div>
           ))}
         </div>
