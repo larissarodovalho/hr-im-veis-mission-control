@@ -486,25 +486,26 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
     doc.text(linhas, MARGIN, y + 4, { lineHeightFactor: 1.3 });
     y += 6 + linhas.length * 3.5;
   });
-  if (dadosDiarios?.serie.length) {
+  if (serieSemanal.length) {
     garantir(18);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(...INK);
-    doc.text("Evolução diária — CRM desatualizado", MARGIN, y);
+    doc.text("Evolução semanal — CRM desatualizado", MARGIN, y);
     y += 5;
-    const datas = Array.from(new Set(dadosDiarios.serie.map((item) => item.dia))).sort();
-    const ultimasDatas = datas.slice(-12);
+    const semanas = Array.from(new Map(serieSemanal.map((item) => [item.semana_inicio, item])).values())
+      .sort((a, b) => a.semana_inicio.localeCompare(b.semana_inicio))
+      .slice(-8);
     const linhas = corretoresIncidencia.map((corretor) => {
-      const valores = ultimasDatas.map((dia) => {
-        const ponto = dadosDiarios.serie.find((item) => item.dia === dia && item.responsavel_id === corretor.responsavel_id);
+      const valores = semanas.map((semana) => {
+        const ponto = serieSemanal.find((item) => item.semana_inicio === semana.semana_inicio && item.responsavel_id === corretor.responsavel_id);
         return ponto ? percentual(ponto.crm_desatualizado, ponto.conta_dias_exigiveis) : "—";
       });
       return [corretor.corretor_nome, ...valores];
     });
     const larguraNome = 38;
-    const larguraDia = (CONTENT_W - larguraNome) / Math.max(1, ultimasDatas.length);
-    tabela(["Corretor", ...ultimasDatas.map((dia) => dia.slice(5).split("-").reverse().join("/"))], linhas, [larguraNome, ...ultimasDatas.map(() => larguraDia)]);
+    const larguraSemana = (CONTENT_W - larguraNome) / Math.max(1, semanas.length);
+    tabela(["Corretor", ...semanas.map((semana) => rotuloSemana(semana))], linhas, [larguraNome, ...semanas.map(() => larguraSemana)]);
   }
   y += 3;
 
