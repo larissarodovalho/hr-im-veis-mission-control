@@ -14,7 +14,7 @@ export const GRUPOS_ACOMPANHAMENTO: Array<{ titulo: string; texto: string }> = [
 
 export const CLASSIFICACOES_ACOMPANHAMENTO: Array<{ id: string; label: string; grupo: GrupoAcompanhamento; texto: string }> = [
   { id: "falta_followup", label: "Falta de follow-up", grupo: "falha_processo", texto: "O último contato ultrapassou o prazo máximo definido para a análise." },
-  { id: "crm_desatualizado", label: "CRM atualizado × desatualizado", grupo: "falha_processo", texto: "Desatualizado é a conta que avançou da etapa inicial sem nenhuma interação registrada para comprovar o atendimento. Atualizado é o restante da carteira analisada que não recebeu esse diagnóstico." },
+  { id: "crm_desatualizado", label: "CRM desatualizado", grupo: "falha_processo", texto: "Desatualizado é a conta que avançou da etapa inicial sem nenhuma interação registrada para comprovar o atendimento. Atualizado é o restante da carteira analisada que não recebeu esse diagnóstico." },
   { id: "sem_retorno", label: "Sem retorno", grupo: "desfecho_cliente", texto: "O corretor realizou tentativas, mas o cliente não respondeu." },
   { id: "sem_interesse", label: "Sem interesse", grupo: "desfecho_cliente", texto: "O cliente informou que não deseja seguir com o atendimento." },
   { id: "desqualificado", label: "Desqualificado", grupo: "desfecho_cliente", texto: "O contato não atende aos critérios para continuar no funil comercial." },
@@ -314,13 +314,14 @@ export async function gerarPdfAcompanhamento({ dados, contas, periodo, filtroCor
   tituloSecao("03 · Taxa de incidência", "Cada problema, lado a lado", "Percentual calculado sobre a carteira de cada corretor.");
   CLASSIFICACOES_ACOMPANHAMENTO.forEach((classificacao) => {
     if (classificacao.id === "crm_desatualizado") {
-      garantir(18 + dados.corretores.length * 10);
+      garantir(18);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
       doc.setTextColor(...INK);
-      doc.text(classificacao.label, MARGIN, y);
+      doc.text("CRM atualizado × desatualizado", MARGIN, y);
       y += 5;
       dados.corretores.forEach((corretor) => {
+        garantir(10);
         const status = calcularStatusCrm(corretor.total, corretor.crm_desatualizado);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(7.5);

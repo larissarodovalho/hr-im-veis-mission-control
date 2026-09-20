@@ -523,7 +523,7 @@ export default function AcompanhamentoCorretoresReport() {
           {CLASSIFICACOES.map((cl) => (
             <div key={cl.id} className={`rounded-lg border p-4 space-y-3 ${cl.id === "crm_desatualizado" ? "md:col-span-2 xl:col-span-4" : ""}`}>
               <div>
-                <p className="font-medium">{cl.label}</p>
+                <p className="font-medium">{cl.id === "crm_desatualizado" ? "CRM atualizado × desatualizado" : cl.label}</p>
                 <Badge variant="outline" className={GRUPO_BADGE[cl.grupo]}>{GRUPO_LABEL[cl.grupo]}</Badge>
                 {cl.id === "crm_desatualizado" && (
                   <p className="mt-2 max-w-3xl text-xs leading-relaxed text-muted-foreground">
@@ -533,7 +533,7 @@ export default function AcompanhamentoCorretoresReport() {
               </div>
               {cl.id === "crm_desatualizado" && (
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-600" /> Atualizado</span>
+                  <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-success" /> Atualizado</span>
                   <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-destructive" /> Desatualizado</span>
                 </div>
               )}
@@ -550,11 +550,11 @@ export default function AcompanhamentoCorretoresReport() {
                           <span className="shrink-0 text-xs text-muted-foreground">{c.total} contas</span>
                         </div>
                         <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted" aria-label={`${c.corretor_nome}: ${status.percentualAtualizado.toFixed(1)}% atualizado e ${status.percentualDesatualizado.toFixed(1)}% desatualizado`}>
-                          <div className="h-full bg-emerald-600" style={{ width: `${status.percentualAtualizado}%` }} />
+                          <div className="h-full bg-success" style={{ width: `${status.percentualAtualizado}%` }} />
                           <div className="h-full bg-destructive" style={{ width: `${status.percentualDesatualizado}%` }} />
                         </div>
                         <div className="flex justify-between gap-3 text-xs tabular-nums">
-                          <span className="text-emerald-700">Atualizado {status.percentualAtualizado.toFixed(1)}% · {status.atualizado}</span>
+                          <span className="text-success">Atualizado {status.percentualAtualizado.toFixed(1)}% · {status.atualizado}</span>
                           <span className="text-destructive">Desatualizado {status.percentualDesatualizado.toFixed(1)}% · {status.desatualizado}</span>
                         </div>
                       </div>
