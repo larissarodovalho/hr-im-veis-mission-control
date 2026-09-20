@@ -571,7 +571,7 @@ export default function AcompanhamentoCorretoresReport() {
           <p className="text-xs uppercase tracking-wide text-muted-foreground">03 · Taxa de incidência</p>
           <h3 className="font-semibold text-lg">Cada problema, lado a lado</h3>
           <p className="text-sm text-muted-foreground">
-            Medição por conta-dia exigível em {dadosDiarios?.dias_uteis ?? 0} dias úteis. Cada faixa mostra a constância diária no período.
+            Medição por conta-semana exigível em {semanasUteis} semanas úteis. Cada faixa mostra a constância semanal no período.
           </p>
         </div>
         {erroDiario && (
