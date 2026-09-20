@@ -987,21 +987,19 @@ function GlossarioSecao({ titulo, itens }: { titulo: string; itens: Array<{ titu
   );
 }
 
-function EvolucaoDiaria({ pontos, campo }: { pontos: SerieDiaria[]; campo: string }) {
+function EvolucaoSemanal({ pontos, campo }: { pontos: PontoSemanal[]; campo: string }) {
   if (!pontos.length) return null;
   return (
-    <div className="flex h-6 items-end gap-0.5" aria-label="Evolução por dia útil">
+    <div className="flex h-6 items-end gap-1" aria-label="Evolução por semana">
       {pontos.map((ponto) => {
-        const valor = campo === "crm_desatualizado"
-          ? ponto.crm_desatualizado
-          : Number((ponto as unknown as Record<string, string | number>)[campo] ?? 0);
-        const percentualDia = ponto.conta_dias_exigiveis ? (valor / ponto.conta_dias_exigiveis) * 100 : 0;
+        const valor = Number((ponto as unknown as Record<string, string | number>)[campo] ?? 0);
+        const percentualSemana = ponto.conta_dias_exigiveis ? (valor / ponto.conta_dias_exigiveis) * 100 : 0;
         return (
           <span
-            key={`${ponto.dia}-${campo}`}
-            className={`min-w-1 flex-1 rounded-sm ${percentualDia > 0 ? "bg-destructive/70" : "bg-success/50"}`}
-            style={{ height: `${Math.max(3, percentualDia)}%` }}
-            title={`${fmtDate(ponto.dia)}: ${percentualDia.toFixed(1)}% (${valor}/${ponto.conta_dias_exigiveis})`}
+            key={`${ponto.semana_inicio}-${campo}`}
+            className={`min-w-2 flex-1 rounded-sm ${percentualSemana > 0 ? "bg-destructive/70" : "bg-success/50"}`}
+            style={{ height: `${Math.max(4, percentualSemana)}%` }}
+            title={`${rotuloSemana(ponto)}: ${percentualSemana.toFixed(1)}% (${valor}/${ponto.conta_dias_exigiveis})`}
           />
         );
       })}
