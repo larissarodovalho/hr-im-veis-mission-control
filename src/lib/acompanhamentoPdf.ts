@@ -15,10 +15,10 @@ export const GRUPOS_ACOMPANHAMENTO: Array<{ titulo: string; texto: string }> = [
 export const CLASSIFICACOES_ACOMPANHAMENTO: Array<{ id: string; label: string; grupo: GrupoAcompanhamento; texto: string }> = [
   { id: "falta_followup", label: "Falta de follow-up", grupo: "falha_processo", texto: "O último contato ultrapassou o prazo máximo definido para a análise." },
   { id: "crm_desatualizado", label: "CRM desatualizado", grupo: "falha_processo", texto: "Indica uma conta exigível sem registro suficiente dentro do prazo. A verificação é feita a cada dia útil e somada no período; atualizado e desatualizado fecham 100% da base exigível." },
-  { id: "sem_retorno", label: "Sem retorno", grupo: "desfecho_cliente", texto: "O corretor realizou tentativas, mas o cliente não respondeu." },
-  { id: "sem_interesse", label: "Sem interesse", grupo: "desfecho_cliente", texto: "O cliente informou que não deseja seguir com o atendimento." },
-  { id: "desqualificado", label: "Desqualificado", grupo: "desfecho_cliente", texto: "O contato não atende aos critérios para continuar no funil comercial." },
-  { id: "encerrado", label: "Encerrado", grupo: "desfecho_cliente", texto: "O atendimento foi finalizado por outro motivo registrado no CRM." },
+  { id: "sem_retorno", label: "Sem retorno", grupo: "desfecho_cliente", texto: "Conta movida para a etapa Sem retorno: houve tentativas e o cliente não respondeu. Contada uma vez, no dia em que o desfecho foi registrado." },
+  { id: "sem_interesse", label: "Sem interesse", grupo: "desfecho_cliente", texto: "Conta encerrada ou desclassificada com motivo de desistência do cliente. Contada uma vez, no dia do registro." },
+  { id: "desqualificado", label: "Desqualificado", grupo: "desfecho_cliente", texto: "Conta desclassificada por não atender aos critérios do funil comercial. Contada uma vez, no dia da desclassificação." },
+  { id: "encerrado", label: "Encerrado", grupo: "desfecho_cliente", texto: "Conta cancelada ou movida para Contato cancelado por outro motivo registrado no CRM. Contada uma vez, no dia do encerramento." },
   { id: "virando_oportunidade", label: "Oportunidade criada", grupo: "em_jogo", texto: "Existe uma Oportunidade realmente vinculada a esta conta." },
   { id: "oportunidade_futura", label: "Oportunidade futura", grupo: "em_jogo", texto: "A conta foi reservada para uma oportunidade futura, mas ainda não possui Oportunidade criada." },
   { id: "ciclo_andamento", label: "Ciclo em andamento", grupo: "em_jogo", texto: "O atendimento permanece ativo e dentro do prazo esperado entre contatos." },
@@ -28,7 +28,7 @@ export const CLASSIFICACOES_ACOMPANHAMENTO: Array<{ id: string; label: string; g
 export const TERMOS_ACOMPANHAMENTO: Array<{ titulo: string; texto: string }> = [
   { titulo: "Período analisado", texto: "Intervalo escolhido no topo da página, no fuso de Cuiabá. A incidência considera somente os dias úteis já decorridos dentro desse intervalo." },
   { titulo: "Dia útil", texto: "Segunda a sexta dentro do período. Fins de semana não entram na medição." },
-  { titulo: "Ocorrência exigível", texto: "Cada dia útil em que uma conta precisava de contato ou atualização por prazo, tarefa ou próxima ação. A mesma conta pode gerar ocorrências em vários dias do período." },
+  { titulo: "Ocorrência exigível", texto: "Cada dia útil em que uma conta precisava de contato ou atualização por prazo, tarefa ou próxima ação. A mesma conta pode gerar ocorrências em vários dias do período. Os desfechos (sem retorno, sem interesse, desqualificado e encerrado) entram apenas uma vez, no dia em que foram registrados, e não pesam nas barras de CRM e follow-up." },
 
   { titulo: "Prazo máximo entre contatos (dias)", texto: "Quantidade máxima de dias aceita entre um contato e o seguinte. Ao ultrapassá-la, uma conta ativa pode ser diagnosticada como falta de follow-up." },
   { titulo: "Diagnóstico", texto: "Leitura automática do CRM com base em interações, tarefas, etapa do funil e motivo de encerramento." },
@@ -64,6 +64,7 @@ interface LinhaDiariaCorretorPdf {
   corretor_nome: string;
   conta_dias_exigiveis: number;
   contas_exigiveis: number;
+  crm_base?: number;
   crm_atualizado: number;
   crm_desatualizado: number;
   falta_followup: number;
@@ -177,6 +178,9 @@ export const calcularStatusCrm = (total: number, desatualizado: number) => {
   };
 };
 const classificacaoLabel = (id: string) => CLASSIFICACOES_ACOMPANHAMENTO.find((item) => item.id === id)?.label ?? id;
+
+/** Desfechos são contados uma vez por cliente: a base é o número de contas, não de ocorrências. */
+const DESFECHOS_POR_CONTA_PDF = new Set(["sem_retorno", "sem_interesse", "desqualificado", "encerrado"]);
 
 const CAMPOS_SEMANA = [
   "conta_dias_exigiveis",
@@ -474,12 +478,13 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
       doc.text(crm ? "CRM atualizado × desatualizado" : "Follow-up feito × não feito", MARGIN, y);
       y += 5;
       corretoresIncidencia.forEach((corretor) => {
+        const baseCrm = corretor.crm_base ?? corretor.conta_dias_exigiveis;
         const problema = crm
-          ? calcularStatusCrm(corretor.conta_dias_exigiveis, corretor.crm_desatualizado).desatualizado
+          ? calcularStatusCrm(baseCrm, corretor.crm_desatualizado).desatualizado
           : corretor.falta_followup;
         barraGeralPdf(
           corretor.corretor_nome,
-          corretor.conta_dias_exigiveis,
+          baseCrm,
           problema,
           crm ? "Atualizado" : "Follow-up feito",
           crm ? "Desatualizado" : "Não feito",
@@ -501,7 +506,9 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
     doc.setTextColor(...MUTED);
     const incidencias = corretoresIncidencia.map((corretor) => {
       const qtd = Number((corretor as unknown as Record<string, string | number | null>)[classificacao.id] ?? 0);
-      return `${corretor.corretor_nome}: ${percentual(qtd, corretor.conta_dias_exigiveis)} (${qtd} ocorrências)`;
+      const porConta = DESFECHOS_POR_CONTA_PDF.has(classificacao.id);
+      const base = porConta ? corretor.contas_exigiveis : corretor.conta_dias_exigiveis;
+      return `${corretor.corretor_nome}: ${percentual(qtd, base)} (${qtd} ${porConta ? `de ${base} clientes` : "ocorrências"})`;
     });
     const linhas = doc.splitTextToSize(incidencias.join("  ·  ") || "Sem contas no período.", CONTENT_W) as string[];
     doc.text(linhas, MARGIN, y + 4, { lineHeightFactor: 1.3 });

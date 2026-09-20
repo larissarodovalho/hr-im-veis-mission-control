@@ -83,6 +83,7 @@ interface LinhaDiariaCorretor {
   corretor_nome: string;
   conta_dias_exigiveis: number;
   contas_exigiveis: number;
+  crm_base?: number;
   crm_atualizado: number;
   crm_desatualizado: number;
   falta_followup: number;
@@ -175,6 +176,9 @@ interface Dados {
 }
 
 const pct = (parte: number, total: number) => (total ? `${((parte / total) * 100).toFixed(1)}%` : "0,0%");
+
+/** Desfechos são contados uma vez por cliente: a base é o número de contas, não de ocorrências. */
+const DESFECHOS_POR_CONTA = new Set(["sem_retorno", "sem_interesse", "desqualificado", "encerrado"]);
 
 const baixarCSV = (linhas: Record<string, unknown>[], nome: string) => {
   const csv = Papa.unparse(linhas);
@@ -483,10 +487,11 @@ export default function AcompanhamentoCorretoresReport() {
                    "Contas exigíveis": c.contas_exigiveis,
                    "Dias úteis com exigência": diasUteis,
                    "Ocorrências exigíveis": c.conta_dias_exigiveis,
+                   "Base de CRM/follow-up": c.crm_base ?? c.conta_dias_exigiveis,
                    "CRM atualizado — ocorrências": c.crm_atualizado,
-                   "CRM atualizado — %": pct(c.crm_atualizado, c.conta_dias_exigiveis),
+                   "CRM atualizado — %": pct(c.crm_atualizado, c.crm_base ?? c.conta_dias_exigiveis),
                    "CRM desatualizado — ocorrências": c.crm_desatualizado,
-                   "CRM desatualizado — %": pct(c.crm_desatualizado, c.conta_dias_exigiveis),
+                   "CRM desatualizado — %": pct(c.crm_desatualizado, c.crm_base ?? c.conta_dias_exigiveis),
                    "Falta de follow-up — ocorrências": c.falta_followup,
                    "Sem retorno — ocorrências": c.sem_retorno,
                    "Sem interesse — ocorrências": c.sem_interesse,
@@ -569,6 +574,7 @@ export default function AcompanhamentoCorretoresReport() {
           <h3 className="font-semibold text-lg">Cada problema, lado a lado</h3>
           <p className="text-sm text-muted-foreground">
             Leitura geral do período filtrado: cada barra mostra o total de ocorrências exigíveis de cada corretor e quanto disso ficou em dia ou em atraso.
+            Sem retorno, sem interesse, desqualificado e encerrado são contados uma vez por cliente, no dia em que o desfecho foi registrado.
           </p>
 
         </div>
@@ -613,14 +619,16 @@ export default function AcompanhamentoCorretoresReport() {
               <div className={cl.id === "crm_desatualizado" || cl.id === "falta_followup" ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : "space-y-2"}>
                 {corretoresDiarios.map((c) => {
                   const qtd = (c as unknown as Record<string, number>)[cl.id] ?? 0;
-                  const perc = c.conta_dias_exigiveis ? (qtd / c.conta_dias_exigiveis) * 100 : 0;
+                  const base = DESFECHOS_POR_CONTA.has(cl.id) ? c.contas_exigiveis : c.conta_dias_exigiveis;
+                  const perc = base ? (qtd / base) * 100 : 0;
+                  const baseCrm = c.crm_base ?? c.conta_dias_exigiveis;
                   if (cl.id === "crm_desatualizado") {
-                    const status = calcularStatusCrm(c.conta_dias_exigiveis, c.crm_desatualizado);
+                    const status = calcularStatusCrm(baseCrm, c.crm_desatualizado);
                     return (
                       <BarraGeral
                         key={c.corretor_nome}
                         nome={c.corretor_nome}
-                        total={c.conta_dias_exigiveis}
+                        total={baseCrm}
                         problema={status.desatualizado}
                         rotuloOk="Atualizado"
                         rotuloProblema="Desatualizado"
@@ -632,7 +640,7 @@ export default function AcompanhamentoCorretoresReport() {
                       <BarraGeral
                         key={c.corretor_nome}
                         nome={c.corretor_nome}
-                        total={c.conta_dias_exigiveis}
+                        total={baseCrm}
                         problema={qtd}
                         rotuloOk="Follow-up feito"
                         rotuloProblema="Não feito"
@@ -645,7 +653,10 @@ export default function AcompanhamentoCorretoresReport() {
                       <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
                         <div className="h-full bg-primary" style={{ width: `${perc}%` }} />
                       </div>
-                      <span className="tabular-nums text-xs w-24 text-right">{perc.toFixed(1)}% · {qtd}</span>
+                      <span className="tabular-nums text-xs w-32 text-right">
+                        {perc.toFixed(1)}% · {qtd}
+                        {DESFECHOS_POR_CONTA.has(cl.id) ? `/${c.contas_exigiveis}` : ""}
+                      </span>
                     </div>
                   );
                 })}
