@@ -494,7 +494,9 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
         doc.setFillColor(...RED);
         doc.rect(MARGIN + 42 + (CONTENT_W - 42) * status.percentualAtualizado / 100, y - 2.5, (CONTENT_W - 42) * status.percentualDesatualizado / 100, 3, "F");
         doc.text(`Atualizado ${percentual(status.atualizado, corretor.conta_dias_exigiveis)} (${status.atualizado}) · Desatualizado ${percentual(status.desatualizado, corretor.conta_dias_exigiveis)} (${status.desatualizado})`, MARGIN + 42, y + 4);
-        y += 10;
+        y += 8;
+        barrasSemanaisPdf(corretor.responsavel_id, "crm_desatualizado", "Atualizado", "Desatualizado");
+        y += 2;
       });
       if (!corretoresIncidencia.length) {
         texto("Sem contas exigíveis nas semanas úteis do período.", CONTENT_W, 7.5);
@@ -517,6 +519,17 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
     const linhas = doc.splitTextToSize(incidencias.join("  ·  ") || "Sem contas no período.", CONTENT_W) as string[];
     doc.text(linhas, MARGIN, y + 4, { lineHeightFactor: 1.3 });
     y += 6 + linhas.length * 3.5;
+    if (classificacao.id === "falta_followup") {
+      corretoresIncidencia.forEach((corretor) => {
+        garantir(6);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.5);
+        doc.setTextColor(...MUTED);
+        doc.text(corretor.corretor_nome, MARGIN, y);
+        y += 4;
+        barrasSemanaisPdf(corretor.responsavel_id, "falta_followup", "Feito", "Não feito");
+      });
+    }
   });
   if (serieSemanal.length) {
     garantir(18);
