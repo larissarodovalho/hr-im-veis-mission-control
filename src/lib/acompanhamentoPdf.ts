@@ -14,7 +14,7 @@ export const GRUPOS_ACOMPANHAMENTO: Array<{ titulo: string; texto: string }> = [
 
 export const CLASSIFICACOES_ACOMPANHAMENTO: Array<{ id: string; label: string; grupo: GrupoAcompanhamento; texto: string }> = [
   { id: "falta_followup", label: "Falta de follow-up", grupo: "falha_processo", texto: "O último contato ultrapassou o prazo máximo definido para a análise." },
-  { id: "crm_desatualizado", label: "CRM desatualizado", grupo: "falha_processo", texto: "Indica uma conta exigível sem registro suficiente dentro do prazo. A verificação é feita a cada dia útil e os resultados são somados por semana; atualizado e desatualizado fecham 100% da base exigível." },
+  { id: "crm_desatualizado", label: "CRM desatualizado", grupo: "falha_processo", texto: "Indica uma conta exigível sem registro suficiente dentro do prazo. A verificação é feita a cada dia útil e somada no período; atualizado e desatualizado fecham 100% da base exigível." },
   { id: "sem_retorno", label: "Sem retorno", grupo: "desfecho_cliente", texto: "O corretor realizou tentativas, mas o cliente não respondeu." },
   { id: "sem_interesse", label: "Sem interesse", grupo: "desfecho_cliente", texto: "O cliente informou que não deseja seguir com o atendimento." },
   { id: "desqualificado", label: "Desqualificado", grupo: "desfecho_cliente", texto: "O contato não atende aos critérios para continuar no funil comercial." },
@@ -26,9 +26,10 @@ export const CLASSIFICACOES_ACOMPANHAMENTO: Array<{ id: string; label: string; g
 ];
 
 export const TERMOS_ACOMPANHAMENTO: Array<{ titulo: string; texto: string }> = [
-  { titulo: "Período analisado", texto: "Intervalo escolhido no topo da página, no fuso de Cuiabá. A incidência considera somente os dias úteis já decorridos, agrupados por semana." },
-  { titulo: "Semana útil", texto: "Bloco de segunda a sexta dentro do período. Semanas parciais no início e no fim entram com os dias que existem." },
-  { titulo: "Conta-semana exigível", texto: "Soma, dentro da semana, das contas que em cada dia útil precisavam de contato ou atualização por prazo, tarefa ou próxima ação. A mesma conta pode ser contada em mais de um dia da semana." },
+  { titulo: "Período analisado", texto: "Intervalo escolhido no topo da página, no fuso de Cuiabá. A incidência considera somente os dias úteis já decorridos dentro desse intervalo." },
+  { titulo: "Dia útil", texto: "Segunda a sexta dentro do período. Fins de semana não entram na medição." },
+  { titulo: "Ocorrência exigível", texto: "Cada dia útil em que uma conta precisava de contato ou atualização por prazo, tarefa ou próxima ação. A mesma conta pode gerar ocorrências em vários dias do período." },
+
   { titulo: "Prazo máximo entre contatos (dias)", texto: "Quantidade máxima de dias aceita entre um contato e o seguinte. Ao ultrapassá-la, uma conta ativa pode ser diagnosticada como falta de follow-up." },
   { titulo: "Diagnóstico", texto: "Leitura automática do CRM com base em interações, tarefas, etapa do funil e motivo de encerramento." },
   { titulo: "Triagem", texto: "Etapa inicial em que o lead é avaliado antes de seguir para a carteira de um corretor." },
@@ -39,7 +40,7 @@ export const TERMOS_ACOMPANHAMENTO: Array<{ titulo: string; texto: string }> = [
   { titulo: "Travados por follow-up", texto: "Contas cujo atendimento ultrapassou o prazo máximo definido sem novo contato registrado." },
   { titulo: "Proporção travada", texto: "Percentual da carteira do corretor classificado como falha de processo." },
   { titulo: "Dias médios parado", texto: "Média de dias sem contato entre as contas classificadas como falha de processo." },
-  { titulo: "Taxa de incidência", texto: "Em cada caixinha, mostra quantas ocorrências exigíveis receberam aquela classificação e qual percentual representam no período. A evolução é exibida por semana e, em CRM, verde e vermelho fecham 100% da base exigível." },
+  { titulo: "Taxa de incidência", texto: "Em cada caixinha, mostra quantas ocorrências exigíveis receberam aquela classificação e qual percentual representam no período inteiro. Em CRM e follow-up, verde e vermelho fecham 100% da base exigível." },
   { titulo: "Base HR Imóveis", texto: "Contas que pertenciam originalmente à base da gestão da HR Imóveis, mesmo que depois tenham sido distribuídas a um corretor." },
   { titulo: "Marketing", texto: "Contas e leads captados pelos canais de marketing da HR Imóveis." },
   { titulo: "Carteira própria do corretor", texto: "Contas cujo dono original é o próprio corretor, independentemente de quem seja o responsável atual." },
@@ -440,66 +441,52 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
   );
 
   const corretoresIncidencia = dadosDiarios?.corretores ?? [];
-  const serieSemanal = agruparSeriePorSemana(dadosDiarios?.serie ?? []);
-  const semanasUteis = contarSemanasUteis(dadosDiarios?.serie ?? []);
+  const diasUteis = new Set((dadosDiarios?.serie ?? []).map((item) => item.dia)).size;
 
-  /** Barras semanais empilhadas (verde = ok, vermelho = problema) com percentuais escritos. */
-  const barrasSemanaisPdf = (responsavelId: string | null, campoProblema: "crm_desatualizado" | "falta_followup", rotuloOk: string, rotuloProblema: string) => {
-    const pontos = serieSemanal.filter((ponto) => ponto.responsavel_id === responsavelId).slice(-10);
-    if (!pontos.length) return;
-    const alturaBarra = 4;
-    const alturaBloco = alturaBarra + 9;
-    garantir(alturaBloco + 2);
-    const larguraSemana = (CONTENT_W - 42) / pontos.length;
-    pontos.forEach((ponto, indice) => {
-      const total = ponto.conta_dias_exigiveis;
-      const problema = Math.min(total, Math.max(0, Number(ponto[campoProblema] ?? 0)));
-      const percOk = total ? ((total - problema) / total) * 100 : 0;
-      const percProblema = total ? (problema / total) * 100 : 0;
-      const x = MARGIN + 42 + indice * larguraSemana;
-      doc.setFillColor(...GREEN);
-      doc.rect(x, y, larguraSemana * percOk / 100, alturaBarra, "F");
-      doc.setFillColor(...RED);
-      doc.rect(x + larguraSemana * percOk / 100, y, larguraSemana * percProblema / 100, alturaBarra, "F");
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(5.8);
-      doc.setTextColor(...INK);
-      doc.text(`${percOk.toFixed(0)}% ${rotuloOk.toLowerCase()}`, x, y + alturaBarra + 2.6);
-      doc.setTextColor(...RED);
-      doc.text(`${percProblema.toFixed(0)}% ${rotuloProblema.toLowerCase()}`, x, y + alturaBarra + 5.4);
-      doc.setTextColor(...MUTED);
-      doc.text(rotuloSemana(ponto), x, y + alturaBarra + 8.2);
-    });
-    y += alturaBloco + 2;
+  /** Barra geral do período (verde = ok, vermelho = problema) com percentuais escritos. */
+  const barraGeralPdf = (nome: string, total: number, problemaBruto: number, rotuloOk: string, rotuloProblema: string) => {
+    garantir(10);
+    const problema = Math.min(total, Math.max(0, problemaBruto));
+    const ok = total - problema;
+    const percOk = total ? (ok / total) * 100 : 0;
+    const percProblema = total ? (problema / total) * 100 : 0;
+    const largura = CONTENT_W - 42;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...MUTED);
+    doc.text(nome, MARGIN, y);
+    doc.setFillColor(...GREEN);
+    doc.rect(MARGIN + 42, y - 2.5, largura * percOk / 100, 3, "F");
+    doc.setFillColor(...RED);
+    doc.rect(MARGIN + 42 + largura * percOk / 100, y - 2.5, largura * percProblema / 100, 3, "F");
+    doc.text(`${rotuloOk} ${percOk.toFixed(1)}% (${ok}) · ${rotuloProblema} ${percProblema.toFixed(1)}% (${problema})`, MARGIN + 42, y + 4);
+    y += 9;
   };
 
-  tituloSecao("03 · Taxa de incidência", "Cada problema, lado a lado", `Medição em conta-semana exigível · ${semanasUteis} semanas úteis no período.`);
+  tituloSecao("03 · Taxa de incidência", "Cada problema, lado a lado", `Leitura geral do período · ${diasUteis} dias úteis apurados.`);
   CLASSIFICACOES_ACOMPANHAMENTO.forEach((classificacao) => {
-    if (classificacao.id === "crm_desatualizado") {
+    if (classificacao.id === "crm_desatualizado" || classificacao.id === "falta_followup") {
+      const crm = classificacao.id === "crm_desatualizado";
       garantir(18);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
       doc.setTextColor(...INK);
-      doc.text("CRM atualizado × desatualizado", MARGIN, y);
+      doc.text(crm ? "CRM atualizado × desatualizado" : "Follow-up feito × não feito", MARGIN, y);
       y += 5;
       corretoresIncidencia.forEach((corretor) => {
-        garantir(10);
-        const status = calcularStatusCrm(corretor.conta_dias_exigiveis, corretor.crm_desatualizado);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(7.5);
-        doc.setTextColor(...MUTED);
-        doc.text(corretor.corretor_nome, MARGIN, y);
-        doc.setFillColor(...GREEN);
-        doc.rect(MARGIN + 42, y - 2.5, (CONTENT_W - 42) * status.percentualAtualizado / 100, 3, "F");
-        doc.setFillColor(...RED);
-        doc.rect(MARGIN + 42 + (CONTENT_W - 42) * status.percentualAtualizado / 100, y - 2.5, (CONTENT_W - 42) * status.percentualDesatualizado / 100, 3, "F");
-        doc.text(`Atualizado ${percentual(status.atualizado, corretor.conta_dias_exigiveis)} (${status.atualizado}) · Desatualizado ${percentual(status.desatualizado, corretor.conta_dias_exigiveis)} (${status.desatualizado})`, MARGIN + 42, y + 4);
-        y += 8;
-        barrasSemanaisPdf(corretor.responsavel_id, "crm_desatualizado", "Atualizado", "Desatualizado");
-        y += 2;
+        const problema = crm
+          ? calcularStatusCrm(corretor.conta_dias_exigiveis, corretor.crm_desatualizado).desatualizado
+          : corretor.falta_followup;
+        barraGeralPdf(
+          corretor.corretor_nome,
+          corretor.conta_dias_exigiveis,
+          problema,
+          crm ? "Atualizado" : "Follow-up feito",
+          crm ? "Desatualizado" : "Não feito",
+        );
       });
       if (!corretoresIncidencia.length) {
-        texto("Sem contas exigíveis nas semanas úteis do período.", CONTENT_W, 7.5);
+        texto("Sem contas exigíveis no período.", CONTENT_W, 7.5);
       }
       y += 2;
       return;
@@ -514,45 +501,14 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
     doc.setTextColor(...MUTED);
     const incidencias = corretoresIncidencia.map((corretor) => {
       const qtd = Number((corretor as unknown as Record<string, string | number | null>)[classificacao.id] ?? 0);
-      return `${corretor.corretor_nome}: ${percentual(qtd, corretor.conta_dias_exigiveis)} (${qtd} conta-dias)`;
+      return `${corretor.corretor_nome}: ${percentual(qtd, corretor.conta_dias_exigiveis)} (${qtd} ocorrências)`;
     });
     const linhas = doc.splitTextToSize(incidencias.join("  ·  ") || "Sem contas no período.", CONTENT_W) as string[];
     doc.text(linhas, MARGIN, y + 4, { lineHeightFactor: 1.3 });
     y += 6 + linhas.length * 3.5;
-    if (classificacao.id === "falta_followup") {
-      corretoresIncidencia.forEach((corretor) => {
-        garantir(6);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(7.5);
-        doc.setTextColor(...MUTED);
-        doc.text(corretor.corretor_nome, MARGIN, y);
-        y += 4;
-        barrasSemanaisPdf(corretor.responsavel_id, "falta_followup", "Feito", "Não feito");
-      });
-    }
   });
-  if (serieSemanal.length) {
-    garantir(18);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(...INK);
-    doc.text("Evolução semanal — CRM desatualizado", MARGIN, y);
-    y += 5;
-    const semanas = Array.from(new Map(serieSemanal.map((item) => [item.semana_inicio, item])).values())
-      .sort((a, b) => a.semana_inicio.localeCompare(b.semana_inicio))
-      .slice(-8);
-    const linhas = corretoresIncidencia.map((corretor) => {
-      const valores = semanas.map((semana) => {
-        const ponto = serieSemanal.find((item) => item.semana_inicio === semana.semana_inicio && item.responsavel_id === corretor.responsavel_id);
-        return ponto ? percentual(ponto.crm_desatualizado, ponto.conta_dias_exigiveis) : "—";
-      });
-      return [corretor.corretor_nome, ...valores];
-    });
-    const larguraNome = 38;
-    const larguraSemana = (CONTENT_W - larguraNome) / Math.max(1, semanas.length);
-    tabela(["Corretor", ...semanas.map((semana) => rotuloSemana(semana))], linhas, [larguraNome, ...semanas.map(() => larguraSemana)]);
-  }
   y += 3;
+
 
   const piorCorretor = [...dados.corretores].sort((a, b) => b.falha_processo / (b.total || 1) - a.falha_processo / (a.total || 1))[0];
   tituloSecao("04 · O que fazer", "Três leituras");

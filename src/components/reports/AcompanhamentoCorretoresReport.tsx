@@ -23,14 +23,11 @@ import {
   CLASSIFICACOES_ACOMPANHAMENTO,
   GRUPOS_ACOMPANHAMENTO,
   TERMOS_ACOMPANHAMENTO,
-  type PontoSemanal,
-  agruparSeriePorSemana,
   calcularStatusCrm,
-  contarSemanasUteis,
   gerarPdfAcompanhamento,
   gerarPdfContasSelecionadas,
-  rotuloSemana,
 } from "@/lib/acompanhamentoPdf";
+
 
 type Grupo = "falha_processo" | "desfecho_cliente" | "em_jogo" | "revisao";
 type OrigemCarteira = "base_hr" | "marketing" | "carteira_propria";
@@ -341,8 +338,8 @@ export default function AcompanhamentoCorretoresReport() {
   const corretores = dados.corretores;
   const corretoresDiarios = dadosDiarios?.corretores ?? [];
   const serieDiaria = dadosDiarios?.serie ?? [];
-  const serieSemanal = agruparSeriePorSemana(serieDiaria);
-  const semanasUteis = contarSemanasUteis(serieDiaria);
+  const diasUteis = new Set(serieDiaria.map((item) => item.dia)).size;
+
   const piorCorretor = [...corretores].sort(
     (a, b) => b.falha_processo / (b.total || 1) - a.falha_processo / (a.total || 1)
   )[0];
@@ -484,7 +481,7 @@ export default function AcompanhamentoCorretoresReport() {
                  corretoresDiarios.map((c) => ({
                    Corretor: c.corretor_nome,
                    "Contas exigíveis": c.contas_exigiveis,
-                   "Semanas úteis com exigência": serieSemanal.filter((s) => s.responsavel_id === c.responsavel_id).length,
+                   "Dias úteis com exigência": diasUteis,
                    "Ocorrências exigíveis": c.conta_dias_exigiveis,
                    "CRM atualizado — ocorrências": c.crm_atualizado,
                    "CRM atualizado — %": pct(c.crm_atualizado, c.conta_dias_exigiveis),
@@ -571,15 +568,16 @@ export default function AcompanhamentoCorretoresReport() {
           <p className="text-xs uppercase tracking-wide text-muted-foreground">03 · Taxa de incidência</p>
           <h3 className="font-semibold text-lg">Cada problema, lado a lado</h3>
           <p className="text-sm text-muted-foreground">
-            Medição por conta-semana exigível em {semanasUteis} semanas úteis. Cada faixa mostra a constância semanal no período.
+            Leitura geral do período filtrado: cada barra mostra o total de ocorrências exigíveis de cada corretor e quanto disso ficou em dia ou em atraso.
           </p>
+
         </div>
         {erroDiario && (
           <div className="flex flex-col gap-3 rounded-md border border-destructive/30 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-2">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
               <div>
-                <p className="text-sm font-medium">Não foi possível calcular a produtividade semanal.</p>
+                <p className="text-sm font-medium">Não foi possível calcular a produtividade do período.</p>
                 <p className="text-xs text-muted-foreground">Os quadros abaixo não representam zero ocorrências. Tente carregar novamente.</p>
               </div>
             </div>
@@ -595,65 +593,64 @@ export default function AcompanhamentoCorretoresReport() {
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
           {CLASSIFICACOES.map((cl) => (
-            <div key={cl.id} className={`rounded-lg border p-4 space-y-3 ${cl.id === "crm_desatualizado" ? "md:col-span-2 xl:col-span-4" : ""}`}>
+            <div key={cl.id} className={`rounded-lg border p-4 space-y-3 ${cl.id === "crm_desatualizado" || cl.id === "falta_followup" ? "md:col-span-2 xl:col-span-4" : ""}`}>
               <div>
-                <p className="font-medium">{cl.id === "crm_desatualizado" ? "CRM atualizado × desatualizado" : cl.label}</p>
+                <p className="font-medium">{cl.id === "crm_desatualizado" ? "CRM atualizado × desatualizado" : cl.id === "falta_followup" ? "Follow-up feito × não feito" : cl.label}</p>
                 <Badge variant="outline" className={GRUPO_BADGE[cl.grupo]}>{GRUPO_LABEL[cl.grupo]}</Badge>
-                {cl.id === "crm_desatualizado" && (
+                {(cl.id === "crm_desatualizado" || cl.id === "falta_followup") && (
                   <p className="mt-2 max-w-3xl text-xs leading-relaxed text-muted-foreground">
-                    Em cada dia útil, entram apenas as contas que exigiam contato ou atualização. Verde e vermelho fecham 100% dos conta-dias exigíveis.
+                    Entram apenas as ocorrências em que a conta exigia contato ou atualização no período. Verde e vermelho fecham 100%.
                   </p>
                 )}
               </div>
-              {cl.id === "crm_desatualizado" && (
+              {(cl.id === "crm_desatualizado" || cl.id === "falta_followup") && (
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-success" /> Atualizado</span>
-                  <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-destructive" /> Desatualizado</span>
+                  <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-success" /> {cl.id === "crm_desatualizado" ? "Atualizado" : "Follow-up feito"}</span>
+                  <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-destructive" /> {cl.id === "crm_desatualizado" ? "Desatualizado" : "Não feito"}</span>
                 </div>
               )}
-              <div className={cl.id === "crm_desatualizado" ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : "space-y-1"}>
+
+              <div className={cl.id === "crm_desatualizado" || cl.id === "falta_followup" ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : "space-y-2"}>
                 {corretoresDiarios.map((c) => {
                   const qtd = (c as unknown as Record<string, number>)[cl.id] ?? 0;
                   const perc = c.conta_dias_exigiveis ? (qtd / c.conta_dias_exigiveis) * 100 : 0;
-                  const pontos = serieSemanal.filter((semana) => semana.responsavel_id === c.responsavel_id);
                   if (cl.id === "crm_desatualizado") {
                     const status = calcularStatusCrm(c.conta_dias_exigiveis, c.crm_desatualizado);
                     return (
-                      <div key={c.corretor_nome} className="space-y-1.5">
-                        <div className="flex items-center justify-between gap-3 text-sm">
-                          <span className="truncate font-medium">{c.corretor_nome}</span>
-                          <span className="shrink-0 text-xs text-muted-foreground">{c.conta_dias_exigiveis} ocorrências exigíveis</span>
-                        </div>
-                        <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted" aria-label={`${c.corretor_nome}: ${status.percentualAtualizado.toFixed(1)}% atualizado e ${status.percentualDesatualizado.toFixed(1)}% desatualizado`}>
-                          <div className="h-full bg-success" style={{ width: `${status.percentualAtualizado}%` }} />
-                          <div className="h-full bg-destructive" style={{ width: `${status.percentualDesatualizado}%` }} />
-                        </div>
-                        <div className="flex justify-between gap-3 text-xs tabular-nums">
-                          <span className="text-success">Atualizado {status.percentualAtualizado.toFixed(1)}% · {status.atualizado}</span>
-                          <span className="text-destructive">Desatualizado {status.percentualDesatualizado.toFixed(1)}% · {status.desatualizado}</span>
-                        </div>
-                        <BarrasSemanais pontos={pontos} campoProblema="crm_desatualizado" rotuloOk="Atualizado" rotuloProblema="Desatualizado" />
-                      </div>
+                      <BarraGeral
+                        key={c.corretor_nome}
+                        nome={c.corretor_nome}
+                        total={c.conta_dias_exigiveis}
+                        problema={status.desatualizado}
+                        rotuloOk="Atualizado"
+                        rotuloProblema="Desatualizado"
+                      />
+                    );
+                  }
+                  if (cl.id === "falta_followup") {
+                    return (
+                      <BarraGeral
+                        key={c.corretor_nome}
+                        nome={c.corretor_nome}
+                        total={c.conta_dias_exigiveis}
+                        problema={qtd}
+                        rotuloOk="Follow-up feito"
+                        rotuloProblema="Não feito"
+                      />
                     );
                   }
                   return (
-                    <div key={c.corretor_nome} className="space-y-1.5 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="w-28 truncate text-muted-foreground">{c.corretor_nome}</span>
-                        <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
-                          <div className="h-full bg-primary" style={{ width: `${perc}%` }} />
-                        </div>
-                        <span className="tabular-nums text-xs w-24 text-right">{perc.toFixed(1)}% · {qtd}</span>
+                    <div key={c.corretor_nome} className="flex items-center gap-2 text-sm">
+                      <span className="w-28 truncate text-muted-foreground">{c.corretor_nome}</span>
+                      <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full bg-primary" style={{ width: `${perc}%` }} />
                       </div>
-                      {cl.id === "falta_followup" ? (
-                        <BarrasSemanais pontos={pontos} campoProblema="falta_followup" rotuloOk="Feito" rotuloProblema="Não feito" />
-                      ) : (
-                        <EvolucaoSemanal pontos={pontos} campo={cl.id} />
-                      )}
+                      <span className="tabular-nums text-xs w-24 text-right">{perc.toFixed(1)}% · {qtd}</span>
                     </div>
                   );
                 })}
               </div>
+
             </div>
           ))}
         </div>
@@ -991,67 +988,40 @@ function GlossarioSecao({ titulo, itens }: { titulo: string; itens: Array<{ titu
   );
 }
 
-function EvolucaoSemanal({ pontos, campo }: { pontos: PontoSemanal[]; campo: string }) {
-  if (!pontos.length) return null;
+/** Barra geral do período: verde (ok) × vermelho (problema), com percentuais e quantidades escritos. */
+function BarraGeral({ nome, total, problema, rotuloOk, rotuloProblema }: {
+  nome: string;
+  total: number;
+  problema: number;
+  rotuloOk: string;
+  rotuloProblema: string;
+}) {
+  const qtdProblema = Math.min(total, Math.max(0, problema));
+  const qtdOk = total - qtdProblema;
+  const percOk = total ? (qtdOk / total) * 100 : 0;
+  const percProblema = total ? (qtdProblema / total) * 100 : 0;
   return (
-    <div className="flex items-end gap-1" aria-label="Evolução por semana">
-      {pontos.map((ponto) => {
-        const valor = Number((ponto as unknown as Record<string, string | number>)[campo] ?? 0);
-        const percentualSemana = ponto.conta_dias_exigiveis ? (valor / ponto.conta_dias_exigiveis) * 100 : 0;
-        return (
-          <div key={`${ponto.semana_inicio}-${campo}`} className="flex min-w-10 flex-1 flex-col items-center gap-0.5">
-            <span className="text-[10px] tabular-nums text-muted-foreground">{percentualSemana.toFixed(0)}%</span>
-            <span
-              className={`h-6 w-full rounded-sm ${percentualSemana > 0 ? "bg-destructive/70" : "bg-success/50"}`}
-              title={`${rotuloSemana(ponto)}: ${percentualSemana.toFixed(1)}% (${valor}/${ponto.conta_dias_exigiveis})`}
-            />
-            <span className="text-[9px] tabular-nums text-muted-foreground">{rotuloSemana(ponto)}</span>
-          </div>
-        );
-      })}
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className="truncate font-medium">{nome}</span>
+        <span className="shrink-0 text-xs text-muted-foreground">{total} ocorrências exigíveis</span>
+      </div>
+      <div
+        className="flex h-5 w-full overflow-hidden rounded-sm text-[10px] font-medium leading-5"
+        aria-label={`${nome}: ${rotuloOk} ${percOk.toFixed(1)}% e ${rotuloProblema} ${percProblema.toFixed(1)}%`}
+      >
+        <span className="flex h-full items-center justify-center bg-success text-primary-foreground" style={{ width: `${percOk}%` }}>
+          {percOk >= 18 ? `${percOk.toFixed(0)}%` : ""}
+        </span>
+        <span className="flex h-full items-center justify-center bg-destructive text-destructive-foreground" style={{ width: `${percProblema}%` }}>
+          {percProblema >= 18 ? `${percProblema.toFixed(0)}%` : ""}
+        </span>
+      </div>
+      <div className="flex justify-between gap-3 text-xs tabular-nums">
+        <span className="text-success">{rotuloOk} {percOk.toFixed(1)}% · {qtdOk}</span>
+        <span className="text-destructive">{rotuloProblema} {percProblema.toFixed(1)}% · {qtdProblema}</span>
+      </div>
     </div>
   );
 }
 
-/** Barras semanais empilhadas verde/vermelho com percentuais escritos (CRM atualizado × desatualizado, follow-up feito × não feito). */
-function BarrasSemanais({ pontos, campoProblema, rotuloOk, rotuloProblema }: {
-  pontos: PontoSemanal[];
-  campoProblema: "crm_desatualizado" | "falta_followup";
-  rotuloOk: string;
-  rotuloProblema: string;
-}) {
-  const visiveis = pontos.slice(-8);
-  if (!visiveis.length) return null;
-  return (
-    <div className="flex items-end gap-1.5" aria-label={`${rotuloOk} × ${rotuloProblema} por semana`}>
-      {visiveis.map((ponto) => {
-        const total = ponto.conta_dias_exigiveis;
-        const problema = Math.min(total, Math.max(0, Number(ponto[campoProblema] ?? 0)));
-        const ok = total - problema;
-        const percOk = total ? (ok / total) * 100 : 0;
-        const percProblema = total ? (problema / total) * 100 : 0;
-        return (
-          <div key={ponto.semana_inicio} className="flex min-w-14 flex-1 flex-col gap-0.5">
-            <div
-              className="flex h-5 w-full overflow-hidden rounded-sm text-[9px] font-medium leading-5"
-              title={`${rotuloSemana(ponto)}: ${rotuloOk} ${percOk.toFixed(1)}% (${ok}) · ${rotuloProblema} ${percProblema.toFixed(1)}% (${problema})`}
-            >
-              <span className="flex h-full items-center justify-center bg-success text-primary-foreground" style={{ width: `${percOk}%` }}>
-                {percOk >= 25 ? `${percOk.toFixed(0)}%` : ""}
-              </span>
-              <span className="flex h-full items-center justify-center bg-destructive text-destructive-foreground" style={{ width: `${percProblema}%` }}>
-                {percProblema >= 25 ? `${percProblema.toFixed(0)}%` : ""}
-              </span>
-            </div>
-            <div className="flex justify-center gap-1 text-[9px] tabular-nums">
-              <span className="text-success">{percOk.toFixed(0)}%</span>
-              <span className="text-muted-foreground">·</span>
-              <span className="text-destructive">{percProblema.toFixed(0)}%</span>
-            </div>
-            <span className="text-center text-[9px] tabular-nums text-muted-foreground">{rotuloSemana(ponto)}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}

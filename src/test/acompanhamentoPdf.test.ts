@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { agruparSeriePorSemana, calcularStatusCrm, contarSemanasUteis, rotuloSemana } from "@/lib/acompanhamentoPdf";
+import { calcularStatusCrm } from "@/lib/acompanhamentoPdf";
 
 describe("status de atualização do CRM", () => {
   it("fecha a carteira em 100%", () => {
@@ -48,40 +48,30 @@ const dia = (data: string, exigiveis: number, desatualizado: number) => ({
   ciclo_andamento: 0,
 });
 
-describe("agrupamento semanal do acompanhamento", () => {
+describe("leitura geral do período", () => {
   const serie = [
-    dia("2026-09-02", 4, 1), // quarta (semana parcial)
-    dia("2026-09-04", 4, 3), // sexta
-    dia("2026-09-07", 5, 2), // segunda da semana seguinte
+    dia("2026-09-02", 4, 1),
+    dia("2026-09-04", 4, 3),
+    dia("2026-09-07", 5, 2),
   ];
 
-  it("agrupa de segunda a sexta somando os dias", () => {
-    const semanas = agruparSeriePorSemana(serie);
-    expect(semanas).toHaveLength(2);
-    expect(semanas[0].semana_inicio).toBe("2026-08-31");
-    expect(semanas[0].conta_dias_exigiveis).toBe(8);
-    expect(semanas[0].crm_desatualizado).toBe(4);
-    expect(semanas[0].dias).toBe(2);
-    expect(semanas[1].semana_inicio).toBe("2026-09-07");
-    expect(semanas[1].conta_dias_exigiveis).toBe(5);
+  const somar = (campo: "conta_dias_exigiveis" | "crm_desatualizado" | "falta_followup") =>
+    serie.reduce((total, item) => total + item[campo], 0);
+
+  it("fecha 100% nos percentuais gerais de CRM e follow-up", () => {
+    const total = somar("conta_dias_exigiveis");
+    const crm = calcularStatusCrm(total, somar("crm_desatualizado"));
+    expect(crm.atualizado + crm.desatualizado).toBe(total);
+    expect(crm.percentualAtualizado + crm.percentualDesatualizado).toBeCloseTo(100, 5);
+
+    const followup = calcularStatusCrm(total, somar("falta_followup"));
+    expect(followup.atualizado + followup.desatualizado).toBe(total);
+    expect(followup.percentualAtualizado + followup.percentualDesatualizado).toBeCloseTo(100, 5);
   });
 
-  it("fecha atualizado e desatualizado em 100% na semana", () => {
-    const [primeira] = agruparSeriePorSemana(serie);
-    expect(primeira.crm_atualizado + primeira.crm_desatualizado).toBe(primeira.conta_dias_exigiveis);
-  });
-
-  it("fecha 100% nos percentuais das barras semanais de CRM e follow-up", () => {
-    for (const semana of agruparSeriePorSemana(serie)) {
-      const crm = calcularStatusCrm(semana.conta_dias_exigiveis, semana.crm_desatualizado);
-      expect(crm.percentualAtualizado + crm.percentualDesatualizado).toBeCloseTo(100, 5);
-      const followup = calcularStatusCrm(semana.conta_dias_exigiveis, semana.falta_followup);
-      expect(followup.percentualAtualizado + followup.percentualDesatualizado).toBeCloseTo(100, 5);
-    }
-  });
-
-  it("conta semanas úteis distintas e gera rótulo legível", () => {
-    expect(contarSemanasUteis(serie)).toBe(2);
-    expect(rotuloSemana(agruparSeriePorSemana(serie)[0])).toBe("31/08 a 04/09");
+  it("usa o total do período como base das barras", () => {
+    expect(somar("conta_dias_exigiveis")).toBe(13);
+    expect(calcularStatusCrm(13, somar("crm_desatualizado")).desatualizado).toBe(6);
   });
 });
+
