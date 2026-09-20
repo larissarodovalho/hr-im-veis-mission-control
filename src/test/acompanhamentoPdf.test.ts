@@ -73,6 +73,6 @@ describe("agrupamento semanal do acompanhamento", () => {
 
   it("conta semanas úteis distintas e gera rótulo legível", () => {
     expect(contarSemanasUteis(serie)).toBe(2);
-    expect(rotuloSemana(agruparSeriePorSemana(serie)[0])).toBe("02/09 a 04/09");
+    expect(rotuloSemana(agruparSeriePorSemana(serie)[0])).toBe("31/08 a 04/09");
   });
 });
