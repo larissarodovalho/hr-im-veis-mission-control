@@ -465,7 +465,7 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
         y += 10;
       });
       if (!corretoresIncidencia.length) {
-        texto("Sem contas exigíveis nos dias úteis do período.", CONTENT_W, 7.5);
+        texto("Sem contas exigíveis nas semanas úteis do período.", CONTENT_W, 7.5);
       }
       y += 2;
       return;
