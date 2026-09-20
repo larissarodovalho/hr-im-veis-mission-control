@@ -619,7 +619,8 @@ export default function AcompanhamentoCorretoresReport() {
               <div className={cl.id === "crm_desatualizado" || cl.id === "falta_followup" ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : "space-y-2"}>
                 {corretoresDiarios.map((c) => {
                   const qtd = (c as unknown as Record<string, number>)[cl.id] ?? 0;
-                  const perc = c.conta_dias_exigiveis ? (qtd / c.conta_dias_exigiveis) * 100 : 0;
+                  const base = DESFECHOS_POR_CONTA.has(cl.id) ? c.contas_exigiveis : c.conta_dias_exigiveis;
+                  const perc = base ? (qtd / base) * 100 : 0;
                   const baseCrm = c.crm_base ?? c.conta_dias_exigiveis;
                   if (cl.id === "crm_desatualizado") {
                     const status = calcularStatusCrm(baseCrm, c.crm_desatualizado);
