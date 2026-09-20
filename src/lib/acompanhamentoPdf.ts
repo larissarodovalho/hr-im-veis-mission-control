@@ -39,7 +39,7 @@ export const TERMOS_ACOMPANHAMENTO: Array<{ titulo: string; texto: string }> = [
   { titulo: "Travados por follow-up", texto: "Contas cujo atendimento ultrapassou o prazo máximo definido sem novo contato registrado." },
   { titulo: "Proporção travada", texto: "Percentual da carteira do corretor classificado como falha de processo." },
   { titulo: "Dias médios parado", texto: "Média de dias sem contato entre as contas classificadas como falha de processo." },
-  { titulo: "Taxa de incidência", texto: "Em cada caixinha, mostra quantos conta-dias exigíveis receberam aquela classificação e qual percentual representam no período. Em CRM, verde e vermelho fecham 100% da base diária exigível." },
+  { titulo: "Taxa de incidência", texto: "Em cada caixinha, mostra quantas ocorrências exigíveis receberam aquela classificação e qual percentual representam no período. A evolução é exibida por semana e, em CRM, verde e vermelho fecham 100% da base exigível." },
   { titulo: "Base HR Imóveis", texto: "Contas que pertenciam originalmente à base da gestão da HR Imóveis, mesmo que depois tenham sido distribuídas a um corretor." },
   { titulo: "Marketing", texto: "Contas e leads captados pelos canais de marketing da HR Imóveis." },
   { titulo: "Carteira própria do corretor", texto: "Contas cujo dono original é o próprio corretor, independentemente de quem seja o responsável atual." },
