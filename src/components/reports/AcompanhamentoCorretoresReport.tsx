@@ -467,7 +467,7 @@ export default function AcompanhamentoCorretoresReport() {
             <p className="text-xs uppercase tracking-wide text-muted-foreground">02 · Retrato por corretor</p>
             <h3 className="font-semibold text-lg">Quanto de cada carteira travou por processo</h3>
           </div>
-          <Button variant="outline" size="sm" disabled={!corretores.length}
+          <Button variant="outline" size="sm" disabled={!corretoresDiarios.length}
             onClick={() =>
               baixarCSV(
                  corretoresDiarios.map((c) => ({
@@ -571,7 +571,7 @@ export default function AcompanhamentoCorretoresReport() {
                 <Badge variant="outline" className={GRUPO_BADGE[cl.grupo]}>{GRUPO_LABEL[cl.grupo]}</Badge>
                 {cl.id === "crm_desatualizado" && (
                   <p className="mt-2 max-w-3xl text-xs leading-relaxed text-muted-foreground">
-                    Desatualizado: conta que avançou da etapa inicial sem interação registrada. Atualizado: restante da carteira analisada. As duas faixas fecham 100%.
+                    Em cada dia útil, entram apenas as contas que exigiam contato ou atualização. Verde e vermelho fecham 100% dos conta-dias exigíveis.
                   </p>
                 )}
               </div>
