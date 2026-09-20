@@ -571,8 +571,9 @@ export default function AcompanhamentoCorretoresReport() {
           <p className="text-xs uppercase tracking-wide text-muted-foreground">03 · Taxa de incidência</p>
           <h3 className="font-semibold text-lg">Cada problema, lado a lado</h3>
           <p className="text-sm text-muted-foreground">
-            Medição por conta-semana exigível em {semanasUteis} semanas úteis. Cada faixa mostra a constância semanal no período.
+            Leitura geral do período filtrado: cada barra mostra o total de ocorrências exigíveis de cada corretor e quanto disso ficou em dia ou em atraso.
           </p>
+
         </div>
         {erroDiario && (
           <div className="flex flex-col gap-3 rounded-md border border-destructive/30 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between">
