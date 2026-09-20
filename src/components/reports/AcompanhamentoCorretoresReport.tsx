@@ -596,22 +596,23 @@ export default function AcompanhamentoCorretoresReport() {
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
           {CLASSIFICACOES.map((cl) => (
-            <div key={cl.id} className={`rounded-lg border p-4 space-y-3 ${cl.id === "crm_desatualizado" ? "md:col-span-2 xl:col-span-4" : ""}`}>
+            <div key={cl.id} className={`rounded-lg border p-4 space-y-3 ${cl.id === "crm_desatualizado" || cl.id === "falta_followup" ? "md:col-span-2 xl:col-span-4" : ""}`}>
               <div>
-                <p className="font-medium">{cl.id === "crm_desatualizado" ? "CRM atualizado × desatualizado" : cl.label}</p>
+                <p className="font-medium">{cl.id === "crm_desatualizado" ? "CRM atualizado × desatualizado" : cl.id === "falta_followup" ? "Follow-up feito × não feito" : cl.label}</p>
                 <Badge variant="outline" className={GRUPO_BADGE[cl.grupo]}>{GRUPO_LABEL[cl.grupo]}</Badge>
-                {cl.id === "crm_desatualizado" && (
+                {(cl.id === "crm_desatualizado" || cl.id === "falta_followup") && (
                   <p className="mt-2 max-w-3xl text-xs leading-relaxed text-muted-foreground">
-                    Em cada dia útil, entram apenas as contas que exigiam contato ou atualização. Verde e vermelho fecham 100% dos conta-dias exigíveis.
+                    Entram apenas as ocorrências em que a conta exigia contato ou atualização no período. Verde e vermelho fecham 100%.
                   </p>
                 )}
               </div>
-              {cl.id === "crm_desatualizado" && (
+              {(cl.id === "crm_desatualizado" || cl.id === "falta_followup") && (
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-success" /> Atualizado</span>
-                  <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-destructive" /> Desatualizado</span>
+                  <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-success" /> {cl.id === "crm_desatualizado" ? "Atualizado" : "Follow-up feito"}</span>
+                  <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-destructive" /> {cl.id === "crm_desatualizado" ? "Desatualizado" : "Não feito"}</span>
                 </div>
               )}
+
               <div className={cl.id === "crm_desatualizado" || cl.id === "falta_followup" ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : "space-y-2"}>
                 {corretoresDiarios.map((c) => {
                   const qtd = (c as unknown as Record<string, number>)[cl.id] ?? 0;
