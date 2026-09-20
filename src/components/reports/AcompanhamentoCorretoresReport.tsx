@@ -1020,10 +1020,11 @@ function BarrasSemanais({ pontos, campoProblema, rotuloOk, rotuloProblema }: {
   rotuloOk: string;
   rotuloProblema: string;
 }) {
-  if (!pontos.length) return null;
+  const visiveis = pontos.slice(-8);
+  if (!visiveis.length) return null;
   return (
     <div className="flex items-end gap-1.5" aria-label={`${rotuloOk} × ${rotuloProblema} por semana`}>
-      {pontos.map((ponto) => {
+      {visiveis.map((ponto) => {
         const total = ponto.conta_dias_exigiveis;
         const problema = Math.min(total, Math.max(0, Number(ponto[campoProblema] ?? 0)));
         const ok = total - problema;
@@ -1036,15 +1037,16 @@ function BarrasSemanais({ pontos, campoProblema, rotuloOk, rotuloProblema }: {
               title={`${rotuloSemana(ponto)}: ${rotuloOk} ${percOk.toFixed(1)}% (${ok}) · ${rotuloProblema} ${percProblema.toFixed(1)}% (${problema})`}
             >
               <span className="flex h-full items-center justify-center bg-success text-primary-foreground" style={{ width: `${percOk}%` }}>
-                {percOk >= 18 ? `${percOk.toFixed(0)}%` : ""}
+                {percOk >= 25 ? `${percOk.toFixed(0)}%` : ""}
               </span>
               <span className="flex h-full items-center justify-center bg-destructive text-destructive-foreground" style={{ width: `${percProblema}%` }}>
-                {percProblema >= 18 ? `${percProblema.toFixed(0)}%` : ""}
+                {percProblema >= 25 ? `${percProblema.toFixed(0)}%` : ""}
               </span>
             </div>
-            <div className="flex justify-between gap-1 text-[9px] tabular-nums">
-              <span className="text-success">{percOk.toFixed(0)}% {rotuloOk.toLowerCase()}</span>
-              <span className="text-destructive">{percProblema.toFixed(0)}% {rotuloProblema.toLowerCase()}</span>
+            <div className="flex justify-center gap-1 text-[9px] tabular-nums">
+              <span className="text-success">{percOk.toFixed(0)}%</span>
+              <span className="text-muted-foreground">·</span>
+              <span className="text-destructive">{percProblema.toFixed(0)}%</span>
             </div>
             <span className="text-center text-[9px] tabular-nums text-muted-foreground">{rotuloSemana(ponto)}</span>
           </div>
