@@ -78,6 +78,13 @@
       "when": 1789936695942,
       "tag": "0010_optimize_daily_broker_productivity",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789936846370,
+      "tag": "0011_batch_daily_broker_productivity",
+      "breakpoints": true
     }
   ]
 }
