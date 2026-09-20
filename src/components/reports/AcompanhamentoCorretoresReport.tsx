@@ -484,7 +484,7 @@ export default function AcompanhamentoCorretoresReport() {
                  corretoresDiarios.map((c) => ({
                    Corretor: c.corretor_nome,
                    "Contas exigíveis": c.contas_exigiveis,
-                   "Semanas úteis com exigência": serieSemanal.filter((s) => s.responsavel_id === c.responsavel_id).length,
+                   "Dias úteis com exigência": diasUteis,
                    "Ocorrências exigíveis": c.conta_dias_exigiveis,
                    "CRM atualizado — ocorrências": c.crm_atualizado,
                    "CRM atualizado — %": pct(c.crm_atualizado, c.conta_dias_exigiveis),
