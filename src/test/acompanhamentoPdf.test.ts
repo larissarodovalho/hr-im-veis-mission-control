@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { agruparSeriePorSemana, calcularStatusCrm, contarSemanasUteis, rotuloSemana } from "@/lib/acompanhamentoPdf";
+import { calcularStatusCrm } from "@/lib/acompanhamentoPdf";
 
 describe("status de atualização do CRM", () => {
   it("fecha a carteira em 100%", () => {
