@@ -23,9 +23,13 @@ import {
   CLASSIFICACOES_ACOMPANHAMENTO,
   GRUPOS_ACOMPANHAMENTO,
   TERMOS_ACOMPANHAMENTO,
+  type PontoSemanal,
+  agruparSeriePorSemana,
   calcularStatusCrm,
+  contarSemanasUteis,
   gerarPdfAcompanhamento,
   gerarPdfContasSelecionadas,
+  rotuloSemana,
 } from "@/lib/acompanhamentoPdf";
 
 type Grupo = "falha_processo" | "desfecho_cliente" | "em_jogo" | "revisao";
@@ -337,6 +341,8 @@ export default function AcompanhamentoCorretoresReport() {
   const corretores = dados.corretores;
   const corretoresDiarios = dadosDiarios?.corretores ?? [];
   const serieDiaria = dadosDiarios?.serie ?? [];
+  const serieSemanal = agruparSeriePorSemana(serieDiaria);
+  const semanasUteis = contarSemanasUteis(serieDiaria);
   const piorCorretor = [...corretores].sort(
     (a, b) => b.falha_processo / (b.total || 1) - a.falha_processo / (a.total || 1)
   )[0];
@@ -478,21 +484,21 @@ export default function AcompanhamentoCorretoresReport() {
                  corretoresDiarios.map((c) => ({
                    Corretor: c.corretor_nome,
                    "Contas exigíveis": c.contas_exigiveis,
-                   "Dias úteis com exigência": new Set(serieDiaria.filter((d) => d.responsavel_id === c.responsavel_id).map((d) => d.dia)).size,
-                   "Conta-dias exigíveis": c.conta_dias_exigiveis,
-                   "CRM atualizado — conta-dias": c.crm_atualizado,
+                   "Semanas úteis com exigência": serieSemanal.filter((s) => s.responsavel_id === c.responsavel_id).length,
+                   "Ocorrências exigíveis": c.conta_dias_exigiveis,
+                   "CRM atualizado — ocorrências": c.crm_atualizado,
                    "CRM atualizado — %": pct(c.crm_atualizado, c.conta_dias_exigiveis),
-                   "CRM desatualizado — conta-dias": c.crm_desatualizado,
+                   "CRM desatualizado — ocorrências": c.crm_desatualizado,
                    "CRM desatualizado — %": pct(c.crm_desatualizado, c.conta_dias_exigiveis),
-                   "Falta de follow-up — conta-dias": c.falta_followup,
-                   "Sem retorno — conta-dias": c.sem_retorno,
-                   "Sem interesse — conta-dias": c.sem_interesse,
-                   "Desqualificado — conta-dias": c.desqualificado,
-                   "Encerrado — conta-dias": c.encerrado,
-                   "Oportunidade criada — conta-dias": c.virando_oportunidade,
-                   "Oportunidade futura — conta-dias": c.oportunidade_futura,
-                   "Etapa antiga — conta-dias": c.etapa_antiga,
-                   "Ciclo em andamento — conta-dias": c.ciclo_andamento,
+                   "Falta de follow-up — ocorrências": c.falta_followup,
+                   "Sem retorno — ocorrências": c.sem_retorno,
+                   "Sem interesse — ocorrências": c.sem_interesse,
+                   "Desqualificado — ocorrências": c.desqualificado,
+                   "Encerrado — ocorrências": c.encerrado,
+                   "Oportunidade criada — ocorrências": c.virando_oportunidade,
+                   "Oportunidade futura — ocorrências": c.oportunidade_futura,
+                   "Etapa antiga — ocorrências": c.etapa_antiga,
+                   "Ciclo em andamento — ocorrências": c.ciclo_andamento,
                  })),
                 `acompanhamento-corretores-${label.replace("/", "-")}.csv`
               )
@@ -565,7 +571,7 @@ export default function AcompanhamentoCorretoresReport() {
           <p className="text-xs uppercase tracking-wide text-muted-foreground">03 · Taxa de incidência</p>
           <h3 className="font-semibold text-lg">Cada problema, lado a lado</h3>
           <p className="text-sm text-muted-foreground">
-            Medição por conta-dia exigível em {dadosDiarios?.dias_uteis ?? 0} dias úteis. Cada faixa mostra a constância diária no período.
+            Medição por conta-semana exigível em {semanasUteis} semanas úteis. Cada faixa mostra a constância semanal no período.
           </p>
         </div>
         {erroDiario && (
@@ -573,7 +579,7 @@ export default function AcompanhamentoCorretoresReport() {
             <div className="flex items-start gap-2">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
               <div>
-                <p className="text-sm font-medium">Não foi possível calcular a produtividade diária.</p>
+                <p className="text-sm font-medium">Não foi possível calcular a produtividade semanal.</p>
                 <p className="text-xs text-muted-foreground">Os quadros abaixo não representam zero ocorrências. Tente carregar novamente.</p>
               </div>
             </div>
@@ -609,14 +615,14 @@ export default function AcompanhamentoCorretoresReport() {
                 {corretoresDiarios.map((c) => {
                   const qtd = (c as unknown as Record<string, number>)[cl.id] ?? 0;
                   const perc = c.conta_dias_exigiveis ? (qtd / c.conta_dias_exigiveis) * 100 : 0;
-                  const pontos = serieDiaria.filter((dia) => dia.responsavel_id === c.responsavel_id);
+                  const pontos = serieSemanal.filter((semana) => semana.responsavel_id === c.responsavel_id);
                   if (cl.id === "crm_desatualizado") {
                     const status = calcularStatusCrm(c.conta_dias_exigiveis, c.crm_desatualizado);
                     return (
                       <div key={c.corretor_nome} className="space-y-1.5">
                         <div className="flex items-center justify-between gap-3 text-sm">
                           <span className="truncate font-medium">{c.corretor_nome}</span>
-                          <span className="shrink-0 text-xs text-muted-foreground">{c.conta_dias_exigiveis} conta-dias</span>
+                          <span className="shrink-0 text-xs text-muted-foreground">{c.conta_dias_exigiveis} ocorrências exigíveis</span>
                         </div>
                         <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted" aria-label={`${c.corretor_nome}: ${status.percentualAtualizado.toFixed(1)}% atualizado e ${status.percentualDesatualizado.toFixed(1)}% desatualizado`}>
                           <div className="h-full bg-success" style={{ width: `${status.percentualAtualizado}%` }} />
@@ -626,7 +632,7 @@ export default function AcompanhamentoCorretoresReport() {
                           <span className="text-success">Atualizado {status.percentualAtualizado.toFixed(1)}% · {status.atualizado}</span>
                           <span className="text-destructive">Desatualizado {status.percentualDesatualizado.toFixed(1)}% · {status.desatualizado}</span>
                         </div>
-                        <EvolucaoDiaria pontos={pontos} campo="crm_desatualizado" />
+                        <EvolucaoSemanal pontos={pontos} campo="crm_desatualizado" />
                       </div>
                     );
                   }
@@ -637,9 +643,9 @@ export default function AcompanhamentoCorretoresReport() {
                         <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
                           <div className="h-full bg-primary" style={{ width: `${perc}%` }} />
                         </div>
-                        <span className="tabular-nums text-xs w-24 text-right">{perc.toFixed(1)}% · {qtd} dias</span>
+                        <span className="tabular-nums text-xs w-24 text-right">{perc.toFixed(1)}% · {qtd}</span>
                       </div>
-                      <EvolucaoDiaria pontos={pontos} campo={cl.id} />
+                      <EvolucaoSemanal pontos={pontos} campo={cl.id} />
                     </div>
                   );
                 })}
@@ -981,21 +987,19 @@ function GlossarioSecao({ titulo, itens }: { titulo: string; itens: Array<{ titu
   );
 }
 
-function EvolucaoDiaria({ pontos, campo }: { pontos: SerieDiaria[]; campo: string }) {
+function EvolucaoSemanal({ pontos, campo }: { pontos: PontoSemanal[]; campo: string }) {
   if (!pontos.length) return null;
   return (
-    <div className="flex h-6 items-end gap-0.5" aria-label="Evolução por dia útil">
+    <div className="flex h-6 items-end gap-1" aria-label="Evolução por semana">
       {pontos.map((ponto) => {
-        const valor = campo === "crm_desatualizado"
-          ? ponto.crm_desatualizado
-          : Number((ponto as unknown as Record<string, string | number>)[campo] ?? 0);
-        const percentualDia = ponto.conta_dias_exigiveis ? (valor / ponto.conta_dias_exigiveis) * 100 : 0;
+        const valor = Number((ponto as unknown as Record<string, string | number>)[campo] ?? 0);
+        const percentualSemana = ponto.conta_dias_exigiveis ? (valor / ponto.conta_dias_exigiveis) * 100 : 0;
         return (
           <span
-            key={`${ponto.dia}-${campo}`}
-            className={`min-w-1 flex-1 rounded-sm ${percentualDia > 0 ? "bg-destructive/70" : "bg-success/50"}`}
-            style={{ height: `${Math.max(3, percentualDia)}%` }}
-            title={`${fmtDate(ponto.dia)}: ${percentualDia.toFixed(1)}% (${valor}/${ponto.conta_dias_exigiveis})`}
+            key={`${ponto.semana_inicio}-${campo}`}
+            className={`min-w-2 flex-1 rounded-sm ${percentualSemana > 0 ? "bg-destructive/70" : "bg-success/50"}`}
+            style={{ height: `${Math.max(4, percentualSemana)}%` }}
+            title={`${rotuloSemana(ponto)}: ${percentualSemana.toFixed(1)}% (${valor}/${ponto.conta_dias_exigiveis})`}
           />
         );
       })}

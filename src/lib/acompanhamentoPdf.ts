@@ -14,7 +14,7 @@ export const GRUPOS_ACOMPANHAMENTO: Array<{ titulo: string; texto: string }> = [
 
 export const CLASSIFICACOES_ACOMPANHAMENTO: Array<{ id: string; label: string; grupo: GrupoAcompanhamento; texto: string }> = [
   { id: "falta_followup", label: "Falta de follow-up", grupo: "falha_processo", texto: "O último contato ultrapassou o prazo máximo definido para a análise." },
-  { id: "crm_desatualizado", label: "CRM desatualizado", grupo: "falha_processo", texto: "Em cada dia útil, indica uma conta exigível sem registro suficiente dentro do prazo. Atualizado e desatualizado são consolidados em conta-dias e fecham 100% da base exigível." },
+  { id: "crm_desatualizado", label: "CRM desatualizado", grupo: "falha_processo", texto: "Indica uma conta exigível sem registro suficiente dentro do prazo. A verificação é feita a cada dia útil e os resultados são somados por semana; atualizado e desatualizado fecham 100% da base exigível." },
   { id: "sem_retorno", label: "Sem retorno", grupo: "desfecho_cliente", texto: "O corretor realizou tentativas, mas o cliente não respondeu." },
   { id: "sem_interesse", label: "Sem interesse", grupo: "desfecho_cliente", texto: "O cliente informou que não deseja seguir com o atendimento." },
   { id: "desqualificado", label: "Desqualificado", grupo: "desfecho_cliente", texto: "O contato não atende aos critérios para continuar no funil comercial." },
@@ -26,8 +26,9 @@ export const CLASSIFICACOES_ACOMPANHAMENTO: Array<{ id: string; label: string; g
 ];
 
 export const TERMOS_ACOMPANHAMENTO: Array<{ titulo: string; texto: string }> = [
-  { titulo: "Período analisado", texto: "Intervalo escolhido no topo da página, no fuso de Cuiabá. A incidência considera somente os dias úteis já decorridos." },
-  { titulo: "Conta-dia exigível", texto: "Uma conta que, em determinado dia útil, precisava de contato ou atualização por prazo, tarefa ou próxima ação. A mesma conta pode ser contada em mais de um dia." },
+  { titulo: "Período analisado", texto: "Intervalo escolhido no topo da página, no fuso de Cuiabá. A incidência considera somente os dias úteis já decorridos, agrupados por semana." },
+  { titulo: "Semana útil", texto: "Bloco de segunda a sexta dentro do período. Semanas parciais no início e no fim entram com os dias que existem." },
+  { titulo: "Conta-semana exigível", texto: "Soma, dentro da semana, das contas que em cada dia útil precisavam de contato ou atualização por prazo, tarefa ou próxima ação. A mesma conta pode ser contada em mais de um dia da semana." },
   { titulo: "Prazo máximo entre contatos (dias)", texto: "Quantidade máxima de dias aceita entre um contato e o seguinte. Ao ultrapassá-la, uma conta ativa pode ser diagnosticada como falta de follow-up." },
   { titulo: "Diagnóstico", texto: "Leitura automática do CRM com base em interações, tarefas, etapa do funil e motivo de encerramento." },
   { titulo: "Triagem", texto: "Etapa inicial em que o lead é avaliado antes de seguir para a carteira de um corretor." },
@@ -38,7 +39,7 @@ export const TERMOS_ACOMPANHAMENTO: Array<{ titulo: string; texto: string }> = [
   { titulo: "Travados por follow-up", texto: "Contas cujo atendimento ultrapassou o prazo máximo definido sem novo contato registrado." },
   { titulo: "Proporção travada", texto: "Percentual da carteira do corretor classificado como falha de processo." },
   { titulo: "Dias médios parado", texto: "Média de dias sem contato entre as contas classificadas como falha de processo." },
-  { titulo: "Taxa de incidência", texto: "Em cada caixinha, mostra quantos conta-dias exigíveis receberam aquela classificação e qual percentual representam no período. Em CRM, verde e vermelho fecham 100% da base diária exigível." },
+  { titulo: "Taxa de incidência", texto: "Em cada caixinha, mostra quantas ocorrências exigíveis receberam aquela classificação e qual percentual representam no período. A evolução é exibida por semana e, em CRM, verde e vermelho fecham 100% da base exigível." },
   { titulo: "Base HR Imóveis", texto: "Contas que pertenciam originalmente à base da gestão da HR Imóveis, mesmo que depois tenham sido distribuídas a um corretor." },
   { titulo: "Marketing", texto: "Contas e leads captados pelos canais de marketing da HR Imóveis." },
   { titulo: "Carteira própria do corretor", texto: "Contas cujo dono original é o próprio corretor, independentemente de quem seja o responsável atual." },
@@ -175,6 +176,106 @@ export const calcularStatusCrm = (total: number, desatualizado: number) => {
   };
 };
 const classificacaoLabel = (id: string) => CLASSIFICACOES_ACOMPANHAMENTO.find((item) => item.id === id)?.label ?? id;
+
+const CAMPOS_SEMANA = [
+  "conta_dias_exigiveis",
+  "crm_atualizado",
+  "crm_desatualizado",
+  "falta_followup",
+  "sem_retorno",
+  "sem_interesse",
+  "desqualificado",
+  "encerrado",
+  "virando_oportunidade",
+  "oportunidade_futura",
+  "etapa_antiga",
+  "ciclo_andamento",
+] as const;
+
+export interface PontoSemanal {
+  semana_inicio: string;
+  semana_fim: string;
+  dias: number;
+  responsavel_id: string | null;
+  corretor_nome: string;
+  conta_dias_exigiveis: number;
+  crm_atualizado: number;
+  crm_desatualizado: number;
+  falta_followup: number;
+  sem_retorno: number;
+  sem_interesse: number;
+  desqualificado: number;
+  encerrado: number;
+  virando_oportunidade: number;
+  oportunidade_futura: number;
+  etapa_antiga: number;
+  ciclo_andamento: number;
+}
+
+const somarDias = (dia: string, quantidade: number) => {
+  const data = new Date(`${dia}T00:00:00Z`);
+  data.setUTCDate(data.getUTCDate() + quantidade);
+  return data.toISOString().slice(0, 10);
+};
+
+/** Segunda-feira (ISO) da semana de um dia no formato YYYY-MM-DD. */
+export const inicioDaSemana = (dia: string) => {
+  const data = new Date(`${dia}T00:00:00Z`);
+  const isoDow = data.getUTCDay() === 0 ? 7 : data.getUTCDay();
+  return somarDias(dia, 1 - isoDow);
+};
+
+/** Agrupa a série apurada por dia útil em blocos semanais (segunda a sexta). */
+export function agruparSeriePorSemana<T extends { dia: string; responsavel_id: string | null; corretor_nome: string }>(
+  serie: T[]
+): PontoSemanal[] {
+  const mapa = new Map<string, PontoSemanal & { _dias: Set<string> }>();
+  for (const ponto of serie) {
+    const semana = inicioDaSemana(ponto.dia);
+    const chave = `${semana}|${ponto.responsavel_id ?? "sem"}`;
+    let atual = mapa.get(chave);
+    if (!atual) {
+      atual = {
+        semana_inicio: semana,
+        semana_fim: semana,
+        dias: 0,
+        responsavel_id: ponto.responsavel_id,
+        corretor_nome: ponto.corretor_nome,
+        conta_dias_exigiveis: 0,
+        crm_atualizado: 0,
+        crm_desatualizado: 0,
+        falta_followup: 0,
+        sem_retorno: 0,
+        sem_interesse: 0,
+        desqualificado: 0,
+        encerrado: 0,
+        virando_oportunidade: 0,
+        oportunidade_futura: 0,
+        etapa_antiga: 0,
+        ciclo_andamento: 0,
+        _dias: new Set<string>(),
+      };
+      mapa.set(chave, atual);
+    }
+    const registro = ponto as unknown as Record<string, number | undefined>;
+    for (const campo of CAMPOS_SEMANA) atual[campo] += Number(registro[campo] ?? 0);
+    atual._dias.add(ponto.dia);
+    if (ponto.dia > atual.semana_fim) atual.semana_fim = ponto.dia;
+  }
+  return Array.from(mapa.values())
+    .map(({ _dias, ...resto }) => ({ ...resto, dias: _dias.size }))
+    .sort((a, b) => a.semana_inicio.localeCompare(b.semana_inicio) || a.corretor_nome.localeCompare(b.corretor_nome));
+}
+
+/** Quantidade de semanas do período que tiveram ao menos um dia útil apurado. */
+export const contarSemanasUteis = (serie: Array<{ dia: string }>) =>
+  new Set(serie.map((ponto) => inicioDaSemana(ponto.dia))).size;
+
+const ddmm = (dia: string) => dia.slice(5).split("-").reverse().join("/");
+
+/** Rótulo curto da semana, ex.: "01/09 a 05/09". */
+export const rotuloSemana = (ponto: { semana_inicio: string; semana_fim: string }) =>
+  `${ddmm(ponto.semana_inicio)} a ${ddmm(ponto.semana_fim)}`;
 
 async function carregarLogo(): Promise<string | null> {
   try {
@@ -339,7 +440,9 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
   );
 
   const corretoresIncidencia = dadosDiarios?.corretores ?? [];
-  tituloSecao("03 · Taxa de incidência", "Cada problema, lado a lado", `Medição em conta-dias exigíveis · ${dadosDiarios?.dias_uteis ?? 0} dias úteis no período.`);
+  const serieSemanal = agruparSeriePorSemana(dadosDiarios?.serie ?? []);
+  const semanasUteis = contarSemanasUteis(dadosDiarios?.serie ?? []);
+  tituloSecao("03 · Taxa de incidência", "Cada problema, lado a lado", `Medição em conta-semana exigível · ${semanasUteis} semanas úteis no período.`);
   CLASSIFICACOES_ACOMPANHAMENTO.forEach((classificacao) => {
     if (classificacao.id === "crm_desatualizado") {
       garantir(18);
@@ -363,7 +466,7 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
         y += 10;
       });
       if (!corretoresIncidencia.length) {
-        texto("Sem contas exigíveis nos dias úteis do período.", CONTENT_W, 7.5);
+        texto("Sem contas exigíveis nas semanas úteis do período.", CONTENT_W, 7.5);
       }
       y += 2;
       return;
@@ -384,25 +487,26 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
     doc.text(linhas, MARGIN, y + 4, { lineHeightFactor: 1.3 });
     y += 6 + linhas.length * 3.5;
   });
-  if (dadosDiarios?.serie.length) {
+  if (serieSemanal.length) {
     garantir(18);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(...INK);
-    doc.text("Evolução diária — CRM desatualizado", MARGIN, y);
+    doc.text("Evolução semanal — CRM desatualizado", MARGIN, y);
     y += 5;
-    const datas = Array.from(new Set(dadosDiarios.serie.map((item) => item.dia))).sort();
-    const ultimasDatas = datas.slice(-12);
+    const semanas = Array.from(new Map(serieSemanal.map((item) => [item.semana_inicio, item])).values())
+      .sort((a, b) => a.semana_inicio.localeCompare(b.semana_inicio))
+      .slice(-8);
     const linhas = corretoresIncidencia.map((corretor) => {
-      const valores = ultimasDatas.map((dia) => {
-        const ponto = dadosDiarios.serie.find((item) => item.dia === dia && item.responsavel_id === corretor.responsavel_id);
+      const valores = semanas.map((semana) => {
+        const ponto = serieSemanal.find((item) => item.semana_inicio === semana.semana_inicio && item.responsavel_id === corretor.responsavel_id);
         return ponto ? percentual(ponto.crm_desatualizado, ponto.conta_dias_exigiveis) : "—";
       });
       return [corretor.corretor_nome, ...valores];
     });
     const larguraNome = 38;
-    const larguraDia = (CONTENT_W - larguraNome) / Math.max(1, ultimasDatas.length);
-    tabela(["Corretor", ...ultimasDatas.map((dia) => dia.slice(5).split("-").reverse().join("/"))], linhas, [larguraNome, ...ultimasDatas.map(() => larguraDia)]);
+    const larguraSemana = (CONTENT_W - larguraNome) / Math.max(1, semanas.length);
+    tabela(["Corretor", ...semanas.map((semana) => rotuloSemana(semana))], linhas, [larguraNome, ...semanas.map(() => larguraSemana)]);
   }
   y += 3;
 
