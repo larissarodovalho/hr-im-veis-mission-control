@@ -83,6 +83,7 @@ interface LinhaDiariaCorretor {
   corretor_nome: string;
   conta_dias_exigiveis: number;
   contas_exigiveis: number;
+  crm_base?: number;
   crm_atualizado: number;
   crm_desatualizado: number;
   falta_followup: number;
