@@ -622,7 +622,7 @@ export default function AcompanhamentoCorretoresReport() {
                       <div key={c.corretor_nome} className="space-y-1.5">
                         <div className="flex items-center justify-between gap-3 text-sm">
                           <span className="truncate font-medium">{c.corretor_nome}</span>
-                          <span className="shrink-0 text-xs text-muted-foreground">{c.conta_dias_exigiveis} conta-dias</span>
+                          <span className="shrink-0 text-xs text-muted-foreground">{c.conta_dias_exigiveis} ocorrências exigíveis</span>
                         </div>
                         <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted" aria-label={`${c.corretor_nome}: ${status.percentualAtualizado.toFixed(1)}% atualizado e ${status.percentualDesatualizado.toFixed(1)}% desatualizado`}>
                           <div className="h-full bg-success" style={{ width: `${status.percentualAtualizado}%` }} />
