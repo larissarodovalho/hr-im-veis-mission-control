@@ -26,8 +26,9 @@ export const CLASSIFICACOES_ACOMPANHAMENTO: Array<{ id: string; label: string; g
 ];
 
 export const TERMOS_ACOMPANHAMENTO: Array<{ titulo: string; texto: string }> = [
-  { titulo: "Período analisado", texto: "Intervalo escolhido no topo da página, no fuso de Cuiabá. A incidência considera somente os dias úteis já decorridos." },
-  { titulo: "Conta-dia exigível", texto: "Uma conta que, em determinado dia útil, precisava de contato ou atualização por prazo, tarefa ou próxima ação. A mesma conta pode ser contada em mais de um dia." },
+  { titulo: "Período analisado", texto: "Intervalo escolhido no topo da página, no fuso de Cuiabá. A incidência considera somente os dias úteis já decorridos, agrupados por semana." },
+  { titulo: "Semana útil", texto: "Bloco de segunda a sexta dentro do período. Semanas parciais no início e no fim entram com os dias que existem." },
+  { titulo: "Conta-semana exigível", texto: "Soma, dentro da semana, das contas que em cada dia útil precisavam de contato ou atualização por prazo, tarefa ou próxima ação. A mesma conta pode ser contada em mais de um dia da semana." },
   { titulo: "Prazo máximo entre contatos (dias)", texto: "Quantidade máxima de dias aceita entre um contato e o seguinte. Ao ultrapassá-la, uma conta ativa pode ser diagnosticada como falta de follow-up." },
   { titulo: "Diagnóstico", texto: "Leitura automática do CRM com base em interações, tarefas, etapa do funil e motivo de encerramento." },
   { titulo: "Triagem", texto: "Etapa inicial em que o lead é avaliado antes de seguir para a carteira de um corretor." },
