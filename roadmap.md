@@ -9,3 +9,4 @@
 - [x] Adicionar comparativo CRM atualizado × desatualizado na tela, PDF e CSV
 - [x] Medir diariamente as contas exigíveis e todos os diagnósticos em dias úteis
 - [x] Exibir evolução diária e consolidado por conta-dia na tela, PDF e CSV
+- [x] Sincronizar os quadros de incidência com a produtividade real e tratar falhas de apuração

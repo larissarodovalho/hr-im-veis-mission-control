@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Download, FileDown, Loader2, Pencil, Search, X } from "lucide-react";
+import { AlertCircle, Download, FileDown, Loader2, Pencil, RefreshCw, Search, X } from "lucide-react";
 import Papa from "papaparse";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -195,6 +195,7 @@ export default function AcompanhamentoCorretoresReport() {
   const [origens, setOrigens] = useState<OrigemCarteira[]>(ORIGENS_CARTEIRA.map((origem) => origem.id));
   const [dados, setDados] = useState<Dados | null>(null);
   const [dadosDiarios, setDadosDiarios] = useState<DadosDiarios | null>(null);
+  const [erroDiario, setErroDiario] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [fCorretor, setFCorretor] = useState("todos");
   const [fClasse, setFClasse] = useState("todas");
@@ -209,15 +210,19 @@ export default function AcompanhamentoCorretoresReport() {
 
   const carregar = useCallback(async () => {
     setLoading(true);
+    setErroDiario(null);
     const parametros = { _inicio: inicioISO, _fim: fimISO, _prazo_dias: prazo, _origens_carteira: origens };
     const [geral, diario] = await Promise.all([
       supabase.rpc("acompanhamento_corretores" as any, parametros),
       supabase.rpc("acompanhamento_apurar_diario" as any, parametros),
     ]);
     if (geral.error) toast.error("Erro ao carregar acompanhamento: " + geral.error.message);
-    if (diario.error) toast.error("Erro ao calcular acompanhamento diário: " + diario.error.message);
+    if (diario.error) {
+      setErroDiario(diario.error.message);
+      toast.error("Não foi possível calcular a produtividade diária.");
+    }
     setDados((geral.data as unknown as Dados) ?? null);
-    setDadosDiarios((diario.data as unknown as DadosDiarios) ?? null);
+    setDadosDiarios(diario.error ? null : ((diario.data as unknown as DadosDiarios) ?? null));
     setLoading(false);
   }, [inicioISO, fimISO, prazo, origens]);
 
@@ -563,6 +568,25 @@ export default function AcompanhamentoCorretoresReport() {
             Medição por conta-dia exigível em {dadosDiarios?.dias_uteis ?? 0} dias úteis. Cada faixa mostra a constância diária no período.
           </p>
         </div>
+        {erroDiario && (
+          <div className="flex flex-col gap-3 rounded-md border border-destructive/30 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+              <div>
+                <p className="text-sm font-medium">Não foi possível calcular a produtividade diária.</p>
+                <p className="text-xs text-muted-foreground">Os quadros abaixo não representam zero ocorrências. Tente carregar novamente.</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" onClick={carregar}>
+              <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
+            </Button>
+          </div>
+        )}
+        {!erroDiario && dadosDiarios && corretoresDiarios.length === 0 && (
+          <p className="rounded-md border bg-muted/30 p-4 text-sm text-muted-foreground">
+            Nenhuma conta exigível foi encontrada com os filtros atuais neste período.
+          </p>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
           {CLASSIFICACOES.map((cl) => (
             <div key={cl.id} className={`rounded-lg border p-4 space-y-3 ${cl.id === "crm_desatualizado" ? "md:col-span-2 xl:col-span-4" : ""}`}>
