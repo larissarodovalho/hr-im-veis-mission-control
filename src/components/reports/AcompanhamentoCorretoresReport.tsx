@@ -341,8 +341,8 @@ export default function AcompanhamentoCorretoresReport() {
   const corretores = dados.corretores;
   const corretoresDiarios = dadosDiarios?.corretores ?? [];
   const serieDiaria = dadosDiarios?.serie ?? [];
-  const serieSemanal = agruparSeriePorSemana(serieDiaria);
-  const semanasUteis = contarSemanasUteis(serieDiaria);
+  const diasUteis = new Set(serieDiaria.map((item) => item.dia)).size;
+
   const piorCorretor = [...corretores].sort(
     (a, b) => b.falha_processo / (b.total || 1) - a.falha_processo / (a.total || 1)
   )[0];
