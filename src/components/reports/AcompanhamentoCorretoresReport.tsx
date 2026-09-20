@@ -643,9 +643,9 @@ export default function AcompanhamentoCorretoresReport() {
                         <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
                           <div className="h-full bg-primary" style={{ width: `${perc}%` }} />
                         </div>
-                        <span className="tabular-nums text-xs w-24 text-right">{perc.toFixed(1)}% · {qtd} dias</span>
+                        <span className="tabular-nums text-xs w-24 text-right">{perc.toFixed(1)}% · {qtd}</span>
                       </div>
-                      <EvolucaoDiaria pontos={pontos} campo={cl.id} />
+                      <EvolucaoSemanal pontos={pontos} campo={cl.id} />
                     </div>
                   );
                 })}
