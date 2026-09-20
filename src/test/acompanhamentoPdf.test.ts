@@ -71,6 +71,15 @@ describe("agrupamento semanal do acompanhamento", () => {
     expect(primeira.crm_atualizado + primeira.crm_desatualizado).toBe(primeira.conta_dias_exigiveis);
   });
 
+  it("fecha 100% nos percentuais das barras semanais de CRM e follow-up", () => {
+    for (const semana of agruparSeriePorSemana(serie)) {
+      const crm = calcularStatusCrm(semana.conta_dias_exigiveis, semana.crm_desatualizado);
+      expect(crm.percentualAtualizado + crm.percentualDesatualizado).toBeCloseTo(100, 5);
+      const followup = calcularStatusCrm(semana.conta_dias_exigiveis, semana.falta_followup);
+      expect(followup.percentualAtualizado + followup.percentualDesatualizado).toBeCloseTo(100, 5);
+    }
+  });
+
   it("conta semanas úteis distintas e gera rótulo legível", () => {
     expect(contarSemanasUteis(serie)).toBe(2);
     expect(rotuloSemana(agruparSeriePorSemana(serie)[0])).toBe("31/08 a 04/09");

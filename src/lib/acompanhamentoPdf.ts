@@ -442,6 +442,37 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
   const corretoresIncidencia = dadosDiarios?.corretores ?? [];
   const serieSemanal = agruparSeriePorSemana(dadosDiarios?.serie ?? []);
   const semanasUteis = contarSemanasUteis(dadosDiarios?.serie ?? []);
+
+  /** Barras semanais empilhadas (verde = ok, vermelho = problema) com percentuais escritos. */
+  const barrasSemanaisPdf = (responsavelId: string | null, campoProblema: "crm_desatualizado" | "falta_followup", rotuloOk: string, rotuloProblema: string) => {
+    const pontos = serieSemanal.filter((ponto) => ponto.responsavel_id === responsavelId).slice(-10);
+    if (!pontos.length) return;
+    const alturaBarra = 4;
+    const alturaBloco = alturaBarra + 9;
+    garantir(alturaBloco + 2);
+    const larguraSemana = (CONTENT_W - 42) / pontos.length;
+    pontos.forEach((ponto, indice) => {
+      const total = ponto.conta_dias_exigiveis;
+      const problema = Math.min(total, Math.max(0, Number(ponto[campoProblema] ?? 0)));
+      const percOk = total ? ((total - problema) / total) * 100 : 0;
+      const percProblema = total ? (problema / total) * 100 : 0;
+      const x = MARGIN + 42 + indice * larguraSemana;
+      doc.setFillColor(...GREEN);
+      doc.rect(x, y, larguraSemana * percOk / 100, alturaBarra, "F");
+      doc.setFillColor(...RED);
+      doc.rect(x + larguraSemana * percOk / 100, y, larguraSemana * percProblema / 100, alturaBarra, "F");
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(5.8);
+      doc.setTextColor(...INK);
+      doc.text(`${percOk.toFixed(0)}% ${rotuloOk.toLowerCase()}`, x, y + alturaBarra + 2.6);
+      doc.setTextColor(...RED);
+      doc.text(`${percProblema.toFixed(0)}% ${rotuloProblema.toLowerCase()}`, x, y + alturaBarra + 5.4);
+      doc.setTextColor(...MUTED);
+      doc.text(rotuloSemana(ponto), x, y + alturaBarra + 8.2);
+    });
+    y += alturaBloco + 2;
+  };
+
   tituloSecao("03 · Taxa de incidência", "Cada problema, lado a lado", `Medição em conta-semana exigível · ${semanasUteis} semanas úteis no período.`);
   CLASSIFICACOES_ACOMPANHAMENTO.forEach((classificacao) => {
     if (classificacao.id === "crm_desatualizado") {
@@ -463,7 +494,9 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
         doc.setFillColor(...RED);
         doc.rect(MARGIN + 42 + (CONTENT_W - 42) * status.percentualAtualizado / 100, y - 2.5, (CONTENT_W - 42) * status.percentualDesatualizado / 100, 3, "F");
         doc.text(`Atualizado ${percentual(status.atualizado, corretor.conta_dias_exigiveis)} (${status.atualizado}) · Desatualizado ${percentual(status.desatualizado, corretor.conta_dias_exigiveis)} (${status.desatualizado})`, MARGIN + 42, y + 4);
-        y += 10;
+        y += 8;
+        barrasSemanaisPdf(corretor.responsavel_id, "crm_desatualizado", "Atualizado", "Desatualizado");
+        y += 2;
       });
       if (!corretoresIncidencia.length) {
         texto("Sem contas exigíveis nas semanas úteis do período.", CONTENT_W, 7.5);
@@ -486,6 +519,17 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
     const linhas = doc.splitTextToSize(incidencias.join("  ·  ") || "Sem contas no período.", CONTENT_W) as string[];
     doc.text(linhas, MARGIN, y + 4, { lineHeightFactor: 1.3 });
     y += 6 + linhas.length * 3.5;
+    if (classificacao.id === "falta_followup") {
+      corretoresIncidencia.forEach((corretor) => {
+        garantir(6);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.5);
+        doc.setTextColor(...MUTED);
+        doc.text(corretor.corretor_nome, MARGIN, y);
+        y += 4;
+        barrasSemanaisPdf(corretor.responsavel_id, "falta_followup", "Feito", "Não feito");
+      });
+    }
   });
   if (serieSemanal.length) {
     garantir(18);
