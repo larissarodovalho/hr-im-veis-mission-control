@@ -177,6 +177,9 @@ interface Dados {
 
 const pct = (parte: number, total: number) => (total ? `${((parte / total) * 100).toFixed(1)}%` : "0,0%");
 
+/** Desfechos são contados uma vez por cliente: a base é o número de contas, não de ocorrências. */
+const DESFECHOS_POR_CONTA = new Set(["sem_retorno", "sem_interesse", "desqualificado", "encerrado"]);
+
 const baixarCSV = (linhas: Record<string, unknown>[], nome: string) => {
   const csv = Papa.unparse(linhas);
   const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
