@@ -632,7 +632,7 @@ export default function AcompanhamentoCorretoresReport() {
                           <span className="text-success">Atualizado {status.percentualAtualizado.toFixed(1)}% · {status.atualizado}</span>
                           <span className="text-destructive">Desatualizado {status.percentualDesatualizado.toFixed(1)}% · {status.desatualizado}</span>
                         </div>
-                        <EvolucaoSemanal pontos={pontos} campo="crm_desatualizado" />
+                        <BarrasSemanais pontos={pontos} campoProblema="crm_desatualizado" rotuloOk="Atualizado" rotuloProblema="Desatualizado" />
                       </div>
                     );
                   }
@@ -645,7 +645,11 @@ export default function AcompanhamentoCorretoresReport() {
                         </div>
                         <span className="tabular-nums text-xs w-24 text-right">{perc.toFixed(1)}% · {qtd}</span>
                       </div>
-                      <EvolucaoSemanal pontos={pontos} campo={cl.id} />
+                      {cl.id === "falta_followup" ? (
+                        <BarrasSemanais pontos={pontos} campoProblema="falta_followup" rotuloOk="Feito" rotuloProblema="Não feito" />
+                      ) : (
+                        <EvolucaoSemanal pontos={pontos} campo={cl.id} />
+                      )}
                     </div>
                   );
                 })}
@@ -1031,7 +1035,7 @@ function BarrasSemanais({ pontos, campoProblema, rotuloOk, rotuloProblema }: {
               className="flex h-5 w-full overflow-hidden rounded-sm text-[9px] font-medium leading-5"
               title={`${rotuloSemana(ponto)}: ${rotuloOk} ${percOk.toFixed(1)}% (${ok}) · ${rotuloProblema} ${percProblema.toFixed(1)}% (${problema})`}
             >
-              <span className="flex h-full items-center justify-center bg-success text-success-foreground" style={{ width: `${percOk}%` }}>
+              <span className="flex h-full items-center justify-center bg-success text-primary-foreground" style={{ width: `${percOk}%` }}>
                 {percOk >= 18 ? `${percOk.toFixed(0)}%` : ""}
               </span>
               <span className="flex h-full items-center justify-center bg-destructive text-destructive-foreground" style={{ width: `${percProblema}%` }}>
