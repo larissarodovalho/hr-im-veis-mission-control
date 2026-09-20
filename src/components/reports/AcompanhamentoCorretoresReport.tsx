@@ -23,6 +23,7 @@ import {
   CLASSIFICACOES_ACOMPANHAMENTO,
   GRUPOS_ACOMPANHAMENTO,
   TERMOS_ACOMPANHAMENTO,
+  calcularStatusCrm,
   gerarPdfAcompanhamento,
   gerarPdfContasSelecionadas,
 } from "@/lib/acompanhamentoPdf";
@@ -439,7 +440,11 @@ export default function AcompanhamentoCorretoresReport() {
                   "% travada": pct(c.falha_processo, c.total), "Falha de processo": c.falha_processo,
                   "Desfecho do cliente": c.desfecho_cliente, "Em jogo": c.em_jogo,
                    Revisão: c.revisao, Oportunidades: c.oportunidades_conduzidas,
-                  "Falta de follow-up": c.falta_followup, "CRM desatualizado": c.crm_desatualizado,
+                   "Falta de follow-up": c.falta_followup,
+                   "CRM atualizado — contas": calcularStatusCrm(c.total, c.crm_desatualizado).atualizado,
+                   "CRM atualizado — %": `${calcularStatusCrm(c.total, c.crm_desatualizado).percentualAtualizado.toFixed(1)}%`,
+                   "CRM desatualizado — contas": calcularStatusCrm(c.total, c.crm_desatualizado).desatualizado,
+                   "CRM desatualizado — %": `${calcularStatusCrm(c.total, c.crm_desatualizado).percentualDesatualizado.toFixed(1)}%`,
                   "Dias médios travadas": c.dias_medios_travadas ?? "",
                 })),
                 `acompanhamento-corretores-${label.replace("/", "-")}.csv`
@@ -516,15 +521,45 @@ export default function AcompanhamentoCorretoresReport() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
           {CLASSIFICACOES.map((cl) => (
-            <div key={cl.id} className="rounded-lg border p-4 space-y-2">
+            <div key={cl.id} className={`rounded-lg border p-4 space-y-3 ${cl.id === "crm_desatualizado" ? "md:col-span-2 xl:col-span-4" : ""}`}>
               <div>
-                <p className="font-medium">{cl.label}</p>
+                <p className="font-medium">{cl.id === "crm_desatualizado" ? "CRM atualizado × desatualizado" : cl.label}</p>
                 <Badge variant="outline" className={GRUPO_BADGE[cl.grupo]}>{GRUPO_LABEL[cl.grupo]}</Badge>
+                {cl.id === "crm_desatualizado" && (
+                  <p className="mt-2 max-w-3xl text-xs leading-relaxed text-muted-foreground">
+                    Desatualizado: conta que avançou da etapa inicial sem interação registrada. Atualizado: restante da carteira analisada. As duas faixas fecham 100%.
+                  </p>
+                )}
               </div>
-              <div className="space-y-1">
+              {cl.id === "crm_desatualizado" && (
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-success" /> Atualizado</span>
+                  <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-destructive" /> Desatualizado</span>
+                </div>
+              )}
+              <div className={cl.id === "crm_desatualizado" ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : "space-y-1"}>
                 {corretores.map((c) => {
                   const qtd = (c as unknown as Record<string, number>)[cl.id] ?? 0;
                   const perc = c.total ? (qtd / c.total) * 100 : 0;
+                  if (cl.id === "crm_desatualizado") {
+                    const status = calcularStatusCrm(c.total, qtd);
+                    return (
+                      <div key={c.corretor_nome} className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-3 text-sm">
+                          <span className="truncate font-medium">{c.corretor_nome}</span>
+                          <span className="shrink-0 text-xs text-muted-foreground">{c.total} contas</span>
+                        </div>
+                        <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted" aria-label={`${c.corretor_nome}: ${status.percentualAtualizado.toFixed(1)}% atualizado e ${status.percentualDesatualizado.toFixed(1)}% desatualizado`}>
+                          <div className="h-full bg-success" style={{ width: `${status.percentualAtualizado}%` }} />
+                          <div className="h-full bg-destructive" style={{ width: `${status.percentualDesatualizado}%` }} />
+                        </div>
+                        <div className="flex justify-between gap-3 text-xs tabular-nums">
+                          <span className="text-success">Atualizado {status.percentualAtualizado.toFixed(1)}% · {status.atualizado}</span>
+                          <span className="text-destructive">Desatualizado {status.percentualDesatualizado.toFixed(1)}% · {status.desatualizado}</span>
+                        </div>
+                      </div>
+                    );
+                  }
                   return (
                     <div key={c.corretor_nome} className="flex items-center gap-2 text-sm">
                       <span className="w-28 truncate text-muted-foreground">{c.corretor_nome}</span>

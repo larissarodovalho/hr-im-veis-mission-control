@@ -14,7 +14,7 @@ export const GRUPOS_ACOMPANHAMENTO: Array<{ titulo: string; texto: string }> = [
 
 export const CLASSIFICACOES_ACOMPANHAMENTO: Array<{ id: string; label: string; grupo: GrupoAcompanhamento; texto: string }> = [
   { id: "falta_followup", label: "Falta de follow-up", grupo: "falha_processo", texto: "O último contato ultrapassou o prazo máximo definido para a análise." },
-  { id: "crm_desatualizado", label: "CRM desatualizado", grupo: "falha_processo", texto: "A conta não possui registros suficientes de atendimento para demonstrar sua evolução." },
+  { id: "crm_desatualizado", label: "CRM desatualizado", grupo: "falha_processo", texto: "Desatualizado é a conta que avançou da etapa inicial sem nenhuma interação registrada para comprovar o atendimento. Atualizado é o restante da carteira analisada que não recebeu esse diagnóstico." },
   { id: "sem_retorno", label: "Sem retorno", grupo: "desfecho_cliente", texto: "O corretor realizou tentativas, mas o cliente não respondeu." },
   { id: "sem_interesse", label: "Sem interesse", grupo: "desfecho_cliente", texto: "O cliente informou que não deseja seguir com o atendimento." },
   { id: "desqualificado", label: "Desqualificado", grupo: "desfecho_cliente", texto: "O contato não atende aos critérios para continuar no funil comercial." },
@@ -37,7 +37,7 @@ export const TERMOS_ACOMPANHAMENTO: Array<{ titulo: string; texto: string }> = [
   { titulo: "Travados por follow-up", texto: "Contas cujo atendimento ultrapassou o prazo máximo definido sem novo contato registrado." },
   { titulo: "Proporção travada", texto: "Percentual da carteira do corretor classificado como falha de processo." },
   { titulo: "Dias médios parado", texto: "Média de dias sem contato entre as contas classificadas como falha de processo." },
-  { titulo: "Taxa de incidência", texto: "Em cada caixinha, mostra quantas contas receberam aquela classificação e qual percentual representam dentro da carteira do respectivo corretor." },
+  { titulo: "Taxa de incidência", texto: "Em cada caixinha, mostra quantas contas receberam aquela classificação e qual percentual representam dentro da carteira do respectivo corretor. Em CRM, a faixa verde mostra o complemento atualizado e a vermelha mostra o desatualizado; juntas, fecham 100% da carteira analisada." },
   { titulo: "Base HR Imóveis", texto: "Contas que pertenciam originalmente à base da gestão da HR Imóveis, mesmo que depois tenham sido distribuídas a um corretor." },
   { titulo: "Marketing", texto: "Contas e leads captados pelos canais de marketing da HR Imóveis." },
   { titulo: "Carteira própria do corretor", texto: "Contas cujo dono original é o próprio corretor, independentemente de quem seja o responsável atual." },
@@ -133,8 +133,20 @@ const MUTED: [number, number, number] = [105, 103, 99];
 const LINE: [number, number, number] = [220, 218, 214];
 const SOFT: [number, number, number] = [247, 246, 243];
 const RED: [number, number, number] = [171, 54, 54];
+const GREEN: [number, number, number] = [39, 119, 79];
 
 const percentual = (parte: number, total: number) => total ? `${((parte / total) * 100).toFixed(1).replace(".", ",")}%` : "0,0%";
+export const calcularStatusCrm = (total: number, desatualizado: number) => {
+  const totalSeguro = Math.max(0, total);
+  const desatualizadoSeguro = Math.min(totalSeguro, Math.max(0, desatualizado));
+  const atualizado = totalSeguro - desatualizadoSeguro;
+  return {
+    atualizado,
+    desatualizado: desatualizadoSeguro,
+    percentualAtualizado: totalSeguro ? (atualizado / totalSeguro) * 100 : 0,
+    percentualDesatualizado: totalSeguro ? (desatualizadoSeguro / totalSeguro) * 100 : 0,
+  };
+};
 const classificacaoLabel = (id: string) => CLASSIFICACOES_ACOMPANHAMENTO.find((item) => item.id === id)?.label ?? id;
 
 async function carregarLogo(): Promise<string | null> {
@@ -301,6 +313,33 @@ export async function gerarPdfAcompanhamento({ dados, contas, periodo, filtroCor
 
   tituloSecao("03 · Taxa de incidência", "Cada problema, lado a lado", "Percentual calculado sobre a carteira de cada corretor.");
   CLASSIFICACOES_ACOMPANHAMENTO.forEach((classificacao) => {
+    if (classificacao.id === "crm_desatualizado") {
+      garantir(18);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(...INK);
+      doc.text("CRM atualizado × desatualizado", MARGIN, y);
+      y += 5;
+      dados.corretores.forEach((corretor) => {
+        garantir(10);
+        const status = calcularStatusCrm(corretor.total, corretor.crm_desatualizado);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.5);
+        doc.setTextColor(...MUTED);
+        doc.text(corretor.corretor_nome, MARGIN, y);
+        doc.setFillColor(...GREEN);
+        doc.rect(MARGIN + 42, y - 2.5, (CONTENT_W - 42) * status.percentualAtualizado / 100, 3, "F");
+        doc.setFillColor(...RED);
+        doc.rect(MARGIN + 42 + (CONTENT_W - 42) * status.percentualAtualizado / 100, y - 2.5, (CONTENT_W - 42) * status.percentualDesatualizado / 100, 3, "F");
+        doc.text(`Atualizado ${percentual(status.atualizado, corretor.total)} (${status.atualizado}) · Desatualizado ${percentual(status.desatualizado, corretor.total)} (${status.desatualizado})`, MARGIN + 42, y + 4);
+        y += 10;
+      });
+      if (!dados.corretores.length) {
+        texto("Sem contas no período.", CONTENT_W, 7.5);
+      }
+      y += 2;
+      return;
+    }
     garantir(13);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
