@@ -75,6 +75,8 @@ interface LinhaDiariaCorretorPdf {
   ciclo_andamento: number;
 }
 
+type SerieDiariaPdf = Omit<LinhaDiariaCorretorPdf, "contas_exigiveis"> & { dia: string };
+
 interface ContaPdf {
   nome: string;
   corretor_nome: string;
@@ -134,7 +136,7 @@ interface GerarPdfParams {
     dias_uteis: number;
     conta_dias_exigiveis: number;
     corretores: LinhaDiariaCorretorPdf[];
-    serie: Array<LinhaDiariaCorretorPdf & { dia: string }>;
+    serie: SerieDiariaPdf[];
   };
   contas: ContaPdf[];
   periodo: string;
