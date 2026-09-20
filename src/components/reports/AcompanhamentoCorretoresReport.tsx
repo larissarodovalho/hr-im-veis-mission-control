@@ -632,7 +632,7 @@ export default function AcompanhamentoCorretoresReport() {
                           <span className="text-success">Atualizado {status.percentualAtualizado.toFixed(1)}% · {status.atualizado}</span>
                           <span className="text-destructive">Desatualizado {status.percentualDesatualizado.toFixed(1)}% · {status.desatualizado}</span>
                         </div>
-                        <EvolucaoDiaria pontos={pontos} campo="crm_desatualizado" />
+                        <EvolucaoSemanal pontos={pontos} campo="crm_desatualizado" />
                       </div>
                     );
                   }
