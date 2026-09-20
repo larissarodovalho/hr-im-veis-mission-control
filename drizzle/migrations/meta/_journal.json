@@ -57,6 +57,13 @@
       "when": 1789839127755,
       "tag": "0007_fix_acompanhamento_account_grouping",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789934415795,
+      "tag": "0008_daily_broker_followup_measurement",
+      "breakpoints": true
     }
   ]
 }
