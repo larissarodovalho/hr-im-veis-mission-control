@@ -71,6 +71,13 @@
       "when": 1789934524512,
       "tag": "0009_exclude_indeterminate_daily_history",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789936695942,
+      "tag": "0010_optimize_daily_broker_productivity",
+      "breakpoints": true
     }
   ]
 }
