@@ -439,7 +439,9 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
   );
 
   const corretoresIncidencia = dadosDiarios?.corretores ?? [];
-  tituloSecao("03 · Taxa de incidência", "Cada problema, lado a lado", `Medição em conta-dias exigíveis · ${dadosDiarios?.dias_uteis ?? 0} dias úteis no período.`);
+  const serieSemanal = agruparSeriePorSemana(dadosDiarios?.serie ?? []);
+  const semanasUteis = contarSemanasUteis(dadosDiarios?.serie ?? []);
+  tituloSecao("03 · Taxa de incidência", "Cada problema, lado a lado", `Medição em conta-semana exigível · ${semanasUteis} semanas úteis no período.`);
   CLASSIFICACOES_ACOMPANHAMENTO.forEach((classificacao) => {
     if (classificacao.id === "crm_desatualizado") {
       garantir(18);
