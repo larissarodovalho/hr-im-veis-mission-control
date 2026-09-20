@@ -475,12 +475,13 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
       doc.text(crm ? "CRM atualizado × desatualizado" : "Follow-up feito × não feito", MARGIN, y);
       y += 5;
       corretoresIncidencia.forEach((corretor) => {
+        const baseCrm = corretor.crm_base ?? corretor.conta_dias_exigiveis;
         const problema = crm
-          ? calcularStatusCrm(corretor.conta_dias_exigiveis, corretor.crm_desatualizado).desatualizado
+          ? calcularStatusCrm(baseCrm, corretor.crm_desatualizado).desatualizado
           : corretor.falta_followup;
         barraGeralPdf(
           corretor.corretor_nome,
-          corretor.conta_dias_exigiveis,
+          baseCrm,
           problema,
           crm ? "Atualizado" : "Follow-up feito",
           crm ? "Desatualizado" : "Não feito",

@@ -615,13 +615,14 @@ export default function AcompanhamentoCorretoresReport() {
                 {corretoresDiarios.map((c) => {
                   const qtd = (c as unknown as Record<string, number>)[cl.id] ?? 0;
                   const perc = c.conta_dias_exigiveis ? (qtd / c.conta_dias_exigiveis) * 100 : 0;
+                  const baseCrm = c.crm_base ?? c.conta_dias_exigiveis;
                   if (cl.id === "crm_desatualizado") {
-                    const status = calcularStatusCrm(c.conta_dias_exigiveis, c.crm_desatualizado);
+                    const status = calcularStatusCrm(baseCrm, c.crm_desatualizado);
                     return (
                       <BarraGeral
                         key={c.corretor_nome}
                         nome={c.corretor_nome}
-                        total={c.conta_dias_exigiveis}
+                        total={baseCrm}
                         problema={status.desatualizado}
                         rotuloOk="Atualizado"
                         rotuloProblema="Desatualizado"
@@ -633,7 +634,7 @@ export default function AcompanhamentoCorretoresReport() {
                       <BarraGeral
                         key={c.corretor_nome}
                         nome={c.corretor_nome}
-                        total={c.conta_dias_exigiveis}
+                        total={baseCrm}
                         problema={qtd}
                         rotuloOk="Follow-up feito"
                         rotuloProblema="Não feito"
