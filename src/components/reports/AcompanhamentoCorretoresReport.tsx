@@ -574,8 +574,8 @@ export default function AcompanhamentoCorretoresReport() {
           <h3 className="font-semibold text-lg">Cada problema, lado a lado</h3>
           <p className="text-sm text-muted-foreground">
             Leitura geral do período filtrado: cada barra mostra o total de ocorrências exigíveis de cada corretor e quanto disso ficou em dia ou em atraso.
-            Sem retorno, sem interesse, desqualificado e encerrado são contados uma vez por cliente, no dia em que o desfecho foi registrado.
           </p>
+
 
         </div>
         {erroDiario && (
