@@ -179,8 +179,6 @@ export const calcularStatusCrm = (total: number, desatualizado: number) => {
 };
 const classificacaoLabel = (id: string) => CLASSIFICACOES_ACOMPANHAMENTO.find((item) => item.id === id)?.label ?? id;
 
-/** Desfechos são contados uma vez por cliente: a base é o número de contas, não de ocorrências. */
-const DESFECHOS_POR_CONTA_PDF = new Set(["sem_retorno", "sem_interesse", "desqualificado", "encerrado"]);
 
 const CAMPOS_SEMANA = [
   "conta_dias_exigiveis",
