@@ -493,14 +493,8 @@ export default function AcompanhamentoCorretoresReport() {
                    "CRM desatualizado — ocorrências": c.crm_desatualizado,
                    "CRM desatualizado — %": pct(c.crm_desatualizado, c.crm_base ?? c.conta_dias_exigiveis),
                    "Falta de follow-up — ocorrências": c.falta_followup,
-                   "Sem retorno — ocorrências": c.sem_retorno,
-                   "Sem interesse — ocorrências": c.sem_interesse,
-                   "Desqualificado — ocorrências": c.desqualificado,
-                   "Encerrado — ocorrências": c.encerrado,
-                   "Oportunidade criada — ocorrências": c.virando_oportunidade,
-                   "Oportunidade futura — ocorrências": c.oportunidade_futura,
-                   "Etapa antiga — ocorrências": c.etapa_antiga,
-                   "Ciclo em andamento — ocorrências": c.ciclo_andamento,
+                   "Falta de follow-up — %": pct(c.falta_followup, c.crm_base ?? c.conta_dias_exigiveis),
+
                  })),
                 `acompanhamento-corretores-${label.replace("/", "-")}.csv`
               )
