@@ -99,6 +99,13 @@
       "when": 1789938930699,
       "tag": "0013_prioritize_disqualification_over_cancellation",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1789991438998,
+      "tag": "0014_fix_daily_followup_persistence_scope",
+      "breakpoints": true
     }
   ]
 }
