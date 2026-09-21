@@ -179,8 +179,6 @@ export const calcularStatusCrm = (total: number, desatualizado: number) => {
 };
 const classificacaoLabel = (id: string) => CLASSIFICACOES_ACOMPANHAMENTO.find((item) => item.id === id)?.label ?? id;
 
-/** Desfechos são contados uma vez por cliente: a base é o número de contas, não de ocorrências. */
-const DESFECHOS_POR_CONTA_PDF = new Set(["sem_retorno", "sem_interesse", "desqualificado", "encerrado"]);
 
 const CAMPOS_SEMANA = [
   "conta_dias_exigiveis",
@@ -468,52 +466,35 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
   };
 
   tituloSecao("03 · Taxa de incidência", "Cada problema, lado a lado", `Leitura geral do período · ${diasUteis} dias úteis apurados.`);
-  CLASSIFICACOES_ACOMPANHAMENTO.forEach((classificacao) => {
-    if (classificacao.id === "crm_desatualizado" || classificacao.id === "falta_followup") {
-      const crm = classificacao.id === "crm_desatualizado";
-      garantir(18);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      doc.setTextColor(...INK);
-      doc.text(crm ? "CRM atualizado × desatualizado" : "Follow-up feito × não feito", MARGIN, y);
-      y += 5;
-      corretoresIncidencia.forEach((corretor) => {
-        const baseCrm = corretor.crm_base ?? corretor.conta_dias_exigiveis;
-        const problema = crm
-          ? calcularStatusCrm(baseCrm, corretor.crm_desatualizado).desatualizado
-          : corretor.falta_followup;
-        barraGeralPdf(
-          corretor.corretor_nome,
-          baseCrm,
-          problema,
-          crm ? "Atualizado" : "Follow-up feito",
-          crm ? "Desatualizado" : "Não feito",
-        );
-      });
-      if (!corretoresIncidencia.length) {
-        texto("Sem contas exigíveis no período.", CONTENT_W, 7.5);
-      }
-      y += 2;
-      return;
-    }
-    garantir(13);
+  CLASSIFICACOES_ACOMPANHAMENTO.filter(
+    (classificacao) => classificacao.id === "crm_desatualizado" || classificacao.id === "falta_followup",
+  ).forEach((classificacao) => {
+    const crm = classificacao.id === "crm_desatualizado";
+    garantir(18);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(...INK);
-    doc.text(classificacao.label, MARGIN, y);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(...MUTED);
-    const incidencias = corretoresIncidencia.map((corretor) => {
-      const qtd = Number((corretor as unknown as Record<string, string | number | null>)[classificacao.id] ?? 0);
-      const porConta = DESFECHOS_POR_CONTA_PDF.has(classificacao.id);
-      const base = porConta ? corretor.contas_exigiveis : corretor.conta_dias_exigiveis;
-      return `${corretor.corretor_nome}: ${percentual(qtd, base)} (${qtd} ${porConta ? `de ${base} clientes` : "ocorrências"})`;
+    doc.text(crm ? "CRM atualizado × desatualizado" : "Follow-up feito × não feito", MARGIN, y);
+    y += 5;
+    corretoresIncidencia.forEach((corretor) => {
+      const baseCrm = corretor.crm_base ?? corretor.conta_dias_exigiveis;
+      const problema = crm
+        ? calcularStatusCrm(baseCrm, corretor.crm_desatualizado).desatualizado
+        : corretor.falta_followup;
+      barraGeralPdf(
+        corretor.corretor_nome,
+        baseCrm,
+        problema,
+        crm ? "Atualizado" : "Follow-up feito",
+        crm ? "Desatualizado" : "Não feito",
+      );
     });
-    const linhas = doc.splitTextToSize(incidencias.join("  ·  ") || "Sem contas no período.", CONTENT_W) as string[];
-    doc.text(linhas, MARGIN, y + 4, { lineHeightFactor: 1.3 });
-    y += 6 + linhas.length * 3.5;
+    if (!corretoresIncidencia.length) {
+      texto("Sem contas exigíveis no período.", CONTENT_W, 7.5);
+    }
+    y += 2;
   });
+
   y += 3;
 
 

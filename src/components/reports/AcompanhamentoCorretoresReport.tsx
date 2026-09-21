@@ -177,8 +177,6 @@ interface Dados {
 
 const pct = (parte: number, total: number) => (total ? `${((parte / total) * 100).toFixed(1)}%` : "0,0%");
 
-/** Desfechos são contados uma vez por cliente: a base é o número de contas, não de ocorrências. */
-const DESFECHOS_POR_CONTA = new Set(["sem_retorno", "sem_interesse", "desqualificado", "encerrado"]);
 
 const baixarCSV = (linhas: Record<string, unknown>[], nome: string) => {
   const csv = Papa.unparse(linhas);
@@ -493,14 +491,8 @@ export default function AcompanhamentoCorretoresReport() {
                    "CRM desatualizado — ocorrências": c.crm_desatualizado,
                    "CRM desatualizado — %": pct(c.crm_desatualizado, c.crm_base ?? c.conta_dias_exigiveis),
                    "Falta de follow-up — ocorrências": c.falta_followup,
-                   "Sem retorno — ocorrências": c.sem_retorno,
-                   "Sem interesse — ocorrências": c.sem_interesse,
-                   "Desqualificado — ocorrências": c.desqualificado,
-                   "Encerrado — ocorrências": c.encerrado,
-                   "Oportunidade criada — ocorrências": c.virando_oportunidade,
-                   "Oportunidade futura — ocorrências": c.oportunidade_futura,
-                   "Etapa antiga — ocorrências": c.etapa_antiga,
-                   "Ciclo em andamento — ocorrências": c.ciclo_andamento,
+                   "Falta de follow-up — %": pct(c.falta_followup, c.crm_base ?? c.conta_dias_exigiveis),
+
                  })),
                 `acompanhamento-corretores-${label.replace("/", "-")}.csv`
               )
@@ -574,8 +566,8 @@ export default function AcompanhamentoCorretoresReport() {
           <h3 className="font-semibold text-lg">Cada problema, lado a lado</h3>
           <p className="text-sm text-muted-foreground">
             Leitura geral do período filtrado: cada barra mostra o total de ocorrências exigíveis de cada corretor e quanto disso ficou em dia ou em atraso.
-            Sem retorno, sem interesse, desqualificado e encerrado são contados uma vez por cliente, no dia em que o desfecho foi registrado.
           </p>
+
 
         </div>
         {erroDiario && (
@@ -597,67 +589,36 @@ export default function AcompanhamentoCorretoresReport() {
             Nenhuma conta exigível foi encontrada com os filtros atuais neste período.
           </p>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-          {CLASSIFICACOES.map((cl) => (
-            <div key={cl.id} className={`rounded-lg border p-4 space-y-3 ${cl.id === "crm_desatualizado" || cl.id === "falta_followup" ? "md:col-span-2 xl:col-span-4" : ""}`}>
+        <div className="grid grid-cols-1 gap-3">
+          {CLASSIFICACOES.filter((cl) => cl.id === "crm_desatualizado" || cl.id === "falta_followup").map((cl) => (
+            <div key={cl.id} className="rounded-lg border p-4 space-y-3">
               <div>
-                <p className="font-medium">{cl.id === "crm_desatualizado" ? "CRM atualizado × desatualizado" : cl.id === "falta_followup" ? "Follow-up feito × não feito" : cl.label}</p>
+                <p className="font-medium">{cl.id === "crm_desatualizado" ? "CRM atualizado × desatualizado" : "Follow-up feito × não feito"}</p>
                 <Badge variant="outline" className={GRUPO_BADGE[cl.grupo]}>{GRUPO_LABEL[cl.grupo]}</Badge>
-                {(cl.id === "crm_desatualizado" || cl.id === "falta_followup") && (
-                  <p className="mt-2 max-w-3xl text-xs leading-relaxed text-muted-foreground">
-                    Entram apenas as ocorrências em que a conta exigia contato ou atualização no período. Verde e vermelho fecham 100%.
-                  </p>
-                )}
+                <p className="mt-2 max-w-3xl text-xs leading-relaxed text-muted-foreground">
+                  Entram apenas as ocorrências em que a conta exigia contato ou atualização no período. Verde e vermelho fecham 100%.
+                </p>
               </div>
-              {(cl.id === "crm_desatualizado" || cl.id === "falta_followup") && (
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-success" /> {cl.id === "crm_desatualizado" ? "Atualizado" : "Follow-up feito"}</span>
-                  <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-destructive" /> {cl.id === "crm_desatualizado" ? "Desatualizado" : "Não feito"}</span>
-                </div>
-              )}
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-success" /> {cl.id === "crm_desatualizado" ? "Atualizado" : "Follow-up feito"}</span>
+                <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-destructive" /> {cl.id === "crm_desatualizado" ? "Desatualizado" : "Não feito"}</span>
+              </div>
 
-              <div className={cl.id === "crm_desatualizado" || cl.id === "falta_followup" ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : "space-y-2"}>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {corretoresDiarios.map((c) => {
-                  const qtd = (c as unknown as Record<string, number>)[cl.id] ?? 0;
-                  const base = DESFECHOS_POR_CONTA.has(cl.id) ? c.contas_exigiveis : c.conta_dias_exigiveis;
-                  const perc = base ? (qtd / base) * 100 : 0;
                   const baseCrm = c.crm_base ?? c.conta_dias_exigiveis;
-                  if (cl.id === "crm_desatualizado") {
-                    const status = calcularStatusCrm(baseCrm, c.crm_desatualizado);
-                    return (
-                      <BarraGeral
-                        key={c.corretor_nome}
-                        nome={c.corretor_nome}
-                        total={baseCrm}
-                        problema={status.desatualizado}
-                        rotuloOk="Atualizado"
-                        rotuloProblema="Desatualizado"
-                      />
-                    );
-                  }
-                  if (cl.id === "falta_followup") {
-                    return (
-                      <BarraGeral
-                        key={c.corretor_nome}
-                        nome={c.corretor_nome}
-                        total={baseCrm}
-                        problema={qtd}
-                        rotuloOk="Follow-up feito"
-                        rotuloProblema="Não feito"
-                      />
-                    );
-                  }
+                  const problema = cl.id === "crm_desatualizado"
+                    ? calcularStatusCrm(baseCrm, c.crm_desatualizado).desatualizado
+                    : c.falta_followup ?? 0;
                   return (
-                    <div key={c.corretor_nome} className="flex items-center gap-2 text-sm">
-                      <span className="w-28 truncate text-muted-foreground">{c.corretor_nome}</span>
-                      <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
-                        <div className="h-full bg-primary" style={{ width: `${perc}%` }} />
-                      </div>
-                      <span className="tabular-nums text-xs w-32 text-right">
-                        {perc.toFixed(1)}% · {qtd}
-                        {DESFECHOS_POR_CONTA.has(cl.id) ? `/${c.contas_exigiveis}` : ""}
-                      </span>
-                    </div>
+                    <BarraGeral
+                      key={c.corretor_nome}
+                      nome={c.corretor_nome}
+                      total={baseCrm}
+                      problema={problema}
+                      rotuloOk={cl.id === "crm_desatualizado" ? "Atualizado" : "Follow-up feito"}
+                      rotuloProblema={cl.id === "crm_desatualizado" ? "Desatualizado" : "Não feito"}
+                    />
                   );
                 })}
               </div>
@@ -665,6 +626,7 @@ export default function AcompanhamentoCorretoresReport() {
             </div>
           ))}
         </div>
+
       </Card>
 
       {/* 04 Leituras */}
