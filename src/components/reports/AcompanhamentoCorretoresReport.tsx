@@ -617,6 +617,23 @@ export default function AcompanhamentoCorretoresReport() {
                 })}
               </div>
 
+              <ul className="max-w-3xl list-disc space-y-1 pl-4 text-xs leading-relaxed text-muted-foreground">
+                {cl.id === "crm_desatualizado" ? (
+                  <>
+                    <li>Entra na contagem do dia a conta que tinha algo a fazer: tarefa vencida, próxima ação marcada para aquele dia ou antes, ou prazo máximo entre contatos estourado.</li>
+                    <li><span className="font-medium text-foreground">Atualizado:</span> houve atendimento registrado no dia, ou o último contato ainda estava dentro do prazo e não havia tarefa vencida.</li>
+                    <li><span className="font-medium text-foreground">Desatualizado:</span> não houve registro e o prazo já tinha passado, ou havia tarefa vencida.</li>
+                    <li>A contagem começa no dia do primeiro contato da conta; dias anteriores não entram.</li>
+                  </>
+                ) : (
+                  <>
+                    <li>Mesma base de dias exigíveis do quadro de CRM.</li>
+                    <li><span className="font-medium text-foreground">Não feito:</span> dia exigível sem nenhum atendimento registrado, com o prazo entre contatos já vencido.</li>
+                    <li><span className="font-medium text-foreground">Feito:</span> atendimento registrado no dia ou contato ainda dentro do prazo.</li>
+                  </>
+                )}
+              </ul>
+
             </div>
           ))}
         </div>
