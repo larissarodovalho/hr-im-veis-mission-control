@@ -497,13 +497,6 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
 
   y += 3;
 
-
-  tituloSecao("Auditoria", "Pontos para revisão da gestão", `${t.oportunidade_futura} oportunidades futuras sem negócio criado · ${t.etapa_antiga} etapas antigas · ${dados.divergencias.length} responsáveis divergentes`);
-  texto(`Oportunidades futuras — ${t.oportunidade_futura} contas estão como oportunidade futura sem Oportunidade criada.`, CONTENT_W, 8.5, INK);
-  texto(`Etapas antigas — ${t.etapa_antiga} contas seguem em etapa antiga preservada no histórico, sem migração automática.`, CONTENT_W, 8.5, INK);
-  texto(`Responsáveis divergentes — ${dados.divergencias.length} Oportunidades têm corretor diferente do responsável da Conta. O corretor da Oportunidade prevalece e nenhuma responsabilidade é alterada.`, CONTENT_W, 8.5, INK);
-  y += 3;
-
   tituloSecao("05 · Conta a conta", "Detalhamento exportado", `${contas.length} contas · filtros: ${filtroCorretor} / ${filtroClassificacao}`);
   tabela(
     ["Cliente", "Corretor", "Classificação", "Etapa", "Interações", "Oportunidades", "Dias sem contato", "Observação"],
@@ -520,14 +513,6 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
     [30, 24, 28, 22, 14, 18, 17, 29],
   );
 
-  if (dados.divergencias.length) {
-    tituloSecao("Auditoria", "Divergências Conta × Oportunidade", "A Oportunidade prevalece e nenhuma responsabilidade é alterada automaticamente.");
-    tabela(
-      ["Cliente", "Responsável da Conta", "Corretor da Oportunidade", "Etapa", "Situação"],
-      dados.divergencias.map((item) => [item.cliente, item.responsavel_conta, item.corretor_oportunidade, item.estagio, item.ativa ? "Ativa" : "Encerrada"]),
-      [40, 40, 40, 32, 30],
-    );
-  }
 
   novaPagina();
   tituloSecao("Legenda", "Entenda este relatório", "Referência para interpretar os números e diagnósticos.");
