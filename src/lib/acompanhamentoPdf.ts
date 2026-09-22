@@ -495,7 +495,9 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
     y += 2;
   });
 
+  texto("Follow-up e CRM medem apenas Contas e Oportunidades. O atendimento de Leads não entra nesta medição.", CONTENT_W, 7.5);
   y += 3;
+
 
   tituloSecao("05 · Conta a conta", "Detalhamento exportado", `${contas.length} contas · filtros: ${filtroCorretor} / ${filtroClassificacao}`);
   tabela(
