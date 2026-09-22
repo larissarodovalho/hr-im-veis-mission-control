@@ -514,38 +514,6 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
   );
 
 
-  novaPagina();
-  tituloSecao("Legenda", "Entenda este relatório", "Referência para interpretar os números e diagnósticos.");
-  const glossario = (itens: Array<{ titulo: string; texto: string }>) => {
-    itens.forEach((item) => {
-      const linhas = doc.splitTextToSize(item.texto, CONTENT_W - 5) as string[];
-      garantir(7 + linhas.length * 3.7);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8.5);
-      doc.setTextColor(...INK);
-      doc.text(item.titulo, MARGIN, y);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(...MUTED);
-      doc.text(linhas, MARGIN, y + 4, { lineHeightFactor: 1.3 });
-      y += 6 + linhas.length * 3.7;
-    });
-  };
-  glossario(TERMOS_ACOMPANHAMENTO);
-  y += 3;
-  tituloSecao("Grupos", "Como os diagnósticos são agrupados");
-  glossario(GRUPOS_ACOMPANHAMENTO);
-  novaPagina();
-  tituloSecao("Classificações", "O que significa cada caixinha");
-  glossario(CLASSIFICACOES_ACOMPANHAMENTO.map(({ label, texto: descricao }) => ({ titulo: label, texto: descricao })));
-  garantir(18);
-  doc.setFillColor(...SOFT);
-  doc.roundedRect(MARGIN, y, CONTENT_W, 16, 2, 2, "F");
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(...INK);
-  doc.text(doc.splitTextToSize("A incidência é calculada diariamente, somente em dias úteis e sobre contas exigíveis. Admin e gestor podem reclassificar uma conta; a classificação manual prevalece a partir da data registrada.", CONTENT_W - 10), MARGIN + 5, y + 6, { lineHeightFactor: 1.3 });
-
   const totalPaginas = doc.getNumberOfPages();
   for (let pagina = 1; pagina <= totalPaginas; pagina++) {
     doc.setPage(pagina);

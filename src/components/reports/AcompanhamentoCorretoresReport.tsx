@@ -21,8 +21,6 @@ import { fmtDate } from "@/lib/datetime";
 import { etapaLabel } from "@/lib/contasFunil";
 import {
   CLASSIFICACOES_ACOMPANHAMENTO,
-  GRUPOS_ACOMPANHAMENTO,
-  TERMOS_ACOMPANHAMENTO,
   calcularStatusCrm,
   gerarPdfAcompanhamento,
   gerarPdfContasSelecionadas,
@@ -800,28 +798,6 @@ export default function AcompanhamentoCorretoresReport() {
         </p>
       </Card>
 
-      {/* Legenda */}
-      <Card className="p-4 md:p-6 space-y-6">
-        <div>
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Legenda</p>
-          <h3 className="font-semibold text-lg">Entenda este relatório</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Consulte aqui como os números e diagnósticos do acompanhamento são calculados e interpretados.
-          </p>
-        </div>
-
-        <GlossarioSecao titulo="Termos e indicadores" itens={TERMOS_ACOMPANHAMENTO} />
-        <GlossarioSecao titulo="Grupos de diagnóstico" itens={GRUPOS_ACOMPANHAMENTO} />
-        <GlossarioSecao
-          titulo="O que significa cada caixinha"
-          itens={CLASSIFICACOES_ACOMPANHAMENTO.map(({ label: titulo, texto }) => ({ titulo, texto }))}
-        />
-
-        <div className="rounded-md border bg-muted/40 p-4 text-sm text-muted-foreground">
-          A incidência é medida diariamente, apenas em dias úteis e sobre contas exigíveis. Admin e gestor podem
-          reclassificar uma conta; a classificação manual prevalece a partir da data em que foi registrada.
-        </div>
-      </Card>
 
       <Dialog open={!!edit} onOpenChange={(o) => !o && setEdit(null)}>
         <DialogContent>
@@ -882,21 +858,6 @@ function Nivel({ titulo, subtitulo, itens }: { titulo: string; subtitulo: string
   );
 }
 
-function GlossarioSecao({ titulo, itens }: { titulo: string; itens: Array<{ titulo: string; texto: string }> }) {
-  return (
-    <section className="space-y-3">
-      <h4 className="font-medium">{titulo}</h4>
-      <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-        {itens.map((item) => (
-          <div key={item.titulo} className="border-t pt-3">
-            <dt className="text-sm font-medium">{item.titulo}</dt>
-            <dd className="text-sm text-muted-foreground mt-1 leading-relaxed">{item.texto}</dd>
-          </div>
-        ))}
-      </dl>
-    </section>
-  );
-}
 
 /** Barra geral do período: verde (ok) × vermelho (problema), com percentuais e quantidades escritos. */
 function BarraGeral({ nome, total, problema, rotuloOk, rotuloProblema }: {
