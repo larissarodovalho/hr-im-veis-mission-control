@@ -513,14 +513,6 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
     [30, 24, 28, 22, 14, 18, 17, 29],
   );
 
-  if (dados.divergencias.length) {
-    tituloSecao("Auditoria", "Divergências Conta × Oportunidade", "A Oportunidade prevalece e nenhuma responsabilidade é alterada automaticamente.");
-    tabela(
-      ["Cliente", "Responsável da Conta", "Corretor da Oportunidade", "Etapa", "Situação"],
-      dados.divergencias.map((item) => [item.cliente, item.responsavel_conta, item.corretor_oportunidade, item.estagio, item.ativa ? "Ativa" : "Encerrada"]),
-      [40, 40, 40, 32, 30],
-    );
-  }
 
   novaPagina();
   tituloSecao("Legenda", "Entenda este relatório", "Referência para interpretar os números e diagnósticos.");
