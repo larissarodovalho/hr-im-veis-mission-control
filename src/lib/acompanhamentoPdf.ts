@@ -496,6 +496,7 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
   });
 
   texto("Follow-up e CRM medem apenas Contas e Oportunidades. O atendimento de Leads não entra nesta medição.", CONTENT_W, 7.5);
+  texto("A medição começa a partir do primeiro contato. Contas ainda a contatar não entram.", CONTENT_W, 7.5);
   y += 3;
 
 
