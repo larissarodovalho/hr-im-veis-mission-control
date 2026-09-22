@@ -625,33 +625,6 @@ export default function AcompanhamentoCorretoresReport() {
 
       </Card>
 
-
-      <Card className="p-4 md:p-6 space-y-4">
-        <div>
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Auditoria</p>
-          <h3 className="font-semibold text-lg">Pontos para revisão da gestão</h3>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Kpi titulo="Oportunidades futuras" valor={String(t.oportunidade_futura)} nota="Sem Oportunidade criada" />
-          <Kpi titulo="Etapas antigas" valor={String(t.etapa_antiga)} nota="Sem migração automática" alerta={t.etapa_antiga > 0} />
-          <Kpi titulo="Responsáveis divergentes" valor={String(dados.divergencias.length)} nota="O corretor da Oportunidade prevalece" alerta={dados.divergencias.length > 0} />
-        </div>
-        {dados.divergencias.length > 0 && (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader><TableRow><TableHead>Cliente</TableHead><TableHead>Responsável da Conta</TableHead><TableHead>Corretor da Oportunidade</TableHead><TableHead>Etapa</TableHead><TableHead>Situação</TableHead></TableRow></TableHeader>
-              <TableBody>{dados.divergencias.map((item) => (
-                <TableRow key={item.oportunidade_id}>
-                  <TableCell className="font-medium"><Link to={`/crm/contas/${item.conta_id}`} className="hover:underline">{item.cliente}</Link></TableCell>
-                  <TableCell>{item.responsavel_conta}</TableCell><TableCell>{item.corretor_oportunidade}</TableCell>
-                  <TableCell>{item.estagio}</TableCell><TableCell>{item.ativa ? "Ativa" : "Encerrada"}</TableCell>
-                </TableRow>
-              ))}</TableBody>
-            </Table>
-          </div>
-        )}
-      </Card>
-
       {/* 05 Conta a conta */}
       <Card className="p-4 md:p-6 space-y-4">
         <div>
