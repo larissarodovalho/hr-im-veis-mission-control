@@ -624,6 +624,9 @@ export default function AcompanhamentoCorretoresReport() {
         <p className="text-xs text-muted-foreground">
           Follow-up e CRM medem apenas Contas e Oportunidades. O atendimento de Leads não entra nesta medição.
         </p>
+        <p className="text-xs text-muted-foreground">
+          A medição começa a partir do primeiro contato. Contas ainda a contatar não entram.
+        </p>
 
       </Card>
 
