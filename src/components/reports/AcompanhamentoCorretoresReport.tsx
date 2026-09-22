@@ -342,10 +342,6 @@ export default function AcompanhamentoCorretoresReport() {
   const serieDiaria = dadosDiarios?.serie ?? [];
   const diasUteis = new Set(serieDiaria.map((item) => item.dia)).size;
 
-  const piorCorretor = [...corretores].sort(
-    (a, b) => b.falha_processo / (b.total || 1) - a.falha_processo / (a.total || 1)
-  )[0];
-
   const alternarOrigem = (origem: OrigemCarteira) => {
     setOrigens((atuais) => {
       if (atuais.includes(origem)) {
@@ -629,28 +625,6 @@ export default function AcompanhamentoCorretoresReport() {
 
       </Card>
 
-      {/* 04 Leituras */}
-      <Card className="p-4 md:p-6 space-y-4">
-        <div>
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">04 · O que fazer</p>
-          <h3 className="font-semibold text-lg">Três leituras</h3>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <Leitura n="01" titulo="Onde o funil falha">
-            {pct(e.leads_com_conta, e.leads)} dos leads possuem Conta vinculada e {pct(e.leads_com_oportunidade, e.leads)}
-            possuem Oportunidade vinculada. Totais independentes não são tratados como uma jornada única.
-          </Leitura>
-          <Leitura n="02" titulo="É do escritório ou de um corretor?">
-            {piorCorretor
-              ? `Falta de follow-up soma ${t.falta_followup} contas nas carteiras. A maior incidência é de ${piorCorretor.corretor_nome} (${pct(piorCorretor.falha_processo, piorCorretor.total)}), mas tratar como falha individual deixa as demais de pé.`
-              : "Sem contas classificadas no período."}
-          </Leitura>
-          <Leitura n="03" titulo="Prazo é o sintoma comum">
-            As contas travadas estão, em média, {t.dias_medios_travadas ?? "—"} dias sem contato, com prazo máximo
-            configurado em {dados.prazo_dias} dias. Falta cadência, não esforço.
-          </Leitura>
-        </div>
-      </Card>
 
       <Card className="p-4 md:p-6 space-y-4">
         <div>
@@ -931,16 +905,6 @@ function Nivel({ titulo, subtitulo, itens }: { titulo: string; subtitulo: string
           </span>
         ))}
       </div>
-    </div>
-  );
-}
-
-function Leitura({ n, titulo, children }: { n: string; titulo: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-lg border p-4">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">Leitura {n}</p>
-      <p className="font-medium mt-1">{titulo}</p>
-      <p className="text-sm text-muted-foreground mt-2">{children}</p>
     </div>
   );
 }

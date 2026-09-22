@@ -498,12 +498,10 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
   y += 3;
 
 
-  const piorCorretor = [...dados.corretores].sort((a, b) => b.falha_processo / (b.total || 1) - a.falha_processo / (a.total || 1))[0];
-  tituloSecao("04 · O que fazer", "Três leituras");
-  texto(`1. Entrada comprovada — ${percentual(e.leads_com_conta, e.leads)} dos leads possuem Conta vinculada e ${percentual(e.leads_com_oportunidade, e.leads)} possuem Oportunidade vinculada. Os demais totais não são tratados como uma jornada única.`, CONTENT_W, 8.5, INK);
-  texto(`2. É do escritório ou de um corretor? — Falta de follow-up soma ${t.falta_followup} contas. ${piorCorretor ? `A maior incidência é de ${piorCorretor.corretor_nome} (${percentual(piorCorretor.falha_processo, piorCorretor.total)}), mas as demais carteiras também devem ser acompanhadas.` : "Não há contas classificadas no período."}`, CONTENT_W, 8.5, INK);
-  texto(`3. Prazo é o sintoma comum — As contas travadas estão, em média, ${t.dias_medios_travadas ?? "—"} dias sem contato, com prazo máximo configurado em ${dados.prazo_dias} dias.`, CONTENT_W, 8.5, INK);
-  texto(`Auditoria — ${t.oportunidade_futura} contas estão como oportunidade futura sem negócio criado, ${t.etapa_antiga} estão em etapa antiga e ${dados.divergencias.length} Oportunidades têm corretor diferente do responsável da Conta.`, CONTENT_W, 8.5, INK);
+  tituloSecao("Auditoria", "Pontos para revisão da gestão", `${t.oportunidade_futura} oportunidades futuras sem negócio criado · ${t.etapa_antiga} etapas antigas · ${dados.divergencias.length} responsáveis divergentes`);
+  texto(`Oportunidades futuras — ${t.oportunidade_futura} contas estão como oportunidade futura sem Oportunidade criada.`, CONTENT_W, 8.5, INK);
+  texto(`Etapas antigas — ${t.etapa_antiga} contas seguem em etapa antiga preservada no histórico, sem migração automática.`, CONTENT_W, 8.5, INK);
+  texto(`Responsáveis divergentes — ${dados.divergencias.length} Oportunidades têm corretor diferente do responsável da Conta. O corretor da Oportunidade prevalece e nenhuma responsabilidade é alterada.`, CONTENT_W, 8.5, INK);
   y += 3;
 
   tituloSecao("05 · Conta a conta", "Detalhamento exportado", `${contas.length} contas · filtros: ${filtroCorretor} / ${filtroClassificacao}`);
