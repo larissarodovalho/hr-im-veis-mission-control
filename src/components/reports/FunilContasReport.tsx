@@ -61,18 +61,31 @@ const QUALIFICACAO_ORDER: QualificacaoStatus[] = [
   "nao_qualificado",
 ];
 
-export default function FunilContasReport() {
+interface FunilProps {
+  lista?: Lista;
+  onListaChange?: (l: Lista) => void;
+  corretor?: string;
+  onCorretorChange?: (c: string) => void;
+  corretoresPermitidos?: string[];
+  refreshKey?: number;
+}
+
+export default function FunilContasReport(props: FunilProps = {}) {
   const { inicioISO, fimISO, label } = useReportsPeriod();
   const [contas, setContas] = useState<Conta[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
-  const [lista, setLista] = useState<Lista>("carteira");
-  const [corretor, setCorretor] = useState<string>("todos");
+  const [listaLocal, setListaLocal] = useState<Lista>("carteira");
+  const [corretorLocal, setCorretorLocal] = useState<string>("todos");
+  const lista = props.lista ?? listaLocal;
+  const setLista = props.onListaChange ?? setListaLocal;
+  const corretor = props.corretor ?? corretorLocal;
+  const setCorretor = props.onCorretorChange ?? setCorretorLocal;
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      setLoading(true);
+      if (!props.refreshKey) setLoading(true);
       const PAGE = 1000;
       const all: Conta[] = [];
       for (let from = 0; ; from += PAGE) {
@@ -88,21 +101,27 @@ export default function FunilContasReport() {
         if (rows.length < PAGE) break;
       }
       // Próxima tarefa pendente por conta (mesma origem da tag de countdown do kanban)
-      const { data: t } = await supabase
-        .from("tarefas")
-        .select("conta_id, prazo")
-        .not("conta_id", "is", null)
-        .not("prazo", "is", null)
-        .neq("status", "Concluída")
-        .order("prazo", { ascending: true })
-        .limit(1000);
+      const t: Tarefa[] = [];
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await supabase
+          .from("tarefas")
+          .select("conta_id, prazo")
+          .not("conta_id", "is", null)
+          .not("prazo", "is", null)
+          .neq("status", "Concluída")
+          .order("prazo", { ascending: true })
+          .range(from, from + PAGE - 1);
+        if (error) break;
+        t.push(...((data ?? []) as Tarefa[]));
+        if ((data ?? []).length < PAGE) break;
+      }
       const { data: p } = await supabase.from("profiles").select("user_id, nome");
       setContas(all);
       setTarefas((t ?? []) as Tarefa[]);
       setProfiles((p ?? []) as Profile[]);
       setLoading(false);
     })();
-  }, [inicioISO, fimISO]);
+  }, [inicioISO, fimISO, props.refreshKey]);
 
   const filtered = useMemo(() => {
     return contas.filter((a) => {
@@ -235,7 +254,7 @@ export default function FunilContasReport() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os corretores</SelectItem>
-              {profiles.map((p) => (
+              {profiles.filter((p) => !props.corretoresPermitidos || props.corretoresPermitidos.includes(p.user_id)).map((p) => (
                 <SelectItem key={p.user_id} value={p.user_id}>
                   {p.nome || "Sem nome"}
                 </SelectItem>
