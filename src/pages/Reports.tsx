@@ -4,7 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, FileSpreadsheet, BarChart3, Shield, Info, CalendarRange } from "lucide-react";
+import { Download, FileSpreadsheet, BarChart3, Shield, Info, CalendarRange, FileText } from "lucide-react";
+import { calcularPerformance, gerarPdfPerformance, primeiraTarefaPorConta, LISTA_LABEL, type ListaPerformance, type PerformanceCorretor } from "@/lib/performancePdf";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Papa from "papaparse";
 import { toast } from "sonner";
@@ -56,55 +57,87 @@ function ReportsInner() {
   const { isAdmin, isGestor, loading: roleLoading } = useRole();
   const can = isAdmin || isGestor;
   const { inicioISO, fimISO, label } = useReportsPeriod();
-  const [stats, setStats] = useState<any[]>([]);
+  const [stats, setStats] = useState<PerformanceCorretor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lista, setLista] = useState<ListaPerformance>("carteira");
+  const [corretor, setCorretor] = useState<string>("todos");
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [gerandoPdf, setGerandoPdf] = useState(false);
+  const [base, setBase] = useState<any>(null);
 
-  useEffect(() => { if (can) load(); /* eslint-disable-next-line */ }, [can, inicioISO, fimISO]);
+  useEffect(() => { if (can) load(); /* eslint-disable-next-line */ }, [can, inicioISO, fimISO, refreshKey]);
+
+  // Atualização automática quando o sistema muda
+  useEffect(() => {
+    if (!can) return;
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const bump = () => { clearTimeout(t); t = setTimeout(() => setRefreshKey((k) => k + 1), 1500); };
+    const ch = supabase.channel("reports-performance");
+    ["contas", "tarefas", "interacoes", "oportunidades", "leads"].forEach((table) =>
+      ch.on("postgres_changes" as any, { event: "*", schema: "public", table }, bump));
+    ch.subscribe();
+    return () => { clearTimeout(t); supabase.removeChannel(ch); };
+  }, [can]);
+
+  const paginar = async (q: (from: number, to: number) => any) => {
+    const all: any[] = [];
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await q(from, from + 999);
+      if (error) break;
+      all.push(...(data ?? []));
+      if ((data ?? []).length < 1000) break;
+    }
+    return all;
+  };
 
   const load = async () => {
-    setLoading(true);
-    const inicioMs = Date.parse(inicioISO);
-    const fimMs = Date.parse(fimISO);
-    const [{ data: profiles }, { data: roles }, { data: leads }, { data: contas }, { data: opsGeradas }, { data: opsEncerradas }] = await Promise.all([
+    if (!refreshKey) setLoading(true);
+    const [{ data: profiles }, { data: roles }, leads, contas, tarefas, opsGeradas, opsEncerradas] = await Promise.all([
       supabase.from("profiles").select("user_id, nome"),
       supabase.from("user_roles").select("user_id, role"),
-      supabase.from("leads").select("corretor_id, created_at").gte("created_at", inicioISO).lte("created_at", fimISO),
-      supabase.from("contas").select("responsavel_id, etapa_funil, created_at, updated_at").gte("updated_at", inicioISO).lte("updated_at", fimISO),
-      supabase.from("oportunidades").select("corretor_id, created_at").gte("created_at", inicioISO).lte("created_at", fimISO),
-      supabase.from("oportunidades").select("corretor_id, estagio, encerrada_em").in("estagio", ["ganha", "perdida"]).gte("encerrada_em", inicioISO).lte("encerrada_em", fimISO),
+      paginar((a, b) => supabase.from("leads").select("corretor_id").gte("created_at", inicioISO).lte("created_at", fimISO).range(a, b)),
+      paginar((a, b) => supabase.from("contas").select("id, etapa_funil, tags, categoria, responsavel_id").gte("created_at", inicioISO).lte("created_at", fimISO).range(a, b)),
+      paginar((a, b) => supabase.from("tarefas").select("conta_id, prazo").not("conta_id", "is", null).not("prazo", "is", null).neq("status", "Concluída").order("prazo").range(a, b)),
+      paginar((a, b) => supabase.from("oportunidades").select("corretor_id").gte("created_at", inicioISO).lte("created_at", fimISO).range(a, b)),
+      paginar((a, b) => supabase.from("oportunidades").select("corretor_id, estagio").in("estagio", ["ganha", "perdida"]).gte("encerrada_em", inicioISO).lte("encerrada_em", fimISO).range(a, b)),
     ]);
-    const corretorIds = new Set<string>(
-      (roles ?? []).filter((r: any) => r.role === "corretor").map((r: any) => r.user_id)
-    );
-    const map = new Map<string, any>();
-    (profiles ?? []).forEach((p: any) => {
-      if (!corretorIds.has(p.user_id)) return;
-      map.set(p.user_id, { user_id: p.user_id, name: p.nome || "Sem nome", leads: 0, contas: 0, estabelecidos: 0, oportunidades: 0, ganhas: 0, encerradas: 0 });
+    // Responsáveis com carteira (em toda a base, não só no período)
+    const { data: resp } = await supabase.from("contas").select("responsavel_id").not("responsavel_id", "is", null).limit(5000);
+    const comCarteira = new Set((resp ?? []).map((r: any) => r.responsavel_id));
+    const rolesPor = new Map<string, string[]>();
+    (roles ?? []).forEach((r: any) => rolesPor.set(r.user_id, [...(rolesPor.get(r.user_id) ?? []), r.role]));
+    const elegiveis = (profiles ?? []).filter((p: any) => {
+      const rs = rolesPor.get(p.user_id) ?? [];
+      if (rs.includes("corretor")) return true;
+      return (rs.includes("admin") || rs.includes("gestor")) && comCarteira.has(p.user_id);
     });
-    (leads ?? []).forEach((l: any) => {
-      if (!l.corretor_id) return;
-      const s = map.get(l.corretor_id); if (!s) return;
-      s.leads++;
-    });
-    (contas ?? []).forEach((c: any) => {
-      if (!c.responsavel_id) return;
-      const s = map.get(c.responsavel_id); if (!s) return;
-      const createdMs = c.created_at ? Date.parse(c.created_at) : null;
-      if (createdMs != null && createdMs >= inicioMs && createdMs <= fimMs) s.contas++;
-      if (c.etapa_funil === "contato_estabelecido") s.estabelecidos++;
-    });
-    (opsGeradas ?? []).forEach((o: any) => {
-      if (!o.corretor_id) return;
-      const s = map.get(o.corretor_id); if (s) s.oportunidades++;
-    });
-    (opsEncerradas ?? []).forEach((o: any) => {
-      if (!o.corretor_id) return;
-      const s = map.get(o.corretor_id); if (!s) return;
-      s.encerradas++;
-      if (o.estagio === "ganha") s.ganhas++;
-    });
-    setStats([...map.values()].sort((a, b) => b.leads - a.leads));
+    setBase({ elegiveis, rolesPor, leads, contas, tarefaPorConta: primeiraTarefaPorConta(tarefas), opsGeradas, opsEncerradas });
     setLoading(false);
+  };
+
+  useEffect(() => {
+    if (!base) return;
+    const linhas = base.elegiveis.map((p: any) => {
+      const rs: string[] = base.rolesPor.get(p.user_id) ?? [];
+      const leadsDoCorretor = base.leads.filter((l: any) => l.corretor_id === p.user_id).length;
+      return calcularPerformance({
+        userId: p.user_id, nome: p.nome || "Sem nome", lista, contas: base.contas,
+        tarefaPorConta: base.tarefaPorConta, opsGeradas: base.opsGeradas, opsEncerradas: base.opsEncerradas,
+        leads: base.leads, temLeads: leadsDoCorretor > 0 || rs.some((r) => ["admin", "gestor", "marketing"].includes(r)),
+      });
+    }).sort((a: PerformanceCorretor, b: PerformanceCorretor) => b.total - a.total);
+    setStats(linhas);
+  }, [base, lista]);
+
+  const statsVisiveis = corretor === "todos" ? stats : stats.filter((s) => s.user_id === corretor);
+
+  const gerarPdf = async (todos: boolean) => {
+    const alvo = todos ? stats : statsVisiveis;
+    if (!alvo.length) return toast.error("Nenhum corretor para o relatório.");
+    setGerandoPdf(true);
+    try { await gerarPdfPerformance({ corretores: alvo, periodo: label, lista }); toast.success("PDF gerado"); }
+    catch (e: any) { toast.error("Erro ao gerar PDF: " + (e?.message ?? e)); }
+    finally { setGerandoPdf(false); }
   };
 
   if (roleLoading) return <div className="p-4 md:p-8 text-muted-foreground">Carregando…</div>;
@@ -171,7 +204,8 @@ function ReportsInner() {
         </TabsContent>
 
         <TabsContent value="performance" className="space-y-4 md:space-y-6 mt-4">
-          <FunilContasReport />
+          <FunilContasReport lista={lista} onListaChange={setLista} corretor={corretor} onCorretorChange={setCorretor}
+            corretoresPermitidos={stats.map((s) => s.user_id)} refreshKey={refreshKey} />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="p-4 md:p-6">
@@ -188,28 +222,41 @@ function ReportsInner() {
           </div>
 
           <Card className="p-4 md:p-6">
-            <h2 className="font-semibold mb-4">Performance por corretor — {label}</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+              <h2 className="font-semibold">Performance por corretor — {label} · {LISTA_LABEL[lista]}</h2>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" disabled={corretor === "todos" || gerandoPdf || loading} onClick={() => gerarPdf(false)}>
+                  <FileText className="h-4 w-4 mr-1" /> Gerar PDF do corretor
+                </Button>
+                <Button size="sm" variant="outline" disabled={gerandoPdf || loading} onClick={() => gerarPdf(true)}>
+                  <FileText className="h-4 w-4 mr-1" /> PDF de todos
+                </Button>
+              </div>
+            </div>
+            {corretor === "todos" && <p className="text-xs text-muted-foreground mb-3">Selecione um corretor no filtro do funil acima para gerar o relatório individual.</p>}
             {loading ? <p className="text-muted-foreground">Carregando…</p> : (
               <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
                 <Table>
                   <TableHeader><TableRow>
                     <TableHead>Corretor</TableHead><TableHead className="text-right">Leads</TableHead>
-                    <TableHead className="text-right">Contas criadas</TableHead>
-                    <TableHead className="text-right"><TooltipProvider><Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 cursor-help">Contatos estabelecidos <Info className="h-3 w-3 text-muted-foreground" /></span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Contas do corretor que estão na etapa "Contato estabelecido" (com movimentação no período, considerando Carteira e Marketing).</p></TooltipContent></Tooltip></TooltipProvider></TableHead>
+                    <TableHead className="text-right">Contas</TableHead>
+                    <TableHead className="text-right">Tarefas atrasadas</TableHead>
+                    <TableHead className="text-right"><TooltipProvider><Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 cursor-help">Contatos estabelecidos <Info className="h-3 w-3 text-muted-foreground" /></span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Contas criadas no período, do corretor, que estão na etapa "Contato estabelecido" — mesmo critério do funil acima e da lista selecionada.</p></TooltipContent></Tooltip></TooltipProvider></TableHead>
                     <TableHead className="text-right"><TooltipProvider><Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 cursor-help">Oportunidades <Info className="h-3 w-3 text-muted-foreground" /></span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Oportunidades de negócio geradas pelo corretor no período (via qualificação do Contato estabelecido).</p></TooltipContent></Tooltip></TooltipProvider></TableHead>
                     <TableHead className="text-right">Ganhas</TableHead>
                     <TableHead className="text-right"><TooltipProvider><Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 cursor-help">Taxa de ganho <Info className="h-3 w-3 text-muted-foreground" /></span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Taxa = Oportunidades ganhas ÷ oportunidades encerradas (ganhas + perdidas) no período × 100.</p></TooltipContent></Tooltip></TooltipProvider></TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
-                    {stats.map(s => (
+                    {statsVisiveis.map(s => (
                       <TableRow key={s.user_id}>
-                        <TableCell className="font-medium whitespace-nowrap">{s.name}</TableCell>
-                        <TableCell className="text-right">{s.leads}</TableCell>
-                        <TableCell className="text-right">{s.contas}</TableCell>
+                        <TableCell className="font-medium whitespace-nowrap">{s.nome}</TableCell>
+                        <TableCell className="text-right">{s.temLeads ? s.leads : "—"}</TableCell>
+                        <TableCell className="text-right">{s.total}</TableCell>
+                        <TableCell className="text-right">{s.atrasada}</TableCell>
                         <TableCell className="text-right">{s.estabelecidos}</TableCell>
                         <TableCell className="text-right">{s.oportunidades}</TableCell>
                         <TableCell className="text-right">{s.ganhas}</TableCell>
-                        <TableCell className="text-right font-semibold">{s.encerradas ? ((s.ganhas / s.encerradas) * 100).toFixed(1) : "0.0"}%</TableCell>
+                        <TableCell className="text-right font-semibold">{s.taxaGanho == null ? "—" : `${s.taxaGanho.toFixed(1)}%`}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
