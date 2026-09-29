@@ -1,4 +1,5 @@
-import { createContext, useContext, useMemo, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { fromCuiabaInputValue } from "@/lib/datetime";
 
 type PeriodCtx = {
@@ -17,6 +18,8 @@ type PeriodCtx = {
   /** Rótulo curto do período. Ex: "2026" ou "Mar/2026" */
   label: string;
   anos: number[];
+  /** Incrementa quando dados do sistema mudam (realtime) */
+  refreshKey: number;
 };
 
 const Ctx = createContext<PeriodCtx | null>(null);
@@ -27,6 +30,12 @@ const MESES = [
 ];
 
 export const MESES_LABELS = MESES;
+
+const REPORT_TABLES = [
+  "contas", "tarefas", "interacoes", "oportunidades", "leads", "conta_propostas", "conta_fechamentos",
+  "vendas", "oportunidade_visitas", "oportunidade_propostas", "captacoes_imovel", "propostas", "imoveis",
+  "carteira_atribuicoes", "carteira_lotes", "imovel_link_eventos", "imovel_links_compartilhados",
+];
 
 function pad(n: number) {
   return String(n).padStart(2, "0");
@@ -40,6 +49,17 @@ export function ReportsPeriodProvider({ children }: { children: ReactNode }) {
   const now = new Date();
   const [ano, setAno] = useState(now.getFullYear());
   const [mes, setMes] = useState<number | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Canal único: qualquer mudança nas tabelas de origem recarrega os relatórios
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const bump = () => { clearTimeout(t); t = setTimeout(() => setRefreshKey((k) => k + 1), 3000); };
+    const ch = supabase.channel("reports-sync");
+    REPORT_TABLES.forEach((table) => ch.on("postgres_changes" as any, { event: "*", schema: "public", table }, bump));
+    ch.subscribe();
+    return () => { clearTimeout(t); supabase.removeChannel(ch); };
+  }, []);
 
   const value = useMemo<PeriodCtx>(() => {
     let inicio: string;
@@ -71,8 +91,9 @@ export function ReportsPeriodProvider({ children }: { children: ReactNode }) {
       fimISO: fromCuiabaInputValue(`${fim}T23:59`)?.replace(":00.000Z", ":59.999Z") ?? `${fim}T03:59:59.999Z`,
       label,
       anos,
+      refreshKey,
     };
-  }, [ano, mes]);
+  }, [ano, mes, refreshKey]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

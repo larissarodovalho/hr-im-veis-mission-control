@@ -32,7 +32,7 @@ type Row = {
 };
 
 export default function FechamentosReport() {
-  const { inicio, fim, label: periodoLabel, mes } = useReportsPeriod();
+  const { inicio, fim, label: periodoLabel, mes, refreshKey } = useReportsPeriod();
   const [responsavelId, setResponsavelId] = useState<string>("todos");
   const [agrupamento, setAgrupamento] = useState<"mensal" | "anual">(mes == null ? "mensal" : "mensal");
   const [rows, setRows] = useState<Row[]>([]);
@@ -95,7 +95,7 @@ export default function FechamentosReport() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inicio, fim]);
+  }, [inicio, fim, refreshKey]);
 
   const filtered = useMemo(
     () => (responsavelId === "todos" ? rows : rows.filter((r) => r.conta_responsavel_id === responsavelId)),

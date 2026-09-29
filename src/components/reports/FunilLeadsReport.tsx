@@ -47,7 +47,7 @@ const PONT_COLORS: Record<string, string> = {
 const PAGE = 1000;
 
 export default function FunilLeadsReport() {
-  const { inicioISO, fimISO, label } = useReportsPeriod();
+  const { inicioISO, fimISO, label, refreshKey } = useReportsPeriod();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [contasRef, setContasRef] = useState<ContaRef[]>([]);
   const [tentativas, setTentativas] = useState<Tentativa[]>([]);
@@ -143,7 +143,7 @@ export default function FunilLeadsReport() {
     return () => {
       cancel = true;
     };
-  }, [inicioISO, fimISO]);
+  }, [inicioISO, fimISO, refreshKey]);
 
   const filtered = useMemo(
     () => (corretor === "todos" ? leads : leads.filter((l) => l.corretor_id === corretor)),

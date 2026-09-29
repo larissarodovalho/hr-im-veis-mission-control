@@ -1,3 +1,4 @@
+import { dayKeyCRM } from "@/lib/datetime";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -43,7 +44,7 @@ const getVendaComissaoTotal = (v: Venda) =>
 
 
 export default function FaturamentoReport() {
-  const { inicio, fim, label: periodoLabel } = useReportsPeriod();
+  const { inicio, fim, label: periodoLabel, refreshKey } = useReportsPeriod();
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [profiles, setProfiles] = useState<{ id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,7 +65,7 @@ export default function FaturamentoReport() {
       setProfiles((p ?? []).map((x: any) => ({ id: x.user_id, nome: x.nome || "Sem nome" })));
       setLoading(false);
     })();
-  }, []);
+  }, [refreshKey]);
 
   const nameOf = useMemo(() => {
     const m = new Map(profiles.map((p) => [p.id, p.nome]));
@@ -79,8 +80,8 @@ export default function FaturamentoReport() {
   const filtered = useMemo(() => {
     return vendas.filter((v) => {
       if (!v.data_venda) return false;
-      const d = new Date(v.data_venda);
-      if (d < range.from || d > range.to) return false;
+      const dia = String(v.data_venda).length <= 10 ? String(v.data_venda) : dayKeyCRM(v.data_venda);
+      if (dia < inicio || dia > fim) return false;
       if (origem !== "todos" && v.origem_negocio !== origem) return false;
       if (nivel !== "todos" && v.nivel_corretor !== nivel) return false;
       if (corretorId !== "none") {
@@ -91,7 +92,7 @@ export default function FaturamentoReport() {
       }
       return true;
     });
-  }, [vendas, range, papel, corretorId, origem, nivel]);
+  }, [vendas, inicio, fim, papel, corretorId, origem, nivel]);
 
   // KPIs
   const kpis = useMemo(() => {

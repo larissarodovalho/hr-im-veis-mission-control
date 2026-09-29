@@ -38,7 +38,7 @@ const COMPARACOES: { valor: keyof Payload; label: string }[] = [
 ];
 
 export default function LinksImoveisReport() {
-  const { inicioISO, fimISO, label } = useReportsPeriod();
+  const { inicioISO, fimISO, label, refreshKey } = useReportsPeriod();
   const [dados, setDados] = useState<Payload>({});
   const [loading, setLoading] = useState(true);
   const [corretores, setCorretores] = useState<{ id: string; nome: string }[]>([]);
@@ -77,7 +77,7 @@ export default function LinksImoveisReport() {
     if (error) toast.error(error.message);
     setDados((data ?? {}) as Payload);
     setLoading(false);
-  }, [inicioISO, fimISO, corretor, imovel, tipo, status, dispositivo, resultado, duracao]);
+  }, [refreshKey, inicioISO, fimISO, corretor, imovel, tipo, status, dispositivo, resultado, duracao]);
 
   useEffect(() => { load(); }, [load]);
 

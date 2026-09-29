@@ -1,3 +1,4 @@
+import { dayKeyCRM } from "@/lib/datetime";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -61,7 +62,7 @@ const PIE_COLORS = ["#6366f1", "#3b82f6", "#06b6d4", "#f59e0b", "#10b981", "#ef4
 const lower = (s: string | null | undefined) => (s || "").toLowerCase();
 
 export default function ImoveisReport() {
-  const { inicio, fim, label: periodoLabel } = useReportsPeriod();
+  const { inicio, fim, label: periodoLabel, refreshKey } = useReportsPeriod();
   const [imoveis, setImoveis] = useState<any[]>([]);
   const [propostas, setPropostas] = useState<any[]>([]);
   const [oportunidades, setOportunidades] = useState<any[]>([]);
@@ -95,7 +96,7 @@ export default function ImoveisReport() {
       setProfiles(pm);
       setLoading(false);
     })();
-  }, []);
+  }, [refreshKey]);
 
   // Cidades disponíveis
   const cidades = useMemo(() => {
@@ -106,9 +107,8 @@ export default function ImoveisReport() {
 
   const inPeriod = (created: string) => {
     if (!created) return false;
-    if (created < inicio) return false;
-    if (created > `${fim}T23:59:59`) return false;
-    return true;
+    const dia = dayKeyCRM(created);
+    return dia >= inicio && dia <= fim;
   };
 
   const imoveisF = useMemo(() => imoveis.filter((i) => {
