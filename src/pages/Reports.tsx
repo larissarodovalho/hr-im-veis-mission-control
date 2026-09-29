@@ -127,7 +127,8 @@ function ReportsInner() {
     setStats(linhas);
   }, [base, lista]);
 
-  const statsVisiveis = corretor === "todos" ? stats : stats.filter((s) => s.user_id === corretor);
+  const statsCorretores = stats.filter((s) => s.nome.trim().toLocaleLowerCase("pt-BR") !== "larissa rodovalho");
+  const statsVisiveis = corretor === "todos" ? statsCorretores : statsCorretores.filter((s) => s.user_id === corretor);
 
   const carregarMetasVgv = async (): Promise<{ metasVgv: Record<string, MetaVgvCorretor>; metaHrx: MetaInstitucionalVgv }> => {
     const [{ data: metas }, { data: institucional }, { data: vendas }] = await Promise.all([
@@ -172,7 +173,7 @@ function ReportsInner() {
   };
 
   const gerarPdf = async (todos: boolean) => {
-    const alvo = todos ? stats : statsVisiveis;
+    const alvo = todos ? statsCorretores : statsVisiveis;
     if (!alvo.length) return toast.error("Nenhum corretor para o relatório.");
     setGerandoPdf(true);
     try {
@@ -249,7 +250,7 @@ function ReportsInner() {
 
         <TabsContent value="performance" className="space-y-4 md:space-y-6 mt-4">
           <FunilContasReport lista={lista} onListaChange={setLista} corretor={corretor} onCorretorChange={setCorretor}
-            corretoresPermitidos={stats.map((s) => s.user_id)} refreshKey={refreshKey} />
+            corretoresPermitidos={statsCorretores.map((s) => s.user_id)} refreshKey={refreshKey} />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="p-4 md:p-6">
@@ -269,7 +270,7 @@ function ReportsInner() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
               <h2 className="font-semibold">Performance por corretor — {label} · {LISTA_LABEL[lista]}</h2>
               <div className="flex flex-wrap gap-2">
-                {isAdmin && <MetasVgvDialog corretores={stats.filter((s) => s.nome.trim().toLocaleLowerCase("pt-BR") !== "larissa rodovalho").map((s) => ({ user_id: s.user_id, nome: s.nome }))} anoInicial={ano} />}
+                {isAdmin && <MetasVgvDialog corretores={statsCorretores.map((s) => ({ user_id: s.user_id, nome: s.nome }))} anoInicial={ano} />}
                 <Button size="sm" disabled={corretor === "todos" || gerandoPdf || loading} onClick={() => gerarPdf(false)}>
                   <FileText className="h-4 w-4 mr-1" /> Gerar PDF do corretor
                 </Button>
