@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, FileSpreadsheet, BarChart3, Shield, Info, CalendarRange, FileText } from "lucide-react";
-import { calcularPerformance, gerarPdfPerformance, primeiraTarefaPorConta, LISTA_LABEL, type ListaPerformance, type PerformanceCorretor } from "@/lib/performancePdf";
+import { calcularPerformance, gerarPdfPerformance, primeiraTarefaPorConta, LISTA_LABEL, type ListaPerformance, type PerformanceCorretor, type MetaVgvCorretor } from "@/lib/performancePdf";
+import MetasVgvDialog from "@/components/reports/MetasVgvDialog";
+import { dayKeyCRM } from "@/lib/datetime";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Papa from "papaparse";
 import { toast } from "sonner";
@@ -56,7 +58,7 @@ function PeriodPicker() {
 function ReportsInner() {
   const { isAdmin, isGestor, loading: roleLoading } = useRole();
   const can = isAdmin || isGestor;
-  const { inicioISO, fimISO, label, refreshKey } = useReportsPeriod();
+  const { inicioISO, fimISO, label, refreshKey, ano } = useReportsPeriod();
   const [stats, setStats] = useState<PerformanceCorretor[]>([]);
   const [loading, setLoading] = useState(true);
   const [lista, setLista] = useState<ListaPerformance>("carteira");
@@ -126,11 +128,28 @@ function ReportsInner() {
 
   const statsVisiveis = corretor === "todos" ? stats : stats.filter((s) => s.user_id === corretor);
 
+  const carregarMetasVgv = async (): Promise<Record<string, MetaVgvCorretor>> => {
+    const [{ data: metas }, { data: vendas }] = await Promise.all([
+      supabase.from("metas_vgv").select("corretor_id, meta_vgv").eq("ano", ano),
+      supabase.from("vendas").select("data_venda, valor_venda, corretor_vendedor_id").gte("data_venda", `${ano - 1}-12-31`).lte("data_venda", `${ano + 1}-01-01T23:59:59`),
+    ]);
+    const out: Record<string, MetaVgvCorretor> = {};
+    stats.forEach((s) => { out[s.user_id] = { ano, meta: 0, mensal: Array(12).fill(0) }; });
+    (metas ?? []).forEach((m: any) => { if (out[m.corretor_id]) out[m.corretor_id].meta = Number(m.meta_vgv) || 0; });
+    (vendas ?? []).forEach((v: any) => {
+      const o = out[v.corretor_vendedor_id]; if (!o || !v.data_venda) return;
+      const dia = String(v.data_venda).length <= 10 ? String(v.data_venda) : dayKeyCRM(v.data_venda);
+      if (Number(dia.slice(0, 4)) !== ano) return;
+      o.mensal[Number(dia.slice(5, 7)) - 1] += Number(v.valor_venda) || 0;
+    });
+    return out;
+  };
+
   const gerarPdf = async (todos: boolean) => {
     const alvo = todos ? stats : statsVisiveis;
     if (!alvo.length) return toast.error("Nenhum corretor para o relatório.");
     setGerandoPdf(true);
-    try { await gerarPdfPerformance({ corretores: alvo, periodo: label, lista }); toast.success("PDF gerado"); }
+    try { const metasVgv = await carregarMetasVgv(); await gerarPdfPerformance({ corretores: alvo, periodo: label, lista, metasVgv }); toast.success("PDF gerado"); }
     catch (e: any) { toast.error("Erro ao gerar PDF: " + (e?.message ?? e)); }
     finally { setGerandoPdf(false); }
   };
@@ -220,6 +239,7 @@ function ReportsInner() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
               <h2 className="font-semibold">Performance por corretor — {label} · {LISTA_LABEL[lista]}</h2>
               <div className="flex flex-wrap gap-2">
+                {isAdmin && <MetasVgvDialog corretores={stats.map((s) => ({ user_id: s.user_id, nome: s.nome }))} anoInicial={ano} />}
                 <Button size="sm" disabled={corretor === "todos" || gerandoPdf || loading} onClick={() => gerarPdf(false)}>
                   <FileText className="h-4 w-4 mr-1" /> Gerar PDF do corretor
                 </Button>
