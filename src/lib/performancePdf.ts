@@ -105,8 +105,9 @@ const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", curren
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
 export interface MetaVgvCorretor { ano: number; meta: number; mensal: number[] }
+export interface MetaInstitucionalVgv { ano: number; meta: number; mensal: number[] }
 
-export async function gerarPdfPerformance({ corretores, periodo, lista, metasVgv }: { corretores: PerformanceCorretor[]; periodo: string; lista: ListaPerformance; metasVgv?: Record<string, MetaVgvCorretor> }) {
+export async function gerarPdfPerformance({ corretores, periodo, lista, metasVgv, metaHrx }: { corretores: PerformanceCorretor[]; periodo: string; lista: ListaPerformance; metasVgv?: Record<string, MetaVgvCorretor>; metaHrx?: MetaInstitucionalVgv }) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const logo = await carregarLogo();
   const W = doc.internal.pageSize.getWidth();
@@ -197,6 +198,56 @@ export async function gerarPdfPerformance({ corretores, periodo, lista, metasVgv
       doc.text("VGV = soma do valor das vendas em que o corretor é o vendedor, pela data da venda (fuso de Cuiabá). Ritmo esperado = meta ÷ 12 acumulado por mês.", M, y, { maxWidth: W - 2 * M });
     }
   });
+
+  if (metaHrx) {
+    doc.addPage();
+    let y = 20;
+    if (logo) doc.addImage(logo, "PNG", M, 12, 18, 21, undefined, "FAST");
+    const x = logo ? 37 : M;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(90);
+    doc.text("HR IMÓVEIS · META INSTITUCIONAL", x, 17);
+    doc.setFontSize(18); doc.setTextColor(20); doc.text("HRX Produções", x, 26);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(90);
+    doc.text(`Ano: ${metaHrx.ano}  ·  Origem: Base HRX (Tráfego/Marketing)`, x, 32);
+    doc.setDrawColor(200); doc.line(M, 38, W - M, 38); y = 47;
+
+    const real = metaHrx.mensal.reduce((a, b) => a + b, 0);
+    const pct = metaHrx.meta > 0 ? (real / metaHrx.meta) * 100 : null;
+    const itens: Array<[string, string]> = [
+      ["Meta anual", metaHrx.meta > 0 ? brl(metaHrx.meta) : "Meta não definida"],
+      ["VGV realizado", brl(real)],
+      ["% atingido", fmtPct(pct)],
+      ["Falta para a meta", metaHrx.meta > 0 ? brl(Math.max(0, metaHrx.meta - real)) : "—"],
+    ];
+    const w = (W - 2 * M - 4) / 2;
+    itens.forEach(([l, v], i) => {
+      const cx = M + (i % 2) * (w + 4), cy = y + Math.floor(i / 2) * 20;
+      doc.setDrawColor(220); doc.roundedRect(cx, cy, w, 16, 2, 2);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(100); doc.text(l, cx + 3, cy + 5);
+      doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(20); doc.text(v, cx + 3, cy + 12.5);
+    });
+    y += 48;
+    if (metaHrx.meta > 0) {
+      const bw = W - 2 * M;
+      doc.setFillColor(230, 230, 230); doc.roundedRect(M, y, bw, 6, 2, 2, "F");
+      doc.setFillColor(22, 130, 80); doc.roundedRect(M, y, Math.max(1, bw * Math.min(1, real / metaHrx.meta)), 6, 2, 2, "F");
+      y += 14;
+    }
+    doc.setFontSize(9); doc.setFont("helvetica", "bold"); doc.setTextColor(90);
+    const cols = [M, M + 30, M + 75, M + 120];
+    doc.text("Mês", cols[0], y); doc.text("VGV do mês", cols[1], y); doc.text("Acumulado", cols[2], y); doc.text("Ritmo esperado", cols[3], y);
+    y += 2; doc.line(M, y, W - M, y); y += 5;
+    doc.setFont("helvetica", "normal"); doc.setTextColor(20);
+    let acc = 0;
+    MESES.forEach((m, i) => {
+      acc += metaHrx.mensal[i];
+      doc.text(m, cols[0], y); doc.text(brl(metaHrx.mensal[i]), cols[1], y); doc.text(brl(acc), cols[2], y);
+      doc.text(metaHrx.meta > 0 ? brl((metaHrx.meta / 12) * (i + 1)) : "—", cols[3], y);
+      y += 6;
+    });
+    y += 4; doc.setFontSize(8); doc.setTextColor(110);
+    doc.text("O realizado considera somente o valor das vendas classificadas como Base HRX (Tráfego/Marketing). Não inclui atendimento, tarefas, folha ou comissões.", M, y, { maxWidth: W - 2 * M });
+  }
 
   const n = doc.getNumberOfPages();
   for (let i = 1; i <= n; i++) {

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, FileSpreadsheet, BarChart3, Shield, Info, CalendarRange, FileText } from "lucide-react";
-import { calcularPerformance, gerarPdfPerformance, primeiraTarefaPorConta, LISTA_LABEL, type ListaPerformance, type PerformanceCorretor, type MetaVgvCorretor } from "@/lib/performancePdf";
+import { calcularPerformance, gerarPdfPerformance, primeiraTarefaPorConta, LISTA_LABEL, type ListaPerformance, type PerformanceCorretor, type MetaVgvCorretor, type MetaInstitucionalVgv } from "@/lib/performancePdf";
 import MetasVgvDialog from "@/components/reports/MetasVgvDialog";
 import { dayKeyCRM } from "@/lib/datetime";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -128,28 +128,38 @@ function ReportsInner() {
 
   const statsVisiveis = corretor === "todos" ? stats : stats.filter((s) => s.user_id === corretor);
 
-  const carregarMetasVgv = async (): Promise<Record<string, MetaVgvCorretor>> => {
-    const [{ data: metas }, { data: vendas }] = await Promise.all([
+  const carregarMetasVgv = async (): Promise<{ metasVgv: Record<string, MetaVgvCorretor>; metaHrx: MetaInstitucionalVgv }> => {
+    const [{ data: metas }, { data: institucional }, { data: vendas }] = await Promise.all([
       supabase.from("metas_vgv").select("corretor_id, meta_vgv").eq("ano", ano),
-      supabase.from("vendas").select("data_venda, valor_venda, corretor_vendedor_id").gte("data_venda", `${ano - 1}-12-31`).lte("data_venda", `${ano + 1}-01-01T23:59:59`),
+      supabase.from("metas_institucionais").select("meta_vgv").eq("entidade", "hrx_producoes").eq("ano", ano).maybeSingle(),
+      supabase.from("vendas").select("data_venda, valor_venda, corretor_vendedor_id, origem_negocio").gte("data_venda", `${ano - 1}-12-31`).lte("data_venda", `${ano + 1}-01-01T23:59:59`),
     ]);
     const out: Record<string, MetaVgvCorretor> = {};
+    const hrx: MetaInstitucionalVgv = { ano, meta: Number(institucional?.meta_vgv) || 0, mensal: Array(12).fill(0) };
     stats.forEach((s) => { out[s.user_id] = { ano, meta: 0, mensal: Array(12).fill(0) }; });
     (metas ?? []).forEach((m: any) => { if (out[m.corretor_id]) out[m.corretor_id].meta = Number(m.meta_vgv) || 0; });
     (vendas ?? []).forEach((v: any) => {
-      const o = out[v.corretor_vendedor_id]; if (!o || !v.data_venda) return;
+      if (!v.data_venda) return;
       const dia = String(v.data_venda).length <= 10 ? String(v.data_venda) : dayKeyCRM(v.data_venda);
       if (Number(dia.slice(0, 4)) !== ano) return;
-      o.mensal[Number(dia.slice(5, 7)) - 1] += Number(v.valor_venda) || 0;
+      const mesVenda = Number(dia.slice(5, 7)) - 1;
+      const valor = Number(v.valor_venda) || 0;
+      const o = out[v.corretor_vendedor_id];
+      if (o) o.mensal[mesVenda] += valor;
+      if (v.origem_negocio === "base_hrx") hrx.mensal[mesVenda] += valor;
     });
-    return out;
+    return { metasVgv: out, metaHrx: hrx };
   };
 
   const gerarPdf = async (todos: boolean) => {
     const alvo = todos ? stats : statsVisiveis;
     if (!alvo.length) return toast.error("Nenhum corretor para o relatório.");
     setGerandoPdf(true);
-    try { const metasVgv = await carregarMetasVgv(); await gerarPdfPerformance({ corretores: alvo, periodo: label, lista, metasVgv }); toast.success("PDF gerado"); }
+    try {
+      const { metasVgv, metaHrx } = await carregarMetasVgv();
+      await gerarPdfPerformance({ corretores: alvo, periodo: label, lista, metasVgv, metaHrx: todos ? metaHrx : undefined });
+      toast.success("PDF gerado");
+    }
     catch (e: any) { toast.error("Erro ao gerar PDF: " + (e?.message ?? e)); }
     finally { setGerandoPdf(false); }
   };
@@ -239,7 +249,7 @@ function ReportsInner() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
               <h2 className="font-semibold">Performance por corretor — {label} · {LISTA_LABEL[lista]}</h2>
               <div className="flex flex-wrap gap-2">
-                {isAdmin && <MetasVgvDialog corretores={stats.map((s) => ({ user_id: s.user_id, nome: s.nome }))} anoInicial={ano} />}
+                {isAdmin && <MetasVgvDialog corretores={stats.filter((s) => s.nome.trim().toLocaleLowerCase("pt-BR") !== "larissa rodovalho").map((s) => ({ user_id: s.user_id, nome: s.nome }))} anoInicial={ano} />}
                 <Button size="sm" disabled={corretor === "todos" || gerandoPdf || loading} onClick={() => gerarPdf(false)}>
                   <FileText className="h-4 w-4 mr-1" /> Gerar PDF do corretor
                 </Button>

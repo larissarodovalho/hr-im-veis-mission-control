@@ -134,6 +134,13 @@
       "when": 1790707598660,
       "tag": "0018_metas_vgv",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790708357988,
+      "tag": "0019_create_metas_institucionais",
+      "breakpoints": true
     }
   ]
 }

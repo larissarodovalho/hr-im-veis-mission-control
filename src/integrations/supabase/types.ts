@@ -2693,6 +2693,36 @@ export type Database = {
         }
         Relationships: []
       }
+      metas_institucionais: {
+        Row: {
+          ano: number
+          created_at: string
+          created_by: string | null
+          entidade: string
+          id: string
+          meta_vgv: number
+          updated_at: string
+        }
+        Insert: {
+          ano: number
+          created_at?: string
+          created_by?: string | null
+          entidade: string
+          id?: string
+          meta_vgv?: number
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          created_at?: string
+          created_by?: string | null
+          entidade?: string
+          id?: string
+          meta_vgv?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       metas_vgv: {
         Row: {
           ano: number
