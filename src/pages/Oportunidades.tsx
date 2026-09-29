@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
+import { StandbyBadge } from "@/components/standby/StandbyControl";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,7 @@ function OpCard({
           <Badge variant="outline" className="text-[10px]">{categoriaLabel(o.categoria_origem ?? cli.categoria)}</Badge>
         )}
         {o.possui_permuta && <Badge variant="outline" className="text-[10px] bg-orange-500/10 text-orange-600 border-orange-500/30">Permuta</Badge>}
+        <StandbyBadge ate={(o as any).standby_ate} className="text-[10px]" />
       </div>
       <p className="text-xs mt-2 flex items-center gap-1 text-muted-foreground">
         <Link2 className="h-3 w-3 shrink-0" />
@@ -123,6 +125,7 @@ export default function Oportunidades() {
   const [fPrioridade, setFPrioridade] = useState("todas");
   const [fDias, setFDias] = useState("todos");
   const [fPermuta, setFPermuta] = useState("todos");
+  const [fStandby, setFStandby] = useState("todos");
   const [showFinalizadas, setShowFinalizadas] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [mobileEstagio, setMobileEstagio] = useState<string>(ESTAGIOS[0]?.key ?? "nova");
@@ -228,6 +231,7 @@ export default function Oportunidades() {
       if (fPrioridade !== "todas" && (o.prioridade ?? "media") !== fPrioridade) return false;
       if (fPermuta === "sim" && !o.possui_permuta) return false;
       if (fPermuta === "nao" && o.possui_permuta) return false;
+      if (fStandby !== "todos") { const ate = (o as any).standby_ate; const venc = ate && new Date(ate).getTime() < Date.now(); if (fStandby === "sem" ? !!ate : fStandby === "vencido" ? !venc : (!ate || venc)) return false; }
       if (fVinculo === "pendente" && o.conta_id) return false;
       if (fVinculo === "ok" && !o.conta_id) return false;
       if (limite) {
@@ -237,7 +241,7 @@ export default function Oportunidades() {
       return true;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ops, q, fCorretor, fCategoria, fTipo, fOrigem, fVinculo, fPrioridade, fDias, fPermuta, showFinalizadas, contasMap, leadsMap]);
+  }, [ops, q, fCorretor, fCategoria, fTipo, fOrigem, fVinculo, fPrioridade, fDias, fPermuta, fStandby, showFinalizadas, contasMap, leadsMap]);
 
   const porEstagio = (key: string) => filtradas.filter((o) => (o.estagio ?? "nova") === key);
   const ativas = filtradas.filter((o) => !isEstagioFinal(o.estagio)).length;
@@ -271,6 +275,7 @@ export default function Oportunidades() {
     (fPrioridade !== "todas" ? 1 : 0) +
     (fDias !== "todos" ? 1 : 0) +
     (fPermuta !== "todos" ? 1 : 0) +
+    (fStandby !== "todos" ? 1 : 0) +
     (showFinalizadas ? 1 : 0);
 
   const renderCard = (o: Op) => (
@@ -373,6 +378,15 @@ export default function Oportunidades() {
             <SelectItem value="todos">Vínculo: todos</SelectItem>
             <SelectItem value="ok">Com conta</SelectItem>
             <SelectItem value="pendente">Sem conta (legado)</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={fStandby} onValueChange={setFStandby}>
+          <SelectTrigger className="w-full md:w-[160px]"><SelectValue placeholder="Standby" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Standby: todos</SelectItem>
+            <SelectItem value="ativo">Em standby (no prazo)</SelectItem>
+            <SelectItem value="vencido">Standby vencido</SelectItem>
+            <SelectItem value="sem">Sem standby</SelectItem>
           </SelectContent>
         </Select>
         <Select value={fPermuta} onValueChange={setFPermuta}>

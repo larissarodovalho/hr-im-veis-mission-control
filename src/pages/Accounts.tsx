@@ -127,6 +127,13 @@ const APT_BADGE: Record<Aptitude, string> = {
 import { formatBRL } from "@/lib/format";
 const fmt = (v: number | null) => (v == null || v === 0 ? "—" : formatBRL(v));
 
+const standbyOk = (ate: string | null | undefined, f: string) => {
+  if (f === "todos") return true;
+  if (!ate) return f === "sem";
+  const venc = new Date(ate).getTime() < Date.now();
+  return f === "vencido" ? venc : f === "ativo" ? !venc : false;
+};
+
 export default function Accounts() {
   const { isAdmin, isGestor } = useRole();
   const { user } = useAuth();
@@ -187,6 +194,7 @@ export default function Accounts() {
   const [ownerFilter, setOwnerFilter] = useState<string>(searchParams.get("responsavel") ?? "todos");
   const [contactFilter, setContactFilter] = useState<string>(searchParams.get("contato") ?? "todos");
   const [etapaFilter, setEtapaFilter] = useState<string>(searchParams.get("etapa") ?? "todos");
+  const [standbyFilter, setStandbyFilter] = useState<string>(searchParams.get("standby") ?? "todos");
   // Rascunho — não filtra até clicar em Aplicar
   const [draftSearch, setDraftSearch] = useState(searchParams.get("q") ?? "");
   const [draftStatus, setDraftStatus] = useState<"todos" | Status>(initialStatus as any);
@@ -410,6 +418,7 @@ export default function Accounts() {
   }, {});
 
   const filtered = accounts.filter((a) => {
+    if (!standbyOk((a as any).standby_ate, standbyFilter)) return false;
     if (lista !== "todos") {
       if (categoriaDe(a) !== lista) return false;
     }
@@ -803,6 +812,15 @@ export default function Accounts() {
                 <SelectItem key={e.id} value={e.id}>{e.label}</SelectItem>
               ))}
               <SelectItem value="legado">Etapas legadas</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={standbyFilter} onValueChange={(v) => { setStandbyFilter(v); const sp = new URLSearchParams(window.location.search); if (v === "todos") sp.delete("standby"); else sp.set("standby", v); window.history.replaceState(null, "", `${window.location.pathname}?${sp}`); }}>
+            <SelectTrigger><SelectValue placeholder="Standby" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Standby: todos</SelectItem>
+              <SelectItem value="ativo">Em standby (no prazo)</SelectItem>
+              <SelectItem value="vencido">Standby vencido</SelectItem>
+              <SelectItem value="sem">Sem standby</SelectItem>
             </SelectContent>
           </Select>
 

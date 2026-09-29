@@ -28,6 +28,8 @@ export interface PerformanceCorretor {
   taxaGanho: number | null;
   leads: number;
   temLeads: boolean;
+  emStandby: number;
+  standbyVencido: number;
 }
 
 const FLUXO = ["a_contatar", "contatado", "contato_estabelecido"];
@@ -55,6 +57,7 @@ export function calcularPerformance(p: {
   userId: string; nome: string; lista: ListaPerformance; contas: PerfConta[];
   tarefaPorConta: Map<string, string>; opsGeradas: PerfOportunidade[]; opsEncerradas: PerfOportunidade[];
   leads: PerfLead[]; temLeads: boolean;
+  standbys?: Array<{ dono: string | null; standby_ate: string }>;
 }): PerformanceCorretor {
   const base = filtrarContas(p.contas, p.lista, p.userId);
   const by: Record<string, number> = {};
@@ -85,6 +88,7 @@ export function calcularPerformance(p: {
     oportunidades: p.opsGeradas.filter((o) => o.corretor_id === p.userId).length,
     ganhas, perdidas, taxaGanho: ganhas + perdidas ? (ganhas / (ganhas + perdidas)) * 100 : null,
     leads: p.leads.filter((l) => l.corretor_id === p.userId).length, temLeads: p.temLeads,
+    ...(() => { const meus = (p.standbys ?? []).filter((s) => s.dono === p.userId); const venc = meus.filter((s) => new Date(s.standby_ate).getTime() < Date.now()).length; return { emStandby: meus.length - venc, standbyVencido: venc }; })(),
   };
 }
 
@@ -133,6 +137,7 @@ export async function gerarPdfPerformance({ corretores, periodo, lista }: { corr
     kpis([
       ["Total de contas", c.total], ["Em andamento", c.emAndamento], ["Sem retorno", c.semRetorno],
       ["Contato estabelecido", c.estabelecidos], ["Atendimento programado", c.programado], ["Tarefas atrasadas", c.atrasada],
+      ["Em standby (no prazo)", c.emStandby], ["Standby vencido", c.standbyVencido],
     ]);
 
     secao("Funil por etapa");
