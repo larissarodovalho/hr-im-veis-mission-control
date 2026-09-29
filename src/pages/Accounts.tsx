@@ -300,7 +300,7 @@ export default function Accounts() {
   const load = async () => {
     setLoading(true);
     try {
-      const [accs, { data: props }, { data: profs }, { data: opsData }] = await Promise.all([
+      const [accs, { data: props }, { data: profs }, { data: opsData }, { data: roles }] = await Promise.all([
         fetchAllContas(),
         supabase.from("conta_propriedades" as any).select("*"),
         supabase.from("profiles").select("user_id, nome"),
@@ -309,14 +309,31 @@ export default function Accounts() {
           .select("id,conta_id,titulo,estagio,valor_alvo,corretor_id")
           .in("estagio", ["nova", "buscando", "visita", "proposta"])
           .not("conta_id", "is", null),
+        supabase.from("user_roles").select("user_id, role"),
       ]);
       setAccounts((accs ?? []) as Account[]);
       setProperties(((props as any) ?? []) as Property[]);
       const map: Record<string, string> = {};
+      ((profs as any) ?? []).forEach((p: any) => {
+        if (p.user_id) map[p.user_id] = p.nome || "—";
+      });
+      // Lista de responsáveis = só corretores (mesmo critério da Performance:
+      // papel corretor, ou admin/gestor com carteira).
+      const comCarteira = new Set(
+        ((accs as any[]) ?? []).map((a: any) => a.responsavel_id).filter(Boolean)
+      );
+      const rolesPor = new Map<string, string[]>();
+      ((roles as any) ?? []).forEach((r: any) =>
+        rolesPor.set(r.user_id, [...(rolesPor.get(r.user_id) ?? []), r.role])
+      );
       const list: { id: string; nome: string }[] = [];
       ((profs as any) ?? []).forEach((p: any) => {
-        if (p.user_id) {
-          map[p.user_id] = p.nome || "—";
+        if (!p.user_id) return;
+        const rs = rolesPor.get(p.user_id) ?? [];
+        if (
+          rs.includes("corretor") ||
+          ((rs.includes("admin") || rs.includes("gestor")) && comCarteira.has(p.user_id))
+        ) {
           list.push({ id: p.user_id, nome: p.nome || "—" });
         }
       });
