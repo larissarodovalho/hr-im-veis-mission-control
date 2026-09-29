@@ -139,11 +139,14 @@ function ReportsInner() {
     stats.forEach((s) => { out[s.user_id] = { ano, meta: 0, mensal: Array(12).fill(0) }; });
     (metas ?? []).forEach((m: any) => { if (out[m.corretor_id]) out[m.corretor_id].meta = Number(m.meta_vgv) || 0; });
     (vendas ?? []).forEach((v: any) => {
-      const o = out[v.corretor_vendedor_id]; if (!o || !v.data_venda) return;
+      if (!v.data_venda) return;
       const dia = String(v.data_venda).length <= 10 ? String(v.data_venda) : dayKeyCRM(v.data_venda);
       if (Number(dia.slice(0, 4)) !== ano) return;
-      o.mensal[Number(dia.slice(5, 7)) - 1] += Number(v.valor_venda) || 0;
-      if (v.origem_negocio === "base_hrx") hrx.mensal[Number(dia.slice(5, 7)) - 1] += Number(v.valor_venda) || 0;
+      const mesVenda = Number(dia.slice(5, 7)) - 1;
+      const valor = Number(v.valor_venda) || 0;
+      const o = out[v.corretor_vendedor_id];
+      if (o) o.mensal[mesVenda] += valor;
+      if (v.origem_negocio === "base_hrx") hrx.mensal[mesVenda] += valor;
     });
     return { metasVgv: out, metaHrx: hrx };
   };
