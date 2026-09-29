@@ -1187,6 +1187,10 @@ export type Database = {
           qualificacao_status: string | null
           ramo_atividade: string | null
           responsavel_id: string | null
+          standby_ate: string | null
+          standby_desde: string | null
+          standby_motivo: string | null
+          standby_por: string | null
           status: string
           tags: string[] | null
           telefone: string | null
@@ -1223,6 +1227,10 @@ export type Database = {
           qualificacao_status?: string | null
           ramo_atividade?: string | null
           responsavel_id?: string | null
+          standby_ate?: string | null
+          standby_desde?: string | null
+          standby_motivo?: string | null
+          standby_por?: string | null
           status?: string
           tags?: string[] | null
           telefone?: string | null
@@ -1259,6 +1267,10 @@ export type Database = {
           qualificacao_status?: string | null
           ramo_atividade?: string | null
           responsavel_id?: string | null
+          standby_ate?: string | null
+          standby_desde?: string | null
+          standby_motivo?: string | null
+          standby_por?: string | null
           status?: string
           tags?: string[] | null
           telefone?: string | null
@@ -3197,6 +3209,10 @@ export type Database = {
           prazo_pretendido: string | null
           prioridade: string
           proposta_aceita_id: string | null
+          standby_ate: string | null
+          standby_desde: string | null
+          standby_motivo: string | null
+          standby_por: string | null
           tipo_imovel: string | null
           titulo: string
           updated_at: string
@@ -3244,6 +3260,10 @@ export type Database = {
           prazo_pretendido?: string | null
           prioridade?: string
           proposta_aceita_id?: string | null
+          standby_ate?: string | null
+          standby_desde?: string | null
+          standby_motivo?: string | null
+          standby_por?: string | null
           tipo_imovel?: string | null
           titulo: string
           updated_at?: string
@@ -3291,6 +3311,10 @@ export type Database = {
           prazo_pretendido?: string | null
           prioridade?: string
           proposta_aceita_id?: string | null
+          standby_ate?: string | null
+          standby_desde?: string | null
+          standby_motivo?: string | null
+          standby_por?: string | null
           tipo_imovel?: string | null
           titulo?: string
           updated_at?: string
@@ -3839,6 +3863,7 @@ export type Database = {
           id: string
           lead_id: string | null
           oportunidade_id: string | null
+          origem: string | null
           prazo: string | null
           prioridade: string
           responsavel_id: string | null
@@ -3854,6 +3879,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           oportunidade_id?: string | null
+          origem?: string | null
           prazo?: string | null
           prioridade?: string
           responsavel_id?: string | null
@@ -3869,6 +3895,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           oportunidade_id?: string | null
+          origem?: string | null
           prazo?: string | null
           prioridade?: string
           responsavel_id?: string | null
