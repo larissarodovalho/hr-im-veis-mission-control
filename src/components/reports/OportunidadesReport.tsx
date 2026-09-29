@@ -1,3 +1,4 @@
+import { useReportsPeriod } from "@/hooks/useReportsPeriod";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -27,6 +28,7 @@ export default function OportunidadesReport({ inicioISO, fimISO }: { inicioISO: 
   const [contas, setContas] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
 
+  const { refreshKey } = useReportsPeriod();
   useEffect(() => {
     const run = async () => {
       setLoading(true);
@@ -60,7 +62,7 @@ export default function OportunidadesReport({ inicioISO, fimISO }: { inicioISO: 
       setLoading(false);
     };
     run();
-  }, []);
+  }, [refreshKey]);
 
   const noPeriodo = (iso?: string | null) => !!iso && iso >= inicioISO && iso <= fimISO;
 

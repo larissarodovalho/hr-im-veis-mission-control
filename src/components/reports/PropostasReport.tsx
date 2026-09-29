@@ -49,7 +49,7 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default function PropostasReport() {
-  const { inicio, fim, label: periodoLabel } = useReportsPeriod();
+  const { inicio, fim, label: periodoLabel, refreshKey } = useReportsPeriod();
   const [rows, setRows] = useState<Row[]>([]);
   const [responsaveis, setResponsaveis] = useState<{ user_id: string; nome: string }[]>([]);
   const [responsavelId, setResponsavelId] = useState<string>("todos");
@@ -113,7 +113,7 @@ export default function PropostasReport() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inicio, fim]);
+  }, [inicio, fim, refreshKey]);
 
   const filtered = useMemo(
     () =>

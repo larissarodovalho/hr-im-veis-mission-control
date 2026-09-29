@@ -187,7 +187,7 @@ const baixarCSV = (linhas: Record<string, unknown>[], nome: string) => {
 };
 
 export default function AcompanhamentoCorretoresReport() {
-  const { inicioISO, fimISO, label } = useReportsPeriod();
+  const { inicioISO, fimISO, label, refreshKey } = useReportsPeriod();
   const { user } = useAuth();
   const { isAdmin, isGestor } = useRole();
   const podeEditar = isAdmin || isGestor;
@@ -225,7 +225,7 @@ export default function AcompanhamentoCorretoresReport() {
     setDados((geral.data as unknown as Dados) ?? null);
     setDadosDiarios(diario.error ? null : ((diario.data as unknown as DadosDiarios) ?? null));
     setLoading(false);
-  }, [inicioISO, fimISO, prazo, origens]);
+  }, [inicioISO, fimISO, prazo, origens, refreshKey]);
 
   useEffect(() => {
     carregar();

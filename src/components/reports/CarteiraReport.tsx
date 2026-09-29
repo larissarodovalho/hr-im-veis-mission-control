@@ -39,7 +39,7 @@ const baixarCSV = (linhas: Record<string, unknown>[], nome: string) => {
 const pct = (parte: number, total: number) => (total ? `${((parte / total) * 100).toFixed(1)}%` : "—");
 
 export default function CarteiraReport() {
-  const { inicioISO, fimISO, label } = useReportsPeriod();
+  const { inicioISO, fimISO, label, refreshKey } = useReportsPeriod();
   const [corretores, setCorretores] = useState<LinhaCorretor[]>([]);
   const [lotes, setLotes] = useState<LinhaLote[]>([]);
   const [motivos, setMotivos] = useState<LinhaMotivo[]>([]);
@@ -61,7 +61,7 @@ export default function CarteiraReport() {
       setLoading(false);
     });
     return () => { vivo = false; };
-  }, [inicioISO, fimISO]);
+  }, [inicioISO, fimISO, refreshKey]);
 
   const kpis = useMemo(() => {
     const soma = (f: (r: LinhaCorretor) => number) => corretores.reduce((t, r) => t + (f(r) || 0), 0);

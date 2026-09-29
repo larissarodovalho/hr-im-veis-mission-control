@@ -21,7 +21,7 @@ import { useReportsPeriod } from "@/hooks/useReportsPeriod";
 type Bucket = { key: string; label: string; leads: number; contas: number };
 
 export default function LeadsParaContasReport() {
-  const { inicioISO, fimISO, inicio, fim, mes, label: periodoLabel } = useReportsPeriod();
+  const { inicioISO, fimISO, inicio, fim, mes, label: periodoLabel, refreshKey } = useReportsPeriod();
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState<{ created_at: string }[]>([]);
   const [contas, setContas] = useState<{ created_at: string }[]>([]);
@@ -51,7 +51,7 @@ export default function LeadsParaContasReport() {
     return () => {
       cancel = true;
     };
-  }, [inicioISO, fimISO]);
+  }, [inicioISO, fimISO, refreshKey]);
 
   // Se um mês específico está selecionado, agrupa por dia; senão, por mês do ano.
   const granularity: "day" | "month" = mes == null ? "month" : "day";
