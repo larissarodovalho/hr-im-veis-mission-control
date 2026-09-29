@@ -2701,6 +2701,7 @@ export type Database = {
           entidade: string
           id: string
           meta_vgv: number
+          peso: number
           updated_at: string
         }
         Insert: {
@@ -2710,6 +2711,7 @@ export type Database = {
           entidade: string
           id?: string
           meta_vgv?: number
+          peso?: number
           updated_at?: string
         }
         Update: {
@@ -2719,6 +2721,7 @@ export type Database = {
           entidade?: string
           id?: string
           meta_vgv?: number
+          peso?: number
           updated_at?: string
         }
         Relationships: []
@@ -2731,6 +2734,7 @@ export type Database = {
           created_by: string | null
           id: string
           meta_vgv: number
+          peso: number
           updated_at: string
         }
         Insert: {
@@ -2740,6 +2744,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           meta_vgv?: number
+          peso?: number
           updated_at?: string
         }
         Update: {
@@ -2749,7 +2754,53 @@ export type Database = {
           created_by?: string | null
           id?: string
           meta_vgv?: number
+          peso?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      metas_vgv_ano: {
+        Row: {
+          ano: number
+          meta_total: number
+          updated_at: string
+        }
+        Insert: {
+          ano: number
+          meta_total?: number
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          meta_total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      metas_vgv_vagas: {
+        Row: {
+          ano: number
+          created_at: string
+          id: string
+          meta_vgv: number
+          peso: number
+          rotulo: string
+        }
+        Insert: {
+          ano: number
+          created_at?: string
+          id?: string
+          meta_vgv?: number
+          peso?: number
+          rotulo?: string
+        }
+        Update: {
+          ano?: number
+          created_at?: string
+          id?: string
+          meta_vgv?: number
+          peso?: number
+          rotulo?: string
         }
         Relationships: []
       }
