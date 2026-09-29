@@ -79,6 +79,14 @@ function ReportsInner() {
 
   const load = async () => {
     if (!refreshKey) setLoading(true);
+    const [{ data: sbContas }, { data: sbOps }] = await Promise.all([
+      supabase.from("contas").select("responsavel_id, standby_ate").not("standby_ate", "is", null),
+      supabase.from("oportunidades").select("corretor_id, standby_ate").not("standby_ate", "is", null),
+    ]);
+    const standbys = [
+      ...(sbContas ?? []).map((s: any) => ({ dono: s.responsavel_id, standby_ate: s.standby_ate })),
+      ...(sbOps ?? []).map((s: any) => ({ dono: s.corretor_id, standby_ate: s.standby_ate })),
+    ];
     const [{ data: profiles }, { data: roles }, leads, contas, tarefas, opsGeradas, opsEncerradas] = await Promise.all([
       supabase.from("profiles").select("user_id, nome"),
       supabase.from("user_roles").select("user_id, role"),
@@ -98,7 +106,7 @@ function ReportsInner() {
       if (rs.includes("corretor")) return true;
       return (rs.includes("admin") || rs.includes("gestor")) && comCarteira.has(p.user_id);
     });
-    setBase({ elegiveis, rolesPor, leads, contas, tarefaPorConta: primeiraTarefaPorConta(tarefas), opsGeradas, opsEncerradas });
+    setBase({ elegiveis, rolesPor, leads, contas, tarefaPorConta: primeiraTarefaPorConta(tarefas), opsGeradas, opsEncerradas, standbys });
     setLoading(false);
   };
 
@@ -110,7 +118,7 @@ function ReportsInner() {
       return calcularPerformance({
         userId: p.user_id, nome: p.nome || "Sem nome", lista, contas: base.contas,
         tarefaPorConta: base.tarefaPorConta, opsGeradas: base.opsGeradas, opsEncerradas: base.opsEncerradas,
-        leads: base.leads, temLeads: leadsDoCorretor > 0 || rs.some((r) => ["admin", "gestor", "marketing"].includes(r)),
+        standbys: base.standbys, leads: base.leads, temLeads: leadsDoCorretor > 0 || rs.some((r) => ["admin", "gestor", "marketing"].includes(r)),
       });
     }).sort((a: PerformanceCorretor, b: PerformanceCorretor) => b.total - a.total);
     setStats(linhas);
@@ -228,6 +236,7 @@ function ReportsInner() {
                     <TableHead>Corretor</TableHead><TableHead className="text-right">Leads</TableHead>
                     <TableHead className="text-right">Contas</TableHead>
                     <TableHead className="text-right">Tarefas atrasadas</TableHead>
+                    <TableHead className="text-right" title="Contas e oportunidades do corretor em standby agora (vencidos entre parênteses)">Em standby</TableHead>
                     <TableHead className="text-right"><TooltipProvider><Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 cursor-help">Contatos estabelecidos <Info className="h-3 w-3 text-muted-foreground" /></span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Contas criadas no período, do corretor, que estão na etapa "Contato estabelecido" — mesmo critério do funil acima e da lista selecionada.</p></TooltipContent></Tooltip></TooltipProvider></TableHead>
                     <TableHead className="text-right"><TooltipProvider><Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 cursor-help">Oportunidades <Info className="h-3 w-3 text-muted-foreground" /></span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Oportunidades de negócio geradas pelo corretor no período (via qualificação do Contato estabelecido).</p></TooltipContent></Tooltip></TooltipProvider></TableHead>
                     <TableHead className="text-right">Ganhas</TableHead>
@@ -240,6 +249,7 @@ function ReportsInner() {
                         <TableCell className="text-right">{s.temLeads ? s.leads : "—"}</TableCell>
                         <TableCell className="text-right">{s.total}</TableCell>
                         <TableCell className="text-right">{s.atrasada}</TableCell>
+                        <TableCell className="text-right">{s.emStandby}{s.standbyVencido ? <span className="text-destructive"> ({s.standbyVencido} venc.)</span> : null}</TableCell>
                         <TableCell className="text-right">{s.estabelecidos}</TableCell>
                         <TableCell className="text-right">{s.oportunidades}</TableCell>
                         <TableCell className="text-right">{s.ganhas}</TableCell>
