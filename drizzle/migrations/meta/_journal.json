@@ -148,6 +148,13 @@
       "when": 1790709687107,
       "tag": "0020_metas_vgv_pesos",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1790710645522,
+      "tag": "0021_fix_acompanhamento_corretores_group_by",
+      "breakpoints": true
     }
   ]
 }
