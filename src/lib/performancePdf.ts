@@ -219,6 +219,8 @@ export async function gerarPdfPerformance({ corretores, periodo, lista, metasVgv
       ["VGV realizado", brl(real)],
       ["% atingido", fmtPct(pct)],
       ["Falta para a meta", metaHrx.meta > 0 ? brl(Math.max(0, metaHrx.meta - real)) : "—"],
+      ["Vendas no ano", String(metaHrx.vendas)],
+      ["Ticket médio", metaHrx.vendas > 0 ? brl(real / metaHrx.vendas) : "—"],
     ];
     const w = (W - 2 * M - 4) / 2;
     itens.forEach(([l, v], i) => {
