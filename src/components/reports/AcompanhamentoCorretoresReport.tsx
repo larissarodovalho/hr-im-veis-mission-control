@@ -21,7 +21,6 @@ import { fmtDate } from "@/lib/datetime";
 import { etapaLabel } from "@/lib/contasFunil";
 import {
   CLASSIFICACOES_ACOMPANHAMENTO,
-  calcularStatusCrm,
   gerarPdfAcompanhamento,
   gerarPdfContasSelecionadas,
 } from "@/lib/acompanhamentoPdf";
@@ -584,54 +583,37 @@ export default function AcompanhamentoCorretoresReport() {
           </p>
         )}
         <div className="grid grid-cols-1 gap-3">
-          {CLASSIFICACOES.filter((cl) => cl.id === "crm_desatualizado" || cl.id === "falta_followup").map((cl) => (
+          {CLASSIFICACOES.filter((cl) => cl.id === "falta_followup").map((cl) => (
             <div key={cl.id} className="rounded-lg border p-4 space-y-3">
               <div>
-                <p className="font-medium">{cl.id === "crm_desatualizado" ? "CRM atualizado × desatualizado" : "Follow-up feito × não feito"}</p>
+                <p className="font-medium">Follow-up feito × não feito</p>
                 <Badge variant="outline" className={GRUPO_BADGE[cl.grupo]}>{GRUPO_LABEL[cl.grupo]}</Badge>
                 <p className="mt-2 max-w-3xl text-xs leading-relaxed text-muted-foreground">
                   Entram apenas as ocorrências em que a conta exigia contato ou atualização no período. Verde e vermelho fecham 100%.
                 </p>
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-success" /> {cl.id === "crm_desatualizado" ? "Atualizado" : "Follow-up feito"}</span>
-                <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-destructive" /> {cl.id === "crm_desatualizado" ? "Desatualizado" : "Não feito"}</span>
+                <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-success" /> Follow-up feito</span>
+                <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-destructive" /> Não feito</span>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {corretoresDiarios.map((c) => {
-                  const baseCrm = c.crm_base ?? c.conta_dias_exigiveis;
-                  const problema = cl.id === "crm_desatualizado"
-                    ? calcularStatusCrm(baseCrm, c.crm_desatualizado).desatualizado
-                    : c.falta_followup ?? 0;
-                  return (
-                    <BarraGeral
-                      key={c.corretor_nome}
-                      nome={c.corretor_nome}
-                      total={baseCrm}
-                      problema={problema}
-                      rotuloOk={cl.id === "crm_desatualizado" ? "Atualizado" : "Follow-up feito"}
-                      rotuloProblema={cl.id === "crm_desatualizado" ? "Desatualizado" : "Não feito"}
-                    />
-                  );
-                })}
+                {corretoresDiarios.map((c) => (
+                  <BarraGeral
+                    key={c.corretor_nome}
+                    nome={c.corretor_nome}
+                    total={c.crm_base ?? c.conta_dias_exigiveis}
+                    problema={c.falta_followup ?? 0}
+                    rotuloOk="Follow-up feito"
+                    rotuloProblema="Não feito"
+                  />
+                ))}
               </div>
 
               <ul className="max-w-3xl list-disc space-y-1 pl-4 text-xs leading-relaxed text-muted-foreground">
-                {cl.id === "crm_desatualizado" ? (
-                  <>
-                    <li>Entra na contagem do dia a conta que tinha algo a fazer: tarefa vencida, próxima ação marcada para aquele dia ou antes, ou prazo máximo entre contatos estourado.</li>
-                    <li><span className="font-medium text-foreground">Atualizado:</span> houve atendimento registrado no dia, ou o último contato ainda estava dentro do prazo e não havia tarefa vencida.</li>
-                    <li><span className="font-medium text-foreground">Desatualizado:</span> não houve registro e o prazo já tinha passado, ou havia tarefa vencida.</li>
-                    <li>A contagem começa no dia do primeiro contato da conta; dias anteriores não entram.</li>
-                  </>
-                ) : (
-                  <>
-                    <li>Mesma base de dias exigíveis do quadro de CRM.</li>
-                    <li><span className="font-medium text-foreground">Não feito:</span> dia exigível sem nenhum atendimento registrado, com o prazo entre contatos já vencido.</li>
-                    <li><span className="font-medium text-foreground">Feito:</span> atendimento registrado no dia ou contato ainda dentro do prazo.</li>
-                  </>
-                )}
+                <li>Base de dias exigíveis: dias úteis em que a conta tinha algo a fazer (tarefa vencida, próxima ação marcada para aquele dia ou antes, ou prazo máximo entre contatos estourado).</li>
+                <li><span className="font-medium text-foreground">Não feito:</span> dia exigível sem nenhum atendimento registrado, com o prazo entre contatos já vencido.</li>
+                <li><span className="font-medium text-foreground">Feito:</span> atendimento registrado no dia ou contato ainda dentro do prazo.</li>
               </ul>
 
             </div>
@@ -639,7 +621,7 @@ export default function AcompanhamentoCorretoresReport() {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Follow-up e CRM medem apenas Contas e Oportunidades. O atendimento de Leads não entra nesta medição.
+          O follow-up mede apenas Contas e Oportunidades. O atendimento de Leads não entra nesta medição.
         </p>
         <p className="text-xs text-muted-foreground">
           A medição começa a partir do primeiro contato. Contas ainda a contatar não entram.

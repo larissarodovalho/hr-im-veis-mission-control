@@ -467,46 +467,35 @@ export async function gerarPdfAcompanhamento({ dados, dadosDiarios, contas, peri
 
   tituloSecao("03 · Taxa de incidência", "Cada problema, lado a lado", `Leitura geral do período · ${diasUteis} dias úteis apurados.`);
   CLASSIFICACOES_ACOMPANHAMENTO.filter(
-    (classificacao) => classificacao.id === "crm_desatualizado" || classificacao.id === "falta_followup",
-  ).forEach((classificacao) => {
-    const crm = classificacao.id === "crm_desatualizado";
+    (classificacao) => classificacao.id === "falta_followup",
+  ).forEach(() => {
     garantir(18);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(...INK);
-    doc.text(crm ? "CRM atualizado × desatualizado" : "Follow-up feito × não feito", MARGIN, y);
+    doc.text("Follow-up feito × não feito", MARGIN, y);
     y += 5;
     corretoresIncidencia.forEach((corretor) => {
       const baseCrm = corretor.crm_base ?? corretor.conta_dias_exigiveis;
-      const problema = crm
-        ? calcularStatusCrm(baseCrm, corretor.crm_desatualizado).desatualizado
-        : corretor.falta_followup;
       barraGeralPdf(
         corretor.corretor_nome,
         baseCrm,
-        problema,
-        crm ? "Atualizado" : "Follow-up feito",
-        crm ? "Desatualizado" : "Não feito",
+        corretor.falta_followup,
+        "Follow-up feito",
+        "Não feito",
       );
     });
     if (!corretoresIncidencia.length) {
       texto("Sem contas exigíveis no período.", CONTENT_W, 7.5);
     }
     y += 1;
-    if (crm) {
-      texto("Entra na contagem do dia a conta que tinha algo a fazer: tarefa vencida, próxima ação marcada para aquele dia ou antes, ou prazo máximo entre contatos estourado.", CONTENT_W, 7.5);
-      texto("Atualizado: houve atendimento registrado no dia, ou o último contato ainda estava dentro do prazo e não havia tarefa vencida.", CONTENT_W, 7.5);
-      texto("Desatualizado: não houve registro e o prazo já tinha passado, ou havia tarefa vencida.", CONTENT_W, 7.5);
-      texto("A contagem começa no dia do primeiro contato da conta; dias anteriores não entram.", CONTENT_W, 7.5);
-    } else {
-      texto("Mesma base de dias exigíveis do quadro anterior.", CONTENT_W, 7.5);
-      texto("Não feito: dia exigível sem nenhum atendimento registrado, com o prazo entre contatos já vencido.", CONTENT_W, 7.5);
-      texto("Feito: atendimento registrado no dia ou contato ainda dentro do prazo.", CONTENT_W, 7.5);
-    }
+    texto("Base de dias exigíveis: dias úteis em que a conta tinha algo a fazer (tarefa vencida, próxima ação marcada para aquele dia ou antes, ou prazo máximo entre contatos estourado).", CONTENT_W, 7.5);
+    texto("Não feito: dia exigível sem nenhum atendimento registrado, com o prazo entre contatos já vencido.", CONTENT_W, 7.5);
+    texto("Feito: atendimento registrado no dia ou contato ainda dentro do prazo.", CONTENT_W, 7.5);
     y += 2;
   });
 
-  texto("Follow-up e CRM medem apenas Contas e Oportunidades. O atendimento de Leads não entra nesta medição.", CONTENT_W, 7.5);
+  texto("O follow-up mede apenas Contas e Oportunidades. O atendimento de Leads não entra nesta medição.", CONTENT_W, 7.5);
   texto("A medição começa a partir do primeiro contato. Contas ainda a contatar não entram.", CONTENT_W, 7.5);
   y += 3;
 
