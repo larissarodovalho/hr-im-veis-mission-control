@@ -127,6 +127,13 @@
       "when": 1790691201156,
       "tag": "0017_standby_contas_oportunidades",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790707598660,
+      "tag": "0018_metas_vgv",
+      "breakpoints": true
     }
   ]
 }

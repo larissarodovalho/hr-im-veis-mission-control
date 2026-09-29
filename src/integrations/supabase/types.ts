@@ -2693,6 +2693,36 @@ export type Database = {
         }
         Relationships: []
       }
+      metas_vgv: {
+        Row: {
+          ano: number
+          corretor_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          meta_vgv: number
+          updated_at: string
+        }
+        Insert: {
+          ano: number
+          corretor_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          meta_vgv?: number
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          corretor_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          meta_vgv?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       newsletter_campanhas: {
         Row: {
           aprovada_em: string | null
