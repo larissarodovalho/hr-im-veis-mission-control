@@ -8,6 +8,7 @@ import { Download, FileSpreadsheet, BarChart3, Shield, Info, CalendarRange, File
 import { calcularPerformance, gerarPdfPerformance, primeiraTarefaPorConta, LISTA_LABEL, type ListaPerformance, type PerformanceCorretor, type MetaVgvCorretor, type MetaInstitucionalVgv } from "@/lib/performancePdf";
 import MetasVgvDialog from "@/components/reports/MetasVgvDialog";
 import { dayKeyCRM } from "@/lib/datetime";
+import { formatBRL } from "@/lib/format";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Papa from "papaparse";
 import { toast } from "sonner";
@@ -151,6 +152,25 @@ function ReportsInner() {
     return { metasVgv: out, metaHrx: hrx };
   };
 
+  const [metasTela, setMetasTela] = useState<{ metasVgv: Record<string, MetaVgvCorretor>; metaHrx: MetaInstitucionalVgv } | null>(null);
+  useEffect(() => { if (stats.length) carregarMetasVgv().then(setMetasTela); /* eslint-disable-next-line */ }, [stats, ano, refreshKey]);
+
+  const CelulasMeta = ({ meta, mensal }: { meta: number; mensal: number[] }) => {
+    const real = mensal.reduce((a, b) => a + b, 0);
+    const pct = meta > 0 ? (real / meta) * 100 : null;
+    return (<>
+      <TableCell className="text-right whitespace-nowrap">{meta > 0 ? formatBRL(meta) : "—"}</TableCell>
+      <TableCell className="text-right whitespace-nowrap">{formatBRL(real, { dash: false })}</TableCell>
+      <TableCell className="min-w-[120px]">
+        {pct == null ? <span className="text-muted-foreground text-xs">Sem meta</span> : (
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden"><div className="h-full bg-primary" style={{ width: `${Math.min(100, Math.max(2, pct))}%` }} /></div>
+            <span className="text-xs tabular-nums font-semibold">{pct.toFixed(1)}%</span>
+          </div>)}
+      </TableCell>
+    </>);
+  };
+
   const gerarPdf = async (todos: boolean) => {
     const alvo = todos ? stats : statsVisiveis;
     if (!alvo.length) return toast.error("Nenhum corretor para o relatório.");
@@ -271,6 +291,9 @@ function ReportsInner() {
                     <TableHead className="text-right"><TooltipProvider><Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 cursor-help">Oportunidades <Info className="h-3 w-3 text-muted-foreground" /></span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Oportunidades de negócio geradas pelo corretor no período (via qualificação do Contato estabelecido).</p></TooltipContent></Tooltip></TooltipProvider></TableHead>
                     <TableHead className="text-right">Ganhas</TableHead>
                     <TableHead className="text-right"><TooltipProvider><Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 cursor-help">Taxa de ganho <Info className="h-3 w-3 text-muted-foreground" /></span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Taxa = Oportunidades ganhas ÷ oportunidades encerradas (ganhas + perdidas) no período × 100.</p></TooltipContent></Tooltip></TooltipProvider></TableHead>
+                    <TableHead className="text-right">Meta {ano}</TableHead>
+                    <TableHead className="text-right">VGV realizado</TableHead>
+                    <TableHead>% atingido</TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
                     {statsVisiveis.map(s => (
@@ -284,8 +307,16 @@ function ReportsInner() {
                         <TableCell className="text-right">{s.oportunidades}</TableCell>
                         <TableCell className="text-right">{s.ganhas}</TableCell>
                         <TableCell className="text-right font-semibold">{s.taxaGanho == null ? "—" : `${s.taxaGanho.toFixed(1)}%`}</TableCell>
+                        <CelulasMeta meta={metasTela?.metasVgv[s.user_id]?.meta ?? 0} mensal={metasTela?.metasVgv[s.user_id]?.mensal ?? []} />
                       </TableRow>
                     ))}
+                    {corretor === "todos" && metasTela && (
+                      <TableRow className="bg-muted/40">
+                        <TableCell className="font-medium whitespace-nowrap">HRX Produções <span className="text-xs text-muted-foreground">(institucional)</span></TableCell>
+                        <TableCell colSpan={8} className="text-xs text-muted-foreground">Somente vendas Base HRX (Tráfego/Marketing)</TableCell>
+                        <CelulasMeta meta={metasTela.metaHrx.meta} mensal={metasTela.metaHrx.mensal} />
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </div>

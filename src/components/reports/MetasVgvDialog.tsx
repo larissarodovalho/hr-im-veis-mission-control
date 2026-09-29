@@ -39,7 +39,8 @@ export default function MetasVgvDialog({ corretores, anoInicial }: { corretores:
       setLinhas(ls);
       setTotal(Number(anoRow?.meta_total) || ls.reduce((s, l) => s + l.valor, 0));
     });
-  }, [open, ano, corretores]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, ano, corretores.map((c) => c.user_id).join(",")]);
 
   const somaPesos = useMemo(() => linhas.reduce((s, l) => s + l.peso, 0), [linhas]);
 
