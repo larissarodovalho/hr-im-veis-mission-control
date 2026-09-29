@@ -27,6 +27,7 @@ import {
 import { formatBRL } from "@/lib/format";
 import GanhaDialog from "@/components/oportunidades/GanhaDialog";
 import PerdidaDialog from "@/components/oportunidades/PerdidaDialog";
+import StandbyControl, { StandbyBadge } from "@/components/standby/StandbyControl";
 
 const fmtDt = (iso?: string | null) => (iso ? format(new Date(iso), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : "—");
 const fmtD = (iso?: string | null) => (iso ? format(new Date(iso), "dd/MM/yyyy") : "—");
@@ -393,6 +394,7 @@ export default function OportunidadeDetailDialog({
               <Badge variant="outline" className="text-[10px]">{categoriaLabel(op.categoria_origem ?? conta?.categoria)}</Badge>
             )}
             {op.possui_permuta && <Badge variant="outline" className="text-[10px] bg-orange-500/10 text-orange-600 border-orange-500/30">Permuta</Badge>}
+            <StandbyBadge ate={(op as any).standby_ate} className="text-[10px]" />
           </DialogTitle>
         </DialogHeader>
 
@@ -406,6 +408,9 @@ export default function OportunidadeDetailDialog({
             <span className="text-muted-foreground">Lead de origem: {leadNome}</span>
           ) : null}
           <div className="flex items-center gap-2 ml-auto">
+            {!finalizada && (
+              <StandbyControl tipo="oportunidade" id={op.id} contaId={op.conta_id} responsavelId={op.corretor_id} standbyAte={(op as any).standby_ate} onChange={() => { reload(op.id); onSaved(); }} />
+            )}
             <Select value={op.estagio} onValueChange={moverEstagio} disabled={finalizada}>
               <SelectTrigger className="w-[190px] h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>

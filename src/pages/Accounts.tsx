@@ -277,7 +277,7 @@ export default function Accounts() {
     while (true) {
       const { data, error } = await supabase
         .from("contas")
-        .select("id, nome, email, telefone, documento, tipo, responsavel_id, created_by, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil, temperatura, ramo_atividade, categoria, origem, data_entrada_carteira, destino_comercial, motivo_cancelamento, lead_id_origem, qualificacao_status, proxima_acao_em")
+        .select("id, nome, email, telefone, documento, tipo, responsavel_id, created_by, status, observacoes, created_at, interesse, is_partner, tags, etapa_funil, temperatura, ramo_atividade, categoria, origem, data_entrada_carteira, destino_comercial, motivo_cancelamento, lead_id_origem, qualificacao_status, proxima_acao_em, standby_ate")
         .order("nome", { ascending: true })
         .range(from, from + PAGE - 1);
       if (error) throw error;

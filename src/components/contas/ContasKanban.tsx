@@ -12,6 +12,7 @@ import {
 } from "@dnd-kit/core";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { StandbyBadge } from "@/components/standby/StandbyControl";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -331,6 +332,7 @@ function ContaCard({
         );
       })()}
       <div className="flex flex-wrap gap-1">
+        <StandbyBadge ate={(a as any).standby_ate} className="text-[10px]" />
         {outraLista ? (
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px]">
             {outraLista}
