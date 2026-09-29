@@ -300,7 +300,7 @@ export default function Accounts() {
   const load = async () => {
     setLoading(true);
     try {
-      const [accs, { data: props }, { data: profs }, { data: opsData }] = await Promise.all([
+      const [accs, { data: props }, { data: profs }, { data: opsData }, { data: roles }] = await Promise.all([
         fetchAllContas(),
         supabase.from("conta_propriedades" as any).select("*"),
         supabase.from("profiles").select("user_id, nome"),
@@ -309,6 +309,7 @@ export default function Accounts() {
           .select("id,conta_id,titulo,estagio,valor_alvo,corretor_id")
           .in("estagio", ["nova", "buscando", "visita", "proposta"])
           .not("conta_id", "is", null),
+        supabase.from("user_roles").select("user_id, role"),
       ]);
       setAccounts((accs ?? []) as Account[]);
       setProperties(((props as any) ?? []) as Property[]);
