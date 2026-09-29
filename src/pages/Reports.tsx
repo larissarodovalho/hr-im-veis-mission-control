@@ -56,28 +56,15 @@ function PeriodPicker() {
 function ReportsInner() {
   const { isAdmin, isGestor, loading: roleLoading } = useRole();
   const can = isAdmin || isGestor;
-  const { inicioISO, fimISO, label } = useReportsPeriod();
+  const { inicioISO, fimISO, label, refreshKey } = useReportsPeriod();
   const [stats, setStats] = useState<PerformanceCorretor[]>([]);
   const [loading, setLoading] = useState(true);
   const [lista, setLista] = useState<ListaPerformance>("carteira");
   const [corretor, setCorretor] = useState<string>("todos");
-  const [refreshKey, setRefreshKey] = useState(0);
   const [gerandoPdf, setGerandoPdf] = useState(false);
   const [base, setBase] = useState<any>(null);
 
   useEffect(() => { if (can) load(); /* eslint-disable-next-line */ }, [can, inicioISO, fimISO, refreshKey]);
-
-  // Atualização automática quando o sistema muda
-  useEffect(() => {
-    if (!can) return;
-    let t: ReturnType<typeof setTimeout> | undefined;
-    const bump = () => { clearTimeout(t); t = setTimeout(() => setRefreshKey((k) => k + 1), 1500); };
-    const ch = supabase.channel("reports-performance");
-    ["contas", "tarefas", "interacoes", "oportunidades", "leads"].forEach((table) =>
-      ch.on("postgres_changes" as any, { event: "*", schema: "public", table }, bump));
-    ch.subscribe();
-    return () => { clearTimeout(t); supabase.removeChannel(ch); };
-  }, [can]);
 
   const paginar = async (q: (from: number, to: number) => any) => {
     const all: any[] = [];

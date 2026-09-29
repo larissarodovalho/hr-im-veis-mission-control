@@ -92,7 +92,7 @@ export default function FaturamentoReport() {
       }
       return true;
     });
-  }, [vendas, range, papel, corretorId, origem, nivel]);
+  }, [vendas, inicio, fim, papel, corretorId, origem, nivel]);
 
   // KPIs
   const kpis = useMemo(() => {
