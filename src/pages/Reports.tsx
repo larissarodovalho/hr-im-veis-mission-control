@@ -137,8 +137,8 @@ function ReportsInner() {
       supabase.from("vendas").select("data_venda, valor_venda, corretor_vendedor_id, origem_negocio").gte("data_venda", `${ano - 1}-12-31`).lte("data_venda", `${ano + 1}-01-01T23:59:59`),
     ]);
     const out: Record<string, MetaVgvCorretor> = {};
-    const hrx: MetaInstitucionalVgv = { ano, meta: Number(institucional?.meta_vgv) || 0, mensal: Array(12).fill(0) };
-    stats.forEach((s) => { out[s.user_id] = { ano, meta: 0, mensal: Array(12).fill(0) }; });
+    const hrx: MetaInstitucionalVgv = { ano, meta: Number(institucional?.meta_vgv) || 0, mensal: Array(12).fill(0), vendas: 0 };
+    stats.forEach((s) => { out[s.user_id] = { ano, meta: 0, mensal: Array(12).fill(0), vendas: 0 }; });
     (metas ?? []).forEach((m: any) => { if (out[m.corretor_id]) out[m.corretor_id].meta = Number(m.meta_vgv) || 0; });
     (vendas ?? []).forEach((v: any) => {
       if (!v.data_venda) return;
@@ -147,8 +147,8 @@ function ReportsInner() {
       const mesVenda = Number(dia.slice(5, 7)) - 1;
       const valor = Number(v.valor_venda) || 0;
       const o = out[v.corretor_vendedor_id];
-      if (o) o.mensal[mesVenda] += valor;
-      if (v.origem_negocio === "base_hrx") hrx.mensal[mesVenda] += valor;
+      if (o) { o.mensal[mesVenda] += valor; o.vendas += 1; }
+      if (v.origem_negocio === "base_hrx") { hrx.mensal[mesVenda] += valor; hrx.vendas += 1; }
     });
     return { metasVgv: out, metaHrx: hrx };
   };
