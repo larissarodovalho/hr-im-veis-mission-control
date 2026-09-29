@@ -104,8 +104,8 @@ const fmtPct = (n: number | null) => (n == null ? "—" : `${n.toFixed(1).replac
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-export interface MetaVgvCorretor { ano: number; meta: number; mensal: number[] }
-export interface MetaInstitucionalVgv { ano: number; meta: number; mensal: number[] }
+export interface MetaVgvCorretor { ano: number; meta: number; mensal: number[]; vendas: number }
+export interface MetaInstitucionalVgv { ano: number; meta: number; mensal: number[]; vendas: number }
 
 export async function gerarPdfPerformance({ corretores, periodo, lista, metasVgv, metaHrx }: { corretores: PerformanceCorretor[]; periodo: string; lista: ListaPerformance; metasVgv?: Record<string, MetaVgvCorretor>; metaHrx?: MetaInstitucionalVgv }) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -175,6 +175,7 @@ export async function gerarPdfPerformance({ corretores, periodo, lista, metasVgv
       kpis([
         ["Meta anual", mv.meta > 0 ? brl(mv.meta) : "Meta não definida"], ["VGV realizado", brl(real)],
         ["% atingido", fmtPct(pct)], ["Falta para a meta", mv.meta > 0 ? brl(Math.max(0, mv.meta - real)) : "—"],
+        ["Vendas no ano", mv.vendas], ["Ticket médio", mv.vendas > 0 ? brl(real / mv.vendas) : "—"],
       ]);
       if (mv.meta > 0) {
         const bw = W - 2 * M;
@@ -218,6 +219,8 @@ export async function gerarPdfPerformance({ corretores, periodo, lista, metasVgv
       ["VGV realizado", brl(real)],
       ["% atingido", fmtPct(pct)],
       ["Falta para a meta", metaHrx.meta > 0 ? brl(Math.max(0, metaHrx.meta - real)) : "—"],
+      ["Vendas no ano", String(metaHrx.vendas)],
+      ["Ticket médio", metaHrx.vendas > 0 ? brl(real / metaHrx.vendas) : "—"],
     ];
     const w = (W - 2 * M - 4) / 2;
     itens.forEach(([l, v], i) => {

@@ -137,8 +137,8 @@ function ReportsInner() {
       supabase.from("vendas").select("data_venda, valor_venda, corretor_vendedor_id, origem_negocio").gte("data_venda", `${ano - 1}-12-31`).lte("data_venda", `${ano + 1}-01-01T23:59:59`),
     ]);
     const out: Record<string, MetaVgvCorretor> = {};
-    const hrx: MetaInstitucionalVgv = { ano, meta: Number(institucional?.meta_vgv) || 0, mensal: Array(12).fill(0) };
-    stats.forEach((s) => { out[s.user_id] = { ano, meta: 0, mensal: Array(12).fill(0) }; });
+    const hrx: MetaInstitucionalVgv = { ano, meta: Number(institucional?.meta_vgv) || 0, mensal: Array(12).fill(0), vendas: 0 };
+    stats.forEach((s) => { out[s.user_id] = { ano, meta: 0, mensal: Array(12).fill(0), vendas: 0 }; });
     (metas ?? []).forEach((m: any) => { if (out[m.corretor_id]) out[m.corretor_id].meta = Number(m.meta_vgv) || 0; });
     (vendas ?? []).forEach((v: any) => {
       if (!v.data_venda) return;
@@ -147,8 +147,8 @@ function ReportsInner() {
       const mesVenda = Number(dia.slice(5, 7)) - 1;
       const valor = Number(v.valor_venda) || 0;
       const o = out[v.corretor_vendedor_id];
-      if (o) o.mensal[mesVenda] += valor;
-      if (v.origem_negocio === "base_hrx") hrx.mensal[mesVenda] += valor;
+      if (o) { o.mensal[mesVenda] += valor; o.vendas += 1; }
+      if (v.origem_negocio === "base_hrx") { hrx.mensal[mesVenda] += valor; hrx.vendas += 1; }
     });
     return { metasVgv: out, metaHrx: hrx };
   };
@@ -156,12 +156,13 @@ function ReportsInner() {
   const [metasTela, setMetasTela] = useState<{ metasVgv: Record<string, MetaVgvCorretor>; metaHrx: MetaInstitucionalVgv } | null>(null);
   useEffect(() => { if (stats.length) carregarMetasVgv().then(setMetasTela); /* eslint-disable-next-line */ }, [stats, ano, refreshKey]);
 
-  const CelulasMeta = ({ meta, mensal }: { meta: number; mensal: number[] }) => {
+  const CelulasMeta = ({ meta, mensal, vendas = 0 }: { meta: number; mensal: number[]; vendas?: number }) => {
     const real = mensal.reduce((a, b) => a + b, 0);
     const pct = meta > 0 ? (real / meta) * 100 : null;
     return (<>
       <TableCell className="text-right whitespace-nowrap">{meta > 0 ? formatBRL(meta) : "—"}</TableCell>
       <TableCell className="text-right whitespace-nowrap">{formatBRL(real, { dash: false })}</TableCell>
+      <TableCell className="text-right whitespace-nowrap">{vendas > 0 ? formatBRL(real / vendas, { dash: false }) : "—"}</TableCell>
       <TableCell className="min-w-[120px]">
         {pct == null ? <span className="text-muted-foreground text-xs">Sem meta</span> : (
           <div className="flex items-center gap-2">
@@ -294,6 +295,7 @@ function ReportsInner() {
                     <TableHead className="text-right"><TooltipProvider><Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 cursor-help">Taxa de ganho <Info className="h-3 w-3 text-muted-foreground" /></span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Taxa = Oportunidades ganhas ÷ oportunidades encerradas (ganhas + perdidas) no período × 100.</p></TooltipContent></Tooltip></TooltipProvider></TableHead>
                     <TableHead className="text-right">Meta {ano}</TableHead>
                     <TableHead className="text-right">VGV realizado</TableHead>
+                    <TableHead className="text-right"><TooltipProvider><Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 cursor-help">Ticket médio <Info className="h-3 w-3 text-muted-foreground" /></span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Ticket médio = VGV realizado no ano ÷ número de vendas do corretor no ano.</p></TooltipContent></Tooltip></TooltipProvider></TableHead>
                     <TableHead>% atingido</TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
@@ -308,14 +310,14 @@ function ReportsInner() {
                         <TableCell className="text-right">{s.oportunidades}</TableCell>
                         <TableCell className="text-right">{s.ganhas}</TableCell>
                         <TableCell className="text-right font-semibold">{s.taxaGanho == null ? "—" : `${s.taxaGanho.toFixed(1)}%`}</TableCell>
-                        <CelulasMeta meta={metasTela?.metasVgv[s.user_id]?.meta ?? 0} mensal={metasTela?.metasVgv[s.user_id]?.mensal ?? []} />
+                        <CelulasMeta meta={metasTela?.metasVgv[s.user_id]?.meta ?? 0} mensal={metasTela?.metasVgv[s.user_id]?.mensal ?? []} vendas={metasTela?.metasVgv[s.user_id]?.vendas ?? 0} />
                       </TableRow>
                     ))}
                     {corretor === "todos" && metasTela && (
                       <TableRow className="bg-muted/40">
                         <TableCell className="font-medium whitespace-nowrap">HRX Produções <span className="text-xs text-muted-foreground">(institucional)</span></TableCell>
                         <TableCell colSpan={8} className="text-xs text-muted-foreground">Somente vendas Base HRX (Tráfego/Marketing)</TableCell>
-                        <CelulasMeta meta={metasTela.metaHrx.meta} mensal={metasTela.metaHrx.mensal} />
+                        <CelulasMeta meta={metasTela.metaHrx.meta} mensal={metasTela.metaHrx.mensal} vendas={metasTela.metaHrx.vendas} />
                       </TableRow>
                     )}
                   </TableBody>
