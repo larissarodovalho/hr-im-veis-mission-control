@@ -239,6 +239,7 @@ function ReportsInner() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
               <h2 className="font-semibold">Performance por corretor — {label} · {LISTA_LABEL[lista]}</h2>
               <div className="flex flex-wrap gap-2">
+                {isAdmin && <MetasVgvDialog corretores={stats.map((s) => ({ user_id: s.user_id, nome: s.nome }))} anoInicial={ano} />}
                 <Button size="sm" disabled={corretor === "todos" || gerandoPdf || loading} onClick={() => gerarPdf(false)}>
                   <FileText className="h-4 w-4 mr-1" /> Gerar PDF do corretor
                 </Button>
