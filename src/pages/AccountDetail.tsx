@@ -28,6 +28,7 @@ import { tempInfo, TEMPERATURAS } from "@/lib/contasTemperatura";
 import { ETAPAS, categoriaDe, isEtapaLegado, etapaLabel, CATEGORIA_LABEL } from "@/lib/contasFunil";
 import CarteiraTimelineConta from "@/components/carteira/CarteiraTimelineConta";
 import CarteiraLoteBadge from "@/components/carteira/CarteiraLoteBadge";
+import StandbyControl, { StandbyBadge } from "@/components/standby/StandbyControl";
 
 type Propriedade = {
   id: string;
@@ -253,6 +254,7 @@ export default function AccountDetail() {
               </Badge>
             )}
             <CarteiraLoteBadge contaId={acc.id} />
+            <StandbyBadge ate={acc.standby_ate} className="text-sm px-2.5 py-1" />
             {acc.lead_id_origem && <Link to={`/crm/leads/${acc.lead_id_origem}`} className="text-primary hover:underline">Ver lead original</Link>}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
@@ -265,6 +267,7 @@ export default function AccountDetail() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <StandbyControl tipo="conta" id={acc.id} responsavelId={acc.responsavel_id} standbyAte={acc.standby_ate} onChange={load} />
           <Button variant="outline" onClick={() => setCatOpen(true)}>
             <ArrowLeftRight className="h-4 w-4 mr-1" /> Alterar categoria
           </Button>
