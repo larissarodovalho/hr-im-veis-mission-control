@@ -101,8 +101,12 @@ async function carregarLogo(): Promise<string | null> {
 }
 
 const fmtPct = (n: number | null) => (n == null ? "—" : `${n.toFixed(1).replace(".", ",")}%`);
+const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-export async function gerarPdfPerformance({ corretores, periodo, lista }: { corretores: PerformanceCorretor[]; periodo: string; lista: ListaPerformance }) {
+export interface MetaVgvCorretor { ano: number; meta: number; mensal: number[] }
+
+export async function gerarPdfPerformance({ corretores, periodo, lista, metasVgv }: { corretores: PerformanceCorretor[]; periodo: string; lista: ListaPerformance; metasVgv?: Record<string, MetaVgvCorretor> }) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const logo = await carregarLogo();
   const W = doc.internal.pageSize.getWidth();
@@ -159,6 +163,39 @@ export async function gerarPdfPerformance({ corretores, periodo, lista }: { corr
 
     doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(110);
     doc.text("Contas criadas no período, pelo responsável atual. Oportunidades pelo corretor da oportunidade. Taxa de ganho = ganhas ÷ (ganhas + perdidas).", M, y, { maxWidth: W - 2 * M });
+
+    const mv = metasVgv?.[c.user_id];
+    if (mv) {
+      doc.addPage();
+      y = 20;
+      secao(`Meta x Realizado — VGV ${mv.ano}`);
+      const real = mv.mensal.reduce((a, b) => a + b, 0);
+      const pct = mv.meta > 0 ? (real / mv.meta) * 100 : null;
+      kpis([
+        ["Meta anual", mv.meta > 0 ? brl(mv.meta) : "Meta não definida"], ["VGV realizado", brl(real)],
+        ["% atingido", fmtPct(pct)], ["Falta para a meta", mv.meta > 0 ? brl(Math.max(0, mv.meta - real)) : "—"],
+      ]);
+      if (mv.meta > 0) {
+        const bw = W - 2 * M;
+        doc.setFillColor(230, 230, 230); doc.roundedRect(M, y, bw, 6, 2, 2, "F");
+        doc.setFillColor(22, 130, 80); doc.roundedRect(M, y, Math.max(1, bw * Math.min(1, real / mv.meta)), 6, 2, 2, "F");
+        y += 14;
+      }
+      doc.setFontSize(9); doc.setFont("helvetica", "bold"); doc.setTextColor(90);
+      const cols = [M, M + 30, M + 75, M + 120];
+      doc.text("Mês", cols[0], y); doc.text("VGV do mês", cols[1], y); doc.text("Acumulado", cols[2], y); doc.text("Ritmo esperado", cols[3], y);
+      y += 2; doc.line(M, y, W - M, y); y += 5;
+      doc.setFont("helvetica", "normal"); doc.setTextColor(20);
+      let acc = 0;
+      MESES.forEach((m, i) => {
+        acc += mv.mensal[i];
+        doc.text(m, cols[0], y); doc.text(brl(mv.mensal[i]), cols[1], y); doc.text(brl(acc), cols[2], y);
+        doc.text(mv.meta > 0 ? brl((mv.meta / 12) * (i + 1)) : "—", cols[3], y);
+        y += 6;
+      });
+      y += 4; doc.setFontSize(8); doc.setTextColor(110);
+      doc.text("VGV = soma do valor das vendas em que o corretor é o vendedor, pela data da venda (fuso de Cuiabá). Ritmo esperado = meta ÷ 12 acumulado por mês.", M, y, { maxWidth: W - 2 * M });
+    }
   });
 
   const n = doc.getNumberOfPages();

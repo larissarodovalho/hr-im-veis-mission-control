@@ -34,7 +34,7 @@ export const MESES_LABELS = MESES;
 const REPORT_TABLES = [
   "contas", "tarefas", "interacoes", "oportunidades", "leads", "conta_propostas", "conta_fechamentos",
   "vendas", "oportunidade_visitas", "oportunidade_propostas", "captacoes_imovel", "propostas", "imoveis",
-  "carteira_atribuicoes", "carteira_lotes", "imovel_link_eventos", "imovel_links_compartilhados",
+  "carteira_atribuicoes", "carteira_lotes", "imovel_link_eventos", "imovel_links_compartilhados", "metas_vgv",
 ];
 
 function pad(n: number) {
