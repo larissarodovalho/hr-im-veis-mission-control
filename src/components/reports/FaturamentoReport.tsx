@@ -311,6 +311,57 @@ export default function FaturamentoReport() {
         </div>
       </Card>
 
+      {/* Vendas do período */}
+      <Card className="p-3 sm:p-4 overflow-x-auto">
+        <h3 className="font-semibold text-sm mb-3">Vendas do período</h3>
+        {loading ? (
+          <p className="text-muted-foreground text-sm">Carregando…</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-muted-foreground text-sm">Sem vendas no período.</p>
+        ) : (
+          <Table className="[&_th]:whitespace-nowrap [&_td]:whitespace-nowrap">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Data</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Vendedor</TableHead>
+                <TableHead>Captador</TableHead>
+                <TableHead className="text-right">Valor da venda</TableHead>
+                <TableHead className="text-right">Comissão total</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {[...filtered]
+                .sort((a, b) => String(b.data_venda).localeCompare(String(a.data_venda)))
+                .map((v) => {
+                  const dia = String(v.data_venda).length <= 10 ? String(v.data_venda) : dayKeyCRM(v.data_venda);
+                  const [y, m, d] = dia.split("-");
+                  return (
+                    <TableRow key={v.id}>
+                      <TableCell>{d}/{m}/{y}</TableCell>
+                      <TableCell className="font-medium">{v.cliente_nome || "—"}</TableCell>
+                      <TableCell>{nameOf(v.corretor_vendedor_id)}</TableCell>
+                      <TableCell>{nameOf(v.corretor_captador_id)}</TableCell>
+                      <TableCell className="text-right">{fmtBRL(v.valor_venda || 0)}</TableCell>
+                      <TableCell className="text-right">{fmtBRL(getVendaComissaoTotal(v))}</TableCell>
+                      <TableCell>{v.status_pagamento || "—"}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              <TableRow className="bg-muted/30">
+                <TableCell className="font-semibold" colSpan={4}>
+                  Total — {filtered.length} {filtered.length === 1 ? "venda" : "vendas"}
+                </TableCell>
+                <TableCell className="text-right font-semibold">{fmtBRL(kpis.vgv)}</TableCell>
+                <TableCell className="text-right font-semibold">{fmtBRL(kpis.comissao)}</TableCell>
+                <TableCell />
+              </TableRow>
+            </TableBody>
+          </Table>
+        )}
+      </Card>
+
       {/* Ranking */}
       <Card className="p-3 sm:p-4 overflow-x-auto">
         <h3 className="font-semibold text-sm mb-3">Ranking por corretor</h3>
