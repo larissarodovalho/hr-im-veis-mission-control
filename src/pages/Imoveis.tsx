@@ -213,7 +213,7 @@ export default function Imoveis() {
     matchesSearch(i) && matchesData(i) && matchesCaptador(i) && matchesValor(i) && matchesBairro(i);
   const disponiveis = items.filter(i => stage(i) === "disponivel" && !isNaoPublicado(i) && passa(i));
   const naoPublicados = items.filter(i => isNaoPublicado(i) && stage(i) !== "vendido" && passa(i));
-  const inativos    = items.filter(i => (stage(i) === "inativo" || stage(i) === "vendido") && !isNaoPublicado(i) && passa(i));
+  const inativos    = items.filter(i => (stage(i) === "vendido" || (stage(i) === "inativo" && !isNaoPublicado(i))) && passa(i));
   const emProposta  = items.filter(i => stage(i) === "proposta"   && passa(i));
   const emFechamento = items.filter(i => stage(i) === "fechamento" && passa(i));
   const vendidos    = items.filter(i => stage(i) === "vendido"    && passa(i));
