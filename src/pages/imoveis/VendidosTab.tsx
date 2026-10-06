@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ const PIE = ["hsl(var(--primary))", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", 
 
 export default function VendidosTab() {
   const { isAdmin, isGestor } = useRole();
+  const navigate = useNavigate();
   const canEdit = isAdmin || isGestor;
   const [vendas, setVendas] = useState<any[]>([]);
   const [imoveis, setImoveis] = useState<Record<string, any>>({});
@@ -240,9 +242,9 @@ export default function VendidosTab() {
                       <div className="flex flex-wrap items-center gap-2">
                         <button
                           type="button"
-                          title="Ver cadastro do imóvel"
+                          title="Ver imóvel na aba Inativos"
                           className="font-mono text-xs font-semibold text-primary underline-offset-2 hover:underline cursor-pointer"
-                          onClick={(e) => { e.stopPropagation(); setViewing(imv); }}
+                          onClick={(e) => { e.stopPropagation(); navigate("/crm/imoveis?tab=inativos"); }}
                         >
                           {imv?.codigo || "Sem código"}
                         </button>
