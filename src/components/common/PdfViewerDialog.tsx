@@ -55,7 +55,7 @@ export function PdfViewerDialog({ open, onOpenChange, bucket, path, title = "Doc
         }
         setStatus("ok");
       } catch (e) {
-        console.error("PdfViewer", e);
+        console.error("PdfViewer", String((e as any)?.message), String((e as any)?.details));
         if (!cancel) setStatus("erro");
       }
     })();
