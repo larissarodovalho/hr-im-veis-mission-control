@@ -158,11 +158,6 @@ export default function NovaVendaDialog({
     const path = (initial as any)?.contrato_pdf_path || null;
     setContratoPath(path);
     setContratoUrl(null);
-    if (path) {
-      supabase.storage.from("contratos-vendas").createSignedUrl(path, 3600).then(({ data }) => {
-        setContratoUrl(data?.signedUrl || null);
-      });
-    }
   }, [open, initial]);
 
   // Auto-preenche nível a partir do nível do corretor vendedor selecionado
@@ -550,9 +545,9 @@ export default function NovaVendaDialog({
             <Label>Contrato (PDF)</Label>
             {contratoPath && !removeContrato && !contratoFile && (
               <div className="flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2 mb-2">
-                <a href={contratoUrl ?? "#"} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline truncate">
+                <button type="button" onClick={() => abrirArquivoStorage("contratos-vendas", contratoPath, "contrato.pdf")} className="text-sm text-primary hover:underline truncate">
                   Ver contrato atual
-                </a>
+                </button>
                 <button type="button" className="text-xs text-rose-600 hover:underline" onClick={() => setRemoveContrato(true)}>
                   Remover
                 </button>
