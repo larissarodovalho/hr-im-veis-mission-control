@@ -421,6 +421,13 @@ export default function FaturamentoReport() {
           </Table>
         )}
       </Card>
+
+      <NovaVendaDialog
+        open={!!vendaAberta}
+        onOpenChange={(o) => { if (!o) setVendaAberta(null); }}
+        initial={vendaAberta}
+        onSaved={() => { setVendaAberta(null); load(); }}
+      />
     </Card>
   );
 }
