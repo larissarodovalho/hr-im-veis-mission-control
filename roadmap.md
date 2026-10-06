@@ -10,3 +10,4 @@
 - [x] Medir diariamente as contas exigíveis e todos os diagnósticos em dias úteis
 - [x] Exibir evolução diária e consolidado por conta-dia na tela, PDF e CSV
 - [x] Sincronizar os quadros de incidência com a produtividade real e tratar falhas de apuração
+- [x] Separar imóveis não publicados e detalhar código, descrição e tipo na aba Vendidos
