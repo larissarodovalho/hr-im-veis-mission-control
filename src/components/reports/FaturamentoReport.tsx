@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchableSelect from "@/components/SearchableSelect";
+import NovaVendaDialog from "@/components/imoveis/NovaVendaDialog";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Download, TrendingUp, Coins, Building2, BarChart3 } from "lucide-react";
 import { ORIGENS, NIVEIS, calculateCommissionPart, calculateCommissionValue, origemLabel, nivelLabel, type OrigemNegocio, type NivelCorretor } from "@/lib/comissaoHR";
@@ -55,21 +56,25 @@ export default function FaturamentoReport() {
   const [origem, setOrigem] = useState<"todos" | OrigemNegocio>("todos");
   const [nivel, setNivel] = useState<"todos" | NivelCorretor>("todos");
 
+  const [vendaAberta, setVendaAberta] = useState<Venda | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    const [{ data: v }, { data: p }, { data: rs }] = await Promise.all([
+      supabase.from("vendas").select("*").order("data_venda", { ascending: false }),
+      supabase.from("profiles").select("user_id,nome"),
+      supabase.from("user_roles").select("user_id, role").eq("role", "corretor"),
+    ]);
+    setVendas((v ?? []) as any);
+    const todos = (p ?? []).map((x: any) => ({ id: x.user_id, nome: x.nome || "Sem nome" }));
+    setProfiles(todos);
+    const idsCorretores = new Set((rs ?? []).map((r: any) => r.user_id));
+    setCorretores(todos.filter((x) => idsCorretores.has(x.id)));
+    setLoading(false);
+  };
+
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const [{ data: v }, { data: p }, { data: rs }] = await Promise.all([
-        supabase.from("vendas").select("*").order("data_venda", { ascending: false }),
-        supabase.from("profiles").select("user_id,nome"),
-        supabase.from("user_roles").select("user_id, role").eq("role", "corretor"),
-      ]);
-      setVendas((v ?? []) as any);
-      const todos = (p ?? []).map((x: any) => ({ id: x.user_id, nome: x.nome || "Sem nome" }));
-      setProfiles(todos);
-      const idsCorretores = new Set((rs ?? []).map((r: any) => r.user_id));
-      setCorretores(todos.filter((x) => idsCorretores.has(x.id)));
-      setLoading(false);
-    })();
+    load();
   }, [refreshKey]);
 
   const nameOf = useMemo(() => {
