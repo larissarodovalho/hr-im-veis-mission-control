@@ -39,7 +39,7 @@ export default function VendidosTab() {
   const load = async () => {
     const [vRes, iRes, pRes] = await Promise.all([
       supabase.from("vendas").select("*").order("data_venda", { ascending: false }),
-      supabase.from("imoveis").select("id,codigo,titulo"),
+      supabase.from("imoveis").select("id,codigo,titulo,descricao,tipo"),
       supabase.from("profiles").select("user_id,nome,avatar_url"),
     ]);
     setVendas(vRes.data ?? []);
@@ -54,6 +54,10 @@ export default function VendidosTab() {
     const ch = supabase
       .channel("imoveis-vendidos-sync")
       .on("postgres_changes", { event: "*", schema: "public", table: "vendas" }, () => {
+        clearTimeout(t);
+        t = setTimeout(load, 1500);
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "imoveis" }, () => {
         clearTimeout(t);
         t = setTimeout(load, 1500);
       })
@@ -203,7 +207,7 @@ export default function VendidosTab() {
           <TableHeader>
             <TableRow>
               <TableHead>Nome</TableHead>
-              <TableHead>Imóvel</TableHead>
+              <TableHead>Imóvel vendido</TableHead>
               <TableHead className="text-right">Valor</TableHead>
               <TableHead className="text-right">Comissão</TableHead>
               <TableHead>Corretor</TableHead>
@@ -225,7 +229,15 @@ export default function VendidosTab() {
               return (
                 <TableRow key={v.id}>
                   <TableCell className="font-medium uppercase text-sm">{v.cliente_nome}</TableCell>
-                  <TableCell className="font-mono text-sm">{imv?.codigo || "—"}</TableCell>
+                  <TableCell className="min-w-72 max-w-md">
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-xs font-semibold text-primary">{imv?.codigo || "Sem código"}</span>
+                        <span className="font-medium text-sm">{imv?.titulo || "Imóvel não identificado"}</span>
+                      </div>
+                      <p className="line-clamp-2 text-xs text-muted-foreground">{imv?.descricao || "Sem descrição cadastrada."}</p>
+                    </div>
+                  </TableCell>
                   <TableCell className="text-right">{fmt(Number(v.valor_venda))}</TableCell>
                   <TableCell className="text-right">{fmt(Number(v.valor_comissao))}</TableCell>
                   <TableCell>
@@ -237,7 +249,7 @@ export default function VendidosTab() {
                     ) : <span className="text-muted-foreground">—</span>}
                   </TableCell>
                   <TableCell><Badge variant="outline" className={STATUS_COLORS[v.status_pagamento]}>{v.status_pagamento}</Badge></TableCell>
-                  <TableCell><Badge variant="outline">{v.tipo}</Badge></TableCell>
+                  <TableCell><Badge variant="outline">{imv?.tipo || "—"}</Badge></TableCell>
                   <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                     {new Date(v.data_venda).toLocaleDateString("pt-BR")}, {new Date(v.data_venda).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                   </TableCell>
