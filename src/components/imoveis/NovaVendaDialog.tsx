@@ -1,4 +1,4 @@
-import { abrirArquivoStorage } from "@/lib/abrirArquivoStorage";
+import { PdfViewerDialog } from "@/components/common/PdfViewerDialog";
 import { useEffect, useState } from "react";
 import { formatBRL } from "@/lib/format";
 import { CurrencyInput } from "@/components/ui/currency-input";
@@ -88,6 +88,7 @@ export default function NovaVendaDialog({
   const [contratoFile, setContratoFile] = useState<File | null>(null);
   const [contratoPath, setContratoPath] = useState<string | null>(null);
   const [contratoUrl, setContratoUrl] = useState<string | null>(null);
+  const [verContrato, setVerContrato] = useState(false);
   const [removeContrato, setRemoveContrato] = useState(false);
   const [imovelManual, setImovelManual] = useState({
     titulo: "",
@@ -546,7 +547,7 @@ export default function NovaVendaDialog({
             <Label>Contrato (PDF)</Label>
             {contratoPath && !removeContrato && !contratoFile && (
               <div className="flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2 mb-2">
-                <button type="button" onClick={() => abrirArquivoStorage("contratos-vendas", contratoPath, "contrato.pdf")} className="text-sm text-primary hover:underline truncate">
+                <button type="button" onClick={() => setVerContrato(true)} className="text-sm text-primary hover:underline truncate">
                   Ver contrato atual
                 </button>
                 <button type="button" className="text-xs text-rose-600 hover:underline" onClick={() => setRemoveContrato(true)}>
@@ -581,6 +582,7 @@ export default function NovaVendaDialog({
           <Button onClick={handleSave} disabled={saving}>{saving ? "Salvando…" : "Salvar venda"}</Button>
         </DialogFooter>
       </DialogContent>
+      <PdfViewerDialog open={verContrato} onOpenChange={setVerContrato} bucket="contratos-vendas" path={contratoPath} title="Contrato da venda" fileName="contrato.pdf" />
     </Dialog>
   );
 }
