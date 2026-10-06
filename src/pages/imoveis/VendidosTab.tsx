@@ -48,7 +48,18 @@ export default function VendidosTab() {
     const pm: Record<string, any> = {}; (pRes.data ?? []).forEach((p: any) => { pm[p.user_id] = p; });
     setProfiles(pm);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const ch = supabase
+      .channel("imoveis-vendidos-sync")
+      .on("postgres_changes", { event: "*", schema: "public", table: "vendas" }, () => {
+        clearTimeout(t);
+        t = setTimeout(load, 1500);
+      })
+      .subscribe();
+    return () => { clearTimeout(t); supabase.removeChannel(ch); };
+  }, []);
 
   const { atual, anterior } = useMemo(() => {
     const now = new Date();
