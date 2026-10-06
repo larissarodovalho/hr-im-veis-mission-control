@@ -54,7 +54,8 @@ export function PdfViewerDialog({ open, onOpenChange, bucket, path, title = "Doc
           if (cancel) return;
         }
         setStatus("ok");
-      } catch {
+      } catch (e) {
+        console.error("PdfViewer", e);
         if (!cancel) setStatus("erro");
       }
     })();
