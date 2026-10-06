@@ -47,6 +47,7 @@ export const STATUS_OPTIONS = [
   "Alugado",
   "Em construção",
   "Indisponível",
+  "Inativo",
 ] as const;
 
 export const CARACTERISTICAS = [

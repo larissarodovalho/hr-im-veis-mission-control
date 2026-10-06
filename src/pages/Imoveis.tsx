@@ -196,19 +196,23 @@ export default function Imoveis() {
   }, [propostas]);
 
   const isVendido = (i: Imovel) => statusLower(i.status) === "vendido";
+  const isInativo = (i: Imovel) => ["inativo", "indisponível", "indisponivel"].includes(statusLower(i.status));
+  const isNaoPublicado = (i: Imovel) => !(i.publicado ?? true);
 
   // Classificação por estágio
-  const stage = (i: Imovel): "vendido" | "fechamento" | "proposta" | "disponivel" => {
+  const stage = (i: Imovel): "vendido" | "fechamento" | "proposta" | "inativo" | "disponivel" => {
     if (isVendido(i)) return "vendido";
     const ps = propostasByImovel[i.id] || [];
     if (ps.some(isAceita)) return "fechamento";
     if (ps.some(isEmAnalise)) return "proposta";
+    if (isInativo(i)) return "inativo";
     return "disponivel";
   };
 
   const passa = (i: Imovel) =>
     matchesSearch(i) && matchesData(i) && matchesCaptador(i) && matchesValor(i) && matchesBairro(i);
-  const disponiveis = items.filter(i => stage(i) === "disponivel" && passa(i));
+  const disponiveis = items.filter(i => stage(i) === "disponivel" && !isNaoPublicado(i) && passa(i));
+  const inativos    = items.filter(i => (stage(i) === "inativo" || (stage(i) === "disponivel" && isNaoPublicado(i))) && passa(i));
   const emProposta  = items.filter(i => stage(i) === "proposta"   && passa(i));
   const emFechamento = items.filter(i => stage(i) === "fechamento" && passa(i));
   const vendidos    = items.filter(i => stage(i) === "vendido"    && passa(i));
