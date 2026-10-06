@@ -388,6 +388,32 @@ export default function Imoveis() {
     </Card>
   );
 
+  const renderInativo = (i: Imovel) => (
+    <Card key={i.id} className="overflow-hidden opacity-90">
+      <Header i={i} badge={
+        <Badge className="absolute top-2 left-2 bg-zinc-700/90 text-white border-0 text-[10px]">
+          {isInativo(i) ? i.status : "Não publicado"}
+        </Badge>
+      } />
+      <div className="p-4 space-y-2">
+        <Title i={i} />
+        <div className="text-[11px] text-muted-foreground space-y-0.5">
+          <div>Corretor: <span className="text-foreground">{profiles[i.corretor_id] || "—"}</span></div>
+          <div>Proprietário: <span className="text-foreground">{contas[i.proprietario_id] || "—"}</span></div>
+        </div>
+        <div className="flex items-center justify-between pt-1">
+          <Badge variant="secondary" className="text-[10px]">{i.finalidade} · {i.tipo}</Badge>
+          <span className="font-semibold text-primary">{fmt(i.valor)}</span>
+        </div>
+        {isInativo(i) && (
+          <p className="text-[11px] text-muted-foreground">
+            Para reativar, edite o imóvel e troque o status para "Disponível".
+          </p>
+        )}
+      </div>
+    </Card>
+  );
+
   const renderEmProposta = (i: Imovel) => {
     const ps = (propostasByImovel[i.id] || []).filter(isEmAnalise);
     return (
@@ -515,7 +541,7 @@ export default function Imoveis() {
     <Card className="p-10 text-center text-muted-foreground col-span-full">{msg}</Card>
   );
 
-  const counts = { d: disponiveis.length, p: emProposta.length, f: emFechamento.length, v: vendidos.length };
+  const counts = { d: disponiveis.length, i: inativos.length, p: emProposta.length, f: emFechamento.length, v: vendidos.length };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
