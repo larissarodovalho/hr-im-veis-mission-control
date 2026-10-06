@@ -343,7 +343,11 @@ export default function FaturamentoReport() {
                   const dia = String(v.data_venda).length <= 10 ? String(v.data_venda) : dayKeyCRM(v.data_venda);
                   const [y, m, d] = dia.split("-");
                   return (
-                    <TableRow key={v.id}>
+                    <TableRow
+                      key={v.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => setVendaAberta(v)}
+                    >
                       <TableCell>{d}/{m}/{y}</TableCell>
                       <TableCell className="font-medium">{v.cliente_nome || "—"}</TableCell>
                       <TableCell>{nameOf(v.corretor_vendedor_id)}</TableCell>
