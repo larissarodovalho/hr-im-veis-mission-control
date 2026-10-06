@@ -238,7 +238,14 @@ export default function VendidosTab() {
                   <TableCell className="min-w-72 max-w-md">
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-xs font-semibold text-primary">{imv?.codigo || "Sem código"}</span>
+                        <button
+                          type="button"
+                          title="Ver cadastro do imóvel"
+                          className="font-mono text-xs font-semibold text-primary underline-offset-2 hover:underline cursor-pointer"
+                          onClick={(e) => { e.stopPropagation(); setViewing(imv); }}
+                        >
+                          {imv?.codigo || "Sem código"}
+                        </button>
                         <span className="font-medium text-sm">{imv?.titulo || "Imóvel não identificado"}</span>
                       </div>
                       <p className="line-clamp-2 text-xs text-muted-foreground">{imv?.descricao || "Sem descrição cadastrada."}</p>
@@ -283,6 +290,14 @@ export default function VendidosTab() {
         onOpenChange={(v) => { setOpenDialog(v); if (!v) setEditing(null); }}
         initial={editing}
         onSaved={load}
+      />
+
+      <DetalhesImovelDialog
+        open={!!viewing}
+        onOpenChange={(v) => { if (!v) setViewing(null); }}
+        imovel={viewing}
+        corretorNome={viewing ? profiles[viewing.corretor_id]?.nome : undefined}
+        proprietarioNome={viewing ? contas[viewing.proprietario_id] : undefined}
       />
     </div>
   );
