@@ -11,6 +11,7 @@ import { LineChart, Line, ResponsiveContainer, PieChart, Pie, Cell } from "recha
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
 import NovaVendaDialog from "@/components/imoveis/NovaVendaDialog";
+import DetalhesImovelDialog from "@/components/imoveis/DetalhesImovelDialog";
 
 import { formatBRL } from "@/lib/format";
 const fmt = (n: number) => formatBRL(n, { dash: false });
@@ -35,18 +36,23 @@ export default function VendidosTab() {
   const [periodo, setPeriodo] = useState<Periodo>("365");
   const [openDialog, setOpenDialog] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
+  const [viewing, setViewing] = useState<any | null>(null);
+  const [contas, setContas] = useState<Record<string, string>>({});
 
   const load = async () => {
-    const [vRes, iRes, pRes] = await Promise.all([
+    const [vRes, iRes, pRes, cRes] = await Promise.all([
       supabase.from("vendas").select("*").order("data_venda", { ascending: false }),
-      supabase.from("imoveis").select("id,codigo,titulo,descricao,tipo"),
+      supabase.from("imoveis").select("*"),
       supabase.from("profiles").select("user_id,nome,avatar_url"),
+      supabase.from("contas").select("id,nome"),
     ]);
     setVendas(vRes.data ?? []);
     const im: Record<string, any> = {}; (iRes.data ?? []).forEach((i: any) => { im[i.id] = i; });
     setImoveis(im);
     const pm: Record<string, any> = {}; (pRes.data ?? []).forEach((p: any) => { pm[p.user_id] = p; });
     setProfiles(pm);
+    const cm: Record<string, string> = {}; (cRes.data ?? []).forEach((c: any) => { cm[c.id] = c.nome; });
+    setContas(cm);
   };
   useEffect(() => {
     load();
@@ -232,7 +238,14 @@ export default function VendidosTab() {
                   <TableCell className="min-w-72 max-w-md">
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-xs font-semibold text-primary">{imv?.codigo || "Sem código"}</span>
+                        <button
+                          type="button"
+                          title="Ver cadastro do imóvel"
+                          className="font-mono text-xs font-semibold text-primary underline-offset-2 hover:underline cursor-pointer"
+                          onClick={(e) => { e.stopPropagation(); setViewing(imv); }}
+                        >
+                          {imv?.codigo || "Sem código"}
+                        </button>
                         <span className="font-medium text-sm">{imv?.titulo || "Imóvel não identificado"}</span>
                       </div>
                       <p className="line-clamp-2 text-xs text-muted-foreground">{imv?.descricao || "Sem descrição cadastrada."}</p>
@@ -277,6 +290,14 @@ export default function VendidosTab() {
         onOpenChange={(v) => { setOpenDialog(v); if (!v) setEditing(null); }}
         initial={editing}
         onSaved={load}
+      />
+
+      <DetalhesImovelDialog
+        open={!!viewing}
+        onOpenChange={(v) => { if (!v) setViewing(null); }}
+        imovel={viewing}
+        corretorNome={viewing ? profiles[viewing.corretor_id]?.nome : undefined}
+        proprietarioNome={viewing ? contas[viewing.proprietario_id] : undefined}
       />
     </div>
   );
