@@ -641,6 +641,13 @@ export default function Imoveis() {
           </div>
         </TabsContent>
 
+        <TabsContent value="inativos" className="mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {inativos.map(renderInativo)}
+            {inativos.length === 0 && emptyState("Nenhum imóvel inativo ou não publicado.")}
+          </div>
+        </TabsContent>
+
         <TabsContent value="proposta" className="mt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {emProposta.map(renderEmProposta)}
