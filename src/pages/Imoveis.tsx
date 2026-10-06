@@ -107,6 +107,13 @@ export default function Imoveis() {
     const lm: Record<string, Lead> = {};
     (ldRes.data ?? []).forEach((l: any) => { lm[l.id] = l; });
     setLeads(lm);
+    const ids = Array.from(new Set((imRes.data ?? []).map((i: any) => i.proprietario_id).filter(Boolean)));
+    const cmap: Record<string, string> = {};
+    for (let k = 0; k < ids.length; k += 200) {
+      const { data } = await supabase.from("contas").select("id,nome").in("id", ids.slice(k, k + 200));
+      (data ?? []).forEach((c: any) => { cmap[c.id] = c.nome; });
+    }
+    setContas(cmap);
   };
 
   useEffect(() => {
@@ -115,11 +122,6 @@ export default function Imoveis() {
       const map: Record<string, string> = {};
       (data ?? []).forEach((p: any) => { if (p.user_id) map[p.user_id] = p.nome || "Sem nome"; });
       setProfiles(map);
-    });
-    supabase.from("contas").select("id,nome").then(({ data }) => {
-      const map: Record<string, string> = {};
-      (data ?? []).forEach((c: any) => { map[c.id] = c.nome; });
-      setContas(map);
     });
   }, []);
 
