@@ -549,7 +549,7 @@ export default function Imoveis() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="font-display text-2xl sm:text-3xl font-semibold flex items-center gap-2"><HomeIcon className="h-6 w-6 sm:h-7 sm:w-7 text-primary" /> Imóveis</h1>
-            <p className="text-muted-foreground mt-1 text-sm">{counts.d} disponíveis · {counts.p} em proposta · {counts.f} em fechamento · {counts.v} vendidos</p>
+            <p className="text-muted-foreground mt-1 text-sm">{counts.d} disponíveis · {counts.i} inativos/não publicados · {counts.p} em proposta · {counts.f} em fechamento · {counts.v} vendidos</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             <Button
@@ -622,6 +622,7 @@ export default function Imoveis() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex h-auto w-full justify-start gap-1 overflow-x-auto whitespace-nowrap">
           <TabsTrigger value="disponiveis">Disponíveis <Badge variant="secondary" className="ml-2 text-[10px]">{counts.d}</Badge></TabsTrigger>
+          <TabsTrigger value="inativos">Inativos / Não publicados <Badge variant="secondary" className="ml-2 text-[10px]">{counts.i}</Badge></TabsTrigger>
           <TabsTrigger value="proposta">Em Proposta <Badge variant="secondary" className="ml-2 text-[10px]">{counts.p}</Badge></TabsTrigger>
           <TabsTrigger value="fechamento">Em Fechamento <Badge variant="secondary" className="ml-2 text-[10px]">{counts.f}</Badge></TabsTrigger>
           <TabsTrigger value="vendidos">Vendidos <Badge variant="secondary" className="ml-2 text-[10px]">{counts.v}</Badge></TabsTrigger>
