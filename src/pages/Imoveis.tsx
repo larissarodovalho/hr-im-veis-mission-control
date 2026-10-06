@@ -196,19 +196,23 @@ export default function Imoveis() {
   }, [propostas]);
 
   const isVendido = (i: Imovel) => statusLower(i.status) === "vendido";
+  const isInativo = (i: Imovel) => ["inativo", "indisponível", "indisponivel"].includes(statusLower(i.status));
+  const isNaoPublicado = (i: Imovel) => !(i.publicado ?? true);
 
   // Classificação por estágio
-  const stage = (i: Imovel): "vendido" | "fechamento" | "proposta" | "disponivel" => {
+  const stage = (i: Imovel): "vendido" | "fechamento" | "proposta" | "inativo" | "disponivel" => {
     if (isVendido(i)) return "vendido";
     const ps = propostasByImovel[i.id] || [];
     if (ps.some(isAceita)) return "fechamento";
     if (ps.some(isEmAnalise)) return "proposta";
+    if (isInativo(i)) return "inativo";
     return "disponivel";
   };
 
   const passa = (i: Imovel) =>
     matchesSearch(i) && matchesData(i) && matchesCaptador(i) && matchesValor(i) && matchesBairro(i);
-  const disponiveis = items.filter(i => stage(i) === "disponivel" && passa(i));
+  const disponiveis = items.filter(i => stage(i) === "disponivel" && !isNaoPublicado(i) && passa(i));
+  const inativos    = items.filter(i => (stage(i) === "inativo" || (stage(i) === "disponivel" && isNaoPublicado(i))) && passa(i));
   const emProposta  = items.filter(i => stage(i) === "proposta"   && passa(i));
   const emFechamento = items.filter(i => stage(i) === "fechamento" && passa(i));
   const vendidos    = items.filter(i => stage(i) === "vendido"    && passa(i));
@@ -384,6 +388,32 @@ export default function Imoveis() {
     </Card>
   );
 
+  const renderInativo = (i: Imovel) => (
+    <Card key={i.id} className="overflow-hidden opacity-90">
+      <Header i={i} badge={
+        <Badge className="absolute top-2 left-2 bg-zinc-700/90 text-white border-0 text-[10px]">
+          {isInativo(i) ? i.status : "Não publicado"}
+        </Badge>
+      } />
+      <div className="p-4 space-y-2">
+        <Title i={i} />
+        <div className="text-[11px] text-muted-foreground space-y-0.5">
+          <div>Corretor: <span className="text-foreground">{profiles[i.corretor_id] || "—"}</span></div>
+          <div>Proprietário: <span className="text-foreground">{contas[i.proprietario_id] || "—"}</span></div>
+        </div>
+        <div className="flex items-center justify-between pt-1">
+          <Badge variant="secondary" className="text-[10px]">{i.finalidade} · {i.tipo}</Badge>
+          <span className="font-semibold text-primary">{fmt(i.valor)}</span>
+        </div>
+        {isInativo(i) && (
+          <p className="text-[11px] text-muted-foreground">
+            Para reativar, edite o imóvel e troque o status para "Disponível".
+          </p>
+        )}
+      </div>
+    </Card>
+  );
+
   const renderEmProposta = (i: Imovel) => {
     const ps = (propostasByImovel[i.id] || []).filter(isEmAnalise);
     return (
@@ -511,7 +541,7 @@ export default function Imoveis() {
     <Card className="p-10 text-center text-muted-foreground col-span-full">{msg}</Card>
   );
 
-  const counts = { d: disponiveis.length, p: emProposta.length, f: emFechamento.length, v: vendidos.length };
+  const counts = { d: disponiveis.length, i: inativos.length, p: emProposta.length, f: emFechamento.length, v: vendidos.length };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
@@ -519,7 +549,7 @@ export default function Imoveis() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="font-display text-2xl sm:text-3xl font-semibold flex items-center gap-2"><HomeIcon className="h-6 w-6 sm:h-7 sm:w-7 text-primary" /> Imóveis</h1>
-            <p className="text-muted-foreground mt-1 text-sm">{counts.d} disponíveis · {counts.p} em proposta · {counts.f} em fechamento · {counts.v} vendidos</p>
+            <p className="text-muted-foreground mt-1 text-sm">{counts.d} disponíveis · {counts.i} inativos/não publicados · {counts.p} em proposta · {counts.f} em fechamento · {counts.v} vendidos</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             <Button
@@ -592,6 +622,7 @@ export default function Imoveis() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex h-auto w-full justify-start gap-1 overflow-x-auto whitespace-nowrap">
           <TabsTrigger value="disponiveis">Disponíveis <Badge variant="secondary" className="ml-2 text-[10px]">{counts.d}</Badge></TabsTrigger>
+          <TabsTrigger value="inativos">Inativos / Não publicados <Badge variant="secondary" className="ml-2 text-[10px]">{counts.i}</Badge></TabsTrigger>
           <TabsTrigger value="proposta">Em Proposta <Badge variant="secondary" className="ml-2 text-[10px]">{counts.p}</Badge></TabsTrigger>
           <TabsTrigger value="fechamento">Em Fechamento <Badge variant="secondary" className="ml-2 text-[10px]">{counts.f}</Badge></TabsTrigger>
           <TabsTrigger value="vendidos">Vendidos <Badge variant="secondary" className="ml-2 text-[10px]">{counts.v}</Badge></TabsTrigger>
@@ -607,6 +638,13 @@ export default function Imoveis() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {disponiveis.map(renderDisponivel)}
             {disponiveis.length === 0 && emptyState("Nenhum imóvel disponível. Clique em Cadastrar imóvel para começar.")}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="inativos" className="mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {inativos.map(renderInativo)}
+            {inativos.length === 0 && emptyState("Nenhum imóvel inativo ou não publicado.")}
           </div>
         </TabsContent>
 
