@@ -18,7 +18,8 @@ Deno.serve(async (req) => {
     if (!document_id) return json({ error: "document_id obrigatório" }, 400);
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const { data: doc } = await admin.from("signed_documents")
+    // Busca com o cliente do usuário: as regras de acesso decidem se ele pode ver o documento
+    const { data: doc } = await userClient.from("signed_documents")
       .select("id, clicksign_document_key").eq("id", document_id).maybeSingle();
     if (!doc?.clicksign_document_key) return json({ error: "documento não encontrado" }, 404);
 
@@ -34,7 +35,8 @@ Deno.serve(async (req) => {
 
     return json({ ok: true });
   } catch (e: any) {
-    return json({ error: e.message || String(e) }, 500);
+    console.error("clicksign-cancel-document error:", e);
+    return json({ error: "Não foi possível concluir a operação. Tente novamente." }, 500);
   }
 });
 

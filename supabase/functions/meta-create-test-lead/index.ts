@@ -1,12 +1,15 @@
 // Trigger a test lead via Graph API: POST /{form_id}/test_leads
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { requireAdmin } from "../_shared/auth.ts";
 
 const PAGE_TOKEN = Deno.env.get("META_PAGE_ACCESS_TOKEN") || "";
 const GRAPH = "https://graph.facebook.com/v21.0";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const denied = await requireAdmin(req, corsHeaders);
+  if (denied) return denied;
 
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
@@ -43,6 +46,15 @@ Deno.serve(async (req) => {
   if (!/^\d{6,}$/.test(form_id)) {
     return new Response(JSON.stringify({ ok: false, error: "form_id inválido" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+
+  {
+    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: known } = await admin.from("meta_lead_forms").select("id").eq("form_id", form_id).maybeSingle();
+    if (!known) {
+      return new Response(JSON.stringify({ ok: false, error: "Formulário não cadastrado no CRM" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
   }
 
   try {

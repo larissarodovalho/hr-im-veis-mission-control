@@ -44,9 +44,23 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Cliente com a sessão do usuário: as regras de acesso decidem quais conversas ele pode usar
+    const userDb = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { data: roleRows } = await supabase.from("user_roles").select("role")
+      .eq("user_id", userRes.user.id).in("role", ["admin", "gestor", "corretor"]);
+    if (!roleRows || roleRows.length === 0) {
+      return new Response(JSON.stringify({ error: "Sem permissão para enviar mensagens" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     let conv: { id: string; phone: string } | null = null;
     if (conversation_id) {
-      const { data } = await supabase
+      const { data } = await userDb
         .from("whatsapp_conversations")
         .select("id, phone")
         .eq("id", conversation_id)
@@ -63,6 +77,27 @@ Deno.serve(async (req) => {
     // Normaliza para formato BR internacional E.164 sem '+': 55 + DDD(2) + numero(8 ou 9)
     if (cleanPhone.length <= 11 && !cleanPhone.startsWith("55")) {
       cleanPhone = "55" + cleanPhone;
+    }
+
+    // Número digitado: se já existe conversa com ele, o usuário precisa ter acesso a ela
+    if (!conv) {
+      if (cleanPhone.length < 12 || cleanPhone.length > 13) {
+        return new Response(JSON.stringify({ error: "Telefone inválido" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: existing } = await supabase.from("whatsapp_conversations")
+        .select("id").eq("phone", cleanPhone).maybeSingle();
+      if (existing) {
+        const { data: visible } = await userDb.from("whatsapp_conversations")
+          .select("id, phone").eq("id", existing.id).maybeSingle();
+        if (!visible) {
+          return new Response(JSON.stringify({ error: "Conversa atribuída a outro corretor" }), {
+            status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        conv = visible as any;
+      }
     }
 
     const EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL");
@@ -135,7 +170,7 @@ Deno.serve(async (req) => {
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Unknown error";
     console.error("whatsapp-send error:", msg);
-    return new Response(JSON.stringify({ error: msg }), {
+    return new Response(JSON.stringify({ error: "Falha ao enviar mensagem" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { safeRows, safeCell } from "@/lib/csvSafe";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -131,7 +132,7 @@ export default function FechamentosReport() {
       Responsável: r.responsavel_nome ?? "",
       Observações: r.observacoes ?? "",
     }));
-    const csv = Papa.unparse(data);
+    const csv = Papa.unparse(safeRows(data));
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -164,7 +165,7 @@ export default function FechamentosReport() {
     }));
     const wb = XLSX.utils.book_new();
     const wsResumo = XLSX.utils.json_to_sheet(resumoData);
-    const wsDetalhe = XLSX.utils.json_to_sheet(detalhado);
+    const wsDetalhe = XLSX.utils.json_to_sheet(safeRows(detalhado));
     XLSX.utils.book_append_sheet(wb, wsResumo, agrupamento === "mensal" ? "Resumo mensal" : "Resumo anual");
     XLSX.utils.book_append_sheet(wb, wsDetalhe, "Detalhado");
     XLSX.writeFile(wb, `fechamentos-${filenameStamp()}.xlsx`);

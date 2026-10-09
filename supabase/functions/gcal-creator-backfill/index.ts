@@ -3,6 +3,7 @@
 // (entity_type = 'reuniao'), busca o evento no Google, lê creator/organizer email e
 // cruza com profiles.email para resolver o criador real.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { getCaller } from "../_shared/auth.ts";
 import { adminClient, formatGoogleCalendarApiError, getValidAccessToken, gcalFetch } from "../_shared/google-calendar.ts";
 
 type Stats = {
@@ -99,6 +100,12 @@ async function backfillForUser(supa: ReturnType<typeof adminClient>, user_id: st
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    const caller = await getCaller(req);
+    if (!caller) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const supa = adminClient();
     const url = new URL(req.url);
     let bodyUserId: string | null = null;
@@ -108,7 +115,10 @@ Deno.serve(async (req) => {
         bodyUserId = typeof body?.user_id === "string" ? body.user_id : null;
       } catch { /* ignore */ }
     }
-    const single = url.searchParams.get("user_id") ?? bodyUserId;
+    // Usuário comum só sincroniza a própria agenda; a rotina do servidor pode sincronizar todos
+    const single = caller.kind === "user"
+      ? caller.userId
+      : (url.searchParams.get("user_id") ?? bodyUserId);
 
     let users: { user_id: string }[];
     if (single) users = [{ user_id: single }];

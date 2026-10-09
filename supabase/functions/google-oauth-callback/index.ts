@@ -1,5 +1,5 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { adminClient, redirectUri, googleOAuthClientId, googleOAuthClientSecret } from "../_shared/google-calendar.ts";
+import { adminClient, redirectUri, googleOAuthClientId, googleOAuthClientSecret, verifyOAuthState } from "../_shared/google-calendar.ts";
 
 const APP_ORIGIN = "https://id-preview--9ba329fa-bc86-4fa7-8521-f11e9da54abe.lovable.app";
 
@@ -26,8 +26,8 @@ Deno.serve(async (req) => {
     if (err) return htmlResponse(false, err);
     if (!code || !state) return htmlResponse(false, "Parâmetros faltando");
 
-    let parsed: { user_id: string; ts: number };
-    try { parsed = JSON.parse(atob(state)); } catch { return htmlResponse(false, "State inválido"); }
+    const parsed = await verifyOAuthState(state);
+    if (!parsed) return htmlResponse(false, "Link de conexão inválido ou expirado. Tente conectar novamente.");
 
     const client_id = googleOAuthClientId();
     const client_secret = googleOAuthClientSecret();
@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
       connected_at: new Date().toISOString(),
       sync_token: null,
     }, { onConflict: "user_id" });
-    if (upErr) return htmlResponse(false, upErr.message);
+    if (upErr) { console.error("gcal upsert", upErr); return htmlResponse(false, "Não foi possível salvar a conexão."); }
 
     return htmlResponse(true, `Conta ${ui.email} conectada com sucesso.`);
   } catch (e) {

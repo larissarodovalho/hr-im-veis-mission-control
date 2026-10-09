@@ -1,5 +1,6 @@
 // Publica/atualiza/remove um evento do CRM na agenda Google do responsável.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { getCaller, userScopedClient } from "../_shared/auth.ts";
 import { adminClient, formatGoogleCalendarApiError, getValidAccessToken, gcalFetch, TIMEZONE } from "../_shared/google-calendar.ts";
 
 type EntityType = "reuniao" | "ligacao" | "visita" | "captacao";
@@ -135,8 +136,37 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { entity_type, entity_id, action } = body as { entity_type: EntityType; entity_id: string; action: Action };
     if (!entity_type || !entity_id || !action) throw new Error("payload inválido");
+    const TABLES: Record<EntityType, string> = {
+      reuniao: "reunioes", ligacao: "ligacoes", visita: "visitas", captacao: "captacoes_imovel",
+    };
+    const table = TABLES[entity_type];
+    if (!table || !["create", "update", "delete"].includes(action)) throw new Error("payload inválido");
+
+    const caller = await getCaller(req);
+    if (!caller) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const supa = adminClient();
+
+    if (caller.kind === "user") {
+      // O registro precisa estar visível para quem chama. Para exclusão, também vale
+      // quando o registro já foi apagado do CRM (limpeza do evento no Google).
+      const { data: visible } = await userScopedClient(caller.authHeader)
+        .from(table).select("id").eq("id", entity_id).maybeSingle();
+      let allowed = !!visible;
+      if (!allowed && action === "delete") {
+        const { data: still } = await supa.from(table).select("id").eq("id", entity_id).maybeSingle();
+        allowed = !still;
+      }
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: "Sem acesso a este registro" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     if (action === "delete") {
       const { data: maps } = await supa.from("google_calendar_sync")

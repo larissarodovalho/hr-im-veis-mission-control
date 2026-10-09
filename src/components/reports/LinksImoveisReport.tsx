@@ -2,6 +2,7 @@
 // Toda a agregação acontece no banco (RPC imovel_links_performance); o navegador
 // nunca carrega a base de eventos. Horários e agrupamentos por período usam America/Cuiaba.
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { safeRows, safeCell } from "@/lib/csvSafe";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -113,7 +114,7 @@ export default function LinksImoveisReport() {
 
   const exportar = () => {
     if (!grupos.length) return toast.error("Nada para exportar");
-    const csv = Papa.unparse(
+    const csv = Papa.unparse(safeRows(
       grupos.map((g) => ({
         Grupo: g.chave,
         "Links gerados": g.gerados,
@@ -121,7 +122,7 @@ export default function LinksImoveisReport() {
         "Taxa de abertura": pct(g.gerados ? (g.abertos * 100) / g.gerados : 0),
         Gostei: g.gostei,
         "Pedidos de visita": g.visitas,
-      })),
+      }))),
     );
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { safeRows, safeCell } from "@/lib/csvSafe";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -192,7 +193,7 @@ function ReportsInner() {
   const exportLeads = async () => {
     const { data, error } = await supabase.from("leads").select("*").gte("created_at", inicioISO).lte("created_at", fimISO);
     if (error) return toast.error(error.message);
-    const csv = Papa.unparse(data ?? []);
+    const csv = Papa.unparse(safeRows((data ?? []) as Record<string, unknown>[]));
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = `leads-${label}.csv`; a.click();

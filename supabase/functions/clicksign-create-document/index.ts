@@ -51,11 +51,36 @@ Deno.serve(async (req) => {
       }
     }
 
-    let b64 = body.file_base64;
-    let mime = body.file_mime || "application/pdf";
+    // Apenas equipe interna pode enviar documentos para assinatura
+    const { data: isStaff } = await userClient.rpc("is_staff");
+    if (!isStaff) return json({ error: "Sem permissão para enviar documentos" }, 403);
+
+    // Signatários: e-mails válidos e quantidade limitada
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (body.signers.length > 10) return json({ error: "Máximo de 10 signatários por documento" }, 400);
+    for (const s of body.signers) {
+      if (typeof s.email !== "string" || !EMAIL_RE.test(s.email.trim()) || s.email.length > 254) {
+        return json({ error: `E-mail inválido para o signatário "${s.name}".` }, 400);
+      }
+    }
+
+    // A conta/lead vinculada precisa estar acessível para quem envia
+    if (body.lead_id) {
+      const { data: lead } = await userClient.from("leads").select("id").eq("id", body.lead_id).maybeSingle();
+      if (!lead) return json({ error: "Lead não encontrado ou sem acesso" }, 403);
+    }
+    if (body.conta_id) {
+      const { data: conta } = await userClient.from("contas").select("id").eq("id", body.conta_id).maybeSingle();
+      if (!conta) return json({ error: "Conta não encontrada ou sem acesso" }, 403);
+    }
+
+    let b64 = String(body.file_base64);
     const m = b64.match(/^data:([^;]+);base64,(.*)$/);
-    if (m) { mime = m[1]; b64 = m[2]; }
-    const contentBase64 = `data:${mime};base64,${b64}`;
+    if (m) b64 = m[2];
+    // Somente PDF, até 15 MB
+    const MAX_BYTES = 15 * 1024 * 1024;
+    if (b64.length > Math.ceil(MAX_BYTES / 3) * 4 + 4) return json({ error: "Arquivo maior que 15 MB" }, 400);
+    const mime = "application/pdf";
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -63,7 +88,14 @@ Deno.serve(async (req) => {
     );
 
     // 1) Upload do PDF original
-    const fileBytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    let fileBytes: Uint8Array;
+    try { fileBytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)); }
+    catch { return json({ error: "Arquivo inválido" }, 400); }
+    // Assinatura de PDF: "%PDF-"
+    if (fileBytes.length < 5 || String.fromCharCode(...fileBytes.slice(0, 5)) !== "%PDF-") {
+      return json({ error: "Envie um arquivo PDF" }, 400);
+    }
+    const contentBase64 = `data:${mime};base64,${b64}`;
     const docId = crypto.randomUUID();
     const originalPath = `${userId}/${docId}/original.pdf`;
     const upload = await admin.storage.from("signed-documents").upload(originalPath, fileBytes, {
@@ -171,7 +203,8 @@ Deno.serve(async (req) => {
     return json({ ok: true, document: insertedDoc, signers: createdSigners });
   } catch (e: any) {
     console.error("clicksign-create-document error:", e);
-    return json({ error: e.message || String(e) }, 500);
+    console.error("clicksign-create-document error:", e);
+    return json({ error: "Não foi possível concluir a operação. Tente novamente." }, 500);
   }
 });
 

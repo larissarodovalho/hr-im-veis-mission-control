@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { safeRows, safeCell } from "@/lib/csvSafe";
 import { Link, useSearchParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
@@ -575,7 +576,7 @@ export default function Accounts() {
     if (!exportCols.length) return toast.error("Selecione ao menos uma coluna");
     try { localStorage.setItem(COLS_KEY, JSON.stringify(exportCols)); } catch {}
     try { localStorage.setItem(FMT_KEY, exportFormat); } catch {}
-    const rows = buildExportRows(exportCols);
+    const rows = safeRows(buildExportRows(exportCols));
     const ws = XLSX.utils.json_to_sheet(rows);
     ws["!cols"] = Array(Object.keys(rows[0] || {}).length).fill({ wch: 20 });
     if (exportFormat === "xlsx") {

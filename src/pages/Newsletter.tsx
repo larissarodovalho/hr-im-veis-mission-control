@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { safeRows, safeCell } from "@/lib/csvSafe";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
@@ -98,7 +99,7 @@ export default function Newsletter() {
       format(new Date(i.created_at), "dd/MM/yyyy HH:mm"),
     ]);
     const csv = [header, ...rows]
-      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .map((r) => r.map((c) => `"${String(safeCell(c)).replace(/"/g, '""')}"`).join(","))
       .join("\n");
     const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);

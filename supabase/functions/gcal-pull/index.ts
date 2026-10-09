@@ -1,6 +1,7 @@
 // Importa eventos novos da agenda Google pessoal de cada usuário conectado.
 // Pode ser chamada manualmente ou via cron.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { getCaller } from "../_shared/auth.ts";
 import { adminClient, formatGoogleCalendarApiError, getValidAccessToken, gcalFetch } from "../_shared/google-calendar.ts";
 
 async function getSharedCalendarId(supa: ReturnType<typeof adminClient>) {
@@ -214,6 +215,9 @@ async function runSync(supa: ReturnType<typeof adminClient>, users: { user_id: s
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    // Sem sessão (rotina agendada): sincroniza todas as agendas conectadas, sem aceitar user_id
+    // nem modo síncrono vindos da requisição.
+    const caller = await getCaller(req);
     const supa = adminClient();
     const url = new URL(req.url);
     let bodyUserId: string | null = null;
@@ -225,8 +229,12 @@ Deno.serve(async (req) => {
         waitFlag = body?.wait === true;
       } catch { /* ignore */ }
     }
-    const single = url.searchParams.get("user_id") ?? bodyUserId;
-    const wait = waitFlag || url.searchParams.get("wait") === "1";
+    // Usuário comum só sincroniza a própria agenda; a rotina do servidor pode sincronizar todos
+    const single = !caller ? null
+      : caller.kind === "user" ? caller.userId
+      : (url.searchParams.get("user_id") ?? bodyUserId);
+    if (!caller) waitFlag = false;
+    const wait = waitFlag || (!!caller && url.searchParams.get("wait") === "1");
 
     let users: { user_id: string }[];
     if (single) users = [{ user_id: single }];
