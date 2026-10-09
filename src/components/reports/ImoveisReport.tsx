@@ -1,4 +1,5 @@
 import { dayKeyCRM } from "@/lib/datetime";
+import { safeRows, safeCell } from "@/lib/csvSafe";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -312,7 +313,7 @@ export default function ImoveisReport() {
     captacaoAnual.forEach((c) => rows.push({ secao: "Captação por ano", metrica: c.name, valor: c.qtd }));
     topBairros.forEach((b) => rows.push({ secao: "Bairros mais cadastrados", metrica: `${b.bairro}${b.cidade ? ` (${b.cidade})` : ""}`, valor: b.qtd }));
 
-    const csv = Papa.unparse(rows);
+    const csv = Papa.unparse(safeRows(rows));
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { safeRows, safeCell } from "@/lib/csvSafe";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -220,7 +221,7 @@ export default function PropostasReport() {
       "Valor (R$)": r.valor ?? "",
       Descrição: r.descricao ?? "",
     }));
-    const csv = Papa.unparse(data);
+    const csv = Papa.unparse(safeRows(data));
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
