@@ -290,7 +290,7 @@ export default function PropostasReport() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(porRespData), "Por corretor");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(porImovelData), "Top imóveis");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(porClienteData), "Top clientes");
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(detalhado), "Detalhado");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(safeRows(detalhado)), "Detalhado");
     XLSX.writeFile(wb, `propostas-${filenameStamp()}.xlsx`);
     toast.success("Excel gerado");
   };

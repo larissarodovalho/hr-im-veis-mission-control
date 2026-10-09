@@ -165,7 +165,7 @@ export default function FechamentosReport() {
     }));
     const wb = XLSX.utils.book_new();
     const wsResumo = XLSX.utils.json_to_sheet(resumoData);
-    const wsDetalhe = XLSX.utils.json_to_sheet(detalhado);
+    const wsDetalhe = XLSX.utils.json_to_sheet(safeRows(detalhado));
     XLSX.utils.book_append_sheet(wb, wsResumo, agrupamento === "mensal" ? "Resumo mensal" : "Resumo anual");
     XLSX.utils.book_append_sheet(wb, wsDetalhe, "Detalhado");
     XLSX.writeFile(wb, `fechamentos-${filenameStamp()}.xlsx`);
