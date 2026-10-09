@@ -93,6 +93,8 @@ async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string
         const endISO = ev.end?.dateTime || (ev.end?.date ? `${ev.end.date}T10:00:00-03:00` : null);
         const duracao_min = endISO ? Math.max(15, Math.round((new Date(endISO).getTime() - new Date(startISO).getTime()) / 60000)) : 60;
 
+      // Evento sem mudança no Google (mesmo etag): não regrava nada
+      if (map && map.etag && ev.etag && map.etag === ev.etag) continue;
       if (map) {
         await supa.from("reunioes").update({
           titulo: ev.summary || "Evento Google",
