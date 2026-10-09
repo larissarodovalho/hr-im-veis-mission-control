@@ -11,10 +11,10 @@ export interface OpcoesImagem {
 }
 
 /** Larguras padrão por contexto de uso. */
-export const IMG_THUMB = { width: 400, quality: 65 } as const;
+export const IMG_THUMB = { width: 600, quality: 75 } as const;
 export const IMG_CARD = { width: 700, quality: 70 } as const;
 export const IMG_GALERIA = { width: 1400, quality: 75 } as const;
-export const IMG_HERO = { width: 1920, quality: 78 } as const;
+export const IMG_HERO = { width: 1920, quality: 90 } as const;
 
 export function imagemOtimizada(
   url: string | null | undefined,
@@ -31,6 +31,23 @@ export function imagemOtimizada(
   const params = new URLSearchParams(query || "");
   if (opts.width) params.set("width", String(opts.width));
   if (opts.quality) params.set("quality", String(opts.quality));
-  params.set("resize", opts.resize ?? "cover");
+  if (opts.resize) params.set("resize", opts.resize);
+  else params.delete("resize");
   return `${alvo}?${params.toString()}`;
+}
+
+/**
+ * srcSet com versões redimensionadas + a foto original como maior opção,
+ * para telas grandes/Retina não ampliarem uma cópia pequena.
+ */
+export function srcSetOtimizado(
+  url: string | null | undefined,
+  larguras: number[],
+  quality = 90,
+  original = true,
+): string | undefined {
+  if (!url || !url.includes(PUBLIC_MARK) || url.includes(RENDER_MARK)) return undefined;
+  const partes = larguras.map((w) => `${imagemOtimizada(url, { width: w, quality })} ${w}w`);
+  if (original) partes.push(`${url} 4000w`);
+  return partes.join(", ");
 }

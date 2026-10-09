@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { imagemOtimizada, IMG_THUMB, IMG_HERO } from "@/lib/imagemOtimizada";
+import { imagemOtimizada, srcSetOtimizado, IMG_THUMB, IMG_HERO } from "@/lib/imagemOtimizada";
 import { useRef, useEffect, useState } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { MapPin, BedDouble, Bath, Car, Maximize2, ArrowLeft, ArrowUpRight, Home, Phone, MessageCircle, ChevronLeft, ChevronRight, X, Images } from "lucide-react";
@@ -165,6 +165,8 @@ export default function ImovelDetalhePage() {
             <motion.img
               key={image}
               src={imageGaleria}
+              srcSet={srcSetOtimizado(image, [1280, 1920, 2500])}
+              sizes="100vw"
               alt={imovel.nome}
               decoding="async"
               className="w-full h-full object-cover cursor-zoom-in"
@@ -298,7 +300,7 @@ export default function ImovelDetalhePage() {
             <AnimatePresence mode="wait">
               <motion.img
                 key={image}
-                src={imagemOtimizada(image, IMG_HERO)}
+                src={image}
                 alt={imovel.nome}
                 onClick={(e) => e.stopPropagation()}
                 initial={{ opacity: 0, scale: 0.98 }}
