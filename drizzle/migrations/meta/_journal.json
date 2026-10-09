@@ -162,6 +162,13 @@
       "when": 1791556807560,
       "tag": "0022_harden_public_inserts_site_assets",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791556926269,
+      "tag": "0023_carteira_config_staff_only",
+      "breakpoints": true
     }
   ]
 }
