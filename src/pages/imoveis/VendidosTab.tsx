@@ -145,6 +145,14 @@ export default function VendidosTab() {
     </Card>
   );
 
+  if (!roleLoading && !canEdit) {
+    return (
+      <Card className="p-10 text-center text-muted-foreground">
+        Acesso restrito a administradores e gestores.
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
