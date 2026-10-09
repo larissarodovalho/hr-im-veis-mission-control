@@ -48,6 +48,15 @@ Deno.serve(async (req) => {
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
+  {
+    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: known } = await admin.from("meta_lead_forms").select("id").eq("form_id", form_id).maybeSingle();
+    if (!known) {
+      return new Response(JSON.stringify({ ok: false, error: "Formulário não cadastrado no CRM" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+  }
+
   try {
     // field_data is optional; Meta will fill defaults. We provide minimal sample.
     const field_data = JSON.stringify([
