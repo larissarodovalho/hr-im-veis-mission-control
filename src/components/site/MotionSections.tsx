@@ -17,12 +17,15 @@ export function ScrollSection({
   strong = false,
   /** When true, render the top/bottom dark fade edges on desktop. */
   fadeEdges = true,
+  /** When true, skip scroll-linked effects (use for long content like listings). */
+  plain = false,
 }: {
   children: React.ReactNode;
   className?: string;
   index?: number;
   strong?: boolean;
   fadeEdges?: boolean;
+  plain?: boolean;
 }) {
   const isMobile = useIsMobile();
   const ref = useRef(null);
@@ -56,6 +59,14 @@ export function ScrollSection({
       ? ["blur(8px)", "blur(0px)", "blur(0px)", "blur(5px)"]
       : ["blur(4px)", "blur(0px)", "blur(0px)", "blur(2px)"],
   );
+
+  if (plain) {
+    return (
+      <section ref={ref} style={{ zIndex: index }} className={`relative ${className}`}>
+        {children}
+      </section>
+    );
+  }
 
   if (isMobile) {
     // Mobile: simple one-shot reveal — fluid, no scroll-linked re-paints.

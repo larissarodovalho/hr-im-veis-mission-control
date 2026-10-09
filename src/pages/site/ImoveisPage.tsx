@@ -367,7 +367,7 @@ export default function ImoveisPage() {
       </ScrollSection>
 
       {/* ─── Grid — elegant cards ─── */}
-      <ScrollSection className="py-4 sm:py-6 md:-mt-8" index={2} fadeEdges={false}>
+      <ScrollSection className="py-4 sm:py-6 md:-mt-8" index={2} fadeEdges={false} plain>
         <div className="px-6 relative z-20">
           <div className="max-w-7xl mx-auto">
 
