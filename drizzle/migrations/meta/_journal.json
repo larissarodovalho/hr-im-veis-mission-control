@@ -169,6 +169,13 @@
       "when": 1791556926269,
       "tag": "0023_carteira_config_staff_only",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791558098274,
+      "tag": "0024_reunioes_bloqueios_staff_only",
+      "breakpoints": true
     }
   ]
 }

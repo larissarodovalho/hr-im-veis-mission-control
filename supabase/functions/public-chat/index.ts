@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
     const { session_id, message } = await req.json();
-    if (typeof message !== "string" || !message.trim() || message.length > 4000) {
+    if (typeof message !== "string" || !message.trim() || message.length > 1000) {
       return new Response(JSON.stringify({ error: "mensagem inválida" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -51,6 +51,15 @@ Deno.serve(async (req) => {
     if (!sid) {
       const { data } = await supabase.from("ai_chat_sessions").insert({}).select("id").single();
       sid = data!.id;
+    }
+
+    // Limite por conversa para conter o custo da IA
+    const { count: userMsgs } = await supabase.from("ai_chat_messages")
+      .select("id", { count: "exact", head: true }).eq("session_id", sid).eq("role", "user");
+    if ((userMsgs ?? 0) >= 30) {
+      return new Response(JSON.stringify({ error: "Limite da conversa atingido. Um corretor entrará em contato." }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     await supabase.from("ai_chat_messages").insert({ session_id: sid, role: "user", content: message });

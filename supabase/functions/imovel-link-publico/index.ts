@@ -28,7 +28,7 @@ function cors(origin: string | null) {
 const BOT_RE = /bot|crawler|spider|preview|facebookexternalhit|whatsapp|telegram|slack|discord|twitterbot|linkedinbot|embedly|quora|pinterest|vkshare|redditbot|applebot|bingpreview|headless|curl|wget|python-requests|postman/i;
 
 const SHARED_BUCKET = "imoveis-compartilhados";
-const SIGNED_TTL_MAX = 60 * 60; // teto de 1h — sempre limitado ao tempo restante do link
+const SIGNED_TTL_MAX = 10 * 60; // teto de 10 min — sempre limitado ao tempo restante do link
 
 function jsonWith(headers: Record<string, string>) {
   return (body: unknown, status = 200) =>
