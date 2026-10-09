@@ -106,14 +106,15 @@ export default function FaturamentoReport() {
 
   // KPIs
   const kpis = useMemo(() => {
-    let vgv = 0, comissao = 0, hr = 0;
+    let vgv = 0, comissao = 0, hr = 0, corretores = 0;
     filtered.forEach((v) => {
       const val = v.valor_venda || 0;
       vgv += val;
       comissao += getVendaComissaoTotal(v);
       hr += calculateCommissionPart(val, v.percent_hr ?? 0);
+      corretores += calculateCommissionPart(val, (v.percent_vendedor ?? 0) + (v.percent_captador ?? 0));
     });
-    return { vgv, comissao, hr, count: filtered.length };
+    return { vgv, comissao, hr, corretores, count: filtered.length, hrPct: vgv > 0 ? (hr / vgv) * 100 : 0 };
   }, [filtered]);
 
   // Ranking
@@ -123,19 +124,24 @@ export default function FaturamentoReport() {
     vgv_vendedor: number; vgv_captador: number;
     com_vendedor: number; com_captador: number;
     vendas_vendedor: number; vendas_captador: number;
+    vgv_unico: number;
   };
   const ranking = useMemo(() => {
     const map = new Map<string, Row>();
     const ensure = (id: string): Row => {
       let r = map.get(id);
       if (!r) {
-        r = { corretor_id: id, nome: nameOf(id), vgv_vendedor: 0, vgv_captador: 0, com_vendedor: 0, com_captador: 0, vendas_vendedor: 0, vendas_captador: 0 };
+        r = { corretor_id: id, nome: nameOf(id), vgv_vendedor: 0, vgv_captador: 0, com_vendedor: 0, com_captador: 0, vendas_vendedor: 0, vendas_captador: 0, vgv_unico: 0 };
         map.set(id, r);
       }
       return r;
     };
     filtered.forEach((v) => {
       const val = v.valor_venda || 0;
+      const creditados = new Set<string>();
+      if (v.corretor_vendedor_id && (papel === "todos" || papel === "vendedor")) creditados.add(v.corretor_vendedor_id);
+      if (v.corretor_captador_id && (papel === "todos" || papel === "captador")) creditados.add(v.corretor_captador_id);
+      creditados.forEach((id) => { ensure(id).vgv_unico += val; });
       if (v.corretor_vendedor_id && (papel === "todos" || papel === "vendedor")) {
         const r = ensure(v.corretor_vendedor_id);
         r.vgv_vendedor += val;
@@ -150,7 +156,7 @@ export default function FaturamentoReport() {
       }
     });
     return [...map.values()].sort((a, b) =>
-      (b.vgv_vendedor + b.vgv_captador) - (a.vgv_vendedor + a.vgv_captador)
+      b.vgv_unico - a.vgv_unico
     );
   }, [filtered, papel, nameOf]);
 
@@ -182,19 +188,16 @@ export default function FaturamentoReport() {
       Corretor: r.nome,
       "VGV Vendedor": r.vgv_vendedor,
       "VGV Captador": r.vgv_captador,
-      "VGV Total": r.vgv_vendedor + r.vgv_captador,
+      "VGV Total": r.vgv_unico,
       "Comissão Vendedor": r.com_vendedor,
       "Comissão Captador": r.com_captador,
-      "Comissão Total": r.com_vendedor + r.com_captador,
+      "Comissão do corretor": r.com_vendedor + r.com_captador,
       "Nº Vendas (Vendedor)": r.vendas_vendedor,
       "Nº Vendas (Captador)": r.vendas_captador,
     }));
-    rows.push({
-      Corretor: "HR Imóveis (casa)",
-      "VGV Vendedor": 0, "VGV Captador": 0, "VGV Total": kpis.vgv,
-      "Comissão Vendedor": 0, "Comissão Captador": 0, "Comissão Total": kpis.hr,
-      "Nº Vendas (Vendedor)": 0, "Nº Vendas (Captador)": kpis.count,
-    } as any);
+    rows.push({ Corretor: "Total corretores", "Comissão do corretor": kpis.corretores } as any);
+    rows.push({ Corretor: `HR Imóveis (casa) · ${kpis.hrPct.toFixed(2).replace(".", ",")}% médio`, "VGV Total": kpis.vgv, "Comissão do corretor": kpis.hr, "Nº Vendas (Captador)": kpis.count } as any);
+    rows.push({ Corretor: "Total geral (corretores + HR)", "Comissão do corretor": kpis.corretores + kpis.hr } as any);
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Faturamento");
@@ -266,18 +269,25 @@ export default function FaturamentoReport() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card className="p-3 sm:p-4 min-w-0">
           <div className="text-xs text-muted-foreground flex items-center gap-1"><TrendingUp className="h-3 w-3 shrink-0" /> VGV total</div>
           <div className="text-base sm:text-xl md:text-2xl font-semibold mt-1 break-words">{fmtBRL(kpis.vgv)}</div>
         </Card>
         <Card className="p-3 sm:p-4 min-w-0">
-          <div className="text-xs text-muted-foreground flex items-center gap-1"><Coins className="h-3 w-3 shrink-0" /> Comissão total</div>
-          <div className="text-base sm:text-xl md:text-2xl font-semibold mt-1 break-words">{fmtBRL(kpis.comissao)}</div>
+          <div className="text-xs text-muted-foreground flex items-center gap-1"><Coins className="h-3 w-3 shrink-0" /> Comissão dos corretores</div>
+          <div className="text-base sm:text-xl md:text-2xl font-semibold mt-1 break-words">{fmtBRL(kpis.corretores)}</div>
+          <div className="text-[11px] text-muted-foreground">vendedor + captador</div>
         </Card>
         <Card className="p-3 sm:p-4 min-w-0">
-          <div className="text-xs text-muted-foreground flex items-center gap-1"><Building2 className="h-3 w-3 shrink-0" /> HR Imóveis (casa)</div>
+          <div className="text-xs text-muted-foreground flex items-center gap-1"><Building2 className="h-3 w-3 shrink-0" /> Comissão HR Imóveis</div>
           <div className="text-base sm:text-xl md:text-2xl font-semibold mt-1 break-words">{fmtBRL(kpis.hr)}</div>
+          <div className="text-[11px] text-muted-foreground">{kpis.hrPct.toFixed(2).replace(".", ",")}% médio do VGV</div>
+        </Card>
+        <Card className="p-3 sm:p-4 min-w-0">
+          <div className="text-xs text-muted-foreground flex items-center gap-1"><Coins className="h-3 w-3 shrink-0" /> Comissão total</div>
+          <div className="text-base sm:text-xl md:text-2xl font-semibold mt-1 break-words">{fmtBRL(kpis.comissao)}</div>
+          <div className="text-[11px] text-muted-foreground">corretores + HR</div>
         </Card>
         <Card className="p-3 sm:p-4 min-w-0">
           <div className="text-xs text-muted-foreground flex items-center gap-1"><BarChart3 className="h-3 w-3 shrink-0" /> Nº de vendas</div>
@@ -332,6 +342,8 @@ export default function FaturamentoReport() {
                 <TableHead>Vendedor</TableHead>
                 <TableHead>Captador</TableHead>
                 <TableHead className="text-right">Valor da venda</TableHead>
+                <TableHead className="text-right">Comissão corretores</TableHead>
+                <TableHead className="text-right">Comissão HR (%)</TableHead>
                 <TableHead className="text-right">Comissão total</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
@@ -353,6 +365,8 @@ export default function FaturamentoReport() {
                       <TableCell>{nameOf(v.corretor_vendedor_id)}</TableCell>
                       <TableCell>{nameOf(v.corretor_captador_id)}</TableCell>
                       <TableCell className="text-right">{fmtBRL(v.valor_venda || 0)}</TableCell>
+                      <TableCell className="text-right">{fmtBRL(calculateCommissionPart(v.valor_venda || 0, (v.percent_vendedor ?? 0) + (v.percent_captador ?? 0)))}</TableCell>
+                      <TableCell className="text-right">{fmtBRL(calculateCommissionPart(v.valor_venda || 0, v.percent_hr ?? 0))} · {String(v.percent_hr ?? 0).replace(".", ",")}%</TableCell>
                       <TableCell className="text-right">{fmtBRL(getVendaComissaoTotal(v))}</TableCell>
                       <TableCell>{v.status_pagamento || "—"}</TableCell>
                     </TableRow>
@@ -363,6 +377,8 @@ export default function FaturamentoReport() {
                   Total — {filtered.length} {filtered.length === 1 ? "venda" : "vendas"}
                 </TableCell>
                 <TableCell className="text-right font-semibold">{fmtBRL(kpis.vgv)}</TableCell>
+                <TableCell className="text-right font-semibold">{fmtBRL(kpis.corretores)}</TableCell>
+                <TableCell className="text-right font-semibold">{fmtBRL(kpis.hr)}</TableCell>
                 <TableCell className="text-right font-semibold">{fmtBRL(kpis.comissao)}</TableCell>
                 <TableCell />
               </TableRow>
@@ -388,7 +404,7 @@ export default function FaturamentoReport() {
                 <TableHead className="text-right">VGV total</TableHead>
                 {showVendedor && <TableHead className="text-right">Comissão vendedor</TableHead>}
                 {showCaptador && <TableHead className="text-right">Comissão captador</TableHead>}
-                <TableHead className="text-right">Comissão total</TableHead>
+                <TableHead className="text-right">Comissão do corretor</TableHead>
                 <TableHead className="text-right">Nº vendas</TableHead>
               </TableRow>
             </TableHeader>
@@ -398,16 +414,28 @@ export default function FaturamentoReport() {
                   <TableCell className="font-medium">{r.nome}</TableCell>
                   {showVendedor && <TableCell className="text-right">{fmtBRL(r.vgv_vendedor)}</TableCell>}
                   {showCaptador && <TableCell className="text-right">{fmtBRL(r.vgv_captador)}</TableCell>}
-                  <TableCell className="text-right font-semibold">{fmtBRL(r.vgv_vendedor + r.vgv_captador)}</TableCell>
+                  <TableCell className="text-right font-semibold">{fmtBRL(r.vgv_unico)}</TableCell>
                   {showVendedor && <TableCell className="text-right">{fmtBRL(r.com_vendedor)}</TableCell>}
                   {showCaptador && <TableCell className="text-right">{fmtBRL(r.com_captador)}</TableCell>}
                   <TableCell className="text-right font-semibold">{fmtBRL(r.com_vendedor + r.com_captador)}</TableCell>
                   <TableCell className="text-right">{Math.max(r.vendas_vendedor, r.vendas_captador)}</TableCell>
                 </TableRow>
               ))}
+              {papel !== "hr" && (
+                <TableRow className="bg-muted/20">
+                  <TableCell className="font-semibold">Total corretores</TableCell>
+                  {showVendedor && <TableCell />}
+                  {showCaptador && <TableCell />}
+                  <TableCell />
+                  {showVendedor && <TableCell className="text-right">{fmtBRL(ranking.reduce((s, r) => s + r.com_vendedor, 0))}</TableCell>}
+                  {showCaptador && <TableCell className="text-right">{fmtBRL(ranking.reduce((s, r) => s + r.com_captador, 0))}</TableCell>}
+                  <TableCell className="text-right font-semibold">{fmtBRL(ranking.reduce((s, r) => s + r.com_vendedor + r.com_captador, 0))}</TableCell>
+                  <TableCell />
+                </TableRow>
+              )}
               {(papel === "todos" || papel === "hr") && (
                 <TableRow className="bg-muted/30">
-                  <TableCell className="font-semibold">HR Imóveis (casa)</TableCell>
+                  <TableCell className="font-semibold">HR Imóveis (casa) <span className="text-xs font-normal text-muted-foreground">· {kpis.hrPct.toFixed(2).replace(".", ",")}% médio</span></TableCell>
                   {showVendedor && <TableCell className="text-right">—</TableCell>}
                   {showCaptador && <TableCell className="text-right">—</TableCell>}
                   <TableCell className="text-right font-semibold">{fmtBRL(kpis.vgv)}</TableCell>
@@ -415,6 +443,18 @@ export default function FaturamentoReport() {
                   {showCaptador && <TableCell className="text-right">—</TableCell>}
                   <TableCell className="text-right font-semibold">{fmtBRL(kpis.hr)}</TableCell>
                   <TableCell className="text-right">{kpis.count}</TableCell>
+                </TableRow>
+              )}
+              {papel === "todos" && (
+                <TableRow className="bg-muted/50">
+                  <TableCell className="font-semibold">Total geral (corretores + HR)</TableCell>
+                  {showVendedor && <TableCell />}
+                  {showCaptador && <TableCell />}
+                  <TableCell />
+                  {showVendedor && <TableCell />}
+                  {showCaptador && <TableCell />}
+                  <TableCell className="text-right font-semibold">{fmtBRL(kpis.corretores + kpis.hr)}</TableCell>
+                  <TableCell />
                 </TableRow>
               )}
             </TableBody>
