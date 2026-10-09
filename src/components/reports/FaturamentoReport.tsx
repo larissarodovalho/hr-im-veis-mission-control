@@ -424,11 +424,11 @@ export default function FaturamentoReport() {
               {papel !== "hr" && (
                 <TableRow className="bg-muted/20">
                   <TableCell className="font-semibold">Total corretores</TableCell>
-                  {showVendedor && <TableCell className="text-right">{fmtBRL(ranking.reduce((s, r) => s + r.com_vendedor, 0))}</TableCell>}
-                  {showCaptador && <TableCell className="text-right">{fmtBRL(ranking.reduce((s, r) => s + r.com_captador, 0))}</TableCell>}
-                  <TableCell />
                   {showVendedor && <TableCell />}
                   {showCaptador && <TableCell />}
+                  <TableCell />
+                  {showVendedor && <TableCell className="text-right">{fmtBRL(ranking.reduce((s, r) => s + r.com_vendedor, 0))}</TableCell>}
+                  {showCaptador && <TableCell className="text-right">{fmtBRL(ranking.reduce((s, r) => s + r.com_captador, 0))}</TableCell>}
                   <TableCell className="text-right font-semibold">{fmtBRL(ranking.reduce((s, r) => s + r.com_vendedor + r.com_captador, 0))}</TableCell>
                   <TableCell />
                 </TableRow>
