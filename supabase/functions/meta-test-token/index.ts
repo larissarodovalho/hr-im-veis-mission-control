@@ -1,6 +1,7 @@
 // Meta — test Page Access Token by calling Graph API /me and debug_token
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { requireAdmin } from "../_shared/auth.ts";
 
 const PAGE_TOKEN = Deno.env.get("META_PAGE_ACCESS_TOKEN") || "";
 const GRAPH = "https://graph.facebook.com/v21.0";
@@ -8,7 +9,7 @@ const GRAPH = "https://graph.facebook.com/v21.0";
 async function resolveHRPageToken(token: string) {
   const meRes = await fetch(`${GRAPH}/me?fields=id,name&access_token=${encodeURIComponent(token)}`);
   const me = await meRes.json();
-  if (!meRes.ok) return { error: me?.error?.message || "Token inválido", details: me };
+  if (!meRes.ok) return { error: me?.error?.message || "Token inválido" };
   if (me.id?.endsWith("99")) {
     return { pageId: me.id, pageName: me.name, token };
   }
@@ -16,12 +17,14 @@ async function resolveHRPageToken(token: string) {
   const acc = await accRes.json();
   const pages = (acc?.data ?? []) as any[];
   const hr = pages.find((p) => p.id?.endsWith("99")) ?? pages.find((p) => /hr\s*im[oó]veis/i.test(p.name ?? ""));
-  if (!hr) return { error: "Página HR Imóveis não encontrada", details: acc };
+  if (!hr) return { error: "Página HR Imóveis não encontrada" };
   return { pageId: hr.id, pageName: hr.name, token: hr.access_token };
 }
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const denied = await requireAdmin(req, corsHeaders);
+  if (denied) return denied;
 
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
@@ -49,7 +52,7 @@ Deno.serve(async (req) => {
   try {
     const resolved = await resolveHRPageToken(PAGE_TOKEN);
     if ("error" in resolved) {
-      return new Response(JSON.stringify({ ok: false, error: resolved.error, details: resolved.details }),
+      return new Response(JSON.stringify({ ok: false, error: resolved.error }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 

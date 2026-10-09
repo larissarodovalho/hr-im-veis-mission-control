@@ -1,12 +1,15 @@
 // Trigger a test lead via Graph API: POST /{form_id}/test_leads
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { requireAdmin } from "../_shared/auth.ts";
 
 const PAGE_TOKEN = Deno.env.get("META_PAGE_ACCESS_TOKEN") || "";
 const GRAPH = "https://graph.facebook.com/v21.0";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const denied = await requireAdmin(req, corsHeaders);
+  if (denied) return denied;
 
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {

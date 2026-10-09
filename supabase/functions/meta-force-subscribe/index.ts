@@ -1,12 +1,15 @@
 // Force subscribe the Page to leadgen field using the META_PAGE_ACCESS_TOKEN's app
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { requireAdmin } from "../_shared/auth.ts";
 
 const PAGE_TOKEN = Deno.env.get("META_PAGE_ACCESS_TOKEN") || "";
 const GRAPH = "https://graph.facebook.com/v21.0";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const denied = await requireAdmin(req, corsHeaders);
+  if (denied) return denied;
 
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
@@ -42,7 +45,7 @@ Deno.serve(async (req) => {
     const meRes = await fetch(`${GRAPH}/me?fields=id,name&access_token=${encodeURIComponent(PAGE_TOKEN)}`);
     const me = await meRes.json();
     if (!meRes.ok) {
-      return new Response(JSON.stringify({ ok: false, step: "me", error: me?.error?.message ?? "Token inválido", details: me }),
+      return new Response(JSON.stringify({ ok: false, step: "me", error: me?.error?.message ?? "Token inválido" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -57,7 +60,7 @@ Deno.serve(async (req) => {
       const pages = (acc?.data ?? []) as any[];
       const hr = pages.find((p) => p.id?.endsWith("99")) ?? pages.find((p) => /hr\s*im[oó]veis/i.test(p.name ?? ""));
       if (!hr) {
-        return new Response(JSON.stringify({ ok: false, step: "find_page", error: "Página HR Imóveis não encontrada nas contas do token", details: acc }),
+        return new Response(JSON.stringify({ ok: false, step: "find_page", error: "Página HR Imóveis não encontrada nas contas do token" }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       pageId = hr.id;

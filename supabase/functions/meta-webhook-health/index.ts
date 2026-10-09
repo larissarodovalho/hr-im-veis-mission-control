@@ -1,6 +1,7 @@
 // Tests the meta-leadgen-webhook handshake from server-side and returns recent activity_log
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { requireAdmin } from "../_shared/auth.ts";
 
 const VERIFY_TOKEN = Deno.env.get("META_VERIFY_TOKEN") || "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -10,6 +11,8 @@ const WEBHOOK_URL = `${SUPABASE_URL}/functions/v1/meta-leadgen-webhook`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const denied = await requireAdmin(req, corsHeaders);
+  if (denied) return denied;
 
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
