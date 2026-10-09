@@ -155,6 +155,13 @@
       "when": 1790710645522,
       "tag": "0021_fix_acompanhamento_corretores_group_by",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1791556807560,
+      "tag": "0022_harden_public_inserts_site_assets",
+      "breakpoints": true
     }
   ]
 }
