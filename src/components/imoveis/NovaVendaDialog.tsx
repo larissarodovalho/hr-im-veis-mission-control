@@ -106,10 +106,21 @@ export default function NovaVendaDialog({
       setImoveis((data ?? []).map((i: any) => ({ id: i.id, nome: `${i.codigo || ""} ${i.titulo}`.trim(), raw: i })));
     });
     supabase.from("leads").select("id,nome").order("nome").then(({ data }) => setLeads((data ?? []).map((l: any) => ({ id: l.id, nome: l.nome }))));
-    supabase.from("contas").select("id,nome,email,telefone").order("nome").then(({ data }) => setContas((data ?? []).map((c: any) => {
-      const extra = [c.email, c.telefone].filter(Boolean).join(" · ");
-      return { id: c.id, nome: extra ? `${c.nome} — ${extra}` : c.nome, rawNome: c.nome };
-    })));
+    // Buscar TODAS as contas em lotes (o servidor limita a 1.000 por consulta;
+    // com mais contas que isso, clientes mais recentes ficavam de fora da lista).
+    (async () => {
+      const todas: any[] = [];
+      const PAGE = 1000;
+      for (let from = 0; ; from += PAGE) {
+        const { data } = await supabase.from("contas").select("id,nome,email,telefone").order("nome").range(from, from + PAGE - 1);
+        todas.push(...(data ?? []));
+        if (!data || data.length < PAGE) break;
+      }
+      setContas(todas.map((c: any) => {
+        const extra = [c.email, c.telefone].filter(Boolean).join(" · ");
+        return { id: c.id, nome: extra ? `${c.nome} — ${extra}` : c.nome, rawNome: c.nome };
+      }));
+    })();
     supabase.from("profiles").select("user_id,nome,nivel").then(({ data }) => setProfiles((data ?? []).map((p: any) => ({ id: p.user_id, nome: p.nome || "Sem nome", nivel: p.nivel || "senior" }))));
     supabase.from("corretores_parceiros").select("id,nome").eq("ativo", true).order("nome").then(({ data }) => setParceiros(data ?? []));
   }, [open]);
