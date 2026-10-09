@@ -215,12 +215,9 @@ async function runSync(supa: ReturnType<typeof adminClient>, users: { user_id: s
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    // Sem sessão (rotina agendada): sincroniza todas as agendas conectadas, sem aceitar user_id
+    // nem modo síncrono vindos da requisição.
     const caller = await getCaller(req);
-    if (!caller) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
     const supa = adminClient();
     const url = new URL(req.url);
     let bodyUserId: string | null = null;
@@ -233,10 +230,11 @@ Deno.serve(async (req) => {
       } catch { /* ignore */ }
     }
     // Usuário comum só sincroniza a própria agenda; a rotina do servidor pode sincronizar todos
-    const single = caller.kind === "user"
-      ? caller.userId
+    const single = !caller ? null
+      : caller.kind === "user" ? caller.userId
       : (url.searchParams.get("user_id") ?? bodyUserId);
-    const wait = waitFlag || url.searchParams.get("wait") === "1";
+    if (!caller) waitFlag = false;
+    const wait = waitFlag || (!!caller && url.searchParams.get("wait") === "1");
 
     let users: { user_id: string }[];
     if (single) users = [{ user_id: single }];
