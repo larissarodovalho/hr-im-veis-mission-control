@@ -158,3 +158,35 @@ export function formatGoogleCalendarApiError(status: number, payload: unknown) {
 
   return `Google Calendar retornou erro ${status}: ${raw.slice(0, 500)}`;
 }
+
+// ---------- State OAuth assinado (impede vincular a agenda a outro usuário) ----------
+function b64url(bytes: Uint8Array) {
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function b64urlDecode(s: string) {
+  const pad = s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4);
+  return Uint8Array.from(atob(pad), (c) => c.charCodeAt(0));
+}
+async function stateKey() {
+  const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  return crypto.subtle.importKey("raw", new TextEncoder().encode(`gcal-oauth-state:${secret}`),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
+}
+export async function signOAuthState(user_id: string) {
+  const nonce = new Uint8Array(16); crypto.getRandomValues(nonce);
+  const payload = b64url(new TextEncoder().encode(JSON.stringify({ user_id, ts: Date.now(), n: b64url(nonce) })));
+  const sig = new Uint8Array(await crypto.subtle.sign("HMAC", await stateKey(), new TextEncoder().encode(payload)));
+  return `${payload}.${b64url(sig)}`;
+}
+export async function verifyOAuthState(state: string, maxAgeMs = 15 * 60 * 1000): Promise<{ user_id: string } | null> {
+  const [payload, sig] = state.split(".");
+  if (!payload || !sig) return null;
+  try {
+    const ok = await crypto.subtle.verify("HMAC", await stateKey(), b64urlDecode(sig), new TextEncoder().encode(payload));
+    if (!ok) return null;
+    const data = JSON.parse(new TextDecoder().decode(b64urlDecode(payload)));
+    if (typeof data?.user_id !== "string" || typeof data?.ts !== "number") return null;
+    if (Date.now() - data.ts > maxAgeMs) return null;
+    return { user_id: data.user_id };
+  } catch { return null; }
+}

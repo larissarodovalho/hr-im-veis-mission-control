@@ -1,5 +1,5 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { userClient, GOOGLE_OAUTH_SCOPES, redirectUri, googleOAuthClientId } from "../_shared/google-calendar.ts";
+import { userClient, GOOGLE_OAUTH_SCOPES, redirectUri, googleOAuthClientId, signOAuthState } from "../_shared/google-calendar.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const state = btoa(JSON.stringify({ user_id: u.user.id, ts: Date.now() }));
+    const state = await signOAuthState(u.user.id);
     const params = new URLSearchParams({
       client_id,
       redirect_uri: redirectUri(req),
