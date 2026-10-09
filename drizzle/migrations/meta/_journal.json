@@ -183,6 +183,13 @@
       "when": 1791558319019,
       "tag": "0025_perf_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791558800951,
+      "tag": "0026_grant_anon_select_imoveis",
+      "breakpoints": true
     }
   ]
 }
