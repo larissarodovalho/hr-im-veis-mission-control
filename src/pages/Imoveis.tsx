@@ -545,6 +545,12 @@ export default function Imoveis() {
   );
 
   const counts = { d: disponiveis.length, n: naoPublicados.length, i: inativos.length, p: emProposta.length, f: emFechamento.length, v: vendidos.length };
+  const canSeeVendidos = isAdmin || isGestor;
+
+  useEffect(() => {
+    if (tab === "vendidos" && !canSeeVendidos) setTab("disponiveis");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, canSeeVendidos]);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
@@ -552,7 +558,7 @@ export default function Imoveis() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="font-display text-2xl sm:text-3xl font-semibold flex items-center gap-2"><HomeIcon className="h-6 w-6 sm:h-7 sm:w-7 text-primary" /> Imóveis</h1>
-            <p className="text-muted-foreground mt-1 text-sm">{counts.d} disponíveis · {counts.n} não publicados · {counts.i} inativos · {counts.p} em proposta · {counts.f} em fechamento · {counts.v} vendidos</p>
+            <p className="text-muted-foreground mt-1 text-sm">{counts.d} disponíveis · {counts.n} não publicados · {counts.i} inativos · {counts.p} em proposta · {counts.f} em fechamento{canSeeVendidos ? ` · ${counts.v} vendidos` : ""}</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             <Button
@@ -629,7 +635,9 @@ export default function Imoveis() {
           <TabsTrigger value="inativos">Inativos <Badge variant="secondary" className="ml-2 text-[10px]">{counts.i}</Badge></TabsTrigger>
           <TabsTrigger value="proposta">Em Proposta <Badge variant="secondary" className="ml-2 text-[10px]">{counts.p}</Badge></TabsTrigger>
           <TabsTrigger value="fechamento">Em Fechamento <Badge variant="secondary" className="ml-2 text-[10px]">{counts.f}</Badge></TabsTrigger>
-          <TabsTrigger value="vendidos">Vendidos <Badge variant="secondary" className="ml-2 text-[10px]">{counts.v}</Badge></TabsTrigger>
+          {canSeeVendidos && (
+            <TabsTrigger value="vendidos">Vendidos <Badge variant="secondary" className="ml-2 text-[10px]">{counts.v}</Badge></TabsTrigger>
+          )}
           <TabsTrigger value="oportunidades">Oportunidades de Negócio</TabsTrigger>
           <TabsTrigger value="captacao">Captação</TabsTrigger>
           <TabsTrigger value="parceiros">Parceiros</TabsTrigger>
@@ -673,9 +681,11 @@ export default function Imoveis() {
           </div>
         </TabsContent>
 
-        <TabsContent value="vendidos" className="mt-4">
-          <VendidosTab />
-        </TabsContent>
+        {canSeeVendidos && (
+          <TabsContent value="vendidos" className="mt-4">
+            <VendidosTab />
+          </TabsContent>
+        )}
 
         <TabsContent value="oportunidades" className="mt-4">
           <Card className="p-8 text-center space-y-3">

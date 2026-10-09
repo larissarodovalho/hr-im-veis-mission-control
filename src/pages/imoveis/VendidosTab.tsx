@@ -29,7 +29,7 @@ const STATUS_COLORS: Record<string, string> = {
 const PIE = ["hsl(var(--primary))", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#06b6d4"];
 
 export default function VendidosTab() {
-  const { isAdmin, isGestor } = useRole();
+  const { isAdmin, isGestor, loading: roleLoading } = useRole();
   const navigate = useNavigate();
   const canEdit = isAdmin || isGestor;
   const [vendas, setVendas] = useState<any[]>([]);
@@ -144,6 +144,14 @@ export default function VendidosTab() {
       </div>
     </Card>
   );
+
+  if (!roleLoading && !canEdit) {
+    return (
+      <Card className="p-10 text-center text-muted-foreground">
+        Acesso restrito a administradores e gestores.
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-5">
