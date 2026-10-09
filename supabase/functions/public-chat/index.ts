@@ -126,6 +126,9 @@ Deno.serve(async (req) => {
           .from("ai_chat_sessions").select("lead_id").eq("id", sid).maybeSingle();
 
         let leadId = existing?.lead_id as string | null;
+        // Só a própria sessão pode alterar o lead que ela criou; um lead encontrado
+        // pelo telefone é apenas vinculado, nunca alterado por um visitante anônimo.
+        const ownsLead = !!leadId;
 
         // Dedup por telefone (últimos 8 dígitos)
         if (!leadId) {
@@ -152,7 +155,7 @@ Deno.serve(async (req) => {
             observacoes: notesParts.join("\n") || null,
           }).select("id").single();
           if (leadIns) leadId = leadIns.id;
-        } else {
+        } else if (ownsLead) {
           const { data: cur } = await supabase
             .from("leads")
             .select("nome, telefone, qualificacao, observacoes")
@@ -234,7 +237,7 @@ Deno.serve(async (req) => {
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     console.error("public-chat error", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "erro" }), {
+    return new Response(JSON.stringify({ error: "erro" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
