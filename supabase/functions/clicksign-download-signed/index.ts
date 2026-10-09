@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     if (!document_id) return json({ error: "document_id obrigatório" }, 400);
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const { data: doc } = await admin.from("signed_documents")
+    const { data: doc } = await userClient.from("signed_documents")
       .select("id, clicksign_document_key, signed_file_url")
       .eq("id", document_id).maybeSingle();
     if (!doc?.clicksign_document_key) return json({ error: "documento não encontrado" }, 404);
@@ -37,14 +37,15 @@ Deno.serve(async (req) => {
     const up = await admin.storage.from("signed-documents").upload(path, buf, {
       contentType: "application/pdf", upsert: true,
     });
-    if (up.error) return json({ error: up.error.message }, 500);
+    if (up.error) { console.error("upload signed pdf", up.error); return json({ error: "Falha ao salvar o PDF assinado" }, 500); }
 
     await admin.from("signed_documents").update({ signed_file_url: path }).eq("id", document_id);
 
     const signed = await admin.storage.from("signed-documents").createSignedUrl(path, 3600);
     return json({ ok: true, url: signed.data?.signedUrl, path });
   } catch (e: any) {
-    return json({ error: e.message || String(e) }, 500);
+    console.error("clicksign-download-signed error:", e);
+    return json({ error: "Não foi possível concluir a operação. Tente novamente." }, 500);
   }
 });
 

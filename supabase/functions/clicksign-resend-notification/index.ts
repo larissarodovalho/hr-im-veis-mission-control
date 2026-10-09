@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     if (!signer_id) return json({ error: "signer_id obrigatório" }, 400);
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const { data: signer } = await admin.from("document_signers")
+    const { data: signer } = await userClient.from("document_signers")
       .select("id, sign_url, clicksign_signer_key, document_id")
       .eq("id", signer_id).maybeSingle();
     if (!signer) return json({ error: "signatário não encontrado" }, 404);
@@ -39,7 +39,8 @@ Deno.serve(async (req) => {
     });
     return json({ ok: true });
   } catch (e: any) {
-    return json({ error: e.message || String(e) }, 500);
+    console.error("clicksign-resend-notification error:", e);
+    return json({ error: "Não foi possível concluir a operação. Tente novamente." }, 500);
   }
 });
 

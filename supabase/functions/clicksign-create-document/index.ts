@@ -171,7 +171,8 @@ Deno.serve(async (req) => {
     return json({ ok: true, document: insertedDoc, signers: createdSigners });
   } catch (e: any) {
     console.error("clicksign-create-document error:", e);
-    return json({ error: e.message || String(e) }, 500);
+    console.error("clicksign-create-document error:", e);
+    return json({ error: "Não foi possível concluir a operação. Tente novamente." }, 500);
   }
 });
 
