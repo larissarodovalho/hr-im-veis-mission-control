@@ -169,11 +169,17 @@ export default function CaptacaoTab() {
 
   useEffect(() => {
     load();
-    supabase.from("contas").select("id,nome,telefone,email").then(({ data }) => {
+    (async () => {
       const m: Record<string, Conta> = {};
-      (data ?? []).forEach((c: any) => { m[c.id] = c; });
+      for (let from = 0; ; from += 1000) {
+        const { data, error } = await supabase.from("contas").select("id,nome,telefone,email")
+          .order("id").range(from, from + 999);
+        if (error || !data) break;
+        data.forEach((c: any) => { m[c.id] = c; });
+        if (data.length < 1000) break;
+      }
       setContas(m);
-    });
+    })();
     supabase.from("imoveis").select("id,titulo,codigo").then(({ data }) => {
       const m: Record<string, Imovel> = {};
       (data ?? []).forEach((i: any) => { m[i.id] = i; });

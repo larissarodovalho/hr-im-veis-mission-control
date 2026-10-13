@@ -28,8 +28,19 @@ export default function ResponsavelProprietarioSection({
   const [parceiros, setParceiros] = useState<{ id: string; nome: string }[]>([]);
   const [openNovaConta, setOpenNovaConta] = useState(false);
 
-  const loadContas = () =>
-    supabase.from("contas").select("id,nome,documento,telefone").order("nome").range(0, 1999).then(({ data }) => setContas(data ?? []));
+  const loadContas = async () => {
+    const PAGE = 1000;
+    const all: any[] = [];
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await supabase
+        .from("contas").select("id,nome,documento,telefone")
+        .order("nome").order("id").range(from, from + PAGE - 1);
+      if (error || !data) break;
+      all.push(...data);
+      if (data.length < PAGE) break;
+    }
+    setContas(all);
+  };
 
   useEffect(() => {
     supabase.from("profiles").select("user_id,nome").eq("ativo", true).order("nome")
