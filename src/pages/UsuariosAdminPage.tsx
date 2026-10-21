@@ -104,12 +104,29 @@ export default function UsuariosAdminPage() {
   }
 
   async function callAdmin(body: any) {
+    const invokeWith = async (token: string) =>
+      supabase.functions.invoke("admin-create-user", {
+        body, headers: { Authorization: `Bearer ${token}` },
+      });
+
     const { data: sess } = await supabase.auth.getSession();
-    const token = sess.session?.access_token;
+    let token = sess.session?.access_token;
     if (!token) throw new Error("Sessão expirada");
-    const { data, error } = await supabase.functions.invoke("admin-create-user", {
-      body, headers: { Authorization: `Bearer ${token}` },
-    });
+
+    let { data, error } = await invokeWith(token);
+    const status = (error as any)?.context?.status;
+    if (error && status === 401) {
+      // Sessão encerrada no servidor: tenta renovar uma vez
+      const { data: ref, error: refErr } = await supabase.auth.refreshSession();
+      token = ref.session?.access_token;
+      if (refErr || !token) {
+        await supabase.auth.signOut();
+        toast.error("Sua sessão expirou. Entre novamente.");
+        window.location.href = "/auth";
+        throw new Error("Sessão expirada");
+      }
+      ({ data, error } = await invokeWith(token));
+    }
     if (error) throw new Error(error.message);
     if ((data as any)?.error) throw new Error((data as any).error);
     return data;
