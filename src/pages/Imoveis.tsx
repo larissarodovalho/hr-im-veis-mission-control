@@ -46,6 +46,8 @@ const isAceita = (p: Proposta) => statusLower(p.status) === "aceita";
 export default function Imoveis() {
   const { isAdmin, isGestor, isMarketing, profile } = useAuth();
   const canEdit = isAdmin || isGestor || isMarketing;
+  const { roles } = useAuth();
+  const canCreate = canEdit || roles.includes("corretor");
   const [items, setItems] = useState<Imovel[]>([]);
   const [propostas, setPropostas] = useState<Proposta[]>([]);
   const [leads, setLeads] = useState<Record<string, Lead>>({});
@@ -568,7 +570,7 @@ export default function Imoveis() {
             >
               <ListChecks className="h-4 w-4 mr-1" /> {selMode ? "Cancelar seleção" : "Criar seleção"}
             </Button>
-            {canEdit && (
+            {canCreate && (
               <Button onClick={() => setOpenNew(true)} className="w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-1" /> Cadastrar imóvel
               </Button>
