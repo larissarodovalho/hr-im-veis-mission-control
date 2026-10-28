@@ -16,7 +16,7 @@ interface Props {
   imovelId: string;
 }
 
-const MAX_BYTES = 10 * 1024 * 1024;
+const MAX_BYTES = 25 * 1024 * 1024;
 
 function fmtSize(b: number | null) {
   if (!b) return "—";
@@ -53,12 +53,12 @@ export default function ImovelDocumentosTab({ imovelId }: Props) {
     const uid = auth.user?.id;
     let ok = 0;
     for (const f of Array.from(files)) {
-      if (f.type !== "application/pdf") {
+      if (f.type !== "application/pdf" && !/\.pdf$/i.test(f.name)) {
         toast.error(`${f.name}: apenas PDF é permitido`);
         continue;
       }
       if (f.size > MAX_BYTES) {
-        toast.error(`${f.name}: máximo 10 MB`);
+        toast.error(`${f.name}: arquivo com mais de 25 MB`);
         continue;
       }
       const safe = f.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
@@ -67,7 +67,7 @@ export default function ImovelDocumentosTab({ imovelId }: Props) {
         .from("imoveis-docs")
         .upload(path, f, { contentType: "application/pdf", upsert: false });
       if (upErr) {
-        toast.error(`${f.name}: ${upErr.message}`);
+        toast.error(`${f.name}: não foi possível enviar (${upErr.message}). Verifique a conexão e tente de novo.`);
         continue;
       }
       const { error: insErr } = await supabase.from("imovel_documentos").insert({
@@ -116,12 +116,12 @@ export default function ImovelDocumentosTab({ imovelId }: Props) {
           <Upload className="h-5 w-5 text-muted-foreground" />
         )}
         <span className="text-sm text-muted-foreground">
-          {uploading ? "Enviando..." : "Anexar PDFs (máx. 10 MB cada)"}
+          {uploading ? "Enviando..." : "Anexar PDFs (máx. 25 MB cada)"}
         </span>
         <input
           type="file"
           multiple
-          accept="application/pdf"
+          accept="application/pdf,.pdf"
           className="hidden"
           disabled={uploading}
           onChange={(e) => {
