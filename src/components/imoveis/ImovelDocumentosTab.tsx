@@ -46,13 +46,13 @@ export default function ImovelDocumentosTab({ imovelId }: Props) {
     if (imovelId) load();
   }, [imovelId]);
 
-  const onFiles = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+  const onFiles = async (files: File[]) => {
+    if (files.length === 0) return;
     setUploading(true);
     const { data: auth } = await supabase.auth.getUser();
     const uid = auth.user?.id;
     let ok = 0;
-    for (const f of Array.from(files)) {
+    for (const f of files) {
       if (f.type !== "application/pdf" && !/\.pdf$/i.test(f.name)) {
         toast.error(`${f.name}: apenas PDF é permitido`);
         continue;
@@ -125,8 +125,9 @@ export default function ImovelDocumentosTab({ imovelId }: Props) {
           className="hidden"
           disabled={uploading}
           onChange={(e) => {
-            onFiles(e.target.files);
+            const lista = e.target.files ? Array.from(e.target.files) : [];
             e.target.value = "";
+            onFiles(lista);
           }}
         />
       </label>
