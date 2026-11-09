@@ -1,3 +1,4 @@
+import type React from "react";
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,7 +30,10 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Reaproveita o mesmo contexto entre recargas a quente para não "perder" o login
+// das telas já montadas (erro "useAuth must be used within AuthProvider").
+const g = globalThis as unknown as { __hrAuthContext?: React.Context<AuthContextType | undefined> };
+const AuthContext = g.__hrAuthContext ?? (g.__hrAuthContext = createContext<AuthContextType | undefined>(undefined));
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
