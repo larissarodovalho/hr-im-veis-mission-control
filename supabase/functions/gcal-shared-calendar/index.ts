@@ -18,7 +18,8 @@ type Action =
   | "add_members"
   | "remove_member"
   | "update_push_flag"
-  | "backfill";
+  | "backfill"
+  | "sync_staff_members";
 
 const SETTINGS_KEY = "shared_calendar";
 const CALENDAR_SUMMARY = "Agenda HR Imóveis";
@@ -198,6 +199,32 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ---- sync_staff_members ----
+    // Garante que todos os admins e gestores tenham acesso de leitura à agenda da equipe.
+    if (action === "sync_staff_members") {
+      const { data: roles } = await supa.from("user_roles").select("user_id").in("role", ["admin", "gestor"]);
+      const ids = [...new Set((roles ?? []).map((r: any) => r.user_id))];
+      const emails: string[] = [];
+      for (const id of ids) {
+        const { data } = await supa.auth.admin.getUserById(id);
+        if (data?.user?.email) emails.push(data.user.email.toLowerCase());
+      }
+      const aclRes = await gcalFetch(ownerConn.access_token, `/calendars/${encodeURIComponent(settings.google_calendar_id)}/acl`);
+      const acl = await aclRes.json();
+      if (!aclRes.ok) throw new Error(formatGoogleCalendarApiError(aclRes.status, acl));
+      const existing = new Set((acl.items ?? []).filter((it: any) => it.scope?.type === "user").map((it: any) => String(it.scope.value).toLowerCase()));
+      const results: any[] = [];
+      for (const email of emails) {
+        if (existing.has(email)) { results.push({ email, ok: true, already: true }); continue; }
+        const r = await gcalFetch(ownerConn.access_token, `/calendars/${encodeURIComponent(settings.google_calendar_id)}/acl?sendNotifications=true`, {
+          method: "POST", body: JSON.stringify({ role: "reader", scope: { type: "user", value: email } }),
+        });
+        const j = await r.json();
+        results.push(r.ok ? { email, ok: true, added: true } : { email, ok: false, error: formatGoogleCalendarApiError(r.status, j) });
+      }
+      return new Response(JSON.stringify({ ok: true, results }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // ---- backfill ----
     if (action === "backfill") {
       const PAGE_SIZE = 500;
@@ -254,6 +281,7 @@ Deno.serve(async (req) => {
       await collect("ligacoes", "data", "ligacao", "future");
       await collect("visitas", "data_visita", "visita", "future");
       await collect("captacoes_imovel", "data_agendada", "captacao", "future");
+      await collect("tarefas", "prazo", "tarefa", "future");
       await collect("reunioes", "agendada_para", "reuniao", "past");
       await collect("ligacoes", "data", "ligacao", "past");
       await collect("visitas", "data_visita", "visita", "past");
@@ -264,7 +292,8 @@ Deno.serve(async (req) => {
       const errors: string[] = [];
       for (const item of toProcess) {
         try {
-          const res = await supa.functions.invoke("gcal-push", {
+          const res = await usupa.functions.invoke("gcal-push", {
+            headers: { Authorization: auth },
             body: { entity_type: item.entity_type, entity_id: item.entity_id, action: "create" },
           });
           if (res.error || (res.data as any)?.error) {
