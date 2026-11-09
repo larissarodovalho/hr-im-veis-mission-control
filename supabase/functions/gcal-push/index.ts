@@ -3,7 +3,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { getCaller, userScopedClient } from "../_shared/auth.ts";
 import { adminClient, formatGoogleCalendarApiError, getValidAccessToken, gcalFetch, TIMEZONE } from "../_shared/google-calendar.ts";
 
-type EntityType = "reuniao" | "ligacao" | "visita" | "captacao";
+type EntityType = "reuniao" | "ligacao" | "visita" | "captacao" | "tarefa";
 type Action = "create" | "update" | "delete";
 
 // Cor determinística por usuário criador, alinhada com a paleta da agenda interna.
@@ -127,6 +127,36 @@ async function buildEventPayload(supa: ReturnType<typeof adminClient>, entity_ty
       },
     };
   }
+  if (entity_type === "tarefa") {
+    const { data: r } = await supa.from("tarefas").select("*").eq("id", entity_id).maybeSingle();
+    if (!r || !r.prazo) return null;
+    const start = new Date(r.prazo);
+    const end = new Date(start.getTime() + 15 * 60000);
+    let relatedName: string | null = null;
+    let link: string | null = null;
+    if (r.conta_id) {
+      const { data: conta } = await supa.from("contas").select("nome").eq("id", r.conta_id).maybeSingle();
+      relatedName = conta?.nome ?? null;
+      link = `https://hrimoveis.com/contas/${r.conta_id}`;
+    } else if (r.lead_id) {
+      const { data: lead } = await supa.from("leads").select("nome").eq("id", r.lead_id).maybeSingle();
+      relatedName = lead?.nome ?? null;
+      link = `https://hrimoveis.com/leads/${r.lead_id}`;
+    }
+    const base = `📋 ${r.titulo}${relatedName ? ` — ${relatedName}` : ""}`;
+    const summary = r.status === "Concluída" ? `[Concluída] ${base}` : base;
+    return {
+      ownerUserId: r.responsavel_id ?? r.created_by,
+      contaId: null,
+      payload: {
+        summary,
+        description: [r.descricao, `Prioridade: ${r.prioridade}`, link ? `Abrir no CRM: ${link}` : null].filter(Boolean).join("\n\n"),
+        start: { dateTime: start.toISOString(), timeZone: TIMEZONE },
+        end: { dateTime: end.toISOString(), timeZone: TIMEZONE },
+        colorId: colorIdForUser(r.created_by),
+      },
+    };
+  }
   return null;
 }
 
@@ -134,10 +164,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const body = await req.json();
-    const { entity_type, entity_id, action } = body as { entity_type: EntityType; entity_id: string; action: Action };
+    let { entity_type, entity_id, action } = body as { entity_type: EntityType; entity_id: string; action: Action };
     if (!entity_type || !entity_id || !action) throw new Error("payload inválido");
     const TABLES: Record<EntityType, string> = {
-      reuniao: "reunioes", ligacao: "ligacoes", visita: "visitas", captacao: "captacoes_imovel",
+      reuniao: "reunioes", ligacao: "ligacoes", visita: "visitas", captacao: "captacoes_imovel", tarefa: "tarefas",
     };
     const table = TABLES[entity_type];
     if (!table || !["create", "update", "delete"].includes(action)) throw new Error("payload inválido");
@@ -166,6 +196,11 @@ Deno.serve(async (req) => {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+    }
+
+    if (entity_type === "tarefa" && action !== "delete") {
+      const { data: t } = await supa.from("tarefas").select("prazo").eq("id", entity_id).maybeSingle();
+      if (t && !t.prazo) action = "delete";
     }
 
     if (action === "delete") {
