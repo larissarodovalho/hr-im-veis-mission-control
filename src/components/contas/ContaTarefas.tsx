@@ -42,6 +42,10 @@ const amanha9h = () => {
   return d.toISOString().slice(0, 16);
 };
 
+// Sincroniza a tarefa com o Google Agenda do responsável (silencioso se falhar).
+const pushAgenda = (id: string, action: "create" | "update" | "delete") =>
+  supabase.functions.invoke("gcal-push", { body: { entity_type: "tarefa", entity_id: id, action } }).catch(() => {});
+
 interface Props {
   contaId?: string;
   leadId?: string;
@@ -115,11 +119,19 @@ export default function ContaTarefas({ contaId, leadId, responsavelId }: Props) 
       prioridade: form.prioridade || "Média",
       responsavel_id: form.responsavel_id || null,
     };
-    const { error } = editingId
-      ? await supabase.from("tarefas").update(payload).eq("id", editingId)
-      : await supabase.from("tarefas").insert({ ...payload, [entityCol]: entityId, status: "A fazer", created_by: userId });
+    const anterior = editingId ? items.find((i) => i.id === editingId) : null;
+    const { data: saved, error } = editingId
+      ? await supabase.from("tarefas").update(payload).eq("id", editingId).select("id").maybeSingle()
+      : await supabase.from("tarefas").insert({ ...payload, [entityCol]: entityId, status: "A fazer", created_by: userId }).select("id").maybeSingle();
     setSaving(false);
     if (error) return toast.error(error.message);
+    if (saved?.id) {
+      const trocouResp = anterior && (anterior.responsavel_id ?? null) !== payload.responsavel_id;
+      (async () => {
+        if (trocouResp) await pushAgenda(saved.id, "delete");
+        await pushAgenda(saved.id, editingId && !trocouResp ? "update" : "create");
+      })();
+    }
     toast.success(editingId ? "Tarefa atualizada" : "Tarefa criada");
     setOpen(false);
     setEditingId(null);
@@ -130,12 +142,14 @@ export default function ContaTarefas({ contaId, leadId, responsavelId }: Props) 
     const novo = t.status === "Concluída" ? "A fazer" : "Concluída";
     const { error } = await supabase.from("tarefas").update({ status: novo }).eq("id", t.id);
     if (error) return toast.error(error.message);
+    if (t.prazo) pushAgenda(t.id, "update");
   };
 
   const excluir = async (id: string) => {
     if (!confirm("Excluir esta tarefa?")) return;
     const { error } = await supabase.from("tarefas").delete().eq("id", id);
     if (error) return toast.error(error.message);
+    pushAgenda(id, "delete");
   };
 
   const pendentes = items.filter((t) => t.status !== "Concluída");

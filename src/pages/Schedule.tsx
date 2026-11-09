@@ -164,6 +164,7 @@ export default function Schedule() {
       { data: ligs, error: lErr },
       { data: vis, error: vErr },
       { data: capts, error: cErr },
+      { data: tars },
     ] = await Promise.all([
       supabase.from("reunioes")
         .select("id, agendada_para, status, local, link, notas, tipo, duracao_min, titulo, criado_por_ia, lead_id, conta_id, recorrencia_id, recorrencia_regra, created_by")
@@ -180,6 +181,10 @@ export default function Schedule() {
         .select("id, data_agendada, estagio, observacoes, conta_id, imovel_id, responsavel_id, created_by")
         .not("data_agendada", "is", null)
         .order("data_agendada"),
+      supabase.from("tarefas")
+        .select("id, titulo, descricao, prazo, status, lead_id, conta_id, created_by, responsavel_id")
+        .not("prazo", "is", null)
+        .order("prazo"),
     ]);
 
     if (rErr) console.error("[Schedule] reunioes", rErr);
@@ -192,6 +197,7 @@ export default function Schedule() {
         ...((r ?? []) as any[]).map((m) => m.lead_id).filter(Boolean),
         ...((ligs ?? []) as any[]).map((c) => c.lead_id).filter(Boolean),
         ...((vis ?? []) as any[]).map((v) => v.lead_id).filter(Boolean),
+        ...((tars ?? []) as any[]).map((t) => t.lead_id).filter(Boolean),
       ]),
     ];
     const contaIds = [
@@ -200,6 +206,7 @@ export default function Schedule() {
         ...((ligs ?? []) as any[]).map((c) => c.conta_id).filter(Boolean),
         ...((vis ?? []) as any[]).map((v) => v.conta_id).filter(Boolean),
         ...((capts ?? []) as any[]).map((c) => c.conta_id).filter(Boolean),
+        ...((tars ?? []) as any[]).map((t) => t.conta_id).filter(Boolean),
       ]),
     ];
     const imovelIds = [
@@ -231,6 +238,7 @@ export default function Schedule() {
         ...((ligs ?? []) as any[]).map((c) => c.created_by).filter(Boolean),
         ...((vis ?? []) as any[]).map((v) => v.created_by).filter(Boolean),
         ...((capts ?? []) as any[]).map((c) => c.created_by).filter(Boolean),
+        ...((tars ?? []) as any[]).map((t) => t.created_by).filter(Boolean),
       ]),
     ];
     let criadoresById = new Map<string, string>();
@@ -360,7 +368,34 @@ export default function Schedule() {
 
       };
     });
-    setReunioes([...reus, ...ligsAgendadas, ...visitasAgendadas, ...captacoesAgendadas].sort((a, b) => +a.date - +b.date));
+    const tarefasAgendadas: Compromisso[] = ((tars ?? []) as any[]).map((t) => {
+      const start = new Date(t.prazo);
+      const lead = t.lead_id ? leadsById.get(t.lead_id) : null;
+      const contaNome = t.conta_id ? contasById.get(t.conta_id)?.nome : null;
+      const alvo = contaNome || lead?.nome;
+      const base = `📋 ${t.titulo}${alvo ? ` — ${alvo}` : ""}`;
+      return {
+        id: `tar:${t.id}`,
+        date: start,
+        end: new Date(start.getTime() + 15 * 60000),
+        tipo: "mensagem" as const,
+        titulo: t.status === "Concluída" ? `[Concluída] ${base}` : base,
+        status: t.status,
+        local: null,
+        link: null,
+        notas: t.descricao,
+        lead_id: t.lead_id,
+        lead_nome: lead?.nome ?? null,
+        lead_telefone: lead?.telefone ?? null,
+        lead_email: lead?.email ?? null,
+        conta_id: t.conta_id ?? null,
+        conta_nome: contaNome ?? null,
+        criado_por_ia: false,
+        criado_por_id: t.created_by ?? null,
+        criado_por_nome: t.created_by ? criadoresById.get(t.created_by) ?? null : null,
+      };
+    });
+    setReunioes([...reus, ...ligsAgendadas, ...visitasAgendadas, ...captacoesAgendadas, ...tarefasAgendadas].sort((a, b) => +a.date - +b.date));
     setBloqueios(((b ?? []) as any[]).map((x) => ({
       id: x.id,
       inicio: new Date(x.inicio),
@@ -521,7 +556,8 @@ export default function Schedule() {
     load();
   };
 
-  const parseId = (id: string): { table: "reunioes" | "ligacoes" | "visitas" | "captacoes_imovel"; realId: string; entity: "reuniao" | "ligacao" | "visita" | "captacao" } => {
+  const parseId = (id: string): { table: "reunioes" | "ligacoes" | "visitas" | "captacoes_imovel" | "tarefas"; realId: string; entity: "reuniao" | "ligacao" | "visita" | "captacao" | "tarefa" } => {
+    if (id.startsWith("tar:")) return { table: "tarefas", realId: id.slice(4), entity: "tarefa" };
     if (id.startsWith("lig:")) return { table: "ligacoes", realId: id.slice(4), entity: "ligacao" };
     if (id.startsWith("vis:")) return { table: "visitas", realId: id.slice(4), entity: "visita" };
     if (id.startsWith("cap:")) return { table: "captacoes_imovel", realId: id.slice(4), entity: "captacao" };
@@ -593,6 +629,12 @@ export default function Schedule() {
         created_by: editForm.created_by || null,
       } as any).eq("id", realId);
       error = res.error;
+    } else if (table === "tarefas") {
+      const res = await supabase.from("tarefas").update({
+        prazo: whenISO,
+        descricao: editForm.notas?.trim() || null,
+      } as any).eq("id", realId);
+      error = res.error;
     }
     setSavingEdit(false);
     if (error) return toast.error(error.message);
@@ -610,6 +652,7 @@ export default function Schedule() {
     if (table === "reunioes") res = await supabase.from("reunioes").update({ status: "realizada" } as any).eq("id", realId);
     else if (table === "ligacoes") res = await supabase.from("ligacoes").update({ resultado: "realizada" } as any).eq("id", realId);
     else if (table === "visitas") res = await supabase.from("visitas").update({ status: "Realizada" } as any).eq("id", realId);
+    else if (table === "tarefas") res = await supabase.from("tarefas").update({ status: "Concluída" } as any).eq("id", realId);
     else res = await supabase.from("captacoes_imovel").update({ estagio: "concluido" } as any).eq("id", realId);
     if (res?.error) return toast.error(res.error.message);
     toast.success("Marcado como concluído");
