@@ -292,7 +292,8 @@ Deno.serve(async (req) => {
       const errors: string[] = [];
       for (const item of toProcess) {
         try {
-          const res = await supa.functions.invoke("gcal-push", {
+          const res = await usupa.functions.invoke("gcal-push", {
+            headers: { Authorization: auth },
             body: { entity_type: item.entity_type, entity_id: item.entity_id, action: "create" },
           });
           if (res.error || (res.data as any)?.error) {
