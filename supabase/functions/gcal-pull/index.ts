@@ -68,6 +68,18 @@ async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string
 
         if (map && map.entity_type !== "reuniao") continue;
 
+        // Eventos criados pelo próprio CRM (tarefas, visitas etc.) não voltam como reunião nova.
+        const crmType = ev.extendedProperties?.private?.crm_entity_type;
+        const summ = String(ev.summary || "");
+        const isCrmTask = summ.startsWith("📋") || summ.startsWith("[Concluída] 📋");
+        if (!map && ((crmType && crmType !== "reuniao") || isCrmTask)) continue;
+        if (map && (isCrmTask || (crmType && crmType !== "reuniao"))) {
+          await supa.from("reunioes").delete().eq("id", map.entity_id).eq("origem", "google_calendar");
+          await supa.from("google_calendar_sync").delete().eq("id", map.id);
+          deleted++;
+          continue;
+        }
+
         // Não importa ocorrências expandidas de eventos recorrentes do Google.
         // Isso evita que bloqueios como "Escritório" apareçam repetidos em todos os dias no CRM.
         if (ev.recurringEventId) {

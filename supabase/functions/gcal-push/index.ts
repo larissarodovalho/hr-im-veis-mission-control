@@ -238,7 +238,8 @@ Deno.serve(async (req) => {
       const { data: conta } = await supa.from("contas").select("email").eq("id", built.contaId).maybeSingle();
       if (conta?.email) attendees.push({ email: conta.email });
     }
-    const fullPayload = attendees.length ? { ...built.payload, attendees } : built.payload;
+    const basePayload = { ...built.payload, extendedProperties: { private: { crm_entity_type: entity_type, crm_entity_id: entity_id } } };
+    const fullPayload = attendees.length ? { ...basePayload, attendees } : basePayload;
 
     // Carrega configuração da agenda compartilhada (se existir)
     const { data: sharedRow } = await supa.from("site_settings")
