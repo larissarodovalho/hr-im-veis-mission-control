@@ -206,10 +206,14 @@ async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string
 // Remove do Google eventos de tarefas criadas antes de 09/11/2026 (Cuiabá). Tarefas continuam no CRM.
 // Apaga o vínculo antes do evento para que o pull nunca trate isso como exclusão vinda do Google.
 async function cleanupOldTarefas(supa: ReturnType<typeof adminClient>) {
-  const { data: maps } = await supa.from("google_calendar_sync")
-    .select("id, user_id, calendar_id, google_event_id, entity_id, tarefas!inner(created_at)")
-    .eq("entity_type", "tarefa").lt("tarefas.created_at", "2026-11-09T04:00:00Z").limit(60);
-  for (const m of (maps ?? []) as any[]) {
+  const { data: all } = await supa.from("google_calendar_sync")
+    .select("id, user_id, calendar_id, google_event_id, entity_id").eq("entity_type", "tarefa").limit(1000);
+  if (!all?.length) return;
+  const ids = [...new Set(all.map((m: any) => m.entity_id))];
+  const { data: old } = await supa.from("tarefas").select("id").in("id", ids).lt("created_at", "2026-11-09T04:00:00Z");
+  const oldIds = new Set((old ?? []).map((t: any) => t.id));
+  const maps = all.filter((m: any) => oldIds.has(m.entity_id)).slice(0, 60);
+  for (const m of maps as any[]) {
     await supa.from("google_calendar_sync").delete().eq("id", m.id);
     const conn = await getValidAccessToken(supa, m.user_id);
     if (!conn) continue;
