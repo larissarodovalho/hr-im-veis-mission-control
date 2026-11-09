@@ -184,6 +184,7 @@ export default function Schedule() {
       supabase.from("tarefas")
         .select("id, titulo, descricao, prazo, status, lead_id, conta_id, created_by, responsavel_id")
         .not("prazo", "is", null)
+        .gte("created_at", "2026-11-09T04:00:00Z") // só tarefas lançadas a partir de 09/11/2026 (Cuiabá), mesmo corte do Google Agenda
         .order("prazo"),
     ]);
 
