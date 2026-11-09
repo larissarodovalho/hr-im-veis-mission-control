@@ -3,6 +3,8 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { getCaller, userScopedClient } from "../_shared/auth.ts";
 import { adminClient, formatGoogleCalendarApiError, getValidAccessToken, gcalFetch, TIMEZONE } from "../_shared/google-calendar.ts";
 
+// Só tarefas criadas a partir de 09/11/2026 00:00 (Cuiabá) vão para o Google Agenda.
+const TAREFAS_GCAL_CUTOFF = "2026-11-09T04:00:00Z";
 type EntityType = "reuniao" | "ligacao" | "visita" | "captacao" | "tarefa";
 type Action = "create" | "update" | "delete";
 
@@ -199,7 +201,12 @@ Deno.serve(async (req) => {
     }
 
     if (entity_type === "tarefa" && action !== "delete") {
-      const { data: t } = await supa.from("tarefas").select("prazo").eq("id", entity_id).maybeSingle();
+      const { data: t } = await supa.from("tarefas").select("prazo, created_at").eq("id", entity_id).maybeSingle();
+      if (t && t.created_at && new Date(t.created_at) < new Date(TAREFAS_GCAL_CUTOFF)) {
+        return new Response(JSON.stringify({ ok: true, skipped: "tarefa anterior ao corte" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       if (t && !t.prazo) action = "delete";
     }
 

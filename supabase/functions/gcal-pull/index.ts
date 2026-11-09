@@ -203,7 +203,27 @@ async function pullForUser(supa: ReturnType<typeof adminClient>, user_id: string
   return { user_id, imported, updated, deleted, calendars: calendars.length };
 }
 
+// Remove do Google eventos de tarefas criadas antes de 09/11/2026 (Cuiabá). Tarefas continuam no CRM.
+// Apaga o vínculo antes do evento para que o pull nunca trate isso como exclusão vinda do Google.
+async function cleanupOldTarefas(supa: ReturnType<typeof adminClient>) {
+  const { data: all } = await supa.from("google_calendar_sync")
+    .select("id, user_id, calendar_id, google_event_id, entity_id").eq("entity_type", "tarefa").limit(1000);
+  if (!all?.length) return;
+  const ids = [...new Set(all.map((m: any) => m.entity_id))];
+  const { data: old } = await supa.from("tarefas").select("id").in("id", ids).lt("created_at", "2026-11-09T04:00:00Z");
+  const oldIds = new Set((old ?? []).map((t: any) => t.id));
+  const maps = all.filter((m: any) => oldIds.has(m.entity_id)).slice(0, 60);
+  for (const m of maps as any[]) {
+    await supa.from("google_calendar_sync").delete().eq("id", m.id);
+    const conn = await getValidAccessToken(supa, m.user_id);
+    if (!conn) continue;
+    const calId = m.calendar_id || conn.calendar_id;
+    try { await gcalFetch(conn.access_token, `/calendars/${encodeURIComponent(calId)}/events/${m.google_event_id}`, { method: "DELETE" }); } catch { /* ignore */ }
+  }
+}
+
 async function runSync(supa: ReturnType<typeof adminClient>, users: { user_id: string }[]) {
+  try { await cleanupOldTarefas(supa); } catch { /* ignore */ }
   for (const u of users) {
     try { await pullForUser(supa, u.user_id); }
     catch (e) {
