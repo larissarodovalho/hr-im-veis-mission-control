@@ -1,3 +1,4 @@
+import { FormasPagamentoSection } from "./FormasPagamento";
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -117,6 +118,7 @@ const empty = {
 export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Props) {
   const [form, setForm] = useState({ ...empty });
   const [caracs, setCaracs] = useState<string[]>([]);
+  const [formasPag, setFormasPag] = useState<string[]>([]);
   const [fotos, setFotos] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
   const [corretorId, setCorretorId] = useState<string>("");
@@ -205,6 +207,7 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
         publicado: form.publicado,
         matricula: form.matricula || null,
         caracteristicas: caracs,
+        formas_pagamento: formasPag,
         fotos: urls,
         created_by: userId,
         corretor_id: corretorId || userId,
@@ -426,6 +429,8 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
               ))}
             </div>
           </section>
+
+          <FormasPagamentoSection value={formasPag} onChange={setFormasPag} />
 
           {/* Fotos */}
           <section className="space-y-3">

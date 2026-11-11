@@ -1,3 +1,4 @@
+import { FormasPagamentoSection } from "./FormasPagamento";
 import { useEffect, useState } from "react";
 import { imagemOtimizada, IMG_THUMB } from "@/lib/imagemOtimizada";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -50,6 +51,7 @@ function extractStoragePath(url: string): string | null {
 export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved }: Props) {
   const [form, setForm] = useState({ ...empty });
   const [caracs, setCaracs] = useState<string[]>([]);
+  const [formasPag, setFormasPag] = useState<string[]>([]);
   const [fotosExistentes, setFotosExistentes] = useState<string[]>([]);
   const [novasFotos, setNovasFotos] = useState<File[]>([]);
   const [removerPaths, setRemoverPaths] = useState<string[]>([]);
@@ -77,6 +79,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
       exclusividade_observacoes: s(imovel.exclusividade_observacoes),
     });
     setCaracs(Array.isArray(imovel.caracteristicas) ? imovel.caracteristicas : []);
+    setFormasPag(Array.isArray(imovel.formas_pagamento) ? imovel.formas_pagamento : []);
     setFotosExistentes(Array.isArray(imovel.fotos) ? imovel.fotos : []);
 
     setNovasFotos([]);
@@ -229,6 +232,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
         publicado: form.publicado,
         matricula: form.matricula || null,
         caracteristicas: caracs,
+        formas_pagamento: formasPag,
         fotos: [...fotosExistentes, ...novasUrls],
         corretor_id: corretorId || null,
         proprietario_id: proprietarioId || null,
@@ -399,6 +403,8 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
               ))}
             </div>
           </section>
+
+          <FormasPagamentoSection value={formasPag} onChange={setFormasPag} />
 
           <section className="space-y-3">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Fotos</h3>
