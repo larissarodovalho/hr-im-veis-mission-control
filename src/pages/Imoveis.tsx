@@ -240,7 +240,7 @@ export default function Imoveis() {
     faixaValor !== "all" || bairroFiltro !== "" || pagFiltro.length > 0;
   const limparFiltros = () => {
     setAnoFiltro("all"); setMesFiltro("all"); setCaptadorFiltro("all");
-    setFaixaValor("all"); setBairroFiltro(""); setPagFiltro([]);
+    setFaixaValor("all"); setBairroFiltro(""); setPagFiltro([]); setAnosMinFiltro(null);
   };
 
   // ---------- Ações ----------
