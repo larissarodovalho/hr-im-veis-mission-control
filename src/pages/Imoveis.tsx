@@ -28,6 +28,8 @@ import DetalhesImovelDialog from "@/components/imoveis/DetalhesImovelDialog";
 import CompartilharImovelDialog from "@/components/imoveis/CompartilharImovelDialog";
 import SelecaoImoveisAcoes from "@/components/imoveis/SelecaoImoveisAcoes";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { FORMAS_PAGAMENTO } from "@/components/imoveis/FormasPagamento";
 import VendidosTab from "@/pages/imoveis/VendidosTab";
 import ParceirosTab from "@/pages/imoveis/ParceirosTab";
 import LinksCompartilhadosTab from "@/pages/imoveis/LinksCompartilhadosTab";
@@ -97,6 +99,7 @@ export default function Imoveis() {
   const [captadorFiltro, setCaptadorFiltro] = useState<string>("all");
   const [faixaValor, setFaixaValor] = useState<string>("all");
   const [bairroFiltro, setBairroFiltro] = useState<string>("");
+  const [pagFiltro, setPagFiltro] = useState<string[]>([]);
 
   const load = async () => {
     const [imRes, prRes, ldRes] = await Promise.all([
@@ -180,6 +183,11 @@ export default function Imoveis() {
     return true;
   };
 
+  const matchesPag = (i: Imovel) => {
+    if (pagFiltro.length === 0) return true;
+    const fp: string[] = (i as any).formas_pagamento ?? [];
+    return pagFiltro.some((p) => fp.includes(p));
+  };
   const matchesBairro = (i: Imovel) => {
     if (!bairroFiltro.trim()) return true;
     const q = bairroFiltro.toLowerCase();
@@ -214,7 +222,7 @@ export default function Imoveis() {
   };
 
   const passa = (i: Imovel) =>
-    matchesSearch(i) && matchesData(i) && matchesCaptador(i) && matchesValor(i) && matchesBairro(i);
+    matchesSearch(i) && matchesData(i) && matchesCaptador(i) && matchesValor(i) && matchesBairro(i) && matchesPag(i);
   const disponiveis = items.filter(i => stage(i) === "disponivel" && !isNaoPublicado(i) && passa(i));
   const naoPublicados = items.filter(i => isNaoPublicado(i) && stage(i) !== "vendido" && passa(i));
   const inativos    = items.filter(i => (stage(i) === "vendido" || (stage(i) === "inativo" && !isNaoPublicado(i))) && passa(i));
@@ -224,10 +232,10 @@ export default function Imoveis() {
 
   const algumFiltro =
     anoFiltro !== "all" || mesFiltro !== "all" || captadorFiltro !== "all" ||
-    faixaValor !== "all" || bairroFiltro !== "";
+    faixaValor !== "all" || bairroFiltro !== "" || pagFiltro.length > 0;
   const limparFiltros = () => {
     setAnoFiltro("all"); setMesFiltro("all"); setCaptadorFiltro("all");
-    setFaixaValor("all"); setBairroFiltro("");
+    setFaixaValor("all"); setBairroFiltro(""); setPagFiltro([]);
   };
 
   // ---------- Ações ----------
@@ -624,6 +632,24 @@ export default function Imoveis() {
             value={bairroFiltro}
             onChange={(e) => setBairroFiltro(e.target.value)}
           />
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-full sm:w-56 justify-start font-normal">
+                {pagFiltro.length === 0 ? "Condição de pagamento" : `Pagamento: ${pagFiltro.length} selecionada${pagFiltro.length > 1 ? "s" : ""}`}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-60 space-y-2" align="start">
+              {FORMAS_PAGAMENTO.map((f) => (
+                <label key={f.value} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <Checkbox
+                    checked={pagFiltro.includes(f.value)}
+                    onCheckedChange={() => setPagFiltro((p) => p.includes(f.value) ? p.filter((x) => x !== f.value) : [...p, f.value])}
+                  />
+                  <span>{f.label}</span>
+                </label>
+              ))}
+            </PopoverContent>
+          </Popover>
           {algumFiltro && (
             <Button variant="ghost" size="sm" onClick={limparFiltros}>Limpar filtros</Button>
           )}
