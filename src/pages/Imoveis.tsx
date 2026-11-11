@@ -100,6 +100,7 @@ export default function Imoveis() {
   const [faixaValor, setFaixaValor] = useState<string>("all");
   const [bairroFiltro, setBairroFiltro] = useState<string>("");
   const [pagFiltro, setPagFiltro] = useState<string[]>([]);
+  const [anosMinFiltro, setAnosMinFiltro] = useState<number | null>(null);
 
   const load = async () => {
     const [imRes, prRes, ldRes] = await Promise.all([
@@ -186,7 +187,11 @@ export default function Imoveis() {
   const matchesPag = (i: Imovel) => {
     if (pagFiltro.length === 0) return true;
     const fp: string[] = (i as any).formas_pagamento ?? [];
-    return pagFiltro.some((p) => fp.includes(p));
+    return pagFiltro.some((p) => {
+      if (!fp.includes(p)) return false;
+      if (p === "anual" && anosMinFiltro) return ((i as any).pagamento_anual_anos ?? 0) >= anosMinFiltro;
+      return true;
+    });
   };
   const matchesBairro = (i: Imovel) => {
     if (!bairroFiltro.trim()) return true;
@@ -235,7 +240,7 @@ export default function Imoveis() {
     faixaValor !== "all" || bairroFiltro !== "" || pagFiltro.length > 0;
   const limparFiltros = () => {
     setAnoFiltro("all"); setMesFiltro("all"); setCaptadorFiltro("all");
-    setFaixaValor("all"); setBairroFiltro(""); setPagFiltro([]);
+    setFaixaValor("all"); setBairroFiltro(""); setPagFiltro([]); setAnosMinFiltro(null);
   };
 
   // ---------- Ações ----------
@@ -648,6 +653,13 @@ export default function Imoveis() {
                   <span>{f.label}</span>
                 </label>
               ))}
+              {pagFiltro.includes("anual") && (
+                <div className="border-t pt-2 space-y-1">
+                  <div className="text-xs text-muted-foreground">Prazo mínimo desejado pelo cliente (anos)</div>
+                  <Input type="number" min={1} max={30} placeholder="Ex.: 4" value={anosMinFiltro ?? ""}
+                    onChange={(e) => { const n = parseInt(e.target.value, 10); setAnosMinFiltro(Number.isFinite(n) ? n : null); }} />
+                </div>
+              )}
             </PopoverContent>
           </Popover>
           {algumFiltro && (

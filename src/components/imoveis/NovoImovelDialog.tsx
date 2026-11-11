@@ -119,6 +119,7 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
   const [form, setForm] = useState({ ...empty });
   const [caracs, setCaracs] = useState<string[]>([]);
   const [formasPag, setFormasPag] = useState<string[]>([]);
+  const [anosAnual, setAnosAnual] = useState<number | null>(null);
   const [fotos, setFotos] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
   const [corretorId, setCorretorId] = useState<string>("");
@@ -208,6 +209,7 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
         matricula: form.matricula || null,
         caracteristicas: caracs,
         formas_pagamento: formasPag,
+        pagamento_anual_anos: formasPag.includes("anual") ? anosAnual : null,
         fotos: urls,
         created_by: userId,
         corretor_id: corretorId || userId,
@@ -430,7 +432,7 @@ export default function NovoImovelDialog({ open, onOpenChange, onCreated }: Prop
             </div>
           </section>
 
-          <FormasPagamentoSection value={formasPag} onChange={setFormasPag} />
+          <FormasPagamentoSection value={formasPag} onChange={setFormasPag} anos={anosAnual} onAnosChange={setAnosAnual} />
 
           {/* Fotos */}
           <section className="space-y-3">

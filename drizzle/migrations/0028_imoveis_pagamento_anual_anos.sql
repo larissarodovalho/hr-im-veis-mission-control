@@ -1,0 +1,1 @@
+ALTER TABLE public.imoveis ADD COLUMN IF NOT EXISTS pagamento_anual_anos smallint NULL CHECK (pagamento_anual_anos BETWEEN 1 AND 30);

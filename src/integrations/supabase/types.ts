@@ -1823,6 +1823,7 @@ export type Database = {
           id: string
           matricula: string | null
           numero: string | null
+          pagamento_anual_anos: number | null
           proprietario_id: string | null
           publicado: boolean
           quartos: number | null
@@ -1865,6 +1866,7 @@ export type Database = {
           id?: string
           matricula?: string | null
           numero?: string | null
+          pagamento_anual_anos?: number | null
           proprietario_id?: string | null
           publicado?: boolean
           quartos?: number | null
@@ -1907,6 +1909,7 @@ export type Database = {
           id?: string
           matricula?: string | null
           numero?: string | null
+          pagamento_anual_anos?: number | null
           proprietario_id?: string | null
           publicado?: boolean
           quartos?: number | null
