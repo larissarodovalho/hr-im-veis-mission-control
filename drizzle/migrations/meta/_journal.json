@@ -190,6 +190,13 @@
       "when": 1791558800951,
       "tag": "0026_grant_anon_select_imoveis",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1794408363497,
+      "tag": "0027_imoveis_formas_pagamento",
+      "breakpoints": true
     }
   ]
 }
