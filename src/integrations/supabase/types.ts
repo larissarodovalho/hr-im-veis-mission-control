@@ -1818,6 +1818,7 @@ export type Database = {
           exclusividade_inicio: string | null
           exclusividade_observacoes: string | null
           finalidade: string
+          formas_pagamento: string[]
           fotos: string[] | null
           id: string
           matricula: string | null
@@ -1859,6 +1860,7 @@ export type Database = {
           exclusividade_inicio?: string | null
           exclusividade_observacoes?: string | null
           finalidade?: string
+          formas_pagamento?: string[]
           fotos?: string[] | null
           id?: string
           matricula?: string | null
@@ -1900,6 +1902,7 @@ export type Database = {
           exclusividade_inicio?: string | null
           exclusividade_observacoes?: string | null
           finalidade?: string
+          formas_pagamento?: string[]
           fotos?: string[] | null
           id?: string
           matricula?: string | null
