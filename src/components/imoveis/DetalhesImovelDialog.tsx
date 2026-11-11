@@ -1,4 +1,4 @@
-import { formaPagamentoLabel } from "./FormasPagamento";
+import { formaPagamentoLabelComAnos } from "./FormasPagamento";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { imagemOtimizada, IMG_THUMB } from "@/lib/imagemOtimizada";
 import { Badge } from "@/components/ui/badge";
@@ -100,7 +100,7 @@ export default function DetalhesImovelDialog({ open, onOpenChange, imovel, corre
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1.5">Condições de pagamento aceitas</div>
               <div className="flex flex-wrap gap-1.5">
                 {i.formas_pagamento.map((c: string) => (
-                  <Badge key={c} variant="secondary" className="text-[11px]">{formaPagamentoLabel(c)}</Badge>
+                  <Badge key={c} variant="secondary" className="text-[11px]">{formaPagamentoLabelComAnos(c, i.pagamento_anual_anos)}</Badge>
                 ))}
               </div>
             </div>

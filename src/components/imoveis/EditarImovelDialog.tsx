@@ -52,6 +52,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
   const [form, setForm] = useState({ ...empty });
   const [caracs, setCaracs] = useState<string[]>([]);
   const [formasPag, setFormasPag] = useState<string[]>([]);
+  const [anosAnual, setAnosAnual] = useState<number | null>(null);
   const [fotosExistentes, setFotosExistentes] = useState<string[]>([]);
   const [novasFotos, setNovasFotos] = useState<File[]>([]);
   const [removerPaths, setRemoverPaths] = useState<string[]>([]);
@@ -80,6 +81,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
     });
     setCaracs(Array.isArray(imovel.caracteristicas) ? imovel.caracteristicas : []);
     setFormasPag(Array.isArray(imovel.formas_pagamento) ? imovel.formas_pagamento : []);
+    setAnosAnual((imovel as any).pagamento_anual_anos ?? null);
     setFotosExistentes(Array.isArray(imovel.fotos) ? imovel.fotos : []);
 
     setNovasFotos([]);
@@ -233,6 +235,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
         matricula: form.matricula || null,
         caracteristicas: caracs,
         formas_pagamento: formasPag,
+        pagamento_anual_anos: formasPag.includes("anual") ? anosAnual : null,
         fotos: [...fotosExistentes, ...novasUrls],
         corretor_id: corretorId || null,
         proprietario_id: proprietarioId || null,
@@ -404,7 +407,7 @@ export default function EditarImovelDialog({ open, onOpenChange, imovel, onSaved
             </div>
           </section>
 
-          <FormasPagamentoSection value={formasPag} onChange={setFormasPag} />
+          <FormasPagamentoSection value={formasPag} onChange={setFormasPag} anos={anosAnual} onAnosChange={setAnosAnual} />
 
           <section className="space-y-3">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Fotos</h3>
