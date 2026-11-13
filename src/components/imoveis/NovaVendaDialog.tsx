@@ -1,3 +1,5 @@
+import ParceiroRapidoDialog from "@/components/imoveis/ParceiroRapidoDialog";
+import { Plus } from "lucide-react";
 import { PdfViewerDialog } from "@/components/common/PdfViewerDialog";
 import { useEffect, useState } from "react";
 import { formatBRL } from "@/lib/format";
@@ -56,6 +58,7 @@ export default function NovaVendaDialog({
   const [contas, setContas] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
   const [parceiros, setParceiros] = useState<any[]>([]);
+  const [parceiroRapido, setParceiroRapido] = useState(false);
 
   const [form, setForm] = useState<any>({
     imovel_id: "none",
@@ -443,7 +446,23 @@ export default function NovaVendaDialog({
           </div>
           <div>
             <Label>Corretor parceiro</Label>
-            <SearchableSelect value={form.corretor_parceiro_id} onChange={(v) => setForm({ ...form, corretor_parceiro_id: v })} options={parceiros} placeholder="Buscar parceiro…" emptyLabel="—" />
+            <div className="flex gap-2">
+              <div className="flex-1 min-w-0">
+                <SearchableSelect value={form.corretor_parceiro_id} onChange={(v) => setForm({ ...form, corretor_parceiro_id: v })} options={parceiros} placeholder="Buscar parceiro…" emptyLabel="—" />
+              </div>
+              <Button type="button" variant="outline" size="icon" title="Cadastrar parceiro" aria-label="Cadastrar parceiro" onClick={() => setParceiroRapido(true)}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            <ParceiroRapidoDialog
+              open={parceiroRapido}
+              onOpenChange={setParceiroRapido}
+              existentes={parceiros}
+              onCreated={(p, novo) => {
+                if (novo) setParceiros((prev) => [...prev, p].sort((a, b) => a.nome.localeCompare(b.nome)));
+                setForm((prev: any) => ({ ...prev, corretor_parceiro_id: p.id }));
+              }}
+            />
           </div>
           <div>
             <Label>Lead (opcional)</Label>
