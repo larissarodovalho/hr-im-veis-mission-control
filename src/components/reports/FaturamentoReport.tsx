@@ -57,6 +57,7 @@ export default function FaturamentoReport() {
   const [nivel, setNivel] = useState<"todos" | NivelCorretor>("todos");
 
   const [vendaAberta, setVendaAberta] = useState<Venda | null>(null);
+  const [comPagas, setComPagas] = useState<Record<string, { pago: number; total: number }>>({});
 
   const load = async () => {
     setLoading(true);
@@ -66,6 +67,14 @@ export default function FaturamentoReport() {
       supabase.from("user_roles").select("user_id, role").eq("role", "corretor"),
     ]);
     setVendas((v ?? []) as any);
+    const { data: parc } = await supabase.from("venda_parcelas").select("venda_id,valor,status").eq("fluxo", "comissao");
+    const agg: Record<string, { pago: number; total: number }> = {};
+    (parc ?? []).forEach((x: any) => {
+      const a = (agg[x.venda_id] ??= { pago: 0, total: 0 });
+      a.total += Number(x.valor) || 0;
+      if (x.status === "paga") a.pago += Number(x.valor) || 0;
+    });
+    setComPagas(agg);
     const todos = (p ?? []).map((x: any) => ({ id: x.user_id, nome: x.nome || "Sem nome" }));
     setProfiles(todos);
     const idsCorretores = new Set((rs ?? []).map((r: any) => r.user_id));
@@ -368,7 +377,14 @@ export default function FaturamentoReport() {
                       <TableCell className="text-right">{fmtBRL(calculateCommissionPart(v.valor_venda || 0, (v.percent_vendedor ?? 0) + (v.percent_captador ?? 0)))}</TableCell>
                       <TableCell className="text-right">{fmtBRL(calculateCommissionPart(v.valor_venda || 0, v.percent_hr ?? 0))} · {String(v.percent_hr ?? 0).replace(".", ",")}%</TableCell>
                       <TableCell className="text-right">{fmtBRL(getVendaComissaoTotal(v))}</TableCell>
-                      <TableCell>{v.status_pagamento || "—"}</TableCell>
+                      <TableCell>
+                        <div>{v.status_pagamento || "—"}</div>
+                        {comPagas[v.id] && (
+                          <div className="text-[10px] text-muted-foreground">
+                            Comissão recebida {comPagas[v.id].pago.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} · falta {Math.max(0, comPagas[v.id].total - comPagas[v.id].pago).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                          </div>
+                        )}
+                      </TableCell>
                     </TableRow>
                   );
                 })}
