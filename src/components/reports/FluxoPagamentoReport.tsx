@@ -15,6 +15,8 @@ import { formatBRL } from "@/lib/format";
 import { fmtDate, todayCRM } from "@/lib/datetime";
 import { isAtrasada } from "@/lib/vendaParcelas";
 import { useRole } from "@/hooks/useRole";
+import { useAuth } from "@/contexts/AuthContext";
+import { podeVerFluxoPagamento } from "@/lib/acessoFluxoPagamento";
 import NovaVendaDialog from "@/components/imoveis/NovaVendaDialog";
 
 const fmt = (n: number) => formatBRL(n || 0, { dash: false });
@@ -28,7 +30,8 @@ function addDays(d: string, n: number) {
 
 export default function FluxoPagamentoReport() {
   const { isAdmin, isGestor, loading: roleLoading } = useRole();
-  const can = isAdmin || isGestor;
+  const { user } = useAuth();
+  const can = (isAdmin || isGestor) && podeVerFluxoPagamento(user?.id);
   const hoje = todayCRM();
   const [parcelas, setParcelas] = useState<any[]>([]);
   const [vendas, setVendas] = useState<Record<string, any>>({});
@@ -148,7 +151,7 @@ export default function FluxoPagamentoReport() {
   };
 
   if (roleLoading) return null;
-  if (!can) return <Card className="p-6 flex items-center gap-2 text-muted-foreground"><Shield className="h-4 w-4" />Disponível apenas para administradores e gestores.</Card>;
+  if (!can) return <Card className="p-6 flex items-center gap-2 text-muted-foreground"><Shield className="h-4 w-4" />Relatório de acesso restrito.</Card>;
 
   const ResumoCard = ({ t, r }: { t: string; r: ReturnType<typeof resumo> }) => (
     <Card className="p-4 space-y-2">

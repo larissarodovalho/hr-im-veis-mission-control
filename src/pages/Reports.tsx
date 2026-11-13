@@ -14,6 +14,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import Papa from "papaparse";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
+import { useAuth } from "@/contexts/AuthContext";
+import { podeVerFluxoPagamento } from "@/lib/acessoFluxoPagamento";
 import FunilContasReport from "@/components/reports/FunilContasReport";
 import FunilLeadsReport from "@/components/reports/FunilLeadsReport";
 import LeadsParaContasReport from "@/components/reports/LeadsParaContasReport";
@@ -61,6 +63,8 @@ function PeriodPicker() {
 function ReportsInner() {
   const { isAdmin, isGestor, loading: roleLoading } = useRole();
   const can = isAdmin || isGestor;
+  const { user: authUser } = useAuth();
+  const podeFluxo = podeVerFluxoPagamento(authUser?.id);
   const { inicioISO, fimISO, label, refreshKey, ano } = useReportsPeriod();
   const [stats, setStats] = useState<PerformanceCorretor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -224,7 +228,7 @@ function ReportsInner() {
           <TabsTrigger value="imoveis">Imóveis</TabsTrigger>
           <TabsTrigger value="links">Links dos imóveis</TabsTrigger>
           <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
-          {can && <TabsTrigger value="fluxo">Fluxo de pagamento</TabsTrigger>}
+          {podeFluxo && <TabsTrigger value="fluxo">Fluxo de pagamento</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="acompanhamento" className="mt-4">
@@ -344,7 +348,7 @@ function ReportsInner() {
         </TabsContent>
 
         <TabsContent value="fluxo" className="mt-4">
-          <FluxoPagamentoReport />
+          {podeFluxo && <FluxoPagamentoReport />}
         </TabsContent>
       </Tabs>
     </div>
