@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -19,6 +20,24 @@ type Row = {
 const FORMAS = ["Pix", "Transferência", "Boleto", "Cheque", "Dinheiro", "Financiamento", "Safra", "Permuta", "Veículo", "Outro"];
 const BENEF = [{ v: "hr", l: "HR Imóveis" }, { v: "vendedor", l: "Vendedor" }, { v: "captador", l: "Captador" }, { v: "parceiro", l: "Parceiro" }];
 const fmt = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+function MoneyInput({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  const f = (n: number) => (Number(n) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const [txt, setTxt] = useState(f(value));
+  useEffect(() => { setTxt(f(value)); }, [value]);
+  return (
+    <Input
+      inputMode="decimal"
+      value={txt}
+      onChange={(e) => {
+        const digits = e.target.value.replace(/\D/g, "");
+        const n = digits ? Number(digits) / 100 : 0;
+        setTxt(f(n));
+        onChange(n);
+      }}
+    />
+  );
+}
 
 export default function VendaFluxoPagamento({ vendaId, valorVenda, valorComissao, onStatusChange }: {
   vendaId: string; valorVenda: number; valorComissao: number; onStatusChange?: (s: string) => void;
@@ -90,7 +109,11 @@ export default function VendaFluxoPagamento({ vendaId, valorVenda, valorComissao
       <div className="rounded-md border p-3 space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="font-medium text-sm">{titulo}</div>
-          <div className="text-xs text-muted-foreground">Recebido {fmt(pago)} · Falta {fmt(Math.max(0, soma - pago))} · Total {fmt(total)}</div>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="rounded bg-success/15 px-2 py-0.5 font-medium text-success">Recebido {fmt(pago)}</span>
+            <span className="rounded bg-warning/15 px-2 py-0.5 font-medium text-warning">Falta {fmt(Math.max(0, soma - pago))}</span>
+            <span className="rounded-md bg-primary/10 px-3 py-1 text-base font-bold text-primary">Total {fmt(total)}</span>
+          </div>
         </div>
         <Gerador fluxo={fluxo} total={total} onGerar={gerar} />
         {diverge && <div className="text-xs text-destructive">A soma das parcelas ({fmt(soma)}) não bate com o total ({fmt(total)}).</div>}
@@ -98,7 +121,7 @@ export default function VendaFluxoPagamento({ vendaId, valorVenda, valorComissao
         {lista.map(({ r, i }) => {
           const atras = isAtrasada(r, hoje);
           return (
-            <div key={r.id ?? `n${i}`} className="grid grid-cols-2 md:grid-cols-12 gap-2 items-end border-t pt-2">
+            <div key={r.id ?? `n${i}`} className={`grid grid-cols-2 md:grid-cols-12 gap-2 items-end rounded-md border p-2 ${r.status === "paga" ? "border-success/40 bg-success/10" : atras ? "border-destructive/40 bg-destructive/10" : "border-warning/40 bg-warning/10"}`}>
               <div className="md:col-span-1"><Label className="text-[10px]">Nº</Label><Input type="number" value={r.numero} onChange={(e) => upd(i, { numero: Number(e.target.value) })} /></div>
               {fluxo === "comissao" && (
                 <div className="md:col-span-2"><Label className="text-[10px]">Recebe</Label>
@@ -108,7 +131,7 @@ export default function VendaFluxoPagamento({ vendaId, valorVenda, valorComissao
                   </Select></div>
               )}
               <div className="md:col-span-2"><Label className="text-[10px]">Vencimento</Label><Input type="date" value={r.vencimento} onChange={(e) => upd(i, { vencimento: e.target.value })} /></div>
-              <div className="md:col-span-2"><Label className="text-[10px]">Valor (R$)</Label><Input type="number" step="0.01" value={r.valor} onChange={(e) => upd(i, { valor: Number(e.target.value) })} /></div>
+              <div className="md:col-span-2"><Label className="text-[10px]">Valor (R$)</Label><MoneyInput value={r.valor} onChange={(n) => upd(i, { valor: n })} /></div>
               <div className={fluxo === "comissao" ? "md:col-span-2" : "md:col-span-3"}><Label className="text-[10px]">Forma</Label>
                 <Select value={r.forma ?? "none"} onValueChange={(v) => upd(i, { forma: v === "none" ? null : v })}>
                   <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
@@ -116,13 +139,17 @@ export default function VendaFluxoPagamento({ vendaId, valorVenda, valorComissao
                 </Select></div>
               <div className="md:col-span-2 flex flex-col gap-1">
                 {r.status === "paga"
-                  ? <><Badge variant="secondary" className="w-fit">Paga</Badge><Input type="date" value={r.pago_em ?? hoje} onChange={(e) => upd(i, { pago_em: e.target.value })} /></>
-                  : <><Badge variant={atras ? "destructive" : "outline"} className="w-fit">{atras ? "Atrasada" : "Pendente"}</Badge>
+                  ? <><Badge className="w-fit bg-success text-success-foreground hover:bg-success">Paga</Badge><Input type="date" value={r.pago_em ?? hoje} onChange={(e) => upd(i, { pago_em: e.target.value })} /></>
+                  : <>{atras ? <Badge variant="destructive" className="w-fit">Atrasada</Badge> : <Badge className="w-fit bg-warning text-warning-foreground hover:bg-warning">Pendente</Badge>}
                     <Button type="button" size="sm" variant="outline" onClick={() => upd(i, { status: "paga", pago_em: hoje })}><Check className="h-3 w-3 mr-1" />Marcar paga</Button></>}
               </div>
               <div className="md:col-span-1 flex gap-1 justify-end">
                 {r.status === "paga" && <Button type="button" size="sm" variant="ghost" title="Voltar para pendente" onClick={() => upd(i, { status: "pendente", pago_em: null })}>↺</Button>}
                 <Button type="button" size="icon" variant="ghost" onClick={() => del(i)}><Trash2 className="h-4 w-4" /></Button>
+              </div>
+              <div className="col-span-2 md:col-span-12">
+                <Label className="text-[10px]">Observação</Label>
+                <Textarea rows={1} placeholder="Ex.: pago via Pix pelo filho do comprador" value={r.observacao ?? ""} onChange={(e) => upd(i, { observacao: e.target.value || null })} className="bg-background" />
               </div>
             </div>
           );
