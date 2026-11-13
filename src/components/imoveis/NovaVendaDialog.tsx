@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { formatBRL } from "@/lib/format";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { supabase } from "@/integrations/supabase/client";
+import VendaFluxoPagamento from "./VendaFluxoPagamento";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,7 +33,7 @@ import {
 
 export type VendaRow = any;
 
-const STATUS = ["Pagamento pendente", "Finalizada", "Cancelada"] as const;
+const STATUS = ["Pagamento pendente", "Pagamento parcial", "Finalizada", "Cancelada"] as const;
 const TIPOS = ["Venda", "Aluguel"] as const;
 const ORIGENS = ["Site", "Indicação", "Tráfego pago", "WhatsApp", "Portal", "Outra"];
 
@@ -621,6 +622,19 @@ export default function NovaVendaDialog({
             />
             {contratoFile && (
               <p className="text-xs text-muted-foreground mt-1">{contratoFile.name}</p>
+            )}
+          </div>
+          <div className="md:col-span-2 space-y-2">
+            <Label>Fluxo de pagamento</Label>
+            {initial?.id ? (
+              <VendaFluxoPagamento
+                vendaId={initial.id as string}
+                valorVenda={parseFloat(form.valor_venda) || 0}
+                valorComissao={parseFloat(form.valor_comissao) || 0}
+                onStatusChange={(s) => setForm((f: any) => ({ ...f, status_pagamento: s }))}
+              />
+            ) : (
+              <p className="text-xs text-muted-foreground">Salve a venda primeiro; depois, em "Editar venda", lance as parcelas do imóvel e da comissão.</p>
             )}
           </div>
           {form.imovel_id !== "none" && (
