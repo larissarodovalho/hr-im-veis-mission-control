@@ -4143,6 +4143,62 @@ export type Database = {
         }
         Relationships: []
       }
+      venda_parcelas: {
+        Row: {
+          beneficiario: string | null
+          created_at: string
+          fluxo: string
+          forma: string | null
+          id: string
+          numero: number
+          observacao: string | null
+          pago_em: string | null
+          status: string
+          updated_at: string
+          valor: number
+          vencimento: string
+          venda_id: string
+        }
+        Insert: {
+          beneficiario?: string | null
+          created_at?: string
+          fluxo: string
+          forma?: string | null
+          id?: string
+          numero?: number
+          observacao?: string | null
+          pago_em?: string | null
+          status?: string
+          updated_at?: string
+          valor?: number
+          vencimento: string
+          venda_id: string
+        }
+        Update: {
+          beneficiario?: string | null
+          created_at?: string
+          fluxo?: string
+          forma?: string | null
+          id?: string
+          numero?: number
+          observacao?: string | null
+          pago_em?: string | null
+          status?: string
+          updated_at?: string
+          valor?: number
+          vencimento?: string
+          venda_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venda_parcelas_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendas: {
         Row: {
           cliente_nome: string
