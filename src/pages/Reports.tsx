@@ -17,6 +17,7 @@ import { useRole } from "@/hooks/useRole";
 import FunilContasReport from "@/components/reports/FunilContasReport";
 import FunilLeadsReport from "@/components/reports/FunilLeadsReport";
 import LeadsParaContasReport from "@/components/reports/LeadsParaContasReport";
+import FluxoPagamentoReport from "@/components/reports/FluxoPagamentoReport";
 import FaturamentoReport from "@/components/reports/FaturamentoReport";
 import ImoveisReport from "@/components/reports/ImoveisReport";
 import FechamentosReport from "@/components/reports/FechamentosReport";
@@ -223,6 +224,7 @@ function ReportsInner() {
           <TabsTrigger value="imoveis">Imóveis</TabsTrigger>
           <TabsTrigger value="links">Links dos imóveis</TabsTrigger>
           <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
+          {can && <TabsTrigger value="fluxo">Fluxo de pagamento</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="acompanhamento" className="mt-4">
@@ -339,6 +341,10 @@ function ReportsInner() {
 
         <TabsContent value="faturamento" className="mt-4">
           <FaturamentoReport />
+        </TabsContent>
+
+        <TabsContent value="fluxo" className="mt-4">
+          <FluxoPagamentoReport />
         </TabsContent>
       </Tabs>
     </div>
