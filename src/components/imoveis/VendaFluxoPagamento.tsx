@@ -121,7 +121,7 @@ export default function VendaFluxoPagamento({ vendaId, valorVenda, valorComissao
         {lista.map(({ r, i }) => {
           const atras = isAtrasada(r, hoje);
           return (
-            <div key={r.id ?? `n${i}`} className={`grid grid-cols-2 md:grid-cols-12 gap-2 items-end rounded-md border p-2 ${r.status === "paga" ? "border-success/40 bg-success/10" : atras ? "border-destructive/40 bg-destructive/10" : "border-warning/40 bg-warning/10"}`}>
+            <div key={r.id ?? `n${i}`} className={`grid grid-cols-2 md:grid-cols-12 gap-2 items-end rounded-md border p-2 [&_input]:tabular-nums [&>div]:min-w-0 ${r.status === "paga" ? "border-success/40 bg-success/10" : atras ? "border-destructive/40 bg-destructive/10" : "border-warning/40 bg-warning/10"}`}>
               <div className="md:col-span-1"><Label className="text-[10px]">Nº</Label><Input type="number" value={r.numero} onChange={(e) => upd(i, { numero: Number(e.target.value) })} /></div>
               {fluxo === "comissao" && (
                 <div className="md:col-span-2"><Label className="text-[10px]">Recebe</Label>
@@ -177,14 +177,14 @@ function Gerador({ fluxo, total, onGerar }: { fluxo: Fluxo; total: number; onGer
   const [benef, setBenef] = useState("hr");
   if (!aberto) return <Button type="button" size="sm" variant="outline" onClick={() => { setValor(String(total || "")); setAberto(true); }}><Wand2 className="h-3 w-3 mr-1" />Gerar parcelas</Button>;
   return (
-    <div className="grid grid-cols-2 md:grid-cols-6 gap-2 items-end rounded bg-muted/40 p-2">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 items-end rounded bg-muted/40 p-2 [&_input]:tabular-nums">
       <div><Label className="text-[10px]">Quantidade</Label><Input type="number" min={1} value={n} onChange={(e) => setN(e.target.value)} /></div>
       <div><Label className="text-[10px]">Intervalo</Label>
         <Select value={meses} onValueChange={setMeses}><SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="1">Mensal</SelectItem><SelectItem value="3">Trimestral</SelectItem><SelectItem value="6">Semestral</SelectItem><SelectItem value="12">Anual</SelectItem></SelectContent>
         </Select></div>
       <div><Label className="text-[10px]">1ª data</Label><Input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} /></div>
-      <div><Label className="text-[10px]">Valor total</Label><Input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} /></div>
+      <div><Label className="text-[10px]">Valor total</Label><MoneyInput value={Number(valor) || 0} onChange={(n) => setValor(String(n))} /></div>
       {fluxo === "comissao" ? (
         <div><Label className="text-[10px]">Recebe</Label>
           <Select value={benef} onValueChange={setBenef}><SelectTrigger><SelectValue /></SelectTrigger>

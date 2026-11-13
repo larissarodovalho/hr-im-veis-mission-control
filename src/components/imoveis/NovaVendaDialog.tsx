@@ -330,7 +330,7 @@ export default function NovaVendaDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[min(1280px,95vw)] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{initial?.id ? "Editar venda" : "Nova venda"}</DialogTitle>
         </DialogHeader>
