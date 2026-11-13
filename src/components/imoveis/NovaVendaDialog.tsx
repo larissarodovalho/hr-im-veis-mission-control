@@ -1,3 +1,4 @@
+import NovaContaDialog from "@/components/contas/NovaContaDialog";
 import ParceiroRapidoDialog from "@/components/imoveis/ParceiroRapidoDialog";
 import { Plus } from "lucide-react";
 import { PdfViewerDialog } from "@/components/common/PdfViewerDialog";
@@ -59,6 +60,7 @@ export default function NovaVendaDialog({
   const [profiles, setProfiles] = useState<any[]>([]);
   const [parceiros, setParceiros] = useState<any[]>([]);
   const [parceiroRapido, setParceiroRapido] = useState(false);
+  const [contaRapida, setContaRapida] = useState(false);
 
   const [form, setForm] = useState<any>({
     imovel_id: "none",
@@ -351,13 +353,20 @@ export default function NovaVendaDialog({
               </>
             ) : (
               <>
-                <SearchableSelect
-                  value={form.conta_id}
-                  onChange={(v) => setForm({ ...form, conta_id: v })}
-                  options={contas}
-                  placeholder="Buscar cliente nas contas…"
-                  emptyLabel="—"
-                />
+                <div className="flex gap-2">
+                  <div className="flex-1 min-w-0">
+                    <SearchableSelect
+                      value={form.conta_id}
+                      onChange={(v) => setForm({ ...form, conta_id: v })}
+                      options={contas}
+                      placeholder="Buscar cliente nas contas…"
+                      emptyLabel="—"
+                    />
+                  </div>
+                  <Button type="button" variant="outline" size="icon" title="Cadastrar cliente" aria-label="Cadastrar cliente" onClick={() => setContaRapida(true)}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
                 <button
                   type="button"
                   className="text-xs text-muted-foreground hover:text-primary hover:underline mt-1"
@@ -368,6 +377,20 @@ export default function NovaVendaDialog({
               </>
             )}
           </div>
+          <NovaContaDialog
+            open={contaRapida}
+            onOpenChange={setContaRapida}
+            onCreated={async (id) => {
+              if (!id) return;
+              const { data: c } = await supabase.from("contas").select("id,nome,email,telefone").eq("id", id).maybeSingle();
+              if (!c) return;
+              const extra = [c.email, c.telefone].filter(Boolean).join(" · ");
+              const opt = { id: c.id, nome: extra ? `${c.nome} — ${extra}` : c.nome, rawNome: c.nome };
+              setContas((prev) => [...prev.filter((x: any) => x.id !== c.id), opt].sort((a: any, b: any) => a.rawNome.localeCompare(b.rawNome)));
+              setManualCliente(false);
+              setForm((f: any) => ({ ...f, conta_id: c.id }));
+            }}
+          />
           <div className="md:col-span-2">
             <Label>Imóvel</Label>
             {manualImovel ? (
