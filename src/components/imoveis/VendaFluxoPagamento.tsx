@@ -139,8 +139,8 @@ export default function VendaFluxoPagamento({ vendaId, valorVenda, valorComissao
                 </Select></div>
               <div className="md:col-span-2 flex flex-col gap-1">
                 {r.status === "paga"
-                  ? <><Badge className="w-fit bg-success text-success-foreground hover:bg-success">Paga</Badge><Input type="date" value={r.pago_em ?? hoje} onChange={(e) => upd(i, { pago_em: e.target.value })} /></>
-                  : <>{atras ? <Badge variant="destructive" className="w-fit">Atrasada</Badge> : <Badge className="w-fit bg-warning text-warning-foreground hover:bg-warning">Pendente</Badge>}
+                  ? <><Badge className="w-fit bg-success text-background hover:bg-success">Paga</Badge><Input type="date" value={r.pago_em ?? hoje} onChange={(e) => upd(i, { pago_em: e.target.value })} /></>
+                  : <>{atras ? <Badge variant="destructive" className="w-fit">Atrasada</Badge> : <Badge className="w-fit bg-warning text-foreground hover:bg-warning">Pendente</Badge>}
                     <Button type="button" size="sm" variant="outline" onClick={() => upd(i, { status: "paga", pago_em: hoje })}><Check className="h-3 w-3 mr-1" />Marcar paga</Button></>}
               </div>
               <div className="md:col-span-1 flex gap-1 justify-end">
