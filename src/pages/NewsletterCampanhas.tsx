@@ -93,29 +93,6 @@ export default function NewsletterCampanhas() {
     if (!testeEmail.trim()) return toast.error("Informe o email");
     setTestando(true);
     try {
-      // Busca até 3 imóveis disponíveis com foto
-      const { data: imoveis } = await supabase
-        .from("imoveis")
-        .select("id,titulo,cidade,bairro,valor,fotos,codigo,quartos,vagas,area_util,status")
-        .eq("status", "disponivel")
-        .order("created_at", { ascending: false })
-        .limit(12);
-      const imoveisData = ((imoveis ?? []) as any[])
-        .filter((im) => Array.isArray(im.fotos) && im.fotos.length)
-        .slice(0, 3)
-        .map((im) => ({
-          id: im.id,
-          titulo: im.titulo,
-          cidade: im.cidade,
-          bairro: im.bairro,
-          valor: im.valor,
-          foto: im.fotos[0],
-          codigo: im.codigo,
-          quartos: im.quartos,
-          vagas: im.vagas,
-          area_util: im.area_util,
-        }));
-
       const { error } = await supabase.functions.invoke("newsletter-send-test", {
         body: {
           email: testeEmail.trim(),
