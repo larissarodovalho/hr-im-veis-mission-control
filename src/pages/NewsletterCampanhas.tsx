@@ -116,24 +116,18 @@ export default function NewsletterCampanhas() {
           area_util: im.area_util,
         }));
 
-      const { error } = await supabase.functions.invoke("send-transactional-email", {
+      const { error } = await supabase.functions.invoke("newsletter-send-test", {
         body: {
-          templateName: "newsletter-weekly",
-          recipientEmail: testeEmail.trim(),
-          idempotencyKey: `newsletter-test-${Date.now()}-${testeEmail.trim()}`,
-          purpose: "transactional",
-          templateData: {
-            assunto: "HR Imóveis · Boletim semanal de Sinop",
-            manchete: "Como está o mercado imobiliário de Sinop nesta semana",
-            preheader: "Panorama do mercado de Sinop e imóveis selecionados pela equipe.",
-            corpo:
+          email: testeEmail.trim(),
+          assunto: "HR Imóveis · Boletim semanal de Sinop",
+          manchete: "Como está o mercado imobiliário de Sinop nesta semana",
+          preheader: "Panorama do mercado de Sinop e imóveis selecionados pela equipe.",
+          corpo:
               "Sinop segue com bom volume de procura por imóveis prontos para morar, especialmente nas regiões centrais e em bairros planejados como o Jardim Maringá. Imóveis de 3 quartos com vaga coberta continuam sendo os mais buscados pelas famílias que estão se mudando para a cidade.\n\nNeste boletim, nossa equipe reuniu alguns imóveis do nosso portfólio que vale a pena conhecer. Se quiser agendar uma visita ou tirar dúvidas sobre financiamento, é só responder este e-mail que um corretor entra em contato.",
-            imoveis: imoveisData,
-          },
         },
       });
       if (error) throw error;
-      toast.success("Email de teste enfileirado! Chega em alguns segundos.");
+      toast.success("Email de teste enviado! Chega em alguns segundos.");
       setTesteOpen(false);
     } catch (e: any) {
       toast.error("Erro: " + (e?.message ?? "falha ao enviar"));
