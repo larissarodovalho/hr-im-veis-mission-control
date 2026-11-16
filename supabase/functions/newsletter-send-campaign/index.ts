@@ -1,6 +1,6 @@
 // Aprova e dispara o envio da campanha de newsletter para todos os inscritos ativos.
 // Cria uma linha em newsletter_envios por destinatário e enfileira o e-mail individual
-// no send-transactional-email (idempotente por campanha+email).
+// via e-mail gerenciado (idempotente por campanha+email).
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const corsHeaders = {
