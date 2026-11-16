@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
       }
       if (isSupp) { suprimidos++; continue }
 
-      const { error: sendErr } = await sendLoggedEmail('newsletter-weekly', s.email, {
+      const { error: sendErr } = await trySendLoggedEmail('newsletter-weekly', s.email, {
           idempotencyKey: `newsletter-${campanha_id}-${s.id}`,
           templateData: {
             assunto: camp.assunto,

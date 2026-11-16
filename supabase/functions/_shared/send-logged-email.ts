@@ -46,3 +46,16 @@ export async function sendLoggedEmail(
     throw error
   }
 }
+
+/** Same as sendLoggedEmail, but never throws: returns { data, error }. */
+export async function trySendLoggedEmail(
+  templateName: string,
+  to: string,
+  options: SendTemplateEmailOptions = {},
+): Promise<{ data: SendTemplateEmailResult | null; error: Error | null }> {
+  try {
+    return { data: await sendLoggedEmail(templateName, to, options), error: null }
+  } catch (e) {
+    return { data: null, error: e instanceof Error ? e : new Error(String(e)) }
+  }
+}

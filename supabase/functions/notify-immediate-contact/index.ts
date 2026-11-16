@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
 
     const results: any[] = [];
     for (const r of recipients) {
-      const { data, error } = await sendLoggedEmail("immediate-contact-alert", r.email, {
+      const { data, error } = await trySendLoggedEmail("immediate-contact-alert", r.email, {
           idempotencyKey: `immediate-${lead.id}-${Date.now()}`,
           templateData: {
             leadName: lead.nome || "Novo lead",

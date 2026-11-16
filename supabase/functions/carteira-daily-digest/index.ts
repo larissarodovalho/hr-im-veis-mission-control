@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
         ...e.vencidas.slice(0, 5).map((a) => `${nomePorConta.get(a.conta_id) ?? "Conta"} — ${a.proxima_acao || "ação agendada"} vencida`),
       ];
 
-      const { error } = await sendLoggedEmail("carteira-resumo-diario", p.email, {
+      const { error } = await trySendLoggedEmail("carteira-resumo-diario", p.email, {
           idempotencyKey: `carteira-digest-${hoje}-${corretorId}`,
           templateData: {
             nome: p.nome || undefined,
@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
         for (const gid of gestores) {
           const p = perfilPor.get(gid);
           if (!p?.email) continue;
-          const { error } = await sendLoggedEmail("carteira-resumo-diario", p.email, {
+          const { error } = await trySendLoggedEmail("carteira-resumo-diario", p.email, {
               idempotencyKey: `carteira-digest-gestor-${hoje}-${gid}`,
               templateData: {
                 nome: p.nome || undefined,

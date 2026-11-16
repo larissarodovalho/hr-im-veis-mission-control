@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
         area_util: im.area_util,
       }))
 
-    const { data: sendData, error: sendErr } = await sendLoggedEmail('newsletter-weekly', email, {
+    const { data: sendData, error: sendErr } = await trySendLoggedEmail('newsletter-weekly', email, {
         idempotencyKey: `newsletter-test-${Date.now()}-${email}`,
         templateData: {
           assunto: 'Novidades do mercado imobiliário — Sinop',
@@ -79,12 +79,12 @@ Deno.serve(async (req) => {
       })
 
     if (sendErr) {
-      console.error('send-transactional-email erro', sendErr)
+      console.error('newsletter test send error', sendErr)
       return new Response(JSON.stringify({ error: sendErr.message ?? 'erro send' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-    console.log('send-transactional-email ok', sendData)
+    console.log('newsletter test send ok', sendData)
 
 
     return new Response(JSON.stringify({ ok: true, email, imoveis: imoveisData.length }), {
