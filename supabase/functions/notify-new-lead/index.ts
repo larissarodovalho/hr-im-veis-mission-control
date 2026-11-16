@@ -1,5 +1,6 @@
 // Envia e-mail aos usuários que ativaram "Receber e-mail de novos leads" quando
 // um lead é inserido. Acionada pelo trigger trg_notify_new_lead via pg_net.
+import { trySendLoggedEmail } from '../_shared/send-logged-email.ts'
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {

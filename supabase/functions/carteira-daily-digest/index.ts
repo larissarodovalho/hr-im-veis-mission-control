@@ -2,6 +2,7 @@
 // 1) executa carteira_rotina_diaria() (atrasos, devolução automática, alertas)
 // 2) envia resumo por e-mail para corretores com pendências e para gestores/admin
 // Acionada por pg_cron (madrugada, horário de Cuiabá).
+import { trySendLoggedEmail } from '../_shared/send-logged-email.ts'
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {

@@ -1,6 +1,7 @@
 // Aprova e dispara o envio da campanha de newsletter para todos os inscritos ativos.
 // Cria uma linha em newsletter_envios por destinatário e enfileira o e-mail individual
 // via e-mail gerenciado (idempotente por campanha+email).
+import { trySendLoggedEmail } from '../_shared/send-logged-email.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const corsHeaders = {

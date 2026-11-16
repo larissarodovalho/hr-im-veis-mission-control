@@ -1,4 +1,5 @@
 // Marca uma campanha como aguardando aprovação e avisa os admins por e-mail.
+import { sendLoggedEmail } from '../_shared/send-logged-email.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const corsHeaders = {
