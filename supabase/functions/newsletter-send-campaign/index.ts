@@ -122,10 +122,7 @@ Deno.serve(async (req) => {
       }
       if (isSupp) { suprimidos++; continue }
 
-      const { error: sendErr } = await supabase.functions.invoke('send-transactional-email', {
-        body: {
-          templateName: 'newsletter-weekly',
-          recipientEmail: s.email,
+      const { error: sendErr } = await sendLoggedEmail('newsletter-weekly', s.email, {
           idempotencyKey: `newsletter-${campanha_id}-${s.id}`,
           templateData: {
             assunto: camp.assunto,
@@ -133,8 +130,7 @@ Deno.serve(async (req) => {
             corpo: camp.corpo ?? '',
             imoveis: imoveisData,
           },
-        },
-      })
+        })
 
       if (sendErr) {
         falhas++

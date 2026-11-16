@@ -61,12 +61,8 @@ Deno.serve(async (req) => {
 
     const results: any[] = [];
     for (const r of list) {
-      const { error } = await supabase.functions.invoke("send-transactional-email", {
-        body: {
-          templateName: "new-lead-alert",
-          recipientEmail: r.email,
+      const { error } = await sendLoggedEmail("new-lead-alert", r.email, {
           idempotencyKey: `new-lead-${lead.id}-${r.user_id}`,
-          purpose: "transactional",
           templateData: {
             leadName: lead.nome || "Novo lead",
             leadPhone: lead.telefone || "—",
@@ -76,8 +72,7 @@ Deno.serve(async (req) => {
             interest,
             leadUrl,
           },
-        },
-      });
+        });
       results.push({ to: r.email, ok: !error, error: error?.message });
     }
 

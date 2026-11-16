@@ -67,12 +67,8 @@ Deno.serve(async (req) => {
         area_util: im.area_util,
       }))
 
-    const { data: sendData, error: sendErr } = await supabase.functions.invoke('send-transactional-email', {
-      body: {
-        templateName: 'newsletter-weekly',
-        recipientEmail: email,
+    const { data: sendData, error: sendErr } = await sendLoggedEmail('newsletter-weekly', email, {
         idempotencyKey: `newsletter-test-${Date.now()}-${email}`,
-        purpose: 'transactional',
         templateData: {
           assunto: 'Novidades do mercado imobiliário — Sinop',
           manchete: 'O que está movimentando o mercado esta semana',
@@ -80,8 +76,7 @@ Deno.serve(async (req) => {
             'Este é um e-mail de teste do informativo HR Imóveis. O mercado de Sinop segue aquecido, com boa procura por imóveis prontos para morar nas regiões centrais e bairros planejados.\n\nSelecionamos abaixo alguns destaques do nosso catálogo para você conferir o visual completo do e-mail.',
           imoveis: imoveisData,
         },
-      },
-    })
+      })
 
     if (sendErr) {
       console.error('send-transactional-email erro', sendErr)
