@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { sendLoggedEmail } from '../_shared/send-logged-email.ts'
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -82,23 +83,11 @@ Deno.serve(async (req) => {
       const loginUrl = `${origin.replace(/\/$/, "")}/app`;
       try {
         console.log("Enviando e-mail de boas-vindas para", email);
-        const mailRes = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${SERVICE_ROLE}`,
-            apikey: SERVICE_ROLE,
-          },
-          body: JSON.stringify({
-            templateName: "user-welcome",
-            recipientEmail: email,
-            idempotencyKey: `user-welcome-${newId}`,
-            purpose: "transactional",
-            templateData: { nome, email, senha: password, loginUrl },
-          }),
+        const mailRes = await sendLoggedEmail("user-welcome", email, {
+          idempotencyKey: `user-welcome-${newId}`,
+          templateData: { nome, email, senha: password, loginUrl },
         });
-        const mailText = await mailRes.text();
-        console.log("send-transactional-email status:", mailRes.status, mailText);
+        console.log("user-welcome result:", mailRes);
       } catch (mailErr) {
         console.error("Falha ao enviar e-mail de boas-vindas:", mailErr);
       }

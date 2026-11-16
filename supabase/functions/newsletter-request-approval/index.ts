@@ -1,4 +1,5 @@
 // Marca uma campanha como aguardando aprovação e avisa os admins por e-mail.
+import { sendLoggedEmail } from '../_shared/send-logged-email.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -71,12 +72,8 @@ Deno.serve(async (req) => {
         .from('profiles').select('user_id,email,nome').in('user_id', adminIds)
       for (const p of profiles ?? []) {
         if (!p.email) continue
-        await supabase.functions.invoke('send-transactional-email', {
-          body: {
-            templateName: 'newsletter-weekly',
-            recipientEmail: p.email,
+        await sendLoggedEmail('newsletter-weekly', p.email, {
             idempotencyKey: `nl-approval-${campanha_id}-${p.user_id}`,
-            // Reaproveita template newsletter-weekly como aviso simples:
             templateData: {
               assunto: `Aprovar campanha: ${camp.assunto}`,
               manchete: 'Nova campanha aguardando aprovação',
@@ -84,8 +81,7 @@ Deno.serve(async (req) => {
                 `Olá ${p.nome ?? ''},\n\nUma nova campanha foi enviada para aprovação:\n\n"${camp.assunto}"\n\nDestinatários estimados: ${ativos ?? 0}\n\nAbra o CRM em Newsletter → Campanhas para revisar e aprovar.`,
               imoveis: [],
             },
-          },
-        }).catch((e) => console.error('aviso admin falhou', p.email, e))
+          }).catch((e) => console.error('aviso admin falhou', p.email, e))
       }
     }
 

@@ -93,47 +93,18 @@ export default function NewsletterCampanhas() {
     if (!testeEmail.trim()) return toast.error("Informe o email");
     setTestando(true);
     try {
-      // Busca até 3 imóveis disponíveis com foto
-      const { data: imoveis } = await supabase
-        .from("imoveis")
-        .select("id,titulo,cidade,bairro,valor,fotos,codigo,quartos,vagas,area_util,status")
-        .eq("status", "disponivel")
-        .order("created_at", { ascending: false })
-        .limit(12);
-      const imoveisData = ((imoveis ?? []) as any[])
-        .filter((im) => Array.isArray(im.fotos) && im.fotos.length)
-        .slice(0, 3)
-        .map((im) => ({
-          id: im.id,
-          titulo: im.titulo,
-          cidade: im.cidade,
-          bairro: im.bairro,
-          valor: im.valor,
-          foto: im.fotos[0],
-          codigo: im.codigo,
-          quartos: im.quartos,
-          vagas: im.vagas,
-          area_util: im.area_util,
-        }));
-
-      const { error } = await supabase.functions.invoke("send-transactional-email", {
+      const { error } = await supabase.functions.invoke("newsletter-send-test", {
         body: {
-          templateName: "newsletter-weekly",
-          recipientEmail: testeEmail.trim(),
-          idempotencyKey: `newsletter-test-${Date.now()}-${testeEmail.trim()}`,
-          purpose: "transactional",
-          templateData: {
-            assunto: "HR Imóveis · Boletim semanal de Sinop",
-            manchete: "Como está o mercado imobiliário de Sinop nesta semana",
-            preheader: "Panorama do mercado de Sinop e imóveis selecionados pela equipe.",
-            corpo:
+          email: testeEmail.trim(),
+          assunto: "HR Imóveis · Boletim semanal de Sinop",
+          manchete: "Como está o mercado imobiliário de Sinop nesta semana",
+          preheader: "Panorama do mercado de Sinop e imóveis selecionados pela equipe.",
+          corpo:
               "Sinop segue com bom volume de procura por imóveis prontos para morar, especialmente nas regiões centrais e em bairros planejados como o Jardim Maringá. Imóveis de 3 quartos com vaga coberta continuam sendo os mais buscados pelas famílias que estão se mudando para a cidade.\n\nNeste boletim, nossa equipe reuniu alguns imóveis do nosso portfólio que vale a pena conhecer. Se quiser agendar uma visita ou tirar dúvidas sobre financiamento, é só responder este e-mail que um corretor entra em contato.",
-            imoveis: imoveisData,
-          },
         },
       });
       if (error) throw error;
-      toast.success("Email de teste enfileirado! Chega em alguns segundos.");
+      toast.success("Email de teste enviado! Chega em alguns segundos.");
       setTesteOpen(false);
     } catch (e: any) {
       toast.error("Erro: " + (e?.message ?? "falha ao enviar"));

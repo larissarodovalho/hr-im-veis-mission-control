@@ -2,6 +2,7 @@
 // 1) executa carteira_rotina_diaria() (atrasos, devolução automática, alertas)
 // 2) envia resumo por e-mail para corretores com pendências e para gestores/admin
 // Acionada por pg_cron (madrugada, horário de Cuiabá).
+import { trySendLoggedEmail } from '../_shared/send-logged-email.ts'
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -91,12 +92,8 @@ Deno.serve(async (req) => {
         ...e.vencidas.slice(0, 5).map((a) => `${nomePorConta.get(a.conta_id) ?? "Conta"} — ${a.proxima_acao || "ação agendada"} vencida`),
       ];
 
-      const { error } = await supabase.functions.invoke("send-transactional-email", {
-        body: {
-          templateName: "carteira-resumo-diario",
-          recipientEmail: p.email,
+      const { error } = await trySendLoggedEmail("carteira-resumo-diario", p.email, {
           idempotencyKey: `carteira-digest-${hoje}-${corretorId}`,
-          purpose: "transactional",
           templateData: {
             nome: p.nome || undefined,
             papel: "corretor",
@@ -108,8 +105,7 @@ Deno.serve(async (req) => {
             destaques,
             url: `${baseUrl}/crm/minha-carteira`,
           },
-        },
-      });
+        });
       if (error) console.error("Falha ao enviar resumo do corretor:", corretorId, error.message);
       else enviados += 1;
     }
@@ -140,12 +136,8 @@ Deno.serve(async (req) => {
         for (const gid of gestores) {
           const p = perfilPor.get(gid);
           if (!p?.email) continue;
-          const { error } = await supabase.functions.invoke("send-transactional-email", {
-            body: {
-              templateName: "carteira-resumo-diario",
-              recipientEmail: p.email,
+          const { error } = await trySendLoggedEmail("carteira-resumo-diario", p.email, {
               idempotencyKey: `carteira-digest-gestor-${hoje}-${gid}`,
-              purpose: "transactional",
               templateData: {
                 nome: p.nome || undefined,
                 papel: "gestor",
@@ -158,8 +150,7 @@ Deno.serve(async (req) => {
                 destaques,
                 url: `${baseUrl}/crm/carteira`,
               },
-            },
-          });
+            });
           if (error) console.error("Falha ao enviar resumo do gestor:", gid, error.message);
           else enviados += 1;
         }

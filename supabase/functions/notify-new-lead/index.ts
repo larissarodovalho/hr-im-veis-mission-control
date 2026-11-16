@@ -1,5 +1,6 @@
 // Envia e-mail aos usuários que ativaram "Receber e-mail de novos leads" quando
 // um lead é inserido. Acionada pelo trigger trg_notify_new_lead via pg_net.
+import { trySendLoggedEmail } from '../_shared/send-logged-email.ts'
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -61,12 +62,8 @@ Deno.serve(async (req) => {
 
     const results: any[] = [];
     for (const r of list) {
-      const { error } = await supabase.functions.invoke("send-transactional-email", {
-        body: {
-          templateName: "new-lead-alert",
-          recipientEmail: r.email,
+      const { error } = await trySendLoggedEmail("new-lead-alert", r.email, {
           idempotencyKey: `new-lead-${lead.id}-${r.user_id}`,
-          purpose: "transactional",
           templateData: {
             leadName: lead.nome || "Novo lead",
             leadPhone: lead.telefone || "—",
@@ -76,8 +73,7 @@ Deno.serve(async (req) => {
             interest,
             leadUrl,
           },
-        },
-      });
+        });
       results.push({ to: r.email, ok: !error, error: error?.message });
     }
 

@@ -1,5 +1,6 @@
 // Envia um e-mail de teste do template newsletter-weekly para um destinatário,
 // com 3 imóveis disponíveis do catálogo e conteúdo de exemplo. Apenas admin/gestor.
+import { trySendLoggedEmail } from '../_shared/send-logged-email.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
 const corsHeaders = {
@@ -11,7 +12,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
 
   try {
-    const { email } = await req.json().catch(() => ({}))
+    const body = await req.json().catch(() => ({}))
+    const { email } = body
+    const str = (v: unknown, max: number) => (typeof v === 'string' && v.trim() ? v.slice(0, max) : undefined)
     if (!email || typeof email !== 'string' || !/^\S+@\S+\.\S+$/.test(email)) {
       return new Response(JSON.stringify({ error: 'email obrigatório' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -36,7 +39,7 @@ Deno.serve(async (req) => {
     }
     const { data: roles } = await supabase
       .from('user_roles').select('role').eq('user_id', user.id)
-    const allowed = (roles ?? []).some((r: any) => r.role === 'admin' || r.role === 'gestor')
+    const allowed = (roles ?? []).some((r: any) => r.role === 'admin' || r.role === 'gestor' || r.role === 'marketing')
     if (!allowed) {
       return new Response(JSON.stringify({ error: 'permissão negada' }), {
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -67,29 +70,25 @@ Deno.serve(async (req) => {
         area_util: im.area_util,
       }))
 
-    const { data: sendData, error: sendErr } = await supabase.functions.invoke('send-transactional-email', {
-      body: {
-        templateName: 'newsletter-weekly',
-        recipientEmail: email,
+    const { data: sendData, error: sendErr } = await trySendLoggedEmail('newsletter-weekly', email, {
         idempotencyKey: `newsletter-test-${Date.now()}-${email}`,
-        purpose: 'transactional',
         templateData: {
-          assunto: 'Novidades do mercado imobiliário — Sinop',
-          manchete: 'O que está movimentando o mercado esta semana',
-          corpo:
+          assunto: str(body.assunto, 200) ?? 'Novidades do mercado imobiliário — Sinop',
+          manchete: str(body.manchete, 300) ?? 'O que está movimentando o mercado esta semana',
+          preheader: str(body.preheader, 300),
+          corpo: str(body.corpo, 5000) ??
             'Este é um e-mail de teste do informativo HR Imóveis. O mercado de Sinop segue aquecido, com boa procura por imóveis prontos para morar nas regiões centrais e bairros planejados.\n\nSelecionamos abaixo alguns destaques do nosso catálogo para você conferir o visual completo do e-mail.',
           imoveis: imoveisData,
         },
-      },
-    })
+      })
 
     if (sendErr) {
-      console.error('send-transactional-email erro', sendErr)
+      console.error('newsletter test send error', sendErr)
       return new Response(JSON.stringify({ error: sendErr.message ?? 'erro send' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-    console.log('send-transactional-email ok', sendData)
+    console.log('newsletter test send ok', sendData)
 
 
     return new Response(JSON.stringify({ ok: true, email, imoveis: imoveisData.length }), {

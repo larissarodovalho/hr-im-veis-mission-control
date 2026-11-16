@@ -1,6 +1,7 @@
 // Aprova e dispara o envio da campanha de newsletter para todos os inscritos ativos.
 // Cria uma linha em newsletter_envios por destinatário e enfileira o e-mail individual
-// no send-transactional-email (idempotente por campanha+email).
+// via e-mail gerenciado (idempotente por campanha+email).
+import { trySendLoggedEmail } from '../_shared/send-logged-email.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -122,10 +123,7 @@ Deno.serve(async (req) => {
       }
       if (isSupp) { suprimidos++; continue }
 
-      const { error: sendErr } = await supabase.functions.invoke('send-transactional-email', {
-        body: {
-          templateName: 'newsletter-weekly',
-          recipientEmail: s.email,
+      const { error: sendErr } = await trySendLoggedEmail('newsletter-weekly', s.email, {
           idempotencyKey: `newsletter-${campanha_id}-${s.id}`,
           templateData: {
             assunto: camp.assunto,
@@ -133,8 +131,7 @@ Deno.serve(async (req) => {
             corpo: camp.corpo ?? '',
             imoveis: imoveisData,
           },
-        },
-      })
+        })
 
       if (sendErr) {
         falhas++
