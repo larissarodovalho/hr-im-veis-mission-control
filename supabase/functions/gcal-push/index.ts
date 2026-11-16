@@ -145,14 +145,23 @@ async function buildEventPayload(supa: ReturnType<typeof adminClient>, entity_ty
       relatedName = lead?.nome ?? null;
       link = `https://hrimoveis.com/leads/${r.lead_id}`;
     }
-    const base = `📋 ${r.titulo}${relatedName ? ` — ${relatedName}` : ""}`;
+    const ids = [r.created_by, r.responsavel_id].filter(Boolean);
+    const nomes = new Map<string, string>();
+    if (ids.length) {
+      const { data: profs } = await supa.from("profiles").select("user_id, nome").in("user_id", ids);
+      for (const p of (profs ?? []) as any[]) if (p.nome) nomes.set(p.user_id, p.nome);
+    }
+    const criador = r.created_by ? nomes.get(r.created_by) ?? null : null;
+    const responsavel = r.responsavel_id ? nomes.get(r.responsavel_id) ?? null : null;
+    const quem = responsavel ?? criador;
+    const base = `📋 ${r.titulo}${relatedName ? ` — ${relatedName}` : ""}${quem ? ` (${quem})` : ""}`;
     const summary = r.status === "Concluída" ? `[Concluída] ${base}` : base;
     return {
       ownerUserId: r.responsavel_id ?? r.created_by,
       contaId: null,
       payload: {
         summary,
-        description: [r.descricao, `Prioridade: ${r.prioridade}`, link ? `Abrir no CRM: ${link}` : null].filter(Boolean).join("\n\n"),
+        description: [r.descricao, criador ? `Criada por: ${criador}` : null, responsavel ? `Responsável: ${responsavel}` : null, `Prioridade: ${r.prioridade}`, link ? `Abrir no CRM: ${link}` : null].filter(Boolean).join("\n\n"),
         start: { dateTime: start.toISOString(), timeZone: TIMEZONE },
         end: { dateTime: end.toISOString(), timeZone: TIMEZONE },
         colorId: colorIdForUser(r.created_by),
