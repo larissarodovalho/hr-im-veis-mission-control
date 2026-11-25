@@ -225,6 +225,13 @@
       "when": 1795606663628,
       "tag": "0031_reversible_user_deactivation",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1795606925446,
+      "tag": "0032_inactive_user_private_storage_guard",
+      "breakpoints": true
     }
   ]
 }

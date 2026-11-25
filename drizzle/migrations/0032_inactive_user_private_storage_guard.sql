@@ -1,0 +1,1 @@
+CREATE POLICY "Active users only for authenticated file access" ON storage.objects AS RESTRICTIVE FOR ALL TO authenticated USING ((SELECT public.crm_user_is_active())) WITH CHECK ((SELECT public.crm_user_is_active()));

@@ -376,27 +376,27 @@ export default function UsuariosAdminPage() {
           {/* Desktop: table */}
           <Card className="hidden md:block">
             <CardContent className="p-0 overflow-x-auto">
-              <Table>
+              <Table className="min-w-[900px] table-fixed">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Cargo</TableHead>
-                    <TableHead>Papel</TableHead>
-                    <TableHead>Nível</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead className="w-[26%]">Usuário</TableHead>
+                    <TableHead className="w-[19%]">Papel</TableHead>
+                    <TableHead className="w-[12%]">Nível</TableHead>
+                    <TableHead className="w-[12%]">Status</TableHead>
+                    <TableHead className="w-[31%] text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {rows.map((r) => (
                     <TableRow key={r.user_id}>
-                      <TableCell className="font-medium">{r.nome ?? "—"}{r.user_id === user?.id && <Badge variant="secondary" className="ml-2 text-[10px]">você</Badge>}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{r.email}</TableCell>
-                      <TableCell className="text-sm">{r.cargo ?? "—"}</TableCell>
+                      <TableCell>
+                        <div className="font-medium break-words">{r.nome ?? "—"}{r.user_id === user?.id && <Badge variant="secondary" className="ml-2 text-[10px]">você</Badge>}</div>
+                        <div className="text-xs text-muted-foreground break-words">{r.email}</div>
+                        {r.cargo && <div className="mt-0.5 text-xs text-muted-foreground break-words">{r.cargo}</div>}
+                      </TableCell>
                       <TableCell>
                         <Select value={r.role} onValueChange={(v) => handleRoleChange(r, v as UiRole)} disabled={busy || r.user_id === user?.id}>
-                          <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8 w-full"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="admin">Admin</SelectItem>
                             <SelectItem value="gestor">Gestor</SelectItem>
@@ -417,7 +417,7 @@ export default function UsuariosAdminPage() {
                           }}
                           disabled={busy}
                         >
-                          <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8 w-full"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="junior">Júnior</SelectItem>
                             <SelectItem value="senior">Sênior</SelectItem>
@@ -431,16 +431,16 @@ export default function UsuariosAdminPage() {
                           {r.ativo ? <UserRoundX className="h-4 w-4 mr-1" /> : <UserRoundCheck className="h-4 w-4 mr-1" />}
                           {r.ativo ? "Desativar" : "Reativar"}
                         </Button>
-                        <Button size="icon" variant="ghost" onClick={() => openEdit(r)} title="Editar">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => openEdit(r)} title="Editar">
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button size="icon" variant="ghost" onClick={() => setPermTarget(r)} title="Permissões de menu">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => setPermTarget(r)} title="Permissões de menu">
                           <Lock className="h-4 w-4" />
                         </Button>
-                        <Button size="icon" variant="ghost" onClick={() => { setResetTarget(r); setNewPass(genPassword()); }} title="Redefinir senha">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => { setResetTarget(r); setNewPass(genPassword()); }} title="Redefinir senha">
                           <KeyRound className="h-4 w-4" />
                         </Button>
-                        <Button size="icon" variant="ghost" onClick={() => handleDelete(r)} disabled={r.user_id === user?.id} title="Remover">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => handleDelete(r)} disabled={r.user_id === user?.id} title="Remover">
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                         </div>
@@ -448,7 +448,7 @@ export default function UsuariosAdminPage() {
                     </TableRow>
                   ))}
                   {rows.length === 0 && (
-                    <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhum usuário cadastrado</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum usuário cadastrado</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>

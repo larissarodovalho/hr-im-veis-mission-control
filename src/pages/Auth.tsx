@@ -28,7 +28,9 @@ export default function Auth() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(error.code === "user_banned" || error.message.toLowerCase().includes("banned")
+      ? "Seu acesso ao CRM foi desativado. Entre em contato com um administrador."
+      : error.message);
     navigate("/crm");
   };
 

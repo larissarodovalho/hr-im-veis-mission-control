@@ -14,7 +14,7 @@
 
 ## Desativação de usuários
 
-- [ ] Adicionar desativação e reativação com confirmação na aba Usuários.
-- [ ] Bloquear login, sessões anteriores e ações diretas de usuários desativados.
-- [ ] Preservar cadastro, permissões, vínculos e relatórios históricos.
-- [ ] Testar acesso, preservação de dados e o fluxo na tela.
+- [x] Adicionar desativação e reativação com confirmação na aba Usuários.
+- [x] Bloquear login, sessões anteriores e ações diretas de usuários desativados.
+- [x] Preservar cadastro, permissões, vínculos e relatórios históricos.
+- [x] Testar acesso, preservação de dados e o fluxo na tela.
