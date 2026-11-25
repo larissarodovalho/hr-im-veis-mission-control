@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { isUserActive } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,6 +21,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: userRes } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
     if (!userRes?.user) return new Response(JSON.stringify({ error: "Não autorizado" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!(await isUserActive(userRes.user.id))) return new Response(JSON.stringify({ error: "Usuário desativado" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const { lead_id } = await req.json().catch(() => ({}));
     if (!lead_id) return new Response(JSON.stringify({ error: "lead_id obrigatório" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });

@@ -5130,6 +5130,8 @@ export type Database = {
         Args: { p_chave: string; p_conta_id: string; p_payload: Json }
         Returns: Json
       }
+      crm_require_active_user: { Args: never; Returns: undefined }
+      crm_user_is_active: { Args: never; Returns: boolean }
       get_site_visits_daily: {
         Args: { days?: number }
         Returns: {

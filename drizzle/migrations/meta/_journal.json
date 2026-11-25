@@ -218,6 +218,13 @@
       "when": 1794840510754,
       "tag": "0030_harden_criar_notificacao",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1795606663628,
+      "tag": "0031_reversible_user_deactivation",
+      "breakpoints": true
     }
   ]
 }

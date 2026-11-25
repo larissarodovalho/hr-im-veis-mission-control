@@ -1,5 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { sendLoggedEmail } from '../_shared/send-logged-email.ts'
+import { changeUserStatus, validateUserStatusChange } from "../_shared/user-status.ts";
+import { isUserActive } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,6 +43,7 @@ Deno.serve(async (req) => {
       return json({ error: "Unauthorized", detail: userErr?.message }, 401);
     }
     const callerId = userData.user.id;
+    if (!(await isUserActive(callerId))) return json({ error: "Usuário desativado" }, 403);
     const { data: roleRow } = await admin
       .from("user_roles")
       .select("role")
@@ -51,6 +54,30 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const action = body.action ?? "create";
+
+    if (action === "deactivate" || action === "reactivate") {
+      const validationError = validateUserStatusChange(callerId, body.user_id, action);
+      if (validationError) return json({ error: validationError }, 400);
+      const targetId = body.user_id as string;
+      const { data: target, error: targetError } = await admin.from("profiles")
+        .select("ativo").eq("user_id", targetId).maybeSingle();
+      if (targetError) return json({ error: targetError.message }, 400);
+      if (!target) return json({ error: "Usuário não encontrado" }, 404);
+
+      await changeUserStatus({
+        setActive: async (userId, active) => {
+          const { data: changed, error } = await admin.from("profiles")
+            .update({ ativo: active }).eq("user_id", userId).select("user_id").single();
+          if (error || !changed) throw new Error(error?.message ?? "Não foi possível atualizar o status do usuário");
+        },
+        setAuthBan: async (userId, duration) => {
+          const { error } = await admin.auth.admin.updateUserById(userId, { ban_duration: duration });
+          if (error) throw new Error(error.message);
+        },
+      }, targetId, target.ativo, action === "reactivate");
+
+      return json({ ok: true, user_id: targetId, ativo: action === "reactivate" });
+    }
 
     if (action === "create") {
       const { email, password, nome, telefone, cargo, role } = body as {

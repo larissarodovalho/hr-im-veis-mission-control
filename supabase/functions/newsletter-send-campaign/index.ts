@@ -3,6 +3,7 @@
 // via e-mail gerenciado (idempotente por campanha+email).
 import { trySendLoggedEmail } from '../_shared/send-logged-email.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { isUserActive } from '../_shared/auth.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -36,6 +37,7 @@ Deno.serve(async (req) => {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+    if (!(await isUserActive(user.id))) return new Response(JSON.stringify({ error: 'Usuário desativado' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     const { data: roles } = await supabase
       .from('user_roles').select('role').eq('user_id', user.id)
     const allowed = (roles ?? []).some((r: any) => r.role === 'admin' || r.role === 'gestor')

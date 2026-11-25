@@ -2,6 +2,7 @@
 // Ações: create | get | list_members | add_members | remove_member | update_push_flag
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { isUserActive } from "../_shared/auth.ts";
 import {
   adminClient,
   formatGoogleCalendarApiError,
@@ -72,6 +73,7 @@ Deno.serve(async (req) => {
     const usupa = userClient(auth);
     const { data: u } = await usupa.auth.getUser();
     if (!u.user) throw new Error("Sessão inválida");
+    if (!(await isUserActive(u.user.id))) return new Response(JSON.stringify({ error: "Usuário desativado" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const supa = adminClient();
     await assertAdmin(supa, u.user.id);

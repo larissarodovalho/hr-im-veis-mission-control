@@ -11,3 +11,10 @@
 - [x] Exibir evolução diária e consolidado por conta-dia na tela, PDF e CSV
 - [x] Sincronizar os quadros de incidência com a produtividade real e tratar falhas de apuração
 - [x] Separar imóveis não publicados e detalhar código, descrição e tipo na aba Vendidos
+
+## Desativação de usuários
+
+- [ ] Adicionar desativação e reativação com confirmação na aba Usuários.
+- [ ] Bloquear login, sessões anteriores e ações diretas de usuários desativados.
+- [ ] Preservar cadastro, permissões, vínculos e relatórios históricos.
+- [ ] Testar acesso, preservação de dados e o fluxo na tela.

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, ShieldAlert, UserPlus, KeyRound, Trash2, Copy, Pencil, Lock } from "lucide-react";
+import { Loader2, ShieldAlert, UserPlus, KeyRound, Trash2, Copy, Pencil, Lock, UserRoundCheck, UserRoundX } from "lucide-react";
 import { toast } from "sonner";
 import { UserPermissionsDialog } from "@/components/UserPermissionsDialog";
 
@@ -62,17 +62,23 @@ export default function UsuariosAdminPage() {
   const [editTarget, setEditTarget] = useState<Row | null>(null);
   const [editForm, setEditForm] = useState({ nome: "", email: "", telefone: "", cargo: "", role: "corretor" as UiRole });
   const [permTarget, setPermTarget] = useState<Row | null>(null);
+  const [statusTarget, setStatusTarget] = useState<Row | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
-    const [{ data: profs }, { data: roles }] = await Promise.all([
+    const [{ data: profs, error: profileError }, { data: roles, error: roleError }] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("user_id, role"),
     ]);
+    if (profileError || roleError) {
+      toast.error("Não foi possível carregar os usuários");
+      setLoading(false);
+      return;
+    }
     const rolesByUser = new Map<string, Set<AppRole>>();
     (roles ?? []).forEach((r: any) => {
       if (!rolesByUser.has(r.user_id)) rolesByUser.set(r.user_id, new Set());
-      rolesByUser.get(r.user_id)!.add(r.role);
+      rolesByUser.get(r.user_id)?.add(r.role);
     });
     const resolve = (set: Set<AppRole> | undefined): UiRole => {
       if (!set) return "corretor";
@@ -127,7 +133,11 @@ export default function UsuariosAdminPage() {
       }
       ({ data, error } = await invokeWith(token));
     }
-    if (error) throw new Error(error.message);
+    if (error) {
+      const response = (error as { context?: Response }).context;
+      const payload = response instanceof Response ? await response.clone().json().catch(() => null) : null;
+      throw new Error(payload?.error ?? error.message);
+    }
     if ((data as any)?.error) throw new Error((data as any).error);
     return data;
   }
@@ -170,6 +180,20 @@ export default function UsuariosAdminPage() {
       fetchUsers();
     } catch (err: any) { toast.error(err.message); }
     finally { setBusy(false); }
+  }
+
+  async function handleStatusChange() {
+    if (!statusTarget) return;
+    setBusy(true);
+    try {
+      await callAdmin({ action: statusTarget.ativo ? "deactivate" : "reactivate", user_id: statusTarget.user_id });
+      toast.success(statusTarget.ativo ? "Usuário desativado. Cadastro e dados preservados." : "Usuário reativado");
+      setStatusTarget(null);
+      await fetchUsers();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Não foi possível alterar o status do usuário");
+      await fetchUsers();
+    } finally { setBusy(false); }
   }
 
   async function handleReset() {
@@ -290,6 +314,7 @@ export default function UsuariosAdminPage() {
                     <div className="text-xs text-muted-foreground truncate">{r.email}</div>
                     {r.cargo && <div className="text-xs text-muted-foreground mt-0.5">{r.cargo}</div>}
                   </div>
+                  <Badge variant={r.ativo ? "default" : "secondary"}>{r.ativo ? "Ativo" : "Desativado"}</Badge>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
@@ -325,7 +350,7 @@ export default function UsuariosAdminPage() {
                     </Select>
                   </div>
                 </div>
-                <div className="flex gap-1 pt-1 border-t">
+                <div className="flex flex-wrap gap-1 pt-1 border-t">
                   <Button size="sm" variant="ghost" className="flex-1" onClick={() => openEdit(r)}>
                     <Pencil className="h-4 w-4 mr-1" /> Editar
                   </Button>
@@ -334,6 +359,10 @@ export default function UsuariosAdminPage() {
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => { setResetTarget(r); setNewPass(genPassword()); }} title="Redefinir senha">
                     <KeyRound className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="outline" className="w-full" onClick={() => setStatusTarget(r)} disabled={busy || r.user_id === user?.id}>
+                    {r.ativo ? <UserRoundX className="h-4 w-4 mr-1" /> : <UserRoundCheck className="h-4 w-4 mr-1" />}
+                    {r.ativo ? "Desativar" : "Reativar"}
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => handleDelete(r)} disabled={r.user_id === user?.id} title="Remover">
                     <Trash2 className="h-4 w-4 text-destructive" />
@@ -355,6 +384,7 @@ export default function UsuariosAdminPage() {
                     <TableHead>Cargo</TableHead>
                     <TableHead>Papel</TableHead>
                     <TableHead>Nível</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -394,7 +424,13 @@ export default function UsuariosAdminPage() {
                           </SelectContent>
                         </Select>
                       </TableCell>
-                      <TableCell className="text-right space-x-1">
+                      <TableCell><Badge variant={r.ativo ? "default" : "secondary"} className="whitespace-nowrap">{r.ativo ? "Ativo" : "Desativado"}</Badge></TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-1">
+                        <Button size="sm" variant="outline" className="whitespace-nowrap" onClick={() => setStatusTarget(r)} disabled={busy || r.user_id === user?.id}>
+                          {r.ativo ? <UserRoundX className="h-4 w-4 mr-1" /> : <UserRoundCheck className="h-4 w-4 mr-1" />}
+                          {r.ativo ? "Desativar" : "Reativar"}
+                        </Button>
                         <Button size="icon" variant="ghost" onClick={() => openEdit(r)} title="Editar">
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -407,11 +443,12 @@ export default function UsuariosAdminPage() {
                         <Button size="icon" variant="ghost" onClick={() => handleDelete(r)} disabled={r.user_id === user?.id} title="Remover">
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
                   {rows.length === 0 && (
-                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum usuário cadastrado</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhum usuário cadastrado</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -420,6 +457,26 @@ export default function UsuariosAdminPage() {
         </>
       )}
 
+
+      <Dialog open={!!statusTarget} onOpenChange={(open) => { if (!open && !busy) setStatusTarget(null); }}>
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-md" onEscapeKeyDown={(e) => { if (busy) e.preventDefault(); }} onPointerDownOutside={(e) => { if (busy) e.preventDefault(); }}>
+          <DialogHeader>
+            <DialogTitle>{statusTarget?.ativo ? "Desativar usuário" : "Reativar usuário"}</DialogTitle>
+            <DialogDescription>
+              {statusTarget?.ativo
+                ? `Desativar ${statusTarget.nome ?? statusTarget.email}? O acesso ao CRM será bloqueado. O cadastro, os clientes e todo o histórico serão preservados.`
+                : `Reativar ${statusTarget?.nome ?? statusTarget?.email}? O usuário poderá entrar novamente com o mesmo cadastro e permissões.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStatusTarget(null)} disabled={busy}>Cancelar</Button>
+            <Button onClick={handleStatusChange} disabled={busy}>
+              {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {statusTarget?.ativo ? "Desativar usuário" : "Reativar usuário"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!resetTarget} onOpenChange={(o) => !o && setResetTarget(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto w-[calc(100vw-2rem)] max-w-lg">

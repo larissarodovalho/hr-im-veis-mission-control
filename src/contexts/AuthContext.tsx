@@ -1,7 +1,9 @@
 import type React from "react";
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { hasActiveProfile, isInactiveUserError } from "@/lib/userStatus";
+import { toast } from "sonner";
 
 export type AppRole = "admin" | "gestor" | "corretor" | "marketing" | "secretaria";
 
@@ -13,6 +15,7 @@ interface Profile {
   telefone: string | null;
   avatar_url: string | null;
   cargo: string | null;
+  ativo: boolean;
 }
 
 interface AuthContextType {
@@ -41,20 +44,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const activeUserId = useRef<string | null>(null);
+  const endingAccess = useRef(false);
 
-  const loadUserData = async (uid: string) => {
-    const [{ data: prof }, { data: rs }] = await Promise.all([
+  const endInactiveAccess = useCallback(async () => {
+    if (endingAccess.current) return;
+    endingAccess.current = true;
+    activeUserId.current = null;
+    setProfile(null);
+    setRoles([]);
+    setUser(null);
+    setSession(null);
+    toast.error("Seu acesso ao CRM foi desativado. Entre em contato com um administrador.");
+    try {
+      await supabase.auth.signOut({ scope: "local" });
+    } finally {
+      endingAccess.current = false;
+    }
+  }, []);
+
+  const loadUserData = useCallback(async (uid: string) => {
+    const [{ data: prof, error: profileError }, { data: rs, error: roleError }] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
+    if (activeUserId.current !== uid || endingAccess.current) return;
+    if (prof?.ativo === false || isInactiveUserError(profileError) || isInactiveUserError(roleError)) {
+      await endInactiveAccess();
+      return;
+    }
+    if (profileError || roleError) return;
     setProfile(prof as Profile | null);
     setRoles((rs ?? []).map((r: any) => r.role as AppRole));
-  };
+  }, [endInactiveAccess]);
 
   useEffect(() => {
     let mounted = true;
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+      activeUserId.current = sess?.user.id ?? null;
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) {
@@ -70,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     supabase.auth.getSession().then(async ({ data: { session: sess } }) => {
       if (!mounted) return;
+      activeUserId.current = sess?.user.id ?? null;
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) {
@@ -82,7 +111,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false;
       sub.subscription.unsubscribe();
     };
-  }, []);
+  }, [loadUserData]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const uid = user.id;
+    let subscribedOnce = false;
+    const refresh = () => { void loadUserData(uid); };
+    // Data-free per-user doorbell remains readable after deactivation to close this session.
+    const channel = supabase.channel(`auth:user:${uid}`, { config: { private: true } })
+      .on("broadcast", { event: "status_changed" }, refresh)
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          if (subscribedOnce) refresh();
+          subscribedOnce = true;
+        }
+      });
+    const onVisible = () => { if (document.visibilityState === "visible") refresh(); };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      void supabase.removeChannel(channel);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [user?.id, loadUserData]);
 
 
   const refreshProfile = async () => {
@@ -90,6 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    activeUserId.current = null;
     await supabase.auth.signOut();
     setProfile(null);
     setRoles([]);
@@ -99,8 +153,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user, session, profile, roles, loading,
-        isAdmin: roles.includes("admin"),
-        isGestor: roles.includes("gestor") || roles.includes("admin"),
+        isAdmin: hasActiveProfile(profile) && roles.includes("admin"),
+        isGestor: hasActiveProfile(profile) && (roles.includes("gestor") || roles.includes("admin")),
         isMarketing: roles.includes("marketing"),
         isMarketingOnly:
           roles.includes("marketing") &&

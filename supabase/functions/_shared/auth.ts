@@ -17,10 +17,17 @@ export async function getCaller(req: Request): Promise<Caller | null> {
     Deno.env.get("SUPABASE_ANON_KEY")!,
     { global: { headers: { Authorization: authHeader } } },
   );
-  const { data, error } = await client.auth.getClaims(token);
-  const sub = data?.claims?.sub as string | undefined;
-  if (error || !sub || data?.claims?.role !== "authenticated") return null;
-  return { kind: "user", userId: sub, authHeader };
+  const { data, error } = await client.auth.getUser(token);
+  const userId = data.user?.id;
+  if (error || !userId || !(await isUserActive(userId))) return null;
+  return { kind: "user", userId, authHeader };
+}
+
+/** Server-side status check: never infer access from user-editable metadata. */
+export async function isUserActive(userId: string): Promise<boolean> {
+  const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const { data, error } = await admin.from("profiles").select("ativo").eq("user_id", userId).maybeSingle();
+  return !error && data?.ativo === true;
 }
 
 export function userScopedClient(authHeader: string) {
@@ -32,6 +39,7 @@ export function userScopedClient(authHeader: string) {
 }
 
 export async function userHasRole(userId: string, roles: string[]) {
+  if (!(await isUserActive(userId))) return false;
   const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const { data } = await admin.from("user_roles").select("role").eq("user_id", userId).in("role", roles);
   return (data ?? []).length > 0;

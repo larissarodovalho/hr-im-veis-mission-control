@@ -1,5 +1,6 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { userClient, adminClient } from "../_shared/google-calendar.ts";
+import { isUserActive } from "../_shared/auth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -9,6 +10,7 @@ Deno.serve(async (req) => {
     const supa = userClient(auth);
     const { data: u } = await supa.auth.getUser();
     if (!u.user) throw new Error("Sessão inválida");
+    if (!(await isUserActive(u.user.id))) return new Response(JSON.stringify({ error: "Usuário desativado" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const admin = adminClient();
     const { data: row } = await admin.from("user_google_calendar")
