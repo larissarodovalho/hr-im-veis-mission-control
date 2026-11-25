@@ -5130,15 +5130,6 @@ export type Database = {
         Args: { p_chave: string; p_conta_id: string; p_payload: Json }
         Returns: Json
       }
-      delete_email: {
-        Args: { message_id: number; queue_name: string }
-        Returns: boolean
-      }
-      email_queue_dispatch: { Args: never; Returns: undefined }
-      enqueue_email: {
-        Args: { payload: Json; queue_name: string }
-        Returns: number
-      }
       get_site_visits_daily: {
         Args: { days?: number }
         Returns: {
@@ -5210,15 +5201,6 @@ export type Database = {
           nova_oportunidade_id: string
         }[]
       }
-      move_to_dlq: {
-        Args: {
-          dlq_name: string
-          message_id: number
-          payload: Json
-          source_queue: string
-        }
-        Returns: number
-      }
       normalize_br_phone: { Args: { p: string }; Returns: string }
       oportunidade_ativa_da_conta: {
         Args: { _conta_id: string }
@@ -5244,14 +5226,6 @@ export type Database = {
       oportunidades_unificar: {
         Args: { _duplicada: string; _principal: string }
         Returns: Json
-      }
-      read_email_batch: {
-        Args: { batch_size: number; queue_name: string; vt: number }
-        Returns: {
-          message: Json
-          msg_id: number
-          read_ct: number
-        }[]
       }
       search_contas_min: {
         Args: { _limit?: number; _q?: string }
